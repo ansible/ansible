@@ -66,6 +66,27 @@ options:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     aliases: ['aws_region', 'ec2_region']
+  subnets:
+    description:
+      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this. 
+    required: false
+    default: None
+    aliases: []
+    version_added: "1.6"  
+  purge_subnets:
+    description:
+      - Purge existing subnet on ELB that are not found in subnets
+    required: false
+    default: false  
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
+
 extends_documentation_fragment: aws
 """
 
@@ -91,6 +112,20 @@ EXAMPLES = """
         instance_port: 80
         # ssl certificate required for https or ssl
         ssl_certificate_id: "arn:aws:iam::123456789012:server-certificate/company/servercerts/ProdServerCert"
+
+
+# Basic VPC provisioning example
+- local_action:
+    module: ec2_elb_lb
+    name: "test-vpc"
+    state: present
+    subnets: 
+      - subnet-abcd1234
+      - subnet-1a2b3c4d
+    listeners:
+      - protocol: http # options are http, https, ssl, tcp
+        load_balancer_port: 80
+        instance_port: 80
 
 # Configure a health check
 - local_action:
@@ -149,6 +184,20 @@ EXAMPLES = """
         load_balancer_port: 80
         instance_port: 80
     purge_zones: yes
+
+# Creates a ELB and assigns a list of subnets to it. 
+- local_action:
+    module: ec2_elb_lb
+    state: present
+    name: 'New ELB'
+    security_group_ids: 'sg-123456, sg-67890'
+    region: us-west-2
+    subnets: 'subnet-123456, subnet-67890'
+    purge_subnets: yes
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
 """
 
 import sys
@@ -168,8 +217,10 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, security_group_ids=None, health_check=None,
+                 zones=None, purge_zones=None, security_group_ids=None, 
+                 health_check=None, subnets=None, purge_subnets=None,
                  region=None, **aws_connect_params):
+
         self.module = module
         self.name = name
         self.listeners = listeners
@@ -178,6 +229,8 @@ class ElbManager(object):
         self.purge_zones = purge_zones
         self.security_group_ids = security_group_ids
         self.health_check = health_check
+        self.subnets = subnets
+        self.purge_subnets = purge_subnets
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -196,6 +249,7 @@ class ElbManager(object):
             self._set_zones()
             self._set_security_groups()
             self._set_elb_listeners()
+            self._set_subnets()
         self._set_health_check()
 
     def ensure_gone(self):
@@ -220,7 +274,8 @@ class ElbManager(object):
                 'dns_name': check_elb.dns_name,
                 'zones': check_elb.availability_zones,
                 'security_group_ids': check_elb.security_groups,
-                'status': self.status
+                'status': self.status,
+                'subnets': self.subnets
             }
 
             if check_elb.health_check:
@@ -271,7 +326,8 @@ class ElbManager(object):
         self.elb = self.elb_conn.create_load_balancer(name=self.name,
                                                       zones=self.zones,
                                                       security_groups=self.security_group_ids,
-                                                      complex_listeners=listeners)
+                                                      complex_listeners=listeners,
+                                                      subnets=self.subnets)
         if self.elb:
             self.changed = True
             self.status = 'created'
@@ -390,22 +446,46 @@ class ElbManager(object):
                 self.module.fail_json(msg="an unknown server error occurred, please try again later")
         self.changed = True
 
+    def _attach_subnets(self, subnets):
+        self.elb_conn.attach_lb_to_subnets(self.name, subnets)
+        self.changed = True
+
+    def _detach_subnets(self, subnets):
+        self.elb_conn.detach_lb_from_subnets(self.name, subnets)
+        self.changed = True
+
+    def _set_subnets(self):
+        """Determine which subnets need to be attached or detached on the ELB"""
+        if self.subnets:
+            if self.purge_subnets:
+                subnets_to_detach = list(set(self.elb.subnets) - set(self.subnets))
+                subnets_to_attach = list(set(self.subnets) - set(self.elb.subnets))
+            else:
+                subnets_to_detach = None
+                subnets_to_attach = list(set(self.subnets) - set(self.elb.subnets))
+
+            if subnets_to_attach:
+                self._attach_subnets(subnets_to_attach)
+            if subnets_to_detach:
+                self._detach_subnets(subnets_to_detach)
+                
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
-        if self.purge_zones:
-            zones_to_disable = list(set(self.elb.availability_zones) -
+        if self.zones:
+            if self.purge_zones:
+                zones_to_disable = list(set(self.elb.availability_zones) -
                                     set(self.zones))
-            zones_to_enable = list(set(self.zones) -
-                                   set(self.elb.availability_zones))
-        else:
-            zones_to_disable = None
-            zones_to_enable = list(set(self.zones) -
-                                   set(self.elb.availability_zones))
-        if zones_to_enable:
-            self._enable_zones(zones_to_enable)
-        # N.B. This must come second, in case it would have removed all zones
-        if zones_to_disable:
-            self._disable_zones(zones_to_disable)
+                zones_to_enable = list(set(self.zones) -
+                                    set(self.elb.availability_zones))
+            else:
+                zones_to_disable = None
+                zones_to_enable = list(set(self.zones) -
+                                    set(self.elb.availability_zones))
+            if zones_to_enable:
+                self._enable_zones(zones_to_enable)
+            # N.B. This must come second, in case it would have removed all zones
+            if zones_to_disable:
+                self._disable_zones(zones_to_disable)
 
     def _set_security_groups(self):
         if self.security_group_ids != None and set(self.elb.security_groups) != set(self.security_group_ids):
@@ -464,6 +544,8 @@ def main():
             purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
+            subnets={'default': None, 'required': False, 'type': 'list'},
+            purge_subnets={'default': False, 'required': False, 'type': 'bool'}
         )
     )
 
@@ -483,15 +565,18 @@ def main():
     purge_zones = module.params['purge_zones']
     security_group_ids = module.params['security_group_ids']
     health_check = module.params['health_check']
+    subnets = module.params['subnets']
+    purge_subnets = module.params['purge_subnets']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
 
-    if state == 'present' and not zones:
-        module.fail_json(msg="At least one availability zone is required for ELB creation")
+    if state == 'present' and not (zones or subnets):
+        module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
 
-    elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
+    elb_man = ElbManager(module, name, listeners, purge_listeners, zones, 
                          purge_zones, security_group_ids, health_check, 
+                         subnets, purge_subnets, 
                          region=region, **aws_connect_params)
 
     if state == 'present':
