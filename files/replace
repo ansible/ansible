@@ -90,6 +90,8 @@ def write_changes(module,contents,dest):
     validate = module.params.get('validate', None)
     valid = not validate
     if validate:
+        if "%s" not in validate:
+            module.fail_json(msg="validate must contain %%s: %s" % (validate))
         (rc, out, err) = module.run_command(validate % tmpfile)
         valid = rc == 0
         if rc != 0:
