@@ -35,6 +35,9 @@ test_hash:
 	ANSIBLE_HASH_BEHAVIOUR=replace ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
 	ANSIBLE_HASH_BEHAVIOUR=merge ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
 
+test_var_precedence:
+	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e 'extra_var=extra_var'
+
 cloud: amazon rackspace
 
 cloud_cleanup: amazon_cleanup rackspace_cleanup

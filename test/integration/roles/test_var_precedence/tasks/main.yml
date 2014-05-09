@@ -1,0 +1,5 @@
+- assert:
+    that:
+      - 'extra_var == "extra_var"'
+      - 'vars_var == "vars_var"'
+      - 'vars_files_var == "vars_files_var"'

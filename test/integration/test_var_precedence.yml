@@ -1,0 +1,19 @@
+---
+- hosts: testhost
+  vars:
+  - vars_var: "vars_var"
+  - param_var: "BAD!"
+  - vars_files_var: "BAD!"
+  vars_files:
+  - vars/test_var_precedence.yml
+  roles:
+  - { role: test_var_precedence, param_var: "param_var" }
+  tasks:
+  - debug: var=extra_var
+  - debug: var=vars_var
+  - debug: var=vars_files_var
+  - assert:
+      that:
+        - 'extra_var == "extra_var"'
+        - 'vars_var == "vars_var"'
+        - 'vars_files_var == "vars_files_var"'
