@@ -287,6 +287,10 @@ class Runner(object):
     def _compute_environment_string(self, inject=None):
         ''' what environment variables to use when running the command? '''
 
+        shell_type = inject.get('ansible_shell_type')
+        if not shell_type:
+            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
+
         default_environment = dict(
             LANG     = C.DEFAULT_MODULE_LANG,
             LC_CTYPE = C.DEFAULT_MODULE_LANG,
@@ -301,7 +305,10 @@ class Runner(object):
 
         result = ""
         for (k,v) in default_environment.iteritems():
-            result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
+            if shell_type in ('csh', 'fish'):
+                result = "env %s=%s %s" % (k, pipes.quote(unicode(v)), result)
+            else:
+                result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
         return result
 
     # *****************************************************
