@@ -322,6 +322,7 @@ def reset(git_path, module, dest):
 def get_remote_head(git_path, module, dest, version, remote, bare):
     cloning = False
     cwd = None
+    tag = False
     if remote == module.params['repo']:
         cloning = True
     else:
@@ -336,7 +337,8 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     elif is_remote_branch(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     elif is_remote_tag(git_path, module, dest, remote, version):
-        cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
+        tag = True
+        cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
     else:
         # appears to be a sha1.  return as-is since it appears
         # cannot check for a specific sha1 on remote
@@ -344,6 +346,16 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
+
+    if tag:
+    # Find the dereferenced tag if this is an annotated tag.
+        for tag in out.split('\n'):
+            if tag.endswith(version + '^{}'):
+                out = tag
+                break
+            elif tag.endswith(version):
+                out = tag
+
     rev = out.split()[0]
     return rev
 
