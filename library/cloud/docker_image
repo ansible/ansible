@@ -45,7 +45,7 @@ options:
     description:
        - Image tag to work with
     required: false
-    default: ""
+    default: "latest"
     aliases: []
   nocache:
     description:
