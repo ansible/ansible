@@ -119,15 +119,15 @@ options:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
-
-    recursive:
+    submodules:
         required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
+        default: null
         version_added: "1.6"
         description:
-            - if C(no), repository will be cloned without the --recursive
-              option, skipping sub-modules.
+            - Select which sub-modules will be updated. 'none' to skip all.
+              If this argument is not supplied all sub-modules will be
+              updated. 
+       
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -229,7 +229,7 @@ def get_version(module, git_path, dest, ref="HEAD"):
     return sha
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, recursive):
+          reference, submodules):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -241,7 +241,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.append('--bare')
     else:
         cmd.extend([ '--origin', remote ])
-        if recursive:
+        if submodules is None:
             cmd.extend([ '--recursive' ])
         if is_remote_branch(git_path, module, dest, repo, version) \
         or is_remote_tag(git_path, module, dest, repo, version):
@@ -252,9 +252,13 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend([ '--reference', str(reference) ])
     cmd.extend([ repo, dest ])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
+    cmd = [git_path, 'submodule', 'update', '--init', '--recursive']
     if bare:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    elif submodules is not None and submodules.lower() != 'none':
+        cmd.extend(submodules.split())
+        module.run_command(cmd, check_rc=True, cwd=dest)
   
 def has_local_mods(module, git_path, dest, bare):
     if bare:
@@ -391,7 +395,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote, bare):
+def fetch(git_path, module, repo, dest, version, remote, bare, submodules):
     ''' updates repo from remote sources '''
     if bare:
         (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
@@ -406,17 +410,17 @@ def fetch(git_path, module, repo, dest, version, remote, bare):
         (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
-    (rc, out3, err3) = submodule_update(git_path, module, dest)
+    (rc, out3, err3) = submodule_update(git_path, module, dest, submodules)
     return (rc, out1 + out2 + out3, err1 + err2 + err3)
 
-def submodule_update(git_path, module, dest):
+def submodule_update(git_path, module, dest, submodules):
     ''' init and update any submodules '''
 
     # get the valid submodule params
     params = get_submodule_update_params(module, git_path, dest)
 
-    # skip submodule commands if .gitmodules is not present
-    if not os.path.exists(os.path.join(dest, '.gitmodules')):
+    # skip submodule commands if .gitmodules is not present or 'none' submodule specified
+    if not os.path.exists(os.path.join(dest, '.gitmodules')) or (submodules is not None and submodules.lower() == 'none'):
         return (0, '', '')
     cmd = [ git_path, 'submodule', 'sync' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
@@ -424,12 +428,12 @@ def submodule_update(git_path, module, dest):
         cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ,'--remote' ]
     else:
         cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
-    (rc, out, err) = module.run_command(cmd, cwd=dest)
-    if rc != 0:
-        module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
+    if submodules is not None and submodules.lower() != 'none': 
+        cmd.extend(submodules.split())# yep, we do not handle whitespaces in sub-modules
+    (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     return (rc, out, err)
 
-def switch_version(git_path, module, dest, remote, version):
+def switch_version(git_path, module, dest, remote, version, submodules):
     ''' once pulled, switch to a particular SHA, tag, or branch '''
     cmd = ''
     if version != 'HEAD':
@@ -455,7 +459,7 @@ def switch_version(git_path, module, dest, remote, version):
             module.fail_json(msg="Failed to checkout %s" % (version))
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
-    (rc, out2, err2) = submodule_update(git_path, module, dest)
+    (rc, out2, err2) = submodule_update(git_path, module, dest, submodules)
     return (rc, out1 + out2, err1 + err2)
 
 # ===========================================
@@ -476,7 +480,7 @@ def main():
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
-            recursive=dict(default='yes', type='bool'),
+            submodules=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -494,6 +498,7 @@ def main():
     
     key_file   = module.params['key_file']
     ssh_opts   = module.params['ssh_opts']
+    submodules = module.params['submodules']
 
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
@@ -509,8 +514,6 @@ def main():
             add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
     else:            
         add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
-
-    recursive = module.params['recursive']
 
     if bare:
         gitconfig = os.path.join(dest, 'config')
@@ -528,7 +531,7 @@ def main():
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
         clone(git_path, module, repo, dest, remote, depth, version, bare,
-              reference, recursive)
+              reference, submodules)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -560,12 +563,12 @@ def main():
                 module.exit_json(changed=False, before=before, after=remote_head)
         if module.check_mode:
             module.exit_json(changed=True, before=before, after=remote_head)
-        fetch(git_path, module, repo, dest, version, remote, bare)
+        fetch(git_path, module, repo, dest, version, remote, bare, submodules)
 
     # switch to version specified regardless of whether
     # we cloned or pulled
     if not bare:
-        switch_version(git_path, module, dest, remote, version)
+        switch_version(git_path, module, dest, remote, version, submodules)
 
     # determine if we changed anything
     after = get_version(module, git_path, dest)
