@@ -1,0 +1,38 @@
+digraph G {
+
+        subgraph cluster_0 {
+            "command line variables" -> "--extra-args"
+        }
+	
+        subgraph cluster_1 {
+	    "role variables" -> "roles/rolename/vars.yml" -> "parameters passed to role" -> "parameters from dependent roles" 
+	}
+
+        subgraph cluster_2 {
+            "top-level playbook variables" -> "vars: directives" -> "vars_files: directives";
+        }
+
+	subgraph cluster_3 {
+	    "inventory variables" -> "group_vars/all" -> "group_vars/grandparent1" -> "group_vars/parent1" -> "host_vars/myhostname";
+            "group_vars/all" -> "group_vars/grandparent2";
+            "group_vars/grandparent1" -> "group_vars/parent2"
+            "group_vars/grandparent2" -> "host_vars/myhostname";
+            "group_vars/parent2" -> "host_vars/myhostname"
+	}
+
+        subgraph cluster_4 {
+            "facts" -> "gathered host facts"
+            "facts" -> "host facts from /etc/ansible/facts.d"
+            "facts" -> "set_fact"
+            "facts" -> "include_vars"
+        }
+
+        subgraph cluster_5 {
+            "role defaults" -> "roles/rolename/defaults.yml"
+        }
+
+        "command line variables" -> "role variables" -> "top-level playbook variables" -> "inventory variables" -> "role defaults" -> "facts"
+
+     
+
+}
