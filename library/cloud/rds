@@ -370,6 +370,9 @@ def main():
         else:
             return 'vpc_security_groups'
 
+    # Package up the optional parameters
+    params = {}
+
     # Validate parameters for each command
     if command == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
@@ -412,9 +415,6 @@ def main():
     for v in invalid_vars:
         if module.params.get(v):
             module.fail_json(msg = str("Parameter %s invalid for %s command" % (v, command)))
-
-    # Package up the optional parameters
-    params = {}
 
     if db_engine:
         params["engine"] = db_engine
