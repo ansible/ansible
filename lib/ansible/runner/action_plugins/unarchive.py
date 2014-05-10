@@ -49,10 +49,29 @@ class ActionModule(object):
         source  = options.get('src', None)
         dest    = options.get('dest', None)
         copy    = utils.boolean(options.get('copy', 'yes'))
+        creates = options.get('creates', None)
 
         if source is None or dest is None:
             result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
+
+        if creates:
+            # do not run the command if the line contains creates=filename
+            # and the filename already exists. This allows idempotence
+            # of command executions.
+            module_args_tmp = "path=%s" % creates
+            module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
+                                                        complex_args=complex_args, persist_files=True)
+            stat = module_return.result.get('stat', None)
+            if stat and stat.get('exists', False):
+                return ReturnData(
+                    conn=conn,
+                    comm_ok=True,
+                    result=dict(
+                        skipped=True,
+                        msg=("skipped, since %s exists" % creates)
+                    )
+                )
 
         dest = os.path.expanduser(dest)
         source = template.template(self.runner.basedir, os.path.expanduser(source), inject)
