@@ -47,7 +47,7 @@ options:
     default: null
   user:
     description:
-      - The specific user who's crontab should be modified.
+      - The specific user whose crontab should be modified.
     required: false
     default: root
   job:
@@ -95,7 +95,7 @@ options:
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run ( 0-7 for Sunday - Saturday, *, etc )
+      - Day of the week that the job should run ( 0-6 for Sunday-Saturday, *, etc )
     required: false
     default: "*"
     aliases: [ "dow" ]
