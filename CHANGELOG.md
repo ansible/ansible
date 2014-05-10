@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-## 1.6 "And the Cradle Will Rock" - Active Development
+## 1.7 "Summer Nights" - Active Development
+
+Pending!
+
+## 1.6 "And the Cradle Will Rock" - May 5, 2014
 
 Major features/changes:
 

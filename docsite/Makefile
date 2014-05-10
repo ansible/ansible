@@ -10,6 +10,10 @@ docs: clean modules staticmin
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
 
+variables:
+	(mkdir -p htmlout/)
+	dot variables.dot -Tpng -o htmlout/variables.png
+
 viewdocs: clean staticmin
 	./build-site.py view
 

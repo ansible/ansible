@@ -68,6 +68,11 @@ options:
         - Name of the network to which the subnet should be attached
      required: true
      default: None
+   name:
+     description:
+       - The name of the subnet that should be created
+     required: true
+     default: None
    cidr:
      description:
         - The CIDR representation of the subnet that should be assigned to the subnet

@@ -287,10 +287,14 @@ class Runner(object):
     def _compute_environment_string(self, inject=None):
         ''' what environment variables to use when running the command? '''
 
-        default_environment = collections.OrderedDict([
-            ('LANG', C.DEFAULT_MODULE_LANG),
-            ('LC_CTYPE', C.DEFAULT_MODULE_LANG),
-        ])
+        shell_type = inject.get('ansible_shell_type')
+        if not shell_type:
+            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
+
+        default_environment = dict(
+            LANG     = C.DEFAULT_MODULE_LANG,
+            LC_CTYPE = C.DEFAULT_MODULE_LANG,
+        )
 
         if self.environment:
             enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
@@ -301,7 +305,10 @@ class Runner(object):
 
         result = ""
         for (k,v) in default_environment.iteritems():
-            result = "%s %s=%s" % (result, k, pipes.quote(unicode(v)))
+            if shell_type in ('csh', 'fish'):
+                result = "env %s=%s %s" % (k, pipes.quote(unicode(v)), result)
+            else:
+                result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
         return result
 
     # *****************************************************
@@ -570,7 +577,10 @@ class Runner(object):
         hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
 
         # use combined_cache and host_variables to template the module_vars
+        # we update the inject variables with the data we're about to template
+        # since some of the variables we'll be replacing may be contained there too
         module_vars_inject = utils.combine_vars(combined_cache.get(host, {}), host_variables)
+        module_vars_inject.update(self.module_vars)
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         inject = {}

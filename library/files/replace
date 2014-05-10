@@ -90,6 +90,8 @@ def write_changes(module,contents,dest):
     validate = module.params.get('validate', None)
     valid = not validate
     if validate:
+        if "%s" not in validate:
+            module.fail_json(msg="validate must contain %%s: %s" % (validate))
         (rc, out, err) = module.run_command(validate % tmpfile)
         valid = rc == 0
         if rc != 0:
@@ -139,7 +141,7 @@ def main():
     mre = re.compile(params['regexp'], re.MULTILINE)
     result = re.subn(mre, params['replace'], contents, 0)
 
-    if result[1] > 0:
+    if result[1] > 0 and contents != result[0]:
         msg = '%s replacements made' % result[1]
         changed = True
     else:

@@ -183,5 +183,48 @@
     that:
       - "file13_result.changed == true"
 
-- name: remote directory foobar
+- name: remove directory foobar
   file: path={{output_dir}}/foobar state=absent
+  register: file14_result
+
+- name: verify that the directory was removed
+  assert:
+    that:
+      - 'file14_result.changed == true'
+      - 'file14_result.state == "absent"'
+
+- name: create a test sub-directory
+  file: dest={{output_dir}}/sub1 state=directory
+  register: file15_result
+
+- name: verify that the new directory was created
+  assert:
+    that:
+      - 'file15_result.changed == true'
+      - 'file15_result.state == "directory"'
+
+- name: create test files in the sub-directory
+  file: dest={{output_dir}}/sub1/{{item}} state=touch
+  with_items:
+  - file1
+  - file2
+  - file3
+  register: file16_result
+
+- name: verify the files were created
+  assert:
+    that:
+      - 'item.changed == true'
+      - 'item.state == "file"'
+  with_items: file16_result.results
+
+- name: try to force the sub-directory to a link
+  file: src={{output_dir}}/testing dest={{output_dir}}/sub1 state=link force=yes
+  register: file17_result
+  ignore_errors: true
+
+- name: verify the directory was not replaced with a link
+  assert:
+    that:
+      - 'file17_result.failed == true'
+      - 'file17_result.state == "directory"'
