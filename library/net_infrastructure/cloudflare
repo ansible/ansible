@@ -52,11 +52,11 @@ options:
     required: false
     default: null
 
-  type:
+  record_type:
     description:
       - The type of DNS record to create
     required: false
-    choices: [ 'A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL' ]
+    choices:  ['A'/'CNAME'/'MX'/'TXT'/'SPF'/'AAAA'/'NS'/'SRV'/'LOC'] 
     default: null
 
   ttl:
@@ -113,7 +113,7 @@ EXAMPLES = '''
   register: record
 
 # and then delete it
-- local_action: cloudflare domain=my.com record_ids={{ record['id'] }}
+- local_action: cloudflare domain=my.com record_ids={{ record['rec_id'] }}
 
 # create a my.com CNAME record to example.com
 - local_action: cloudflare domain=my.com record= type=CNAME value=example.com state=present
@@ -127,6 +127,7 @@ EXAMPLES = '''
 '''
 
 import os
+import traceback
 try:
     from pyflare import Pyflare
 except ImportError:
@@ -167,9 +168,9 @@ def main():
     is_solo           = module.params.get('solo')
 
     if account_email and account_api_token:
-        client = Pyflare(email=account_email, api_token=account_api_token)
+        client = Pyflare(account_email, account_api_token)
     else:
-        client = Pyflare(email=os.environ.get('CLOUDFLARE_EMAIL'), api_token=os.environ.get('CLOUDFLARE_API_TOKEN'))
+        client = Pyflare(os.environ.get('CLOUDFLARE_EMAIL'), os.environ.get('CLOUDFLARE_API_KEY'))
 
     try:
         # Let's figure out what operation we want to do
@@ -197,7 +198,7 @@ def main():
                     # delete any records that have the same name and record type
                     same_type = [r['rec_id'] for r in records if r['display_name'] == record and r['type'] == record_type]
                     if rr:
-                        same_type = [rid for rid in same_type if rid != rr['id']]
+                        same_type = [rid for rid in same_type if rid != rr['rec_id']]
                     if same_type:
                         if not module.check_mode:
                             for rid in same_type:
@@ -205,26 +206,21 @@ def main():
                         changed = True
                 if rr:
                     # check if we need to update
-                    if rr['ttl'] != ttl or rr['content'] != value:
+                    if rr['ttl'] != str(ttl) or rr['content'] != str(value):
+                        
                         if module.check_mode:
                             module.exit_json(changed=True)
                         else:
-                            module.exit_json(changed=True, result=client.rec_edit(str(domain), str(type), str(rr['id']), str(value),str(ttl))['response']['rec'])
+                            module.exit_json(changed=True, result= client.rec_edit(str(domain), record_type, rr['rec_id'], record, value,str(ttl))['response']['rec'])
+
                     else:
                         module.exit_json(changed=changed, result=rr)
                 else:
                     # create it
-                    data = {
-                        'name':        record,
-                        'record_type': record_type,
-                        'content':     value,
-                    }
-                    if ttl:      data['ttl']  = ttl
-                    if priority: data['prio'] = priority
                     if module.check_mode:
                         module.exit_json(changed=True)
                     else:
-                        module.exit_json(changed=True, result=client.rec_new(str(domain), str(type), str(content), str(ttl), )['response']['rec']['obj'])
+                        module.exit_json(changed=True, result=client.rec_new(str(domain), str(record_type), record, value, str(ttl) )['response']['rec']['obj'])
             elif state == 'absent':
                 if rr:
                     if not module.check_mode:
@@ -258,7 +254,8 @@ def main():
                 module.fail_json(msg="'%s' is an unknown value for the state argument" % state)
 
     except Exception, e:
-        module.fail_json(msg="An error occured while updating cloudflare: %s" % e.message)
+        module.fail_json(msg="An error occured while updating cloudflare: %s\n%s" % (e, traceback.format_exc()))
+        raise
 
     module.fail_json(msg="Unknown what you wanted me to do")
 
