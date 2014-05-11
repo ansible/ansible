@@ -231,6 +231,11 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
         
+        # Instance filters (see boto and EC2 API docs)
+        self.instance_filters = {}
+        if config.has_option('ec2', 'instance_filters'):
+            filters = config.get('ec2', 'instance_filters', '').split(',')
+            self.instance_filters = dict(x.split('=') for x in filters)
 
 
     def parse_cli_args(self):
@@ -276,7 +281,7 @@ class Ec2Inventory(object):
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
  
-            reservations = conn.get_all_instances()
+            reservations = conn.get_all_instances(filters = self.instance_filters)
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
