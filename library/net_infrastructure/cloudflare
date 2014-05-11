@@ -24,14 +24,14 @@ description:
 options:
   account_email:
     description:
-      - "Account email. required"
-    required: true 
+      - "Account email. if not specified, requires to be set through CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY ENV variables"
+    required: false
     default: null
 
   account_api_token:
     description:
       - Account API token. See I(account_email) for info.
-    required: true 
+    required: false 
     default: null      
 
   domain:
