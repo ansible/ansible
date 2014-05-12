@@ -140,7 +140,10 @@ class DockerImageManager:
             if not chunk:
                 continue
 
-            chunk_json = json.loads(chunk)
+            try:
+                chunk_json = json.loads(chunk)
+            except ValueError:
+                continue
 
             if 'error' in chunk_json:
                 self.error_msg = chunk_json['error']
@@ -152,6 +155,12 @@ class DockerImageManager:
                 match = re.search(success_search, output)
                 if match:
                     image_id = match.group(1)
+
+        # Just in case we skipped evaluating the JSON returned from build
+        # during every iteration, add an error if the image_id was never
+        # populated
+        if not image_id:
+            self.error_msg = 'Unknown error encountered'
 
         return image_id
 
