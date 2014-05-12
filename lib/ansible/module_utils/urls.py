@@ -203,11 +203,12 @@ def url_argument_spec():
         validate_certs = dict(default='yes', type='bool'),
         url_username = dict(required=False),
         url_password = dict(required=False),
+        timeout = dict(required=False, default=10, type='int'),
     )
 
 
 def fetch_url(module, url, data=None, headers=None, method=None, 
-              use_proxy=False, force=False, last_mod_time=None, timeout=10):
+              use_proxy=False, force=False, last_mod_time=None, timeout=None):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
@@ -226,6 +227,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     distribution = get_distribution()
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
+
+    if timeout is None:
+        timeout = module.params.get('timeout', 10)
+        print "timeout: %d, %s" % (timeout, type(timeout))
 
     parsed = urlparse.urlparse(url)
     if parsed[0] == 'https':
