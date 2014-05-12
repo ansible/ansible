@@ -38,10 +38,6 @@ class ActionModule(object):
                     # make sure the dwim'd path ends in a trailing "/"
                     # if the original path did
                     path += '/'
-            elif 'inventory_dir' in self.inject['vars']:
-                # non-roles
-                abs_dir = os.path.abspath(self.inject['vars']['inventory_dir'])
-                path = os.path.join(abs_dir, path)
 
         return path
 
