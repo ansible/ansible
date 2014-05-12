@@ -1,7 +1,11 @@
 #!/usr/bin/python
-
-# https://code.google.com/p/hostinfo/
-# https://github.com/dwagon/Hostinfo
+#
+# Dynamic inventory for Ansible with a hostinfo <https://github.com/dwagon/Hostinfo> backend.
+# List groupings of servers based on predefined hostinfo queries in hostinfo.ini
+#
+# Written by Andy Zaugg
+# Date:  12/05/14
+#
 
 import sys, os, json, ConfigParser
 from optparse import OptionParser
