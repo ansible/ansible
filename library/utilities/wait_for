@@ -176,21 +176,24 @@ def main():
         end = start + datetime.timedelta(seconds=timeout)
         while datetime.datetime.now() < end:
             if path:
-                try:
-                    f = open(path)
-                    try:
-                        if search_regex:
-                            if re.search(search_regex, f.read(), re.MULTILINE):
-                                break
-                            else:
-                                time.sleep(1)
-                        else:
-                            break
-                    finally:
-                        f.close()
-                except IOError:
+                if os.path.exists(path):
+                    if search_regex:
+                        try:
+                            f = open(path)
+                            try:
+                                if re.search(search_regex, f.read(), re.MULTILINE):
+                                    break
+                                else:
+                                    time.sleep(1)
+                            finally:
+                                f.close()
+                        except IOError:
+                            time.sleep(1)
+                            pass
+                    else:
+                        break
+                else:
                     time.sleep(1)
-                    pass
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
