@@ -284,11 +284,11 @@ class LdapManager(object):
             old_entry = self._entry_get(dn)
 
             if old_entry is None:
-                self._entry_add(dn, build_add_list(operations))
+                self._entry_add(dn, self.build_add_list(operations))
                 return True
 
             else:
-                mod_list = build_mod_list(old_entry, operations)
+                mod_list = self.build_mod_list(old_entry, operations)
 
                 if not mod_list:
                     return False
@@ -298,36 +298,36 @@ class LdapManager(object):
 
         return False
 
-
-def build_add_list(operations):
-    entry = {}
-    for operation, attr, values in operations:
-        if operation == 'add':
-            if attr in entry:
-                entry[attr] += values
-            else:
+    @staticmethod
+    def build_add_list(operations):
+        entry = {}
+        for operation, attr, values in operations:
+            if operation == 'add':
+                if attr in entry:
+                    entry[attr] += values
+                else:
+                    entry[attr] = values
+            if operation == 'replace':
                 entry[attr] = values
-        if operation == 'replace':
-            entry[attr] = values
 
-    return ldap.modlist.addModlist(entry)
+        return ldap.modlist.addModlist(entry)
 
+    @staticmethod
+    def build_mod_list(old_entry, operations):
+        result = []
+        for operation, attr, values in operations:
+            if operation == 'add':
+                values = [v for v in values if (attr not in old_entry) or (v not in old_entry[attr])]
+                if values:
+                    result.append((ldap.MOD_ADD, attr, values))
+            elif operation == 'replace':
+                result.append((ldap.MOD_REPLACE, attr, values))
+            elif operation == 'delete':
+                result.append((ldap.MOD_DELETE, attr, values))
+            else:
+                raise LdapModuleError('Unknown ldap operation: ' + operation)
 
-def build_mod_list(old_entry, operations):
-    result = []
-    for operation, attr, values in operations:
-        if operation == 'add':
-            values = [v for v in values if (attr not in old_entry) or (v not in old_entry[attr])]
-            if values:
-                result.append((ldap.MOD_ADD, attr, values))
-        elif operation == 'replace':
-            result.append((ldap.MOD_REPLACE, attr, values))
-        elif operation == 'delete':
-            result.append((ldap.MOD_DELETE, attr, values))
-        else:
-            raise LdapModuleError('Unknown ldap operation: ' + operation)
-
-    return result
+        return result
 
 
 def encode_str(s):
