@@ -59,6 +59,12 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
         aliases: []
+    disable_recommends:
+        description:
+          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages. 
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
 
 notes: []
 # informational: requirements for nodes
@@ -69,6 +75,9 @@ author: Patrick Callahan
 EXAMPLES = '''
 # Install "nmap"
 - zypper: name=nmap state=present
+
+# Install apache2 with recommended packages
+- zypper: name=apache2 state=present disable_recommends=no
 
 # Remove the "nmap" package
 - zypper: name=nmap state=absent
@@ -102,7 +111,7 @@ def get_package_state(m, name):
         return False
 
 # Function used to make sure a package is present.
-def package_present(m, name, installed_state, disable_gpg_check):
+def package_present(m, name, installed_state, disable_gpg_check, disable_recommends):
     if installed_state is False:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
@@ -110,6 +119,9 @@ def package_present(m, name, installed_state, disable_gpg_check):
             cmd.append('--no-gpg-check')
 
         cmd.extend(['install', '--auto-agree-with-licenses'])
+        # add install parameter
+        if disable_recommends:
+            cmd.append('--no-recommends')
         cmd.append(name)
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
@@ -126,7 +138,7 @@ def package_present(m, name, installed_state, disable_gpg_check):
     return (rc, stdout, stderr, changed)
 
 # Function used to make sure a package is the latest available version.
-def package_latest(m, name, installed_state, disable_gpg_check):
+def package_latest(m, name, installed_state, disable_gpg_check, disable_recommends):
 
     if installed_state is True:
         cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
@@ -149,7 +161,7 @@ def package_latest(m, name, installed_state, disable_gpg_check):
 
     else:
         # If package was not installed at all just make it present.
-        return package_present(m, name, installed_state, disable_gpg_check)
+        return package_present(m, name, installed_state, disable_gpg_check, disable_recommends)
 
 # Function used to make sure a package is not installed.
 def package_absent(m, name, installed_state):
@@ -178,6 +190,7 @@ def main():
             name = dict(required=True, aliases=['pkg']),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
+            disable_recommends = dict(requiered=False, default='yes', type='bool'), 
         ),
         supports_check_mode = False
     )
@@ -188,6 +201,7 @@ def main():
     name  = params['name']
     state = params['state']
     disable_gpg_check = params['disable_gpg_check']
+    disable_recommends = params['disable_recommends']
 
     rc = 0
     stdout = ''
@@ -201,11 +215,11 @@ def main():
 
     # Perform requested action
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check, disable_recommends)
     elif state in ['absent', 'removed']:
         (rc, stdout, stderr, changed) = package_absent(module, name, installed_state)
     elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check, disable_recommends)
 
     if rc != 0:
         if stderr:
