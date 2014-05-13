@@ -41,7 +41,7 @@ class Connection(object):
         self.host = host
         self.ipv6 = ':' in self.host
         self.port = port
-        self.user = user
+        self.user = str(user)
         self.password = password
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
