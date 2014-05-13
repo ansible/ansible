@@ -336,9 +336,15 @@ def upgrade_packages(module):
 
     # Try to find any occurance of a package changing version like:
     # "bzip2-1.0.6->1.0.6p0: ok".
-    changed = re.search("\W\w.+->.+: ok\W", stdout)
-    if module.check_mode:
-        module.exit_json(changed=changed)
+    match = re.search("\W\w.+->.+: ok\W", stdout)
+    if match:
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        changed=True
+
+    else:
+        changed=False
 
     # It seems we can not trust the return value, so depend on the presence of
     # stderr to know if something failed.
