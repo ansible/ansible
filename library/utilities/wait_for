@@ -176,7 +176,8 @@ def main():
         end = start + datetime.timedelta(seconds=timeout)
         while datetime.datetime.now() < end:
             if path:
-                if os.path.exists(path):
+                try:
+                    os.stat(path)
                     if search_regex:
                         try:
                             f = open(path)
@@ -192,8 +193,13 @@ def main():
                             pass
                     else:
                         break
-                else:
-                    time.sleep(1)
+                except OSError, e:
+                    # File not present
+                    if os.errno == 2:
+                        time.sleep(1)
+                    else:
+                        elapsed = datetime.datetime.now() - start
+                        module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
