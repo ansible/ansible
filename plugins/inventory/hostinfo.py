@@ -40,6 +40,7 @@ def generateHostList(config, hosts):
 						hosts[section].pop(hosts[section].index(item.strip()))
 					except ValueError:
 						continue
+	return hosts
 					
 #-------------------------------------------------------------------------------------------------------------
 def getConfig(configFile):
