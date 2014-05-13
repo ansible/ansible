@@ -785,7 +785,7 @@ class Play(object):
             """ update a host's varscache with new var data """
 
             data = utils.combine_vars(inject, data)
-            self.playbook.VARS_CACHE[host].update(data)
+            self.playbook.VARS_CACHE[host] = utils.combine_vars(self.playbook.VARS_CACHE.get(host, {}), data)
             self.playbook.callbacks.on_import_for_host(host, filename4)
 
         def process_files(filename, filename2, filename3, filename4, host=None):
