@@ -92,6 +92,7 @@ class Homebrew(object):
         \s                  # spaces
         :                   # colons
         {sep}               # the OS-specific path separator
+        .                   # dots
         -                   # dashes
     '''.format(sep=os.path.sep)
 
@@ -99,6 +100,7 @@ class Homebrew(object):
         \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
         \s                  # spaces
         {sep}               # the OS-specific path separator
+        .                   # dots
         -                   # dashes
     '''.format(sep=os.path.sep)
 
@@ -121,6 +123,7 @@ class Homebrew(object):
          - a string containing only:
              - alphanumeric characters
              - dashes
+             - dots
              - spaces
              - colons
              - os.path.sep
@@ -145,6 +148,7 @@ class Homebrew(object):
          - a string containing only:
              - alphanumeric characters
              - dashes
+             - dots
              - spaces
              - os.path.sep
         '''

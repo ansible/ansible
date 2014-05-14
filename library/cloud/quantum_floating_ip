@@ -142,6 +142,7 @@ def _get_server_state(module, nova):
     return server_info, server
 
 def _get_port_info(neutron, module, instance_id, internal_network_name=None):
+    subnet_id = None
     if internal_network_name:
         kwargs = {
             'name': internal_network_name,

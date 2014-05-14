@@ -725,14 +725,12 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                     msg="Error on %s definition. datastore needs to be"
                     " specified." % disk)
             try:
-                disksize = vm_disk[disk]['size_gb']
+                disksize = int(vm_disk[disk]['size_gb'])
                 # Convert the disk size to kiloboytes
                 disksize = disksize * 1024 * 1024
-            except KeyError:
+            except (KeyError, ValueError):
                 vsphere_client.disconnect()
-                module.fail_json(
-                    msg="Error on %s definition. size needs to be"
-                    " specified." % disk)
+                module.fail_json(msg="Error on %s definition. size needs to be specified as an integer." % disk)
             try:
                 disktype = vm_disk[disk]['type']
             except KeyError:
