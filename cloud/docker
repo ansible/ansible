@@ -384,7 +384,7 @@ class DockerManager:
 
         self.env = None
         if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env')))
+            self.env = dict(map(lambda x: x.split("=", 1), self.module.params.get('env')))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
