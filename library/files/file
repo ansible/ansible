@@ -165,8 +165,15 @@ def main():
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
-            os.makedirs(path)
             changed = True
+            curpath = ''
+            for dirname in path.split('/'):
+                curpath = '/'.join([curpath, dirname])
+                if not os.path.exists(curpath):
+                    os.mkdir(curpath)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=curpath
+                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
