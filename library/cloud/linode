@@ -69,6 +69,11 @@ options:
      - swap size in MB
     default: 512
     type: integer
+  partitions:
+    description:
+      - list of partitions, such as [{size: 250, type: ext4}]
+    default: []
+    type: list
   distribution:
     description:
      - distribution to use for the instance (Linode Distribution)
@@ -103,6 +108,7 @@ EXAMPLES = '''
      plan: 1
      datacenter: 2
      distribution: 99
+     partitions: [{'size': 1000, 'type': 'ext3'}]
      password: 'superSecureRootPassword'
      ssh_pub_key: 'ssh-rsa qwerty'
      swap: 768
@@ -208,7 +214,7 @@ def getInstanceDetails(api, server):
     return instance
 
 def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                  payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
+                  partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
     instances = []
     changed = False
     new_server = False   
@@ -267,8 +273,19 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                     password = randompass()
                 if not swap:
                     swap = 512
-                # Create data disk
+                    
                 size = servers[0]['TOTALHD'] - swap
+
+                # check if we have extra partitions and the main partition will be the leftover
+                if partitions:
+                    for p in partitions:
+                        size -= partitions['size']
+                
+                # at least 750MB for main partition
+                if size < 750:
+                    raise Exception("Not enough space left for main partition")
+                
+                # Create data disk
                 if ssh_pub_key:
                     res = api.linode_disk_createfromdistribution(
                               LinodeId=linode_id, DistributionID=distribution, 
@@ -284,6 +301,21 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                                              Label='%s swap disk (lid: %s)' % (name, linode_id), 
                                              Size=swap)
                 jobs.append(res['JobID'])
+                
+                # now create the extra partitions
+                if partitions:
+                    partitionid = 0
+                    for p in partitions:
+                        if not 'type' in p or not 'size' in p:
+                            raise Exception("Invalid partition: provide both size and type")
+                        if partitions['type'] not in ['ext3', 'ext4', 'raw']:
+                            raise Exception("Invalid partition type")
+                        res = api.linode_disk_create(LinodeId=linode_id, Type=p['type'], 
+                                             Label='%s disk partition %s (lid: %s)' % (name, partitionid, linode_id), 
+                                             Size=p['size'])
+                        jobs.append(res['JobID'])
+                        partitionid += 1
+                
             except Exception, e:
                 # TODO: destroy linode ?
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
@@ -443,6 +475,7 @@ def main():
             datacenter = dict(type='int'),
             linode_id = dict(type='int', aliases=['lid']),
             payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
+            partitions = dict(default=[]),
             password = dict(type='str'),
             ssh_pub_key = dict(type='str'),
             swap = dict(type='int', default=512),
@@ -458,6 +491,7 @@ def main():
     distribution = module.params.get('distribution')
     datacenter = module.params.get('datacenter')
     linode_id = module.params.get('linode_id')
+    partitions = module.params.get('partitions')
     payment_term = module.params.get('payment_term')
     password = module.params.get('password')
     ssh_pub_key = module.params.get('ssh_pub_key')
@@ -480,7 +514,7 @@ def main():
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
     linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                 payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
+                 partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
 
 # import module snippets
 from ansible.module_utils.basic import *
