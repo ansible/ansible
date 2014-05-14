@@ -1005,6 +1005,22 @@ def is_list_of_strings(items):
             return False
     return True
 
+def _listify(a):
+    if not isinstance(a, (list, tuple)):
+        return [a,]
+    else:
+        return a
+
+def list_union(a, b):
+    set_a = set(_listify(a))
+    set_b = set(_listify(b))
+    return list(set_a.union(set_b))
+
+def list_intersection(a, b):
+    set_a = set(_listify(a))
+    set_b = set(_listify(b))
+    return list(set_a.intersection(set_b))
+
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
     this is intended for allowing things like:
