@@ -94,6 +94,14 @@ options:
     default: present
     choices: ['absent', 'present']
     version_added: "1.6"
+  force_detach:
+    description:
+      - When set to "yes" and attempting to remove a volume, if the volume is currently attached to an instance, the volume will be forcibly detached for removal.
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+    version_added: "1.6"
+
 author: Lester Wade
 extends_documentation_fragment: aws
 '''
@@ -204,12 +212,20 @@ def get_volume(module, ec2):
 
 def delete_volume(module, ec2):
     vol = get_volume(module, ec2)
+    force_detach = module.params.get('force_detach')
+
     if not vol:
         module.exit_json(changed=False)
     else:
        if vol.attachment_state() is not None: 
-           adata = vol.attach_data
-           module.fail_json(msg="Volume %s is attached to an instance %s." % (vol.id, adata.instance_id))
+          if force_detach:
+              vol.detach(force=True)
+              while vol.status != 'available':
+                  time.sleep(3)
+                  vol.update()
+          else:
+              adata = vol.attach_data
+              module.fail_json(msg="Volume %s is attached to an instance %s." % (vol.id, adata.instance_id))
        ec2.delete_volume(vol.id)
        module.exit_json(changed=True)
 
@@ -305,7 +321,8 @@ def main():
             device_name = dict(),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
             snapshot = dict(),
-            state = dict(choices=['absent', 'present'], default='present')
+            state = dict(choices=['absent', 'present'], default='present'),
+            force_detach = dict(type='bool', default=False)
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
