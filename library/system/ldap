@@ -237,9 +237,11 @@ class LdapManager(object):
                  uri,
                  start_tls=False,
                  bind_dn=None,
-                 bind_pw=None):
+                 bind_pw=None,
+                 dry_run=False):
 
         self._conn = ldap.initialize(uri)
+        self._dry_run = dry_run
 
         if ldapurl.LDAPUrl(uri).urlscheme.lower() != 'ldap' and start_tls:
             raise LdapModuleError('Can not use STARTTLS on non-plain LDAP URL: ' + uri)
@@ -277,13 +279,16 @@ class LdapManager(object):
             return False
 
     def _entry_remove(self, dn):
-        self._conn.delete_s(dn)
+        if not self._dry_run:
+            self._conn.delete_s(dn)
 
     def _entry_add(self, dn, mod_list):
-        self._conn.add_s(dn, mod_list)
+        if not self._dry_run:
+            self._conn.add_s(dn, mod_list)
 
     def _entry_modify(self, dn, mod_list):
-        self._conn.modify_ext_s(dn, mod_list)
+        if not self._dry_run:
+            self._conn.modify_ext_s(dn, mod_list)
 
     def ensure_entry(self, dn, operations, state):
         if state == 'absent':
@@ -511,7 +516,7 @@ def main():
 
             data=dict(default=None)
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if not HAVE_LDAP:
@@ -538,7 +543,7 @@ def main():
             uri = protocol + '://' + host + ':' + str(port)
 
     try:
-        lm = LdapManager(uri, start_tls, bind_dn, bind_pw)
+        lm = LdapManager(uri, start_tls, bind_dn, bind_pw, dry_run=module.check_mode)
     except LdapModuleError as e:
         module.fail_json(msg='Error connecting LDAP: ' + str(e), exitValue=1)
     except ldap.LDAPError as e:
