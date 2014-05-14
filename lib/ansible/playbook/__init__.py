@@ -505,6 +505,7 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
+            basedir=self.basedir,
             pattern=play.hosts,
             module_name='setup',
             module_args={},
