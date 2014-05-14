@@ -976,7 +976,15 @@ class DefaultVMConfig(object):
                     for k, v in value.items():
                         if k in self.check_dict[key]:
                             if not isinstance(self.check_dict[key][k], v):
-                                self.recursive_missing.append((k, v))
+                                try:
+                                    if v == int:
+                                        self.check_dict[key][k] = int(self.check_dict[key][k])
+                                    elif v == basestring:
+                                        self.check_dict[key][k] = str(self.check_dict[key][k])
+                                    else:
+                                        raise ValueError
+                                except ValueError:
+                                    self.recursive_missing.append((k, v))
                         else:
                             self.recursive_missing.append((k, v))
 
