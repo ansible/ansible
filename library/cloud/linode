@@ -93,6 +93,14 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
+  domain_host:
+    description:
+     - the domain host, such as example.com
+    default: null
+  domain_name:
+    description:
+     - the domain name, such as "node" (for node.example.com)
+    default: null
 requirements: [ "linode-python" ]
 author: Vincent Viallet
 notes:
@@ -214,7 +222,8 @@ def getInstanceDetails(api, server):
     return instance
 
 def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                  partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
+                  partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout,
+                  domain_host, domain_name):
     instances = []
     changed = False
     new_server = False   
@@ -320,6 +329,33 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 # TODO: destroy linode ?
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
+        if domain_host and domain_name:
+            domain_list = api.domain_list()
+            domain_data = [dc for dc in api.domain_list() if domain_name in dc['DOMAIN']]
+            if not domain_data:
+                res = api.domain_create(Domain = domain_host, Type="master", SOA_Email="") #TODO
+                domain_id = res['DomainID']
+            else:
+                domain_id = domain_data[domain_name]
+            
+            # Get a fresh copy of the server details because we need the ip
+            server = api.linode_list(LinodeId=linode_id)[0]
+            if server['STATUS'] == -2:
+                module.fail_json(msg = '(lid: %s) failed to list')
+
+            # From now on we know the task is a success
+            # Build instance report
+            instance = getInstanceDetails(api, server)
+            
+            domain_resource_list = linode.domain_resource_list(DomainID=domain_id)
+            domain_resource_data = [dc for dc in domain_resource_list if domain_host in dc['NAME']]
+            if not domain_resource_data:
+                res = api.domain_resource_create(DomainID=domain_id, Name=domain_host, Type="A", Target=instance["ipv4"])
+                resource_id = res['ResourceID'];
+            else:
+                resource_id = domain_resource_data["RESOURCEID"]
+                # res = api.domain_resource_update(DomainID=domain_id, ResourceId = resource_id, Name=domain_host, Type="A", Target=instance["ipv4"])
+            
         if not configs:
             for arg in ('name', 'linode_id', 'distribution'):
                 if not eval(arg):
@@ -481,6 +517,8 @@ def main():
             swap = dict(type='int', default=512),
             wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300),
+            domain_host = dict(type='str'),
+            domain_name = dict(type='str'),
         )
     )
 
@@ -498,6 +536,8 @@ def main():
     swap = module.params.get('swap')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    domain_host = module.params.get('domain_host')
+    domain_name = module.params.get('domain_name')
 
     # Setup the api_key
     if not api_key:
@@ -514,7 +554,8 @@ def main():
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
     linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                 partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
+                 partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout,
+                 domain_host, domain_name)
 
 # import module snippets
 from ansible.module_utils.basic import *
