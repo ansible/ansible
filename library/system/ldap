@@ -214,6 +214,20 @@ except ImportError:
     HAVE_LDAP = False
 
 
+if HAVE_LDAP:
+    LDAP_OPERATION_MAP = {
+        'add': ldap.MOD_ADD,
+        'delete': ldap.MOD_DELETE,
+        'replace': ldap.MOD_REPLACE
+    }
+
+    INVERSE_LDAP_OPERATION_MAP = {
+        ldap.MOD_ADD: 'add',
+        ldap.MOD_DELETE: 'delete',
+        ldap.MOD_REPLACE: 'replace'
+    }
+
+
 class LdapModuleError(Exception):
     pass
 
@@ -275,59 +289,124 @@ class LdapManager(object):
         if state == 'absent':
             if self._entry_exists(dn):
                 self._entry_remove(dn)
-                return True
+                return True, []
+            else:
+                return False, []
 
         elif state == 'present':
             if not operations:
                 raise LdapModuleError('data should be not empty (or no-op) for state=present')
 
             old_entry = self._entry_get(dn)
+            mod_list = self.build_mod_list(old_entry, operations)
 
             if old_entry is None:
-                self._entry_add(dn, self.build_add_list(operations))
-                return True
+                self._entry_add(dn, self.build_add_list(mod_list))
+                return True, mod_list
 
             else:
-                mod_list = self.build_mod_list(old_entry, operations)
-
                 if not mod_list:
-                    return False
+                    return False, mod_list
 
                 self._entry_modify(dn, mod_list)
-                return True
+                return True, mod_list
 
-        return False
+        else:
+            raise LdapModuleError('Unknown state: ' + state)
 
     @staticmethod
-    def build_add_list(operations):
+    def build_add_list(mod_list):
+        """
+        Build ldap add_list (list of modification tuples for LDAPObject.add methods).
+        Input `mod_list` should have collapsed entries, as produced by build_mod_list method.
+        Also `mod_list` should have only add operations (or behavior would be incorrect).
+        :param mod_list: mod_list, built by `build_mod_list` method
+        """
         entry = {}
-        for operation, attr, values in operations:
-            if operation == 'add':
-                if attr in entry:
-                    entry[attr] += values
-                else:
-                    entry[attr] = values
-            if operation == 'replace':
+        for operation, attr, values in mod_list:
+            if operation == ldap.MOD_ADD:
                 entry[attr] = values
 
         return ldap.modlist.addModlist(entry)
 
     @staticmethod
-    def build_mod_list(old_entry, operations):
-        result = []
-        for operation, attr, values in operations:
-            if operation == 'add':
-                values = [v for v in values if (attr not in old_entry) or (v not in old_entry[attr])]
-                if values:
-                    result.append((ldap.MOD_ADD, attr, values))
-            elif operation == 'replace':
-                result.append((ldap.MOD_REPLACE, attr, values))
-            elif operation == 'delete':
-                result.append((ldap.MOD_DELETE, attr, values))
-            else:
-                raise LdapModuleError('Unknown ldap operation: ' + operation)
+    def _mod_list_filter_by_attr(mod_list, attr):
+        """
+        Removes all modifications on `attr` in partial mod_list.
+        Each modification is tuple (with 3 elements: `operation`, `attr`, `values`).
+        """
+        return filter(lambda x: x[1] != attr, mod_list)
 
-        return result
+    @staticmethod
+    def _collapse_operations(old_values, partial_operations):
+        """
+        Collapses list of ordered ldap operations to one operation or no-op.
+        All operations, passed to this method should be on one attribute.
+        :param old_values: values in field before operations sequence
+        :param partial_operations: list of operation tuples, at least one required.
+        :return: None if operation sequence on old_values will be no-op or
+                 one `add`, `replace` or `delete` operation with args.
+        """
+        assert partial_operations
+        assert len(partial_operations) > 0
+        assert len(set(map(lambda x: x[1], partial_operations))) == 1
+
+        old_values = set(old_values or [])
+
+        attr = partial_operations[0][1]
+        result_values = set(old_values)
+
+        for operation, _, values in partial_operations:
+            if operation == 'delete':
+                if values:
+                    [result_values.discard(v) for v in values]
+                else:
+                    result_values.clear()
+            elif operation == 'replace':
+                if values:
+                    result_values.clear()
+                    [result_values.add(v) for v in values]
+                else:
+                    result_values.clear()
+            elif operation == 'add':
+                [result_values.add(v) for v in values]
+
+        if result_values == old_values:
+            return None
+        elif result_values == set():
+            return 'delete', attr, set()
+        elif result_values.issuperset(old_values):
+            return 'add', attr, result_values - old_values
+        elif result_values.issubset(old_values):
+            return 'delete', attr, old_values - result_values
+        else:
+            return 'replace', attr, result_values
+
+    @staticmethod
+    def build_mod_list(old_entry, operations):
+        """
+        Build ldap mod_list (list of modification tuples for LDAPObject.modify methods).
+        It supposed to be optimal (have at most one operation per attribute).
+        If operation sequence on one attribute will change nothing in ldap it will be suppressed.
+        """
+        if old_entry is None:
+            old_entry = {}
+
+        attrs = set([attr for (_, attr, _) in operations])
+        result = []
+
+        for attr in attrs:
+            # at least one operation in partial_operations by its construction
+            partial_operations = filter(lambda mod: mod[1] == attr, operations)
+            old_values = []
+            if attr in old_entry:
+                old_values = old_entry[attr]
+
+            collapsed_operation = LdapManager._collapse_operations(old_values, partial_operations)
+            if collapsed_operation:
+                result.append(collapsed_operation)
+
+        return [(LDAP_OPERATION_MAP[operation], attr, list(values)) for (operation, attr, values) in result]
 
 
 def encode_str(s):
@@ -471,8 +550,15 @@ def main():
         module.fail_json(msg='Error parsing data: ' + str(e), dn=dn, raw_data=data)
 
     try:
-        changed = lm.ensure_entry(dn, operations=parsed_data, state=state)
-        module.exit_json(changed=changed, dn=dn, target_state=state, target_operations=parsed_data)
+        (changed, applied_mod_list) = lm.ensure_entry(dn, operations=parsed_data, state=state)
+
+        applied_operations = [(INVERSE_LDAP_OPERATION_MAP[op], attr, values) for (op, attr, values) in applied_mod_list]
+
+        module.exit_json(changed=changed,
+                         dn=dn,
+                         target_state=state,
+                         target_operations=parsed_data,
+                         applied_operations=applied_operations)
     except LdapModuleError as e:
         module.fail_json(msg='Error: ' + str(e), exitValue=1, target_operations=parsed_data)
     except ldap.LDAPError as e:
