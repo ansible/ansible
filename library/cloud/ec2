@@ -1134,7 +1134,7 @@ def main():
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
-            ebs_optimized = dict(),
+            ebs_optimized = dict(type='bool', default=False),
         )
     )
 
