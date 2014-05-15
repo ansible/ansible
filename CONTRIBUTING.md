@@ -1,5 +1,5 @@
-Ansible Community  Information
-==============================
+Ansible Community Information
+=============================
 
 The purpose of the Ansible community is to  unite developers, system administrators, operations, and 
 IT managers to share and build great automation solutions.  This document contains all sorts of 
