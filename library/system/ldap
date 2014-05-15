@@ -46,6 +46,13 @@ options:
         required: false
         default: null
         aliases: []
+    auth:
+        description:
+            - Authentication method. C(sasl_ext) is supported only on U(ldapi://) (unix socket connection)
+        required: false
+        aliases: []
+        choices: ["simple", "sasl_ext"]
+        default: "simple"
     dn:
         description:
             - Operation-specific distinguished name (dn)
@@ -185,6 +192,13 @@ objectClass: dcObject
 delete: dc
 
 
+# Use SASL EXTERNAL auth method on unix socket (ldapi://).
+# It's often used on initial OpenLDAP 2.4+ configuration on cn=config tree.
+
+- ldap: uri=ldapi:// auth=sasl_ext
+        dn=ou=ou1,dc=my-domain,dc=com
+        data=a/objectClass=organizationalUnit;a/ou=ou1
+
 
 # `data` one-line format BNF-like grammar.
 
@@ -206,6 +220,7 @@ safe-utf8-init-char ::= SAFE-INIT-CHAR | UTF8-2 | UTF8-3 | UTF8-4 | UTF8-5 | UTF
 
 try:
     import ldap
+    import ldap.sasl
     import ldap.modlist
     import ldapurl
 
@@ -238,6 +253,7 @@ class LdapManager(object):
                  start_tls=False,
                  bind_dn=None,
                  bind_pw=None,
+                 auth='simple',
                  dry_run=False):
 
         self._conn = ldap.initialize(uri)
@@ -246,13 +262,21 @@ class LdapManager(object):
         if ldapurl.LDAPUrl(uri).urlscheme.lower() != 'ldap' and start_tls:
             raise LdapModuleError('Can not use STARTTLS on non-plain LDAP URL: ' + uri)
 
+        if auth == 'sasl_ext' and ldapurl.LDAPUrl(uri).urlscheme.lower() != 'ldapi':
+            raise LdapModuleError('SASL EXTERNAL auth mechanism is only supported on ldapi:// LDAP URL')
+
         if start_tls:
             self._conn.start_tls_s()
 
-        if bind_dn is None:
-            self._conn.simple_bind_s()
+        if auth == 'simple':
+            if bind_dn is None:
+                self._conn.simple_bind_s()
+            else:
+                self._conn.simple_bind_s(bind_dn, bind_pw)
+        elif auth == 'sasl_ext':
+            self._conn.sasl_interactive_bind_s('', ldap.sasl.external())
         else:
-            self._conn.simple_bind_s(bind_dn, bind_pw)
+            raise LdapModuleError('Unsupported auth method: ' + auth)
 
     def _entry_get(self, dn):
         """
@@ -507,6 +531,8 @@ def main():
             host=dict(default='localhost'),
             port=dict(default=389),
 
+            auth=dict(default='simple', choises=['simple', 'sasl_ext']),
+
             bind_dn=dict(default=None),
             bind_pw=dict(default=None, aliases=['bind_pass', 'bind_password']),
 
@@ -527,6 +553,7 @@ def main():
     host = module.params['host']
     port = module.params['port']
     start_tls = module.params['starttls']
+    auth = module.params['auth']
 
     bind_dn = module.params['bind_dn']
     bind_pw = module.params['bind_pw']
@@ -543,7 +570,7 @@ def main():
             uri = protocol + '://' + host + ':' + str(port)
 
     try:
-        lm = LdapManager(uri, start_tls, bind_dn, bind_pw, dry_run=module.check_mode)
+        lm = LdapManager(uri, start_tls, bind_dn, bind_pw, auth=auth, dry_run=module.check_mode)
     except LdapModuleError as e:
         module.fail_json(msg='Error connecting LDAP: ' + str(e), exitValue=1)
     except ldap.LDAPError as e:
