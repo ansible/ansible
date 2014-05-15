@@ -516,7 +516,7 @@ class DockerManager:
             # '{} {}'.format(entrypoint, command)
             command_matches = (not command or running_command.endswith(command))
 
-            if name_matches or (image_matches and tag_matches and command_matches):
+            if name_matches or (name is None and image_matches and tag_matches and command_matches):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
