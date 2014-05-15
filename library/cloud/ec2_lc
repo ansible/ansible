@@ -34,6 +34,7 @@ options:
       - Unique name for configuration
     required: true
   instance_profile_name:
+    version_added: "1.7"
     description:
       - Name of the IAM instance profile to use. Boto library must be 2.5.0+
     required: false
@@ -76,6 +77,7 @@ extends_documentation_fragment: aws
 """
 
 EXAMPLES = '''
+# A simple example
 - ec2_lc:
     name: special
     image_id: ami-XXX
@@ -83,6 +85,46 @@ EXAMPLES = '''
     security_groups: 'group,group2'
     instance_type: t1.micro
 
+# A more advanced example that looks up an ami, creates a launch config with
+# an instance profile and user data script, and launches an autoscaling group
+
+- name: create an autoscaling group based on a launch configuration
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    profile: app-server-profile
+    keypair: my-key
+    instance_type: t1.micro
+    group: my-group
+    region: us-west-2
+    azs: us-west-2a,us-west-2b,us-west-2c
+  tasks:
+  - name: lookup ami id
+    ec2_ami_search: distro=ubuntu region={{ region }} release=trusty
+    register: ubuntu_image
+  # Note that launch configs cannot be updated -- only created or deleted
+  - name: ensure launch config exists
+    ec2_lc:
+      name: prod_lc
+      region: "{{ region }}"
+      image_id: "{{ ubuntu_image.ami }}"
+      key_name: "{{ keypair }}"
+      security_groups: "{{ group }}"
+      instance_type: "{{ instance_type }}"
+      instance_profile_name: "{{ profile }}"
+      user_data: |
+        #!/bin/bash
+        echo I bootstrapped!
+  - name: ensure asg exists
+    ec2_asg:
+      name: prod_asg
+      launch_config_name: prod_lc
+      min_size: 1
+      max_size: 1
+      region: "{{ region }}"
+      availability_zones: "{{ azs }}"
+      state: present
 '''
 
 import sys
