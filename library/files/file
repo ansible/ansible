@@ -201,12 +201,12 @@ def main():
                 module.fail_json(msg="absolute paths are required")
         elif prev_state == 'directory':
             if not force:
-                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
             elif len(os.listdir(path)) > 0:
                 # refuse to replace a directory that has files in it
                 module.fail_json(path=path, msg='the directory %s is not empty, refusing to convert it' % path)
         elif prev_state in ['file', 'hard'] and not force:
-            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
 
         if prev_state == 'absent':
             changed = True
