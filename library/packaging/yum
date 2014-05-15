@@ -78,6 +78,22 @@ options:
     default: null
     aliases: []
 
+  disableplugin:
+    description:
+      - Plugin name to disable for the install/update operation. This will not persist beyond the transaction. Multiple repos separated with a ','
+    required: false
+    version_added: "1.7"
+    default: null
+    aliases: [] 
+
+  noplugins:
+    description:
+      - Disable all yum plugins for the install/update operation. This will not persist beyond the transaction.
+    required: false
+    version_added: "1.7"
+    default: false
+    aliases: [] 
+
   conf_file:
     description:
       - The remote yum configuration file to use for the transaction.
@@ -710,8 +726,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     module.exit_json(**res)
 
-def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
-           disable_gpg_check):
+def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_gpg_check, noplugins, disableplugin):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -744,6 +759,17 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     for repoid in en_repos:
         r_cmd = ['--enablerepo=%s' % repoid]
         yum_basecmd.extend(r_cmd)
+
+    dis_plugins = []
+    if disableplugin:
+        dis_plugins = disableplugin.split(',');
+
+    for plugin in dis_plugins:
+        r_cmd = ['--disableplugin=%s' % plugin]
+        yum_basecmd.extend(r_cmd)
+
+    if noplugins:
+        yum_basecmd.append('--noplugins')
 
     if state in ['installed', 'present', 'latest']:
         my = yum_base(conf_file)
@@ -802,6 +828,8 @@ def main():
             disablerepo=dict(),
             list=dict(),
             conf_file=dict(default=None),
+            noplugins=dict(required=False, default="no", type='bool'),
+            disableplugin=dict(),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
@@ -827,9 +855,10 @@ def main():
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
+        noplugins = params['noplugins']
+        disableplugin = params.get('disableplugin', '')
         disable_gpg_check = params['disable_gpg_check']
-        res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check)
+        res = ensure(module, state, pkg, params['conf_file'], enablerepo, disablerepo, disable_gpg_check, noplugins, disableplugin)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # import module snippets
