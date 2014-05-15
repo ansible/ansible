@@ -1,14 +1,14 @@
-Ansible Community  Information
-==============================
+Ansible Community Information
+=============================
 
-The purpose of the Ansible community is to  unite developers, system administrators, operations, and 
+The purpose of the Ansible community is to unite developers, system administrators, operations, and 
 IT managers to share and build great automation solutions.  This document contains all sorts of 
 information about how to contribute and interact with Ansible.  Welcome!
 
 Ways to Interact
 ================
 
-There are a lot of ways to join and  be a part  of the  Ansible community, such as:
+There are a lot of ways to join and be a part of the Ansible community, such as:
 
 Sharing Ansible with Others
 ---------------------------
@@ -24,7 +24,7 @@ Sharing Content and Tips
 
 Join the [Ansible project mailing list](https://groups.google.com/forum/#!forum/ansible-project) and you 
 can share playbooks you may have written and other interesting implementation stories. Put your Ansible 
-content up on places like github  to share with others.
+content up on places like github to share with others.
 
 Sharing A Feature Idea
 ----------------------
@@ -38,8 +38,8 @@ Helping with Documentation
 
 Ansible documentation is a community project too!  If you would like to help with the 
 documentation, whether correcting a typo or improving a section, or maybe even 
-documenting a new feature, submit a github pull request to  the code that
-lives in the “docsite/rst” subdirectory of the project.   Docs are in restructured text
+documenting a new feature, submit a github pull request to the code that
+lives in the “docsite/rst” subdirectory of the project.  Docs are in restructured text
 format.  If you aren’t comfortable with restructured text, you can also open a ticket on 
 github about any errors you spot or sections you would like to see added. For more information
 on creating pull requests, please refer to the
@@ -62,11 +62,11 @@ to modify a pull request later.
 
 When submitting patches, be sure to run the unit tests first “make tests” and always use 
 “git rebase” vs “git merge” (aliasing git pull to git pull --rebase is a great idea) to 
-avoid merge commits in your submissions.  There are also integration tests that can be run in the "tests/integration" directory.  
+avoid merge commits in your submissions.  There are also integration tests that can be run in the "tests/integration" directory.
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that contain merge commits.  Use "git pull --rebase" vs "git pull" and "git rebase" vs "git merge". Also be sure to use topic branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
-We’ll then review your contributions and engage with you about questions and  so on.  
+We’ll then review your contributions and engage with you about questions and so on.
 
 As we have a very large and active community, so it may take awhile to get your contributions 
 in!  See the notes about priorities in a later section for understanding our work queue.
@@ -93,7 +93,7 @@ Ansible practices responsible disclosure - if this is a security related bug, em
 
 Bugs should be reported to [github.com/ansible/ansible](http://github.com/ansible/ansible) after 
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
-to see if the issue has already been reported.  
+to see if the issue has already been reported.
 
 When filing a bug, please use the [issue template](https://raw2.github.com/ansible/ansible/devel/examples/issues/ISSUE_TEMPLATE.md) to provide all relevant information.
 
@@ -102,9 +102,9 @@ for IRC or the mailing list instead where things are likely to be more of a disc
 
 To be respectful of reviewers time and allow us to help everyone efficiently, please 
 provide minimal well-reduced and well-commented examples versus sharing your entire production
-playbook.  Include playbook snippets and output where possible.  
+playbook.  Include playbook snippets and output where possible.
 
-Content in the GitHub bug tracker can be indented four spaces to preserve formatting.  
+Content in the GitHub bug tracker can be indented four spaces to preserve formatting.
 For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire.
 
 If you are not sure if something is a bug yet, you are welcome to ask about something on 
@@ -123,10 +123,10 @@ Ansible was one of the top 5 projects with the most OSS contributors on GitHub i
 In the interest of transparency, we're telling you how we do this.
 
 In our bug tracker you'll notice some labels - P1, P2, P3, P4, and P5.  These are our internal
-priority orders that we use to sort tickets.  
+priority orders that we use to sort tickets.
 
 With some exceptions for easy merges (like documentation typos for instance), 
-we're going to spend most of our time working on P1 and P2 items first, including pull requests.  
+we're going to spend most of our time working on P1 and P2 items first, including pull requests.
 These usually relate to important
 bugs or features affecting large segments of the userbase.  So if you see something categorized
 "P3 or P4", and it's not appearing to get a lot of immediate attention, this is why.
@@ -196,21 +196,21 @@ Staff
 -----
 
 Ansible, Inc is a company supporting Ansible and building additional solutions based on 
-Ansible.  We also do services and support for those that are interested.   Our most 
+Ansible.  We also do services and support for those that are interested.  Our most 
 important task however is enabling all the great things that happen in the Ansible 
 community, including organizing software releases of Ansible.  For more information about
 any of these things, contact info@ansible.com
 
-On IRC, you can find us as mdehaan, jimi_c, Tybstar, and others.   On the mailing list, 
+On IRC, you can find us as mdehaan, jimi_c, Tybstar, and others.  On the mailing list, 
 we post with an @ansible.com address.
 
 Community Code of Conduct
 -------------------------
 
 Ansible’s community welcomes users of all types, backgrounds, and skill levels. Please 
-treat others as you expect to be treated, keep discussions positive, and avoid discrimination, profanity, allegations of Cthulhu worship, or engaging in controversial debates (except vi vs emacs is cool).  
+treat others as you expect to be treated, keep discussions positive, and avoid discrimination, profanity, allegations of Cthulhu worship, or engaging in controversial debates (except vi vs emacs is cool).
 
-Posts to mailing lists  should remain focused around Ansible and IT automation.   Abuse of these community guidelines will not be tolerated and may result in banning from community resources.
+Posts to mailing lists should remain focused around Ansible and IT automation.  Abuse of these community guidelines will not be tolerated and may result in banning from community resources.
 
 Contributors License Agreement
 ------------------------------
@@ -219,6 +219,3 @@ By contributing you agree that these contributions are your own (or approved by 
 and you grant a full, complete, irrevocable
 copyright license to all users and developers of the project, present and future, pursuant 
 to the license of the project.
-
-
-

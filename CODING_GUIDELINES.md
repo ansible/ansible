@@ -12,7 +12,7 @@ Language
 ========
 
   * While not all components of Ansible must be in Python, core contributions to the Ansible repo must be written in Python.  This is to maximize the ability of everyone to contribute.
-  * If you want to write non-Python ansible modules or inventory scripts, that's fine, but they are not going to get merged in most likely.  Sorry!!  
+  * If you want to write non-Python ansible modules or inventory scripts, that's fine, but they are not going to get merged in most likely.  Sorry!!
 
 PEP8 and basic style checks
 ===========================
@@ -42,7 +42,7 @@ Whitespace
 
 Shebang Lines
 =============
- 
+
   * /usr/bin/scripts should start with '/usr/bin/env python'
   * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpreter', see the FAQ in the docs for more info.
 
@@ -60,13 +60,13 @@ Classes
 
   * With the exception of module code (where inline is better), it is desirable to see classes in their own files.
   * Classes should generally not cause side effects as soon as they are instantiated, move meaningful behavior to methods rather than constructors.
- 
+
 Functions and Methods
 =====================
 
   * In general, functions should not be 'too long' and should describe a meaningful amount of work
   * When code gets too nested, that's usually the sign the loop body could benefit from being a function
-  * Parts of our existing code are not the best examples of this at times. 
+  * Parts of our existing code are not the best examples of this at times.
   * Functions should have names that describe what they do, along with docstrings
   * Functions should be named with_underscores
   * "Don't repeat yourself" is generally a good philosophy
@@ -122,7 +122,7 @@ Don't use line continuations:
     # no
     if (this_is_a_very_long_line and foo and /
        i_am_going_to_continue_it):
-          bar()
+	  bar()
 
     # better:
     if (this_is_a_very_long_line and foo and i_am_going_to_continue_it):
@@ -161,24 +161,24 @@ All contributions to the core repo should preserve original licenses and new con
 Module Documentation
 ====================
 
-All module pull requests must include a DOCUMENTATION docstring (YAML format, 
-see other modules for examples) as well as an EXAMPLES docstring, which is free form.  
+All module pull requests must include a DOCUMENTATION docstring (YAML format,
+see other modules for examples) as well as an EXAMPLES docstring, which is free form.
 
-When adding new modules, any new parameter must have a "version_added" attribute.  
-When submitting a new module, the module should have a "version_added" attribute in the 
+When adding new modules, any new parameter must have a "version_added" attribute.
+When submitting a new module, the module should have a "version_added" attribute in the
 pull request as well, set to the current development version.
 
 Be sure to check grammar and spelling.
 
-It's frequently the case that modules get submitted with YAML that isn't valid, 
-so you can run "make webdocs" from the checkout to preview your module's documentation. 
-If it fails to build, take a look at your DOCUMENTATION string 
+It's frequently the case that modules get submitted with YAML that isn't valid,
+so you can run "make webdocs" from the checkout to preview your module's documentation.
+If it fails to build, take a look at your DOCUMENTATION string
 or you might have a Python syntax error in there too.
 
 Python Imports
 ==============
 
-To make it clear what a module is importing, imports should not be sprinkled throughout the code. 
+To make it clear what a module is importing, imports should not be sprinkled throughout the code.
 
 Python Imports should happen at the top of the file, exempting code from module_utils.
 
@@ -196,14 +196,14 @@ When a conditional runtime import is required, do so something like this instead
     if not HAS_FOO:
        raise Exception("the foo library is required")
 
-This makes it clear what optional dependencies are but allows this to be deferred until runtime.   In the case of module code, the raising of the Exception will be replaced
+This makes it clear what optional dependencies are but allows this to be deferred until runtime.  In the case of module code, the raising of the Exception will be replaced
 with a "module.exit_json" call.
 
 Exceptions
 ==========
 
 In the main body of the code, use typed exceptions where possible:
-    
+
     # not this
     raise Exception("panic!")
 
@@ -265,7 +265,7 @@ Use 'in':
     # not this:
     if x.find('foo') != -1:
 
-    # this: 
+    # this:
     if 'foo' in x:
 
 String checks
@@ -295,7 +295,6 @@ Always do "git pull --rebase" and "git rebase" vs "git pull" or "git merge".
 
 Always create a new branch for each pull request to avoid intertwingling different features or fixes on the same branch.
 
-   
 Python Version Compliance
 =========================
 
@@ -313,7 +312,3 @@ This was not meant to be a scary document, so we hope it wasn't, but we also hop
 If you have questions about this document, please ask on the ansible-devel mailing list.
 
 Thank you!
-
-
-
-
