@@ -36,13 +36,12 @@ class InventoryDirectory(object):
         self.parsers = []
         self.hosts = {}
         self.groups = {}
- 
+
         for i in self.names:
 
             # Skip files that end with certain extensions or characters
-            for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo"):
-                if i.endswith(ext):
-                    continue
+            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+                continue
             # Skip hidden files
             if i.startswith('.') and not i.startswith('./'):
                 continue
