@@ -89,7 +89,7 @@ class CallbackModule(object):
     def playbook_on_not_import_for_host(self, host, missing_file):
         pass
 
-    def playbook_on_play_start(self, pattern):
+    def playbook_on_play_start(self, name):
         pass
 
     def playbook_on_stats(self, stats):
