@@ -384,7 +384,7 @@ class DockerManager:
 
         self.env = None
         if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env')))
+            self.env = dict(map(lambda x: x.split("=", 1), self.module.params.get('env')))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
@@ -507,7 +507,9 @@ class DockerManager:
             running_image, running_tag = self.get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
-            name_matches = (name and name in i['Names'])
+            name_matches = False
+            if i["Names"]:
+                name_matches = (name and name in i['Names'])
             image_matches = (running_image == image)
             tag_matches = (not tag or running_tag == tag)
             # if a container has an entrypoint, `command` will actually equal
