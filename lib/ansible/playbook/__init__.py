@@ -322,8 +322,9 @@ class PlayBook(object):
             ansible.callbacks.set_play(self.runner_callbacks, play)
             if not self._run_play(play):
                 break
-            ansible.callbacks.set_play(self.callbacks, None)
-            ansible.callbacks.set_play(self.runner_callbacks, None)
+
+        ansible.callbacks.set_play(self.callbacks, None)
+        ansible.callbacks.set_play(self.runner_callbacks, None)
 
         # summarize the results
         results = {}
