@@ -695,9 +695,9 @@ class PlaybookCallbacks(object):
         display(msg, color='cyan')
         call_callback_module('playbook_on_not_import_for_host', host, missing_file)
 
-    def on_play_start(self, pattern):
-        display(banner("PLAY [%s]" % pattern))
-        call_callback_module('playbook_on_play_start', pattern)
+    def on_play_start(self, name):
+        display(banner("PLAY [%s]" % name))
+        call_callback_module('playbook_on_play_start', name)
 
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)
