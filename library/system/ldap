@@ -278,6 +278,9 @@ class LdapManager(object):
         else:
             raise LdapModuleError('Unsupported auth method: ' + auth)
 
+    def close(self):
+        self._conn.unbind_s()
+
     def _entry_get(self, dn):
         """
         Internal function to get ldap entry by exact dn.
@@ -577,24 +580,27 @@ def main():
         module.fail_json(msg='Error connecting LDAP: ' + str(e), exitValue=1)
 
     try:
-        parsed_data = parse_data(data)
-    except LdapModuleError as e:
-        module.fail_json(msg='Error parsing data: ' + str(e), dn=dn, raw_data=data)
+        try:
+            parsed_data = parse_data(data)
+        except LdapModuleError as e:
+            module.fail_json(msg='Error parsing data: ' + str(e), dn=dn, raw_data=data)
 
-    try:
-        (changed, applied_mod_list) = lm.ensure_entry(dn, operations=parsed_data, state=state)
+        try:
+            (changed, applied_mod_list) = lm.ensure_entry(dn, operations=parsed_data, state=state)
 
-        applied_operations = [(INVERSE_LDAP_OPERATION_MAP[op], attr, values) for (op, attr, values) in applied_mod_list]
+            applied_operations = [(INVERSE_LDAP_OPERATION_MAP[op], attr, values) for (op, attr, values) in applied_mod_list]
 
-        module.exit_json(changed=changed,
-                         dn=dn,
-                         target_state=state,
-                         target_operations=parsed_data,
-                         applied_operations=applied_operations)
-    except LdapModuleError as e:
-        module.fail_json(msg='Error: ' + str(e), exitValue=1, target_operations=parsed_data)
-    except ldap.LDAPError as e:
-        module.fail_json(msg='LDAP error: ' + str(e), exitValue=1, target_operations=parsed_data)
+            module.exit_json(changed=changed,
+                             dn=dn,
+                             target_state=state,
+                             target_operations=parsed_data,
+                             applied_operations=applied_operations)
+        except LdapModuleError as e:
+            module.fail_json(msg='Error: ' + str(e), exitValue=1, target_operations=parsed_data)
+        except ldap.LDAPError as e:
+            module.fail_json(msg='LDAP error: ' + str(e), exitValue=1, target_operations=parsed_data)
+    finally:
+        lm.close()
 
 
 from ansible.module_utils.basic import *
