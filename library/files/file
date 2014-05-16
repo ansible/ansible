@@ -165,8 +165,15 @@ def main():
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
-            os.makedirs(path)
             changed = True
+            curpath = ''
+            for dirname in path.split('/'):
+                curpath = '/'.join([curpath, dirname])
+                if not os.path.exists(curpath):
+                    os.mkdir(curpath)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=curpath
+                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
@@ -194,12 +201,12 @@ def main():
                 module.fail_json(msg="absolute paths are required")
         elif prev_state == 'directory':
             if not force:
-                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
             elif len(os.listdir(path)) > 0:
                 # refuse to replace a directory that has files in it
                 module.fail_json(path=path, msg='the directory %s is not empty, refusing to convert it' % path)
         elif prev_state in ['file', 'hard'] and not force:
-            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
 
         if prev_state == 'absent':
             changed = True

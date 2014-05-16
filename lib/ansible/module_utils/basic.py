@@ -182,6 +182,7 @@ class AnsibleModule(object):
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
         self.no_log = no_log
+        self.cleanup_files = []
         
         self.aliases = {}
         
@@ -898,11 +899,20 @@ class AnsibleModule(object):
     def from_json(self, data):
         return json.loads(data)
 
+    def add_cleanup_file(self, path):
+        if path not in self.cleanup_files:
+            self.cleanup_files.append(path)
+
+    def do_cleanup_files(self):
+        for path in self.cleanup_files:
+            self.cleanup(path)
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(0)
 
@@ -911,6 +921,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(1)
 
@@ -958,7 +969,7 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def cleanup(self,tmpfile):
+    def cleanup(self, tmpfile):
         if os.path.exists(tmpfile):
             try:
                 os.unlink(tmpfile)
