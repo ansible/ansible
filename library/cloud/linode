@@ -137,7 +137,7 @@ EXAMPLES = '''
      plan: 1
      datacenter: 2
      distribution: 99
-     partitions: [{"size":10000,"type":"ext3"}]
+     partitions: "[{\"size\":30000,\"type\":\"ext4\"}]"
      password: 'superSecureRootPassword'
      ssh_pub_key: 'ssh-rsa qwerty'
      swap: 768
@@ -316,11 +316,15 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                     
                 size = servers[0]['TOTALHD'] - swap
 
+                with open("/root/test.txt", "a") as myfile:
+                    myfile.write(str(type(partitions)))
+                
+
                 # check if we have extra partitions and the main partition will be the leftover
                 if partitions:
                     for p in partitions:
                         if not 'type' in p or not 'size' in p:
-                            raise Exception("Invalid partition: provide both size and type")
+                            module.fail_json(msg = "Invalid partition: provide both size and type")
                         size -= p['size']
                 
                 # at least 750MB for main partition
@@ -351,14 +355,14 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                         if p['type'] not in ['ext3', 'ext4', 'raw']:
                             raise Exception("Invalid partition type")
                         res = api.linode_disk_create(LinodeId=linode_id, Type=p['type'], 
-                                        Label='%s disk partition %s (lid: %s)' % (name, partitionid, linode_id), 
+                                        Label='%s partition %s %s' % (name[:25], partitionid, linode_id), 
                                         Size=p['size'])
                         jobs.append(res['JobID'])
                         partitionid += 1
                 
             except Exception, e:
                 # TODO: destroy linode ?
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg = str(e))
 
         if domain_host and domain_name:
             domain_list = api.domain_list()
@@ -582,7 +586,7 @@ def main():
 
     if partitions:
         try:
-            partitions = json.loads(partitions)
+            partitions = eval(partitions)
         except Exception, e:
             module.fail_json(msg = 'Invalid json in partition')
 
