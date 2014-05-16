@@ -32,7 +32,7 @@ DOCUMENTATION = '''
 ---
 module: zypper
 author: Patrick Callahan
-version_added: "1.2"
+version_added: "1.7"
 short_description: Manage packages on SuSE and openSuSE
 description:
     - Manage packages on SuSE and openSuSE using the zypper and rpm tools.
