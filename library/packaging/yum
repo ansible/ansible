@@ -62,7 +62,7 @@ options:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
-        Multiple repos separated with a ','.
+        When specifying multiple repos, separate them with a ",".
     required: false
     version_added: "0.9"
     default: null
@@ -72,7 +72,7 @@ options:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
-        Multiple repos separated with a ','.
+        When specifying multiple repos, separate them with a ",".
     required: false
     version_added: "0.9"
     default: null
