@@ -343,9 +343,6 @@ class DefaultRunnerCallbacks(object):
     def on_ok(self, host, res):
         call_callback_module('runner_on_ok', host, res)
 
-    def on_error(self, host, msg):
-        call_callback_module('runner_on_error', host, msg)
-
     def on_skipped(self, host, item=None):
         call_callback_module('runner_on_skipped', host, item=item)
 
@@ -403,10 +400,6 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_skipped(self, host, item=None):
         display("%s | skipped" % (host), runner=self.runner)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
-
-    def on_error(self, host, err):
-        display("err: [%s] => %s\n" % (host, err), stderr=True, runner=self.runner)
-        super(CliRunnerCallbacks, self).on_error(host, err)
 
     def on_no_hosts(self):
         display("no hosts matched\n", stderr=True, runner=self.runner)
@@ -533,18 +526,6 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             else:
                 display(msg, color='yellow', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
-
-    def on_error(self, host, err):
-
-        item = err.get('item', None)
-        msg = ''
-        if item:
-            msg = "err: [%s] => (item=%s) => %s" % (host, item, err)
-        else:
-            msg = "err: [%s] => %s" % (host, err)
-
-        display(msg, color='red', stderr=True, runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_error(host, err)
 
     def on_skipped(self, host, item=None):
         if constants.DISPLAY_SKIPPED_HOSTS:

@@ -49,9 +49,6 @@ class CallbackModule(object):
     def runner_on_ok(self, host, res):
         say("pew", LASER_VOICE)
 
-    def runner_on_error(self, host, msg):
-        pass
-
     def runner_on_skipped(self, host, item=None):
         say("pew", LASER_VOICE)
 

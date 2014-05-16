@@ -63,9 +63,6 @@ class CallbackModule(object):
     def runner_on_ok(self, host, res):
         log(host, 'OK', res)
 
-    def runner_on_error(self, host, msg):
-        log(host, 'ERROR', msg)
-
     def runner_on_skipped(self, host, item=None):
         log(host, 'SKIPPED', '...')
 
