@@ -73,7 +73,7 @@ options:
     type: integer
   partitions:
     description:
-      - list of partitions in JSON, such as [{"size":2500,"type":"ext4"}]
+      - optional, list of partitions in JSON with size and type, such as [{"size":2500,"type":"ext4"}]
     default: []
     type: list
   distribution:
@@ -105,7 +105,7 @@ options:
     default: null
   domain_email:
     description:
-     - the domain email, such as me@example.com
+     - the domain email, such as me@example.com. Required when you are creating a domain
     default: null
 requirements: [ "linode-python" ]
 author: Vincent Viallet
@@ -122,12 +122,30 @@ EXAMPLES = '''
      plan: 1
      datacenter: 2
      distribution: 99
-     partitions: [{"size":1000,"type":"ext3"}]
      password: 'superSecureRootPassword'
      ssh_pub_key: 'ssh-rsa qwerty'
      swap: 768
      wait: yes
      wait_timeout: 600
+     state: present
+
+# Create a server with an extra partition of 10GB and set its DNS to node.example.com
+- local_action:
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     plan: 1
+     datacenter: 2
+     distribution: 99
+     partitions: [{"size":10000,"type":"ext3"}]
+     password: 'superSecureRootPassword'
+     ssh_pub_key: 'ssh-rsa qwerty'
+     swap: 768
+     wait: yes
+     wait_timeout: 600
+     domain_host: example.com
+     domain_name: node
+     domain_email: admin@example.com
      state: present
 
 # Ensure a running server (create if missing)
@@ -334,7 +352,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                             raise Exception("Invalid partition type")
                         res = api.linode_disk_create(LinodeId=linode_id, Type=p['type'], 
                                         Label='%s disk partition %s (lid: %s)' % (name, partitionid, linode_id), 
-                                        FromDistributionID = , Size=p['size'])
+                                        Size=p['size'])
                         jobs.append(res['JobID'])
                         partitionid += 1
                 
@@ -393,7 +411,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             # Get disk list
             disks_id = []
             for disk in api.linode_disk_list(LinodeId=linode_id):
-                if disk['TYPE'] == 'ext3':
+                if 'data disk' in disk['LABEL']:
                     disks_id.insert(0, str(disk['DISKID']))
                     continue
                 disks_id.append(str(disk['DISKID']))
@@ -406,7 +424,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             new_server = True
             try:
                 api.linode_config_create(LinodeId=linode_id, KernelId=kernel_id,
-                                         Disklist=disks_list, Label='%s config' % name)
+                                         Disklist=disks_list, Label='%s config' % name,
+                                         RootDeviceNum = 1)
                 configs = api.linode_config_list(LinodeId=linode_id)
             except Exception, e:
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
