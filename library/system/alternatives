@@ -109,6 +109,8 @@ def main():
                     current_path = value
                 elif key == 'Alternative':
                     all_alternatives.append(value)
+                elif key == 'Link' and not link:
+                    link = value
 
     if current_path != path:
         try:
