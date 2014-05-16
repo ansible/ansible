@@ -85,7 +85,7 @@ notes:
 
 EXAMPLES = '''
 # Downloads and installs all the libs and dependencies outlined in the /path/to/project/composer.lock
-- composer: command=install working_dir=/path/to/project
+- composer: working_dir=/path/to/project
 '''
 
 import os
