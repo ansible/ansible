@@ -526,7 +526,8 @@ class DockerManager:
     def get_running_containers(self):
         running = []
         for i in self.get_deployed_containers():
-            if i['State']['Running'] == True and i['State'].get('Ghost', False) == False:
+            if i['State']['Running'] == True and \
+               (i['State'].has_key('Ghost') and i['State']['Ghost'] == False):
                 running.append(i)
 
         return running
