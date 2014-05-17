@@ -93,7 +93,7 @@ And that will provide the most basic form of variable substitution.
 
 This is also valid directly in playbooks, and you'll occasionally want to do things like::
 
-    template: src=foo.cfg.j2 dest={{ remote_install_path}}/foo.cfg
+    template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
 
 In the above example, we used a variable to help decide where to place a file.
 
