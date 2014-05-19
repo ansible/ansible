@@ -43,6 +43,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # of an ansible module. The source of this common code lives
 # in lib/ansible/module_common.py
 
+import locale
 import os
 import re
 import pipes
@@ -190,6 +191,10 @@ class AnsibleModule(object):
             for k, v in FILE_COMMON_ARGUMENTS.iteritems():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
+
+        # check the locale as set by the current environment, and
+        # reset to LANG=C if it's an invalid/unavailable locale
+        self._check_locale()
 
         (self.params, self.args) = self._load_params()
 
@@ -561,6 +566,22 @@ class AnsibleModule(object):
             kwargs['state'] = 'absent'
         return kwargs
 
+    def _check_locale(self):
+        '''
+        Uses the locale module to test the currently set locale
+        (per the LANG and LC_CTYPE environment settings)
+        '''
+        try:
+            # setting the locale to '' uses the default locale
+            # as it would be returned by locale.getdefaultlocale()
+            locale.setlocale(locale.LC_ALL, '')
+        except locale.Error, e:
+            # fallback to the 'C' locale, which may cause unicode
+            # issues but is preferable to simply failing because
+            # of an unknown locale
+            locale.setlocale(locale.LC_ALL, 'C')
+        except Exception, e:
+            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
     def _handle_aliases(self):
         aliases_results = {} #alias:canon
