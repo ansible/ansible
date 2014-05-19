@@ -358,6 +358,11 @@ class PlayBook(object):
         hosts = self._trim_unavailable_hosts(task.play._play_hosts)
         self.inventory.restrict_to(hosts)
 
+        if task.check_mode:
+            check_mode = True
+        else:
+            check_mode = self.check
+
         runner = ansible.runner.Runner(
             pattern=task.play.hosts,
             inventory=self.inventory,
@@ -382,7 +387,7 @@ class PlayBook(object):
             transport=task.transport,
             sudo_pass=task.sudo_pass,
             is_playbook=True,
-            check=self.check,
+            check=check_mode,
             diff=self.diff,
             environment=task.environment,
             complex_args=task.args,
