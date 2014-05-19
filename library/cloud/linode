@@ -389,7 +389,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 resource_id = res['ResourceID'];
             else:
                 resource_id = domain_resource_data[0]["RESOURCEID"]
-                # res = api.domain_resource_update(DomainID=domain_id, ResourceId = resource_id, Name=domain_name, Type="A", Target=instance["ipv4"])
+                res = api.domain_resource_update(DomainID=domain_id, ResourceId = resource_id, Name=domain_name, Type="A", Target=instance["ipv4"])
             
         if not configs:
             for arg in ('name', 'linode_id', 'distribution'):
