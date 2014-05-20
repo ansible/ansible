@@ -376,53 +376,46 @@ class Homebrew(object):
             self.message = 'Invalid package: {0}.'.format(self.current_package)
             raise HomebrewException(self.message)
 
+    def _outdated_packages(self):
+        rc, out, err = self.module.run_command([
+            self.brew_path,
+            'outdated',
+        ])
+        return [line.split(' ')[0].strip() for line in out.split('\n') if line]
+
     def _get_current_package_output(self, out):
         try:
             json_output = json.loads(out)
         except ValueError:
-            self.failed = True
-            self.message = ('`brew info --json=v1 {0}` failed.  Try '
-                            'updating homebrew.'.format(self.current_package, ))
-            raise HomebrewException(self.message)
+            return None, False
 
         if isinstance(json_output, list):
             current_package_output = json_output[0]
         else:
             current_package_output = json_output
 
-        return current_package_output
-    # /helpers ----------------------------------------------------- }}}
+        return current_package_output, True
 
-    # checks ------------------------------------------------------- {{{
-    def _current_package_is_installed(self):
-        self._raise_exception_if_invalid_package()
+    def _current_package_is_installed_helper_old(self, out):
+        for line in out.split('\n'):
+            if (
+                re.search(r'Built from source', line)
+                or re.search(r'Poured from bottle', line)
+            ):
+                return True
 
-        cmd = [
-            self.brew_path,
-            "info",
-            "--json=v1",
-            self.current_package,
-        ]
-        rc, out, err = self.module.run_command(cmd)
+        return False
 
-        current_package_output = self._get_current_package_output(out)
+    def _current_package_is_installed_helper_new(self, current_package_output):
         if current_package_output.get('installed'):
             return True
 
         return False
 
-    def _current_package_is_outdated(self):
-        self._raise_exception_if_invalid_package()
+    def _current_package_is_outdated_helper_old(self, out):
+        return self.current_package in self._outdated_packages()
 
-        cmd = [
-            self.brew_path,
-            'info',
-            '--json=v1',
-            self.current_package,
-        ]
-        rc, out, err = self.module.run_command(cmd)
-
-        current_package_output = self._get_current_package_output(out)
+    def _current_package_is_outdated_helper_new(self, current_package_output):
         if not current_package_output.get('installed'):
             return False
 
@@ -457,6 +450,60 @@ class Homebrew(object):
 
         return True
 
+    def _current_package_is_installed_from_head_helper_old(self, out):
+        try:
+            version_info = [line for line in out.split('\n') if line][0]
+        except IndexError:
+            return False
+
+        return version_info.split(' ')[-1] == 'HEAD'
+
+    def _current_package_is_installed_from_head_helper_new(self, current_package_output):
+        if not current_package_output.get('installed'):
+            return False
+
+        for installed_version in current_package_output['installed']:
+            if installed_version.get('version') == 'HEAD':
+                return True
+
+        return False
+    # /helpers ----------------------------------------------------- }}}
+
+    # checks ------------------------------------------------------- {{{
+    def _current_package_is_installed(self):
+        self._raise_exception_if_invalid_package()
+
+        cmd = [
+            self.brew_path,
+            "info",
+            "--json=v1",
+            self.current_package,
+        ]
+        rc, out, err = self.module.run_command(cmd)
+
+        current_package_output, use_new_helper = self._get_current_package_output(out)
+        if use_new_helper:
+            return self._current_package_is_installed_helper_new(current_package_output)
+        else:
+            return self._current_package_is_installed_helper_old(out)
+
+    def _current_package_is_outdated(self):
+        self._raise_exception_if_invalid_package()
+
+        cmd = [
+            self.brew_path,
+            'info',
+            '--json=v1',
+            self.current_package,
+        ]
+        rc, out, err = self.module.run_command(cmd)
+
+        current_package_output, use_new_helper = self._get_current_package_output(out)
+        if use_new_helper:
+            return self._current_package_is_outdated_helper_new(current_package_output)
+        else:
+            return self._current_package_is_outdated_helper_old(out)
+
     def _current_package_is_installed_from_head(self):
         self._raise_exception_if_invalid_package()
 
@@ -467,15 +514,11 @@ class Homebrew(object):
             self.current_package,
         ])
 
-        current_package_output = self._get_current_package_output(out)
-        if not current_package_output.get('installed'):
-            return False
-
-        for installed_version in current_package_output['installed']:
-            if installed_version.get('version') == 'HEAD':
-                return True
-
-        return False
+        current_package_output, use_new_helper = self._get_current_package_output(out)
+        if use_new_helper:
+            return self._current_package_is_installed_from_head_helper_new(current_package_output)
+        else:
+            return self._current_package_is_installed_from_head_helper_old(out)
     # /checks ------------------------------------------------------ }}}
 
     # commands ----------------------------------------------------- {{{
