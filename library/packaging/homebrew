@@ -72,6 +72,10 @@ EXAMPLES = '''
 
 import os.path
 import re
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 
 # exceptions -------------------------------------------------------------- {{{
@@ -212,7 +216,6 @@ class Homebrew(object):
         '''A valid module is an instance of AnsibleModule.'''
 
         return isinstance(module, AnsibleModule)
-
     # /class validations ------------------------------------------- }}}
 
     # class properties --------------------------------------------- {{{
@@ -343,7 +346,7 @@ class Homebrew(object):
             self.brew_path = None
             self.failed = True
             self.message = 'Unable to locate homebrew executable.'
-            raise HomebrewException('Unable to locate homebrew executable.')
+            raise HomebrewException(self.message)
 
         return self.brew_path
 
@@ -366,59 +369,100 @@ class Homebrew(object):
 
         return (failed, changed, message)
 
-    # checks ------------------------------------------------------- {{{
-    def _current_package_is_installed(self):
+    # helpers ------------------------------------------------------ {{{
+    def _raise_exception_if_invalid_package(self):
         if not self.valid_package(self.current_package):
             self.failed = True
             self.message = 'Invalid package: {0}.'.format(self.current_package)
             raise HomebrewException(self.message)
 
+    def _get_current_package_output(self, out):
+        try:
+            json_output = json.loads(out)
+        except ValueError:
+            self.failed = True
+            self.message = ('`brew info --json=v1 {0}` failed.  Try '
+                            'updating homebrew.'.format(self.current_package, ))
+            raise HomebrewException(self.message)
+
+        if isinstance(json_output, list):
+            current_package_output = json_output[0]
+        else:
+            current_package_output = json_output
+
+        return current_package_output
+    # /helpers ----------------------------------------------------- }}}
+
+    # checks ------------------------------------------------------- {{{
+    def _current_package_is_installed(self):
+        self._raise_exception_if_invalid_package()
+
         cmd = [
-            "{brew_path}".format(brew_path=self.brew_path),
+            self.brew_path,
             "info",
+            "--json=v1",
             self.current_package,
         ]
         rc, out, err = self.module.run_command(cmd)
-        for line in out.split('\n'):
-            if (
-                re.search(r'Built from source', line)
-                or re.search(r'Poured from bottle', line)
-            ):
-                return True
+
+        current_package_output = self._get_current_package_output(out)
+        if current_package_output.get('installed'):
+            return True
 
         return False
 
-    def _outdated_packages(self):
-        rc, out, err = self.module.run_command([
-            self.brew_path,
-            'outdated',
-        ])
-        return [line.split(' ')[0].strip() for line in out.split('\n') if line]
-
     def _current_package_is_outdated(self):
-        if not self.valid_package(self.current_package):
+        self._raise_exception_if_invalid_package()
+
+        cmd = [
+            self.brew_path,
+            'info',
+            '--json=v1',
+            self.current_package,
+        ]
+        rc, out, err = self.module.run_command(cmd)
+
+        current_package_output = self._get_current_package_output(out)
+        if not current_package_output.get('installed'):
             return False
 
-        return self.current_package in self._outdated_packages()
+        stable_version = (
+            current_package_output
+            .get('versions', dict())
+            .get('stable')
+        )
+        head_version = (
+            current_package_output
+            .get('versions', dict())
+            .get('head')
+        )
+        current_versions = set([stable_version, head_version])
+
+        for version in current_package_output['installed']:
+            if version.get('version') in current_versions:
+                return False
+
+        return True
 
     def _current_package_is_installed_from_head(self):
-        if not Homebrew.valid_package(self.current_package):
-            return False
-        elif not self._current_package_is_installed():
-            return False
+        self._raise_exception_if_invalid_package()
 
         rc, out, err = self.module.run_command([
             self.brew_path,
             'info',
+            '--json=v1',
             self.current_package,
         ])
 
-        try:
-            version_info = [line for line in out.split('\n') if line][0]
-        except IndexError:
+        current_package_output = self._get_current_package_output(out)
+        if not current_package_output.get('installed'):
             return False
 
-        return version_info.split(' ')[-1] == 'HEAD'
+        for installed_version in current_package_output['installed']:
+            if installed_version.get('version') == 'HEAD':
+                return True
+
+        return False
     # /checks ------------------------------------------------------ }}}
 
     # commands ----------------------------------------------------- {{{
@@ -492,10 +536,7 @@ class Homebrew(object):
 
     # installed ------------------------------ {{{
     def _install_current_package(self):
-        if not self.valid_package(self.current_package):
-            self.failed = True
-            self.message = 'Invalid package: {0}.'.format(self.current_package)
-            raise HomebrewException(self.message)
+        self._raise_exception_if_invalid_package()
 
         if self._current_package_is_installed():
             self.unchanged_count += 1
@@ -544,22 +585,22 @@ class Homebrew(object):
 
     # upgraded ------------------------------- {{{
     def _upgrade_current_package(self):
-        command = 'upgrade'
+        self._raise_exception_if_invalid_package()
 
-        if not self.valid_package(self.current_package):
-            self.failed = True
-            self.message = 'Invalid package: {0}.'.format(self.current_package)
-            raise HomebrewException(self.message)
+        previously_installed = self._current_package_is_installed()
+        previously_outdated = self._current_package_is_outdated()
 
-        if not self._current_package_is_installed():
-            command = 'install'
-
-        if self._current_package_is_installed() and not self._current_package_is_outdated():
+        if previously_installed and not previously_outdated:
             self.message = 'Package is already upgraded: {0}'.format(
                 self.current_package,
             )
             self.unchanged_count += 1
             return True
+
+        if not previously_installed:
+            command = 'install'
+        else:
+            command = 'upgrade'
 
         if self.module.check_mode:
             self.changed = True
@@ -576,7 +617,10 @@ class Homebrew(object):
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
-        if self._current_package_is_installed() and not self._current_package_is_outdated():
+        currently_installed = self._current_package_is_installed()
+        currently_outdated = self._current_package_is_outdated()
+
+        if currently_installed and not currently_outdated:
             self.changed_count += 1
             self.changed = True
             self.message = 'Package upgraded: {0}'.format(self.current_package)
@@ -615,12 +659,10 @@ class Homebrew(object):
 
     # uninstalled ---------------------------- {{{
     def _uninstall_current_package(self):
-        if not self.valid_package(self.current_package):
-            self.failed = True
-            self.message = 'Invalid package: {0}.'.format(self.current_package)
-            raise HomebrewException(self.message)
+        self._raise_exception_if_invalid_package()
 
-        if not self._current_package_is_installed():
+        previously_installed = self._current_package_is_installed()
+        if not previously_installed:
             self.unchanged_count += 1
             self.message = 'Package already uninstalled: {0}'.format(
                 self.current_package,
@@ -642,7 +684,8 @@ class Homebrew(object):
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
-        if not self._current_package_is_installed():
+        currently_installed = self._current_package_is_installed()
+        if not currently_installed:
             self.changed_count += 1
             self.changed = True
             self.message = 'Package uninstalled: {0}'.format(self.current_package)
@@ -662,12 +705,10 @@ class Homebrew(object):
 
     # linked --------------------------------- {{{
     def _link_current_package(self):
-        if not self.valid_package(self.current_package):
-            self.failed = True
-            self.message = 'Invalid package: {0}.'.format(self.current_package)
-            raise HomebrewException(self.message)
+        self._raise_exception_if_invalid_package()
 
-        if not self._current_package_is_installed():
+        previously_installed = self._current_package_is_installed()
+        if not previously_installed:
             self.failed = True
             self.message = 'Package not installed: {0}.'.format(self.current_package)
             raise HomebrewException(self.message)
@@ -708,12 +749,10 @@ class Homebrew(object):
 
     # unlinked ------------------------------- {{{
     def _unlink_current_package(self):
-        if not self.valid_package(self.current_package):
-            self.failed = True
-            self.message = 'Invalid package: {0}.'.format(self.current_package)
-            raise HomebrewException(self.message)
+        self._raise_exception_if_invalid_package()
 
-        if not self._current_package_is_installed():
+        previously_installed = self._current_package_is_installed()
+        if not previously_installed:
             self.failed = True
             self.message = 'Package not installed: {0}.'.format(self.current_package)
             raise HomebrewException(self.message)
