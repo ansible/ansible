@@ -580,6 +580,8 @@ class AnsibleModule(object):
             # issues but is preferable to simply failing because
             # of an unknown locale
             locale.setlocale(locale.LC_ALL, 'C')
+            os.environ['LANG']     = 'C'
+            os.environ['LC_CTYPE'] = 'C'
         except Exception, e:
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
