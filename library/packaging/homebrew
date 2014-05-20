@@ -426,21 +426,34 @@ class Homebrew(object):
         if not current_package_output.get('installed'):
             return False
 
-        stable_version = (
+        stable_version_number = (
             current_package_output
             .get('versions', dict())
             .get('stable')
         )
-        head_version = (
+        head_version_number = (
             current_package_output
             .get('versions', dict())
             .get('head')
         )
-        current_versions = set([stable_version, head_version])
+        devel_version_number = (
+            current_package_output
+            .get('versions', dict())
+            .get('devel')
+        )
+        current_version_numbers = set(
+            version_number
+            for version_number in [stable_version_number,
+                                   head_version_number,
+                                   devel_version_number, ]
+            if version_number
+        )
 
-        for version in current_package_output['installed']:
-            if version.get('version') in current_versions:
-                return False
+        for installed_version in current_package_output['installed']:
+            installed_version_number = installed_version.get('version')
+            for current_version_number in current_version_numbers:
+                if installed_version_number.startswith(current_version_number):
+                    return False
 
         return True
 
