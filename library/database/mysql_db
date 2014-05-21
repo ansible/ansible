@@ -42,7 +42,7 @@ options:
     description:
       - The username used to authenticate with
     required: false
-    default: root
+    default: null
   login_password:
     description:
       - The password used to authenticate with
@@ -87,13 +87,12 @@ options:
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb. (See M(apt).)
-   - The I(defaults_file) will be loaded if passed, otherwise, ~/.my.cnf would be loaded.  Any parameters
-     passed will override the parameters found in the my.cnf file.  user, password, host, port and socket
-     parameters will be read from the my.cnf.
-   - If user not found, root will be used
-   - If password not found, no password will be used.  It is no longer required.
+   - Both I(login_password) and I(login_user) are required when you are
+     passing credentials. If none are present, the module will attempt to read
+     the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
+     default login of C(root) with no password.
 requirements: [ ConfigParser ]
-author: Mark Theunissen (Him You Ten added defaults_file)
+author: Mark Theunissen
 '''
 
 EXAMPLES = '''
@@ -202,7 +201,7 @@ def config_get(config, section, option):
     return strip_quotes(config.get(section, option))
 
 
-def load_mycnf(defaults_file, module):
+def load_mycnf(defaults_file):
     config = ConfigParser.RawConfigParser()
     mycnf = os.path.expanduser(defaults_file)
     passwd = None
@@ -224,8 +223,7 @@ def load_mycnf(defaults_file, module):
         try:
             passwd = config_get(config, 'client', 'pass')
         except (ConfigParser.NoOptionError):
-            module.fail_json(msg="cannot find password:"+e.message)
-            return False
+			pass
     try:
         user = config_get(config, 'client', 'user')
     except:
@@ -285,7 +283,7 @@ def main():
     defaults_file = module.params["defaults_file"]
     
     # load my.cnf specified or use default ~/.my.cnf
-    mycnf_params = load_mycnf(defaults_file, module)
+    mycnf_params = load_mycnf(defaults_file)
     
     # load the module params
     login_user = module.params["login_user"]
