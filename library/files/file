@@ -184,7 +184,7 @@ def main():
 
         absrc = src
         if not os.path.isabs(absrc):
-            absrc = os.path.normpath('%s/%s' % (os.path.dirname(path), absrc))
+            absrc = os.path.abspath(src)
 
         if not os.path.exists(absrc) and not force:
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
