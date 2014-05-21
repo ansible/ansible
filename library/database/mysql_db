@@ -213,7 +213,7 @@ def load_mycnf(defaults_file):
         return False
     try:
         config.readfp(open(mycnf))
-    except (IOError, e):
+    except (IOError):
         return False
     # We support two forms of passwords in .my.cnf, both pass= and password=,
     # as these are both supported by MySQL.
@@ -240,7 +240,7 @@ def load_mycnf(defaults_file):
         unix_socket = config_get(config, 'client', 'socket')
     except:
         pass
-
+    
     creds = dict(
         user=user,
         passwd=passwd,
@@ -248,7 +248,7 @@ def load_mycnf(defaults_file):
         port=port,
         unix_socket=unix_socket,
     )
-
+    
     return creds
 
 # ===========================================
@@ -314,7 +314,6 @@ def main():
         login_host = "localhost"
     if login_port is None:
         login_port = "3306"
-
     
     if state in ['dump','import']:
         if target is None:
