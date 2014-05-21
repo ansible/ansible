@@ -53,7 +53,6 @@ EXAMPLES = '''
   alternatives: name=hadoop-conf link=/etc/hadoop/conf path=/etc/hadoop/conf.ansible
 '''
 
-UPDATE_ALTERNATIVES = '/usr/sbin/update-alternatives'
 DEFAULT_LINK_PRIORITY = 50
 
 def main():
@@ -70,6 +69,8 @@ def main():
     name = params['name']
     path = params['path']
     link = params['link']
+
+    UPDATE_ALTERNATIVES =  module.get_bin_path('update-alternatives',True)
 
     current_path = None
     all_alternatives = []
