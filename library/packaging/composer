@@ -28,6 +28,11 @@ version_added: "1.6"
 description:
     - Composer is a tool for dependency management in PHP. It allows you to declare the dependent libraries your project needs and it will install them in your project for you
 options:
+    command:
+        description:
+            - Composer command like "install", "update" and so option
+        required: false
+        default: install
     working_dir:
         description:
             - Directory of your project ( see --working-dir )
@@ -85,7 +90,7 @@ notes:
 
 EXAMPLES = '''
 # Downloads and installs all the libs and dependencies outlined in the /path/to/project/composer.lock
-- composer: working_dir=/path/to/project
+- composer: command=install working_dir=/path/to/project
 '''
 
 import os
