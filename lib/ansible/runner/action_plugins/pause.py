@@ -101,7 +101,7 @@ class ActionModule(object):
                 # Clear out any unflushed buffered input which would
                 # otherwise be consumed by raw_input() prematurely.
                 tcflush(sys.stdin, TCIFLUSH)
-                self.result['user_input'] = raw_input(self.prompt)
+                self.result['user_input'] = raw_input(self.prompt.encode(sys.stdout.encoding))
         except KeyboardInterrupt:
             while True:
                 print '\nAction? (a)bort/(c)ontinue: '
