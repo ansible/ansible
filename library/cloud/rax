@@ -233,10 +233,10 @@ def server_to_dict(obj):
     return instance
 
 
-def create(module, names, flavor, image, meta, key_name, files,
-           wait, wait_timeout, disk_config, group, nics,
-           extra_create_args, user_data, config_drive, existing=[]):
-
+def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
+           files={}, wait=True, wait_timeout=300, disk_config=None,
+           group=None, nics=[], extra_create_args={}, user_data=None,
+           config_drive=False, existing=[]):
     cs = pyrax.cloudservers
     changed = False
 
@@ -336,7 +336,7 @@ def create(module, names, flavor, image, meta, key_name, files,
         module.exit_json(**results)
 
 
-def delete(module, instance_ids, wait, wait_timeout, kept=[]):
+def delete(module, instance_ids=[], wait=True, wait_timeout=300, kept=[]):
     cs = pyrax.cloudservers
 
     changed = False
@@ -412,10 +412,12 @@ def delete(module, instance_ids, wait, wait_timeout, kept=[]):
         module.exit_json(**results)
 
 
-def cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                 wait, wait_timeout, disk_config, count, group,
-                 instance_ids, exact_count, networks, count_offset,
-                 auto_increment, extra_create_args, user_data, config_drive):
+def cloudservers(module, state=None, name=None, flavor=None, image=None,
+                 meta={}, key_name=None, files={}, wait=True, wait_timeout=300,
+                 disk_config=None, count=1, group=None, instance_ids=[],
+                 exact_count=False, networks=[], count_offset=0,
+                 auto_increment=False, extra_create_args={}, user_data=None,
+                 config_drive=False):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     if not cnw:
@@ -545,8 +547,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     instance_ids = []
                     for server in servers:
                         instance_ids.append(server.id)
-                    delete(module, instance_ids, wait, wait_timeout,
-                           kept=kept)
+                    delete(module, instance_ids=instance_ids, wait=wait,
+                           wait_timeout=wait_timeout, kept=kept)
                 elif len(servers) < count:
                     if auto_increment:
                         names = []
@@ -627,9 +629,11 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
                 names = [name] * (count - len(servers))
 
-        create(module, names, flavor, image, meta, key_name, files,
-               wait, wait_timeout, disk_config, group, nics, extra_create_args,
-               user_data, config_drive, existing=servers)
+        create(module, names=names, flavor=flavor, image=image,
+               meta=meta, key_name=key_name, files=files, wait=wait,
+               wait_timeout=wait_timeout, disk_config=disk_config, group=group,
+               nics=nics, extra_create_args=extra_create_args,
+               user_data=user_data, config_drive=config_drive, existing=servers)
 
     elif state == 'absent':
         if instance_ids is None:
@@ -662,7 +666,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                                            'success': [], 'error': [],
                                            'timeout': []})
 
-        delete(module, instance_ids, wait, wait_timeout)
+        delete(module, instance_ids=instance_ids, wait=wait,
+               wait_timeout=wait_timeout)
 
 
 def main():
@@ -748,10 +753,14 @@ def main():
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
-    cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                 wait, wait_timeout, disk_config, count, group,
-                 instance_ids, exact_count, networks, count_offset,
-                 auto_increment, extra_create_args, user_data, config_drive)
+    cloudservers(module, state=state, name=name, flavor=flavor,
+                 image=image, meta=meta, key_name=key_name, files=files,
+                 wait=wait, wait_timeout=wait_timeout, disk_config=disk_config,
+                 count=count, group=group, instance_ids=instance_ids,
+                 exact_count=exact_count, networks=networks,
+                 count_offset=count_offset, auto_increment=auto_increment,
+                 extra_create_args=extra_create_args, user_data=user_data,
+                 config_drive=config_drive)
 
 
 # import module snippets
