@@ -78,6 +78,11 @@ options:
       - Purge existing subnet on ELB that are not found in subnets
     required: false
     default: false  
+  scheme:
+    description:
+      - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
+    required: false
+    default: 'internet-facing'
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
@@ -118,6 +123,7 @@ EXAMPLES = """
 - local_action:
     module: ec2_elb_lb
     name: "test-vpc"
+    scheme: internal
     state: present
     subnets: 
       - subnet-abcd1234
@@ -219,7 +225,7 @@ class ElbManager(object):
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, security_group_ids=None, 
                  health_check=None, subnets=None, purge_subnets=None,
-                 region=None, **aws_connect_params):
+                 scheme="internet-facing", region=None, **aws_connect_params):
 
         self.module = module
         self.name = name
@@ -231,6 +237,7 @@ class ElbManager(object):
         self.health_check = health_check
         self.subnets = subnets
         self.purge_subnets = purge_subnets
+        self.scheme = scheme
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -275,7 +282,8 @@ class ElbManager(object):
                 'zones': check_elb.availability_zones,
                 'security_group_ids': check_elb.security_groups,
                 'status': self.status,
-                'subnets': self.subnets
+                'subnets': self.subnets,
+                'scheme': check_elb.scheme
             }
 
             if check_elb.health_check:
@@ -309,7 +317,7 @@ class ElbManager(object):
 
     def _get_elb_connection(self):
         try:
-            return connect_to_aws(boto.ec2.elb, self.region, 
+            return connect_to_aws(boto.ec2.elb, self.region,
                                   **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
@@ -327,7 +335,8 @@ class ElbManager(object):
                                                       zones=self.zones,
                                                       security_groups=self.security_group_ids,
                                                       complex_listeners=listeners,
-                                                      subnets=self.subnets)
+                                                      subnets=self.subnets,
+                                                      scheme=self.scheme)
         if self.elb:
             self.changed = True
             self.status = 'created'
@@ -545,7 +554,8 @@ def main():
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
             subnets={'default': None, 'required': False, 'type': 'list'},
-            purge_subnets={'default': False, 'required': False, 'type': 'bool'}
+            purge_subnets={'default': False, 'required': False, 'type': 'bool'},
+            scheme={'default': 'internet-facing', 'required': False}
         )
     )
 
@@ -567,6 +577,7 @@ def main():
     health_check = module.params['health_check']
     subnets = module.params['subnets']
     purge_subnets = module.params['purge_subnets']
+    scheme = module.params['scheme']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -574,10 +585,10 @@ def main():
     if state == 'present' and not (zones or subnets):
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
 
-    elb_man = ElbManager(module, name, listeners, purge_listeners, zones, 
-                         purge_zones, security_group_ids, health_check, 
-                         subnets, purge_subnets, 
-                         region=region, **aws_connect_params)
+    elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
+                         purge_zones, security_group_ids, health_check,
+                         subnets, purge_subnets,
+                         scheme, region=region, **aws_connect_params)
 
     if state == 'present':
         elb_man.ensure_ok()
