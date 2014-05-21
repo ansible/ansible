@@ -990,7 +990,7 @@ def terminate_instances(module, ec2, instance_ids):
     terminated_instance_ids = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
-            if inst.state == 'running':
+            if inst.state == 'running' or inst.state == 'stopped':
                 terminated_instance_ids.append(inst.id)
                 instance_dict_array.append(get_instance_info(inst))
                 try:
