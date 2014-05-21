@@ -186,7 +186,7 @@ class Ec2Inventory(object):
 
         config = ConfigParser.SafeConfigParser()
         ec2_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
-        ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
+        ec2_ini_path = os.path.expanduser(os.path.expandvars(os.environ.get('EC2_INI_PATH', ec2_default_ini_path)))
         config.read(ec2_ini_path)
 
         # is eucalyptus?
