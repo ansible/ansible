@@ -651,9 +651,10 @@ class PlaybookCallbacks(object):
             msg = 'input for %s: ' % varname
 
         def prompt(prompt, private):
+            msg = prompt.encode(sys.stdout.encoding)
             if private:
-                return getpass.getpass(prompt)
-            return raw_input(prompt)
+                return getpass.getpass(msg)
+            return raw_input(msg)
 
 
         if confirm:
