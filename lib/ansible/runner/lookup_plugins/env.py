@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible import utils, errors
+from ansible.utils import template
 import os
 
 class LookupModule(object):
@@ -25,7 +26,10 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        try:
+            terms = template.template(self.basedir, terms, inject)
+        except Exception, e:
+            pass
 
         if isinstance(terms, basestring):
             terms = [ terms ]
