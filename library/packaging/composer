@@ -30,7 +30,7 @@ description:
 options:
     command:
         description:
-            - Composer command like "install", "update" and so option
+            - Composer command like "install", "update" and so on
         required: false
         default: install
     working_dir:
