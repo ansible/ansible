@@ -120,6 +120,9 @@ EXAMPLES = """
 # Ensure no user named 'sally' exists, also passing in the auth credentials.
 - mysql_user: login_user=root login_password=123456 name=sally state=absent
 
+# Specify grants composed of more than one word
+- mysql_user: name=replication password=12345 priv=*.*:"REPLICATION CLIENT" state=present
+
 # Example privileges string format
 mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 
