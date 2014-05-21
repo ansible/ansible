@@ -136,7 +136,7 @@ options:
   user_data:
     description:
       - Data to be uploaded to the servers config drive. This option implies
-        I(config_drive)
+        I(config_drive). Can be a file path or a string
     version_added: 1.7
   wait:
     description:
@@ -633,7 +633,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                meta=meta, key_name=key_name, files=files, wait=wait,
                wait_timeout=wait_timeout, disk_config=disk_config, group=group,
                nics=nics, extra_create_args=extra_create_args,
-               user_data=user_data, config_drive=config_drive, existing=servers)
+               user_data=user_data, config_drive=config_drive,
+               existing=servers)
 
     elif state == 'absent':
         if instance_ids is None:
