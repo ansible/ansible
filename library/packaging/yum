@@ -78,7 +78,7 @@ options:
     default: null
     aliases: []
 
-  disable_plugin:
+  disable_plugins:
     description:
       - Plugin name to disable for the install/update operation. This will not persist beyond the transaction. Multiple repos separated with a ','. Use "all" to disable all plugins.
     required: false
@@ -121,7 +121,7 @@ EXAMPLES = '''
   yum: name=httpd enablerepo=testing state=installed
 
 - name: upgrade all packages without the fastestmirror plugin
-  yum: name=* state=latest disable_plugin=fastestmirror
+  yum: name=* state=latest disable_plugins=fastestmirror
 
 - name: install the nginx rpm from a remote repo
   yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
@@ -718,7 +718,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     module.exit_json(**res)
 
-def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_gpg_check, disable_plugin):
+def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_gpg_check, disable_plugins):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -752,12 +752,12 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_g
         r_cmd = ['--enablerepo=%s' % repoid]
         yum_basecmd.extend(r_cmd)
 
-    # disable_plugin can be "all" or comma separated string of plugin names
-    if disable_plugin:
-        if disable_plugin == 'all':
+    # disable_plugins can be "all" or comma separated string of plugin names
+    if disable_plugins:
+        if disable_plugins == 'all':
             yum_basecmd.append('--noplugins')
         else:
-            for plugin in disable_plugin.split(','):
+            for plugin in disable_plugins.split(','):
                 r_cmd = ['--disableplugin=%s' % plugin]
                 yum_basecmd.extend(r_cmd)
 
@@ -816,7 +816,7 @@ def main():
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             enablerepo=dict(),
             disablerepo=dict(),
-            disable_plugin=dict(),
+            disable_plugins=dict(),
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
@@ -844,9 +844,9 @@ def main():
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
-        disable_plugin = params.get('disable_plugin', '')
+        disable_plugins = params.get('disable_plugins', '')
         disable_gpg_check = params['disable_gpg_check']
-        res = ensure(module, state, pkg, params['conf_file'], enablerepo, disablerepo, disable_gpg_check, disable_plugin)
+        res = ensure(module, state, pkg, params['conf_file'], enablerepo, disablerepo, disable_gpg_check, disable_plugins)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # import module snippets
