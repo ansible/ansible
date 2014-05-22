@@ -61,6 +61,11 @@ options:
      - root password to apply to a new server (auto generated if missing)
     default: null
     type: string
+  private_ip:
+    description:
+     - Adds a private IP to the server if it does not exist
+    default: False
+    type: bool
   ssh_pub_key:
     description:
      - SSH public key applied to root user
@@ -246,7 +251,7 @@ def getInstanceDetails(api, server):
     return instance
 
 def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                  partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout,
+                  partitions, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout,
                   domain_host, domain_name, domain_email):
     instances = []
     changed = False
@@ -364,6 +369,15 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 # TODO: destroy linode ?
                 module.fail_json(msg = str(e))
 
+        # Get a fresh copy of the server details because we need the ip
+        server = api.linode_list(LinodeId=linode_id)[0]
+        if server['STATUS'] == -2:
+            module.fail_json(msg = '(lid: %s) failed to list')
+
+        # From now on we know the task is a success
+        # Build instance report
+        instance = getInstanceDetails(api, server)
+
         if domain_host and domain_name:
             domain_list = api.domain_list()
             domain_data = [dc for dc in domain_list if domain_host == dc['DOMAIN']]
@@ -373,15 +387,6 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             else:
                 domain_id = domain_data[0]['DOMAINID']
             
-            # Get a fresh copy of the server details because we need the ip
-            server = api.linode_list(LinodeId=linode_id)[0]
-            if server['STATUS'] == -2:
-                module.fail_json(msg = '(lid: %s) failed to list')
-
-            # From now on we know the task is a success
-            # Build instance report
-            instance = getInstanceDetails(api, server)
-            
             domain_resource_list = api.domain_resource_list(DomainID=domain_id)
             domain_resource_data = [dc for dc in domain_resource_list if domain_name in dc['NAME']]
             if not domain_resource_data:
@@ -390,7 +395,11 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             else:
                 resource_id = domain_resource_data[0]["RESOURCEID"]
                 res = api.domain_resource_update(DomainID=domain_id, ResourceId = resource_id, Name=domain_name, Type="A", Target=instance["ipv4"])
-            
+        
+        if not instance['private'] and private_ip:
+            res = api.linode_ip_addprivate(LinodeID = linode_id)
+            instance = getInstanceDetails(api, server)
+
         if not configs:
             for arg in ('name', 'linode_id', 'distribution'):
                 if not eval(arg):
@@ -549,6 +558,7 @@ def main():
             payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
             partitions = dict(type='str'),
             password = dict(type='str'),
+            private_ip = dict(type='bool', default=False),
             ssh_pub_key = dict(type='str'),
             swap = dict(type='int', default=512),
             wait = dict(type='bool', default=True),
@@ -569,6 +579,7 @@ def main():
     partitions = module.params.get('partitions')
     payment_term = module.params.get('payment_term')
     password = module.params.get('password')
+    private_ip = module.params.get('private_ip')
     ssh_pub_key = module.params.get('ssh_pub_key')
     swap = module.params.get('swap')
     wait = module.params.get('wait')
@@ -598,7 +609,7 @@ def main():
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
     linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                 partitions, payment_term, password, ssh_pub_key, swap, wait, wait_timeout,
+                 partitions, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout,
                  domain_host, domain_name, domain_email)
 
 # import module snippets
