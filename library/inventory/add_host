@@ -19,6 +19,15 @@ options:
     description:
     - The groups to add the hostname to, comma separated.
     required: false
+notes:
+  - This module is most commonly used in conjunction with a C(with_) style loop
+  - This module is commonly referred to as a host list bypass plugin. This
+    means that add_host will not execute for every host targeted by a playbook.
+    Instead add_host will only execute on the first host in the hosts
+    list as defined by inventory.
+  - For instances where you need to dynamically add all hosts targeted by a
+    playbook to a group for later use, the C(group_by) module is
+    potentially the better choice.
 author: Seth Vidal
 '''
 
