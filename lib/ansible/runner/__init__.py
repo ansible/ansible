@@ -877,7 +877,7 @@ class Runner(object):
             if hasattr(sys.stdout, "isatty"):
                 if "stdout" in data and sys.stdout.isatty():
                     if not string_functions.isprintable(data['stdout']):
-                        data['stdout'] = ''
+                        data['stdout'] = ''.join(c for c in data['stdout'] if string_functions.isprintable(c))
 
             if 'item' in inject:
                 result.result['item'] = inject['item']
