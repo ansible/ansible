@@ -574,6 +574,16 @@ class Ec2Inventory(object):
                     group_names.append(group.name)
                 instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
                 instance_vars["ec2_security_group_names"] = ','.join(group_names)
+            elif key == "ec2_block_device_mapping":
+                mapping = []
+                for drive in value:
+                    ret = {}
+                    for attr in ["attach_time", "delete_on_termination", "ephemeral_name", "iops", "status", "volume_id"]:
+                        ret[attr] = getattr(value[drive], attr)
+                        if ret[attr] is None: ret[attr] = ""
+                    ret["device_name"] = drive
+                    mapping.append(ret)
+                instance_vars["ec2_block_device_mapping"] = mapping
             else:
                 pass
                 # TODO Product codes if someone finds them useful
