@@ -501,7 +501,6 @@ Note: The error may actually appear before this position: line %s, column %s
                 if '"{{' not in probline or "'{{" not in probline:
                     unquoted_var = True
 
-            msg = process_common_errors(msg, probline, mark.column)
             if not unquoted_var:
                 msg = process_common_errors(msg, probline, mark.column)
             else:
@@ -519,7 +518,6 @@ Should be written as:
       - "{{ foo }}"      
 
 """
-                msg = process_common_errors(msg, probline, mark.column)
         else:
             # most likely displaying a file with sensitive content,
             # so don't show any of the actual lines of yaml just the
