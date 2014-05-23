@@ -27,36 +27,36 @@ description:
 version_added: 1.7
 author: Michael Warkentin
 options:
-  name:
-    description:
-      - The name of a bower package to install
-    required: false
-  path:
-    description:
-      - The base path where to install the bower packages
-    required: false
-  version:
-    description:
-      - The version to be installed
-    required: false
-  state:
-    description:
-      - The state of the node.js library
-    required: false
-    default: present
-    choices: [ "present", "absent", "latest" ]
-  offline:
-    description:
-      - Install packages from local cache, if the packages were installed before
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
   clean_cache:
     description:
       - Clean the bower cache before installing
     required: false
     default: no
     choices: [ "yes", "no" ]
+  name:
+    description:
+      - The name of a bower package to install
+    required: false
+  offline:
+    description:
+      - Install packages from local cache, if the packages were installed before
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+  path:
+    description:
+      - The base path where to install the bower packages
+    required: true
+  state:
+    description:
+      - The state of the bower package
+    required: false
+    default: present
+    choices: [ "present", "absent", "latest" ]
+  version:
+    description:
+      - The version to be installed
+    required: false
 '''
 
 EXAMPLES = '''
@@ -75,3 +75,35 @@ description: Install packages based on bower.json.
 description: Update packages based on bower.json to their latest version.
 - bower: path=/app/location state=latest
 '''
+
+def main():
+    arg_spec = dict(
+        clean_cache=dict(default='no', type='bool'),
+        name=dict(default=None),
+        offline=dict(default='no', type='bool'),
+        path=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent', 'latest', ]),
+        version=dict(default=None),
+    )
+    module = AnsibleModule(
+        argument_spec=arg_spec
+    )
+
+    clean_cache = module.params['clean_cache']
+    name = module.params['name']
+    offline = module.params['offline']
+    path = module.params['path']
+    state = module.params['state']
+    version = module.params['version']
+
+    if state == 'absent' and not name:
+        module.fail_json(msg='uninstalling a package is only available for named packages')
+
+    bower = Bower(module, clean_cache=clean_cache, name=name, offline=offline, \
+                  path=path, state=state, version=version)
+
+    changed = False
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
