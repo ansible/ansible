@@ -36,6 +36,14 @@ options:
         required: false
         description:
             - Optional I(GID) to set for the group.
+    non_unique:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        description:
+            - Optionally when used with the -g option, this option allows to
+              change the group ID to a non-unique value.
+        version_added: "1.7"
     state:
         required: false
         default: "present"
@@ -84,6 +92,7 @@ class Group(object):
         self.module     = module
         self.state      = module.params['state']
         self.name       = module.params['name']
+        self.non_unique = module.params['non_unique']
         self.gid        = module.params['gid']
         self.system     = module.params['system']
         self.syslogging = False
@@ -105,6 +114,10 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
+
+                if self.non_unique:
+                    cmd.append('-o')
+
             elif key == 'system' and kwargs[key] == True:
                 cmd.append('-r')
         cmd.append(self.name)
@@ -118,6 +131,9 @@ class Group(object):
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
                     cmd.append('-g')
                     cmd.append(kwargs[key])
+
+                    if self.non_unique:
+                        cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -150,7 +166,7 @@ class SunOS(Group):
 
     This overrides the following methods from the generic class:-
         - group_add()
-    """ 
+    """
 
     platform = 'SunOS'
     distribution = None
@@ -162,6 +178,9 @@ class SunOS(Group):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
+
+                if self.non_unique:
+                    cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -191,6 +210,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('id='+kwargs[key])
+
             elif key == 'system' and kwargs[key] == True:
                 cmd.append('-a')
         cmd.append(self.name)
@@ -203,6 +223,7 @@ class AIX(Group):
             if key == 'gid':
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
                     cmd.append('id='+kwargs[key])
+
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -234,6 +255,10 @@ class FreeBsdGroup(Group):
         cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
         if self.gid is not None:
             cmd.append('-g %d' % int(self.gid))
+
+            if self.non_unique:
+                cmd.append('-o')
+
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
@@ -242,6 +267,7 @@ class FreeBsdGroup(Group):
         cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g %d' % int(self.gid))
+
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
@@ -274,6 +300,10 @@ class OpenBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
+
+            if self.non_unique:
+                cmd.append('-o')
+
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -284,6 +314,10 @@ class OpenBsdGroup(Group):
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
+
+            if self.non_unique:
+                cmd.append('-o')
+
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -316,6 +350,10 @@ class NetBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
+
+            if self.non_unique:
+                cmd.append('-o')
+
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -326,6 +364,10 @@ class NetBsdGroup(Group):
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
+
+            if self.non_unique:
+                cmd.append('-o')
+
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -342,6 +384,7 @@ def main():
             name=dict(required=True, type='str'),
             gid=dict(default=None, type='str'),
             system=dict(default=False, type='bool'),
+            non_unique=dict(default='no', type='bool'),
         ),
         supports_check_mode=True
     )
