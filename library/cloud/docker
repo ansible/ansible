@@ -184,7 +184,7 @@ options:
     aliases: []
     version_added: "1.6"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
-requirements: [ "docker-py >= 0.3.0" ]
+requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
 
 EXAMPLES = '''
@@ -384,7 +384,7 @@ class DockerManager:
 
         self.env = None
         if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env')))
+            self.env = dict(map(lambda x: x.split("=", 1), self.module.params.get('env')))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
@@ -507,14 +507,16 @@ class DockerManager:
             running_image, running_tag = self.get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
-            name_matches = (name and name in i['Names'])
+            name_matches = False
+            if i["Names"]:
+                name_matches = (name and name in i['Names'])
             image_matches = (running_image == image)
             tag_matches = (not tag or running_tag == tag)
             # if a container has an entrypoint, `command` will actually equal
             # '{} {}'.format(entrypoint, command)
             command_matches = (not command or running_command.endswith(command))
 
-            if name_matches or (image_matches and tag_matches and command_matches):
+            if name_matches or (name is None and image_matches and tag_matches and command_matches):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
@@ -524,7 +526,7 @@ class DockerManager:
     def get_running_containers(self):
         running = []
         for i in self.get_deployed_containers():
-            if i['State']['Running'] == True and i['State']['Ghost'] == False:
+            if i['State']['Running'] == True and i['State'].get('Ghost', False) == False:
                 running.append(i)
 
         return running

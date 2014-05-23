@@ -14,7 +14,7 @@
 ########################################################
 # variable section
 
-NAME = "ansible"
+NAME = ansible
 OS = $(shell uname -s)
 
 # Manpages are currently built with asciidoc -- would like to move to markdown
@@ -50,10 +50,14 @@ RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
 RPMRELEASE = 1
-ifeq ($(OFFICIAL),)
+ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
+
+# MOCK build parameters
+MOCK_BIN ?= mock
+MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
@@ -128,6 +132,20 @@ rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
+
+mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
+	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/  --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/
+	@echo "#############################################"
+	@echo "Ansible SRPM is built:"
+	@echo rpm-build/*.src.rpm
+	@echo "#############################################"
+
+mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
+	$(MOCK_BIN) -r $(MOCK_CFG) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
+	@echo "#############################################"
+	@echo "Ansible RPM is built:"
+	@echo rpm-build/*.noarch.rpm
+	@echo "#############################################"
 
 srpm: rpmcommon
 	@rpmbuild --define "_topdir %(pwd)/rpm-build" \

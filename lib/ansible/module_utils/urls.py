@@ -50,6 +50,8 @@ try:
 except:
     HAS_SSL=False
 
+import os
+import re
 import socket
 import tempfile
 
@@ -77,6 +79,58 @@ zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
 """
 
+def generic_urlparse(parts):
+    '''
+    Returns a dictionary of url parts as parsed by urlparse,
+    but accounts for the fact that older versions of that
+    library do not support named attributes (ie. .netloc)
+    '''
+    generic_parts = dict()
+    if hasattr(parts, 'netloc'):
+        # urlparse is newer, just read the fields straight
+        # from the parts object
+        generic_parts['scheme']   = parts.scheme
+        generic_parts['netloc']   = parts.netloc
+        generic_parts['path']     = parts.path
+        generic_parts['params']   = parts.params
+        generic_parts['query']    = parts.query
+        generic_parts['fragment'] = parts.fragment
+        generic_parts['username'] = parts.username
+        generic_parts['password'] = parts.password
+        generic_parts['hostname'] = parts.hostname
+        generic_parts['port']     = parts.port
+    else:
+        # we have to use indexes, and then parse out
+        # the other parts not supported by indexing
+        generic_parts['scheme']   = parts[0]
+        generic_parts['netloc']   = parts[1]
+        generic_parts['path']     = parts[2]
+        generic_parts['params']   = parts[3]
+        generic_parts['query']    = parts[4]
+        generic_parts['fragment'] = parts[5]
+        # get the username, password, etc.
+        try:
+            netloc_re = re.compile(r'^((?:\w)+(?::(?:\w)+)?@)?([A-Za-z0-9.-]+)(:\d+)?$')
+            (auth, hostname, port) = netloc_re.match(parts[1])
+            if port:
+                # the capture group for the port will include the ':',
+                # so remove it and convert the port to an integer
+                port = int(port[1:])
+            if auth:
+                # the capture group above inclues the @, so remove it
+                # and then split it up based on the first ':' found
+                auth = auth[:-1]
+                username, password = auth.split(':', 1)
+            generic_parts['username'] = username
+            generic_parts['password'] = password
+            generic_parts['hostname'] = hostnme
+            generic_parts['port']     = port
+        except:
+            generic_parts['username'] = None
+            generic_parts['password'] = None
+            generic_parts['hostname'] = None
+            generic_parts['port']     = None
+    return generic_parts
 
 class RequestWithMethod(urllib2.Request):
     '''
@@ -103,6 +157,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
     http://stackoverflow.com/questions/1087227/validate-ssl-certificates-with-python
     http://techknack.net/python-urllib2-handlers/
     '''
+    CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\nConnection: close\r\n"
 
     def __init__(self, module, hostname, port):
         self.module = module
@@ -161,13 +216,42 @@ class SSLValidationHandler(urllib2.BaseHandler):
 
         return (tmp_path, paths_checked)
 
+    def validate_proxy_response(self, response, valid_codes=[200]):
+        '''
+        make sure we get back a valid code from the proxy
+        '''
+        try:
+            (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
+            if int(resp_code) not in valid_codes:
+                raise Exception
+        except:
+            self.module.fail_json(msg='Connection to proxy failed')
+
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
+        https_proxy = os.environ.get('https_proxy')
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
-            ssl_s.connect((self.hostname, self.port))
-            ssl_s.close()
+            if https_proxy:
+                proxy_parts = generic_urlparse(urlparse.urlparse(https_proxy))
+                s.connect((proxy_parts.get('hostname'), proxy_parts.get('port')))
+                if proxy_parts.get('scheme') == 'http':
+                    s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
+                    if proxy_parts.get('username'):
+                        credentials = "%s:%s" % (proxy_parts.get('username',''), proxy_parts.get('password',''))
+                        s.sendall('Proxy-Authorization: Basic %s\r\n' % credentials.encode('base64').strip())
+                    s.sendall('\r\n')
+                    connect_result = s.recv(4096)
+                    self.validate_proxy_response(connect_result)
+                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+                else:
+                    self.module.fail_json(msg='Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
+            else:
+                s.connect((self.hostname, self.port))
+                ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+            # close the ssl connection
+            #ssl_s.unwrap()
+            s.close()
         except (ssl.SSLError, socket.error), e:
             # fail if we tried all of the certs but none worked
             if 'connection refused' in str(e).lower():
@@ -207,7 +291,7 @@ def url_argument_spec():
 
 
 def fetch_url(module, url, data=None, headers=None, method=None, 
-              use_proxy=False, force=False, last_mod_time=None, timeout=10):
+              use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
@@ -227,6 +311,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
 
+    # FIXME: change the following to use the generic_urlparse function
+    #        to remove the indexed references for 'parsed'
     parsed = urlparse.urlparse(url)
     if parsed[0] == 'https':
         if not HAS_SSL and validate_certs:

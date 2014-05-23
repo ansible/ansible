@@ -294,26 +294,24 @@ class Play(object):
                             else:
                                 self.included_roles.append(dep)
 
+                        def _merge_conditional(cur_conditionals, new_conditionals):
+                            if isinstance(new_conditionals, (basestring, bool)):
+                                cur_conditionals.append(new_conditionals)
+                            elif isinstance(new_conditionals, list):
+                                cur_conditionals.extend(new_conditionals)
+
                         # pass along conditionals from roles to dep roles
-                        if type(role) is dict:
-                            if 'when' in passed_vars:
-                                if 'when' in dep_vars:
-                                    tmpcond = []
+                        passed_when = passed_vars.get('when')
+                        role_when = role_vars.get('when')
+                        dep_when = dep_vars.get('when')
 
-                                    if type(passed_vars['when']) is str:
-                                        tmpcond.append(passed_vars['when'])
-                                    elif type(passed_vars['when']) is list:
-                                        tmpcond += passed_vars['when']
+                        tmpcond = []
+                        _merge_conditional(tmpcond, passed_when)
+                        _merge_conditional(tmpcond, role_when)
+                        _merge_conditional(tmpcond, dep_when)
 
-                                    if type(dep_vars['when']) is str:
-                                        tmpcond.append(dep_vars['when'])
-                                    elif type(dep_vars['when']) is list:
-                                        tmpcond += dep_vars['when']
-
-                                    if len(tmpcond) > 0:
-                                        dep_vars['when'] = tmpcond
-                                else:
-                                    dep_vars['when'] = passed_vars['when']
+                        if len(tmpcond) > 0:
+                            dep_vars['when'] = tmpcond
 
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
                         dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
@@ -565,7 +563,10 @@ class Play(object):
                     task_vars = utils.combine_vars(task_vars, x['vars'])
 
                 if 'when' in x:
-                    included_additional_conditions.append(x['when'])
+                    if isinstance(x['when'], (basestring, bool)):
+                        included_additional_conditions.append(x['when'])
+                    elif isinstance(x['when'], list):
+                        included_additional_conditions.extend(x['when'])
 
                 new_role = None
                 if 'role_name' in x:
@@ -785,7 +786,7 @@ class Play(object):
             """ update a host's varscache with new var data """
 
             data = utils.combine_vars(inject, data)
-            self.playbook.VARS_CACHE[host].update(data)
+            self.playbook.VARS_CACHE[host] = utils.combine_vars(self.playbook.VARS_CACHE.get(host, {}), data)
             self.playbook.callbacks.on_import_for_host(host, filename4)
 
         def process_files(filename, filename2, filename3, filename4, host=None):
@@ -855,5 +856,4 @@ class Play(object):
 
         # finally, update the VARS_CACHE for the host, if it is set
         if host is not None:
-            self.playbook.VARS_CACHE[host].update(self.vars)
             self.playbook.VARS_CACHE[host].update(self.playbook.extra_vars)

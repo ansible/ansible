@@ -28,9 +28,9 @@ description:
 version_added: "1.1"
 options:
   command:
-    choices: [ 'cleanup', 'flush', 'loaddata', 'runfcgi', 'syncdb', 'test', 'validate', 'migrate', 'collectstatic' ]
+    choices: [ 'cleanup', 'collectstatic', 'flush', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
     description:
-      - The name of the Django management command to run. Allowed commands are cleanup, createcachetable, flush, loaddata, syncdb, test, validate.
+      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate. Other commands can be entered, but will fail if they're unknown to Django.
     required: true
   app_path:
     description:
