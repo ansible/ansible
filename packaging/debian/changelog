@@ -1,3 +1,9 @@
+ansible (1.6.2) unstable; urgency=low
+
+  * 1.6.2 release
+
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 23 May 2014 17:30:00 -0500
+
 ansible (1.6.1) unstable; urgency=low
 
   * 1.6.1 release

@@ -1,11 +1,12 @@
 %define name ansible
+%define ansible_version $VERSION
 
 %if 0%{?rhel} == 5
 %define __python /usr/bin/python26
 %endif
 
 Name:      %{name}
-Version:   1.6.1
+Version:   %{ansible_version}
 Release:   1%{?dist}
 Url:       http://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
@@ -113,6 +114,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+
+* Fri May 23 2014 Michael DeHaan <michael@ansible.com> - 1.6.2
+- Release 1.6.2
 
 * Wed May 07 2014 Michael DeHaan <michael@ansible.com> - 1.6.1
 - Release 1.6.1

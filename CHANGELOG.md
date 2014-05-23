@@ -1,6 +1,18 @@
 Ansible Changes By Release
 ==========================
 
+## 1.6.2 "And the Cradle Will Rock" - May 23, 2014
+ 
+- If an improper locale is specified, core modules will now automatically revert to using the 'C' locale.
+- Modules using the fetch_url utility will now obey proxy environment variables.
+- The SSL validation step in fetch_url will likewise obey proxy settings, however only proxies using the http protocol are supported.
+- Fixed multiple bugs in docker module related to version changes upstream.
+- Fixed a bug in the ec2_group module where egress rules were lost when a VPC was specified.
+- Fixed two bugs in the synchronize module:
+  * a trailing slash might be lost when calculating relative paths, resulting in an incorrect destination.
+  * the sync might use the inventory directory incorrectly instead of the playbook or role directory.
+- Files will now only be chown'd on an atomic move if the src/dest uid/gid do not match.
+
 ## 1.6.1 "And the Cradle Will Rock" - May 7, 2014
 
 - Fixed a bug in group_by, where systems were being grouped incorrectly.
