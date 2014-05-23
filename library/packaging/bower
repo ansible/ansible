@@ -1,0 +1,77 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Michael Warkentin <mwarkentin@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: bower
+short_description: Manage bower packages with bower
+description:
+  - Manage bower packages with bower
+version_added: 1.7
+author: Michael Warkentin
+options:
+  name:
+    description:
+      - The name of a bower package to install
+    required: false
+  path:
+    description:
+      - The base path where to install the bower packages
+    required: false
+  version:
+    description:
+      - The version to be installed
+    required: false
+  state:
+    description:
+      - The state of the node.js library
+    required: false
+    default: present
+    choices: [ "present", "absent", "latest" ]
+  offline:
+    description:
+      - Install packages from local cache, if the packages were installed before
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+  clean_cache:
+    description:
+      - Clean the bower cache before installing
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+'''
+
+EXAMPLES = '''
+description: Install "bootstrap" bower package.
+- bower: name=bootstrap
+
+description: Install "bootstrap" bower package on version 3.1.1.
+- bower: name=coffee-script version=3.1.1
+
+description: Remove the "bootstrap" bower package.
+- bower: name=bower state=absent
+
+description: Install packages based on bower.json.
+- bower: path=/app/location
+
+description: Update packages based on bower.json to their latest version.
+- bower: path=/app/location state=latest
+'''
