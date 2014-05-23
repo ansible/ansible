@@ -72,7 +72,7 @@ class SoftLayerInventory(object):
     def parse_options(self):
         '''Parse all the arguments from the CLI'''
 
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on EC2')
+        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on SoftLayer')
         parser.add_argument('--list', action='store_true', default=False,
                            help='List instances (default: False)')
         parser.add_argument('--host', action='store',
@@ -103,9 +103,8 @@ class SoftLayerInventory(object):
         if 'hardwareStatusId' in instance and instance['hardwareStatusId'] != 5:
             return
 
+        # if there's no IP address, we can't reach it
         if 'primaryIpAddress' not in instance:
-            print instance['fullyQualifiedDomainName'] + " doesn't have an ip!"
-            print instance
             return
 
         dest = instance['primaryIpAddress']
