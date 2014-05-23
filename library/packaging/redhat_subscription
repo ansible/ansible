@@ -372,7 +372,7 @@ def main():
                 rhn.configure(**module.params)
                 rhn.register(username, password, autosubscribe, activationkey)
                 rhn.subscribe(pool)
-            except CommandException, e:
+            except Exception, e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
             else:
                 module.exit_json(changed=True, msg="System successfully registered to '%s'." % server_hostname)
@@ -385,7 +385,7 @@ def main():
             try:
                 rhn.unsubscribe()
                 rhn.unregister()
-            except CommandException, e:
+            except Exception, e:
                 module.fail_json(msg="Failed to unregister: %s" % e)
             else:
                 module.exit_json(changed=True, msg="System successfully unregistered from %s." % server_hostname)
