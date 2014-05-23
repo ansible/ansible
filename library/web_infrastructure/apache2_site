@@ -45,10 +45,10 @@ notes:
 
 EXAMPLES = '''
 # enables the Apache2 site "example.com"
-- apache2_module: state=present name=example.com
+- apache2_site: state=present name=example.com
 
 # disables the default Apache2 site
-- apache2_module: state=absent name=default
+- apache2_site: state=absent name=default
 '''
 
 import re
