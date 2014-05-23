@@ -61,7 +61,7 @@ options:
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
     key_file:
-        requird: false
+        required: false
         default: None
         version_added: "1.5"
         description:
