@@ -51,6 +51,11 @@ options:
     description:
       - A list of security groups into which instances should be found
     required: false
+  instance_profile_name:
+    description:
+      - The name or ARN of the instance profile associated with the IAM role for the instance
+    required: false
+    default: null
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -178,6 +183,8 @@ def create_launch_config(connection, module):
     ramdisk_id = module.params.get('ramdisk_id')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
+    instance_profile_name = module.params.get('instance_profile_name')
+
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -205,6 +212,9 @@ def create_launch_config(connection, module):
         instance_profile_name=instance_profile_name,
         ebs_optimized=ebs_optimized,
     )
+
+    if instance_profile_name:
+        lc.instance_profile_name = instance_profile_name
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -244,6 +254,7 @@ def main():
             kernel_id=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
+            instance_profile_name=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
             ramdisk_id=dict(type='str'),
