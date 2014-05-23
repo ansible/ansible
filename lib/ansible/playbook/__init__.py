@@ -348,7 +348,7 @@ class PlayBook(object):
     def _trim_unavailable_hosts(self, hostlist=[]):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in self.inventory.list_hosts(hostlist) if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in hostlist if (h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
