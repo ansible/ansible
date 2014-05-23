@@ -952,9 +952,9 @@ def make_su_cmd(su_user, executable, cmd):
     """
     # TODO: work on this function
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-    prompt = 'assword: '
+    prompt = '[Pp]assword: ?$'
     success_key = 'SUDO-SUCCESS-%s' % randbits
-    sudocmd = '%s %s %s %s -c %s' % (
+    sudocmd = '%s %s %s -c "%s -c %s"' % (
         C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
