@@ -104,6 +104,11 @@ def send_msg(channel, msg, server='localhost', port='6667',
         'yellow': "08",
         'blue': "12",
     }
+    try:
+        channel, chanpasswd = channel.split()
+        chanpasswd = ''.join(chanpasswd)
+    except ValueError:
+        chanpasswd = ''
 
     try:
         colornumber = colornumbers[color]
@@ -133,7 +138,7 @@ def send_msg(channel, msg, server='localhost', port='6667',
             raise Exception('Timeout waiting for IRC server welcome response')
         sleep(0.5)
 
-    irc.send('JOIN %s\r\n' % channel)
+    irc.send('JOIN %s%s\r\n' % (channel, ' %s' % chanpasswd if chanpasswd else ''))
     join = ''
     start = time.time()
     while 1:
