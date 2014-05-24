@@ -1,0 +1,59 @@
+#!/usr/bin/python
+from azure.servicemanagement import *
+from ansible.module_utils.azure import *
+
+import json
+
+
+def get_locations(module):
+    sms = Azure.get_sms(module)
+    locations = {}
+    for location in sms.list_locations():
+        locations[location.name] = {
+            "location_name" : location.name,
+            "location_display_name" : location.display_name,
+            "location_services" : location.available_services
+        }
+    return locations
+
+def create_vm(module):
+    name = 'myvm'
+    location = 'West Europe'
+    sms = Azure.get_sms(module)
+    # You can either set the location or an affinity_group
+    sms.create_hosted_service(service_name=name,
+        label=name,
+        location=location)
+
+    # Name of an os image as returned by list_os_images
+    image_name = 'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd'
+
+    # Destination storage account container/blob where the VM disk
+    # will be created
+    media_link = 'url_to_target_storage_blob_for_vm_hd'
+
+    # Linux VM configuration, you can use WindowsConfigurationSet
+    # for a Windows VM instead
+    linux_config = LinuxConfigurationSet('myhostname', 'myuser', 'mypassword', True)
+
+    os_hd = OSVirtualHardDisk(image_name, media_link)
+
+    sms.create_virtual_machine_deployment(service_name=name,
+        deployment_name=name,
+        deployment_slot='production',
+        label=name,
+        role_name=name,
+        system_config=linux_config,
+        os_virtual_hard_disk=os_hd,
+        role_size='Small')
+
+def main():
+    module = AnsibleModule(argument_spec=azure_common_argument_spec())
+
+
+    module.exit_json(msg="Create VM complete", vm=create_vm(module))
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()

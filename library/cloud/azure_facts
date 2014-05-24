@@ -1,0 +1,42 @@
+#!/usr/bin/python
+from azure.servicemanagement import *
+from ansible.module_utils.azure import *
+
+import json
+
+
+def get_locations(module):
+    sms = Azure.get_sms(module)
+    locations = {}
+    for location in sms.list_locations():
+        locations[location.name] = {
+            "location_name" : location.name,
+            "location_display_name" : location.display_name,
+            "location_services" : location.available_services
+        }
+    return locations
+
+def get_hosted_services(module):
+  sms = Azure.get_sms(module)
+  services = {}
+  for service in sms.list_hosted_services():
+      services[service.service_name] = {
+          "service_name" : service.service_name,
+          "service_management_url" : service.url,
+          "service_affinity_group" : service.hosted_service_properties.affinity_group,
+          "service_affinity_group" : service.hosted_service_properties.location
+      }
+  return services
+
+
+def main():
+    module=AnsibleModule(argument_spec=azure_common_argument_spec())
+
+    facts=dict(locations=get_locations(module), hosted_services=get_hosted_services(module))
+
+    module.exit_json(msg="Facts complete", facts=facts)
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
