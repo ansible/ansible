@@ -162,6 +162,8 @@ def target_loggedon(module, target):
     
     if rc == 0:
         return target in out
+    elif rc == 21:
+        return False
     else:
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
