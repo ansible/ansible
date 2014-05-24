@@ -44,6 +44,7 @@ options:
       - The AMI unique identifier to be used for the group
     required: false
   instance_monitoring:
+    version_added: "1.7"
     description:
       - Whether instances in group are launched with detailed monitoring
     required: false
@@ -82,6 +83,14 @@ EXAMPLES = '''
     key_name: default
     security_groups: 'group,group2'
     instance_type: t1.micro
+
+- ec2_lc:
+    name: detailed_monitoring
+    image_id: ami-XXX
+    key_name: default
+    security_groups: 'group,group2'
+    instance_type: t1.micro
+    instance_monitoring: True
 
 '''
 
