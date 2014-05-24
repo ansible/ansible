@@ -175,7 +175,7 @@ options:
   instance_ids:
     version_added: "1.3"
     description:
-      - list of instance ids, currently used for states: absent, running, stopped
+      - list of instance ids, currently used for the states 'absent', 'running', and 'stopped'
     required: false
     default: null
     aliases: []
