@@ -7,32 +7,27 @@ import json
 
 def get_locations(module):
     sms = Azure.get_sms(module)
-    locations = {}
-    for location in sms.list_locations():
-        locations[location.name] = {
-            "location_name" : location.name,
-            "location_display_name" : location.display_name,
-            "location_services" : location.available_services
-        }
-    return locations
+    return azure_props_to_dict(sms.list_locations())
 
-def get_hosted_services(module):
+def get_cloud_services(module):
   sms = Azure.get_sms(module)
-  services = {}
-  for service in sms.list_hosted_services():
-      services[service.service_name] = {
-          "service_name" : service.service_name,
-          "service_management_url" : service.url,
-          "service_affinity_group" : service.hosted_service_properties.affinity_group,
-          "service_affinity_group" : service.hosted_service_properties.location
-      }
-  return services
+  return azure_props_to_dict(sms.list_hosted_services())
 
+def list_images(module):
+    sms = Azure.get_sms(module)
+    return azure_props_to_dict(sms.list_os_images())
+
+def list_storage_accounts(module):
+    sms = Azure.get_sms(module)
+    return azure_props_to_dict(sms.list_storage_accounts())
 
 def main():
     module=AnsibleModule(argument_spec=azure_common_argument_spec())
 
-    facts=dict(locations=get_locations(module), hosted_services=get_hosted_services(module))
+    facts=dict(azure_images=list_images(module),
+                locations=get_locations(module),
+                cloud_services=get_cloud_services(module),
+                storage_accounts=list_storage_accounts(module))
 
     module.exit_json(msg="Facts complete", facts=facts)
 

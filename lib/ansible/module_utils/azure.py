@@ -1,5 +1,5 @@
 from os import *
-
+import json
 from azure.servicemanagement import *
 
 
@@ -10,6 +10,12 @@ def azure_common_argument_spec():
         management_endpoint=dict(aliases=['MANAGEMENT_ENDPOINT'], type='str'),
         )
     return spec
+
+def azure_props(x):
+    return dict((key, getattr(x, key)) for key in dir(x) if key not in dir(x.__class__))
+
+def azure_props_to_dict(x):
+    return json.loads(json.dumps(x, default=lambda o: o.__dict__))
 
 class Azure():
     '''

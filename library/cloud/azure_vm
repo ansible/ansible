@@ -1,7 +1,8 @@
 #!/usr/bin/python
 from azure.servicemanagement import *
 from ansible.module_utils.azure import *
-
+from azure import BLOB_SERVICE_HOST_BASE
+from azure import WindowsAzureError
 import json
 
 
@@ -17,28 +18,37 @@ def get_locations(module):
     return locations
 
 def create_vm(module):
-    name = 'myvm'
     location = 'West Europe'
     sms = Azure.get_sms(module)
-    # You can either set the location or an affinity_group
-    sms.create_hosted_service(service_name=name,
-        label=name,
-        location=location)
+    name=module.params.get('name')
+    image_name = module.params.get('image_name')
+    storage_name = module.params.get('storage_name')
+    cloud_service_name = name #module.params.get('cloud_service_name')
 
-    # Name of an os image as returned by list_os_images
-    image_name = 'OpenLogic__OpenLogic-CentOS-62-20120531-en-us-30GB.vhd'
+    container_name = module.params.get('container_name')
+    if not container_name:
+        container_name = name
+    blob_name = module.params.get('blob_name')
+    if not blob_name:
+        blob_name = "os"
+
+    sms.create_hosted_service(service_name=name, label=name, location=location)
+
 
     # Destination storage account container/blob where the VM disk
     # will be created
-    media_link = 'url_to_target_storage_blob_for_vm_hd'
+    media_link = "http://{storage_name}.{blob_service_host_base}/{container}/{blob}.vhd".format(
+        storage_name=storage_name,
+        blob_service_host_base=BLOB_SERVICE_HOST_BASE,
+        container=container_name,
+        blob="os").lower().replace("_", "-").replace("--", "-")
 
     # Linux VM configuration, you can use WindowsConfigurationSet
     # for a Windows VM instead
-    linux_config = LinuxConfigurationSet('myhostname', 'myuser', 'mypassword', True)
+    linux_config = LinuxConfigurationSet('myhostname', 'myuser', 'on8heads.#', True)
 
     os_hd = OSVirtualHardDisk(image_name, media_link)
-
-    sms.create_virtual_machine_deployment(service_name=name,
+    vm = sms.create_virtual_machine_deployment(service_name=cloud_service_name,
         deployment_name=name,
         deployment_slot='production',
         label=name,
@@ -47,11 +57,25 @@ def create_vm(module):
         os_virtual_hard_disk=os_hd,
         role_size='Small')
 
+    props = sms.get_deployment_by_name(cloud_service_name, name)
+    module.exit_json(msg="Create VM complete", vm=azure_props_to_dict(props), id=azure_props_to_dict(vm))
+
 def main():
-    module = AnsibleModule(argument_spec=azure_common_argument_spec())
+    argument_spec = azure_common_argument_spec()
+    argument_spec.update(dict(
+        name=dict(aliases=['NAME'], type='str'),
+        image_name = dict(aliases=['IMAGE_NAME'], type='str'),
+        container_name = dict(aliases=['CONTAINER_NAME'], type='str'),
+        blob_name = dict(aliases=['BLOB_NAME'], type='str'),
+        storage_name = dict(aliases=['STORAGE_NAME'], type='str'),
+        cloud_service_name = dict(aliases=['CLOUD_SERVICE_NAME'], type='str')))
 
+    module = AnsibleModule(argument_spec=argument_spec)
 
-    module.exit_json(msg="Create VM complete", vm=create_vm(module))
+    try:
+        create_vm(module)
+    except WindowsAzureError as e:
+        module.fail_json(msg=str(e))
 
 # import module snippets
 from ansible.module_utils.basic import *
