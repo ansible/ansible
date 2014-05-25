@@ -189,7 +189,7 @@ def main():
 
     elif state in ['link','hard']:
 
-        if os.path.is_dir(path): 
+        if os.path.isdir(path):
             relpath = path
         else:
             relpath = os.path.dirname(path)
