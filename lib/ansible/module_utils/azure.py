@@ -17,6 +17,12 @@ def azure_props(x):
 def azure_props_to_dict(x):
     return json.loads(json.dumps(x, default=lambda o: o.__dict__))
 
+def create_azure_conform_name(name):
+    if name:
+      return name.lower().replace("_", "-").replace("--", "-")
+    else:
+      return name
+
 class Azure():
     '''
     To use azure from ansible you need at least:

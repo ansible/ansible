@@ -5,31 +5,38 @@ from azure import BLOB_SERVICE_HOST_BASE
 from azure import WindowsAzureError
 import json
 
+from ansible.utils import display_functions
+from ansible.callbacks import display
 from ansible.callbacks import vv, vvv
 
-def get_locations(module):
-    sms = Azure.get_sms(module)
-    locations = {}
-    for location in sms.list_locations():
-        locations[location.name] = {
-            "location_name" : location.name,
-            "location_display_name" : location.display_name,
-            "location_services" : location.available_services
-        }
-    return locations
+
+def _create_media_link(storage_name, container_name, blob_name):
+  return create_azure_conform_name("http://{storage_name}{blob_service_host_base}/{container}/{blob}.vhd".format(
+      storage_name=storage_name,
+      blob_service_host_base=BLOB_SERVICE_HOST_BASE,
+      container=container_name,
+      blob=blob_name))
+
+def _log(msg):
+    display(msg)
+
+def _create_cloud_service(name):
+    _log("* Cloud service not passed as an argument, creating one based on given name: " + cloud_service_name)
+    try:
+      sms.create_hosted_service(service_name=cloud_service_name, label=name, location=location)
+    except:
 
 def create_vm(module):
     location = 'West Europe'
     sms = Azure.get_sms(module)
-    name=module.params.get('name')
+    name=create_azure_conform_name(module.params.get('name'))
     image_name = module.params.get('image_name')
     storage_name = module.params.get('storage_name')
 
-    cloud_service_name = module.params.get('cloud_service_name')
+    cloud_service_name = create_azure_conform_name(module.params.get('cloud_service_name'))
     if not cloud_service_name:
         cloud_service_name = name
-        vv("Cloud service not passed as an arguement, creating one based on name: " + name)
-        sms.create_hosted_service(service_name=name, label=name, location=location)
+        _create_cloud_service(cloud_service_name)
 
 
     container_name = module.params.get('container_name')
@@ -40,23 +47,18 @@ def create_vm(module):
     if not blob_name:
         blob_name = "os"
 
-    sms.create_hosted_service(service_name=name, label=name, location=location)
-
-
     # Destination storage account container/blob where the VM disk
     # will be created
-    media_link = "http://{storage_name}{blob_service_host_base}/{container}/{blob}.vhd".format(
-        storage_name=storage_name,
-        blob_service_host_base=BLOB_SERVICE_HOST_BASE,
-        container=container_name,
-        blob="os").lower().replace("_", "-").replace("--", "-")
+    media_link = _create_media_link(storage_name, container_name, blob_name)
+
+    _log("* Using media link: " + media_link)
 
     # Linux VM configuration, you can use WindowsConfigurationSet
     # for a Windows VM instead
     linux_config = LinuxConfigurationSet('myhostname', 'myuser', 'on8heads.#', True)
 
     os_hd = OSVirtualHardDisk(image_name, media_link)
-    vv("Created os_hd: " + azure_props_to_dict(os_hd))
+    _log("* Created os_hd: " + str(azure_props_to_dict(os_hd)))
 
     vm = sms.create_virtual_machine_deployment(service_name=cloud_service_name,
         deployment_name=name,
