@@ -1,27 +1,29 @@
-from os import *
 import json
-from azure.servicemanagement import *
 
+from azure.servicemanagement import *
+import os
 
 def azure_common_argument_spec():
     return dict(
         certificate_path=dict(aliases=['CERTIFICATE_PATH'], type='str'),
         subscription_id=dict(aliases=['SUBSCRIPTION_ID'], no_log=True, type='str'),
-        management_endpoint=dict(aliases=['MANAGEMENT_ENDPOINT'], type='str'),
-        )
-    return spec
+        management_endpoint=dict(aliases=['MANAGEMENT_ENDPOINT'], type='str'))
+
 
 def azure_props(x):
     return dict((key, getattr(x, key)) for key in dir(x) if key not in dir(x.__class__))
 
+
 def azure_props_to_dict(x):
     return json.loads(json.dumps(x, default=lambda o: o.__dict__))
 
+
 def create_azure_conform_name(name):
     if name:
-      return name.lower().replace("_", "-").replace("--", "-")
+        return name.lower().replace("_", "-").replace("--", "-")
     else:
-      return name
+        return name
+
 
 class Azure():
     '''
@@ -30,7 +32,7 @@ class Azure():
     * working pem/cer pair (https://github.com/Azure/azure-sdk-for-python)
     * azure python sdk (pip install azure)
     '''
-    AZURE_MANAGEMENT_ENDPOINT='https://management.core.windows.net'
+    AZURE_MANAGEMENT_ENDPOINT = 'https://management.core.windows.net'
 
     @staticmethod
     def get_sms(module):
@@ -47,7 +49,6 @@ class Azure():
             if 'AZURE_SUBSCRIPTION_ID' in os.environ:
                 subscription_id = os.environ['AZURE_SUBSCRIPTION_ID']
 
-
         if not certificate_path:
             if 'AZURE_MANAGEMENT_CERTIFICATE' in os.environ:
                 certificate_path = os.environ['AZURE_MANAGEMENT_CERTIFICATE']
@@ -58,10 +59,9 @@ class Azure():
             else:
                 management_endpoint = Azure.AZURE_MANAGEMENT_ENDPOINT
 
-
         facts = dict(certificate_path=certificate_path,
-                        subscription_id=subscription_id,
-                        management_endpoint=management_endpoint)
+                     subscription_id=subscription_id,
+                     management_endpoint=management_endpoint)
 
         return facts
 
