@@ -61,6 +61,10 @@ options:
     required: false
     default: 'yes'
     choices: [ 'yes', 'no' ]
+  spot_price:
+    description:
+      - Bidding price for spot instances
+    required: false
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -137,6 +141,7 @@ def create_launch_config(connection, module):
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
     instance_monitoring = module.params.get('instance_monitoring')
+    spot_price = module.params.get('spot_price')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -157,6 +162,7 @@ def create_launch_config(connection, module):
         block_device_mappings=[bdm],
         instance_type=instance_type,
         instance_monitoring=instance_monitoring,
+        spot_price=spot_price,
     )
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
@@ -173,7 +179,7 @@ def create_launch_config(connection, module):
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
                      security_groups=result.security_groups, instance_type=instance_type,
-                     instance_monitoring=instance_monitoring)
+                     instance_monitoring=instance_monitoring, spot_price=spot_price)
 
 
 def delete_launch_config(connection, module):
@@ -198,6 +204,7 @@ def main():
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
             instance_monitoring=dict(default='yes', type='bool'),
+            spot_price=dict(type='float'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
