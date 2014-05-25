@@ -5,6 +5,7 @@ from azure import BLOB_SERVICE_HOST_BASE
 from azure import WindowsAzureError
 import json
 
+from ansible.callbacks import vv, vvv
 
 def get_locations(module):
     sms = Azure.get_sms(module)
@@ -23,11 +24,18 @@ def create_vm(module):
     name=module.params.get('name')
     image_name = module.params.get('image_name')
     storage_name = module.params.get('storage_name')
-    cloud_service_name = name #module.params.get('cloud_service_name')
+
+    cloud_service_name = module.params.get('cloud_service_name')
+    if not cloud_service_name:
+        cloud_service_name = name
+        vv("Cloud service not passed as an arguement, creating one based on name: " + name)
+        sms.create_hosted_service(service_name=name, label=name, location=location)
+
 
     container_name = module.params.get('container_name')
     if not container_name:
         container_name = name
+
     blob_name = module.params.get('blob_name')
     if not blob_name:
         blob_name = "os"
@@ -37,7 +45,7 @@ def create_vm(module):
 
     # Destination storage account container/blob where the VM disk
     # will be created
-    media_link = "http://{storage_name}.{blob_service_host_base}/{container}/{blob}.vhd".format(
+    media_link = "http://{storage_name}{blob_service_host_base}/{container}/{blob}.vhd".format(
         storage_name=storage_name,
         blob_service_host_base=BLOB_SERVICE_HOST_BASE,
         container=container_name,
@@ -48,6 +56,8 @@ def create_vm(module):
     linux_config = LinuxConfigurationSet('myhostname', 'myuser', 'on8heads.#', True)
 
     os_hd = OSVirtualHardDisk(image_name, media_link)
+    vv("Created os_hd: " + azure_props_to_dict(os_hd))
+
     vm = sms.create_virtual_machine_deployment(service_name=cloud_service_name,
         deployment_name=name,
         deployment_slot='production',
