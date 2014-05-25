@@ -167,7 +167,7 @@ def write_changes(module,lines,dest):
 def check_file_attrs(module, changed, message):
 
     file_args = module.load_file_common_arguments(module.params)
-    if module.set_file_attributes_if_different(file_args, False):
+    if module.set_fs_attributes_if_different(file_args, False):
 
         if changed:
             message += " and "
