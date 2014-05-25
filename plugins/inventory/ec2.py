@@ -211,6 +211,20 @@ class Ec2Inventory(object):
         else:
             self.regions = configRegions.split(",")
 
+        # Filters
+        self.host_filter = None
+        if config.has_option('ec2', 'host_filter'):
+            configFilter = config.get('ec2', 'host_filter')
+            if configFilter:
+                var, delim, value = configFilter.partition('=')
+                # No = sign, just check for presence of variable
+                if not delim:
+                    value = None
+                # Value was given
+                else:
+                    value = value.strip()
+                self.host_filter = (var.strip(), value)
+
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
@@ -330,6 +344,16 @@ class Ec2Inventory(object):
         if instance.state != 'running':
             return
 
+        instance_vars = self.get_host_info_dict_from_instance(instance)
+
+        # Filter instances based on hostvars
+        if self.host_filter:
+            var, value = self.host_filter
+            if var not in instance_vars:
+                return
+            if value is not None and instance_vars.get(var) != value:
+                return
+
         # Select the best destination address
         if instance.subnet_id:
             dest = getattr(instance, self.vpc_destination_variable)
@@ -383,7 +407,7 @@ class Ec2Inventory(object):
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
 
-        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
+        self.inventory["_meta"]["hostvars"][dest] = instance_vars
 
 
     def add_rds_instance(self, instance, region):
