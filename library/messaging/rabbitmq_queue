@@ -1,0 +1,234 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rabbitmq_queue
+short_description: Adds or removes queues to RabbitMQ
+description:
+  - Add or remove queues to/from the RabbitMQ server using the HTTP api provided by the management plugin.
+version_added: "1.0"
+author: Jaco Nel
+options:
+  host:
+    description:
+      - The RabbitMQ management api endpoint
+    required: true
+    default: null
+    aliases: ["api", "url"]
+  user:
+    description:
+      - The username to use for basic authentication with the RabbitMQ server.
+    required: true
+    default: null
+    aliases: ["username"]
+  password:
+    description:
+      - Password of the user to use for basic authentication against the RabbitMQ server.
+    required: true
+    default: null
+  queue:
+    description:
+      - The name of the queue to be created or deleted.
+    required: true
+    default: null
+  node:
+    description:
+      - The node on which to add the queue if running in a cluster
+    required: false
+    default: null
+  vhost:
+    description:
+      - Vhost to create queue under.
+    required: false
+    default: "/"
+  auto_delete:
+    description:
+      - Whether to delete the queue when no more consumers are attached to the queue
+    require: false
+    default: "no"
+    choices: ["yes", "no"]
+  durable:
+    description:
+      - Marks the queue as durable
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+  arguments:
+    description:
+      - Additional arguments to use when creating the queue. This parameter accepts a json object string. 
+    requireL: False
+    default: null
+  force:
+    description:
+      - Deletes and recreates the queue.
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+  state:
+    description:
+      - Specify if queue is to be added or removed
+    required: false
+    default: present
+    choices: ["present", "absent"]
+'''
+
+EXAMPLES = '''
+# Add queue to server
+- rabbitmq_queue: host='http://localhost:15672/api'
+                  user=guest
+                  password=guest
+                  vhost=/
+                  queue=test_queue
+                  arguments='{"x-dead-letter-exchange": "dead"}'
+
+# Remove queue from server
+- rabbitmq_queue: user=guest
+                  password=guest
+                  vhost=/
+                  queue=test_queue
+'''
+
+from urllib import quote_plus
+
+import base64
+import httplib2
+import json
+
+class RabbitMqQueue(object):
+    def __init__(self, module, host, port, ssl, username, password, vhost, name, auto_delete, durable, node, arguments):
+        self.module      = module
+        self.host        = host
+        self.port        = port
+        self.ssl         = ssl
+        self.username    = username
+        self.password    = password
+        self.vhost       = vhost
+        self.name        = name
+        self.auto_delete = auto_delete
+        self.durable     = durable
+        self.node        = node
+        self.arguments   = arguments
+
+    def _exec(self, **kwargs):
+        """Executes are request to the RabbitMQ Management API"""
+        url = 'https' if self.ssl else 'http' + '://' + self.host + ':' + str(self.port) + '/api/queues/' + quote_plus(self.vhost) + '/' + self.name
+
+        auth = base64.encodestring(self.username + ':' + self.password)
+        headers = {'Content-type': 'application/json', 'Authorization': 'Basic ' + auth}
+        http = httplib2.Http(disable_ssl_certificate_validation=True)
+        headers, content = http.request(url, kwargs['method'], body=json.dumps(kwargs['body']), headers=headers)
+
+        if headers['status'] == '401':
+            module.fail_json(msg='API authentication failed. Possibly invalid username or password.')
+
+        return headers['status'], content
+
+    def get(self):
+        """Retrieves the details about a specific queue using the RabbitMQ Management API"""
+        request = dict(method = 'GET', body = None)
+        return self._exec(**request)
+
+    def add(self):
+        request = dict(
+            method = 'PUT',
+            body = {
+                'auto_delete': self.auto_delete,
+                'durable': self.durable,
+            }
+        )
+
+        if self.node is not None:
+            request['body']['node'] = self.node
+
+        if self.arguments is not None:
+            request['body']['arguments'] = self.arguments
+
+        return self._exec(**request)
+
+    def delete(self):
+        """Deletes the given queue from RabbitMQ using the Management API"""
+        request = dict( 
+            method = 'DELETE',
+            vhost = self.vhost,
+            name = self.name,
+            body = None
+        )
+
+        return self._exec(**request)
+
+def main():
+    arg_spec = dict(
+        host = dict(required = False, aliases = ['host', 'url'], default = 'localhost'),
+        port = dict(required = False, default = 15672),
+        ssl = dict(required = False, default = False),
+        user = dict(required = True, aliases = ['username']),
+        password = dict(required = True, aliases = ['pwd']),
+        vhost = dict(default = '/'),
+        queue = dict(required = True, default = None, aliases = ['name']),
+        auto_delete = dict(default = 'no', type = 'bool'),
+        durable = dict(default = 'yes', type = 'bool'),
+        node = dict(default = None),
+        arguments = dict(default = None),
+        force = dict(default = 'no', type = 'bool'),
+        state = dict(default = 'present', choices = ['present', 'absent']))
+
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    host        = module.params['host']
+    port        = module.params['port']
+    ssl         = module.params['ssl']
+    username    = module.params['user']
+    password    = module.params['password']
+    vhost       = module.params['vhost']
+    queue       = module.params['queue']
+    auto_delete = module.params['auto_delete']
+    durable     = module.params['durable']
+    node        = module.params['node']
+    arguments   = module.params['arguments']
+    force       = module.params['force']
+    state       = module.params['state']
+    if arguments is not None:
+        arguments = json.loads(arguments)
+   
+    rabbitmq_queue = RabbitMqQueue(module, host, port, ssl, username, password, vhost, queue, auto_delete, durable, node, arguments)
+
+    changed = False
+    response = rabbitmq_queue.get()
+    if response[0] != '404':
+        if state == 'absent':
+            if not module.check_mode:
+                rabbitmq_queue.delete()
+            changed = True
+        else:
+            if force:
+                if not module.check_mode:
+                    rabbitmq_queue.delete()
+                    rabbitmq_queue.add()
+                changed = True
+
+    elif state == 'present':
+        if not module.check_mode:
+            rabbitmq_queue.add()
+        changed = True
+
+    module.exit_json(changed=changed, queue=queue, state=state)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
