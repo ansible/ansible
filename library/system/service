@@ -67,6 +67,16 @@ options:
         default: 'default'
         description:
         - "For OpenRC init scripts (ex: Gentoo) only.  The runlevel that this service belongs to."
+    keep_environment:
+        required: false
+        choices: ["yes", "no"]
+        default: "no"
+        description:
+        - On Linux, if the 'service' binary is installed, it is used by default
+          to control services by stripping all environmental variables except
+          TERM, PATH and LANG before calling the init scripts. Set this to "yes"
+          in order to control the service directly through its init.d script and
+          keep the environment untouched.
     arguments:
         description:
         - Additional arguments provided on the command line
@@ -126,26 +136,27 @@ class Service(object):
         return load_platform_subclass(Service, args, kwargs)
 
     def __init__(self, module):
-        self.module         = module
-        self.name           = module.params['name']
-        self.state          = module.params['state']
-        self.sleep          = module.params['sleep']
-        self.pattern        = module.params['pattern']
-        self.enable         = module.params['enabled']
-        self.runlevel       = module.params['runlevel']
-        self.changed        = False
-        self.running        = None
-        self.crashed        = None
-        self.action         = None
-        self.svc_cmd        = None
-        self.svc_initscript = None
-        self.svc_initctl    = None
-        self.enable_cmd     = None
-        self.arguments      = module.params.get('arguments', '')
-        self.rcconf_file    = None
-        self.rcconf_key     = None
-        self.rcconf_value   = None
-        self.svc_change     = False
+        self.module           = module
+        self.name             = module.params['name']
+        self.state            = module.params['state']
+        self.sleep            = module.params['sleep']
+        self.pattern          = module.params['pattern']
+        self.enable           = module.params['enabled']
+        self.runlevel         = module.params['runlevel']
+        self.keep_environment = module.params['keep_environment']
+        self.changed          = False
+        self.running          = None
+        self.crashed          = None
+        self.action           = None
+        self.svc_cmd          = None
+        self.svc_initscript   = None
+        self.svc_initctl      = None
+        self.enable_cmd       = None
+        self.arguments        = module.params.get('arguments', '')
+        self.rcconf_file      = None
+        self.rcconf_key       = None
+        self.rcconf_value     = None
+        self.svc_change       = False
 
         # select whether we dump additional debug info through syslog
         self.syslogging = False
@@ -453,7 +464,7 @@ class LinuxService(Service):
             self.enable_cmd = location['systemctl']
 
         # Locate a tool for runtime service management (start, stop etc.)
-        if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
+        if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name) and not self.keep_environment:
             # SysV init script
             self.svc_cmd = location['service']
         elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
@@ -1153,6 +1164,7 @@ def main():
             pattern = dict(required=False, default=None),
             enabled = dict(type='bool'),
             runlevel = dict(required=False, default='default'),
+            keep_environment = dict(type='bool', default='no'),
             arguments = dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True
