@@ -23,6 +23,7 @@ import types
 import pipes
 import glob
 import re
+import collections
 import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s
@@ -140,38 +141,38 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     return _re.sub(replacement, value)
 
 def unique(a):
-    try:
+    if isinstance(a,collections.Hashable):
         c = set(a)
-    except TypeError, e:
+    else:
         c = []
         c = filter(lambda x: x not in c, a)
     return c
 
 def intersect(a, b):
-    try:
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
         c = set(a) & set(b)
-    except TypeError, e:
+    else:
         c = filter(lambda x: x in b, a)
     return c
 
 def difference(a, b):
-    try:
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
         c = set(a) - set(b)
-    except TypeError, e:
+    else:
         c = filter(lambda x: x not in b, a)
     return c
 
 def symmetric_difference(a, b):
-    try:
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
         c = set(a) ^ set(b)
-    except TypeError, e:
+    else:
         c = filter(lambda x: x not in intersect(a,b), union(a,b))
     return c
 
 def union(a, b):
-    try:
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
         c = set(a) | set(b)
-    except TypeError, e:
+    else:
         c = a + b
     return c
 
