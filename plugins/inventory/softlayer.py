@@ -55,14 +55,12 @@ class SoftLayerInventory(object):
             print self.json_format_dict(self.inventory["_meta"]["hostvars"][self.args.host], True)
 
     def to_safe(self, word):
-        ''' Converts 'bad' characters in a string to underscores so they can be
-        used as Ansible groups '''
+        '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups'''
 
         return re.sub("[^A-Za-z0-9\-\.]", "_", word)
 
     def push(self, my_dict, key, element):
-        ''' Pushed an element onto an array that may not have been defined in
-        the dict '''
+        '''Push an element onto an array that may not have been defined in the dict'''
 
         if key in my_dict:
             my_dict[key].append(element);
@@ -80,8 +78,7 @@ class SoftLayerInventory(object):
         self.args = parser.parse_args()
 
     def json_format_dict(self, data, pretty=False):
-        ''' Converts a dict to a JSON object and dumps it as a formatted
-        string '''
+        '''Converts a dict to a JSON object and dumps it as a formatted string'''
 
         if pretty:
             return json.dumps(data, sort_keys=True, indent=2)
