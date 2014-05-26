@@ -501,7 +501,6 @@ Note: The error may actually appear before this position: line %s, column %s
                 if '"{{' not in probline or "'{{" not in probline:
                     unquoted_var = True
 
-            msg = process_common_errors(msg, probline, mark.column)
             if not unquoted_var:
                 msg = process_common_errors(msg, probline, mark.column)
             else:
@@ -519,7 +518,6 @@ Should be written as:
       - "{{ foo }}"      
 
 """
-                msg = process_common_errors(msg, probline, mark.column)
         else:
             # most likely displaying a file with sensitive content,
             # so don't show any of the actual lines of yaml just the
@@ -952,9 +950,9 @@ def make_su_cmd(su_user, executable, cmd):
     """
     # TODO: work on this function
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-    prompt = 'assword: '
+    prompt = '[Pp]assword: ?$'
     success_key = 'SUDO-SUCCESS-%s' % randbits
-    sudocmd = '%s %s %s %s -c %s' % (
+    sudocmd = '%s %s %s -c "%s -c %s"' % (
         C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
