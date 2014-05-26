@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import stat
 import array
 import errno
 import fcntl
@@ -173,7 +174,7 @@ class Facts(object):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact','')
-            if os.access(fn, os.X_OK):
+            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
                 # run it
                 # try to read it as json first
                 # if that fails read it with ConfigParser
