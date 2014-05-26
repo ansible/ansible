@@ -31,14 +31,14 @@ def create_cloud_service(module):
     props = module.params.get('props')
 
     sms = Azure.get_sms(module)
-
-    service_facts = get_cloud_service_facts(sms, name)
-    if service_facts is None:
+    cloud_service_name_available = sms.check_hosted_service_name_availability(name)
+    if cloud_service_name_available.result:
         sms.create_hosted_service(name, label, desc, location, affinity_group, props)
         service_facts = get_cloud_service_facts(sms, name)
         cloud_service=azure_props_to_dict(service_facts)
         module.exit_json(msg="Create cloud service complete", cloud_service=cloud_service)
     else:
+        service_facts = get_cloud_service_facts(sms, name)
         cloud_service=azure_props_to_dict(service_facts)
         module.fail_json(msg="Cloud service " + name + " already exists.", cloud_service=cloud_service)
 
