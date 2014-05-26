@@ -3,6 +3,13 @@
 SoftLayer external inventory script.
 
 The SoftLayer Python API client is required. Use `pip install softlayer` to install it.
+You have a few different options for configuring your username and api_key. You can pass 
+environment variables (SL_USERNAME and SL_API_KEY). You can also write INI file to
+~/.softlayer or /etc/softlayer.conf. For more information see the SL API at:
+- https://softlayer-python.readthedocs.org/en/latest/config_file.html
+
+The SoftLayer Python client has a built in command for saving this configuration file
+via the command `sl config setup`.
 """
 
 # Copyright (C) 2014  AJ Bourg <aj@ajbourg.com>
@@ -21,15 +28,12 @@ The SoftLayer Python API client is required. Use `pip install softlayer` to inst
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
-# Thanks to the vagrant.py inventory script for giving me the basic structure
-# of this.
+# I found the structure of the ec2.py script very helpful as an example
+# as I put this together. Thanks to whoever wrote that script!
 #
 
 import SoftLayer
-import sys
-import subprocess
 import re
-import string
 import argparse
 try:
     import json
