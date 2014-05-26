@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013-2014, Raphael Randschau <nicolai86@me.com>
-# Written by Matthew Williams <matthew@flowroute.com>
-# Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
-#
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: bundler
-short_description: Install Application Dependencies
+short_description: install ruby application dependencies
 version_added: "1.0"
 author: Raphael Randschau
 options:
@@ -42,20 +39,18 @@ options:
       - generate binstubs
     required: false
     default: no
-  gemfile:
+  gem_file:
     description:
       - Path of Gemfile to run against
     required: false
-    default: yes
   path:
     description:
       - Path to install dependencies into
     required: false
-author: Raphael Randschau
 '''
 
 EXAMPLES = '''
-# Installs application dependencies
+# installs application dependencies
 - bundle: path=shared/vendor deployment=yes
 '''
 
@@ -124,8 +119,8 @@ class BundlerModule(object):
         cmd = self.get_bundle_path() + ' install --without=deployment:test'
         if self.module.params.get('path', None):
             cmd = cmd + ' --path=' + self.module.params.get('path')
-        if self.module.params.get('gemfile', None):
-            cmd = cmd + ' --gemfile=' + self.module.params.get('gemfile')
+        if self.module.params.get('gem_file', None):
+            cmd = cmd + ' --gemfile=' + self.module.params.get('gem_file')
         if self.module.params.get('binstubs', None):
             cmd = cmd + ' --binstubs=bin/'
         if self.module.params.get('deployment', None):
@@ -140,7 +135,7 @@ def main():
         argument_spec = dict(
             path             = dict(required=True, type='str'),
             executable       = dict(required=False, type='str'),
-            gemfile          = dict(required=True, type='str'),
+            gem_file         = dict(required=True, type='str'),
             deployment       = dict(required=False, type='bool'),
             binstubs         = dict(required=False, type='bool'),
         ),
