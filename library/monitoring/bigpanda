@@ -44,11 +44,6 @@ options:
     description:
       - Free text description of the deployment.
     required: false
-  source:
-    description:
-      - The system that triggered the event.
-    required: false
-    default: 'ansible'
   url:
     description:
       - Base URL of the API server.
@@ -104,7 +99,7 @@ def main():
             owner=dict(required=False),
             description=dict(required=False),
             message=dict(required=False),
-            source=dict(required=False, default='ansible'),
+            source_system=dict(required=False, default='ansible'),
             validate_certs=dict(default='yes', type='bool'),
             url=dict(required=False, default='https://api.bigpanda.io'),
         ),
@@ -128,7 +123,7 @@ def main():
 
     # Insert state-specific attributes to body
     if state == 'started':
-        for k in ('source', 'env', 'owner', 'description'):
+        for k in ('source_system', 'env', 'owner', 'description'):
             v = module.params[k]
             if v is not None:
                 body[k] = v
