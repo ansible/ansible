@@ -93,7 +93,7 @@ class Bower(object):
             if self.offline:
                 cmd.append('--offline')
 
-            #If path is specified, cd into that path and run the command.
+            # If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
                 if not os.path.exists(self.path):
@@ -123,7 +123,7 @@ class Bower(object):
                     outdated.append(dep)
                 else:
                     installed.append(dep)
-        #Named dependency not installed
+        # Named dependency not installed
         else:
             missing.append(self.name)
 
@@ -173,7 +173,7 @@ def main():
         if len(missing) or len(outdated):
             changed = True
             bower.update()
-    else: #absent
+    else:  # Absent
         installed, missing, outdated = bower.list()
         if name in installed:
             changed = True
@@ -181,6 +181,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
+# Import module snippets
 from ansible.module_utils.basic import *
 main()
