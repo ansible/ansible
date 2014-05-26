@@ -9,18 +9,23 @@ from ansible.utils import display_functions
 from ansible.callbacks import display
 from ansible.callbacks import vv, vvv
 
+import time
 
 class AzureVm:
-    def _wait_for_completion(self, promise, sms):
+
+    STARTING_SSH_PORT=60022
+
+    def _wait_for_completion(self, promise):
+        self._log("Waiting for operational state of vm.")
         if not promise: return
         count = 0
         while True:
             count += 1
             if count > 120:
                 raise TimeoutError('Timed out waiting for async operation to complete.')
-            time.sleep(5)
-            operation_result = sms.get_operation_status(promise.request_id)
+            operation_result = self.sms.get_operation_status(promise.request_id)
             self._log('* Starting vm: ' + operation_result.status)
+            time.sleep(5)
             if operation_result.status == "Succeeded":
                 return
 
@@ -37,175 +42,188 @@ class AzureVm:
         display(msg)
 
 
-    def _create_cloud_service(self, cloud_service_name, location, affinity_group):
-        self._log("* Trying to create cloud service for name: " + cloud_service_name)
-        if not (location or affinity_group):
+    def _create_cloud_service(self):
+        self._log("* Trying to create cloud service for name: " + self.cloud_service_name)
+        if not (self.location or self.affinity_group):
             locations = azure_props_to_dict(self.sms.list_locations())
             affinity_groups = azure_props_to_dict(self.sms.list_affinity_groups())
             self.module.fail_json(msg='location or affinity_group must be specified.', available_locations=locations,
                                   available_affinity_groups=affinity_groups)
 
-        cloud_service_name_available = self.sms.check_hosted_service_name_availability(cloud_service_name)
+        cloud_service_name_available = self.sms.check_hosted_service_name_availability(self.cloud_service_name)
         if cloud_service_name_available.result:
             self._log('* Cloud service name available. Creating it now.')
-            self.sms.create_hosted_service(service_name=cloud_service_name, label=cloud_service_name, location=location,
-                                           affinity_group=affinity_group)
+            self.sms.create_hosted_service(service_name=self.cloud_service_name, label=self.cloud_service_name, location=self.location,
+                                           affinity_group=self.affinity_group)
         else:
             self._log('* Cloud service exists. Using it.')
 
     def create_vm(self):
-        name = create_azure_conform_name(self.module.params.get('name'))
-        image_name = self.module.params.get('image_name')
-        role_size = self.module.params.get('role_size')
-        if not role_size or not role_size in ['ExtraSmall', 'Small', 'Medium', 'Large', 'ExtraLarge']:
-            self.module.fail_json(msg="Role size must be one of [ExtraSmall, Small, Medium, Large, ExtraLarge]")
-
-        storage_name = self.module.params.get('storage_name')
-        affinity_group = self.module.params.get('affinity_group')
-        location = self.module.params.get('location')
-        if location and affinity_group:
-            self.module.fail_json(msg="Use only one type of parameter (location) or (affinity_group).")
-
-        cloud_service_name = create_azure_conform_name(self.module.params.get('cloud_service_name'))
-        create_cloud_service = self.module.params.get('create_cloud_service')
-
-        if not cloud_service_name or create_cloud_service:
-            if not cloud_service_name:
-                cloud_service_name = name
-            self._create_cloud_service(cloud_service_name, location, affinity_group)
-        else:
-            cloud_service_names = map(lambda x: x.service_name, self.sms.list_hosted_services())
-            if not cloud_service_name in cloud_service_names:
-                self.module.fail_json(
-                    msg="The specified cloud service [" + cloud_service_name + "] is not one of the exising onse (" +
-                        str(cloud_service_names) + "). Change name or use parameter (create_cloud_service=true).")
-
-        container_name = self.module.params.get('container_name')
-        if not container_name:
-            container_name = name
-
-        blob_name = self.module.params.get('blob_name')
-        if not blob_name:
-            blob_name = name + "-os"
-
-        # Destination storage account container/blob where the VM disk
-        # will be created
-        media_link = self._create_media_link(storage_name, container_name, blob_name)
-
-        self._log("* Using media link: " + media_link)
-
-        # Linux VM configuration, you can use WindowsConfigurationSet
-        # for a Windows VM instead
-        linux_config = LinuxConfigurationSet('check', 'azureuser', 'on8heads.#', True)
-        self._log("* Using linux config: " + str(azure_props_to_dict(linux_config)))
-
-        os_hd = OSVirtualHardDisk(image_name, media_link)
-        self._log("* Created os_hd: " + str(azure_props_to_dict(os_hd)))
-
         network = ConfigurationSet()
-        network.input_endpoints.input_endpoints.append(ConfigurationSetInputEndpoint('ssh', 'tcp', '22', '22', name))
-        try:
-            result = self.sms.create_virtual_machine_deployment(service_name=cloud_service_name,
-                                                                deployment_name=name,
-                                                                deployment_slot='production',
-                                                                label=name,
-                                                                network_config=network,
-                                                                availability_set_name=name,
-                                                                role_name=name,
-                                                                system_config=linux_config,
-                                                                os_virtual_hard_disk=os_hd,
-                                                                role_size=role_size)
-        except Exception as e:
-            self._log('*  error ' + str(e))
-            # we'll use add role for this - as long as we have the correct deployment name this should work okay
-            result = self.sms.add_role(service_name=cloud_service_name,
-                                       deployment_name='matlockx-azure-vm',
-                                       role_name=name,
-                                       system_config=linux_config,
-                                       os_virtual_hard_disk=os_hd,
-                                       network_config=network)
+        network.input_endpoints.input_endpoints.append(ConfigurationSetInputEndpoint('ssh', 'tcp', '22', '22', self.role_name))
+        network.subnet_names.append('Subnet-1')
 
-        self._log('* Requested vm with RequestId: ' + str(result.request_id))
-        #_wait_for_completion(result, sms)
-        props = self.sms.get_deployment_by_name(cloud_service_name, name)
+        try:
+            result = self.sms.create_virtual_machine_deployment(service_name=self.cloud_service_name,
+                                                                deployment_name=self.deployment_name,
+                                                                deployment_slot='production',
+                                                                label=self.role_name,
+                                                                network_config=network,
+                                                                availability_set_name=self.role_name,
+                                                                role_name=self.role_name,
+                                                                system_config=self.linux_config,
+                                                                os_virtual_hard_disk=self.os_hd,
+                                                                role_size=self.role_size,
+                                                                virtual_network_name=self.virtual_network_name)
+            self._wait_for_completion(result)
+            props = self.sms.get_deployment_by_name(self.cloud_service_name, self.deployment_name)
+
+        except WindowsAzureConflictError as e:
+            props = self._add_role(0)
+
         self.module.exit_json(msg="Create VM complete", vm=azure_props_to_dict(props))
+
+    def _add_role(self, instance_number):
+        network = ConfigurationSet()
+        network.input_endpoints.input_endpoints.append(ConfigurationSetInputEndpoint(name='ssh_' + str(instance_number),
+                protocol='tcp',
+                port=str(self.STARTING_SSH_PORT + instance_number),
+                local_port='22',
+                load_balanced_endpoint_set_name=self.role_name))
+
+        result = self.sms.add_role(service_name=self.cloud_service_name,
+                                   deployment_name=self.deployment_name,
+                                   role_name=self.role_name,
+                                   system_config=self.linux_config,
+                                   os_virtual_hard_disk=self.os_hd,
+                                   network_config=network)
+
+        self._wait_for_completion(result)
+        return self.sms.get_role(self.cloud_service_name, self.deployment_name, self.role_name)
 
     def delete_vm(self):
         cloud_service_name = self.module.params.get('cloud_service_name')
-        name = self.module.params.get('name')
-        if not name or not cloud_service_name:
-            self.module.fail_json(msg='Params (cloud_service_name) and (name) must be defined.')
+        self.sms.delete_role(service_name=cloud_service_name, deployment_name=self.deployment_name, role_name=self.role_name)
 
-        self.sms.delete_deployment(service_name=cloud_service_name, deployment_name=name)
+    def delete_cloud_service(self):
+        self._log("Deleting cloud service " + self.cloud_service_name)
+        cloud_service=self.sms.get_hosted_service_properties(self.cloud_service_name, True)
+        for deployment in cloud_service.deployments:
+            self._log("Deleting deployment " + deployment.name)
+            #for role in deployment.role_list:
+            #    self._log("Deleting role " + role.role_name)
+            #    self.sms.delete_role(self.cloud_service_name, deployment.name, role.role_name)
+            self.sms.delete_deployment(service_name=self.cloud_service_name, deployment_name=deployment.name)
+
+        self.sms.delete_hosted_service(service_name=self.cloud_service_name)
+
+        self.module.exit_json(msg="Deleted cloud service " + self.cloud_service_name, changed=True)
 
     def __init__(self, module):
         self.sms = Azure.get_sms(module)
         self.module = module
         params = module.params
 
-        self.vm_name = create_azure_conform_name(params['vm_name'])
+        self.cloud_service_name = create_azure_conform_name(params['cloud_service_name'])
+        self.create_cloud_service = params['create_cloud_service']
+        self.role_name = create_azure_conform_name(params['role_name'])
         self.deployment_name = create_azure_conform_name(params['deployment_name'])
         self.image_name = params['image_name']
-        role_size = self.module.params.get('role_size')
-        if not role_size or not role_size in ['ExtraSmall', 'Small', 'Medium', 'Large', 'ExtraLarge']:
+        self.role_size = params['role_size']
+        self.cluster_size = params['cluster_size']
+        self.storage_name = params['storage_name']
+        self.affinity_group = params['affinity_group']
+        self.location = params['location']
+        self.container_name = params['container_name']
+        self.blob_name = params['blob_name']
+        self.host_name = params['host_name']
+        self.user_name = params['user_name']
+        self.password = params['password']
+        self.virtual_network_name = params['virtual_network_name']
+
+        #if location and affinity_group:
+        #    self.module.fail_json(msg="Use only one type of parameter (location) or (affinity_group).")
+
+        if not self.role_size or not self.role_size in ['ExtraSmall', 'Small', 'Medium', 'Large', 'ExtraLarge']:
             self.module.fail_json(msg="Role size must be one of [ExtraSmall, Small, Medium, Large, ExtraLarge]")
 
-        storage_name = self.module.params.get('storage_name')
-        affinity_group = self.module.params.get('affinity_group')
-        location = self.module.params.get('location')
-        if location and affinity_group:
-            self.module.fail_json(msg="Use only one type of parameter (location) or (affinity_group).")
-
-        cloud_service_name = create_azure_conform_name(self.module.params.get('cloud_service_name'))
-        create_cloud_service = self.module.params.get('create_cloud_service')
-
-        if not cloud_service_name or create_cloud_service:
-            if not cloud_service_name:
-                cloud_service_name = name
-            self._create_cloud_service(cloud_service_name, location, affinity_group)
+        if not self.cloud_service_name or self.create_cloud_service:
+            if not self.cloud_service_name:
+                self.cloud_service_name = self.role_name
+            self._create_cloud_service()
         else:
             cloud_service_names = map(lambda x: x.service_name, self.sms.list_hosted_services())
-            if not cloud_service_name in cloud_service_names:
+            if not self.cloud_service_name in cloud_service_names:
                 self.module.fail_json(
-                    msg="The specified cloud service [" + cloud_service_name + "] is not one of the exising onse (" +
+                    msg="The specified cloud service [" + self.cloud_service_name + "] is not one of the exising onse (" +
                         str(cloud_service_names) + "). Change name or use parameter (create_cloud_service=true).")
 
-        container_name = self.module.params.get('container_name')
-        if not container_name:
-            container_name = name
+        if not self.container_name:
+            self.container_name = self.role_name
 
-        blob_name = self.module.params.get('blob_name')
-        if not blob_name:
-            blob_name = name + "-os"
+        if not self.blob_name:
+            self.blob_name = "os-"+ str(self.role_name)
+
+        if not self.host_name:
+            self.host_name = self.role_name
+
+        self.media_link = self._create_media_link(self.storage_name, self.container_name, self.blob_name)
+        self._log("* Using media_link: " + str(self.media_link))
+
+        self.linux_config = LinuxConfigurationSet(self.host_name, self.user_name, self.password, True)
+        self._log("* Using linux config: " + str(azure_props_to_dict(self.linux_config)))
+
+        self.os_hd = OSVirtualHardDisk(self.image_name, self.media_link)
+        self._log("* Using os_hd: " + str(azure_props_to_dict(self.os_hd)))
+
+
+        self._log("Using params: "+ str(params))
+
+
 
 
 def main():
     argument_spec = azure_common_argument_spec()
     argument_spec.update(dict(
-        vm_name=dict(aliases=['VM_NAME'], type='str'),
-        deployment_name=dict(aliases=['DEPLOYMENT_NAME'], type='str'),
-        image_name=dict(aliases=['IMAGE_NAME'], type='str'),
-        storage_name=dict(aliases=['STORAGE_NAME'], type='str'),
-        role_size=dict(aliases=['ROLE_SIZE'], type='str', default='Small'),
-        state=dict(aliases=['STATE'], type='str', default='present'),
-        cloud_service_name=dict(aliases=['CLOUD_SERVICE_NAME'], type='str'),
-        location=dict(aliases=['LOCATION'], type='str', default=None),
-        affinity_group=dict(aliases=['AFFINITY_GROUP'], type='str', default=None),
-        blob_name=dict(aliases=['BLOB_NAME'], type='str'),
-        container_name=dict(aliases=['CONTAINER_NAME'], type='str'),
-        create_cloud_service=dict(aliases=['CREATE_CLOUD_SERVICE'], type='bool', default=False)))
+        role_name=dict(required=False, type='str'),
+        deployment_name=dict(required=False, type='str'),
+        image_name=dict(required=False, type='str'),
+        storage_name=dict(required=False, type='str'),
+        cloud_service_name=dict(required=True, type='str'),
+        state=dict(default='present', choices=['present', 'absent', 'cluster', 'absent_cloud_service']),
+        cluster_size=dict(required=False, type='int'),
+        role_size=dict(required=False, type='str', default='Small'),
+        virtual_network_name=dict(required=False, type='str'),
+        location=dict(required=False, type='str', default=None),
+        affinity_group=dict(required=False, type='str', default=None),
+        blob_name=dict(required=False, type='str'),
+        container_name=dict(required=False, type='str'),
+        create_cloud_service=dict(required=False, choices=BOOLEANS,default=False),
+        host_name=dict(required=False, type='str'),
+        user_name=dict(required=False, type='str', default='azureuser'),
+        password=dict(required=False, type='str', default='letMeIn!'),))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            #required_together = (['subscription_id', 'certificate_path', 'username', 'password'],),
-                           mutually_exclusive = (['location', 'affinity_group']),)
+                           mutually_exclusive = (['location', 'affinity_group']))
     azure_vm = AzureVm(module)
-    state = module.params.get('state')
-
+    state = module.params['state']
     try:
         if state == 'present':
             azure_vm.create_vm()
+        elif state == 'absent_cloud_service':
+            azure_vm.delete_cloud_service()
         elif state == 'absent':
             azure_vm.delete_vm()
+        elif state == 'cluster':
+            cluser_size = module.params['cluster_size']
+            if not cluser_size:
+                module.fail_json(msg="Cluster size is required.")
+
+            azure_vm.create_vm()
+            for cluster_num in cluser_size:
+                azure_vm._add_role(cluster_num)
+
     except WindowsAzureError as e:
         module.fail_json(msg=str(e))
 

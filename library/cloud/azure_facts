@@ -21,15 +21,20 @@ def list_storage_accounts(module):
     sms = Azure.get_sms(module)
     return azure_props_to_dict(sms.list_storage_accounts())
 
+def list_virtual_network_sites(module):
+    sms = Azure.get_sms(module)
+    return azure_props_to_dict(sms.list_virtual_network_sites())
+
 def main():
     module=AnsibleModule(argument_spec=azure_common_argument_spec())
 
     facts=dict(azure_images=list_images(module),
                 locations=get_locations(module),
                 cloud_services=get_cloud_services(module),
-                storage_accounts=list_storage_accounts(module))
+                storage_accounts=list_storage_accounts(module),
+                virtual_networks=list_virtual_network_sites(module))
 
-    module.exit_json(msg="Facts complete", facts=facts)
+    module.exit_json(msg="Facts complete", ansible_facts=facts)
 
 # import module snippets
 from ansible.module_utils.basic import *
