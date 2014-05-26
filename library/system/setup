@@ -28,6 +28,10 @@ options:
         version_added: "1.1"
         description:
             - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
+              Separate multiple wildcards (which will be ORed) using ";".
+              To match a second-level filter, use the "first_level->second_level" form.
+              Note that second-level filter results overwrite those of first-level filters
+              in case they overlap; this may lead to unexpected results.
         required: false
         default: '*'
     fact_path:
@@ -53,7 +57,8 @@ notes:
       bubbled up to the caller. Using the ansible facts and choosing to not
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
       remote systems. (See also M(facter) and M(ohai).)
-    - The filter option filters only the first level subkey below ansible_facts.
+    - The filter option filters only the first and, optionally, second level (sub)key
+      below ansible_facts.
 author: Michael DeHaan
 '''
 
@@ -69,6 +74,12 @@ ansible all -m setup -a 'filter=facter_*'
 
 # Display only facts about certain interfaces.
 ansible all -m setup -a 'filter=ansible_eth[0-2]'
+
+# Display only facts about everything with a second-level key matching "mac*".
+ansible all -m setup -a 'filter=*->mac*'
+
+Display only facts matching "ansible_user*" or "ansible_system*".
+ansible all -m setup -a 'filter=ansible_user*;ansible_system*'
 """
 
 
@@ -114,13 +125,38 @@ def run_setup(module):
     setup_result = { 'ansible_facts': {} }
 
     for (k,v) in setup_options.items():
-        if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
+        # return all elements if matching "*"
+        if module.params['filter'] == '*':
             setup_result['ansible_facts'][k] = v
+        else:
+            # ";" separates multiple filter statements
+            for filter_subexpr in module.params['filter'].split(";"):
+                # "->" separates first- from second-level filter statements
+                if filter_subexpr.count("->") == 1:
+                    if fnmatch.fnmatch(k, filter_subexpr.split("->")[0]) and type(v) is dict:
+                        for subkey in v:
+                            # create a new (sub-)dict that contains only keys that match
+                            # the second-level filter statement.
+                            # TODO: this might destroy an "old" dict that contains useful
+                            # data returned from filter statements that were previously matched.
+                            # do we really want this, or do we want to merge the results instead?
+                            setup_result['ansible_facts'][k] = \
+                            dict((key, value) for key, value in v.iteritems() if fnmatch.fnmatch(key, filter_subexpr.split("->")[1]))
+
+                        # prune entries in the setup_result dict that are empty
+                        if (k in setup_result['ansible_facts'] and len(setup_result['ansible_facts'][k]) == 0):
+                            del(setup_result['ansible_facts'][k])
+
+                # TODO: should we be doing anything else if -> is found multiple times?
+                else:
+                    if fnmatch.fnmatch(k, filter_subexpr):
+                        setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
     setup_result['verbose_override'] = True
 
     return setup_result
+
 
 def main():
     global module
