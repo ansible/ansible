@@ -61,7 +61,7 @@ description: Install "bootstrap" bower package on version 3.1.1.
 - bower: name=bootstrap version=3.1.1
 
 description: Remove the "bootstrap" bower package.
-- bower: name=bower state=absent
+- bower: name=bootstrap state=absent
 
 description: Install packages based on bower.json.
 - bower: path=/app/location
