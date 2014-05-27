@@ -109,6 +109,8 @@ class Facts(object):
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
+                 { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
     def __init__(self):
