@@ -230,7 +230,10 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
+
+        # Group related
+        self.ami_enabled = config.getboolean('ec2', 'group_ami_id')
+
 
 
     def parse_cli_args(self):
@@ -351,6 +354,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.placement, dest)
+
+        # Inventory: Group Amazon Machine Image (AMI) ID
+        if self.ami_enabled:
+            self.push(self.inventory, instance.image_id, dest)
 
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
