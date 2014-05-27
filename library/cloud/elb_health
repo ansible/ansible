@@ -1,0 +1,102 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+DOCUMENTATION = '''
+module: elb_health
+short_description: get health of instances in an Elastic Load Balancer.
+description:
+    - Get health status of an AWS Elastic Load Balancer. Also returns count of states.
+version_added: "1.6"
+options:
+  load_balancer_name:
+    description:
+      - Name of load balancer. (this is not the canonical DNS, it's the actual name)
+    required: true
+    default: null 
+    aliases: ['name']
+  aws_access_key:
+    description:
+      - AWS access key. Used if IAM Role authentication fails. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
+  aws_secret_key:
+    description:
+      - AWS secret key. Used if IAM Role authentication fails. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: ['ec2_secret_key', 'secret_key']
+
+---
+
+requirements: [ "boto" ]
+author: Ted Timmons
+'''
+
+EXAMPLES = '''
+# Simple fetch-and-debug
+  - local_action: elb_health load_balancer_name="our-app-lb"
+    register: elb_health
+  - debug: msg="elb info is {{elb_health}}"
+# Halt Ansible playbook if we don't have enough healthy hosts
+  - local_action: elb_health load_balancer_name="our-app-lb"
+    register: elb_health
+  - name: fail if we are low on ec2s
+    fail: msg="Our application is too unhealthy to deploy"
+    when: elb_health.state_count.InService < 17
+'''
+
+from collections import Counter
+
+try:
+    import boto
+except ImportError:
+    module.fail_json(msg="boto required for this module")
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+        load_balancer_name=dict(),
+    ))
+    module = AnsibleModule(argument_spec=argument_spec)
+    load_balancer_name = module.params.get('load_balancer_name', aliases=['name'])
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    if not load_balancer_name:
+      module.fail_json(msg = "name of load balancer is required.")
+
+
+    try:
+      # try connecting with an IAM role first.
+      conn = boto.connect_elb()
+    except boto.exception.NoAuthHandlerFound as e:
+      conn = boto.connect_elb(aws_access_key, aws_secret_key)
+    except Exception as e:
+      module.fail_json(msg = str(e))
+
+    try:
+      statelist = conn.describe_instance_health(load_balancer_name)
+    except Exception as e:
+      module.fail_json(msg = str(e))
+
+    retstate = []
+    state_counter = Counter()
+    for instance in statelist:
+      instance_info = dict(
+        description=instance.description,
+        instance_id=instance.instance_id,
+        reason_code=instance.reason_code,
+        state=instance.state,
+      )
+      retstate.append(instance_info)
+      state_counter[instance.state] += 1
+    
+    module.exit_json(instance_state=retstate, state_count=state_counter, failed=False)
+
+# Import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
+
