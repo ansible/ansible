@@ -88,7 +88,7 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
-requirements: [ "linode-python" ]
+requirements: [ "linode-python", "pycurl" ]
 author: Vincent Viallet
 notes:
   - LINODE_API_KEY env variable can be used instead
@@ -156,13 +156,18 @@ import time
 import os
 
 try:
-    # linode module raise warning due to ssl - silently ignore them ...
-    import warnings
-    warnings.simplefilter("ignore")
+    import pycurl
+except ImportError:
+    print("failed=True msg='pycurl required for this module'")
+    sys.exit(1)
+
+
+try:
     from linode import api as linode_api
 except ImportError:
     print("failed=True msg='linode-python required for this module'")
     sys.exit(1)
+
 
 def randompass():
     '''
