@@ -94,12 +94,10 @@
   subversion: repo={{ repo }} dest={{ checkout_dir }} export=True
   register: subverted4
 
-# FIXME: this needs to be fixed in the code see GitHub 6079
-
-#- name: verify on a reclone things are marked unchanged
-#  assert:
-#    that:
-#      - "not subverted.changed"
+- name: verify on a reclone things are marked unchanged
+  assert:
+    that:
+      - "not subverted4.changed"
 
 # TBA: test for additional options or URL variants welcome
 
