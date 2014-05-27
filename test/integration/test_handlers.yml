@@ -17,8 +17,9 @@
             - "not hostvars[inventory_hostname]['handler1_called']"
             - "'handler2_called' in hostvars[inventory_hostname]"
 
-#- hosts: testgroup
-#  gather_facts: False
-#  connection: local
-#  roles:
-#  - { role: test_handlers_meta }
+- name: test handlers
+  hosts: testgroup
+  gather_facts: False
+  connection: local
+  roles:
+  - { role: test_handlers }

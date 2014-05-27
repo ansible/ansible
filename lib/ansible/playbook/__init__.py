@@ -355,7 +355,7 @@ class PlayBook(object):
     def _run_task_internal(self, task):
         ''' run a particular module step in a playbook '''
 
-        hosts = self._trim_unavailable_hosts(task.play._play_hosts)
+        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts))
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
