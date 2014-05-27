@@ -141,6 +141,8 @@ def cloud_block_storage(module, state, name, description, meta, size,
     except ValueError:
         try:
             volume = cbs.find(name=name)
+        except pyrax.exc.NotFound:
+            pass
         except Exception, e:
             module.fail_json(msg='%s' % e)
 
