@@ -63,7 +63,7 @@ options:
     default: null
     choices: [ 'user', 'group', 'mask', 'other' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if name is a file.
+      - the entity type of the ACL to apply, see setfacl documentation for more info.
 
 
   permissions:
