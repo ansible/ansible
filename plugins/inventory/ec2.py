@@ -352,6 +352,9 @@ class Ec2Inventory(object):
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.placement, dest)
 
+        # Inventory: Group by Amazon Machine Image (AMI) ID
+        self.push(self.inventory, instance.image_id, dest)
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
 
