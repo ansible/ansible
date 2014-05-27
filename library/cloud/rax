@@ -387,7 +387,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
     servers = []
 
     for key, value in meta.items():
-        meta[key] = repr(value)
+        meta[key] = value.encode()
 
     # Add the group meta key
     if group and 'group' not in meta:
