@@ -112,7 +112,7 @@ Testing Lifecycle
 
 If writing some degree of basic validation of your application into your playbooks, they will run every time you deploy.
 
-As such, deploying into a local development VM and a state environment will both validate that things are according to plan
+As such, deploying into a local development VM and a stage environment will both validate that things are according to plan
 ahead of your production deploy.
 
 Your workflow may be something like this::
