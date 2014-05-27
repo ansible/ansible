@@ -361,7 +361,7 @@ class DockerManager:
                 # with bind mode 
                 elif len(parts) == 3:
                     if parts[2] not in ['ro', 'rw']:
-                      self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
+                        self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
                     ro = parts[2] == 'ro'
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = {'bind': parts[1], 'ro': ro}
