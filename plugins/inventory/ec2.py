@@ -232,7 +232,14 @@ class Ec2Inventory(object):
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
         # Group related
+        self.instance_id_enabled = config.getboolean('ec2', 'group_instance_id')
+        self.region_enabled = config.getboolean('ec2', 'group_region')
+        self.availability_zone_enabled = config.getboolean('ec2', 'group_availability_zone')
         self.ami_enabled = config.getboolean('ec2', 'group_ami_id')
+        self.instance_type_enabled = config.getboolean('ec2', 'group_instance_type')
+        self.key_pair_enabled = config.getboolean('ec2', 'group_key_pair')
+        self.security_group_enabled = config.getboolean('ec2', 'group_security_group')
+        self.tag_keys_enabled = config.getboolean('ec2', 'group_tag_keys')
 
 
 
@@ -347,39 +354,46 @@ class Ec2Inventory(object):
         self.index[dest] = [region, instance.id]
 
         # Inventory: Group by instance ID (always a group of 1)
-        self.inventory[instance.id] = [dest]
+        if self.instance_id_enabled:
+            self.inventory[instance.id] = [dest]
 
         # Inventory: Group by region
-        self.push(self.inventory, region, dest)
+        if self.region_enabled:
+            self.push(self.inventory, region, dest)
 
         # Inventory: Group by availability zone
-        self.push(self.inventory, instance.placement, dest)
+        if self.availability_zone_enabled:
+            self.push(self.inventory, instance.placement, dest)
 
         # Inventory: Group Amazon Machine Image (AMI) ID
         if self.ami_enabled:
             self.push(self.inventory, instance.image_id, dest)
 
         # Inventory: Group by instance type
-        self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
+        if self.instance_type_enabled:
+            self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
 
         # Inventory: Group by key pair
-        if instance.key_name:
-            self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
+        if self.key_pair_enabled:
+            if instance.key_name:
+                self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
         
         # Inventory: Group by security group
-        try:
-            for group in instance.groups:
-                key = self.to_safe("security_group_" + group.name)
-                self.push(self.inventory, key, dest)
-        except AttributeError:
-            print 'Package boto seems a bit older.'
-            print 'Please upgrade boto >= 2.3.0.'
-            sys.exit(1)
+        if self.security_group_enabled:
+            try:
+                for group in instance.groups:
+                    key = self.to_safe("security_group_" + group.name)
+                    self.push(self.inventory, key, dest)
+            except AttributeError:
+                print 'Package boto seems a bit older.'
+                print 'Please upgrade boto >= 2.3.0.'
+                sys.exit(1)
 
         # Inventory: Group by tag keys
-        for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
+        if self.tag_keys_enabled:
+            for k, v in instance.tags.iteritems():
+                key = self.to_safe("tag_" + k + "=" + v)
+                self.push(self.inventory, key, dest)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled:
