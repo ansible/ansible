@@ -92,7 +92,7 @@ class HostVars(dict):
 
     def __getitem__(self, host):
         if host not in self.lookup:
-            result = self.inventory.get_variables(host, vault_password=self.vault_password)
+            result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
             result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = result
         return self.lookup[host]
