@@ -1,0 +1,36 @@
+---
+# tasks file for test_ec2_asg
+
+# ============================================================
+# create and kill an ASG
+- name: lookup ami id
+  ec2_ami_search: distro=ubuntu region={{ ec2_region }} release=trusty
+  register: ubuntu_image
+- name: ensure launch config exists
+  ec2_lc:
+    name: "{{ resource_prefix }}-lc"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    image_id: "{{ ubuntu_image.ami }}"
+    instance_type: t1.micro
+- name: launch asg
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    launch_config_name: "{{ resource_prefix }}-lc"
+    min_size: 1
+    max_size: 1
+    region: "{{ ec2_region }}"
+    state: present
+- name: pause for a bit to make sure that the group can't be trivially deleted
+  pause: seconds=30
+- name: kill asg
+  ec2_asg:
+    name: "{{ resource_prefix }}-asg"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: absent
+  async: 300
