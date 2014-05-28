@@ -45,6 +45,20 @@ options:
     default: 'present'
     choices: [ "present", "absent" ]
     aliases: []
+  purge_rules:
+    version_added: "1.7"
+    description:
+      - Purge existing rules on security group that are not found in rules
+    required: false
+    default: 'true'
+    aliases: []
+  purge_rules_egress:
+    version_added: "1.7"
+    description:
+      - Purge existing rules_egree on security group that are not found in rules_egress
+    required: false
+    default: 'true'
+    aliases: []
 
 extends_documentation_fragment: aws
 
@@ -164,6 +178,9 @@ def main():
             rules=dict(),
             rules_egress=dict(),
             state = dict(default='present', choices=['present', 'absent']),
+            purge_rules=dict(default=True, required=False, type='bool'),
+            purge_rules_egress=dict(default=True, required=False, type='bool'),
+
         )
     )
     module = AnsibleModule(
@@ -177,6 +194,8 @@ def main():
     rules = module.params['rules']
     rules_egress = module.params['rules_egress']
     state = module.params.get('state')
+    purge_rules = module.params['purge_rules']
+    purge_rules_egress = module.params['purge_rules_egress']
 
     changed = False
 
@@ -274,14 +293,15 @@ def main():
                     changed = True
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        for rule in groupRules.itervalues():
-            for grant in rule.grants:
-                grantGroup = None
-                if grant.group_id:
-                    grantGroup = groups[grant.group_id]
-                if not module.check_mode:
-                    group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
-                changed = True
+        if purge_rules:
+            for rule in groupRules.itervalues() :
+                for grant in rule.grants:
+                    grantGroup = None
+                    if grant.group_id:
+                        grantGroup = groups[grant.group_id]
+                    if not module.check_mode:
+                        group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+                    changed = True
 
         # Manage egress rules
         groupRules = {}
@@ -338,20 +358,21 @@ def main():
                 del groupRules[default_egress_rule]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        for rule in groupRules.itervalues():
-            for grant in rule.grants:
-                grantGroup = None
-                if grant.group_id:
-                    grantGroup = groups[grant.group_id].id
-                if not module.check_mode:
-                    ec2.revoke_security_group_egress(
-                            group_id=group.id,
-                            ip_protocol=rule.ip_protocol,
-                            from_port=rule.from_port,
-                            to_port=rule.to_port,
-                            src_group_id=grantGroup,
-                            cidr_ip=grant.cidr_ip)
-                changed = True
+        if purge_rules_egress:
+            for rule in groupRules.itervalues():
+                for grant in rule.grants:
+                    grantGroup = None
+                    if grant.group_id:
+                        grantGroup = groups[grant.group_id].id
+                    if not module.check_mode:
+                        ec2.revoke_security_group_egress(
+                                group_id=group.id,
+                                ip_protocol=rule.ip_protocol,
+                                from_port=rule.from_port,
+                                to_port=rule.to_port,
+                                src_group_id=grantGroup,
+                                cidr_ip=grant.cidr_ip)
+                    changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)
