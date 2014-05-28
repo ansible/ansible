@@ -181,7 +181,7 @@ def delete_autoscaling_group(connection, module):
 
         instances = True
         while instances:
-            connection.get_all_groups()
+            groups = connection.get_all_groups()
             for group in groups:
                 if group.name == group_name:
                     if not group.instances:
