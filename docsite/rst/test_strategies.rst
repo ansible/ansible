@@ -112,7 +112,7 @@ Testing Lifecycle
 
 If writing some degree of basic validation of your application into your playbooks, they will run every time you deploy.
 
-As such, deploying into a local development VM and a state environment will both validate that things are according to plan
+As such, deploying into a local development VM and a stage environment will both validate that things are according to plan
 ahead of your production deploy.
 
 Your workflow may be something like this::
@@ -240,7 +240,7 @@ as part of a Continous Integration/Continous Delivery pipeline, as is covered in
 The focus should not be on infrastructure testing, but on application testing, so we strongly encourage getting together with your
 QA team and ask what sort of tests would make sense to run every time you deploy development VMs, and which sort of tests they would like
 to run against the stage environment on every deploy.  Obviously at the development stage, unit tests are great too.  But don't unit
-tests your playbook.  Ansible describes states of resources declaratively, so you don't have to.  If there are cases where you want
+test your playbook.  Ansible describes states of resources declaratively, so you don't have to.  If there are cases where you want
 to be sure of something though, that's great, and things like stat/assert are great go-to modules for that purpose.
 
 In all, testing is a very organizational and site-specific thing.  Everybody should be doing it, but what makes the most sense for your

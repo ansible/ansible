@@ -132,6 +132,10 @@ def search(value, pattern='', ignorecase=False):
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
+
+    if not isinstance(value, basestring):
+        value = str(value)
+
     if ignorecase:
         flags = re.I
     else:
