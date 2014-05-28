@@ -11,6 +11,7 @@
     #- { role: test_ec2_eip, tags: test_ec2_eip }
     #- { role: test_ec2_ami, tags: test_ec2_ami }
     #- { role: test_ec2, tags: test_ec2 }
+    - { role: test_ec2_asg, tags: test_ec2_asg }
 
 # complex test for ec2_elb, split up over multiple plays
 # since there is a setup component as well as the test which
