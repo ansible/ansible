@@ -117,12 +117,21 @@ if __name__ == '__main__':
     elb = boto.connect_elb(aws_access_key_id=opts.ec2_access_key,
             aws_secret_access_key=opts.ec2_secret_key)
 
+    asg = boto.connect_autoscale(aws_access_key_id=opts.ec2_access_key,
+            aws_secret_access_key=opts.ec2_secret_key)
+
     try:
         # Delete matching keys
         delete_aws_resources(aws.get_all_key_pairs, 'name', opts)
 
-        # Delete matching groups
+        # Delete matching security groups
         delete_aws_resources(aws.get_all_security_groups, 'name', opts)
+
+        # Delete matching ASGs
+        delete_aws_resources(asg.get_all_groups, 'name', opts)
+
+        # Delete matching launch configs
+        delete_aws_resources(asg.get_all_launch_configurations, 'name', opts)
 
         # Delete ELBs
         delete_aws_resources(elb.get_all_load_balancers, 'name', opts)
