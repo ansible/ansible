@@ -131,7 +131,7 @@ def create_autoscaling_group(connection, module):
             ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg=str(e))
-        module.params['availability_zones'] = [zone.name for zone in ec2_connection.get_all_zones()]
+        availability_zones = module.params['availability_zones'] = [zone.name for zone in ec2_connection.get_all_zones()]
 
     if not as_groups:
         ag = AutoScalingGroup(
