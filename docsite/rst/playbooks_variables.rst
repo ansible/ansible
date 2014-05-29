@@ -578,6 +578,7 @@ This will return a ginormous amount of variable data, which may look like this, 
         "ansible_selinux": false, 
         "ansible_ssh_host_key_dsa_public": "REDACTED KEY VALUE"
         "ansible_ssh_host_key_ecdsa_public": "REDACTED KEY VALUE"
+        "ansible_ssh_host_key_ed25519_public": "REDACTED KEY VALUE"
         "ansible_ssh_host_key_rsa_public": "REDACTED KEY VALUE"
         "ansible_swapfree_mb": 665, 
         "ansible_swaptotal_mb": 1021, 
