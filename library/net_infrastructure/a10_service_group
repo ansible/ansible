@@ -1,0 +1,220 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to manage A10 Networks slb service-group objects
+(c) 2014, Mischa Peters <mpeters@a10networks.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: a10_service_group
+version_added: 1.0
+short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
+description:
+    - Manage slb service-group objects on A10 Networks devices via aXAPI
+author: Mischa Peters
+notes:
+    - Requires A10 Networks aXAPI 2.1
+    - When a server doesn't exist and is added to the service-group the server will be created
+requirements:
+    - urllib2
+    - re
+options:
+  host:
+    description:
+      - hostname or ip of your A10 Networks device
+    required: true
+    default: null
+    aliases: []
+    choices: []
+  username:
+    description:
+      - admin account of your A10 Networks device
+    required: true
+    default: null
+    aliases: ['user', 'admin']
+    choices: []
+  password:
+    description:
+      - admin password of your A10 Networks device
+    required: true
+    default: null
+    aliases: ['pass', 'pwd']
+    choices: []
+  service_group:
+    description:
+      - slb service-group name
+    required: true
+    default: null
+    aliases: ['service', 'pool', 'group']
+    choices: []
+  service_group_protocol:
+    description:
+      - slb service-group protocol
+    required: false
+    default: tcp
+    aliases: ['proto', 'protocol']
+    choices: ['tcp', 'udp']
+  service_group_method:
+    description:
+      - slb service-group loadbalancing method
+    required: false
+    default: round-robin
+    aliases: ['method']
+    choices: ['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']
+  server_name:
+    description:
+      - slb server name
+    required: false
+    default: null
+    aliases: ['server', 'member']
+    choices: []
+  server_port:
+    description:
+      - slb server port
+    required: false
+    default: null
+    aliases: ['port']
+    choices: []
+  server_status:
+    description:
+      - slb server status
+    required: false
+    default: enabled
+    aliases: ['status']
+    choices: ['enable', 'disable']
+  state:
+    description:
+      - create, remove or update slb service-group
+    required: false
+    default: present
+    aliases: []
+    choices: ['present', 'absent']
+'''
+
+EXAMPLES = '''
+# Create a new service-group
+ansible host -m a10_service_group -a "host=a10adc.example.com username=axapiuser password=axapipass service_group=sg-80-tcp"
+
+# Add a server
+ansible host -m a10_service_group -a "host=a10adc.example.com username=axapiuser password=axapipass service_group=sg-80-tcp server_name=realserver1 server_port=80"
+
+# Disable a server
+ansible host -m a10_service_group -a "host=a10adc.example.com username=axapiuser password=axapipass service_group=sg-80-tcp server_name=realserver1 server_port=80 status=disable"
+'''
+
+import urllib2
+
+def axapi_call(url, post=None):
+    result = urllib2.urlopen(url, post).read()
+    return result
+
+def axapi_authenticate(base_url, user, pwd):
+    url = base_url + '&method=authenticate&username=' + user + '&password=' + pwd
+    sessid = json.loads(axapi_call(url))['session_id']
+    result = base_url + '&session_id=' + sessid
+    return result
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec=dict(
+            host = dict(type='str', required=True),
+            username = dict(type='str', aliases=['user', 'admin'], required=True),
+            password = dict(type='str', aliases=['pass', 'pwd'], required=True),
+            service_group = dict(type='str', aliases=['service', 'pool', 'group'], required=True),
+            service_group_protocol = dict(type='str', default='tcp', aliases=['proto', 'protocol'], choices=['tcp', 'udp']),
+            service_group_method = dict(type='str', default='round-robin', aliases=['method'], choices=['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']),
+            server_name = dict(type='str', aliases=['server', 'member']),
+            server_port = dict(type='int', aliases=['port']),
+            server_status = dict(type='str', default='enable', aliases=['status'], choices=['enable', 'disable']),
+            state = dict(type='str', default='present', choices=['present', 'absent']),
+        ),
+        supports_check_mode=False
+    )
+
+    host = module.params['host']
+    user = module.params['username']
+    pwd = module.params['password']
+    slb_service_group = module.params['service_group']
+    slb_service_group_proto = module.params['service_group_protocol']
+    slb_service_group_method = module.params['service_group_method']
+    slb_server = module.params['server_name']
+    slb_server_port = module.params['server_port']
+    slb_server_status = module.params['server_status']
+    state = module.params['state']
+
+    axapi_base_url = 'https://' + host + '/services/rest/V2.1/?format=json'
+    load_balancing_methods = { 'round-robin': 0,
+                               'weighted-rr': 1,
+                               'least-connection': 2,
+                               'weighted-least-connection': 3,
+                               'service-least-connection': 4,
+                               'service-weighted-least-connection': 5,
+                               'fastest-response': 6,
+                               'least-request': 7,
+                               'round-robin-strict': 8,
+                               'src-ip-only-hash': 14,
+                               'src-ip-hash': 15}
+
+    if slb_service_group_proto == 'tcp' or slb_service_group_proto == 'TCP':
+        protocol = '2'
+    else:
+        protocol = '3'
+
+    if slb_server_status == 'enable':
+        status = '1'
+    else:
+        status = '0'
+
+    if slb_service_group is None:
+        module.fail_json(msg='service_group is required')
+
+    if slb_server is None and slb_server_port is None:
+        json_post = {'service_group': { 'name': slb_service_group, 'protocol': protocol, 'lb_method': load_balancing_methods[slb_service_group_method] }}
+    elif slb_server is not None and slb_server_port is not None:
+        json_post = {'service_group': { 'name': slb_service_group, 'protocol': protocol, 'lb_method': load_balancing_methods[slb_service_group_method], 'member_list': [{ 'server': slb_server, 'port': slb_server_port, 'status': status }]}}
+    else:
+        module.fail_json(msg='server_name and server_name_port are required to add to the service-group')
+
+    try:
+        session_url = axapi_authenticate(axapi_base_url, user, pwd)
+
+        if state == 'present':
+            response = axapi_call(session_url + '&method=slb.service_group.search', json.dumps({ 'name': slb_service_group }))
+            slb_service_group_exist = re.search(slb_service_group, response, re.I)
+
+            if slb_service_group_exist is None:
+                response = axapi_call(session_url + '&method=slb.service_group.create', json.dumps(json_post))
+            else:
+                response = axapi_call(session_url + '&method=slb.service_group.update', json.dumps(json_post))
+
+        if state == 'absent':
+            response = axapi_call(session_url + '&method=slb.service_group.delete', json.dumps({ 'name': slb_service_group }))
+
+        result = json.loads(response)
+        axapi_call(session_url + '&method=session.close')
+
+    except Exception, e:
+        return module.fail_json(msg='received exception: %s' % e)
+
+    module.exit_json(changed=True, content=result)
+
+from ansible.module_utils.basic import *
+main()
