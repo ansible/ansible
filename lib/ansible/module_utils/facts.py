@@ -109,6 +109,8 @@ class Facts(object):
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
+                 { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
     def __init__(self):
@@ -1311,8 +1313,11 @@ class HPUX(Hardware):
         rc, out, err = module.run_command("model")
         self.facts['model'] = out.strip()
         if self.facts['architecture'] == 'ia64':
+            separator = ':'
+            if self.facts['distribution_version'] == "B.11.23":
+                separator = '='
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' | grep -v BMC", use_unsafe_shell=True)
-            self.facts['firmware_version'] = out.split(':')[1].strip()
+            self.facts['firmware_version'] = out.split(separator)[1].strip()
 
 
 class Darwin(Hardware):
