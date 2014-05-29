@@ -1,0 +1,258 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to manage A10 Networks slb virtual server objects
+(c) 2014, Mischa Peters <mpeters@a10networks.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: a10_virtual_server
+version_added: 1.0
+short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
+description:
+    - Manage slb virtual server objects on A10 Networks devices via aXAPI
+author: Mischa Peters
+notes:
+    - Requires A10 Networks aXAPI 2.1
+requirements:
+    - urllib2
+    - re
+options:
+  host:
+    description:
+      - hostname or ip of your A10 Networks device
+    required: true
+    default: null
+    aliases: []
+    choices: []
+  username:
+    description:
+      - admin account of your A10 Networks device
+    required: true
+    default: null
+    aliases: ['user', 'admin']
+    choices: []
+  password:
+    description:
+      - admin password of your A10 Networks device
+    required: true
+    default: null
+    aliases: ['pass', 'pwd']
+    choices: []
+  virtual_server:
+    description:
+      - slb virtual server name
+    required: true
+    default: null
+    aliases: ['vip', 'virtual']
+    choices: []
+  virtual_server_ip:
+    description:
+      - slb virtual server ip address
+    required: false
+    default: null
+    aliases: ['ip', 'address']
+    choices: []
+  virtual_server_status:
+    description:
+      - slb virtual server status
+    required: false
+    default: enable
+    aliases: ['status']
+    choices: ['enabled', 'disabled']
+  virtual_server_port:
+    description:
+      - slb virtual server port
+    required: false
+    default: round-robin
+    aliases: ['port', 'vport']
+    choices: []
+  virtual_server_type:
+    description:
+      - slb virtual server port type
+    required: false
+    default: null
+    aliases: ['proto', 'protocol']
+    choices: ['tcp', 'udp', 'fast-http', 'http', 'https']
+  virtual_server_port_status:
+    description:
+      - slb virtual server port status
+    required: false
+    default: enable
+    aliases: ['status']
+    choices: ['enabled', 'disabled']
+  service_group:
+    description:
+      - slb virtual server service-group
+    required: false
+    default: enabled
+    aliases: ['pool', 'group']
+    choices: []
+  state:
+    description:
+      - create, update or remove slb virtual server
+    required: false
+    default: present
+    aliases: []
+    choices: ['present', 'absent']
+'''
+
+EXAMPLES = '''
+# Create a new virtual server
+ansible host -m a10_virtual -a "host=a10adc.example.com username=axapiuser password=axapipass virtual_server=vip1 virtual_server_ip=192.168.1.20"
+
+# Add a virtual port
+ansible host -m a10_virtual -a "host=a10adc.example.com username=axapiuser password=axapipass virtual_server=vip1 virtual_server_ip=192.168.1.20 virtual_server_port=80 virtual_server_port_type=http service_group=sg-80-tcp"
+
+# Disable a virtual server
+ansible host -m a10_virtual -a "host=a10adc.example.com username=axapiuser password=axapipass virtual_server=vip1 status=disable"
+
+# Disable a virtual server port
+ansible host -m a10_virtual -a "host=a10adc.example.com username=axapiuser password=axapipass virtual_server=vip1 virtual_server_port=80 virtual_server_port_type=http virtual_server_port_status=disable"
+'''
+
+import urllib2
+
+def axapi_call(url, post=None):
+    result = urllib2.urlopen(url, post).read()
+    return result
+
+def axapi_authenticate(base_url, user, pwd):
+    url = base_url + '&method=authenticate&username=' + user + '&password=' + pwd
+    sessid = json.loads(axapi_call(url))['session_id']
+    result = base_url + '&session_id=' + sessid
+    return result
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec=dict(
+            host = dict(type='str', required=True),
+            username = dict(type='str', aliases=['user', 'admin'], required=True),
+            password = dict(type='str', aliases=['pass', 'pwd'], required=True),
+            virtual_server = dict(type='str', aliases=['vip', 'virtual'], required=True),
+            virtual_server_ip = dict(type='str', aliases=['ip', 'address']),
+            virtual_server_status = dict(type='str', default='enabled', aliases=['status'], choices=['enabled', 'disabled']),
+            virtual_server_port = dict(type='int', aliases=['port', 'vport']),
+            virtual_server_port_type = dict(type='str', aliases=['proto', 'protocol'], choices=['tcp', 'udp', 'fast-http', 'http', 'https']),
+            virtual_server_port_status = dict(type='str', default='enabled', aliases=['portstatus', 'port_status'], choices=['enabled', 'disabled']),
+            service_group = dict(type='str', aliases=['pool', 'group']),
+            state = dict(type='str', default='present', choices=['present', 'absent']),
+        ),
+        supports_check_mode=False
+    )
+
+    host = module.params['host']
+    user = module.params['username']
+    pwd = module.params['password']
+    slb_virtual = module.params['virtual_server']
+    slb_virtual_ip = module.params['virtual_server_ip']
+    slb_virtual_status = module.params['virtual_server_status']
+    slb_virtual_port = module.params['virtual_server_port']
+    slb_virtual_port_type = module.params['virtual_server_port_type']
+    slb_virtual_port_status = module.params['virtual_server_port_status']
+    slb_service_group = module.params['service_group']
+    state = module.params['state']
+
+    axapi_base_url = 'https://' + host + '/services/rest/V2.1/?format=json'
+    vport_types = { 'tcp': 2,
+                    'udp': 3,
+                    'fast-http': 9,
+                    'http': 11,
+                    'https': 12}
+
+    if slb_virtual_status == 'enabled':
+        status = '1'
+    else:
+        status = '0'
+
+    if slb_virtual_port_status == 'enabled':
+        port_status = '1'
+    else:
+        port_status = '0'
+
+    if slb_virtual is None:
+        module.fail_json(msg='virtual_server is required')
+
+    try:
+        session_url = axapi_authenticate(axapi_base_url, user, pwd)
+
+        if state == 'present':
+            find_slb_virtual = axapi_call(session_url + '&method=slb.virtual_server.search', json.dumps({ 'name': slb_virtual }))
+            slb_virtual_fail = re.search('status": "fail', find_slb_virtual, re.I)
+
+            if slb_virtual_fail:
+                if slb_virtual_port is None and slb_virtual_port_type is None and slb_service_group is None:
+                    json_post = { 'virtual_server': { 'name': slb_virtual, 'address': slb_virtual_ip, 'status': status }}
+                elif slb_virtual_port is not None and slb_virtual_port_type is not None and slb_service_group is None:
+                    json_post = { 'virtual_server': { 'name': slb_virtual, 'address': slb_virtual_ip, 'status': status, 'vport_list': [{ 'protocol': vport_types[slb_virtual_port_type], 'port': slb_virtual_port }]}}
+                elif slb_virtual_port is not None and slb_virtual_port_type is not None and slb_service_group is not None:
+                    json_post = { 'virtual_server': { 'name': slb_virtual, 'address': slb_virtual_ip, 'status': status, 'vport_list': [{ 'protocol': vport_types[slb_virtual_port_type], 'port': slb_virtual_port, 'service_group': slb_service_group }]}}
+                else:
+                    module.fail_json(msg='virtual_server_port and virtual_server_type are required to create the virtual port')
+
+                response = axapi_call(session_url + '&method=slb.virtual_server.create', json.dumps(json_post))
+            else:
+                response = axapi_call(session_url + '&method=slb.virtual_server.search', json.dumps({ 'name': slb_virtual }))
+                slb_virtual_port_exist = re.search('"port":' + str(slb_virtual_port), response, re.I)
+                current_status = json.loads(response)['virtual_server']['status']
+                current_port_status = 1
+
+                if slb_virtual_port_exist:
+                    vport_list = json.loads(response)['virtual_server']['vport_list']
+                    if vport_list:
+                        for port in range(len(vport_list)):
+                            if slb_virtual_port == str(vport_list[port]['port']):
+                                current_port_status = vport_list[port]['port']
+
+                    json_post = { 'address': slb_virtual_ip, 'vport': { 'protocol': vport_types[slb_virtual_port_type], 'port': slb_virtual_port, 'service_group': slb_service_group }, 'status': port_status }
+                    response = axapi_call(session_url + '&method=slb.virtual_server.vport.update', json.dumps(json_post))
+                else:
+                    if slb_service_group is None:
+                        module.fail_json(msg='service_group is required')
+                    json_post = { 'name': slb_virtual, 'vport': { 'protocol': vport_types[slb_virtual_port_type], 'port': slb_virtual_port, 'service_group': slb_service_group }, 'status': port_status }
+                    response = axapi_call(session_url + '&method=slb.virtual_server.vport.create', json.dumps(json_post))
+
+                if current_status != status:
+                    json_post = { 'virtual_server': { 'name': slb_virtual, 'address': slb_virtual_ip, 'status': status }}
+                    response = axapi_call(session_url + '&method=slb.virtual_server.update', json.dumps(json_post))
+
+                if current_port_status != port_status:
+                    json_post = { 'address': slb_virtual_ip, 'vport': { 'protocol': vport_types[slb_virtual_port_type], 'port': slb_virtual_port }, 'status': port_status }
+                    response = axapi_call(session_url + '&method=slb.virtual_server.vport.update', json.dumps(json_post))
+
+        if state == 'absent':
+            if slb_virtual_port is not None and slb_virtual_port_type is not None:
+                response = axapi_call(session_url + '&method=slb.virtual_server.vport.delete', json.dumps({ 'name': slb_virtual, 'vport': { 'protocol': vport_types[slb_virtual_port_type], 'port': slb_virtual_port }}))
+            elif slb_virtual_port is None and slb_virtual_port_type is None:
+                response = axapi_call(session_url + '&method=slb.virtual_server.delete', json.dumps({ 'name': slb_virtual }))
+            else:
+                module.fail_json(msg='virtual_server_port and virtual_server_type are required to remove the virtual port')
+
+        result = json.loads(response)
+        axapi_call(session_url + '&method=session.close')
+
+    except Exception, e:
+        return module.fail_json(msg='received exception: %s' % e)
+
+    module.exit_json(changed=True, content=result)
+
+from ansible.module_utils.basic import *
+main()
