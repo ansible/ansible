@@ -118,7 +118,7 @@ class Facts(object):
         self.get_platform_facts()
         self.get_distribution_facts()
         self.get_cmdline()
-        self.get_public_ssh_host_keys()
+        self.get_public_ssh2_host_keys()
         self.get_selinux_facts()
         self.get_pkg_mgr_facts()
         self.get_lsb_facts()
@@ -331,30 +331,20 @@ class Facts(object):
                 else:
                     self.facts['cmdline'][item[0]] = item[1]
 
-    def get_public_ssh_host_keys(self):
-        dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
-        rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
-        ecdsa_filename = '/etc/ssh/ssh_host_ecdsa_key.pub'
+    def get_public_ssh2_host_keys(self):
+        self.get_public_ssh2_host_key_type('dsa')
+        self.get_public_ssh2_host_key_type('rsa')
+        self.get_public_ssh2_host_key_type('ecdsa')
+        self.get_public_ssh2_host_key_type('ed25519')
 
+    def get_public_ssh2_host_key_type(self, keytype):
         if self.facts['system'] == 'Darwin':
-            dsa_filename = '/etc/ssh_host_dsa_key.pub'
-            rsa_filename = '/etc/ssh_host_rsa_key.pub'
-            ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
-        dsa = get_file_content(dsa_filename)
-        rsa = get_file_content(rsa_filename)
-        ecdsa = get_file_content(ecdsa_filename)
-        if dsa is None:
-            dsa = 'NA'
+            filename = '/etc/ssh_host_%s_key.pub' % keytype
         else:
-            self.facts['ssh_host_key_dsa_public'] = dsa.split()[1]
-        if rsa is None:
-            rsa = 'NA'
-        else:
-            self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
-        if ecdsa is None:
-            ecdsa = 'NA'
-        else:
-            self.facts['ssh_host_key_ecdsa_public'] = ecdsa.split()[1]
+            filename = '/etc/ssh/ssh_host_%s_key.pub' % keytype
+        content = get_file_content(filename)
+        if content is not None:
+            self.facts['ssh_host_key_%s_public' % keytype] = content.split()[1]
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
