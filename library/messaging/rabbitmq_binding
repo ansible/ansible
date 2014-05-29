@@ -100,7 +100,7 @@ options:
 
 EXAMPLES = '''
 # Bind an exchange to a queue.
-- rabbitmq_binding: host='http://localhost:15672/api'
+- rabbitmq_binding: host='localhost'
                     user='guest'
                     password='guest'
                     vhost='/'
@@ -110,7 +110,7 @@ EXAMPLES = '''
                     routing_key='test'
 
 # Bind an exchange to another exchange.
-- rabbitmq_binding: host='http://localhost:15672/api'
+- rabbitmq_binding: host='localhost'
                     user='guest'
                     password='guest'
                     vhost='/'
@@ -120,7 +120,7 @@ EXAMPLES = '''
                     routing_key='test'
 
 # To delete a binding between an exchange and a queue
-- rabbitmq_binding: host='http://localhost:15672/api'
+- rabbitmq_binding: host='localhost'
                     user='guest'
                     password='guest'
                     vhost='/'
@@ -131,7 +131,7 @@ EXAMPLES = '''
                     state='absent'
 
 # To delete a binding between an exhange and another exchange
-- rabbitmq_binding: host='http://localhost:15672/api'
+- rabbitmq_binding: host='localhost'
                     user='guest'
                     password='guest'
                     vhost='/'

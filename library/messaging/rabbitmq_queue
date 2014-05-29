@@ -90,15 +90,16 @@ options:
 
 EXAMPLES = '''
 # Add queue to server
-- rabbitmq_queue: host='http://localhost:15672/api'
+- rabbitmq_queue: host='localhost'
                   user=guest
                   password=guest
                   vhost=/
                   queue=test_queue
-                  arguments='{"x-dead-letter-exchange": "dead"}'
+                  arguments='{"x-dead-letter-exchange":"dead"}'
 
 # Remove queue from server
-- rabbitmq_queue: user=guest
+- rabbitmq_queue: host='localhost'
+                  user=guest
                   password=guest
                   vhost=/
                   queue=test_queue

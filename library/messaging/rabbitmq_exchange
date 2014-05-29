@@ -105,7 +105,7 @@ options:
 
 EXAMPLES = '''
 # Add exchange to server
-- rabbitmq_exchange: host='http://localhost:15672/api'
+- rabbitmq_exchange: host='localhost'
                   user=guest
                   password=guest
                   vhost=/
@@ -114,13 +114,14 @@ EXAMPLES = '''
                   durable=no
                   internal=no
                   auto_delete=no
-                  arguments='{"some-additional-arg": true}'
+                  arguments='{"some-additional-arg":true}'
 
 # Remove exchange from server
-- rabbitmq_exchange: user=guest
-                  password=guest
-                  name=test_exchange
-                  state=absent
+- rabbitmq_exchange: host='localhost' 
+                     user=guest
+                     password=guest
+                     name=test_exchange
+                     state=absent
 '''
 
 from urllib import quote_plus
