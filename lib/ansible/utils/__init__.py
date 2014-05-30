@@ -1006,17 +1006,20 @@ def is_list_of_strings(items):
     return True
 
 def list_union(a, b):
-    result = list(a)
-    for i in b:
-        if i not in result:
-            result.append(i)
+    result = []
+    for x in a:
+        if x not in result:
+            result.append(x)
+    for x in b:
+        if x not in result:
+            result.append(x)
     return result
 
 def list_intersection(a, b):
     result = []
-    for i in a:
-        if i in b:
-            result.append(i)
+    for x in a:
+        if x in b and x not in result:
+            result.append(x)
     return result
 
 def safe_eval(expr, locals={}, include_exceptions=False):
