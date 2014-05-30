@@ -554,11 +554,11 @@ class Runner(object):
 
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
-        combined_cache.get(host, {}).update(self.vars_cache.get(host, {}))
+        combined_cache[host] = utils.combine_vars(combined_cache.get(host, {}), self.vars_cache.get(host, {}))
         hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
 
         # use combined_cache and host_variables to template the module_vars
-        module_vars_inject = utils.combine_vars(combined_cache.get(host, {}), host_variables)
+        module_vars_inject = utils.combine_vars(host_variables, combined_cache.get(host, {}))
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         inject = {}
