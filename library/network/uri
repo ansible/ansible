@@ -406,6 +406,7 @@ def main():
     # Write the file out if requested
     if dest is not None:
         if resp['status'] == 304:
+            status_code = [304]
             changed = False
         else:
             write_file(module, url, dest, content)
