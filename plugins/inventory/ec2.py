@@ -214,6 +214,8 @@ class Ec2Inventory(object):
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
+        if config.has_option('ec2', 'tag_destination_variable'):
+            self.tag_destination_variable = config.get('ec2', 'tag_destination_variable')
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
@@ -230,7 +232,7 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
+
 
 
     def parse_cli_args(self):
@@ -275,12 +277,12 @@ class Ec2Inventory(object):
             if conn is None:
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
- 
+
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
-        
+
         except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
@@ -331,10 +333,17 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address
-        if instance.subnet_id:
-            dest = getattr(instance, self.vpc_destination_variable)
-        else:
-            dest =  getattr(instance, self.destination_variable)
+        try:
+            # Try to use a tag first
+            dest=instance.tags[self.tag_destination_variable]
+         # And if that did not work
+        except AttributeError:
+            # Prefer the VPC Destination variable
+            if instance.subnet_id:
+                dest = getattr(instance, self.vpc_destination_variable)
+            else:
+                # Over the default destination variable
+                dest =  getattr(instance, self.destination_variable)
 
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
@@ -358,7 +367,7 @@ class Ec2Inventory(object):
         # Inventory: Group by key pair
         if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
-        
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -416,10 +425,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.availability_zone, dest)
-        
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
