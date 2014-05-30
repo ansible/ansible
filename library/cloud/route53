@@ -338,9 +338,9 @@ def main():
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
-        decoded_name = rset.name.replace(r'\100', '@')
+        decoded_name = decoded_name.replace(r'\100', '@')
 
-        if rset.type == type_in and decoded_name == record_in and value_in in rset.resource_records:
+        if rset.type == type_in and decoded_name == record_in or (rset.type == 'CNAME' and value_in in rset.resource_records):
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
@@ -370,10 +370,14 @@ def main():
         if not module.params['overwrite']:
             module.fail_json(msg = "Record already exists with different value. Set 'overwrite' to replace it")
         else:
-            change = changes.add_change("DELETE", record_in, type_in, record['ttl'],
-                                                  alias_hosted_zone_id=zones[alias_zone_in], alias_dns_name=alias_in, identifier=identifier_in,
-                                                  weight=weight_in, region=region_in,  
-                                                  alias_evaluate_target_health=alias_eval_health_in, health_check=health_check_in)
+            change = changes.add_change("DELETE", record_in, record['type'], record['ttl'],
+                                                  alias_hosted_zone_id=record['alias_hosted_zone_id'], 
+                                                  alias_dns_name=record['alias_dns_name'] ,
+                                                  identifier=record['identifier'],
+                                                  weight=record['weight'],  
+                                                  region=record['region'],  
+                                                  alias_evaluate_target_health=record['alias_evaluate_target_health'], 
+                                                  health_check=record['health_check'])
         for v in record['values']:
             change.add_value(v)
 
