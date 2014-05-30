@@ -448,6 +448,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_unreachable(self, host, results):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
+
         item = None
         if type(results) == dict:
             item = results.get('item', None)
@@ -459,7 +463,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
-
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -492,6 +498,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
 
         item = host_result.get('item', None)
 
@@ -528,6 +537,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_skipped(self, host, item=None):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
+
         if constants.DISPLAY_SKIPPED_HOSTS:
             msg = ''
             if item:
