@@ -682,3 +682,83 @@ If enabled, this setting allows multiple private keys to be uploaded to the daem
 
 New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 
+.. _all_configuration_options:
+
+All Configuration Options
+`````````````````````````
+
+.. code-block::
+
+    [accelerate]
+        accelerate_connect_timeout  ACCELERATE_CONNECT_TIMEOUT        (Default: 1.0)
+        accelerate_daemon_timeout   ACCELERATE_DAEMON_TIMEOUT         (Default: 30)
+        accelerate_keys_dir         ACCELERATE_KEYS_DIR               (Default: ~/.fireball.keys)
+        accelerate_keys_dir_perms   ACCELERATE_KEYS_DIR_PERMS         (Default: 700)
+        accelerate_keys_file_perms  ACCELERATE_KEYS_FILE_PERMS        (Default: 600)
+        accelerate_multi_key        ACCELERATE_MULTI_KEY              (Default: None)
+        accelerate_port             ACCELERATE_PORT                   (Default: 5099)
+        accelerate_timeout          ACCELERATE_TIMEOUT                (Default: 30)
+
+    [defaults]
+        action_plugins              ANSIBLE_ACTION_PLUGINS            (Default: /usr/share/ansible_plugins/action_plugins)
+        ansible_managed             None                              (Default: Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host})
+        ask_pass                    ANSIBLE_ASK_PASS                  (Default: None)
+        ask_su_pass                 ANSIBLE_ASK_SU_PASS               (Default: None)
+        ask_sudo_pass               ANSIBLE_ASK_SUDO_PASS             (Default: None)
+        ask_vault_pass              ANSIBLE_ASK_VAULT_PASS            (Default: None)
+        callback_plugins            ANSIBLE_CALLBACK_PLUGINS          (Default: /usr/share/ansible_plugins/callback_plugins)
+        connection_plugins          ANSIBLE_CONNECTION_PLUGINS        (Default: /usr/share/ansible_plugins/connection_plugins)
+        deprecation_warnings        ANSIBLE_DEPRECATION_WARNINGS      (Default: True)
+        display_skipped_hosts       DISPLAY_SKIPPED_HOSTS             (Default: True)
+        error_on_undefined_vars     ANSIBLE_ERROR_ON_UNDEFINED_VARS   (Default: True)
+        executable                  ANSIBLE_EXECUTABLE                (Default: /bin/sh)
+        filter_plugins              ANSIBLE_FILTER_PLUGINS            (Default: /usr/share/ansible_plugins/filter_plugins)
+        force_color                 ANSIBLE_FORCE_COLOR               (Default: None)
+        forks                       ANSIBLE_FORKS                     (Default: 5)
+        gathering                   ANSIBLE_GATHERING                 (Default: implicit)
+        hash_behaviour              ANSIBLE_HASH_BEHAVIOUR            (Default: replace)
+        host_key_checking           ANSIBLE_HOST_KEY_CHECKING         (Default: True)
+        hostfile                    ANSIBLE_HOSTS                     (Default: /etc/ansible/hosts)
+        jinja2_extensions           ANSIBLE_JINJA2_EXTENSIONS         (Default: None)
+        keep_remote_files           ANSIBLE_KEEP_REMOTE_FILES         (Default: None)
+        library                     ANSIBLE_LIBRARY                   (Default: /usr/share/ansible)
+        log_path                    ANSIBLE_LOG_PATH                  (Default: None)
+        lookup_plugins              ANSIBLE_LOOKUP_PLUGINS            (Default: /usr/share/ansible_plugins/lookup_plugins)
+        module_args                 ANSIBLE_MODULE_ARGS               (Default: None)
+        module_lang                 ANSIBLE_MODULE_LANG               (Default: en_US.UTF-8)
+        module_name                 None                              (Default: command)
+        nocolor                     ANSIBLE_NOCOLOR                   (Default: None)
+        nocows                      ANSIBLE_NOCOWS                    (Default: None)
+        pattern                     None                              (Default: *)
+        poll_interval               ANSIBLE_POLL_INTERVAL             (Default: 15)
+        private_key_file            ANSIBLE_PRIVATE_KEY_FILE          (Default: None)
+        remote_port                 ANSIBLE_REMOTE_PORT               (Default: None)
+        remote_tmp                  ANSIBLE_REMOTE_TEMP               (Default: $HOME/.ansible/tmp)
+        remote_user                 ANSIBLE_REMOTE_USER               (Default: $USER)
+        roles_path                  ANSIBLE_ROLES_PATH                (Default: /etc/ansible/roles)
+        su                          ANSIBLE_SU                        (Default: None)
+        su_exe                      ANSIBLE_SU_EXE                    (Default: su)
+        su_flags                    ANSIBLE_SU_FLAGS                  (Default: None)
+        su_user                     ANSIBLE_SU_USER                   (Default: root)
+        sudo                        ANSIBLE_SUDO                      (Default: None)
+        sudo_exe                    ANSIBLE_SUDO_EXE                  (Default: sudo)
+        sudo_flags                  ANSIBLE_SUDO_FLAGS                (Default: -H)
+        sudo_user                   ANSIBLE_SUDO_USER                 (Default: root)
+        syslog_facility             ANSIBLE_SYSLOG_FACILITY           (Default: LOG_USER)
+        system_warnings             ANSIBLE_SYSTEM_WARNINGS           (Default: True)
+        timeout                     ANSIBLE_TIMEOUT                   (Default: 10)
+        transport                   ANSIBLE_TRANSPORT                 (Default: smart)
+        vars_plugins                ANSIBLE_VARS_PLUGINS              (Default: /usr/share/ansible_plugins/vars_plugins)
+
+    [fireball_connection]
+        zeromq_port                 ANSIBLE_ZEROMQ_PORT               (Default: 5099)
+
+    [paramiko_connection]
+        pty                         ANSIBLE_PARAMIKO_PTY              (Default: True)
+        record_host_keys            ANSIBLE_PARAMIKO_RECORD_HOST_KEYS (Default: True)
+
+    [ssh_connection]
+        control_path                ANSIBLE_SSH_CONTROL_PATH          (Default: %(directory)s/ansible-ssh-%%h-%%p-%%r)
+        pipelining                  ANSIBLE_SSH_PIPELINING            (Default: None)
+        scp_if_ssh                  ANSIBLE_SCP_IF_SSH                (Default: None)
+        ssh_args                    ANSIBLE_SSH_ARGS                  (Default: None)
