@@ -195,7 +195,7 @@ class RabbitMQExchange(object):
         list_bindings = json.loads(content)
         for binding in list_bindings:
             # does the routing keys match?
-            routing_key_match = ('routing_key' in self.binding) and (self.routing_key == binding['routing_key']) if self.routing_key is not None else True
+            routing_key_match = ('routing_key' in binding) and (self.routing_key == binding['routing_key']) if self.routing_key is not None else True
 
             # same amount of arguments?
             args_length_match = (len(self.arguments) == len(binding['arguments']))
