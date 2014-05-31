@@ -78,6 +78,10 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
+        if '_original_file' in inject:
+            templates_paths = [utils.path_dwim_relative(inject['_original_file'], 'templates', '', self.runner.basedir, check=False)]
+        else:
+            templates_paths = None
 
         if dest.endswith("/"):
             base = os.path.basename(source)
@@ -85,7 +89,7 @@ class ActionModule(object):
 
         # template the source data locally & get ready to transfer
         try:
-            resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass)
+            resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass, extra_search_paths=templates_paths)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
