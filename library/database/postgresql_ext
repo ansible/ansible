@@ -115,7 +115,7 @@ def main():
         argument_spec = dict(
             db              = dict(required=True),
             extension       = dict(required=True, aliases=['name', 'ext']),
-            login_host      = dict(default="localhost"),
+            login_host      = dict(default=""),
             login_password  = dict(default=""),
             login_user      = dict(default="postgres"),
             port            = dict(default="5432"),
