@@ -16,8 +16,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import ansible.utils as utils
-from ansible.utils import safe_eval
 import ansible.errors as errors
+import re
+
+# regular expression to match jinja expressions that contain
+# "item[*]" or "item.*" subexpressions
+item_regex = re.compile(r"[^a-zA-Z0-9_]*item(\[\d+\]|\.\d+)")
 
 def flatten(terms):
     ret = []
@@ -30,44 +34,47 @@ def flatten(terms):
             ret.append(term)
     return ret
 
-def combine(a,b):
-    results = []
-    for x in a:
-        for y in b:
-            results.append(flatten([x,y]))
-    return results
-
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
     def __lookup_injects(self, terms, inject):
-        results = []
-        for x in terms:
-            intermediate = utils.listify_lookup_plugin_terms(x, self.basedir, inject)
-            results.append(intermediate)
-        return results
+        # loop_paths:
+        #   A list of all possible paths/branches in the nested loop.
+        #   Each path/branch is represented as a list of the values that are
+        #   in effect at each step in the path. The index in a path's
+        #   list denotes the step number (loop level). So, for example,
+        #   loop_items[0][0] is set to the value that is in effect at the
+        #   first step of the first possible path in the loop.
+        loop_paths = [[]]
+
+        for loop_index, term in enumerate(terms):
+            new_paths = []
+            for path in loop_paths:
+                if loop_index != 0 and isinstance(term, basestring) and item_regex.search(term):
+                    # Inject values of previous steps in the current loop
+                    # path, so that, at each step, the value of the previous
+                    # steps can be used when evaluating expressions that 
+                    # contain "item[*]" or "item.*"
+                    item = []
+                    for step in path:
+                        item.append(step)
+                    inject['item'] = item
+                intermediate = utils.listify_lookup_plugin_terms(term, self.basedir, inject)
+                values = flatten(intermediate)
+                for value in values:
+                    new_paths.append(path + [value])
+            loop_paths = new_paths
+
+        return loop_paths
 
     def run(self, terms, inject=None, **kwargs):
-
-        # this code is common with 'items.py' consider moving to utils if we need it again
-
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
-        terms = self.__lookup_injects(terms, inject)
+        loop_paths = self.__lookup_injects(terms, inject)
 
-        my_list = terms[:]
-        my_list.reverse()
-        result = []
-        if len(my_list) == 0:
-            raise errors.AnsibleError("with_nested requires at least one element in the nested list")
-        result = my_list.pop()
-        while len(my_list) > 0:
-            result2 = combine(result, my_list.pop())
-            result  = result2
-        new_result = []
-        for x in result:
-            new_result.append(flatten(x))
-        return new_result
+        # There must be at least one possible path in the loop
+        if not loop_paths[0]:
+            raise errors.AnsibleError("with_nested requires at least one element in the first (nesting) list")
 
-
+        return loop_paths
