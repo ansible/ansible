@@ -34,22 +34,16 @@ Adapted from the ansible Linode plugin by Dan Slimmon.
 # #####################################################################
 
 # Standard imports
-import re
 import sys
+import re
 import argparse
 import os
-import sys
 if sys.version_info < (3,):
     from urlparse import urlparse
     import ConfigParser
-    import codecs
-    def u(x):
-        return codecs.unicode_escape_decode(x)[0]
 else:
     from configparser import ConfigParser
     from urllib.parse import urlparse
-    def u(x):
-        return x
 
 from time import time
 try:
@@ -59,15 +53,62 @@ except ImportError:
 
 try:
     import azure
-    from azure import WindowsAzureError
     from azure.servicemanagement import ServiceManagementService
+    from azure import _USER_AGENT_STRING, _update_request_uri_query
+    from azure.http import HTTPResponse
+    from azure.http import HTTPError
 except ImportError as e:
     print("failed=True msg='`azure` library required for this script'")
     sys.exit(1)
 
+# monkey patch for temporary redirects until https://github.com/Azure/azure-sdk-for-python/issues/129 is fixed
+def perform_request_new(self, request):
+    connection = self.get_connection(request)
+    try:
+        connection.putrequest(request.method, request.path)
 
+        if not self.use_httplib:
+            if self.proxy_host and self.proxy_user:
+                connection.set_proxy_credentials(
+                    self.proxy_user, self.proxy_password)
 
+        self.send_request_headers(connection, request.headers)
+        self.send_request_body(connection, request.body)
 
+        resp = connection.getresponse()
+        self.status = int(resp.status)
+        self.message = resp.reason
+        self.respheader = headers = resp.getheaders()
+
+        # for consistency across platforms, make header names lowercase
+        for i, value in enumerate(headers):
+            headers[i] = (value[0].lower(), value[1])
+
+        respbody = None
+        if resp.length is None:
+            respbody = resp.read()
+        elif resp.length > 0:
+            respbody = resp.read(resp.length)
+        response = HTTPResponse(
+            int(resp.status), resp.reason, headers, respbody)
+        if self.status == 307:
+            print("Temporary redirect detected...")
+            new_url = urlparse(dict(headers)['location'])
+            request.host = new_url.hostname
+            request.path = new_url.path
+            if new_url.query:
+                request.path += '?' + new_url.query
+            request.path, request.query = _update_request_uri_query(request)
+            return self.perform_request(request)
+        if self.status >= 300:
+            raise HTTPError(self.status, self.message,
+                            self.respheader, respbody)
+
+        return response
+    finally:
+        connection.close()
+
+azure.http.httpclient._HTTPClient.perform_request = perform_request_new
 
 class AzureInventory(object):
 
@@ -102,13 +143,12 @@ class AzureInventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
-
         # Data to print
         if self.args.host:
             data_to_print = self.get_host_info()
         elif self.args.list:
             # Display list of roles for inventory
-            if len(self.inventory) == 0:
+            if self.inventory == self._empty_inventory():
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
@@ -185,7 +225,7 @@ class AzureInventory(object):
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                             help='Force refresh of cache by making API requests to Azure (default: False - use cache files)')
 
-        parser.add_argument('--host', action='store_true', help='Get all the variables about a specific role')
+        parser.add_argument('--host', action='store_true', default=False, help='Get all the variables about a specific role')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -199,7 +239,7 @@ class AzureInventory(object):
         try:
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
-        except WindowsAzureError as e:
+        except azure.WindowsAzureError as e:
             self._print_error_and_exit("Looks like Azure's API is down.", e)
 
     def add_deployments(self, cloud_service):
@@ -209,14 +249,14 @@ class AzureInventory(object):
                 if deployment.deployment_slot == "Production":
                     for role in deployment.role_instance_list:
                         self.add_deployment(cloud_service, deployment, role)
-        except WindowsAzureError as e:
+        except azure.WindowsAzureError as e:
             self._print_error_and_exit("Looks like Azure's API is down.", e)
 
     def get_roles(self):
         deployment_info = None
         try:
             deployment_info = self.sms.get_deployment_by_name(self.cloud_service_name, self.deployment_name)
-        except WindowsAzureError:    #not  found
+        except azure.WindowsAzureError:    #not  found
             pass
         roles = []
         if deployment_info:
@@ -312,7 +352,7 @@ class AzureInventory(object):
     def _print_error_and_exit(self, msg, error):
         print(msg)
         print("")
-        print(u(error))
+        print(unicode(error))
         sys.exit(1)
 
 

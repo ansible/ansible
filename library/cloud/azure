@@ -137,18 +137,6 @@ options:
         command = openssl x509 -in ~/.azure/azure.pem -fingerprint -noout
     required: false
     default: null
-  wait:
-    description:
-      - wait for the instance to be in state 'running' before returning
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    aliases: []
-  wait_timeout:
-    description:
-      - how long before wait gives up, in seconds
-    default: 300
-    aliases: []
 
 
 requirements: [ "azure" ]
@@ -178,20 +166,77 @@ EXAMPLES = '''
 '''
 import base64
 from ansible.module_utils.azure import *
-from azure import (
-    BLOB_SERVICE_HOST_BASE,
-    WindowsAzureError)
-from azure.servicemanagement import *
-
+try:
+    import azure
+    from azure.servicemanagement import ServiceManagementService, ConfigurationSetInputEndpoint, LinuxConfigurationSet, PublicKey, OSVirtualHardDisk, \
+        ConfigurationSet
+    from azure import _USER_AGENT_STRING, _update_request_uri_query
+    from azure.http import HTTPResponse
+    from azure.http import HTTPError
+except ImportError as e:
+    print("failed=True msg='`azure` library required for this script'")
+    sys.exit(1)
 
 import time, re, string, sys
 from datetime import datetime
-
 if sys.version_info < (3,):
     from urlparse import urlparse
 else:
     from urllib.parse import urlparse
 
+
+# monkey patch for temporary redirects until https://github.com/Azure/azure-sdk-for-python/issues/129 is fixed
+def perform_request_new(self, request):
+    connection = self.get_connection(request)
+    try:
+        connection.putrequest(request.method, request.path)
+
+        if not self.use_httplib:
+            if self.proxy_host and self.proxy_user:
+                connection.set_proxy_credentials(
+                    self.proxy_user, self.proxy_password)
+
+        self.send_request_headers(connection, request.headers)
+        self.send_request_body(connection, request.body)
+
+        resp = connection.getresponse()
+        self.status = int(resp.status)
+        self.message = resp.reason
+        self.respheader = headers = resp.getheaders()
+
+        # for consistency across platforms, make header names lowercase
+        for i, value in enumerate(headers):
+            headers[i] = (value[0].lower(), value[1])
+
+        respbody = None
+        if resp.length is None:
+            respbody = resp.read()
+        elif resp.length > 0:
+            respbody = resp.read(resp.length)
+        response = HTTPResponse(
+            int(resp.status), resp.reason, headers, respbody)
+        if self.status == 307:
+            print("Temporary redirect detected...")
+            new_url = urlparse(dict(headers)['location'])
+            request.host = new_url.hostname
+            request.path = new_url.path
+            if new_url.query:
+                request.path += '?' + new_url.query
+            request.path, request.query = _update_request_uri_query(request)
+            return self.perform_request(request)
+        if self.status >= 300:
+            raise HTTPError(self.status, self.message,
+                            self.respheader, respbody)
+
+        return response
+    finally:
+        connection.close()
+
+
+azure.http.httpclient._HTTPClient.perform_request = perform_request_new
+
+def azure_props_to_dict(x):
+    return json.loads(json.dumps(x, default=lambda o: o.__dict__))
 
 class AzureVm:
     STARTING_SSH_PORT = 60022
@@ -202,7 +247,7 @@ class AzureVm:
         while True:
             count += 1
             if count > 120:
-                raise WindowsAzureError('Timed out waiting for async operation to complete.')
+                raise azure.WindowsAzureError('Timed out waiting for async operation to complete.')
             operation_result = self.sms.get_operation_status(promise.request_id)
             self._log('Operation ' + msg + ' : ' + operation_result.status)
             time.sleep(5)
@@ -212,12 +257,13 @@ class AzureVm:
     def _create_media_link(self, storage_name, container_name, blob_name):
         return create_azure_conform_name("http://{storage_name}{blob_service_host_base}/{container}/{blob}.vhd".format(
             storage_name=storage_name,
-            blob_service_host_base=BLOB_SERVICE_HOST_BASE,
+            blob_service_host_base=azure.BLOB_SERVICE_HOST_BASE,
             container=container_name,
             blob=blob_name))
 
     def _log(self, msg):
-        print("*  " + msg)
+        noop = msg
+        #print("*  " + msg)
 
     def _create_cloud_service_if_not_exists(self, force_affinity_group=True):
         self._log("Create cloud service it not exists.")
@@ -334,7 +380,7 @@ class AzureVm:
         props = []
         try:
             props = self.sms.get_hosted_service_properties(self.cloud_service_name, True)
-        except WindowsAzureError:    #not found
+        except azure.WindowsAzureError:    #not found
             pass
         if props:
             if len(props.deployments) == 1 and len(props.deployments[0].role_list) == 1:
@@ -361,7 +407,7 @@ class AzureVm:
         props = []
         try:
             props = self.sms.get_hosted_service_properties(self.cloud_service_name, True)
-        except WindowsAzureError:    #not found
+        except azure.WindowsAzureError:    #not found
             pass
         if props:
             for deployment in props.deployments:
@@ -407,7 +453,7 @@ class AzureVm:
         deployment_info = None
         try:
             deployment_info = self.sms.get_deployment_by_name(self.cloud_service_name, self.deployment_name)
-        except WindowsAzureError:    #not  found
+        except azure.WindowsAzureError:    #not  found
             pass
         roles = []
         if deployment_info:
@@ -428,7 +474,7 @@ class AzureVm:
         deployment_info = None
         try:
             deployment_info = self.sms.get_deployment_by_name(self.cloud_service_name, self.deployment_name)
-        except WindowsAzureError:  # not found
+        except azure.WindowsAzureError:  # not found
             pass
 
         return azure_props_to_dict(deployment_info)
@@ -525,8 +571,8 @@ def main():
 
         module.exit_json(changed=len(roles) > 0, roles=azure_vm.get_roles(), deployment=deployment)
 
-    except WindowsAzureError as e:
-        module.fail_json(msg=str(e, 'utf-8'))
+    except azure.WindowsAzureError as e:
+        module.fail_json(msg=unicode(e))
 
 
 from ansible.module_utils.basic import *
