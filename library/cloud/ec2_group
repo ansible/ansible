@@ -61,8 +61,8 @@ EXAMPLES = '''
     description: an example EC2 group
     vpc_id: 12345
     region: eu-west-1a
-    ec2_secret_key: SECRET
-    ec2_access_key: ACCESS
+    aws_secret_key: SECRET
+    aws_access_key: ACCESS
     rules:
       - proto: tcp
         from_port: 80
