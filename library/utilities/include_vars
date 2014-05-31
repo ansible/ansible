@@ -32,7 +32,8 @@ EXAMPLES = """
 # Load a variable file based on the OS type, or a default if not found.
 - include_vars: "{{ item }}"
   with_first_found:
-   - "{{ ansible_os_distribution }}.yml"
+   - "{{ ansible_distribution }}.yml"
+   - "{{ ansible_os_family }}.yml"
    - "default.yml"
- 
+
 """

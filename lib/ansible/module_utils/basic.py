@@ -1020,6 +1020,7 @@ class AnsibleModule(object):
                 context = self.selinux_default_context(dest)
 
         creating = not os.path.exists(dest)
+        switched_user = os.getlogin() != pwd.getpwuid(os.getuid())[0]
 
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
@@ -1035,7 +1036,7 @@ class AnsibleModule(object):
                 prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
 
             try: # leaves tmp file behind when sudo and  not root
-                if os.getenv("SUDO_USER") and os.getuid() != 0:
+                if switched_user and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
                     # copy2 will preserve some metadata
                     shutil.copy2(src, tmp_dest.name)
@@ -1058,7 +1059,7 @@ class AnsibleModule(object):
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(dest, 0666 ^ umask)
-            if os.getenv("SUDO_USER"):
+            if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
