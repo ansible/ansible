@@ -94,6 +94,12 @@ options:
     default: present
     choices: ['absent', 'present']
     version_added: "1.6"
+  encrypted:
+    description:
+      - encrypt an EBS volume
+    required: false
+    default: false
+    version_add: "1.7"
 author: Lester Wade
 extends_documentation_fragment: aws
 '''
@@ -221,6 +227,7 @@ def create_volume(module, ec2, zone):
     iops = module.params.get('iops')
     volume_size = module.params.get('volume_size')
     snapshot = module.params.get('snapshot')
+    encrypted = module.params.get('encrypted')
     # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
     if iops:
         volume_type = 'io1'
@@ -248,7 +255,7 @@ def create_volume(module, ec2, zone):
                                  changed=False)
     else:
         try:
-            volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
+            volume = ec2.create_volume(volume_size, zone, snapshot, encrypted, volume_type, iops)
             while volume.status != 'available':
                 time.sleep(3)
                 volume.update()
@@ -305,6 +312,7 @@ def main():
             device_name = dict(),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
             snapshot = dict(),
+            encrypted = dict(default=False, type='bool'),
             state = dict(choices=['absent', 'present'], default='present')
         )
     )
@@ -318,6 +326,7 @@ def main():
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
+    encrypted = module.params.get('encrypted')
     state = module.params.get('state')
 
     ec2 = ec2_connect(module)
