@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+from paramiko import SSHConfig
 
 from ansible import utils
 from ansible.runner.return_data import ReturnData
@@ -73,9 +74,9 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-   
+
         self.inject = inject
-    
+
         # Store original transport and sudo values.
         self.original_transport = inject.get('ansible_connection', self.runner.transport)
         self.original_sudo = self.runner.sudo
@@ -117,6 +118,18 @@ class ActionModule(object):
         src_host = '127.0.0.1'
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
 
+        # Fall back to SSH config settings
+        ssh_cfg = {}
+        ssh_cfg_file = os.path.expanduser('~/.ssh/config')
+        if os.path.exists(ssh_cfg_file):
+            config = SSHConfig()
+            with open(ssh_cfg_file) as f:
+                config.parse(f)
+                ssh_cfg = config.lookup(dest_host)
+
+        if 'hostname' in ssh_cfg:
+            dest_host = ssh_cfg['hostname']
+
         # allow ansible_ssh_host to be templated
         dest_host = template.template(self.runner.basedir, dest_host, inject, fail_on_undefined=True)
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
@@ -126,6 +139,9 @@ class ActionModule(object):
         inv_port = inject.get('ansible_ssh_port', inject['inventory_hostname'])
         if inv_port != dest_port and inv_port != inject['inventory_hostname']:
             options['dest_port'] = inv_port
+
+        if 'dest_port' not in options and 'port' in ssh_cfg:
+            options['dest_port'] = ssh_cfg['port']
 
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
@@ -143,7 +159,7 @@ class ActionModule(object):
                     # use a delegate host instead of localhost
                     use_delegate = True
 
-        # COMPARE DELEGATE, HOST AND TRANSPORT                             
+        # COMPARE DELEGATE, HOST AND TRANSPORT
         process_args = False
         if not dest_host is src_host and self.original_transport != 'local':
             # interpret and inject remote host info into src or dest
@@ -160,7 +176,9 @@ class ActionModule(object):
                 if not use_delegate or not user:
                     user = inject.get('ansible_ssh_user',
                                     self.runner.remote_user)
-                
+                    if user == self.runner.remote_user and 'user' in ssh_cfg:
+                        user = ssh_cfg['user']
+
             if use_delegate:
                 # FIXME
                 private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
@@ -172,7 +190,10 @@ class ActionModule(object):
             if not private_key is None:
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
-                
+
+            if 'private_key' not in options and 'identityfile' in ssh_cfg:
+                options['private_key'] = ssh_cfg['identityfile'][0]
+
             # use the mode to define src and dest's url
             if options.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
@@ -206,8 +227,7 @@ class ActionModule(object):
         # run the module and store the result
         result = self.runner._execute_module(conn, tmp, 'synchronize', module_args, complex_args=options, inject=inject)
 
-        # reset the sudo property                 
+        # reset the sudo property
         self.runner.sudo = self.original_sudo
 
         return result
-
