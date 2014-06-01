@@ -103,7 +103,14 @@ options:
     master_ssl_cipher:
         description:
             - same as mysql variable
-
+    gtid_replication:
+        description:
+            - does the host uses GTID based replication or not
+        possible values: 0,1
+    warnings_filtered:
+        description:
+            - which types of warnings should be muted
+	possivle values: all, warnings, none
 '''
 
 EXAMPLES = '''
@@ -231,6 +238,7 @@ def main():
             login_host=dict(default="localhost"),
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
+            gtid_replication=dict(default=None, choices=['0', '1']),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
@@ -246,6 +254,7 @@ def main():
             master_ssl_cert=dict(default=None),
             master_ssl_key=dict(default=None),
             master_ssl_cipher=dict(default=None),
+            warnings_filtered=dict(default="none", choices=["none", "warnings", "all"])
         )
     )
     user = module.params["login_user"]
@@ -267,11 +276,16 @@ def main():
     master_ssl_cert = module.params["master_ssl_cert"]
     master_ssl_key = module.params["master_ssl_key"]
     master_ssl_cipher = module.params["master_ssl_cipher"]
+    gtid_replication = module.params["gtid_replication"]
+    warnings_filtered = module.params["warnings_filtered"]
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
     else:
-        warnings.filterwarnings('error', category=MySQLdb.Warning)
+	if warnings_filtered == "all":
+            warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+        elif warnings_filtered == "warnings":
+            warnings.filterwarnings('error', category=MySQLdb.Warning)
 
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
@@ -348,6 +362,8 @@ def main():
             chm.append("MASTER_SSL_KEY='" + master_ssl_key + "'")
         if master_ssl_cipher:
             chm.append("MASTER_SSL_CIPTHER='" + master_ssl_cipher + "'")
+        if gtid_replication:
+            chm.append("MASTER_AUTO_POSITION = 1")
         changemaster(cursor,chm)
         module.exit_json(changed=True)
     elif mode in "startslave":
