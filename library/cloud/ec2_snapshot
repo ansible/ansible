@@ -193,7 +193,6 @@ def main():
             current_time = time.mktime(time.localtime())
             snapshot_age = current_time - recent['start_time']
             if snapshot_age < snapshot_max_age:
-                file('/tmp/ansible', 'w').write("Start time is %d\nAge is %d\n" % (recent['start_time'], snapshot_age))
                 snapshot = recent['snapshot']
         except boto.exception.BotoServerError, e:
             module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
