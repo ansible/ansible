@@ -95,11 +95,11 @@ options:
     choices: ['absent', 'present']
     version_added: "1.6"
   encrypted:
-    description: 
-      -  Encrypt an EBS volume 
+    description:
+      - encrypt an EBS volume
     required: false
     default: false
-    version_added: "1.7"
+    version_add: "1.7"
 author: Lester Wade
 extends_documentation_fragment: aws
 '''
@@ -326,7 +326,7 @@ def main():
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
-    ecrypted = module.params.get('encrypted')
+    encrypted = module.params.get('encrypted')
     state = module.params.get('state')
 
     ec2 = ec2_connect(module)
