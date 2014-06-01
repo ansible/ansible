@@ -18,6 +18,7 @@
 import base64
 import json
 import os.path
+import itertools as it
 import yaml
 import types
 import pipes
@@ -200,6 +201,10 @@ def rand(end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+def merge_dicts(a, b):
+    """Merges two dictionaries not in-place."""
+    return dict(it.chain(a.items(), b.items()))
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -262,6 +267,9 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+
+            # dict
+            'merge_dicts': merge_dicts,
 
             # version comparison
             'version_compare': version_compare,
