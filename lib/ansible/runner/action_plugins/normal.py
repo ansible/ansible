@@ -58,7 +58,7 @@ class ActionModule(object):
         else:
             module_arguments = module_args
 
-        vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
+        vv("REMOTE_MODULE %s %s" % (module_name, module_arguments), host=conn.host)
         return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject, complex_args=complex_args)
 
 
