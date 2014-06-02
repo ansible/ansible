@@ -347,7 +347,7 @@ def main():
         if master_ssl_key:
             chm.append("MASTER_SSL_KEY='" + master_ssl_key + "'")
         if master_ssl_cipher:
-            chm.append("MASTER_SSL_CIPTHER='" + master_ssl_cipher + "'")
+            chm.append("MASTER_SSL_CIPHER='" + master_ssl_cipher + "'")
         changemaster(cursor,chm)
         module.exit_json(changed=True)
     elif mode in "startslave":
