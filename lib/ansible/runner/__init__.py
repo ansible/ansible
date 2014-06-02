@@ -199,7 +199,6 @@ class Runner(object):
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.hide             = hide
-        print "####### this is coming from devel"
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
