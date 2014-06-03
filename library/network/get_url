@@ -316,11 +316,11 @@ def main():
         method = match.group(1)
         checksum = match.group(2)
 
-        try:
-            destination_checksum = getattr(hashlib, method)(open(dest).read()).hexdigest()
-        except AttributeError:
+        if method not in hashlib.algorithms:
             os.remove(dest)
             module.fail_json(msg="Could not hash with algorithm '%s'. Available algorithms: %s " % (method, hashlib.algorithms))
+
+        destination_checksum = getattr(hashlib, method)(open(dest).read()).hexdigest()
 
         if checksum.lower() != destination_checksum:
             os.remove(dest)
