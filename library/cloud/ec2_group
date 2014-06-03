@@ -230,6 +230,10 @@ def main():
                 # to 0.0.0.0/0 is added automatically but it's not
                 # reflected in the object returned by the AWS API
                 # call. We re-read the group for getting an updated object
+                # amazon sometimes takes a couple seconds to update the security group so wait till it exists
+                while len(ec2.get_all_security_groups(filters={ 'group_id': group.id, })) == 0:
+                    time.sleep(0.1)
+
                 group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
             changed = True
     else:
