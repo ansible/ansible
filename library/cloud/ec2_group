@@ -185,10 +185,13 @@ def main():
     group = None
     groups = {}
     for curGroup in ec2.get_all_security_groups():
+        if curGroup.vpc_id != vpc_id:
+            continue
+
         groups[curGroup.id] = curGroup
         groups[curGroup.name] = curGroup
 
-        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
+        if curGroup.name == name:
             group = curGroup
 
     # Ensure requested group is absent
