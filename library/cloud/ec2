@@ -476,6 +476,7 @@ from ast import literal_eval
 
 try:
     import boto.ec2
+    import boto.vpc
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
 except ImportError:
@@ -747,14 +748,18 @@ def create_instances(module, ec2, override_count=None):
     try:
         # Here we try to lookup the group id from the security group name - if group is set.
         if group_name:
-            grp_details = ec2.get_all_security_groups()
-            if type(group_name) == list:
-                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
-            elif type(group_name) == str:
-                for grp in grp_details:
-                    if str(group_name) in str(grp):
-                        group_id = [str(grp.id)]
+            # Wrap the group_name in a list if it's not one already
+            if type(group_name) == str:
                 group_name = [group_name]
+            # Filter by VPC if subnet is set. Group name is only unique within a VPC.
+            if vpc_subnet_id:
+                grp_details = ec2.get_all_security_groups(filters={
+                    'group_name': group_name,
+                    'vpc_id': [ec2.get_all_subnets([vpc_subnet_id])[0].vpc_id],
+                })
+            else:
+                grp_details = ec2.get_all_security_groups(groupnames=group_name)
+            group_id = [ str(grp.id) for grp in grp_details ]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
             #wrap the group_id in a list if it's not one already
@@ -1131,7 +1136,10 @@ def main():
                              ],
     )
 
-    ec2 = ec2_connect(module)
+    if module.params.get('vpc_subnet_id'):
+        ec2 = ec2_connect(module, vpc=True)
+    else:
+        ec2 = ec2_connect(module)
 
     tagged_instances = [] 
 

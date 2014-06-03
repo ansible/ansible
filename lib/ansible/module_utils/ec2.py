@@ -166,7 +166,7 @@ def connect_to_aws(aws_module, region, **params):
     return conn
 
 
-def ec2_connect(module):
+def ec2_connect(module, vpc=False):
 
     """ Return an ec2 connection"""
 
@@ -175,7 +175,10 @@ def ec2_connect(module):
     # If we have a region specified, connect to its endpoint.
     if region:
         try:
-            ec2 = connect_to_aws(boto.ec2, region, **boto_params)
+            if vpc:
+                ec2 = connect_to_aws(boto.vpc, region, **boto_params)
+            else:
+                ec2 = connect_to_aws(boto.ec2, region, **boto_params)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
