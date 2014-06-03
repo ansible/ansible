@@ -44,6 +44,7 @@ import traceback
 import getpass
 import sys
 import json
+import subprocess
 
 #import vault
 from vault import VaultLib
@@ -147,6 +148,32 @@ def decrypt(key, msg):
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
+
+def read_vault_file(vault_password_file):
+    """Read a vault password from a file or if executable, execute the script and
+    retrieve password from STDOUT
+    """
+    if vault_password_file:
+        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
+        if is_executable(this_path):
+            try:
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+            except OSError, e:
+                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(this_path), e))
+            stdout, stderr = p.communicate()
+            vault_pass = stdout.strip('\r\n')
+        else:
+            try:
+                f = open(this_path, "rb")
+                vault_pass=f.read().strip()
+                f.close()
+            except (OSError, IOError), e:
+                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+
+        return vault_pass
+    else:
+        return None
 
 def err(msg):
     ''' print an error message to stderr '''
@@ -757,8 +784,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for su password')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
         help='ask for vault password')
-    parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
-        help="vault password file")
+    parser.add_option('--vault-password-file', default=constants.DEFAULT_VAULT_PASSWORD_FILE,
+        dest='vault_password_file', help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
