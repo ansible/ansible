@@ -63,7 +63,6 @@
     that:
         - "'invocation' in apt_result"
         - "'changed' in apt_result"
-        - "'item' in apt_result"
         - "'stderr' in apt_result"
         - "'stdout' in apt_result"
         - "'stdout_lines' in apt_result"
