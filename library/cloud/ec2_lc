@@ -47,6 +47,12 @@ options:
     description:
       - The SSH key name to be used for access to managed instances
     required: false
+  associate_public_ip_address:
+    version_added: "1.6"
+    description:
+      - when provisioning within vpc, assign a public IP address.
+    required: false
+    default: null
   security_groups:
     description:
       - A list of security groups into which instances should be found
@@ -122,6 +128,7 @@ def create_launch_config(connection, module):
     name = module.params.get('name')
     image_id = module.params.get('image_id')
     key_name = module.params.get('key_name')
+    associate_public_ip_address = module.params['associate_public_ip_address']
     security_groups = module.params['security_groups']
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
@@ -141,6 +148,7 @@ def create_launch_config(connection, module):
         name=name,
         image_id=image_id,
         key_name=key_name,
+        associate_public_ip_address=associate_public_ip_address,
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
@@ -180,6 +188,7 @@ def main():
             image_id=dict(type='str'),
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
+            associate_public_ip_address=dict(type='bool'),
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
