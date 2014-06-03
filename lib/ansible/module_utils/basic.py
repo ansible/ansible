@@ -1020,7 +1020,18 @@ class AnsibleModule(object):
                 context = self.selinux_default_context(dest)
 
         creating = not os.path.exists(dest)
-        switched_user = os.getlogin() != pwd.getpwuid(os.getuid())[0]
+
+        try:
+            login_name = os.getlogin()
+        except OSError:
+            # not having a tty can cause the above to fail, so
+            # just get the LOGNAME environment variable instead
+            login_name = os.environ.get('LOGNAME', None)
+
+        # if the original login_name doesn't match the currently
+        # logged-in user, or if the SUDO_USER environment variable
+        # is set, then this user has switched their credentials
+        switched_user = login_name and login_name != pwd.getpwuid(os.getuid())[0] or os.environ.get('SUDO_USER')
 
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
