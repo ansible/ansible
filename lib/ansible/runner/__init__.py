@@ -572,8 +572,8 @@ class Runner(object):
         # use combined_cache and host_variables to template the module_vars
         # we update the inject variables with the data we're about to template
         # since some of the variables we'll be replacing may be contained there too
-        module_vars_inject = utils.combine_vars(combined_cache.get(host, {}), host_variables)
-        module_vars_inject.update(self.module_vars)
+        module_vars_inject = utils.combine_vars(host_variables, combined_cache.get(host, {}))
+        module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         inject = {}
