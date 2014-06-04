@@ -222,12 +222,12 @@ class LibcloudInventory(object):
         self.push(self.inventory, self.to_safe('type_' + node.instance_type), dest)
         '''
         # Inventory: Group by key pair
-        if node.extra['keyname']:
-            self.push(self.inventory, self.to_safe('key_' + node.extra['keyname']), dest)
+        if node.extra['key_name']:
+            self.push(self.inventory, self.to_safe('key_' + node.extra['key_name']), dest)
             
         # Inventory: Group by security group, quick thing to handle single sg
-        if node.extra['securitygroup']:
-            self.push(self.inventory, self.to_safe('sg_' + node.extra['securitygroup'][0]), dest)
+        if node.extra['security_group']:
+            self.push(self.inventory, self.to_safe('sg_' + node.extra['security_group'][0]), dest)
 
     def get_host_info(self):
         '''
