@@ -21,21 +21,22 @@
 DOCUMENTATION = '''
 ---
 module: haproxy
-short_description: Enable/Diable Haproxy Backend Server.
+short_description: An Ansible module to handle actions enable/disable server and set/get weight from haproxy using socket commands.
 description:
     - Enable/Diable Haproxy Backend Server,
+    - Get/Set weight of Haproxy Backend Server,
       using haproxy socket commands - http://haproxy.1wt.eu
 notes:
-    - "enable or disable commands are restricted and can only be issued on sockets configured for level 'admin', "
+    - "enable or disable or set weight commands are restricted and can only be issued on sockets configured for level 'admin', "
     - "Check - http://haproxy.1wt.eu/download/1.4/doc/configuration.txt, "
-    - "Exampe: 'stats socket /var/run/haproxy.sock level admin'"
+    - "Example: 'stats socket /var/run/haproxy.sock level admin'"
 options:
   action:
     description:
       - Action to take.
     required: true
     default: null
-    choices: [ "enable_server", "disable_server" ]
+    choices: [ "enable_server", "disable_server", "get_weight", "set_weight" ]
   host:
     description:
       - Host (backend) to operate in Haproxy.
@@ -46,27 +47,37 @@ options:
       - Haproxy socket file name with path.
     required: false
     default: /var/run/haproxy.sock
-  frontend:
+  backend:
     description:
-      - Name of the haproxy frontend pool.
+      - Name of the haproxy backend pool.
         Required, else auto-detection applied.
     required: false
     default: auto-detected
-
+  weight:
+    description:
+      - The value passed in argument. If the value ends with the '%' sign, then the new weight will be relative to the initially cnfigured weight. Relative weights are only permitted between 0 and 100% and absolute weights are permitted between 0 and 256.
+    required: false
+    default: /var/run/haproxy.sock
 '''
 
 EXAMPLES = '''
-# disable backend server in 'www' frontend
-- haproxy: action=disable_server host={{ inventory_hostname }} frontend=www
+# disable backend server in 'www' backend
+- haproxy: action=disable_server host={{ inventory_hostname }} backend=www
 
-# disable backend server without frontend name (applied to all)
+# disable backend server without backend name (applied to all)
 - haproxy: action=disable_server host={{ inventory_hostname }}
 
 # disable server, provide socket file
-- haproxy: action=disable_server host={{ inventory_hostname }} socket=/var/run/haproxy.sock frontend=www
+- haproxy: action=disable_server host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
 
-# enable backend server in 'www' frontend
-- haproxy: action=enable_server host={{ inventory_hostname }} frontend=www
+# enable backend server in 'www' backend
+- haproxy: action=enable_server host={{ inventory_hostname }} backend=www
+
+# report a server's current weight in 'www' backend
+- haproxy: action=get_weight host={{ inventory_hostname }} backend=www
+
+# change a server's current weight in 'www' backend
+- haproxy: action=set_weight host={{ inventory_hostname }} backend=www weight=10
 
 author: Ravi Bhure <ravibhure@gmail.com>
 version_added: "1.6"
@@ -84,7 +95,9 @@ RECV_SIZE = 1024
 def main():
     ACTION_CHOICES = [
         'enable_server',
-        'disable_server'
+        'disable_server',
+	'get_weight',
+	'set_weight'
         ]
 
     # load ansible module object
@@ -92,13 +105,15 @@ def main():
         argument_spec = dict(
             action = dict(required=True, default=None, choices=ACTION_CHOICES),
             host=dict(required=True, default=None),
-	    frontend=dict(required=False, default=None),
+	    backend=dict(required=False, default=None),
+	    weight=dict(required=False, default=None),
             socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION)
         ),
     )
     action = module.params['action']
     host = module.params['host']
-    frontend = module.params['frontend']
+    backend = module.params['backend']
+    weight = module.params['weight']
     socket = module.params['socket']
 
     ##################################################################
@@ -110,7 +125,7 @@ def main():
 
     ##################################################################
 
-    if action in ['enable_server', 'disable_server']:
+    if action in ['enable_server', 'disable_server', 'get_weight', 'set_weight']:
         if not host:
             module.fail_json(msg='no host specified for action requiring one')
     ##################################################################
@@ -148,7 +163,8 @@ class HAProxy(object):
         self.module = module
         self.action = kwargs['action']
         self.host = kwargs['host']
-        self.frontend = kwargs['frontend']
+        self.backend = kwargs['backend']
+        self.weight = kwargs['weight']
         self.socket = kwargs['socket']
 
         self.command_results = []
@@ -171,17 +187,28 @@ class HAProxy(object):
         while buf:
           result += buf
           buf = self.client.recv(RECV_SIZE)
+	  self.command_results = result.strip()
         self.client.close()
         return result
 
-    def enable_server(self, host, frontend):
+    def enable_server(self, host, backend):
         """
-        Enables backend server for a particular frontend.
+        Enables backend server for a particular backend.
+
+        enable server <backend>/<server>
+          If the server was previously marked as DOWN for maintenance, this marks the
+          server UP and checks are re-enabled.
+
+          Both the backend and the server may be specified either by their name or by
+          their numeric ID, prefixed with a sharp ('#').
+
+          This command is restricted and can only be issued on sockets configured for
+          level "admin".
 
         Syntax: enable server <pxname>/<svname>
         """
         svname = host
-        if self.frontend is None:
+        if self.backend is None:
           output = self.execute('show stat')
           #sanitize and make a list of lines
           output = output.lstrip('# ').strip()
@@ -189,25 +216,40 @@ class HAProxy(object):
           result = output
 
           for line in result:
-            if 'FRONTEND' in line:
+            if 'BACKEND' in line:
               result =  line.split(',')[0]
 	      pxname = result
 	      cmd = "enable server %s/%s" % (pxname, svname)
 	      self.execute(cmd)
 
 	else:
-            pxname = frontend
+            pxname = backend
 	    cmd = "enable server %s/%s" % (pxname, svname)
 	    self.execute(cmd)
 
-    def disable_server(self, host, frontend):
+    def disable_server(self, host, backend):
         """
-        Disable backend server for a particular frontend.
+        Disable backend server for a particular backend.
+
+        disable server <backend>/<server>
+          Mark the server DOWN for maintenance. In this mode, no more checks will be
+          performed on the server until it leaves maintenance.
+          If the server is tracked by other servers, those servers will be set to DOWN
+          during the maintenance.
+
+          In the statistics page, a server DOWN for maintenance will appear with a
+          "MAINT" status, its tracking servers with the "MAINT(via)" one.
+
+          Both the backend and the server may be specified either by their name or by
+          their numeric ID, prefixed with a sharp ('#').
+
+          This command is restricted and can only be issued on sockets configured for
+          level "admin".
 
         Syntax: disable server <pxname>/<svname>
         """
         svname = host
-        if self.frontend is None:
+        if self.backend is None:
           output = self.execute('show stat')
           #sanitize and make a list of lines
           output = output.lstrip('# ').strip()
@@ -215,15 +257,92 @@ class HAProxy(object):
           result = output
 
           for line in result:
-            if 'FRONTEND' in line:
+            if 'BACKEND' in line:
               result =  line.split(',')[0]
               pxname = result
               cmd = "disable server %s/%s" % (pxname, svname)
               self.execute(cmd)
 
         else:
-            pxname = frontend
+            pxname = backend
             cmd = "disable server %s/%s" % (pxname, svname)
+            self.execute(cmd)
+
+    def get_weight(self, host, backend):
+        """
+        Report a server's current weight.
+
+        get weight <backend>/<server>
+          Report the current weight and the initial weight of server <server> in
+          backend <backend> or an error if either doesn't exist. The initial weight is
+          the one that appears in the configuration file. Both are normally equal
+          unless the current weight has been changed. Both the backend and the server
+          may be specified either by their name or by their numeric ID, prefixed with a
+          sharp ('#').
+
+        Syntax: get weight <pxname>/<svname>
+        """
+        svname = host
+        if self.backend is None:
+          output = self.execute('show stat')
+          #sanitize and make a list of lines
+          output = output.lstrip('# ').strip()
+          output = output.split('\n')
+          result = output
+
+          for line in result:
+            if 'BACKEND' in line:
+              result =  line.split(',')[0]
+              pxname = result
+              cmd = "get weight %s/%s" % (pxname, svname)
+              self.execute(cmd)
+
+        else:
+            pxname = backend
+            cmd = "get weight %s/%s" % (pxname, svname)
+            self.execute(cmd)
+
+    def set_weight(self, host, backend, weight):
+        """
+        Change a server's current weight.
+
+        set weight <backend>/<server> <weight>[%]
+          Change a server's weight to the value passed in argument. If the value ends
+          with the '%' sign, then the new weight will be relative to the initially
+          configured weight. Relative weights are only permitted between 0 and 100%,
+          and absolute weights are permitted between 0 and 256. Servers which are part
+          of a farm running a static load-balancing algorithm have stricter limitations
+          because the weight cannot change once set. Thus for these servers, the only
+          accepted values are 0 and 100% (or 0 and the initial weight). Changes take
+          effect immediately, though certain LB algorithms require a certain amount of
+          requests to consider changes. A typical usage of this command is to disable
+          a server during an update by setting its weight to zero, then to enable it
+          again after the update by setting it back to 100%. This command is restricted
+          and can only be issued on sockets configured for level "admin". Both the
+          backend and the server may be specified either by their name or by their
+          numeric ID, prefixed with a sharp ('#').
+
+        Syntax: set weight <pxname>/<svname>
+        """
+        svname = host
+	weight = weight
+        if self.backend is None:
+          output = self.execute('show stat')
+          #sanitize and make a list of lines
+          output = output.lstrip('# ').strip()
+          output = output.split('\n')
+          result = output
+
+          for line in result:
+            if 'BACKEND' in line:
+              result =  line.split(',')[0]
+              pxname = result
+              cmd = "set weight %s/%s %s" % (pxname, svname, weight)
+              self.execute(cmd)
+
+        else:
+            pxname = backend
+            cmd = "set weight %s/%s %s" % (pxname, svname, weight)
             self.execute(cmd)
 
     def act(self):
@@ -231,20 +350,25 @@ class HAProxy(object):
         Figure out what you want to do from ansible, and then do the
         needful (at the earliest).
         """
-        # toggle enable/disbale
+        # toggle enable/disbale server
         if self.action == 'enable_server':
-            self.enable_server(self.host, self.frontend)
+            self.enable_server(self.host, self.backend)
 
         elif self.action == 'disable_server':
-            self.disable_server(self.host, self.frontend)
+            self.disable_server(self.host, self.backend)
 
+        # toggle get/set weight
+        elif self.action == 'get_weight':
+            self.get_weight(self.host, self.backend)
+
+        elif self.action == 'set_weight':
+            self.set_weight(self.host, self.backend, self.weight)
         # wtf?
         else:
             self.module.fail_json(msg="unknown action specified: '%s'" % \
                                       self.action)
 
-        self.module.exit_json(haproxy_commands=self.command_results,
-                              changed=True)
+        self.module.exit_json(stdout=self.command_results, changed=True)
 
 # import module snippets
 from ansible.module_utils.basic import *
