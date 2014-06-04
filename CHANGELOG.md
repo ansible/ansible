@@ -3,7 +3,9 @@ Ansible Changes By Release
 
 ## 1.7 "Summer Nights" - Active Development
 
-Pending!
+New Modules:
+
+* cloud: rax_meta
 
 ## 1.6 "And the Cradle Will Rock" - May 5, 2014
 
