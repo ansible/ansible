@@ -392,14 +392,20 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
     servers = []
 
-    for key, value in meta.items():
-        meta[key] = repr(value)
-
     # Add the group meta key
     if group and 'group' not in meta:
         meta['group'] = group
     elif 'group' in meta and group is None:
         group = meta['group']
+
+    # Normalize and ensure all metadata values are strings
+    for k, v in meta.items():
+        if isinstance(v, list):
+            meta[k] = ','.join(['%s' % i for i in v])
+        elif isinstance(v, dict):
+            meta[k] = json.dumps(v)
+        elif not isinstance(v, basestring):
+            meta[k] = '%s' % v
 
     # When using state=absent with group, the absent block won't match the
     # names properly. Use the exact_count functionality to decrease the count
