@@ -203,7 +203,7 @@ def rand(end, start=None, step=None):
 
 def merge_dicts(a, b):
     """Merges two dictionaries not in-place."""
-    return dict(it.chain(a.items(), b.items()))
+    return dict(it.chain(a.iteritems(), b.iteritems()))
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
