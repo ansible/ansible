@@ -296,10 +296,12 @@ mode, your module will simply be skipped.
 To support check mode in non-python modules, insert a '#SUPPORTS_CHECK_MODE=True' in your source.
 The module argument CHECKMODE will be 'True' when check mode is enabled. For example::
 
+    #!/bin/bash
     #SUPPORTS_CHECK_MODE=True
-    #INCLUDE_BASH_HELPER --args 'somearg1 somearg2 CHECKMODE'
+    ... Parse args file, will contain 'CHECKMODE=True' if in check mode ...
     if [ "$CHECKMODE" = 'True' ]; then
-        ...
+       # Test and flag if changes are needed, but *don't* modify anything!
+       echo "ok=true changed=true"
 
 .. _module_dev_pitfalls:
 
