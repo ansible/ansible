@@ -181,8 +181,9 @@ class TestFilters(unittest.TestCase):
 
     def test_merge_dicts(self):
         pairs = zip(letters, it.count())
-        d1 = dict(random.sample(pairs, len(pairs)/2))
-        d2 = dict(random.sample(pairs, len(pairs)/2))
-        expected_result = dict(it.chain(d1.iteritems(), d2.iteritems()))
+        d1 = dict(rnd.sample(pairs, len(pairs)/2))
+        d2 = dict(rnd.sample(pairs, len(pairs)/2))
+        d1.update(d2)
+        expected_result = d1
         actual_result = ansible.runner.filter_plugins.core.merge_dicts(d1, d2)
         self.assertDictEqual(actual_result, expected_result)
