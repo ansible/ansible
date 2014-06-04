@@ -392,26 +392,21 @@ class Runner(object):
             if 'port' not in args:
                 args += " port=%s" % C.ZEROMQ_PORT
 
-        (
-        module_style,
-        shebang,
-        module_data,
-        module_checkable
-        ) = self._configure_module(conn, module_name, args, inject, complex_args)
+        module_info = self._configure_module(conn, module_name, args, inject, complex_args)
 
         # a remote tmp path may be necessary and not already created
-        if self._late_needs_tmp_path(conn, tmp, module_style):
+        if self._late_needs_tmp_path(conn, tmp, module_info.style):
             tmp = self._make_tmp_path(conn)
 
         remote_module_path = os.path.join(tmp, module_name)
 
-        if (module_style != 'new'
+        if (module_info.style != 'new'
            or async_jid is not None
            or not conn.has_pipelining
            or not C.ANSIBLE_SSH_PIPELINING
            or C.DEFAULT_KEEP_REMOTE_FILES
            or self.su):
-            self._transfer_str(conn, tmp, module_name, module_data)
+            self._transfer_str(conn, tmp, module_name, module_info.data)
 
         environment_string = self._compute_environment_string(inject)
 
@@ -422,8 +417,8 @@ class Runner(object):
 
         cmd = ""
         in_data = None
-        if module_style != 'new':
-            if 'CHECKMODE=True' in args and not module_checkable:
+        if module_info.style != 'new':
+            if 'CHECKMODE=True' in args and not module_info.checkable:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
                 return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot yet run check mode against old-style modules"))
@@ -434,7 +429,7 @@ class Runner(object):
 
             # decide whether we need to transfer JSON or key=value
             argsfile = None
-            if module_style == 'non_native_want_json':
+            if module_info.style == 'non_native_want_json':
                 if complex_args:
                     complex_args.update(utils.parse_kv(args))
                     argsfile = self._transfer_str(conn, tmp, 'arguments', utils.jsonify(complex_args))
@@ -456,17 +451,17 @@ class Runner(object):
         else:
             if async_jid is None:
                 if conn.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES and not self.su:
-                    in_data = module_data
+                    in_data = module_info.data
                 else:
                     cmd = "%s" % (remote_module_path)
             else:
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
-        if not shebang:
+        if not module_info.shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
 
-        cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
+        cmd = " ".join([environment_string.strip(), module_info.shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
@@ -1051,17 +1046,12 @@ class Runner(object):
 
     def _copy_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' transfer a module over SFTP, does not run it '''
-        (
-        module_style,
-        module_shebang,
-        module_data,
-        module_checkable
-        ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
+        module_info = self._configure_module(conn, module_name, args, inject, complex_args)
         module_remote_path = os.path.join(tmp, module_name)
         
-        self._transfer_str(conn, tmp, module_name, module_data)
+        self._transfer_str(conn, tmp, module_name, module_info.data)
          
-        return (module_remote_path, module_style, module_shebang)
+        return (module_remote_path, module_info.style, module_info.shebang)
 
     # *****************************************************
 
@@ -1075,11 +1065,9 @@ class Runner(object):
 
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang, module_checkable) = module_replacer.modify_module(
-            module_path, complex_args, module_args, inject
-        )
+        module_info = module_replacer.modify_module( module_path, complex_args, module_args, inject )
 
-        return (module_style, module_shebang, module_data, module_checkable)
+        return (module_info)
 
 
     # *****************************************************

@@ -20,6 +20,7 @@ from cStringIO import StringIO
 import inspect
 import os
 import shlex
+import collections
 
 # from Ansible
 from ansible import errors
@@ -170,5 +171,5 @@ class ModuleReplacer(object):
                     lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
                     module_data = "\n".join(lines)
 
-            return (module_data, module_style, shebang, module_checkable)
+            return (collections.namedtuple('ModuleInfo', ('data', 'style', 'shebang', 'checkable'))(module_data, module_style, shebang, module_checkable))
 
