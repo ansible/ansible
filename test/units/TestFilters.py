@@ -180,6 +180,7 @@ class TestFilters(unittest.TestCase):
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))
 
     def test_merge_dicts(self):
+        """Simple test for the filter - dicts are actually must be merged"""
         pairs = zip(letters, it.count())
         d1 = dict(rnd.sample(pairs, len(pairs)/2))
         d2 = dict(rnd.sample(pairs, len(pairs)/2))
