@@ -72,17 +72,19 @@ options:
     required: false
     default: None
     aliases: []
-    version_added: "1.6"  
+    version_added: "1.7"
   purge_subnets:
     description:
       - Purge existing subnet on ELB that are not found in subnets
     required: false
     default: false  
+    version_added: "1.7"
   scheme:
     description:
       - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
     required: false
     default: 'internet-facing'
+    version_added: "1.7"
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
