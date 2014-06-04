@@ -35,11 +35,25 @@ class LookupModule(object):
             terms = [ terms ]
 
         for term in terms:
-            path = utils.path_dwim(self.basedir, term)
-            if not os.path.exists(path):
-                raise errors.AnsibleError("%s does not exist" % path)
+            basedir_path  = utils.path_dwim(self.basedir, term)
+            relative_path = None
+            playbook_path = None
 
-            ret.append(codecs.open(path, encoding="utf8").read().rstrip())
+            # Special handling of the file lookup, used primarily when the
+            # lookup is done from a role. If the file isn't found in the
+            # basedir of the current file, use dwim_relative to look in the
+            # role/files/ directory, and finally the playbook directory
+            # itself (which will be relative to the current working dir)
+            if '_original_file' in inject:
+                relative_path = utils.path_dwim_relative(inject['_original_file'], 'files', term, self.basedir, check=False)
+            if 'playbook_dir' in inject:
+                playbook_path = os.path.join(inject['playbook_dir'], term)
 
+            for path in (basedir_path, relative_path, playbook_path):
+                if path and os.path.exists(path):
+                    ret.append(codecs.open(path, encoding="utf8").read().rstrip())
+                    break
+            else:
+                raise errors.AnsibleError("could not locate file in lookup: %s" % term)
 
         return ret
