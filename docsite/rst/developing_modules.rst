@@ -201,7 +201,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
         "changed" : True,
         "rc" : 5,
         "ansible_facts" : {
-            "leptons" : 5000
+            "leptons" : 5000,
             "colors" : {
                 "red"   : "FF0000",
                 "white" : "FFFFFF"
