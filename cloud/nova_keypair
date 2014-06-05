@@ -19,7 +19,7 @@
 
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions
+    from novaclient import exceptions as exc
     import time
 except ImportError:
     print("failed=True msg='novaclient is required for this module to work'")
