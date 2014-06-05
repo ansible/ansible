@@ -34,19 +34,20 @@ options:
   user:
     description:
       - The username to use for basic authentication with the RabbitMQ server.
-    required: true
-    default: null
+    required: false
+    default: "guest"
     aliases: ["username"]
   password:
     description:
       - Password of the user to use for basic authentication against the RabbitMQ server.
-    required: true
-    default: null
+    required: false
+    default: "guest"
   queue:
     description:
       - The name of the queue to be created or deleted.
     required: true
     default: null
+    aliases: ['name']
   node:
     description:
       - The node on which to add the queue if running in a cluster
@@ -71,7 +72,7 @@ options:
     choices: ["yes", "no"]
   arguments:
     description:
-      - Additional arguments to use when creating the queue. This parameter accepts a json object string. 
+      - Additional arguments to use when creating the queue. This parameter is a complex object. 
     requireL: False
     default: null
   force:
@@ -89,20 +90,53 @@ options:
 '''
 
 EXAMPLES = '''
-# Add queue to server
-- rabbitmq_queue: host='localhost'
-                  user=guest
-                  password=guest
-                  vhost=/
-                  queue=test_queue
-                  arguments='{"x-dead-letter-exchange":"dead"}'
+# Adding a new queue to server
+# Due to the arguments parameter being an complex type, we need to provide the 
+# arguments using the args keyword.
+- name: Create RabbitMQ queue
+    action: rabbitmq_queue
+    args:
+        host: 'localhost'
+        user: 'guest'
+        password: 'password'
+        vhost: '/'
+        name: 'test_queue_single'
+        durable: true
+        auto_delete: true
+        arguments:
+            x-message-ttl: 3600
+            x-deadletter-exchange: 'dead'
 
-# Remove queue from server
+# if no arguments are required, the following approach might be preferred.
+- name: Create RabbitMQ Queue
+    rabbitmq_queue: host='localhost'
+                    user='guest'
+                    password='password'
+                    vhost='/'
+                    name='test_queue_single'
+                    durable=true
+                    auto_delete=true
+
+# Creating multiple queues by using vars
+  vars:
+    queues: 
+        - { name: "test_queue_a", durable: true, auto_delete: true, arguments: {'x-message-ttl': 3600}}
+        - { name: "test_queue_b", durable: true, auto_delete: false, arguments: {'x-message-ttl': 3601}}
+        - { name: "test_queue_c", durable: false, auto_delete: true, arguments: {'x-message-ttl': 3602}}
+        - { name: "test_queue_d", durable: false, auto_delete: false, arguments: {'x-message-ttl': 3603}}
+
+  tasks:
+    - name: Create Queues
+      action: rabbitmq_queue
+      args: "{{ item }}"
+      with_items: queues
+
+# Remove an existing queue from server. Queues are removed using only their names.
 - rabbitmq_queue: host='localhost'
-                  user=guest
-                  password=guest
-                  vhost=/
-                  queue=test_queue
+                  user='guest'
+                  password=''guest'
+                  vhost='/'
+                  name='test_queue'
 '''
 
 from urllib import quote_plus
@@ -138,7 +172,7 @@ class RabbitMqQueue(object):
         if headers['status'] == '401':
             module.fail_json(msg='API authentication failed. Possibly invalid username or password.')
 
-        return headers['status'], content
+        return headers['status'], content, kwargs['body']
 
     def get(self):
         """Retrieves the details about a specific queue using the RabbitMQ Management API"""
@@ -178,16 +212,16 @@ def main():
         host = dict(required = False, aliases = ['host', 'url'], default = 'localhost'),
         port = dict(required = False, default = 15672),
         ssl = dict(required = False, default = False),
-        user = dict(required = True, aliases = ['username']),
-        password = dict(required = True, aliases = ['pwd']),
-        vhost = dict(default = '/'),
+        user = dict(required = False, default = 'guest', aliases = ['username']),
+        password = dict(required = False, default = 'guest', aliases = ['pwd']),
+        vhost = dict(required = False, default = '/'),
         queue = dict(required = True, default = None, aliases = ['name']),
-        auto_delete = dict(default = 'no', type = 'bool'),
-        durable = dict(default = 'yes', type = 'bool'),
-        node = dict(default = None),
-        arguments = dict(default = None),
-        force = dict(default = 'no', type = 'bool'),
-        state = dict(default = 'present', choices = ['present', 'absent']))
+        auto_delete = dict(required = False, default = 'no', type = 'bool'),
+        durable = dict(required = False, default = 'yes', type = 'bool'),
+        node = dict(required = False, default = None),
+        arguments = dict(required = False, default = None),
+        force = dict(required = False, default = 'no', type = 'bool'),
+        state = dict(required = False, default = 'present', choices = ['present', 'absent']))
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
@@ -204,12 +238,11 @@ def main():
     arguments   = module.params['arguments']
     force       = module.params['force']
     state       = module.params['state']
-    if arguments is not None:
-        arguments = json.loads(arguments)
-   
+
     rabbitmq_queue = RabbitMqQueue(module, host, port, ssl, username, password, vhost, queue, auto_delete, durable, node, arguments)
 
     changed = False
+    """
     response = rabbitmq_queue.get()
     if response[0] != '404':
         if state == 'absent':
@@ -224,11 +257,13 @@ def main():
                 changed = True
 
     elif state == 'present':
-        if not module.check_mode:
-            rabbitmq_queue.add()
-        changed = True
+    """
+    if not module.check_mode:
+        status, content, body = rabbitmq_queue.add()
+    changed = True
+    module.exit_json(changed=changed, queue=queue, state=state, args=arguments)
 
-    module.exit_json(changed=changed, queue=queue, state=state)
+    #module.exit_json(changed=changed, queue=queue, state=state, args=arguments)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

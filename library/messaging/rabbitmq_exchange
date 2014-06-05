@@ -45,14 +45,14 @@ options:
   user:
     description:
       - The username to use for basic authentication with the RabbitMQ server.
-    required: true
-    default: null
+    required: false
+    default: 'guest'
     aliases: ["username"]
   password:
     description:
       - Password of the user to use for basic authentication against the RabbitMQ server.
-    required: true
-    default: null
+    required: false
+    default: 'guest'
   vhost:
     description:
       - Vhost to create exchange under.
@@ -104,19 +104,44 @@ options:
 '''
 
 EXAMPLES = '''
-# Add exchange to server
+# Add exchange to server with no arguments
 - rabbitmq_exchange: host='localhost'
-                  user=guest
-                  password=guest
-                  vhost=/
-                  name=test_exchange
-                  type=direct
-                  durable=no
-                  internal=no
-                  auto_delete=no
-                  arguments='{"some-additional-arg":true}'
+                     user=guest
+                     password=guest
+                     vhost=/
+                     name=test_exchange
+                     type=direct
+                     durable=no
+                     internal=no
+                     auto_delete=no
 
-# Remove exchange from server
+# Add to the server with arguments
+- name: Create Exchanges
+    action: rabbitmq_exchange
+    args: 
+        name: 'test_exchange_single'
+        type: 'direct'
+        durable: true
+        auto_delete: true
+        arguments:
+            x-arg-test: 'World'
+            x-another-arg: 'World'
+
+# Add to multipe exchanges to the server using vars
+  vars:
+    exchanges: 
+        - { name: "test_exchange_a", durable: true, auto_delete: true, arguments: {'x-arg-test': 'test_a'}}
+        - { name: "test_exchange_b", durable: true, auto_delete: false, arguments: {'x-arg-test': 'test_b'}}
+        - { name: "test_exchange_c", durable: false, auto_delete: true, arguments: {'x-arg-test': 'test_c'}}
+        - { name: "test_exchange_d", durable: false, auto_delete: false, arguments: {'x-arg-test': 'test_d'}}
+
+    tasks:
+    - name: Create Exchanges
+      action: rabbitmq_exchange
+      args: "{{ item }}"
+      with_items: exchanges
+
+# Remove exchange from server by name
 - rabbitmq_exchange: host='localhost' 
                      user=guest
                      password=guest
@@ -186,8 +211,8 @@ def main():
         host = dict(required = False, default = 'localhost', aliases = ['host', 'url']),
         port = dict(required = False, default = 15672),
         ssl = dict(required = False, default = False),
-        user = dict(required = True, aliases = ['username']),
-        password = dict(required = True, aliases = ['pwd']),
+        user = dict(required = False, default = 'guest', aliases = ['username']),
+        password = dict(required = False, default = 'guest', aliases = ['pwd']),
         vhost = dict(required = False, default = '/'),
         name = dict(required = True, default = None),
         auto_delete = dict(required = False, default = 'no', type = 'bool'),
@@ -211,12 +236,10 @@ def main():
     durable     = module.params['durable']
     internal    = module.params['internal']
     type        = module.params['type']
+    arguments   = module.params['arguments']
+
     force       = module.params['force']
     state       = module.params['state']
-
-    arguments = module.params['arguments']
-    if arguments is not None:
-        arguments = json.loads(arguments)
 
     rabbitmq_exchange = RabbitMQExchange(module, host, port, ssl, username, password, vhost, name, type, auto_delete, durable, internal, arguments)
 

@@ -60,7 +60,7 @@ options:
     default: "/"
   source:
     description:
-      - The name of the exchange or queue to create/delete the binding for/from.
+      - The name of the exchange to create/delete the binding for/from.
     required: true
     default: null
   destination:
@@ -68,7 +68,7 @@ options:
       - The name of the exchange or queue to create/delete the binding for/from.
     required: true
     default: null
-  bind_type:
+  binding_type:
     description:
       - Exchange-to-exchange binding or exchange-to-queue binding.
     require: true
@@ -81,7 +81,7 @@ options:
     default: null
   arguments:
     description:
-      - Additional arguments to supply with creation of the binding.
+      - Additional arguments to supply with creation of the binding. Complex argument type.
     required: false
     default: null
   force:
@@ -99,7 +99,33 @@ options:
 '''
 
 EXAMPLES = '''
-# Bind an exchange to a queue.
+# Creation of a single binding (exchange bound to a queue) that uses arguments
+- name: Create Binding
+    action: rabbitmq_binding
+    args: 
+        source: 'test_exchange_single' 
+        destination: 'test_queue_single'
+        binding_type: 'queue'
+        routing_key: 'single'
+        arguments:
+            x-arg-test: 'Hello'
+            x-arg-another: 'World'
+
+# Creating multiple bindings (exchange bound to a queue), with arguments, using ansible vars
+  vars:
+    bindings: 
+        - { source: "test_exchange_a", destination: 'test_queue_a', binding_type: 'queue', routing_key: 'a', arguments: {'x-arg-test': 'test_a'}}
+        - { source: "test_exchange_b", destination: 'test_queue_b', binding_type: 'queue', routing_key: 'b', arguments: {'x-arg-test': 'test_b'}}
+        - { source: "test_exchange_c", destination: 'test_queue_c', binding_type: 'queue', routing_key: 'c', arguments: {'x-arg-test': 'test_c'}}
+        - { source: "test_exchange_d", destination: 'test_queue_d', binding_type: 'queue', arguments: {'x-arg-test': 'test_d'}}
+
+  tasks:
+    - name: Create binding
+      action: rabbitmq_binding
+      args: "{{ item }}"
+      with_items: bindings
+
+# Creation of a single binding (exchange bound to a queue) that does not use arguments
 - rabbitmq_binding: host='localhost'
                     user='guest'
                     password='guest'
@@ -109,7 +135,7 @@ EXAMPLES = '''
                     binding_type='queue'
                     routing_key='test'
 
-# Bind an exchange to another exchange.
+# Creation of a single binding (exchange bound to an exchange) that does not use arguments
 - rabbitmq_binding: host='localhost'
                     user='guest'
                     password='guest'
@@ -239,8 +265,8 @@ def main():
         host = dict(required = False, default = 'localhost', aliases = ['host', 'url']),
         port = dict(required = False, default = 15672),
         ssl = dict(required = False, default = False),
-        user = dict(required = True, aliases = ['username']),
-        password = dict(required = True, aliases = ['pwd']),
+        user = dict(required = False, default = 'guest', aliases = ['username']),
+        password = dict(required = False, default = 'guest', aliases = ['pwd']),
         vhost = dict(required = False, default = '/'),
         source = dict(required = True),
         destination = dict(required = True),
@@ -263,10 +289,6 @@ def main():
     binding_type = module.params['binding_type']
     routing_key  = module.params['routing_key']
     arguments    = module.params['arguments']
-    if arguments is not None:
-        arguments = json.loads(arguments)
-    else:
-        arguments = {}
 
     force = module.params['force']
     state = module.params['state']
