@@ -28,7 +28,7 @@ description:
       using haproxy socket commands - http://haproxy.1wt.eu
 notes:
     - "enable or disable or set weight commands are restricted and can only be issued on sockets configured for level 'admin', "
-    - "Check - http://haproxy.1wt.eu/download/1.4/doc/configuration.txt, "
+    - "Check - http://haproxy.1wt.eu/download/1.5/doc/configuration.txt, "
     - "Example: 'stats socket /var/run/haproxy.sock level admin'"
 options:
   action:
@@ -55,9 +55,16 @@ options:
     default: auto-detected
   weight:
     description:
-      - The value passed in argument. If the value ends with the '%' sign, then the new weight will be relative to the initially cnfigured weight. Relative weights are only permitted between 0 and 100% and absolute weights are permitted between 0 and 256.
+      - The value passed in argument. If the value ends with the '%' sign, then the new weight will be relative to the initially cnfigured weight.
+	Relative weights are only permitted between 0 and 100% and absolute weights are permitted between 0 and 256.
     required: false
-    default: /var/run/haproxy.sock
+    default: null
+  shutdown_sessions:
+    description:
+      - When disabling server, immediately terminate all the sessions attached to the specified server.
+	This can be used to terminate long-running sessions after a server is put into maintenance mode, for instance.
+    required: false
+    default: false
 '''
 
 EXAMPLES = '''
@@ -69,6 +76,9 @@ EXAMPLES = '''
 
 # disable server, provide socket file
 - haproxy: action=disable_server host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
+
+# disable backend server in 'www' backend and drop open sessions to it
+- haproxy: action=disable_server host={{ inventory_hostname }} backend=www shutdown_sessions=true
 
 # enable backend server in 'www' backend
 - haproxy: action=enable_server host={{ inventory_hostname }} backend=www
@@ -96,8 +106,8 @@ def main():
     ACTION_CHOICES = [
         'enable_server',
         'disable_server',
-	'get_weight',
-	'set_weight'
+        'get_weight',
+        'set_weight'
         ]
 
     # load ansible module object
@@ -105,9 +115,10 @@ def main():
         argument_spec = dict(
             action = dict(required=True, default=None, choices=ACTION_CHOICES),
             host=dict(required=True, default=None),
-	    backend=dict(required=False, default=None),
-	    weight=dict(required=False, default=None),
-            socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION)
+            backend=dict(required=False, default=None),
+            weight=dict(required=False, default=None),
+            socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
+            shutdown_sessions=dict(required=False, default=False),
         ),
     )
     action = module.params['action']
@@ -115,6 +126,7 @@ def main():
     backend = module.params['backend']
     weight = module.params['weight']
     socket = module.params['socket']
+    shutdown_sessions = module.params['shutdown_sessions']
 
     ##################################################################
     # Required args per action:
@@ -156,7 +168,7 @@ class HAProxy(object):
     The complete set of external commands Haproxy handles is documented
     on their website:
 
-    http://haproxy.1wt.eu/download/1.4/doc/configuration.txt#Unix Socket commands
+    http://haproxy.1wt.eu/download/1.5/doc/configuration.txt#Unix Socket commands
     """
 
     def __init__(self, module, **kwargs):
@@ -166,6 +178,7 @@ class HAProxy(object):
         self.backend = kwargs['backend']
         self.weight = kwargs['weight']
         self.socket = kwargs['socket']
+        self.shutdown_sessions = kwargs['shutdown_sessions']
 
         self.command_results = []
 
@@ -187,7 +200,7 @@ class HAProxy(object):
         while buf:
           result += buf
           buf = self.client.recv(RECV_SIZE)
-	  self.command_results = result.strip()
+	self.command_results = result.strip()
         self.client.close()
         return result
 
@@ -218,16 +231,16 @@ class HAProxy(object):
           for line in result:
             if 'BACKEND' in line:
               result =  line.split(',')[0]
-	      pxname = result
-	      cmd = "enable server %s/%s" % (pxname, svname)
-	      self.execute(cmd)
+              pxname = result
+              cmd = "enable server %s/%s" % (pxname, svname)
+              self.execute(cmd)
 
-	else:
+        else:
             pxname = backend
-	    cmd = "enable server %s/%s" % (pxname, svname)
-	    self.execute(cmd)
+            cmd = "enable server %s/%s" % (pxname, svname)
+            self.execute(cmd)
 
-    def disable_server(self, host, backend):
+    def disable_server(self, host, backend, shutdown_sessions):
         """
         Disable backend server for a particular backend.
 
@@ -261,11 +274,15 @@ class HAProxy(object):
               result =  line.split(',')[0]
               pxname = result
               cmd = "disable server %s/%s" % (pxname, svname)
+              if shutdown_sessions:
+                cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
               self.execute(cmd)
 
         else:
             pxname = backend
             cmd = "disable server %s/%s" % (pxname, svname)
+            if shutdown_sessions:
+              cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
             self.execute(cmd)
 
     def get_weight(self, host, backend):
@@ -325,7 +342,7 @@ class HAProxy(object):
         Syntax: set weight <pxname>/<svname>
         """
         svname = host
-	weight = weight
+        weight = weight
         if self.backend is None:
           output = self.execute('show stat')
           #sanitize and make a list of lines
@@ -355,7 +372,7 @@ class HAProxy(object):
             self.enable_server(self.host, self.backend)
 
         elif self.action == 'disable_server':
-            self.disable_server(self.host, self.backend)
+            self.disable_server(self.host, self.backend, self.shutdown_sessions)
 
         # toggle get/set weight
         elif self.action == 'get_weight':
