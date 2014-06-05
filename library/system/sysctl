@@ -221,9 +221,7 @@ class SysctlModule(object):
         # do it
         if get_platform().lower() == 'freebsd':
             # freebsd doesn't support -p, so reload the sysctl service
-            rc,out,err = self.module.run_command('service sysctl reload')
-            # ignore exit code 1, not sure why we get that.
-            rc = 0
+            rc,out,err = self.module.run_command('/sbin/sysctl -f /etc/sysctl.conf')
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
