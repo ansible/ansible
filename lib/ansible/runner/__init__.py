@@ -144,7 +144,6 @@ class Runner(object):
         vault_pass=None,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
-        hide=False,                         # option to enable/disable logging for commands
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -198,7 +197,6 @@ class Runner(object):
         self.su_pass          = su_pass
         self.vault_pass       = vault_pass
         self.no_log           = no_log
-        self.hide             = hide
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -838,8 +836,9 @@ class Runner(object):
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
 
-        result = handler.run(conn, tmp, module_name, module_args, inject, complex_args, hide=self.hide)
+        result = handler.run(conn, tmp, module_name, module_args, inject, complex_args, no_log=self.no_log)
         # Code for do until feature
+        print "testing"
         until = self.module_vars.get('until', None)
         if until is not None and result.comm_ok:
             inject[self.module_vars.get('register')] = result.result
@@ -855,7 +854,7 @@ class Runner(object):
                     tmp = ''
                     if self._early_needs_tmp_path(module_name, handler):
                         tmp = self._make_tmp_path(conn)
-                    result = handler.run(conn, tmp, module_name, module_args, inject, complex_args, hide=self.hide)
+                    result = handler.run(conn, tmp, module_name, module_args, inject, complex_args, no_log=self.no_log)
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
                     inject[self.module_vars.get('register')] = result.result
@@ -873,7 +872,7 @@ class Runner(object):
             # connection or parsing errors...
             self.callbacks.on_unreachable(host, result.result)
         else:
-            if self.hide:
+            if self.no_log:
                 if 'cmd' in result.result.keys():
                     if 'stderr' in result.result.keys() and str(result.result['cmd']).strip('" ') in str(result.result['stderr']).strip('" '):
                             result.result['stderr'] = re.sub(result.result['cmd'].strip('" '), 'COMMAND_HIDDDEN', result.result['stderr'])

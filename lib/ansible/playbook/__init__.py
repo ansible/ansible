@@ -396,7 +396,6 @@ class PlayBook(object):
             vault_pass = self.vault_password,
             run_hosts=hosts,
             no_log=task.no_log,
-            hide=task.hide,
         )
 
         runner.module_vars.update({'play_hosts': hosts})

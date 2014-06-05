@@ -33,7 +33,7 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, hide=False, **kwargs):
+    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' transfer & execute a module that is not 'copy' or 'template' '''
 
         module_args = self.runner._complex_args_hack(complex_args, module_args)
@@ -53,7 +53,7 @@ class ActionModule(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        if hide:
+        if self.runner.no_log:
             module_arguments = "ARGUMENTS_HIDDEN"
         else:
             module_arguments = module_args
