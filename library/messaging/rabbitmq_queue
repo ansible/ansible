@@ -22,7 +22,7 @@ module: rabbitmq_queue
 short_description: Adds or removes queues to RabbitMQ
 description:
   - Add or remove queues to/from the RabbitMQ server using the HTTP api provided by the management plugin.
-version_added: "1.0"
+version_added: "1.7"
 author: Jaco Nel
 options:
   host:

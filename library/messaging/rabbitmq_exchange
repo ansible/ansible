@@ -22,7 +22,7 @@ module: rabbitmq_exchange
 short_description: Adds or removes exchange to/from RabbitMQ
 description:
   - Add or remove exchanges to/from the RabbitMQ server using the HTTP api provided by the management plugin.
-version_added: "1.0"
+version_added: "1.7"
 author: Jaco Nel
 options:
   host:
