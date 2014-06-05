@@ -144,23 +144,23 @@ except:
 # executed with no parameters, return the list of
 # all groups and hosts
 
+NOVA_CONFIG_FILES = [os.getcwd() + "/nova.ini",
+                     os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
+                     "/etc/ansible/nova.ini"]
+
 def nova_load_config_file():
     p = ConfigParser.SafeConfigParser()
-    path1 = os.getcwd() + "/nova.ini"
-    path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini"))
-    path3 = "/etc/ansible/nova.ini"
 
-    if os.path.exists(path1):
-        p.read(path1)
-    elif os.path.exists(path2):
-        p.read(path2)
-    elif os.path.exists(path3):
-        p.read(path3)
-    else:
-        return None
-    return p
+    for path in NOVA_CONFIG_FILES:
+        if os.path.exists(path):
+            p.read(path)
+            return p
+
+    return None
 
 config = nova_load_config_file()
+if not config:
+    sys.exit('Unable to find configfile in %s' % ', '.join(NOVA_CONFIG_FILES))
 
 client = nova_client.Client(
     version     = config.get('openstack', 'version'),
