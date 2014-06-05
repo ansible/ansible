@@ -117,6 +117,7 @@ class Facts(object):
         self.facts = {}
         self.get_platform_facts()
         self.get_distribution_facts()
+        self.get_uptime()
         self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
@@ -129,6 +130,20 @@ class Facts(object):
 
     def populate(self):
         return self.facts
+
+    def get_uptime(self):
+        uptime_path = module.get_bin_path('uptime')
+        if uptime_path:
+            rc, out, err = module.run_command(uptime_path)
+            if rc == 0:
+                raw = out.replace(',','')
+                days = int(raw.split()[2])
+                if 'min' in raw:
+                    hours = 0
+                    minutes = int(raw[4])
+                else:
+                    hours, minutes = map(int, raw.split()[4].split(':'))
+                self.facts['uptime'] = days*24*60*60 + hours*60*60 + minutes*60
 
     # Platform
     # platform.system() can be Linux, Darwin, Java, or Windows
@@ -537,6 +552,11 @@ class LinuxHardware(Hardware):
             pass
         return self.facts
 
+    def get_uptime(self):
+        data = get_file_content('/proc/uptime')
+        if data:
+            self.facts['uptime'] = float(data.split()[0])
+
     def get_memory_facts(self):
         if not os.access("/proc/meminfo", os.R_OK):
             return
@@ -797,6 +817,11 @@ class SunOSHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         return self.facts
+
+    def get_uptime(self):
+        rc, out, err = module.run_command("/usr/bin/kstat -p unix:0:system_misc:snaptime")
+        if out:
+            self.facts['uptime'] = float(out.split()[1])
 
     def get_cpu_facts(self):
         physid = 0
