@@ -20,7 +20,7 @@ module: azure
 short_description: create or terminate a virtual machine in azure
 description:
      - Creates or terminates azure instances. When created optionally waits for it to be 'running'. This module has a dependency on python-azure >= 0.7.1
-version_added: "1.5"
+version_added: "1.7"
 options:
   name:
     description:
@@ -39,7 +39,7 @@ options:
     default: null
   management_cert_path:
     description:
-      - path to an azure management certificate associated with the subscription id. Overrides the AZURE_MANAGEMENT_CERT_PATH environement variable.
+      - path to an azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environement variable.
     required: false
     default: null
   storage_account:
@@ -95,7 +95,6 @@ options:
     default: 300
     aliases: []
   state:
-    version_added: "1.3"
     description:
       - create or terminate instances
     required: false
@@ -129,10 +128,11 @@ EXAMPLES = '''
     state: absent
 '''
 
+import base64
+import datetime
 import os
 import sys
 import time
-import datetime
 from urlparse import urlparse
 
 AZURE_LOCATIONS = ['East Asia',
@@ -154,16 +154,20 @@ except ImportError:
     print "failed=True msg='azure required for this module'"
     sys.exit(1)
 
-def get_ssh_certificate_tokens(ssh_cert_path):
+def get_ssh_certificate_tokens(module, ssh_cert_path):
     """
     Returns the sha1 fingerprint and a base64-encoded PKCS12 version of the certificate.
     """
     # This returns a string such as SHA1 Fingerprint=88:60:0B:13:A9:14:47:DA:4E:19:10:7D:34:92:2B:DF:A1:7D:CA:FF
-    openssl_x509_output = subprocess.check_output(['openssl', 'x509', '-in', ssh_cert_path, '-fingerprint', '-noout'])
-    fingerprint = openssl_x509_output.strip()[17:].replace(':','')
+    rc, stdout, stderr = module.run_command(['openssl', 'x509', '-in', ssh_cert_path, '-fingerprint', '-noout'])
+    if rc != 0:
+        module.fail_json(msg="failed to generate the key fingerprint, error was: %s" % stderr)
+    fingerprint = stdout.strip()[17:].replace(':','')
 
-    pkcs12_process = subprocess.Popen(['openssl', 'pkcs12', '-export', '-in', ssh_cert_path, '-nokeys', '-password', 'pass:'], stdout=subprocess.PIPE)
-    pkcs12_base64 = subprocess.check_output(['base64'], stdin=pkcs12_process.stdout).strip()
+    rc, stdout, stderr = module.run_command(['openssl', 'pkcs12', '-export', '-in', ssh_cert_path, '-nokeys', '-password', 'pass:'])
+    if rc != 0:
+        module.fail_json(msg="failed to generate the pkcs12 signature from the certificate, error was: %s" % stderr)
+    pkcs12_base64 = base64.b64encode(stdout.strip())
 
     return (fingerprint, pkcs12_base64)
 
@@ -200,7 +204,7 @@ def create_virtual_machine(module, azure):
     except WindowsAzureMissingResourceError as e:
         pass # no such deployment
     except WindowsAzureError as e:
-        module.fail_json(msg = str(e))
+        module.fail_json(msg="failed to create the new deployment, error was: %s" % str(e))
 
     if deployment:
         changed = False
@@ -213,7 +217,7 @@ def create_virtual_machine(module, azure):
             if not name in existing_service_names:
                 azure.create_hosted_service(service_name=name, label=name, location=location)
         except WindowsAzureError as e:
-            module.fail_json(msg = str(e))
+            module.fail_json(msg="failed to create the new service name, it already exists: %s" % str(e))
 
         # Create linux configuration
         disable_ssh_password_authentication = not password
@@ -221,7 +225,7 @@ def create_virtual_machine(module, azure):
 
         # Add ssh certificates if specified
         if ssh_cert_path:
-            fingerprint, pkcs12_base64 = get_ssh_certificate_tokens(ssh_cert_path)
+            fingerprint, pkcs12_base64 = get_ssh_certificate_tokens(module, ssh_cert_path)
             # Add certificate to cloud service
             azure.add_service_certificate(name, pkcs12_base64, 'pfx', '')
             # Create ssh config
@@ -261,7 +265,7 @@ def create_virtual_machine(module, azure):
                                                     os_virtual_hard_disk=os_hd,
                                                     role_size=role_size)
         except WindowsAzureError as e:
-            module.fail_json(msg = str(e))
+            module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
 
         # wait here until the deployment is up
         deployment = None
@@ -310,7 +314,7 @@ def terminate_virtual_machine(module, azure):
     except WindowsAzureMissingResourceError as e:
         pass # no such deployment
     except WindowsAzureError as e:
-        module.fail_json(msg = str(e))
+        module.fail_json(msg="failed to find the deployment, error was: %s" % str(e))
 
     # Delete deployment
     if deployment:
@@ -332,7 +336,7 @@ def terminate_virtual_machine(module, azure):
             # Now that the vm is deleted, remove the cloud service
             azure.delete_hosted_service(service_name=name)
         except WindowsAzureError as e:
-            module.fail_json(msg = str(e))
+            module.fail_json(msg="failed to delete the service %s, error was: %s" % (name, str(e)))
 
     return changed
 
@@ -343,7 +347,7 @@ def get_azure_creds(module):
 
     if not subscription_id:
         subscription_id = os.environ['AZURE_SUBSCRIPTION_ID']
-        management_cert_path = os.environ['AZURE_MANAGEMENT_CERT_PATH']
+        management_cert_path = os.environ['AZURE_CERT_PATH']
 
     return subscription_id, management_cert_path
 
