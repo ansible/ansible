@@ -57,7 +57,7 @@ EXAMPLES = '''
 - name: Conditional
   action: debug msg="This instance is a t1.micro"
   when: ansible_ec2_instance_type == "t1.micro"
-  
+
 - name: Gather facts with boto
   action: ec2_facts use_boto=yes region=us-west-1
 '''
@@ -182,7 +182,7 @@ class EC2BotoFacts(object):
     def __init__(self, module, ec2):
         self.module = module
         self.ec2 = ec2
-
+    # code copied from ec2.py. Create to Peter Sankauskas 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be
         used as Ansible groups '''
