@@ -90,7 +90,7 @@ options:
     default: 'force-confdef,force-confold'
   deb:
      description:
-       - Path to a local .deb package file to install.
+       - Path to a .deb package on the remote machine.
      required: false
      version_added: "1.6"
 requirements: [ python-apt, aptitude ]
