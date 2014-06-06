@@ -30,10 +30,20 @@ options:
         default: 'yes'
         choices: ['yes', 'no']
         version_added: 1.5.1
+    use_boto:
+        description:
+            - If C(no), uses metadata server. If C(yes) uses boto to get information. 
+              If C(yes), the information is the same as the ec2.py inventory.
+        required: false
+        default: 'no'
+        choices: ['yes', 'no']
+        version_added: 1.6.1
+
 description:
      - This module fetches data from the metadata servers in ec2 (aws).
        Eucalyptus cloud provides a similar service and this module should
        work this cloud provider as well.
+extends_documentation_fragment: aws
 notes:
     - Parameters to filter on ec2_facts may be added later.
 author: "Silviu Dicu <silviudicu@gmail.com>"
@@ -47,10 +57,19 @@ EXAMPLES = '''
 - name: Conditional
   action: debug msg="This instance is a t1.micro"
   when: ansible_ec2_instance_type == "t1.micro"
+  
+- name: Gather facts with boto
+  action: ec2_facts use_boto=yes region=us-west-1
 '''
    
 import socket
 import re
+try:
+    import boto.ec2
+except ImportError:
+    boto_found = False
+else:
+    boto_found = True
 
 socket.setdefaulttimeout(5)
 
@@ -158,21 +177,97 @@ class Ec2Metadata(object):
         self.add_ec2_region(data)
         return data
 
-def main():
-    argument_spec = url_argument_spec()
+class EC2BotoFacts(object):
 
+    def __init__(self, module, ec2):
+        self.module = module
+        self.ec2 = ec2
+
+    def to_safe(self, word):
+        ''' Converts 'bad' characters in a string to underscores so they can be
+        used as Ansible groups '''
+
+        return re.sub("[^A-Za-z0-9\-]", "_", word)
+
+    def get_host_info_dict_from_instance(self, instance):
+        instance_vars = {}
+        for key in vars(instance):
+            value = getattr(instance, key)
+            key = self.to_safe('ec2_' + key)
+            print key 
+            # Handle complex types
+            # state/previous_state changed to properties in boto in https://github.com/boto/boto/commit/a23c379837f698212252720d2af8dec0325c9518
+            if key == 'ec2__state':
+                instance_vars['ec2_state'] = instance.state or ''
+                instance_vars['ec2_state_code'] = instance.state_code
+            elif key == 'ec2__previous_state':
+                instance_vars['ec2_previous_state'] = instance.previous_state or ''
+                instance_vars['ec2_previous_state_code'] = instance.previous_state_code
+            elif type(value) in [int, bool]:
+                instance_vars[key] = value
+            elif type(value) in [str, unicode]:
+                instance_vars[key] = value.strip()
+            elif type(value) == type(None):
+                instance_vars[key] = ''
+            elif key == 'ec2_region':
+                instance_vars[key] = value.name
+            elif key == 'ec2__placement':
+                instance_vars['ec2_placement'] = value.zone
+            elif key == 'ec2_tags':
+                for k, v in value.iteritems():
+                    key = self.to_safe('ec2_tag_' + k)
+                    instance_vars[key] = v
+            elif key == 'ec2_groups':
+                group_ids = []
+                group_names = []
+                for group in value:
+                    group_ids.append(group.id)
+                    group_names.append(group.name)
+                instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
+                instance_vars["ec2_security_group_names"] = ','.join(group_names)
+            else:
+                pass
+        return  instance_vars
+
+    def run(self, instance_id):
+        try:
+            reservations = self.ec2.get_all_reservations(instance_ids=[instance_id])
+        except boto.exception.EC2ResponseError, e:
+            self.module.fail_json(msg=str(e))
+        instance = reservations[0].instances[0]    
+        return self.get_host_info_dict_from_instance(instance)
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update( dict(
+        use_boto = dict(required=False, default=False, type='bool')
+        )
+    )
     module = AnsibleModule(
         argument_spec = argument_spec,
         supports_check_mode = True,
     )
-
+    use_boto = module.params.get('use_boto')
+    
     ec2_facts = Ec2Metadata(module).run()
-    ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
+    ec2_facts.update(module='metadata')
 
+    if use_boto:
+        if not boto_found:
+            module.fail_json(msg="boto is required")
+
+        ec2 = ec2_connect(module) 
+        boot_facts = EC2BotoFacts(module, ec2)
+        ec2_facts.update(boot_facts.run(ec2_facts['ansible_ec2_instance_id']))
+        ec2_facts.update(module='boto')
+
+    ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
     module.exit_json(**ec2_facts_result)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.ec2 import *
 
-main()
+if __name__=="__main__":
+    main()
