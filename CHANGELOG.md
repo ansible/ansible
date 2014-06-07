@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 New Modules:
 
+* cloud: azure
 * cloud: rax_meta
 
 ## 1.6 "And the Cradle Will Rock" - May 5, 2014
