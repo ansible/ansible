@@ -233,7 +233,7 @@ EXAMPLES = '''
       memory: True
 
 # Remove a named snapshot
-# delete all snapshots matching the name
+# deletes all snapshots matching the name
 
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
@@ -245,6 +245,17 @@ EXAMPLES = '''
       action: delete
       name: sw_upgrade
       remove_children: True
+
+#Remove all snapshots from a VM
+
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    password: mypass
+    guest: newvm001
+    state: snapshot
+    snapshot_args:
+      action: delete_all
           
 '''
 
@@ -1081,6 +1092,13 @@ def snapshot(vsphere_client, module, guest, vm, snapshot_args):
             module.exit_json(changed=True, changes=changes)
         else:
             module.fail_json(msg="Snapshot %s was not found" % name)
+    elif action == 'delete_all':
+        list_snapshots = vm.get_snapshots()
+        for snapshot in list_snapshots:
+            snapshot_name =snapshot.get_name() 
+            vm.delete_named_snapshot(snapshot_name)
+        changes = "all snapshots removed"
+        module.exit_json(changed=True, changes=changes)
     else:
         vsphere_client.disconnect()
         module.fail_json(msg=" %s is not a valid option for the action parameter" % action)
