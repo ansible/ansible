@@ -223,7 +223,6 @@ def create_virtual_machine(module, azure):
     Returns:
         True if a new virtual machine was created, false otherwise
     """
-
     name = module.params.get('name')
     hostname = module.params.get('hostname') or name + ".cloudapp.net"
     endpoints = module.params.get('endpoints').split(',')
@@ -302,8 +301,8 @@ def create_virtual_machine(module, azure):
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
 
 
-        deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-        return (changed, urlparse(deployment.url).hostname, deployment)
+    deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
+    return (changed, urlparse(deployment.url).hostname, deployment)
 
 
 def terminate_virtual_machine(module, azure):
