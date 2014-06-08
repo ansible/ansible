@@ -228,9 +228,24 @@ EXAMPLES = '''
     guest: newvm001
     state: snapshot
     snapshot_args:
-        action: create
-        name: upgrading software
-        memory: False
+      action: create
+      name: sw_upgrade
+      memory: True
+
+# Remove a named snapshot
+# delete all snapshots matching the name
+
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    password: mypass
+    guest: newvm001
+    state: snapshot
+    snapshot_args:
+      action: delete
+      name: sw_upgrade
+      remove_children: True
+          
 '''
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
