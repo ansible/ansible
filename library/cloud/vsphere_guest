@@ -5,6 +5,9 @@
 # TODO:
 # Ability to set CPU/Memory reservations
 
+#for setting default snapshot name 
+import datetime
+
 try:
     import json
 except ImportError:
@@ -67,7 +70,7 @@ options:
     description:
      - Indicate desired state of the vm.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_off', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_on', 'absent', 'powered_off', 'restarted', 'reconfigured', 'snapshot']
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -98,6 +101,11 @@ options:
       - Boolean. Allows you to run commands which may alter the running state of a guest. Also used to reconfigure and destroy.
     default: "no"
     choices: [ "yes", "no" ]
+  snapshot_args:
+    description:
+      - A key, value list of snapshot settings.
+    required: false
+    default: null
 
 notes:
   - This module should run from a system that can access vSphere directly.
@@ -210,6 +218,19 @@ EXAMPLES = '''
     guest: newvm001
     state: absent
     force: yes
+
+# Take a snapshot of an existing VM
+
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    password: mypass
+    guest: newvm001
+    state: snapshot
+    snapshot_args:
+        action: create
+        name: upgrading software
+        memory: False
 '''
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
@@ -1008,6 +1029,49 @@ def config_check(name, passed, default, module):
 
     return True
 
+def snapshot(vsphere_client, module, guest, vm, snapshot_args):
+    changed = False
+    changes = []
+    memory = False
+    action = "create"
+    remove_children = False
+    name = datetime.datetime.now()
+
+    #if snapshot_args are specififed, set them from defaults
+    if "memory" in snapshot_args:
+        memory = snapshot_args['memory']
+    if "action" in snapshot_args:
+        action = snapshot_args['action']
+    if "name" in snapshot_args:
+        name = snapshot_args['name']
+    if "remove_children" in snapshot_args:
+        remove_children = snapshot_args['remove_children']
+        
+    if action == 'create':
+        vm.create_snapshot(name, memory=memory, quiesce=False)
+        list_snapshots = vm.get_snapshots()
+        for snapshot in list_snapshots:
+            changes = snapshot.get_name()
+    elif action == 'delete':
+        #check for existing snapshot
+        list_snapshots = vm.get_snapshots()
+        for snapshot in list_snapshots:
+            snapshot_name = snapshot.get_name()
+            found = False
+            if snapshot_name == name:
+                found = True
+                vm.delete_named_snapshot(name, remove_children=remove_children)
+                changes = "Snapshot %s was removed" % (name)
+        if found:
+            module.exit_json(changed=True, changes=changes)
+        else:
+            module.fail_json(msg="Snapshot %s was not found" % name)
+    else:
+        vsphere_client.disconnect()
+        module.fail_json(msg=" %s is not a valid option for the action parameter" % action)
+
+    module.exit_json(changed=True, changes=changes)
+        
 
 def main():
 
@@ -1054,7 +1118,8 @@ def main():
                     'present',
                     'absent',
                     'restarted',
-                    'reconfigured'
+                    'reconfigured',
+                    'snapshot'
                 ],
                 default='present'),
             vmware_guest_facts=dict(required=False, choices=BOOLEANS),
@@ -1067,6 +1132,7 @@ def main():
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, choices=BOOLEANS, default=False),
             esxi=dict(required=False, type='dict', default={}),
+            snapshot_args=dict(required=False, type='dict', default={'memory' : False}),
 
 
         ),
@@ -1102,6 +1168,7 @@ def main():
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
+    snapshot_args = module.params['snapshot_args']
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1164,6 +1231,13 @@ def main():
                 guest=guest,
                 vm=vm,
                 force=force)
+        elif state == 'snapshot':
+            snapshot(
+                vsphere_client=viserver,
+                module=module,
+                guest=guest,
+                vm=vm,
+                snapshot_args=snapshot_args)
 
     # VM doesn't exist
     else:
