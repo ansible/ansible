@@ -209,18 +209,18 @@ def main():
             (rc, out, err) = package_uninstall(module, name, src, category)
             out = out[:75]
 
-	#Success,Warning,Interruption,Reboot all,Reboot this return codes
-    if rc is 0 or rc is 2 or rc is 3 or rc is 10 or rc is 20: 
+    # Success, Warning, Interruption, Reboot all, Reboot this return codes
+    if rc in (0, 2, 3, 10, 20):
         result['changed'] = True
-    #no install nor uninstall, or failed
+    # no install nor uninstall, or failed
     else:
         result['changed'] = False
-        
-    #Fatal error,Administration,Administration Interaction return codes
-    if rc is 1 or rc is 4 or rc is 5:
-    	result['failed'] = True
+
+    # Fatal error, Administration, Administration Interaction return codes
+    if rc in (1, 4 , 5):
+        result['failed'] = True
     else:
-    	result['failed'] = False
+        result['failed'] = False
 
     if out:
         result['stdout'] = out
