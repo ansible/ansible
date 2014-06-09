@@ -173,10 +173,11 @@ Latest Releases Via Apt (Ubuntu)
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
 
-Once configured, 
+To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
+    $ sudo apt-get install apt-add-repository
     $ sudo apt-add-repository ppa:rquillo/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
