@@ -178,7 +178,9 @@ class Host(object):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            self._zapi.host.create({'host': host_name, 'interfaces': interfaces, 'groups': group_ids, 'status': status})
+            host_list = self._zapi.host.create({'host': host_name, 'interfaces': interfaces, 'groups': group_ids, 'status': status})
+            if len(host_list) >= 1:
+                return host_list['hostids'][0]
         except Exception, e:
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
@@ -446,8 +448,8 @@ def main():
             module.fail_json(msg="Specify at least one interface for creating host '%s'." % host_name)
 
         # create host
-        host.add_host(host_name, group_ids, status, interfaces)
-        host.link_or_clear_template(host_name, template_ids)
+        host_id = host.add_host(host_name, group_ids, status, interfaces)
+        host.link_or_clear_template(host_id, template_ids)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
             host_name, ip, link_templates))
 
