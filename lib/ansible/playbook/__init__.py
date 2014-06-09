@@ -469,10 +469,10 @@ class PlayBook(object):
                 for res in result['results']:
                     if type(res) == dict:
                         facts = res.get('ansible_facts', {})
-                        self.SETUP_CACHE[host].update(facts)
+			self.SETUP_CACHE[host] = utils.combine_vars(self.SETUP_CACHE[host], facts)
             else:
                 facts = result.get('ansible_facts', {})
-                self.SETUP_CACHE[host].update(facts)
+		self.SETUP_CACHE[host] = utils.combine_vars(self.SETUP_CACHE[host], facts)
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
