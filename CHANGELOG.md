@@ -1,6 +1,15 @@
 Ansible Changes By Release
 ==========================
 
+## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
+
+- Corrects a regression where handlers were run across all hosts, not just those that triggered the handler.
+- Fixed a bug in which modules did not support properly moving a file atomically when su was in use.
+- Fixed two bugs related to symlinks with directories when using the file module.
+- Fixed a bug related to MySQL master replication syntax.
+- Corrects a regression in the order of variable merging done by the internal runner code.
+- Various other minor bug fixes.
+
 ## 1.6.2 "And the Cradle Will Rock" - May 23, 2014
  
 - If an improper locale is specified, core modules will now automatically revert to using the 'C' locale.
