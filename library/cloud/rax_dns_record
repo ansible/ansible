@@ -113,30 +113,15 @@ EXAMPLES = '''
       register: ptr_record
 '''
 
-from uuid import UUID
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
 
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
 
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
-
-
-def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
-                       name=None, server=None, state='present', ttl=7200):
-    """Function for manipulating DNS PTR records"""
-
+def rax_dns_record(module, data=None, comment=None, loadbalancer=None,
+                   name=None, server=None, state='present', ttl=7200):
     changed = False
     results = []
 
@@ -301,7 +286,7 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
 
-    module.exit_json(changed=changed, record=to_dict(record))
+    module.exit_json(changed=changed, record=rax_to_dict(record))
 
 
 def main():

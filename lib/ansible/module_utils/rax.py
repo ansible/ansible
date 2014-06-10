@@ -26,7 +26,147 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
+from uuid import UUID
+
+
+FINAL_STATUSES = ('ACTIVE', 'ERROR')
+VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
+                 'error', 'error_deleting')
+
+CLB_ALGORITHMS = ['RANDOM', 'LEAST_CONNECTIONS', 'ROUND_ROBIN',
+              'WEIGHTED_LEAST_CONNECTIONS', 'WEIGHTED_ROUND_ROBIN']
+CLB_PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS',
+                 'IMAPv4', 'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP',
+                 'TCP', 'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
+
+NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
+SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
+
+
+def rax_slugify(value):
+    """Prepend a key with rax_ and normalize the key name"""
+    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+
+
+def rax_clb_node_to_dict(obj):
+    """Function to convert a CLB Node object to a dict"""
+    if not obj:
+        return {}
+    node = obj.to_dict()
+    node['id'] = obj.id
+    node['weight'] = obj.weight
+    return node
+
+
+def rax_to_dict(obj, obj_type='standard'):
+    """Generic function to convert a pyrax object to a dict
+
+    obj_type values:
+        standard
+        clb
+        server
+
+    """
+    instance = {}
+    for key in dir(obj):
+        value = getattr(obj, key)
+        if obj_type == 'clb' and key == 'nodes':
+            instance[key] = []
+            for node in value:
+                instance[key].append(rax_clb_node_to_dict(node))
+        elif (isinstance(value, list) and len(value) > 0 and
+                not isinstance(value[0], NON_CALLABLES)):
+            instance[key] = []
+            for item in value:
+                instance[key].append(rax_to_dict(item))
+        elif (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
+            if obj_type == 'server':
+                key = rax_slugify(key)
+            instance[key] = value
+
+    if obj_type == 'server':
+        for attr in ['id', 'accessIPv4', 'name', 'status']:
+            instance[attr] = instance.get(rax_slugify(attr))
+
+    return instance
+
+
+def rax_find_image(module, rax_module, image):
+    cs = rax_module.cloudservers
+    try:
+        UUID(image)
+    except ValueError:
+        try:
+            image = cs.images.find(human_id=image)
+        except(cs.exceptions.NotFound,
+               cs.exceptions.NoUniqueMatch):
+            try:
+                image = cs.images.find(name=image)
+            except (cs.exceptions.NotFound,
+                    cs.exceptions.NoUniqueMatch):
+                module.fail_json(msg='No matching image found (%s)' %
+                                     image)
+
+    return rax_module.utils.get_id(image)
+
+
+def rax_find_volume(module, rax_module, name):
+    cbs = rax_module.cloud_blockstorage
+    try:
+        UUID(name)
+        volume = cbs.get(name)
+    except ValueError:
+        try:
+            volume = cbs.find(name=name)
+        except rax_module.exc.NotFound:
+            volume = None
+        except Exception, e:
+            module.fail_json(msg='%s' % e)
+    return volume
+
+
+def rax_find_network(module, rax_module, network):
+    cnw = rax_module.cloud_networks
+    try:
+        UUID(network)
+    except ValueError:
+        if network.lower() == 'public':
+            return cnw.get_server_networks(PUBLIC_NET_ID)
+        elif network.lower() == 'private':
+            return cnw.get_server_networks(SERVICE_NET_ID)
+        else:
+            try:
+                network_obj = cnw.find_network_by_label(network)
+            except (rax_module.exceptions.NetworkNotFound,
+                    rax_module.exceptions.NetworkLabelNotUnique):
+                module.fail_json(msg='No matching network found (%s)' %
+                                     network)
+            else:
+                return cnw.get_server_networks(network_obj)
+    else:
+        return cnw.get_server_networks(network)
+
+
+def rax_find_server(module, rax_module, server):
+    cs = rax_module.cloudservers
+    try:
+        UUID(server)
+        server = cs.servers.get(server)
+    except ValueError:
+        servers = cs.servers.list(search_opts=dict(name='^%s$' % server))
+        if not servers:
+            module.fail_json(msg='No Server was matched by name, '
+                                 'try using the Server ID instead')
+        if len(servers) > 1:
+            module.fail_json(msg='Multiple servers matched by name, '
+                                 'try using the Server ID instead')
+
+        # We made it this far, grab the first and hopefully only server
+        # in the list
+        server = servers[0]
+    return server
+
 
 def rax_argument_spec():
     return dict(
@@ -48,6 +188,9 @@ def rax_required_together():
 
 
 def setup_rax_module(module, rax_module):
+    rax_module.USER_AGENT = 'ansible/%s %s' % (ANSIBLE_VERSION,
+                                               rax_module.USER_AGENT)
+
     api_key = module.params.get('api_key')
     auth_endpoint = module.params.get('auth_endpoint')
     credentials = module.params.get('credentials')
