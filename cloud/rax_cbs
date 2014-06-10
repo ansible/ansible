@@ -99,20 +99,11 @@ EXAMPLES = '''
       register: my_volume
 '''
 
-import sys
-
-from uuid import UUID
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
-                 'error', 'error_deleting')
 
 
 def cloud_block_storage(module, state, name, description, meta, size,
@@ -135,16 +126,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
-    try:
-        UUID(name)
-        volume = cbs.get(name)
-    except ValueError:
-        try:
-            volume = cbs.find(name=name)
-        except pyrax.exc.NotFound:
-            pass
-        except Exception, e:
-            module.fail_json(msg='%s' % e)
+    volume = rax_find_volume(module, pyrax, name)
 
     if state == 'present':
         if not volume:
