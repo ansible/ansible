@@ -26,52 +26,27 @@ options:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
-    default: null
     aliases: ['aws_region', 'ec2_region']
   volume_id:
     description:
       - volume from which to take the snapshot
     required: false
-    default: null
-    aliases: []
   description:
     description:
       - description to be applied to the snapshot
     required: false
-    default: null
-    aliases: []
   instance_id:
     description:
     - instance that has the required volume to snapshot mounted
     required: false
-    default: null
-    aliases: []
   device_name:
     description:
     - device name of a mounted volume to be snapshotted
     required: false
-    default: null
-    aliases: []
-  profile:
-    description:
-      - uses a boto profile. Only works with boto >= 2.24.0
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
-  security_token:
-    description:
-      - security token to authenticate against AWS
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
   snapshot_tags:
     description:
       - a hash/dictionary of tags to add to the snapshot
     required: false
-    default: null
-    aliases: []
     version_added: "1.6"
 
 author: Will Thames
@@ -112,21 +87,19 @@ except ImportError:
     sys.exit(1)
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
             volume_id = dict(),
             description = dict(),
             instance_id = dict(),
             device_name = dict(),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
-            ec2_url = dict(),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
             wait = dict(type='bool', default='true'),
             wait_timeout = dict(default=0),
             snapshot_tags = dict(type='dict', default=dict()),
         )
     )
+    module = AnsibleModule(argument_spec=argument_spec)
 
     volume_id = module.params.get('volume_id')
     description = module.params.get('description')
