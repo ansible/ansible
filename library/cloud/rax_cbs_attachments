@@ -81,18 +81,11 @@ EXAMPLES = '''
       register: my_volume
 '''
 
-import sys
-
-from uuid import UUID
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
 
 def cloud_block_storage_attachments(module, state, volume, server, device,
@@ -113,34 +106,13 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
     changed = False
     instance = {}
 
-    try:
-        UUID(volume)
-        volume = cbs.get(volume)
-    except ValueError:
-        try:
-            volume = cbs.find(name=volume)
-        except Exception, e:
-            module.fail_json(msg='%s' % e)
+    volume = rax_find_volume(module, pyrax, volume)
 
     if not volume:
         module.fail_json(msg='No matching storage volumes were found')
 
     if state == 'present':
-        try:
-            UUID(server)
-            server = cs.servers.get(server)
-        except ValueError:
-            servers = cs.servers.list(search_opts=dict(name='^%s$' % server))
-            if not servers:
-                module.fail_json(msg='No Server was matched by name, '
-                                     'try using the Server ID instead')
-            if len(servers) > 1:
-                module.fail_json(msg='Multiple servers matched by name, '
-                                     'try using the Server ID instead')
-
-            # We made it this far, grab the first and hopefully only server
-            # in the list
-            server = servers[0]
+        server = rax_find_server(module, pyrax, server)
 
         if (volume.attachments and
                 volume.attachments[0]['server_id'] == server.id):
@@ -176,21 +148,7 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
             module.exit_json(**result)
 
     elif state == 'absent':
-        try:
-            UUID(server)
-            server = cs.servers.get(server)
-        except ValueError:
-            servers = cs.servers.list(search_opts=dict(name='^%s$' % server))
-            if not servers:
-                module.fail_json(msg='No Server was matched by name, '
-                                     'try using the Server ID instead')
-            if len(servers) > 1:
-                module.fail_json(msg='Multiple servers matched by name, '
-                                     'try using the Server ID instead')
-
-            # We made it this far, grab the first and hopefully only server
-            # in the list
-            server = servers[0]
+        server = rax_find_server(module, pyrax, server)
 
         if (volume.attachments and
                 volume.attachments[0]['server_id'] == server.id):

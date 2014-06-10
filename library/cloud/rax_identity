@@ -47,16 +47,11 @@ EXAMPLES = '''
       register: rackspace_identity
 '''
 
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
 
 def cloud_identity(module, state, identity):

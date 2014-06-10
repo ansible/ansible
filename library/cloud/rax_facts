@@ -55,29 +55,11 @@ EXAMPLES = '''
         ansible_ssh_host: "{{ rax_accessipv4 }}"
 '''
 
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-def rax_slugify(value):
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
-
-
-def pyrax_object_to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            key = rax_slugify(key)
-            instance[key] = value
-    return instance
 
 
 def rax_facts(module, address, name, server_id):
@@ -120,7 +102,7 @@ def rax_facts(module, address, name, server_id):
         module.fail_json(msg='Multiple servers found matching provided '
                              'search parameters')
     elif len(servers) == 1:
-        ansible_facts = pyrax_object_to_dict(servers[0])
+        ansible_facts = rax_to_dict(servers[0], 'server')
 
     module.exit_json(changed=changed, ansible_facts=ansible_facts)
 

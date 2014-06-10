@@ -194,43 +194,11 @@ EXAMPLES = '''
       register: rax
 '''
 
-import os
-import re
-import time
-
-from uuid import UUID
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-ACTIVE_STATUSES = ('ACTIVE', 'BUILD', 'HARD_REBOOT', 'MIGRATING', 'PASSWORD',
-                   'REBOOT', 'REBUILD', 'RESCUE', 'RESIZE', 'REVERT_RESIZE')
-FINAL_STATUSES = ('ACTIVE', 'ERROR')
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
-SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
-
-
-def rax_slugify(value):
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
-
-
-def server_to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            key = rax_slugify(key)
-            instance[key] = value
-
-    for attr in ['id', 'accessIPv4', 'name', 'status']:
-        instance[attr] = instance.get(rax_slugify(attr))
-
-    return instance
 
 
 def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
@@ -299,7 +267,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
             server.get()
         except:
             server.status == 'ERROR'
-        instance = server_to_dict(server)
+        instance = rax_to_dict(server, 'server')
         if server.status == 'ACTIVE' or not wait:
             success.append(instance)
         elif server.status == 'ERROR':
@@ -307,7 +275,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
         elif wait:
             timeout.append(instance)
 
-    untouched = [server_to_dict(s) for s in existing]
+    untouched = [rax_to_dict(s, 'server') for s in existing]
     instances = success + untouched
 
     results = {
@@ -354,7 +322,7 @@ def delete(module, instance_ids=[], wait=True, wait_timeout=300, kept=[]):
         else:
             changed = True
 
-        instance = server_to_dict(server)
+        instance = rax_to_dict(server, 'server')
         instances[instance['id']] = instance
 
     # If requested, wait for server deletion
@@ -384,7 +352,7 @@ def delete(module, instance_ids=[], wait=True, wait_timeout=300, kept=[]):
     success = filter(lambda s: s['status'] in ('', 'DELETED'),
                      instances.values())
 
-    instances = [server_to_dict(s) for s in kept]
+    instances = [rax_to_dict(s, 'server') for s in kept]
 
     results = {
         'changed': changed,
@@ -451,48 +419,13 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
         state = 'present'
         was_absent = True
 
-    # Check if the provided image is a UUID and if not, search for an
-    # appropriate image using human_id and name
     if image:
-        try:
-            UUID(image)
-        except ValueError:
-            try:
-                image = cs.images.find(human_id=image)
-            except(cs.exceptions.NotFound,
-                   cs.exceptions.NoUniqueMatch):
-                try:
-                    image = cs.images.find(name=image)
-                except (cs.exceptions.NotFound,
-                        cs.exceptions.NoUniqueMatch):
-                    module.fail_json(msg='No matching image found (%s)' %
-                                         image)
+        image = rax_find_image(module, pyrax, image)
 
-        image = pyrax.utils.get_id(image)
-
-    # Check if the provided network is a UUID and if not, search for an
-    # appropriate network using label
     nics = []
     if networks:
         for network in networks:
-            try:
-                UUID(network)
-            except ValueError:
-                if network.lower() == 'public':
-                    nics.extend(cnw.get_server_networks(PUBLIC_NET_ID))
-                elif network.lower() == 'private':
-                    nics.extend(cnw.get_server_networks(SERVICE_NET_ID))
-                else:
-                    try:
-                        network_obj = cnw.find_network_by_label(network)
-                    except (pyrax.exceptions.NetworkNotFound,
-                            pyrax.exceptions.NetworkLabelNotUnique):
-                        module.fail_json(msg='No matching network found (%s)' %
-                                             network)
-                    else:
-                        nics.extend(cnw.get_server_networks(network_obj))
-            else:
-                nics.extend(cnw.get_server_networks(network))
+            nics.extend(rax_find_network(module, pyrax, network))
 
     # act on the state
     if state == 'present':
@@ -568,7 +501,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                     instances = []
                     instance_ids = []
                     for server in servers:
-                        instances.append(server_to_dict(server))
+                        instances.append(rax_to_dict(server, 'server'))
                         instance_ids.append(server.id)
                     module.exit_json(changed=False, action=None,
                                      instances=instances,
@@ -623,7 +556,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 if len(servers) >= count:
                     instances = []
                     for server in servers:
-                        instances.append(server_to_dict(server))
+                        instances.append(rax_to_dict(server, 'server'))
 
                     instance_ids = [i['id'] for i in instances]
                     module.exit_json(changed=False, action=None,
