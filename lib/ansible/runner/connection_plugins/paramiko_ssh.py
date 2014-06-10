@@ -186,6 +186,7 @@ class Connection(object):
         bufsize = 4096
         try:
             chan = self.ssh.get_transport().open_session()
+            self.ssh.get_transport().set_keepalive(5)
         except Exception, e:
             msg = "Failed to open session"
             if len(str(e)) > 0:
