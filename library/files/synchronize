@@ -221,8 +221,8 @@ def main():
         supports_check_mode = True
     )
 
-    source = module.params['src']
-    dest = module.params['dest']
+    source = '"' + module.params['src'] + '"'
+    dest = '"' + module.params['dest'] + '"'
     dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
