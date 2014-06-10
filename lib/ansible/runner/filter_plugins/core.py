@@ -28,6 +28,7 @@ from ansible import errors
 from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
+from jinja2.filters import environmentfilter
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -185,7 +186,8 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
-def rand(end, start=None, step=None):
+@environmentfilter
+def rand(environment, end, start=None, step=None):
     r = SystemRandom()
     if isinstance(end, (int, long)):
         if not start:
