@@ -227,9 +227,6 @@ def main(args):
                     unknown_tags = ((set(pb.only_tags) | set(pb.skip_tags)) -
                                     (matched_tags | unmatched_tags))
 
-                    if unknown_tags:
-                        continue
-
                 if options.listhosts:
                     print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
                     for host in hosts:
