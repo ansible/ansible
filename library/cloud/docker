@@ -380,7 +380,7 @@ class DockerManager:
 
         self.links = None
         if self.module.params.get('links'):
-            self.links = dict(map(lambda x: x.split(':'), self.module.params.get('links')))
+            self.links = self.get_links(self.module.params.get('links'))
 
         self.env = None
         if self.module.params.get('env'):
@@ -389,6 +389,22 @@ class DockerManager:
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
+
+
+    def get_links(self, links):
+        """
+        Parse the links passed, if a link is specified without an alias then just create the alias of the same name as the link
+        """
+        processed_links = {}
+
+        for link in links:
+            parsed_link = link.split(':', 1)
+            if(len(parsed_link) == 2):
+                processed_links[parsed_link[0]] = parsed_link[1]
+            else:
+                processed_links[parsed_link[0]] = parsed_link[0]
+
+        return processed_links
 
 
     def get_exposed_ports(self, expose_list):
@@ -450,7 +466,6 @@ class DockerManager:
                 binds[container_port] = bind
 
         return binds
-
 
 
     def get_split_image_tag(self, image):
