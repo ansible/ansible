@@ -152,6 +152,7 @@ class Connection(ConnectionBase):
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
+            ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
             ssh.load_system_host_keys()
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin))
