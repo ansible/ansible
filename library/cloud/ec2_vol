@@ -325,7 +325,7 @@ def main():
     if id and name:
         module.fail_json(msg="Both id and name cannot be specified")
 
-    if not (id or name or volume_size):
+    if volume_size and (id or name):
         module.fail_json(msg="Cannot specify volume_size and either one of name or id")
 
     # Here we need to get the zone info for the instance. This covers situation where 
