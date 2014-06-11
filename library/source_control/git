@@ -428,10 +428,7 @@ def submodule_update(git_path, module, dest):
         return (0, '', '')
     cmd = [ git_path, 'submodule', 'sync' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if 'remote' in params:
-        cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ,'--remote' ]
-    else:
-        cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
+    cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
