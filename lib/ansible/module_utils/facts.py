@@ -1581,7 +1581,7 @@ class LinuxNetwork(Network):
                         iface = words[-1]
                         if iface != device:
                             interfaces[iface] = {}
-                        if not secondary or "ipv4" not in interfaces[iface]:
+                        if not secondary and "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
                                                          'netmask': netmask,
                                                          'network': network}
