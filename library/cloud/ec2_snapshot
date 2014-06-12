@@ -48,34 +48,45 @@ options:
       - a hash/dictionary of tags to add to the snapshot
     required: false
     version_added: "1.6"
-
+  wait:
+    description:
+      - wait for the snapshot to be ready
+    choices: ['yes', 'no']
+    required: false
+    default: yes
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+      - specify 0 to wait forever
+    required: false
+    default: 0
 author: Will Thames
 extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
 # Simple snapshot of volume using volume_id
-- local_action: 
-    module: ec2_snapshot 
-    volume_id: vol-abcdef12   
+- local_action:
+    module: ec2_snapshot
+    volume_id: vol-abcdef12
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
 
 # Snapshot of volume mounted on device_name attached to instance_id
-- local_action: 
-    module: ec2_snapshot 
+- local_action:
+    module: ec2_snapshot
     instance_id: i-12345678
     device_name: /dev/sdb1
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
 
 # Snapshot of volume with tagging
-- local_action: 
-    module: ec2_snapshot 
+- local_action:
+    module: ec2_snapshot
     instance_id: i-12345678
     device_name: /dev/sdb1
     snapshot_tags:
         frequency: hourly
         source: /data
-'''    
+'''
 
 import sys
 import time
