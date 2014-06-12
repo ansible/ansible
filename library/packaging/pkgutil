@@ -74,12 +74,8 @@ def package_latest(module, name, site):
     if site is not None:
         cmd += [ '-t', pipes.quote(site) ]
     cmd.append(pipes.quote(name))
-    cmd += [ '| tail -1 | grep -v SAME' ]
-    rc, out, err = module.run_command(' '.join(cmd), use_unsafe_shell=True)
-    if rc == 1:
-        return True
-    else:
-        return False
+    (rc, out, err) = run_command(module, cmd)
+    return 'SAME' in out
 
 def run_command(module, cmd):
     progname = cmd[0]
