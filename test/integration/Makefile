@@ -16,7 +16,7 @@ endif
 
 VAULT_PASSWORD_FILE = vault-password
 
-all: non_destructive destructive check_mode test_hash test_handlers test_group_by test_var_in_vault
+all: non_destructive destructive check_mode test_hash test_handlers test_group_by test_vault
 
 non_destructive:
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
