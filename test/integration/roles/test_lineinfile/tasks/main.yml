@@ -209,3 +209,50 @@
     that:
     - "result.stat.md5 == 'fef1d487711facfd7aa2c87d788c19d9'"
 
+# Test EOF in cases where file has no newline at EOF
+- name: testnoeof deploy the file for lineinfile
+  copy: src=testnoeof.txt dest={{output_dir}}/testnoeof.txt
+  register: result
+
+- name: testnoeof insert a line at the end of the file
+  lineinfile: dest={{output_dir}}/testnoeof.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: testempty assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: testnoeof stat the no newline EOF test after the insert at the end
+  stat: path={{output_dir}}/testnoeof.txt
+  register: result
+
+- name: testnoeof assert test md5 matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.md5 == 'f75c9d51f45afd7295000e63ce655220'"
+
+# Test EOF with empty file to make sure no unneccessary newline is added
+- name: testempty deploy the testempty file for lineinfile
+  copy: src=testempty.txt dest={{output_dir}}/testempty.txt
+  register: result
+
+- name: testempty insert a line at the end of the file
+  lineinfile: dest={{output_dir}}/testempty.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: testempty assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: testempty stat the test after the insert at the end
+  stat: path={{output_dir}}/testempty.txt
+  register: result
+
+- name: testempty assert test md5 matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.md5 == '357dcbee8dfb4436f63bab00a235c45a'"
