@@ -739,7 +739,7 @@ class LinuxHardware(Hardware):
 
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
-                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
+                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/physical_block_size",512)
                     part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
                     d['partitions'][partname] = part
 
@@ -754,7 +754,7 @@ class LinuxHardware(Hardware):
             d['sectors'] = get_file_content(sysdir + "/size")
             if not d['sectors']:
                 d['sectors'] = 0
-            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
+            d['sectorsize'] = get_file_content(sysdir + "/queue/physical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = 512
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
