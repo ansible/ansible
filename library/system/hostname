@@ -27,7 +27,7 @@ short_description: Manage hostname
 requirements: [ hostname ]
 description:
     - Set system's hostname
-    - Currently implemented on only Debian, Ubuntu, RedHat and CentOS.
+    - Currently implemented on only Arch, Debian, Ubuntu, RedHat and CentOS.
 options:
     name:
         required: true
@@ -181,6 +181,11 @@ class DebianHostname(Hostname):
 class UbuntuHostname(Hostname):
     platform = 'Linux'
     distribution = 'Ubuntu'
+    strategy_class = DebianStrategy
+
+class ArchHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Arch'
     strategy_class = DebianStrategy
 
 # ===========================================

@@ -126,6 +126,7 @@ def get_platform():
 
 def get_distribution():
     ''' return the distribution name '''
+    distribution = None
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
@@ -138,8 +139,17 @@ def get_distribution():
         except:
             # FIXME: MethodMissing, I assume?
             distribution = platform.dist()[0].capitalize()
-    else:
-        distribution = None
+        # Fall back to querying lsb_release
+        # TODO: share code w/ setup module (currently not modularized)
+        if not distribution:
+            try:
+                p = subprocess.Popen(['lsb_release', '-i', '-s'],
+                    stdout=subprocess.PIPE)
+                (distro_id, _) = p.communicate()
+                if p.returncode == 0:
+                    distribution = distro_id.strip().capitalize()
+            except OSError:
+                pass # lsb_release not installed
     return distribution
 
 def load_platform_subclass(cls, *args, **kwargs):
