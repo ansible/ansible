@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+# (c) 2014, Ahti Kitsik <ak@ahtik.com>
 #
 # This file is part of Ansible
 #
@@ -25,7 +26,7 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: lineinfile
-author: Daniel Hokka Zakrisson
+author: Daniel Hokka Zakrisson, Ahti Kitsik
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
@@ -110,7 +111,7 @@ options:
   validate:
      required: false
      description:
-       - validation to run before copying into place. The command is passed 
+       - validation to run before copying into place. The command is passed
          securely so shell features like expansion and pipes won't work.
      required: false
      default: None
@@ -251,6 +252,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # if insertafter=/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
     elif insertafter == 'EOF':
+
+        # If the file is not empty then ensure there's a newline before the added line
+        if len(lines)>0 and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
+            lines.append(os.linesep)
+
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True
