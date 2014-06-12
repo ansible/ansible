@@ -107,17 +107,17 @@ To install from source.
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git
-    $ cd ./ansible
-    $ source ./hacking/env-setup
+    git clone git://github.com/ansible/ansible.git
+    cd ./ansible
+    source ./hacking/env-setup
 
 If you don't have pip installed in your version of Python, install pip::
 
-    $ sudo easy_install pip
+    sudo easy_install pip
 
 Ansible also uses the following Python modules that need to be installed::
 
-    $ sudo pip install paramiko PyYAML jinja2 httplib2
+    sudo pip install paramiko PyYAML jinja2 httplib2
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
 will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
@@ -125,8 +125,8 @@ other than /etc/ansible/hosts:
 
 .. code-block:: bash
 
-    $ echo "127.0.0.1" > ~/ansible_hosts
-    $ export ANSIBLE_HOSTS=~/ansible_hosts
+    echo "127.0.0.1" > ~/ansible_hosts
+    export ANSIBLE_HOSTS=~/ansible_hosts
 
 You can read more about the inventory file in later parts of the manual.
 
@@ -134,7 +134,7 @@ Now let's test things with a ping command:
 
 .. code-block:: bash
 
-    $ ansible all -m ping --ask-pass
+    ansible all -m ping --ask-pass
 
 You can also use "sudo make install" if you wish.
 
@@ -155,16 +155,16 @@ Fedora users can install Ansible directly, though if you are using RHEL or CentO
 .. code-block:: bash
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
-    $ sudo yum install ansible
+    sudo yum install ansible
 
 You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git
-    $ cd ./ansible
-    $ make rpm
-    $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
+    git clone git://github.com/ansible/ansible.git
+    cd ./ansible
+    make rpm
+    sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
 
 .. _from_apt:
 
@@ -177,16 +177,18 @@ To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-get install apt-add-repository
-    $ sudo apt-add-repository ppa:rquillo/ansible
-    $ sudo apt-get update
-    $ sudo apt-get install ansible
+    sudo apt-add-repository ppa:rquillo/ansible
+    sudo apt-get update
+    sudo apt-get install ansible
 
+apt-add-repository comes from software-properties-common
+or if you are using Ubuntu LTS Precise it's in python-software-properties
+    
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
 .. code-block:: bash
 
-    $ make deb
+    make deb
 
 You may also wish to run from source to get the latest, which is covered above.
 
@@ -197,13 +199,13 @@ Latest Releases Via pkg (FreeBSD)
 
 .. code-block:: bash
 
-    $ sudo pkg install ansible
+    sudo pkg install ansible
 
 You may also wish to install from ports, run:
 
 .. code-block:: bash
 
-    $ sudo make -C /usr/ports/sysutils/ansible install
+    sudo make -C /usr/ports/sysutils/ansible install
 
 .. _from_brew:
 
@@ -214,8 +216,8 @@ To install on a Mac, make sure you have Homebrew, then run:
 
 .. code-block:: bash
 
-    $ brew update
-    $ brew install ansible
+    brew update
+    brew install ansible
 
 .. _from_pip:
 
@@ -225,15 +227,15 @@ Latest Releases Via Pip
 Ansible can be installed via "pip", the Python package manager.  If 'pip' isn't already available in
 your version of Python, you can get pip by::
 
-   $ sudo easy_install pip
+   sudo easy_install pip
 
 Then install Ansible with::
 
-   $ sudo pip install ansible
+   sudo pip install ansible
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
-   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
+   sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
