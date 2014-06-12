@@ -63,29 +63,19 @@ import os
 import pipes
 
 def package_installed(module, name):
-    cmd = [module.get_bin_path('pkginfo', True)]
-    cmd.append('-q')
+    cmd = [ 'pkginfo', '-q' ]
     cmd.append(name)
-    rc, out, err = module.run_command(' '.join(cmd))
-    if rc == 0:
-        return True
-    else:
-        return False
+    (rc, out, err) = run_command(module, cmd)
+    return rc == 0
 
 def package_latest(module, name, site):
     # Only supports one package
-    name = pipes.quote(name)
-    site = pipes.quote(site)
     cmd = [ 'pkgutil', '--single', '-c' ]
     if site is not None:
-        cmd += [ '-t', site ]
-    cmd.append(name)
-    cmd += [ '| tail -1 | grep -v SAME' ]
-    rc, out, err = module.run_command(' '.join(cmd), use_unsafe_shell=True)
-    if rc == 1:
-        return True
-    else:
-        return False
+        cmd += [ '-t', pipes.quote(site) ]
+    cmd.append(pipes.quote(name))
+    (rc, out, err) = run_command(module, cmd)
+    return 'SAME' in out
 
 def run_command(module, cmd):
     progname = cmd[0]
