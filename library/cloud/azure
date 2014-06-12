@@ -92,6 +92,11 @@ options:
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
+    default: 600
+    aliases: []
+  wait_timeout_redirects:
+    description:
+      - how long before wait gives up for redirects, in seconds
     default: 300
     aliases: []
   state:
@@ -137,22 +142,58 @@ from urlparse import urlparse
 
 AZURE_LOCATIONS = ['East Asia',
                    'Southeast Asia',
+                   'Brazil South',
                    'North Europe',
                    'West Europe',
+                   'Japan West',
                    'East US',
+                   'South Central US',
                    'West US']
 
-AZURE_ROLE_SIZES = ['Small', 'Medium', 'Large', 'ExtraLarge', 'A5', 'A6', 'A7']
+AZURE_ROLE_SIZES = ['ExtraSmall',
+                    'Small',
+                    'Medium',
+                    'Large',
+                    'ExtraLarge',
+                    'A5',
+                    'A6',
+                    'A7',
+                    'A8',
+                    'A9',
+                    'Basic_A0',
+                    'Basic_A1',
+                    'Basic_A2',
+                    'Basic_A3',
+                    'Basic_A4']
 
 try:
-    import azure
+    import azure as windows_azure
+
     from azure import WindowsAzureError, WindowsAzureMissingResourceError
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
                                          ConfigurationSetInputEndpoint)
 except ImportError:
-    print "failed=True msg='azure required for this module'"
+    print
+    "failed=True msg='azure required for this module'"
     sys.exit(1)
+
+from distutils.version import LooseVersion
+from types import MethodType
+import json
+
+
+def _wait_for_completion(azure, promise, wait_timeout, msg):
+    if not promise: return
+    wait_timeout = time.time() + wait_timeout
+    while wait_timeout > time.time():
+        operation_result = azure.get_operation_status(promise.request_id)
+        time.sleep(5)
+        if operation_result.status == "Succeeded":
+            return
+
+    raise WindowsAzureError('Timed out waiting for async operation ' + msg + ' "' + str(promise.request_id) + '" to complete.')
+
 
 def get_ssh_certificate_tokens(module, ssh_cert_path):
     """
@@ -162,7 +203,7 @@ def get_ssh_certificate_tokens(module, ssh_cert_path):
     rc, stdout, stderr = module.run_command(['openssl', 'x509', '-in', ssh_cert_path, '-fingerprint', '-noout'])
     if rc != 0:
         module.fail_json(msg="failed to generate the key fingerprint, error was: %s" % stderr)
-    fingerprint = stdout.strip()[17:].replace(':','')
+    fingerprint = stdout.strip()[17:].replace(':', '')
 
     rc, stdout, stderr = module.run_command(['openssl', 'pkcs12', '-export', '-in', ssh_cert_path, '-nokeys', '-password', 'pass:'])
     if rc != 0:
@@ -182,8 +223,6 @@ def create_virtual_machine(module, azure):
     Returns:
         True if a new virtual machine was created, false otherwise
     """
-
-
     name = module.params.get('name')
     hostname = module.params.get('hostname') or name + ".cloudapp.net"
     endpoints = module.params.get('endpoints').split(',')
@@ -198,24 +237,15 @@ def create_virtual_machine(module, azure):
     wait_timeout = int(module.params.get('wait_timeout'))
 
     # Check if a deployment with the same name already exists
-    deployment = None
-    try:
-        deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-    except WindowsAzureMissingResourceError as e:
-        pass # no such deployment
-    except WindowsAzureError as e:
-        module.fail_json(msg="failed to create the new deployment, error was: %s" % str(e))
-
-    if deployment:
+    cloud_service_name_available = azure.check_hosted_service_name_availability(name)
+    if not cloud_service_name_available.result:
         changed = False
     else:
         changed = True
-
         # Create cloud service if necessary
         try:
-            existing_service_names = [service.service_name for service in azure.list_hosted_services()]
-            if not name in existing_service_names:
-                azure.create_hosted_service(service_name=name, label=name, location=location)
+            result = azure.create_hosted_service(service_name=name, label=name, location=location)
+            _wait_for_completion(azure, result, wait_timeout, "create_hosted_service")
         except WindowsAzureError as e:
             module.fail_json(msg="failed to create the new service name, it already exists: %s" % str(e))
 
@@ -227,7 +257,9 @@ def create_virtual_machine(module, azure):
         if ssh_cert_path:
             fingerprint, pkcs12_base64 = get_ssh_certificate_tokens(module, ssh_cert_path)
             # Add certificate to cloud service
-            azure.add_service_certificate(name, pkcs12_base64, 'pfx', '')
+            result = azure.add_service_certificate(name, pkcs12_base64, 'pfx', '')
+            _wait_for_completion(azure, result, wait_timeout, "add_service_certificate")
+
             # Create ssh config
             ssh_config = SSH()
             ssh_config.public_keys = PublicKeys()
@@ -255,36 +287,25 @@ def create_virtual_machine(module, azure):
 
         # Spin up virtual machine
         try:
-            azure.create_virtual_machine_deployment(service_name=name,
-                                                    deployment_name=name,
-                                                    deployment_slot='production',
-                                                    label=name,
-                                                    role_name=name,
-                                                    system_config=linux_config,
-                                                    network_config=network_config,
-                                                    os_virtual_hard_disk=os_hd,
-                                                    role_size=role_size)
+            result = azure.create_virtual_machine_deployment(service_name=name,
+                                                             deployment_name=name,
+                                                             deployment_slot='production',
+                                                             label=name,
+                                                             role_name=name,
+                                                             system_config=linux_config,
+                                                             network_config=network_config,
+                                                             os_virtual_hard_disk=os_hd,
+                                                             role_size=role_size)
+            _wait_for_completion(azure, result, wait_timeout, "create_virtual_machine_deployment")
         except WindowsAzureError as e:
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
 
-        # wait here until the deployment is up
-        deployment = None
-        wait_timeout = time.time() + wait_timeout
-        while wait_timeout > time.time() and not deployment:
-            try:
-                deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-            except WindowsAzureMissingResourceError as e:
-                pass # deployment still not available
-            except WindowsAzureError as e:
-                # got a bad response from azure, wait a second and then try again
-                time.sleep(1)
-                continue
-            if deployment:
-                break
-            else:
-                time.sleep(5)
 
-    return changed
+    try:
+        deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
+        return (changed, urlparse(deployment.url).hostname, deployment)
+    except WindowsAzureError as e:
+        module.fail_json(msg="failed to lookup the deployment information for %s, error was: %s" % (name, str(e)))
 
 
 def terminate_virtual_machine(module, azure):
@@ -309,10 +330,11 @@ def terminate_virtual_machine(module, azure):
     changed = False
 
     deployment = None
+    disk_names = []
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
     except WindowsAzureMissingResourceError as e:
-        pass # no such deployment
+        pass  # no such deployment or service
     except WindowsAzureError as e:
         module.fail_json(msg="failed to find the deployment, error was: %s" % str(e))
 
@@ -320,25 +342,27 @@ def terminate_virtual_machine(module, azure):
     if deployment:
         changed = True
         try:
-            # TODO: Also find a way to delete old hard drives
-            azure.delete_deployment(service_name=name,deployment_name=name)
-            wait_timeout = time.time() + wait_timeout
-            while wait_timeout > time.time() and deployment:
-                try:
-                    deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-                except WindowsAzureMissingResourceError as e:
-                    break # successfully deleted
-                except WindowsAzureError as e:
-                    # Azure api error, wait a second and retry
-                    time.sleep(1)
-                    continue
-                time.sleep(5)
+            # gather disk info
+            results = []
+            for role in deployment.role_list:
+                role_props = azure.get_role(name, deployment.name, role.role_name)
+                if role_props.os_virtual_hard_disk.disk_name not in disk_names:
+                    disk_names.append(role_props.os_virtual_hard_disk.disk_name)
+
+            result = azure.delete_deployment(name, deployment.name)
+            _wait_for_completion(azure, result, wait_timeout, "delete_deployment")
+
+            for disk_name in disk_names:
+                azure.delete_disk(disk_name, True)
+
             # Now that the vm is deleted, remove the cloud service
-            azure.delete_hosted_service(service_name=name)
+            result = azure.delete_hosted_service(service_name=name)
+            _wait_for_completion(azure, result, wait_timeout, "delete_hosted_service")
         except WindowsAzureError as e:
             module.fail_json(msg="failed to delete the service %s, error was: %s" % (name, str(e)))
 
-    return changed
+    return changed, urlparse(deployment.url).hostname, deployment
+
 
 def get_azure_creds(module):
     # Check modul args for credentials, then check environment vars
@@ -351,34 +375,41 @@ def get_azure_creds(module):
 
     return subscription_id, management_cert_path
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            ssh_cert_path = dict(),
-            name = dict(),
-            hostname = dict(),
-            location = dict(choices=AZURE_LOCATIONS),
-            role_size = dict(choices=AZURE_ROLE_SIZES),
-            subscription_id = dict(no_log=True),
-            storage_account = dict(),
-            management_cert_path = dict(),
-            endpoints = dict(default='22'),
-            user = dict(),
-            password = dict(),
-            image = dict(),
-            state = dict(default='present'),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300)
+        argument_spec=dict(
+            ssh_cert_path=dict(),
+            name=dict(),
+            hostname=dict(),
+            location=dict(choices=AZURE_LOCATIONS),
+            role_size=dict(choices=AZURE_ROLE_SIZES),
+            subscription_id=dict(no_log=True),
+            storage_account=dict(),
+            management_cert_path=dict(),
+            endpoints=dict(default='22'),
+            user=dict(),
+            password=dict(),
+            image=dict(),
+            state=dict(default='present'),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(default=600),
+            wait_timeout_redirects=dict(default=300)
         )
     )
-
     # create azure ServiceManagementService object
     subscription_id, management_cert_path = get_azure_creds(module)
-    azure = ServiceManagementService(subscription_id, management_cert_path)
 
+    wait_timeout_redirects = int(module.params.get('wait_timeout_redirects'))
+    if LooseVersion(windows_azure.__version__) <= "0.8.0":
+        # wrapper for handling redirects which the sdk <= 0.8.0 is not following
+        azure = Wrapper(ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects)
+    else:
+        azure = ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects
+
+    cloud_service_raw = None
     if module.params.get('state') == 'absent':
-        changed = terminate_virtual_machine(module, azure)
-
+        (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
 
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
@@ -392,10 +423,41 @@ def main():
             module.fail_json(msg='location parameter is required for new instance')
         if not module.params.get('storage_account'):
             module.fail_json(msg='storage_account parameter is required for new instance')
-        changed = create_virtual_machine(module, azure)
+        (changed, public_dns_name, deployment) = create_virtual_machine(module, azure)
+
+    module.exit_json(changed=changed, public_dns_name=public_dns_name, deployment=json.loads(json.dumps(deployment, default=lambda o: o.__dict__)))
 
 
-    module.exit_json(changed=changed)
+class Wrapper(object):
+    def __init__(self, obj, wait_timeout):
+        self.other = obj
+        self.wait_timeout = wait_timeout
+
+    def __getattr__(self, name):
+        if hasattr(self.other, name):
+            func = getattr(self.other, name)
+            return lambda *args, **kwargs: self._wrap(func, args, kwargs)
+        raise AttributeError(name)
+
+    def _wrap(self, func, args, kwargs):
+        if type(func) == MethodType:
+            result = self._handle_temporary_redirects(lambda: func(*args, **kwargs))
+        else:
+            result = self._handle_temporary_redirects(lambda: func(self.other, *args, **kwargs))
+        return result
+
+    def _handle_temporary_redirects(self, f):
+        wait_timeout = time.time() + self.wait_timeout
+        while wait_timeout > time.time():
+            try:
+                return f()
+            except WindowsAzureError as e:
+                if not str(e).lower().find("temporary redirect") == -1:
+                    time.sleep(5)
+                    pass
+                else:
+                    raise e
+
 
 # import module snippets
 from ansible.module_utils.basic import *
