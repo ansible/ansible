@@ -301,8 +301,11 @@ def create_virtual_machine(module, azure):
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
 
 
-    deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-    return (changed, urlparse(deployment.url).hostname, deployment)
+    try:
+        deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
+        return (changed, urlparse(deployment.url).hostname, deployment)
+    except WindowsAzureError as e:
+        module.fail_json(msg="failed to lookup the deployment information for %s, error was: %s" % (name, str(e)))
 
 
 def terminate_virtual_machine(module, azure):
@@ -399,7 +402,7 @@ def main():
 
     wait_timeout_redirects = int(module.params.get('wait_timeout_redirects'))
     if LooseVersion(windows_azure.__version__) <= "0.8.0":
-        #wrapper for handling redirects which the sdk <= 0.8.0 is not following
+        # wrapper for handling redirects which the sdk <= 0.8.0 is not following
         azure = Wrapper(ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects)
     else:
         azure = ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects
