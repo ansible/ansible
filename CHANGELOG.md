@@ -7,6 +7,8 @@ New Modules:
 
 * cloud: azure
 * cloud: rax_meta
+* cloud: rax_scaling_group
+* cloud: rax_scaling_policy
 
 ## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
 
