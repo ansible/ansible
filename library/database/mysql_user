@@ -167,7 +167,7 @@ def user_add(cursor, user, host, password, new_priv, require_ssl):
     cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
-            privileges_grant(cursor, user,host,db_table,priv, require_ssl)
+            privileges_grant(cursor, user,host,db_table,priv,require_ssl)
     return True
 
 def user_mod(cursor, user, host, password, new_priv, append_privs, require_ssl):
