@@ -150,7 +150,7 @@ class DebianStrategy(GenericStrategy):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError, err:
-                self.module.fail_json(msg="failed to write file: %s" % 
+                self.module.fail_json(msg="failed to write file: %s" %
                     str(err))
         try:
             f = open(self.HOSTNAME_FILE)
@@ -181,6 +181,11 @@ class DebianHostname(Hostname):
 class UbuntuHostname(Hostname):
     platform = 'Linux'
     distribution = 'Ubuntu'
+    strategy_class = DebianStrategy
+
+class LinaroHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Linaro'
     strategy_class = DebianStrategy
 
 # ===========================================
@@ -260,7 +265,7 @@ class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific'
     strategy_class = RedHatStrategy
-    
+
 # ===========================================
 
 class FedoraStrategy(GenericStrategy):
