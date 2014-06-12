@@ -1137,6 +1137,7 @@ class AnsibleModule(object):
             # that are not balanced
             # source: http://blog.stevenlevithan.com/archives/match-quoted-string
             r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
+            r'^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$', 
             # TODO: add more regex checks here
         ]
         for re_str in clean_re_strings:
