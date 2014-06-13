@@ -576,7 +576,7 @@ class LinuxService(Service):
                 override_file.close()
 
             initpath = '/etc/init'
-            manreg = re.compile('^manual\s*$', re.M | re.I)
+            manreg = re.compile('^start on manual\s*$', re.M | re.I)
             conf_file_name = "%s/%s.conf" % (initpath, self.name)
             override_file_name = "%s/%s.override" % (initpath, self.name)
 
@@ -591,12 +591,12 @@ class LinuxService(Service):
                     write_to_override_file(override_file_name, manreg.sub('', override_file_contents))
                 # Add manual stanza if not present and service disabled
                 elif not (self.enable) and not (manreg.search(override_file_contents)):
-                    write_to_override_file(override_file_name, override_file_contents + '\nmanual\n')
+                    write_to_override_file(override_file_name, override_file_contents + '\nstart on manual\n')
                 else:
                     return
             # Add file with manual stanza if service disabled
             elif not (self.enable):
-                write_to_override_file(override_file_name, 'manual\n')
+                write_to_override_file(override_file_name, 'start on manual\n')
             else:
                 return
 
