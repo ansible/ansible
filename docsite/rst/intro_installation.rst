@@ -177,10 +177,11 @@ To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-get install apt-add-repository
     $ sudo apt-add-repository ppa:rquillo/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
+
+The apt-add-repository command comes from the package software-properties-common or from python-software-properties depending on your Ubuntu version.
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
