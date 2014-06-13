@@ -97,7 +97,7 @@ Remove image from local docker storage:
 - hosts: web
   sudo: yes
   tasks:
-  - name: run tomcat servers
+  - name: remove image
     docker_image: name="my/app" state=absent
 
 '''
