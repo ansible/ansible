@@ -39,6 +39,22 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
+import platform
+
+
+def get_distribution_version():
+    ''' return the distribution version '''
+    if platform.system() == 'Linux':
+        try:
+            distribution_version = platform.linux_distribution()[1]
+        except:
+            # FIXME: MethodMissing, I assume?
+            distribution_version = platform.dist()[1]
+    else:
+        distribution_version = None
+    return distribution_version
+
+
 class UnimplementedStrategy(object):
     def __init__(self, module):
         self.module = module
@@ -135,6 +151,7 @@ class GenericStrategy(object):
     def set_permanent_hostname(self, name):
         pass
 
+
 # ===========================================
 
 class DebianStrategy(GenericStrategy):
@@ -173,20 +190,6 @@ class DebianStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 
-class DebianHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Debian'
-    strategy_class = DebianStrategy
-
-class UbuntuHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Ubuntu'
-    strategy_class = DebianStrategy
-
-class LinaroHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Linaro'
-    strategy_class = DebianStrategy
 
 # ===========================================
 
@@ -236,35 +239,6 @@ class RedHatStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 
-class RedHat5Hostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Redhat'
-    strategy_class = RedHatStrategy
-
-class RedHatServerHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux server'
-    strategy_class = RedHatStrategy
-
-class RedHatWorkstationHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux workstation'
-    strategy_class = RedHatStrategy
-
-class CentOSHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Centos'
-    strategy_class = RedHatStrategy
-
-class AmazonLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Amazon'
-    strategy_class = RedHatStrategy
-
-class ScientificLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Scientific'
-    strategy_class = RedHatStrategy
 
 # ===========================================
 
@@ -323,6 +297,63 @@ class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
     strategy_class = FedoraStrategy
+
+class RedHat5Hostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Redhat'
+    strategy_class = RedHatStrategy
+
+class RedHatServerHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux server'
+    if float(get_distribution_version()) >= 7:
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
+
+class RedHatWorkstationHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux workstation'
+    if float(get_distribution_version()) >= 7:
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
+
+class CentOSHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Centos'
+    if float(get_distribution_version()) >= 7:
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
+
+class ScientificLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Scientific'
+    if float(get_distribution_version()) >= 7:
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
+
+class AmazonLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Amazon'
+    strategy_class = RedHatStrategy
+
+class DebianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Debian'
+    strategy_class = DebianStrategy
+
+class UbuntuHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Ubuntu'
+    strategy_class = DebianStrategy
+
+class LinaroHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Linaro'
+    strategy_class = DebianStrategy
 
 # ===========================================
 
