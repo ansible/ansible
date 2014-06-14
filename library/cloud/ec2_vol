@@ -55,6 +55,10 @@ options:
     default: 100
     aliases: []
     version_added: "1.3"
+  encrypted:
+    description:
+      - Enable encryption at rest for this volume.
+    default: false
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
@@ -219,6 +223,7 @@ def create_volume(module, ec2, zone):
     id = module.params.get('id')
     instance = module.params.get('instance')
     iops = module.params.get('iops')
+    encrypted = module.params.get('encrypted')
     volume_size = module.params.get('volume_size')
     snapshot = module.params.get('snapshot')
     # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
@@ -248,7 +253,7 @@ def create_volume(module, ec2, zone):
                                  changed=False)
     else:
         try:
-            volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
+            volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
             while volume.status != 'available':
                 time.sleep(3)
                 volume.update()
@@ -302,6 +307,7 @@ def main():
             name = dict(),
             volume_size = dict(),
             iops = dict(),
+            encrypted = dict(),
             device_name = dict(),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
             snapshot = dict(),
@@ -315,6 +321,7 @@ def main():
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
     iops = module.params.get('iops')
+    encrypted = module.params.get('encrypted')
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
