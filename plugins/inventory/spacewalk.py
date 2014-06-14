@@ -54,7 +54,7 @@ CACHE_AGE = 300 # 5min
 
 # Sanity check
 if not os.path.exists(SW_REPORT):
-    print >> sys.stderr, 'Error: %s is required for operation.' % (SW_REPORT)
+    sys.stderr.write('Error: %s is required for operation.' % (SW_REPORT))
     sys.exit(1)
 
 # Pre-startup work
@@ -113,8 +113,8 @@ if options.list:
             groups[system['group_name']].add(system['server_name'])
 
     except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s system-groups-systems": %s' % \
-            (SW_REPORT, str(e))
+        sys.stderr.write('Problem executing the command "%s system-groups-systems": %s' % \
+            (SW_REPORT, str(e)))
         sys.exit(2)
 
     if options.human:
@@ -138,8 +138,8 @@ elif options.host:
                 break
 
     except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
-            (SW_REPORT, str(e))
+        sys.stderr.write('Problem executing the command "%s inventory": %s' % \
+            (SW_REPORT, str(e)))
         sys.exit(2)
     
     if options.human:

@@ -147,9 +147,9 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
                 print msg2.encode('utf-8')
         else:
             try:
-                print >>sys.stderr, msg2
+                sys.stderr.write(msg2)
             except UnicodeEncodeError:
-                print >>sys.stderr, msg2.encode('utf-8')
+                sys.stderr.write(msg2.encode('utf-8'))
     if constants.DEFAULT_LOG_PATH != '':
         while msg.startswith("\n"):
             msg = msg.replace("\n","")
