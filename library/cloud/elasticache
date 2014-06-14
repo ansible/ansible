@@ -148,7 +148,7 @@ try:
     from boto.elasticache.layer1 import ElastiCacheConnection
     from boto.regioninfo import RegionInfo
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 

@@ -28,4 +28,4 @@ class CallbackModule(object):
     def on_any(self, *args, **kwargs):
         play = getattr(self, 'play', None)
         task = getattr(self, 'task', None)
-        print "play = %s, task = %s, args = %s, kwargs = %s" % (play,task,args,kwargs)
+        print("play = %s, task = %s, args = %s, kwargs = %s" % (play,task,args,kwargs))

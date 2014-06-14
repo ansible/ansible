@@ -24,9 +24,9 @@ import traceback
 try:
     from sphinx.application import Sphinx
 except ImportError:
-    print "#################################"
-    print "Dependency missing: Python Sphinx"
-    print "#################################"
+    print("#################################")
+    print("Dependency missing: Python Sphinx")
+    print("#################################")
     sys.exit(1)
 import os
 
@@ -40,7 +40,7 @@ class SphinxBuilder(object):
         """
         Run the DocCommand.
         """
-        print "Creating html documentation ..."
+        print("Creating html documentation ...")
 
         try:
             buildername = 'html'
@@ -83,9 +83,9 @@ def build_rst_docs():
 
 if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
-        print "This script builds the html documentation from rst/asciidoc sources.\n"
-        print "    Run 'make docs' to build everything."
-        print "    Run 'make viewdocs' to build and then preview in a web browser."
+        print("This script builds the html documentation from rst/asciidoc sources.\n")
+        print("    Run 'make docs' to build everything.")
+        print("    Run 'make viewdocs' to build and then preview in a web browser.")
         sys.exit(0)
 
     # The 'htmldocs' make target will call this scrip twith the 'rst'

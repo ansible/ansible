@@ -217,7 +217,7 @@ try:
     from boto.ec2.elb.healthcheck import HealthCheck
     from boto.regioninfo import RegionInfo
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 

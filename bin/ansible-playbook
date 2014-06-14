@@ -203,9 +203,9 @@ def main(args):
         )
 
         if options.listhosts or options.listtasks or options.syntax:
-            print ''
-            print 'playbook: %s' % playbook
-            print ''
+            print()
+            print('playbook: %s' % playbook)
+            print()
             playnum = 0
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
@@ -231,25 +231,25 @@ def main(args):
                         continue
 
                 if options.listhosts:
-                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
+                    print('  play #%d (%s): host count=%d' % (playnum, label, len(hosts)))
                     for host in hosts:
-                        print '    %s' % host
+                        print('    %s' % host)
 
                 if options.listtasks:
-                    print '  play #%d (%s):' % (playnum, label)
+                    print('  play #%d (%s):' % (playnum, label))
 
                     for task in play.tasks():
                         if (set(task.tags).intersection(pb.only_tags) and not
                             set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
-                                print '    %s' % task.name
-                print ''
+                                print('    %s' % task.name)
+                print()
             continue
 
         if options.syntax:
             # if we've not exited by now then we are fine.
-            print 'Playbook Syntax is fine'
+            print('Playbook Syntax is fine')
             return 0
 
         failed_hosts = []
@@ -299,7 +299,7 @@ def main(args):
                 )
 
 
-            print ""
+            print()
             if len(failed_hosts) > 0:
                 return 2
             if len(unreachable_hosts) > 0:

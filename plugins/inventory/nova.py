@@ -199,7 +199,7 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 		continue
 
     # Return server list
-    print json.dumps(groups)
+    print(json.dumps(groups))
     sys.exit(0)
 
 #####################################################
@@ -228,9 +228,9 @@ elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
                 if key != 'os_manager':
                     results[key] = value
 
-    print json.dumps(results)
+    print(json.dumps(results))
     sys.exit(0)
 
 else:
-    print "usage: --list  ..OR.. --host <hostname>"
+    print("usage: --list  ..OR.. --host <hostname>")
     sys.exit(1)

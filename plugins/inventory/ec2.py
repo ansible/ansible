@@ -165,7 +165,7 @@ class Ec2Inventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        print(data_to_print)
 
 
     def is_cache_valid(self):
@@ -283,8 +283,8 @@ class Ec2Inventory(object):
         
         except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
-                print "Looks like AWS is down again:"
-            print e
+                print("Looks like AWS is down again:")
+            print(e)
             sys.exit(1)
 
     def get_rds_instances_by_region(self, region):
@@ -299,8 +299,8 @@ class Ec2Inventory(object):
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError, e:
             if not e.reason == "Forbidden":
-                print "Looks like AWS RDS is down: "
-                print e
+                print("Looks like AWS RDS is down: ")
+                print(e)
                 sys.exit(1)
 
     def get_instance(self, region, instance_id):
@@ -365,8 +365,8 @@ class Ec2Inventory(object):
                 key = self.to_safe("security_group_" + group.name)
                 self.push(self.inventory, key, dest)
         except AttributeError:
-            print 'Package boto seems a bit older.'
-            print 'Please upgrade boto >= 2.3.0.'
+            print('Package boto seems a bit older.')
+            print('Please upgrade boto >= 2.3.0.')
             sys.exit(1)
 
         # Inventory: Group by tag keys
@@ -426,8 +426,8 @@ class Ec2Inventory(object):
                 key = self.to_safe("security_group_" + instance.security_group.name)
                 self.push(self.inventory, key, dest)
         except AttributeError:
-            print 'Package boto seems a bit older.'
-            print 'Please upgrade boto >= 2.3.0.'
+            print('Package boto seems a bit older.')
+            print('Please upgrade boto >= 2.3.0.')
             sys.exit(1)
 
         # Inventory: Group by engine
@@ -527,9 +527,9 @@ class Ec2Inventory(object):
             else:
                 pass
                 # TODO Product codes if someone finds them useful
-                #print key
-                #print type(value)
-                #print value
+                #print(key)
+                #print(type(value))
+                #print(value)
 
         return instance_vars
 

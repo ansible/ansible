@@ -110,7 +110,7 @@ try:
     from requests.exceptions import *
     from urlparse import urlparse
 except ImportError, e:
-    print "failed=True msg='failed to import python module: %s'" % e
+    print("failed=True msg='failed to import python module: %s'" % e)
     sys.exit(1)
 
 class DockerImageManager:

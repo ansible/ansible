@@ -130,7 +130,7 @@ class Cli(object):
                 f = open(this_path, "rb")
                 tmp_vault_pass=f.read().strip()
                 f.close()
-            except (OSError, IOError), e:
+            except ((OSError, IOError), e):
                 raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
 
             if not options.ask_vault_pass:
@@ -224,7 +224,7 @@ if __name__ == '__main__':
                 sys.exit(2)
         if results['dark']:
             sys.exit(3)
-    except errors.AnsibleError, e:
+    except(errors.AnsibleError, e):
         # Generic handler for ansible specific errors
         callbacks.display("ERROR: %s" % str(e), stderr=True, color='red')
         sys.exit(1)

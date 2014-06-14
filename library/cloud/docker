@@ -326,7 +326,7 @@ def _human_to_bytes(number):
             return int(number[:-len(each)]) * (1024 ** i)
         i = i + 1
 
-    print "failed=True msg='Could not convert %s to integer'" % (number)
+    print("failed=True msg='Could not convert %s to integer'" % (number))
     sys.exit(1)
 
 def _ansible_facts(container_list):

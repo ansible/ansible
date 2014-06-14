@@ -116,11 +116,11 @@ class ZabbixInventory(object):
 
             if self.options.host:
                 data = self.get_host(api, self.options.host)
-                print json.dumps(data, indent=2)
+                print(json.dumps(data, indent=2))
 
             elif self.options.list:
                 data = self.get_list(api)
-                print json.dumps(data, indent=2)
+                print(json.dumps(data, indent=2))
 
             else:
                 sys.stderr.write("usage: --list  ..OR.. --host <hostname>")

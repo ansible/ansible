@@ -80,7 +80,7 @@ import time
 try:
     from dopy.manager import DoError, DoManager
 except ImportError as e:
-    print "failed=True msg='dopy required for this module'"
+    print("failed=True msg='dopy required for this module'")
     sys.exit(1)
 
 class TimeoutError(DoError):

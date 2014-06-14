@@ -175,7 +175,7 @@ import time
 try:
     import boto.ec2
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 def get_volume(module, ec2):

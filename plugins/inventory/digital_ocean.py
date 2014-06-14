@@ -140,7 +140,7 @@ except ImportError:
 try:
     from dopy.manager import DoError, DoManager
 except ImportError, e:
-    print "failed=True msg='`dopy` library required for this script'"
+    print("failed=True msg='`dopy` library required for this script'")
     sys.exit(1)
 
 
@@ -170,14 +170,14 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'client_id') or not hasattr(self, 'api_key'):
-            print '''Could not find values for DigitalOcean client_id and api_key.
+            print('''Could not find values for DigitalOcean client_id and api_key.
 They must be specified via either ini file, command line argument (--client-id and --api-key),
-or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
+or environment variables (DO_CLIENT_ID and DO_API_KEY)''')
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
         if self.args.env:
-            print "DO_CLIENT_ID=%s DO_API_KEY=%s" % (self.client_id, self.api_key)
+            print("DO_CLIENT_ID=%s DO_API_KEY=%s" % (self.client_id, self.api_key))
             sys.exit(0)
 
         # Manage cache
@@ -190,7 +190,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    print '''Cache is empty and --force-cache was specified'''
+                    print('''Cache is empty and --force-cache was specified''')
                     sys.exit(-1)
                 self.load_all_data_from_digital_ocean()
             else:
@@ -214,9 +214,9 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
                                  json_data = self.inventory
 
         if self.args.pretty:
-            print json.dumps(json_data, sort_keys=True, indent=2)
+            print(json.dumps(json_data, sort_keys=True, indent=2))
         else:
-            print json.dumps(json_data)
+            print(json.dumps(json_data))
         # That's all she wrote...
 
 

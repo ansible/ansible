@@ -102,12 +102,12 @@ class GceInventory(object):
 
         # Just display data for specific host
         if self.args.host:
-            print self.json_format_dict(self.node_to_dict(
-                    self.get_instance(self.args.host)))
+            print(self.json_format_dict(self.node_to_dict(
+                    self.get_instance(self.args.host))))
             sys.exit(0)
 
         # Otherwise, assume user wants all instances grouped
-        print self.json_format_dict(self.group_instances())
+        print(self.json_format_dict(self.group_instances()))
         sys.exit(0)
 
 

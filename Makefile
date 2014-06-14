@@ -29,7 +29,7 @@ ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is require
 endif
 
 PYTHON=python
-SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print(get_python_lib()"))
 
 # VERSION file provides one place to update the software version
 VERSION := $(shell cat VERSION)

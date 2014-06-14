@@ -108,7 +108,7 @@ try:
     import boto.ec2.elb
     from boto.regioninfo import RegionInfo
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 class ElbManager:

@@ -119,9 +119,9 @@ if options.list:
 
     if options.human:
         for group, systems in groups.iteritems():
-            print '[%s]\n%s\n' % (group, '\n'.join(systems))
+            print('[%s]\n%s\n' % (group, '\n'.join(systems)))
     else:
-        print json.dumps(dict([ (k, list(s)) for k, s in groups.iteritems() ]))
+        print(json.dumps(dict([ (k, list(s)) for k, s in groups.iteritems() ])))
 
     sys.exit(0)
 
@@ -143,11 +143,11 @@ elif options.host:
         sys.exit(2)
     
     if options.human:
-        print 'Host: %s' % options.host
+        print('Host: %s' % options.host)
         for k, v in host_details.iteritems():
-            print '  %s: %s' % (k, '\n    '.join(v.split(';')))
+            print('  %s: %s' % (k, '\n    '.join(v.split(';'))))
     else:
-        print json.dumps(host_details)
+        print(json.dumps(host_details))
 
     sys.exit(0)
 

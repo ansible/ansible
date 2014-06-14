@@ -37,8 +37,8 @@ class CallbackModule(object):
         # ansible will not call any callback if disabled is set to True
         if not os.path.exists(SAY_CMD):
             self.disabled = True
-            print "%s does not exist, plugin %s disabled" % \
-                    (SAY_CMD, os.path.basename(__file__))
+            print("%s does not exist, plugin %s disabled" % \
+                    (SAY_CMD, os.path.basename(__file__)))
 
     def on_any(self, *args, **kwargs):
         pass

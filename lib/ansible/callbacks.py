@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import utils
+import ansible.utils
 import sys
 import getpass
 import os
@@ -24,7 +24,7 @@ import random
 import fnmatch
 import tempfile
 import fcntl
-import constants
+from ansible import constants
 from ansible.color import stringc
 
 import logging
@@ -142,9 +142,9 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
     if not log_only:
         if not stderr:
             try:
-                print msg2
+                print(msg2)
             except UnicodeEncodeError:
-                print msg2.encode('utf-8')
+                print(msg2.encode('utf-8'))
         else:
             try:
                 sys.stderr.write(msg2)

@@ -79,12 +79,12 @@ def print_list():
         if tmp_dict:
             meta['hostvars'][alias] = tmp_dict
 
-    print json.dumps({_key: list(set(meta['hostvars'].keys())), '_meta': meta})
+    print(json.dumps({_key: list(set(meta['hostvars'].keys())), '_meta': meta}))
 
 
 def print_host(host):
     cfg = get_config()
-    print json.dumps(cfg[host])
+    print(json.dumps(cfg[host]))
 
 
 def get_args(args_list):
