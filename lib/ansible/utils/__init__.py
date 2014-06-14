@@ -151,7 +151,7 @@ def decrypt(key, msg):
 def err(msg):
     ''' write an error message to stderr '''
 
-    sys.stderr.write(msg)
+    sys.stderr.write(msg + "\n")
 
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
