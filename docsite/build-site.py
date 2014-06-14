@@ -72,7 +72,7 @@ class SphinxBuilder(object):
         except ImportError, ie:
             traceback.print_exc()
         except Exception, ex:
-            print >> sys.stderr, "FAIL! exiting ... (%s)" % ex
+            sys.stderr.write("FAIL! exiting ... (%s)" % ex)
 
     def build_docs(self):
         self.app.builder.build_all()
@@ -100,4 +100,4 @@ if __name__ == '__main__':
     if "view" in sys.argv:
         import webbrowser
         if not webbrowser.open('htmlout/index.html'):
-            print >> sys.stderr, "Could not open on your webbrowser."
+            sys.stderr.write("Could not open on your webbrowser.")

@@ -280,10 +280,10 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        print >>sys.stderr, "--module-dir is required"
+        sys.stderr.write("--module-dir is required")
         sys.exit(1)
     if not os.path.exists(options.module_dir):
-        print >>sys.stderr, "--module-dir does not exist: %s" % options.module_dir
+        sys.stderr.write("--module-dir does not exist: %s" % options.module_dir)
         sys.exit(1)
     if not options.template_dir:
         print "--template-dir must be specified"
