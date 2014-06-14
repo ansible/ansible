@@ -112,7 +112,6 @@ def _read_password(filename):
     return data
 
 def execute_create(args, options, parser):
-
     if len(args) > 1:
         raise errors.AnsibleError("'create' does not accept more than one filename")        
 
@@ -203,6 +202,11 @@ def main():
     action = get_action(sys.argv)
     parser = build_option_parser(action)
     (options, args) = parser.parse_args()
+
+    if not len(args):
+        raise errors.AnsibleError(
+            "The '%s' command requires a filename as the first argument" % action
+        ) 
 
     # execute the desired action
     try:
