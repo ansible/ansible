@@ -18,7 +18,7 @@
 # from python and deps
 
 try:
-    from io import StringIO
+    import io.StringIO as StringIO
 except ImportError:
     from cStringIO import StringIO
 import inspect

@@ -53,7 +53,7 @@ import sys
 import json
 
 #import vault
-#from vault import VaultLib
+from vault import VaultLib
 
 VERBOSITY=0
 
