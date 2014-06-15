@@ -33,12 +33,15 @@ Tested with Zabbix Server 2.0.6.
 import os, sys
 import json
 import argparse
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 try:
     from zabbix_api import ZabbixAPI
 except:
-    sys.stderr.write("Error: Zabbix API library must be installed: pip install zabbix-api.")
+    sys.stderr.write("Error: Zabbix API library must be installed: pip install zabbix-api.\n")
     sys.exit(1)
 
 try:
@@ -110,7 +113,7 @@ class ZabbixInventory(object):
             try:
                 api = ZabbixAPI(server=self.zabbix_server)
                 api.login(user=self.zabbix_username, password=self.zabbix_password)
-            except BaseException, e:
+            except BaseException:
                 sys.stderr.write("Error: Could not login to Zabbix server. Check your zabbix.ini.")
                 sys.exit(1)
 

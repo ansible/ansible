@@ -35,7 +35,10 @@ import os
 import argparse
 import re
 from time import time
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver

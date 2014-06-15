@@ -36,10 +36,10 @@ except Exception:
     bytes = str
 import ast
 import time
-try:
-    import io.StringIO as StringIO
-except ImportError:
-    import StringIO
+#try:
+#    from io import StringIO
+#except ImportError:
+import StringIO
 import stat
 import termios
 import tty
@@ -116,7 +116,7 @@ def key_for_hostname(hostname):
 
     key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
-        os.makedirs(key_path, mode=0o700)
+        os.makedirs(key_path, mode=int('700', 8))
         os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
     elif not os.path.isdir(key_path):
         raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
@@ -257,12 +257,12 @@ def unfrackpath(path):
     '''
     return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
 
-def prepare_writeable_dir(tree,mode=0o777):
+def prepare_writeable_dir(tree,mode=int('777', 8)):
     ''' make sure a directory exists and is writeable '''
 
     # modify the mode to ensure the owner at least
     # has read/write access to this directory
-    mode |= 0o700
+    mode |= int('700', 8)
 
     # make sure the tree path is always expanded
     # and normalized and free of symlinks
