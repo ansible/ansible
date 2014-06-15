@@ -387,7 +387,8 @@ def parse_yaml(data, path_hint=None):
         # since the line starts with { or [ we can infer this is a JSON document.
         try:
             loaded = json.loads(data)
-        except(ValueError, ve):
+        except(ValueError):
+            ve = sys.exc_info()[1]
             if path_hint:
                 raise errors.AnsibleError(path_hint + ": " + str(ve))
             else:
@@ -566,7 +567,8 @@ def parse_yaml_from_file(path, vault_password=None):
 
     try:
         return parse_yaml(data, path_hint=path)
-    except(yaml.YAMLError, exc):
+    except(yaml.YAMLError):
+        exc = sys.exc_info()[1]
         process_yaml_error(exc, data, path, show_content)
 
 def parse_kv(args):
@@ -577,7 +579,8 @@ def parse_kv(args):
         args = args.encode('utf-8')
         try:
             vargs = shlex.split(args, posix=True)
-        except(ValueError, ve):
+        except(ValueError):
+            ve = sys.exc_info()[1]
             if 'no closing quotation' in str(ve).lower():
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
@@ -632,7 +635,8 @@ def md5(filename):
             digest.update(block)
             block = infile.read(blocksize)
         infile.close()
-    except(IOError, e):
+    except(IOError):
+        e = sys.exc_info()[1]
         raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
 
@@ -1110,13 +1114,14 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except(SyntaxError, e):
+    except(SyntaxError):
         # special handling for syntax errors, we just return
         # the expression string back as-is
         if include_exceptions:
             return (expr, None)
         return expr
-    except(Exception, e):
+    except(Exception):
+        e = = sys.exc_info()[1]
         if include_exceptions:
             return (expr, e)
         return expr
