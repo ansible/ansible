@@ -28,6 +28,17 @@ PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
+_GLOBAL_ALIASES = {
+    'neutron_floating_ip': 'quantum_floating_ip',
+    'neutron_floating_ip_associate': 'quantum_floating_ip_associate',
+    'neutron_network': 'quantum_network',
+    'neutron_router': 'quantum_router',
+    'neutron_router_gateway': 'quantum_router_gateway',
+    'neutron_router_interface': 'quantum_router_interface',
+    'neutron_subnet': 'quantum_subnet',
+}
+
+
 def push_basedir(basedir):
     # avoid pushing the same absolute dir more than once
     basedir = os.path.realpath(basedir)
@@ -141,6 +152,8 @@ class PluginLoader(object):
 
     def find_plugin(self, name):
         ''' Find a plugin named name '''
+        if name in _GLOBAL_ALIASES:
+            name = _GLOBAL_ALIASES[name]
 
         if name in self._plugin_path_cache:
             return self._plugin_path_cache[name]
