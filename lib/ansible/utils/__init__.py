@@ -36,10 +36,10 @@ except Exception:
     bytes = str
 import ast
 import time
-#try:
-#    from io import StringIO
-#except ImportError:
-import StringIO
+try:
+    import StringIO
+except ImportError:
+    import io
 import stat
 import termios
 import tty
