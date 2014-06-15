@@ -29,13 +29,13 @@ PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
 _GLOBAL_ALIASES = {
-    'neutron_floating_ip': 'quantum_floating_ip',
-    'neutron_floating_ip_associate': 'quantum_floating_ip_associate',
-    'neutron_network': 'quantum_network',
-    'neutron_router': 'quantum_router',
-    'neutron_router_gateway': 'quantum_router_gateway',
-    'neutron_router_interface': 'quantum_router_interface',
-    'neutron_subnet': 'quantum_subnet',
+    'quantum_floating_ip': 'neutron_floating_ip',
+    'quantum_floating_ip_associate': 'neutron_floating_ip_associate',
+    'quantum_network': 'neutron_network',
+    'quantum_router': 'neutron_router',
+    'quantum_router_gateway': 'neutron_router_gateway',
+    'quantum_router_interface': 'neutron_router_interface',
+    'quantum_subnet': 'neutron_subnet',
 }
 
 
