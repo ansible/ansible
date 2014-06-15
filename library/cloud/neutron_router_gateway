@@ -23,10 +23,10 @@ try:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    print("failed=True msg='neutronclient (or quantumclient) and keystoneclient are required'")
 DOCUMENTATION = '''
 ---
-module: quantum_router_gateway
+module: neutron_router_gateway
 version_added: "1.2"
 short_description: set/unset a gateway interface for the router with the specified external network
 description:
@@ -72,12 +72,12 @@ options:
         - Name of the external network which should be attached to the router.
      required: true
      default: None
-requirements: ["quantumclient", "neutronclient", "keystoneclient"]
+requirements: ["neutronclient", "quantumclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
 # Attach an external network with a router to allow flow of external traffic
-- quantum_router_gateway: state=present login_username=admin login_password=admin
+- neutron_router_gateway: state=present login_username=admin login_password=admin
                           login_tenant_name=admin router_name=external_router
                           network_name=external_network
 '''

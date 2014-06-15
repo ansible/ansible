@@ -23,11 +23,11 @@ try:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    print("failed=True msg='neutronclient (or quantumclient) and keystoneclient are required'")
 
 DOCUMENTATION = '''
 ---
-module: quantum_router
+module: neutron_router
 version_added: "1.2"
 short_description: Create or Remove router from openstack
 description:
@@ -78,12 +78,12 @@ options:
         - desired admin state of the created router .
      required: false
      default: true
-requirements: ["quantumclient", "neutronclient", "keystoneclient"]
+requirements: ["neutronclient", "quantumnclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
 # Creates a router for tenant admin
-- quantum_router: state=present
+- neutron_router: state=present
                 login_username=admin
                 login_password=admin
                 login_tenant_name=admin
