@@ -840,7 +840,8 @@ class Runner(object):
         # Code for do until feature
         until = self.module_vars.get('until', None)
         if until is not None and result.comm_ok:
-            inject[self.module_vars.get('register')] = result.result
+            register = template.template(self.basedir, self.module_vars.get('register'), inject)
+            inject[register] = result.result
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 retries = self.module_vars.get('retries')
@@ -856,7 +857,8 @@ class Runner(object):
                     result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
-                    inject[self.module_vars.get('register')] = result.result
+                    register = template.template(self.basedir, self.module_vars.get('register'), inject)
+                    inject[register] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
@@ -891,6 +893,7 @@ class Runner(object):
             failed_when = self.module_vars.get('failed_when')
             if (changed_when is not None or failed_when is not None) and self.background == 0:
                 register = self.module_vars.get('register')
+                register = template.template(self.basedir, register, inject)
                 if register is not None:
                     if 'stdout' in data:
                         data['stdout_lines'] = data['stdout'].splitlines()

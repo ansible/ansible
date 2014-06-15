@@ -461,6 +461,8 @@ class PlayBook(object):
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
+        register = template(play.basedir, task.register, task.module_vars)
+
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
             if 'results' in result:
@@ -476,7 +478,7 @@ class PlayBook(object):
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                self.SETUP_CACHE[host][register] = result
 
         # also have to register some failed, but ignored, tasks
         if task.ignore_errors and task.register:
@@ -484,7 +486,7 @@ class PlayBook(object):
             for host, result in failed.iteritems():
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                self.SETUP_CACHE[host][register] = result
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
