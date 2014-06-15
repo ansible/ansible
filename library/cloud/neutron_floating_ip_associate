@@ -25,11 +25,11 @@ try:
     from keystoneclient.v2_0 import client as ksclient
     import time
 except ImportError:
-    print "failed=True msg='novaclient, keystone, and quantumclient (or neutronclient) client are required'"
+    print "failed=True msg='novaclient, keystoneclient, and neutronclient (or quantumclient) are required'"
 
 DOCUMENTATION = '''
 ---
-module: quantum_floating_ip_associate
+module: neutron_floating_ip_associate
 version_added: "1.2"
 short_description: Associate or disassociate a particular floating IP with an instance
 description:
@@ -75,12 +75,12 @@ options:
         - floating ip that should be assigned to the instance
      required: true
      default: None
-requirements: ["quantumclient", "neutronclient", "keystoneclient"]
+requirements: ["neutronclient", "quantumclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
 # Associate a specific floating IP with an Instance
-- quantum_floating_ip_associate:
+- neutron_floating_ip_associate:
            state=present
            login_username=admin
            login_password=admin

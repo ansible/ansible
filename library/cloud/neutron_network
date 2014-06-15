@@ -23,11 +23,11 @@ try:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    print("failed=True msg='neutronclient (or quantumclient) and keystoneclient are required'")
 
 DOCUMENTATION = '''
 ---
-module: quantum_network
+module: neutron_network
 version_added: "1.4"
 short_description: Creates/Removes networks from OpenStack
 description:
@@ -103,18 +103,18 @@ options:
         - Whether the state should be marked as up or down
      required: false
      default: true
-requirements: ["quantumclient", "neutronclient", "keystoneclient"]
+requirements: ["neutronclient", "quantumclient", "keystoneclient"]
 
 '''
 
 EXAMPLES = '''
 # Create a GRE backed Quantum network with tunnel id 1 for tenant1
-- quantum_network: name=t1network tenant_name=tenant1 state=present
+- neutron_network: name=t1network tenant_name=tenant1 state=present
                    provider_network_type=gre provider_segmentation_id=1
                    login_username=admin login_password=admin login_tenant_name=admin
 
 # Create an external network
-- quantum_network: name=external_network state=present
+- neutron_network: name=external_network state=present
                    provider_network_type=local router_external=yes
                    login_username=admin login_password=admin login_tenant_name=admin
 '''
