@@ -3,6 +3,11 @@ Ansible Changes By Release
 
 ## 1.7 "Summer Nights" - Active Development
 
+New inventory scripts:
+
+* SoftLayer
+* Windows Azure
+
 New Modules:
 
 * cloud: azure
