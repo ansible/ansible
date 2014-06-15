@@ -973,11 +973,12 @@ def make_su_cmd(su_user, executable, cmd):
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
-#_TO_UNICODE_TYPES = (unicode(), type(None))
+_TO_UNICODE_TYPES = (unicode(), type(None))
 
 def to_unicode(value):
-    #if isinstance(value, _TO_UNICODE_TYPES):
-    #    return value
+    # TODO this is causing issues with Python3
+    if isinstance(value, _TO_UNICODE_TYPES):
+        return value
     return value.decode("utf-8")
 
 def get_diff(diff):
