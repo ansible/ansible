@@ -1122,7 +1122,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (expr, None)
         return expr
     except(Exception):
-        e = = sys.exc_info()[1]
+        e = sys.exc_info()[1]
         if include_exceptions:
             return (expr, e)
         return expr
