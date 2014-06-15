@@ -122,6 +122,10 @@ class TgzFile(object):
     def unarchive(self):
         cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
+        if rc != 0 and 'Usage' in err:
+            # Error may be due to tar not understanding "-C"
+            cmd = '%s -x%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
+            rc, out, err = self.module.run_command(cmd, cwd=self.dest)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
