@@ -37,9 +37,9 @@ except Exception:
 import ast
 import time
 try:
-    from io import StringIO
+    import io.StringIO as StringIO
 except ImportError:
-    from cStringIO import StringIO
+    import StringIO
 import stat
 import termios
 import tty
@@ -973,7 +973,7 @@ def make_su_cmd(su_user, executable, cmd):
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
-_TO_UNICODE_TYPES = (unicode(), type(None))
+_TO_UNICODE_TYPES = (unicode, type(None))
 
 def to_unicode(value):
     # TODO this is causing issues with Python3
