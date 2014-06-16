@@ -57,8 +57,7 @@ EXAMPLES = '''
 # Specify a pkg flavour with '--'
 - openbsd_pkg: name=vim--nox11 state=present
 
-# Getting ambiguity errors?
-# Specify the default flavour:
+# Specify the default flavour to avoid ambiguity errors
 - openbsd_pkg: name=vim-- state=present
 '''
 
