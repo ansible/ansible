@@ -50,7 +50,7 @@ options:
     version_added: "1.3"
   overwrite:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
+      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. The special value "smart" only overwrites the file if the MD5 sum differs.
     required: false
     default: true
     version_added: "1.2"
@@ -91,7 +91,7 @@ options:
     version_added: "1.6"
 
 requirements: [ "boto" ]
-author: Lester Wade, Ralph Tice
+author: Lester Wade, Ralph Tice, Joost Cassee
 '''
 
 EXAMPLES = '''
@@ -103,6 +103,8 @@ EXAMPLES = '''
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get 
 # GET/download and do not overwrite local file (trust remote)
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get force=false
+# GET/download and overwrite local file if different (trust remote)
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get force=smart
 # PUT/upload and overwrite remote file (trust local)
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
 # PUT/upload with metadata
@@ -125,6 +127,9 @@ import sys
 import os
 import urlparse
 import hashlib
+
+# special value for 'overwrite' paramater to update on changed md5 hash
+SMART = "smart"
 
 try:
     import boto
@@ -281,7 +286,7 @@ def main():
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
-            overwrite      = dict(aliases=['force'], default=True, type='bool'),
+            overwrite      = dict(aliases=['force'], default=True),
             metadata      = dict(type='dict'),
         ),
     )
@@ -298,8 +303,11 @@ def main():
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
 
+    if overwrite not in [True, False, SMART]:
+        module.fail_json(msg="value for 'overwrite' must be 'yes', 'no' or 'smart', was: %s" % overwrite)
+
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    
+
     if module.params.get('object'):
         obj = os.path.expanduser(module.params['object'])
 
@@ -361,25 +369,15 @@ def main():
                 if overwrite is True:
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
+                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=yes to force.", changed=False)
             else:
                 sum_matches = False
-                if overwrite is True:
+                if overwrite in [True, SMART]:
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
-        
-        # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
-        if sum_matches is True and overwrite is False:
-            module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
+                    module.fail_json(msg="Checksums do not match. Use overwrite=yes or overwrite=smart to force download.", failed=True)
 
-        # At this point explicitly define the overwrite condition.
-        if sum_matches is True and pathrtn is True and overwrite is True:
-            download_s3file(module, s3, bucket, obj, dest)
-
-        # If sum does not match but the destination exists, we 
-               
-    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...        
+    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
 
         # Use this snippet to debug through conditionals:
@@ -408,11 +406,11 @@ def main():
                         get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
-                    if overwrite is True:
+                    if overwrite in [True, SMART]:
                         upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
-                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
-                                                                                                            
+                        module.exit_json(msg="Checksums do not match. Use overwrite=yes or overwrite=smart to force upload.", failed=True)
+
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:      
             create_bucket(module, s3, bucket)
