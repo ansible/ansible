@@ -807,7 +807,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
             parent_folder = 'vm'        
 
         # Search for folder if found, set vmfor -- if not, create it
-        folder_found = False
+        folder_found = None
         folders = vsphere_client._get_managed_objects(MORTypes.Folder)
         for f in folders:
             get_folder_name = folders[f]
@@ -865,15 +865,18 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
 
 def create_vm_folder(module, vsphere_client, folder_name, parent_folder_name):
     folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+    found = None
     for f in folders:
         get_folder_name = folders[f]
         if get_folder_name == parent_folder_name:
+            found = True
             vm_folder = f
             break
-        else:
-            module.fail_json(
-                msg="Can not Create folder %s, Parent Folder %s does not exist" %
-                (folder_name, parent_folder_name))
+
+    if not found:
+        module.fail_json(
+            msg="Can not Create folder %s, Parent Folder %s does not exist" %
+            (folder_name, parent_folder_name))
 
     # Create folder
     request = VI.CreateFolderRequestMsg()
