@@ -134,7 +134,7 @@ try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import DNSimpleException
 except ImportError:
-    print "failed=True msg='dnsimple required for this module'"
+    print("failed=True msg='dnsimple required for this module'")
     sys.exit(1)
 
 def main():

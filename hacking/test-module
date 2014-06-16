@@ -101,7 +101,7 @@ def boilerplate_module(modfile, args, interpreter):
     inject = {}
     if interpreter:
         if '=' not in interpreter:
-            print 'interpeter must by in the form of ansible_python_interpreter=/usr/bin/python'
+            print('interpeter must by in the form of ansible_python_interpreter=/usr/bin/python')
             sys.exit(1)
         interpreter_type, interpreter_path = interpreter.split('=')
         if not interpreter_type.startswith('ansible_'):
@@ -117,8 +117,8 @@ def boilerplate_module(modfile, args, interpreter):
     )
 
     modfile2_path = os.path.expanduser("~/.ansible_module_generated")
-    print "* including generated source, if any, saving to: %s" % modfile2_path
-    print "* this may offset any line numbers in tracebacks/debuggers!"
+    print("* including generated source, if any, saving to: %s" % modfile2_path)
+    print("* this may offset any line numbers in tracebacks/debuggers!")
     modfile2 = open(modfile2_path, 'w')
     modfile2.write(module_data)
     modfile2.close()
@@ -139,21 +139,21 @@ def runtest( modfile, argspath):
     (out, err) = cmd.communicate()
 
     try:
-        print "***********************************"
-        print "RAW OUTPUT"
-        print out
-        print err
+        print("***********************************")
+        print("RAW OUTPUT")
+        print(out)
+        print(err)
         results = utils.parse_json(out)
     except:
-        print "***********************************"
-        print "INVALID OUTPUT FORMAT"
-        print out
+        print("***********************************")
+        print("INVALID OUTPUT FORMAT")
+        print(out)
         traceback.print_exc()
         sys.exit(1)
 
-    print "***********************************"
-    print "PARSED OUTPUT"
-    print utils.jsonify(results,format=True)
+    print("***********************************")
+    print("PARSED OUTPUT")
+    print(utils.jsonify(results,format=True))
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""

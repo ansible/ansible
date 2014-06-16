@@ -217,7 +217,7 @@ password hashing library is installed.
 
 Once the library is ready, SHA512 password values can then be generated as follows::
 
-    python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
+    python -c "from passlib.hash import sha512_crypt; print(sha512_crypt.encrypt('<password>'))"
 
 .. _commercial_support:
 

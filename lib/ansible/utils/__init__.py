@@ -30,9 +30,16 @@ from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
 import ansible.constants as C
+try:
+    bytes
+except Exception:
+    bytes = str
 import ast
 import time
-import StringIO
+try:
+    import StringIO
+except ImportError:
+    import io
 import stat
 import termios
 import tty
@@ -109,7 +116,7 @@ def key_for_hostname(hostname):
 
     key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
-        os.makedirs(key_path, mode=0700)
+        os.makedirs(key_path, mode=int('700', 8))
         os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
     elif not os.path.isdir(key_path):
         raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
@@ -149,9 +156,9 @@ def decrypt(key, msg):
 ###############################################################
 
 def err(msg):
-    ''' print an error message to stderr '''
+    ''' write an error message to stderr '''
 
-    print >> sys.stderr, msg
+    sys.stderr.write(msg + "\n")
 
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
@@ -250,12 +257,12 @@ def unfrackpath(path):
     '''
     return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
 
-def prepare_writeable_dir(tree,mode=0777):
+def prepare_writeable_dir(tree,mode=int('777', 8)):
     ''' make sure a directory exists and is writeable '''
 
     # modify the mode to ensure the owner at least
     # has read/write access to this directory
-    mode |= 0700
+    mode |= int('700', 8)
 
     # make sure the tree path is always expanded
     # and normalized and free of symlinks
@@ -264,7 +271,11 @@ def prepare_writeable_dir(tree,mode=0777):
     if not os.path.exists(tree):
         try:
             os.makedirs(tree, mode)
-        except (IOError, OSError), e:
+        except IOError:
+            e = sys.exc_info()[1]
+            raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
+        except OSError:
+            e = sys.exc_info()[1]
             raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
     if not os.access(tree, os.W_OK):
         raise errors.AnsibleError("Cannot write to path %s" % tree)
@@ -326,7 +337,7 @@ def parse_json(raw_data):
         try:
             tokens = shlex.split(data)
         except:
-            print "failed to parse json: "+ data
+            print("failed to parse json: "+ data)
             raise
 
         for t in tokens:
@@ -376,7 +387,8 @@ def parse_yaml(data, path_hint=None):
         # since the line starts with { or [ we can infer this is a JSON document.
         try:
             loaded = json.loads(data)
-        except ValueError, ve:
+        except(ValueError):
+            ve = sys.exc_info()[1]
             if path_hint:
                 raise errors.AnsibleError(path_hint + ": " + str(ve))
             else:
@@ -555,7 +567,8 @@ def parse_yaml_from_file(path, vault_password=None):
 
     try:
         return parse_yaml(data, path_hint=path)
-    except yaml.YAMLError, exc:
+    except(yaml.YAMLError):
+        exc = sys.exc_info()[1]
         process_yaml_error(exc, data, path, show_content)
 
 def parse_kv(args):
@@ -566,7 +579,8 @@ def parse_kv(args):
         args = args.encode('utf-8')
         try:
             vargs = shlex.split(args, posix=True)
-        except ValueError, ve:
+        except(ValueError):
+            ve = sys.exc_info()[1]
             if 'no closing quotation' in str(ve).lower():
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
@@ -621,7 +635,8 @@ def md5(filename):
             digest.update(block)
             block = infile.read(blocksize)
         infile.close()
-    except IOError, e:
+    except(IOError):
+        e = sys.exc_info()[1]
         raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
 
@@ -662,7 +677,7 @@ def _gitinfo():
             else:
                 offset = time.altzone
             result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+                time.strftime("%Y/%m/%d %H:%M:%S", date), offset // -36)
     else:
         result = ''
     return result
@@ -961,6 +976,7 @@ def make_su_cmd(su_user, executable, cmd):
 _TO_UNICODE_TYPES = (unicode, type(None))
 
 def to_unicode(value):
+    # TODO this is causing issues with Python3
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
@@ -1099,13 +1115,14 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except SyntaxError, e:
+    except(SyntaxError):
         # special handling for syntax errors, we just return
         # the expression string back as-is
         if include_exceptions:
             return (expr, None)
         return expr
-    except Exception, e:
+    except(Exception):
+        e = sys.exc_info()[1]
         if include_exceptions:
             return (expr, e)
         return expr

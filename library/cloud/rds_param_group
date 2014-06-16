@@ -123,7 +123,7 @@ try:
     import boto.rds
     from boto.exception import BotoServerError
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)

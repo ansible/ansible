@@ -479,7 +479,7 @@ try:
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 def find_running_instances_by_count_tag(module, ec2, count_tag):

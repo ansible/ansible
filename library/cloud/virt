@@ -88,7 +88,7 @@ import sys
 try:
     import libvirt
 except ImportError:
-    print "failed=True msg='libvirt python module unavailable'"
+    print("failed=True msg='libvirt python module unavailable'")
     sys.exit(1)
 
 ALL_COMMANDS = []

@@ -188,7 +188,7 @@ try:
     import boto.vpc
     from boto.exception import EC2ResponseError
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 def get_vpc_info(vpc):

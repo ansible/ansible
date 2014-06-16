@@ -39,7 +39,7 @@ class TestConstants(unittest.TestCase):
         
         res = get_config(p, 'defaults', 'test_key', env_var, 'default')
 
-        print res
+        print(res)
         assert res == 'test_value'
 
 

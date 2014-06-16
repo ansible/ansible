@@ -3,7 +3,7 @@ VARS_FILE ?= integration_config.yml
 
 # Create a semi-random string for use when testing cloud-based resources
 ifndef CLOUD_RESOURCE_PREFIX
-CLOUD_RESOURCE_PREFIX := $(shell python -c "import string,random; print 'ansible-testing-' + ''.join(random.choice(string.ascii_letters + string.digits) for _ in xrange(8));")
+CLOUD_RESOURCE_PREFIX := $(shell python -c "import string,random; print('ansible-testing-' + ''.join(random.choice(string.ascii_letters + string.digits) for _ in xrange(8)));")
 endif
 
 CREDENTIALS_FILE = credentials.yml

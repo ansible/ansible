@@ -209,7 +209,7 @@ try:
     from ovirtsdk.api import API
     from ovirtsdk.xml import params
 except ImportError:
-    print "failed=True msg='ovirtsdk required for this module'"
+    print("failed=True msg='ovirtsdk required for this module'")
     sys.exit(1)
 
 # ------------------------------------------------------------------- #
@@ -220,7 +220,7 @@ def conn(url, user, password):
     try:
         value = api.test()
     except:
-        print "error connecting to the oVirt API"
+        print("error connecting to the oVirt API")
         sys.exit(1)
     return api
 
@@ -249,17 +249,17 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
     try:
         conn.vms.add(vmparams)
     except:
-        print "Error creating VM with specified parameters"
+        print("Error creating VM with specified parameters")
         sys.exit(1)
     vm = conn.vms.get(name=vmname)
     try:
         vm.disks.add(vmdisk)
     except:
-        print "Error attaching disk"
+        print("Error attaching disk")
     try:
         vm.nics.add(nic_net1)
     except:
-        print "Error adding nic"
+        print("Error adding nic")
 
 
 # create an instance from a template
@@ -268,7 +268,7 @@ def create_vm_template(conn, vmname, image, zone):
     try:
         conn.vms.add(vmparams)
     except:
-        print 'error adding template %s' % image
+        print('error adding template %s' % image)
         sys.exit(1)
 
 
@@ -302,7 +302,7 @@ def vm_remove(conn, vmname):
 # Get the VMs status
 def vm_status(conn, vmname):
     status = conn.vms.get(name=vmname).status.state
-    print "vm status is : %s" % status
+    print("vm status is : %s" % status)
     return status
 
 
@@ -311,10 +311,10 @@ def get_vm(conn, vmname):
     vm = conn.vms.get(name=vmname)
     if vm == None:
         name = "empty"
-        print "vmname: %s" % name
+        print("vmname: %s" % name)
     else:
         name = vm.get_name()
-        print "vmname: %s" % name
+        print("vmname: %s" % name)
     return name
 
 # ------------------------------------------------------------------- #

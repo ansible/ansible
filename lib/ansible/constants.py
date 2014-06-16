@@ -18,7 +18,10 @@
 import os
 import pwd
 import sys
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 from string import ascii_letters, digits
 
 # copied from utils, avoid circular reference fun :)

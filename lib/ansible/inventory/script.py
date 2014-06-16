@@ -38,7 +38,8 @@ class InventoryScript(object):
         cmd = [ self.filename, "--list" ]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError, e:
+        except OSError:
+            e = sys.exc_info()[1]
             raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
         self.data = stdout
@@ -120,7 +121,8 @@ class InventoryScript(object):
         cmd = [self.filename, "--host", host.name]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError, e:
+        except OSError:
+            e = sys.exc_info()[1]
             raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, err) = sp.communicate()
         return utils.parse_json(out)

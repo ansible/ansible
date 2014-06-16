@@ -87,8 +87,8 @@ def clean504(module, hookurl, oauthkey, repo, user):
 
     for hook in decoded:
         if hook['last_response']['code'] == 504:
-            # print "Last response was an ERROR for hook:"
-            # print hook['id']
+            # print("Last response was an ERROR for hook:")
+            # print(hook['id'])
             delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
@@ -99,8 +99,8 @@ def cleanall(module, hookurl, oauthkey, repo, user):
 
     for hook in decoded:
         if hook['last_response']['code'] != 200:
-            # print "Last response was an ERROR for hook:"
-            # print hook['id']
+            # print("Last response was an ERROR for hook:")
+            # print(hook['id'])
             delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks

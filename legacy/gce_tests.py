@@ -669,13 +669,13 @@ def main(tests_to_run=[]):
     for test in test_cases:
         if tests_to_run and test['id'] not in tests_to_run:
             continue
-        print "=> starting/setup '%s:%s'"% (test['id'], test['desc'])
-        if DEBUG: print "=debug>", test['setup']
+        print("=> starting/setup '%s:%s'"% (test['id'], test['desc']))
+        if DEBUG: print("=debug>", test['setup'])
         for c in test['setup']:
             (s,o) = run(c)
         test_i = 1
         for t in test['tests']:
-            if DEBUG: print "=>debug>", test_i, t['desc']
+            if DEBUG: print("=>debug>", test_i, t['desc'])
             # run any test-specific setup commands
             if t.has_key('setup'):
                 for setup in t['setup']:
@@ -690,14 +690,14 @@ def main(tests_to_run=[]):
             # an empty 'a' directive allows test to run
             # setup/teardown for a subsequent test.
             if t['a']:
-                if DEBUG: print "=>debug>", t['m'], t['a']
+                if DEBUG: print("=>debug>", t['m'], t['a'])
                 acmd = "ansible all -o -m %s -a \"%s\"" % (t['m'],t['a'])
                 #acmd = "ANSIBLE_KEEP_REMOTE_FILES=1 ansible all -vvv -m %s -a \"%s\"" % (t['m'],t['a'])
                 (s,o) = run(acmd)
 
                 # check expected output
-                if DEBUG: print "=debug>", o.strip(), "!=", t['r']
-                print "=> %s.%02d '%s':" % (test['id'], test_i, t['desc']),
+                if DEBUG: print("=debug>", o.strip(), "!=", t['r'])
+                print("=> %s.%02d '%s':" % (test['id'], test_i, t['desc']))
                 if t.has_key('strip_numbers'):
                     # strip out all numbers so we don't trip over different
                     # IP addresses
@@ -706,13 +706,13 @@ def main(tests_to_run=[]):
                     is_good = (o.strip() == t['r'])
 
                 if is_good:
-                    print "PASS"
+                    print("PASS")
                 else:
-                    print "FAIL"
+                    print("FAIL")
                     if VERBOSE:
-                        print "=>", acmd
-                        print "=> Expected:", t['r']
-                        print "=>      Got:", o.strip()
+                        print("=>", acmd)
+                        print("=> Expected:", t['r'])
+                        print("=>      Got:", o.strip())
 
             # run any 'peek_after' commands
             if t.has_key('peek_after') and PEEKING_ENABLED:
@@ -725,8 +725,8 @@ def main(tests_to_run=[]):
                     (status, output) = run(td)
             test_i += 1
 
-        print "=> completing/teardown '%s:%s'" % (test['id'], test['desc'])
-        if DEBUG: print "=debug>", test['teardown']
+        print("=> completing/teardown '%s:%s'" % (test['id'], test['desc']))
+        if DEBUG:(print("=debug>", test['teardown']))
         for c in test['teardown']:
             (s,o) = run(c)
 
@@ -735,13 +735,13 @@ if __name__ == '__main__':
     tests_to_run = []
     if len(sys.argv) == 2:
         if sys.argv[1] in ["--help", "--list"]:
-            print "usage: %s [id1,id2,...,idN]" % sys.argv[0]
-            print "  * An empty argument list will execute all tests"
-            print "  * Do not need to specify tests in numerical order"
-            print "  * List test categories with --list or --help"
-            print ""
+            print("usage: %s [id1,id2,...,idN]" % sys.argv[0])
+            print("  * An empty argument list will execute all tests")
+            print("  * Do not need to specify tests in numerical order")
+            print("  * List test categories with --list or --help")
+            print()
             for test in test_cases:
-                print "\t%s:%s" % (test['id'], test['desc'])
+                print("\t%s:%s" % (test['id'], test['desc']))
             sys.exit(0)
         else:
             tests_to_run = sys.argv[1].split(',')

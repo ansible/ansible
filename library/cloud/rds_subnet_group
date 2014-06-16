@@ -93,7 +93,7 @@ try:
     import boto.rds
     from boto.exception import BotoServerError
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 def main():

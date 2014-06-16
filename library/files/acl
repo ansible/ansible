@@ -112,7 +112,7 @@ def split_entry(entry):
     try:
         p,e,t,d = a
     except ValueError, e:
-        print "wtf?? %s => %s" % (entry,a)
+        print("wtf?? %s => %s" % (entry,a))
         raise e
 
     if d:

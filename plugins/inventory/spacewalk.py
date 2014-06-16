@@ -54,7 +54,7 @@ CACHE_AGE = 300 # 5min
 
 # Sanity check
 if not os.path.exists(SW_REPORT):
-    print >> sys.stderr, 'Error: %s is required for operation.' % (SW_REPORT)
+    sys.stderr.write('Error: %s is required for operation.' % (SW_REPORT))
     sys.exit(1)
 
 # Pre-startup work
@@ -113,15 +113,15 @@ if options.list:
             groups[system['group_name']].add(system['server_name'])
 
     except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s system-groups-systems": %s' % \
-            (SW_REPORT, str(e))
+        sys.stderr.write('Problem executing the command "%s system-groups-systems": %s' % \
+            (SW_REPORT, str(e)))
         sys.exit(2)
 
     if options.human:
         for group, systems in groups.iteritems():
-            print '[%s]\n%s\n' % (group, '\n'.join(systems))
+            print('[%s]\n%s\n' % (group, '\n'.join(systems)))
     else:
-        print json.dumps(dict([ (k, list(s)) for k, s in groups.iteritems() ]))
+        print(json.dumps(dict([ (k, list(s)) for k, s in groups.iteritems() ])))
 
     sys.exit(0)
 
@@ -138,16 +138,16 @@ elif options.host:
                 break
 
     except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
-            (SW_REPORT, str(e))
+        sys.stderr.write('Problem executing the command "%s inventory": %s' % \
+            (SW_REPORT, str(e)))
         sys.exit(2)
     
     if options.human:
-        print 'Host: %s' % options.host
+        print('Host: %s' % options.host)
         for k, v in host_details.iteritems():
-            print '  %s: %s' % (k, '\n    '.join(v.split(';')))
+            print('  %s: %s' % (k, '\n    '.join(v.split(';'))))
     else:
-        print json.dumps(host_details)
+        print(json.dumps(host_details))
 
     sys.exit(0)
 

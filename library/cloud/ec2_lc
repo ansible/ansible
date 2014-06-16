@@ -93,7 +93,7 @@ try:
     from boto.ec2.autoscale import LaunchConfiguration
     from boto.exception import BotoServerError
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 
