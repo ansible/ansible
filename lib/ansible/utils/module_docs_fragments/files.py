@@ -21,7 +21,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = """
 options:
-options:
   path:
     description:
       - 'path to the file being managed.  Aliases: I(dest), I(name)'
