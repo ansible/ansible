@@ -156,7 +156,7 @@ class LDAPModule(object):
 
     def update(self, dn, old_attrs, new_attrs):
         modlist = modifyModlist(old_attrs, new_attrs,
-                                ignore_oldexistent=self.remove_unset_attrs)
+                                ignore_oldexistent=not(self.remove_unset_attrs))
         if modlist and not self.dryrun:
             self._conn.modify_s(dn, modlist)
 
@@ -205,7 +205,7 @@ def main():
             'bind_password':      {'required': True},
             'content':            {'required': True, 'no_log': True},
             'ldap_uri':           {'aliases': ['ldap_url'], 'default': 'ldap://localhost:389'},
-            'remove_unset_attrs': {'default': False, 'choices': BOOLEANS},
+            'remove_unset_attrs': {'default': False, 'type': 'bool'},
             'state':              {'default': 'present', 'choices': ['present', 'absent']},
             'timeout':            {'default': 10, 'type': 'int'},
             'src':                {},  # used in ldap plugin runner to load content from file
