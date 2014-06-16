@@ -69,6 +69,21 @@ options:
     choices: [ "yes", "no" ]
     default: "yes"
     aliases: [ "thirsty" ]
+  mode:
+    description:
+      - mode the file or directory should be, such as 0644 as would be fed to chmod
+    required: false
+    default: null
+  owner:
+    description:
+      - name of the user that should own the file/directory, as would be fed to chown
+    required: false
+    default: null
+  group:
+    description:
+      - name of the group that should own the file/directory, as would be fed to chown
+    required: false
+    default: null
   validate:
     description:
       - The validation command to run before copying into place.  The path to the file to
