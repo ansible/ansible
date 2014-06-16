@@ -39,20 +39,8 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
-import platform
-
-
-def get_distribution_version():
-    ''' return the distribution version '''
-    if platform.system() == 'Linux':
-        try:
-            distribution_version = platform.linux_distribution()[1]
-        except:
-            # FIXME: MethodMissing, I assume?
-            distribution_version = platform.dist()[1]
-    else:
-        distribution_version = None
-    return distribution_version
+# import module snippets
+from ansible.module_utils.basic import *
 
 
 class UnimplementedStrategy(object):
@@ -283,6 +271,9 @@ class FedoraStrategy(GenericStrategy):
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
 
+
+# ===========================================
+
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
@@ -380,6 +371,4 @@ def main():
 
     module.exit_json(changed=changed, name=name)
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()
