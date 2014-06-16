@@ -868,6 +868,10 @@ def create_vm_folder(module, vsphere_client, folder_name, parent_folder_name):
         if get_folder_name == parent_folder_name:
             vm_folder = f
             break
+        else:
+            module.fail_json(
+                msg="Can not Create folder %s, Parent Folder %s does not exist" %
+                (folder_name, parent_folder_name))
 
     # Create folder
     request = VI.CreateFolderRequestMsg()
