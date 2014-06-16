@@ -50,7 +50,7 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
                 if rc != 0:
                     module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
             else:
-                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
+                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
 
 def get_fqdn(repo_url):
 
@@ -71,6 +71,8 @@ def get_fqdn(repo_url):
         parts = urlparse.urlparse(repo_url)
         if parts[1] != '':
             result = parts[1]
+        if "@" in result:
+            result = result.split("@", 1)[1]
 
     return result
 
