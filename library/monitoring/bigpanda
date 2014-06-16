@@ -34,7 +34,7 @@ options:
     alias: host
   env:
     description:
-      - The airbrake environment name, typically 'production', 'staging', etc.
+      - The environment name, typically 'production', 'staging', etc.
     required: false
   owner:
     description:
