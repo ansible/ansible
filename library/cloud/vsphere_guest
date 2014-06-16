@@ -51,9 +51,11 @@ options:
   vm_folder:
     description:
       - The name of the vm folder to create the VM in.
+    version_added: "1.7"
   parent_folder:
     description:
       - If vm_folder is specified, the parent folder for vm_folder to be created in. Only needed if vm_folder does not yet exist and you want the folder created in a subfolder of datacenter
+    version_added: "1.7"
   resource_pool:
     description:
       - The name of the resource_pool to create the VM in.
