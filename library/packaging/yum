@@ -96,7 +96,7 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
-  disableexclues:
+  disable_excludes:
     description:
       - Whether to use configured excludes. Options are all, which completely
         disables excludes, or main, which disables excludes defined in the 
@@ -104,6 +104,7 @@ options:
         disable excludes configured in the named repoid's sections of
         yum.conf. 
     required: false
+    version_added: "1.7"
     default: null
     aliases: []
 
@@ -123,11 +124,8 @@ EXAMPLES = '''
 - name: install the latest version of Apache from the testing repo
   yum: name=httpd enablerepo=testing state=installed
 
-- name: upgrade all packages respecting excludes
+- name: upgrade all packages
   yum: name=* state=latest
-
-- name: upgrade all packages, even those excluded in the config file
-  yume: name=* state=latest disableexcludes: all
 
 - name: install the nginx rpm from a remote repo
   yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
@@ -725,7 +723,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     module.exit_json(**res)
 
 def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, disableexcludes):
+           disable_gpg_check, disable_excludes):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -759,8 +757,8 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
         r_cmd = ['--enablerepo=%s' % repoid]
         yum_basecmd.extend(r_cmd)
 
-    if disableexcludes:
-        r_cmd = ['--disableexcludes=%s' % disableexcludes]
+    if disable_excludes:
+        r_cmd = ['--disableexcludes=%s' % disable_excludes]
         yum_basecmd.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
@@ -823,7 +821,7 @@ def main():
             disable_gpg_check=dict(required=False, default="no", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
-            disableexcludes=dict(),
+            disable_excludes=dict(),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
@@ -847,10 +845,11 @@ def main():
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
-        disableexcludes = params.get('disableexcludes')
+        disable_excludes = params.get('disable_excludes')
         res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check, disableexcludes)
+                     disablerepo, disable_gpg_check, disable_excludes)
         module.fail_json(msg="we should never get here unless this all failed", **res)
+
 
 # import module snippets
 from ansible.module_utils.basic import *
