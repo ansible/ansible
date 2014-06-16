@@ -139,13 +139,9 @@ except ImportError:
 def key_check(module, s3, bucket, obj):
     try:
         bucket = s3.lookup(bucket)
-        key_check = bucket.get_key(obj)
+        return bucket.get_key(obj)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
-    if key_check:
-        return True
-    else:
-        return False
 
 def keysum(module, s3, bucket, obj):
     bucket = s3.lookup(bucket)
@@ -160,21 +156,15 @@ def keysum(module, s3, bucket, obj):
 
 def bucket_check(module, s3, bucket):
     try:
-        result = s3.lookup(bucket)
+        return s3.lookup(bucket)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
-    if result:
-        return True
-    else:
-        return False
 
 def create_bucket(module, s3, bucket):
     try:
-        bucket = s3.create_bucket(bucket)
+        return s3.create_bucket(bucket)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
-    if bucket:
-        return True
 
 def delete_bucket(module, s3, bucket):
     try:
@@ -202,21 +192,6 @@ def create_dirkey(module, s3, bucket, obj):
         module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
-
-def upload_file_check(src):
-    if os.path.exists(src):
-        file_exists is True
-    else:
-        file_exists is False
-    if os.path.isdir(src):
-        module.fail_json(msg="Specifying a directory is not a valid source for upload.", failed=True)
-    return file_exists
-
-def path_check(path):
-    if os.path.exists(path):
-        return True
-    else:
-        return False
 
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
     try:
@@ -261,20 +236,18 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
 
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
-    if s3_url is not None:
-        return urlparse.urlparse(s3_url).scheme == 'fakes3'
-    else:
-        return False
+    if s3_url is None:
+        return None
+    return urlparse.urlparse(s3_url).scheme == 'fakes3'
 
 def is_walrus(s3_url):
     """ Return True if it's Walrus endpoint, not S3
 
     We assume anything other than *.amazonaws.com is Walrus"""
-    if s3_url is not None:
-        o = urlparse.urlparse(s3_url)
-        return not o.hostname.endswith('amazonaws.com')
-    else:
+    if s3_url is None:
         return False
+    o = urlparse.urlparse(s3_url)
+    return not o.hostname.endswith('amazonaws.com')
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -303,8 +276,8 @@ def main():
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
 
-    if overwrite not in [True, False, SMART]:
-        module.fail_json(msg="value for 'overwrite' must be 'yes', 'no' or 'smart', was: %s" % overwrite)
+    if overwrite != SMART:
+        overwrite = module.boolean(overwrite)
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -317,8 +290,8 @@ def main():
 
     # Look at s3_url and tweak connection settings
     # if connecting to Walrus or fakes3
-    if is_fakes3(s3_url):
-        try:
+    try:
+        if is_fakes3(s3_url):
             fakes3 = urlparse.urlparse(s3_url)
             from boto.s3.connection import OrdinaryCallingFormat
             s3 = boto.connect_s3(
@@ -328,164 +301,126 @@ def main():
                 host=fakes3.hostname,
                 port=fakes3.port,
                 calling_format=OrdinaryCallingFormat())
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    elif is_walrus(s3_url):
-        try:
+        elif is_walrus(s3_url):
             walrus = urlparse.urlparse(s3_url).hostname
             s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    else:
-        try:
+        else:
             s3 = boto.connect_s3(aws_access_key, aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
 
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
 
         # First, we check to see if the bucket exists, we get "bucket" returned.
-        bucketrtn = bucket_check(module, s3, bucket)
-        if bucketrtn is False:
+        if not bucket_check(module, s3, bucket):
             module.fail_json(msg="Target bucket cannot be found", failed=True)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
-        keyrtn = key_check(module, s3, bucket, obj)
-        if keyrtn is False:
+        if not key_check(module, s3, bucket, obj):
             module.fail_json(msg="Target key cannot be found", failed=True)
 
         # If the destination path doesn't exist, no need to md5um etag check, so just download.
-        pathrtn = path_check(dest)
-        if pathrtn is False:
+        if not os.path.exists(dest):
             download_s3file(module, s3, bucket, obj, dest)
 
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
-        if pathrtn is True:
-            md5_remote = keysum(module, s3, bucket, obj)
-            md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
-            if md5_local == md5_remote:
-                sum_matches = True
-                if overwrite is True:
-                    download_s3file(module, s3, bucket, obj, dest)
-                else:
-                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=yes to force.", changed=False)
+        md5_remote = keysum(module, s3, bucket, obj)
+        md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
+        if md5_local == md5_remote:
+            if overwrite is True:
+                download_s3file(module, s3, bucket, obj, dest)
             else:
-                sum_matches = False
-                if overwrite in [True, SMART]:
-                    download_s3file(module, s3, bucket, obj, dest)
-                else:
-                    module.fail_json(msg="Checksums do not match. Use overwrite=yes or overwrite=smart to force download.", failed=True)
+                module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=yes to force.", changed=False)
+        else:
+            if overwrite is True or overwrite == SMART:
+                download_s3file(module, s3, bucket, obj, dest)
+            else:
+                module.fail_json(msg="Checksums do not match. Use overwrite=yes or overwrite=smart to force download.", failed=True)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
 
-        # Use this snippet to debug through conditionals:
-#       module.exit_json(msg="Bucket return %s"%bucketrtn)
-#       sys.exit(0)
-
         # Lets check the src path.
-        pathrtn = path_check(src)
-        if pathrtn is False:
+        if not os.path.exists(src):
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
 
-        # Lets check to see if bucket exists to get ground truth.
-        bucketrtn = bucket_check(module, s3, bucket)
-        if bucketrtn is True:
-            keyrtn = key_check(module, s3, bucket, obj)
-
-        # Lets check key state. Does it exist and if it does, compute the etag md5sum.
-        if bucketrtn is True and keyrtn is True:
-                md5_remote = keysum(module, s3, bucket, obj)
-                md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
-                if md5_local == md5_remote:
-                    sum_matches = True
-                    if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
-                    else:
-                        get_download_url(module, s3, bucket, obj, expiry, changed=False)
-                else:
-                    sum_matches = False
-                    if overwrite in [True, SMART]:
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
-                    else:
-                        module.exit_json(msg="Checksums do not match. Use overwrite=yes or overwrite=smart to force upload.", failed=True)
-
-        # If neither exist (based on bucket existence), we can create both.
-        if bucketrtn is False and pathrtn is True:
+        # If bucket does not exist create bucket and upload
+        if not bucket_check(module, s3, bucket):
             create_bucket(module, s3, bucket)
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
 
         # If bucket exists but key doesn't, just upload.
-        if bucketrtn is True and pathrtn is True and keyrtn is False:
+        if not key_check(module, s3, bucket, obj):
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+
+        # Lets check key state. Does it exist and if it does, compute the etag md5sum.
+        md5_remote = keysum(module, s3, bucket, obj)
+        md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
+        if md5_local == md5_remote:
+            if overwrite is True:
+                upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+            else:
+                get_download_url(module, s3, bucket, obj, expiry, changed=False)
+        else:
+            if overwrite is True or overwrite == SMART:
+                upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+            else:
+                module.exit_json(msg="Checksums do not match. Use overwrite=yes or overwrite=smart to force upload.", failed=True)
+
 
     # Support for deleting an object if we have both params.
     if mode == 'delete':
-        if bucket:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is True:
-                deletertn = delete_bucket(module, s3, bucket)
-                if deletertn is True:
-                    module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
-            else:
-                module.fail_json(msg="Bucket does not exist.", changed=False)
-        else:
+        if not bucket:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
+        if not bucket_check(module, s3, bucket):
+            module.fail_json(msg="Bucket does not exist.", changed=False)
+        delete_bucket(module, s3, bucket)
+        module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
 
     # Need to research how to create directories without "populating" a key, so this should just do bucket creation for now.
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
     if mode == 'create':
-        if bucket and not obj:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is True:
+        if not bucket:
+            module.fail_json(msg="Bucket parameter is required.", failed=True)
+        if not obj:
+            if bucket_check(module, s3, bucket):
                 module.exit_json(msg="Bucket already exists.", changed=False)
-            else:
-                module.exit_json(msg="Bucket created succesfully", changed=create_bucket(module, s3, bucket))
-        if bucket and obj:
-            bucketrtn = bucket_check(module, s3, bucket)
+            create_bucket(module, s3, bucket)
+            module.exit_json(msg="Bucket created succesfully", changed=create_bucket(module, s3, bucket))
+        else:
             if obj.endswith('/'):
                 dirobj = obj
             else:
                 dirobj = obj + "/"
-            if bucketrtn is True:
-                keyrtn = key_check(module, s3, bucket, dirobj)
-                if keyrtn is True:
+            if bucket_check(module, s3, bucket):
+                if key_check(module, s3, bucket, dirobj):
                     module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
                 else:
                     create_dirkey(module, s3, bucket, dirobj)
-            if bucketrtn is False:
+            else:
                 created = create_bucket(module, s3, bucket)
                 create_dirkey(module, s3, bucket, dirobj)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':
-        if bucket and obj:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is False:
-                module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
-            else:
-                keyrtn = key_check(module, s3, bucket, obj)
-                if keyrtn is True:
-                    get_download_url(module, s3, bucket, obj, expiry)
-                else:
-                    module.fail_json(msg="Key %s does not exist."%obj, failed=True)
-        else:
+        if not bucket or not obj:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
+        if not bucket_check(module, s3, bucket):
+            module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
+        if not key_check(module, s3, bucket, obj):
+            module.fail_json(msg="Key %s does not exist."%obj, failed=True)
+        get_download_url(module, s3, bucket, obj, expiry)
 
     if mode == 'getstr':
-        if bucket and obj:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is False:
-                module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
-            else:
-                keyrtn = key_check(module, s3, bucket, obj)
-                if keyrtn is True:
-                    download_s3str(module, s3, bucket, obj)
-                else:
-                    module.fail_json(msg="Key %s does not exist."%obj, failed=True)
+        if not bucket or not obj:
+            module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
+        if not bucket_check(module, s3, bucket):
+            module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
+        if not key_check(module, s3, bucket, obj):
+            module.fail_json(msg="Key %s does not exist."%obj, failed=True)
+        download_s3str(module, s3, bucket, obj)
 
-    module.exit_json(failed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
