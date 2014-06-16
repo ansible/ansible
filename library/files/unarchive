@@ -234,7 +234,9 @@ def main():
 
     # do the unpack
     try:
-        results = handler.unarchive()
+        res_args['extract_results'] = handler.unarchive()
+        if res_args['extract_results']['rc'] != 0:
+            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
     except IOError:
         module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
 
