@@ -59,6 +59,7 @@ options:
     description:
       - Enable encryption at rest for this volume.
     default: false
+    version_added: "2.29"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
