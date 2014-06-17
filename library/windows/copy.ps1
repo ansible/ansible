@@ -1,13 +1,11 @@
 #!powershell
 # WANT_JSON
+# POWERSHELL_COMMON
 
-If ($args.Length -gt 0)
-{
-   $params = Get-Content $args[0] | ConvertFrom-Json;
-}
+$params = Parse-Args $args;
 
 $data = 'FIXME';
 
 $result = New-Object psobject;
-$result | Add-Member -MemberType NoteProperty -Name fixme -Value $data;
+Set-Attr $result "fixme" $data;
 echo $result | ConvertTo-Json;
