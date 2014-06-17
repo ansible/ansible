@@ -206,7 +206,6 @@ def get_volume(module, ec2):
         module.fail_json(msg="Found more than one volume in zone (if specified) with name: %s" % name)
     return vols[0]
 
-
 def delete_volume(module, ec2):
     vol = get_volume(module, ec2)
     if not vol:
@@ -218,6 +217,14 @@ def delete_volume(module, ec2):
        ec2.delete_volume(vol.id)
        module.exit_json(changed=True)
 
+def boto_supports_volume_encryption():
+    """
+    Check if Boto library supports encryption of EBS volumes (added in 2.29.0)
+
+    Returns:
+        True if boto library has the named param as an argument on the request_spot_instances method, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
 def create_volume(module, ec2, zone):
     name = module.params.get('name')
@@ -371,5 +378,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
+from distutils.version import LooseVersion
 
 main()
