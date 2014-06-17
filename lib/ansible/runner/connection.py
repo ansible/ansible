@@ -20,10 +20,6 @@
 
 from ansible import utils
 from ansible.errors import AnsibleError
-import ansible.constants as C
-
-import os
-import os.path
 
 class Connector(object):
     ''' Handles abstract connections to remote hosts '''
