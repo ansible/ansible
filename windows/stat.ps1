@@ -1,11 +1,8 @@
 #!powershell
 # WANT_JSON
+# POWERSHELL_COMMON
 
-$params = New-Object psobject;
-If ($args.Length -gt 0)
-{
-   $params = Get-Content $args[0] | ConvertFrom-Json;
-}
+$params = Parse-Args $args;
 
 $path = '';
 If ($params.path.GetType)
@@ -22,30 +19,30 @@ If ($params.get_md5.GetType)
 $stat = New-Object psobject;
 If (Test-Path $path)
 {
-   $stat | Add-Member -MemberType NoteProperty -Name exists -Value $TRUE;
+   Set-Attr $stat "exists" $TRUE;
    $info = Get-Item $path;
    If ($info.Directory) # Only files have the .Directory attribute.
    {
-      $stat | Add-Member -MemberType NoteProperty -Name isdir -Value $FALSE;
-      $stat | Add-Member -MemberType NoteProperty -Name size -Value $info.Length;
+      Set-Attr $stat "isdir" $FALSE;
+      Set-Attr $stat "size" $info.Length;
    }
    Else
    {
-      $stat | Add-Member -MemberType NoteProperty -Name isdir -Value $TRUE;
+      Set-Attr $stat "isdir" $TRUE;
    }
 }
 Else
 {
-   $stat | Add-Member -MemberType NoteProperty -Name exists -Value $FALSE;
+   Set-Attr $stat "exists" $FALSE;
 }
 
 If ($get_md5 -and $stat.exists -and -not $stat.isdir)
 {
    $path_md5 = (Get-FileHash -Path $path -Algorithm MD5).Hash.ToLower();
-   $stat | Add-Member -MemberType NoteProperty -Name md5 -Value $path_md5;
+   Set-Attr $stat "md5" $path_md5;
 }
 
 $result = New-Object psobject;
-$result | Add-Member -MemberType NoteProperty -Name stat -Value $stat;
-$result | Add-Member -MemberType NoteProperty -Name changed -Value $FALSE;
+Set-Attr $result "stat" $stat;
+Set-Attr $result "changed" $FALSE;
 echo $result | ConvertTo-Json;
