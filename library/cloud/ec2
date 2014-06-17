@@ -185,6 +185,12 @@ options:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
     required: false
     default: true
+  termination_protection:
+    version_added: "1.7"
+    description:
+      - Enable or Disable the Termination Protection
+    required: false
+    default: false
   state:
     version_added: "1.3"
     description:
@@ -738,6 +744,7 @@ def create_instances(module, ec2, override_count=None):
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
     source_dest_check = module.boolean(module.params.get('source_dest_check'))
+    termination_protection = module.boolean(module.params.get('termination_protection'))
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -950,6 +957,11 @@ def create_instances(module, ec2, override_count=None):
             for inst in res.instances:
                 inst.modify_attribute('sourceDestCheck', False)
 
+        # Disabled by default by Amazon
+        if termination_protection:
+            for inst in res.instances:
+                inst.modify_attribute('disableApiTermination', True)
+
     instance_dict_array = []
     created_instance_ids = []
     for inst in running_instances:
@@ -1114,6 +1126,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             source_dest_check = dict(type='bool', default=True),
+            termination_protection = dict(type='bool', default=False),
             state = dict(default='present'),
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
