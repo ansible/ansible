@@ -19,8 +19,7 @@
 
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions as exc
-    import time
+    from novaclient import exceptions as nova_exc
 except ImportError:
     print("failed=True msg='novaclient is required for this module to work'")
 
@@ -34,24 +33,24 @@ description:
 options:
    os_username:
      description:
-        - login username to authenticate to keystone
+        - OpenStack Auth username
      required: true
-     default: admin
+     default: None
    os_password:
      description:
-        - Password of login user
+        - OpenStack Auth password
      required: true
-     default: 'yes'
+     default: None
    os_tenant_name:
      description:
-        - The tenant name of the login user
+        - OpenStack Auth tenant name
      required: true
-     default: 'yes'
+     default: None
    os_auth_url:
      description:
-        - The keystone url for authentication
-     required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
    region_name:
      description:
         - Name of the region
@@ -72,31 +71,44 @@ options:
         - The public key that would be uploaded to nova and injected to vm's upon creation
      required: false
      default: None
-
+   key_file:
+      description:
+        - Path to public key to use
+      required: false
+      default: None
 requirements: ["novaclient"]
 '''
 EXAMPLES = '''
 # Creates a key pair with the running users public key
-- nova_keypair: state=present os_username=admin
-                os_password=admin os_tenant_name=admin name=ansible_key
-                public_key={{ lookup('file','~/.ssh/id_rsa.pub') }}
+- nova_keypair:
+    state: present
+    os_username: admin
+    os_password: admin
+    os_tenant_name: admin
+    name: ansible_key
+    public_key: {{ lookup('file','~/.ssh/id_rsa.pub') }}
 
 # Creates a new key pair and the private key returned after the run.
-- nova_keypair: state=present os_username=admin os_password=admin
-                os_tenant_name=admin name=ansible_key
+- nova_keypair:
+    state: present
+    os_username: admin
+    os_password: admin
+    os_tenant_name: admin
+    name: ansible_key
 '''
 
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
-        os_username                  = dict(default='admin'),
+        os_username                  = dict(required=True),
         os_password                  = dict(required=True),
-        os_tenant_name               = dict(required='True'),
-        os_auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        name                            = dict(required=True),
-        public_key                      = dict(default=None),
-        state                           = dict(default='present', choices=['absent', 'present'])
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        region_name                  = dict(default=None),
+        name                         = dict(required=True),
+        public_key                   = dict(default=None),
+        key_file                     = dict(default=None),
+        state                        = dict(default='present', choices=['absent', 'present'])
         ),
     )
 
@@ -104,37 +116,41 @@ def main():
                               module.params['os_password'],
                               module.params['os_tenant_name'],
                               module.params['os_auth_url'],
+                              region_name=module.params['region_name'],
                               service_type='compute')
     try:
         nova.authenticate()
-    except exc.Unauthorized, e:
-        module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exc.AuthorizationFailure, e:
-        module.fail_json(msg = "Unable to authorize user: %s" % e.message)
+    except nova_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % str(e))
+    except nova_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % str(e))
 
+    if module.params['key_file']:
+        with open(module.params['key_file'], 'r') as f:
+            module.params['public_key'] = f.read()
     if module.params['state'] == 'present':
         for key in nova.keypairs.list():
             if key.name == module.params['name']:
-                if module.params['public_key'] and (module.params['public_key'] != key.public_key ):
-                    module.fail_json(msg = "name {} present but key hash not the same as offered.  Delete key first.".format(key['name']))
+                if module.params['public_key'] and (module.params['public_key'] != key.public_key):
+                    module.fail_json(msg="name {} present but key hash not the same as offered.  Delete key first.".format(key['name']))
                 else:
-                    module.exit_json(changed = False, result = "Key present")            
+                    module.exit_json(changed=False, result="Key present")
         try:
             key = nova.keypairs.create(module.params['name'], module.params['public_key'])
-        except Exception, e:
-            module.exit_json(msg = "Error in creating the keypair: %s" % e.message)
+        except nova_exc, e:
+            module.exit_json(msg="Error in creating the keypair: %s" % str(e))
         if not module.params['public_key']:
-            module.exit_json(changed = True, key = key.private_key)
-        module.exit_json(changed = True, key = None)
+            module.exit_json(changed=True, key=key.private_key)
+        module.exit_json(changed=True, key=None)
     if module.params['state'] == 'absent':
         for key in nova.keypairs.list():
             if key.name == module.params['name']:
                 try:
                     nova.keypairs.delete(module.params['name'])
-                except Exception, e:
-                    module.fail_json(msg = "The keypair deletion has failed: %s" % e.message)
-                module.exit_json( changed = True, result = "deleted")
-        module.exit_json(changed = False, result = "not present")
+                except nova_exc, e:
+                    module.fail_json(msg="The keypair deletion has failed: %s" % str(e))
+                module.exit_json(changed=True, result="deleted")
+        module.exit_json(changed=False, result="not present")
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
