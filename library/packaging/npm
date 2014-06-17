@@ -113,9 +113,9 @@ class Npm(object):
         self.production = kwargs['production']
 
         if kwargs['executable']:
-            self.executable = kwargs['executable']
+            self.executable = kwargs['executable'].split(' ')
         else:
-            self.executable = module.get_bin_path('npm', True)
+            self.executable = [module.get_bin_path('npm', True)]
 
         if kwargs['version']:
             self.name_version = self.name + '@' + self.version
@@ -124,7 +124,7 @@ class Npm(object):
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = [self.executable] + args
+            cmd = self.executable + args
 
             if self.glbl:
                 cmd.append('--global')
