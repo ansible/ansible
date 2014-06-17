@@ -59,7 +59,7 @@ class ActionModule(object):
         source = os.path.expanduser(source)
 
         if flat:
-            if dest.endswith("/"):
+            if dest.endswith("/"): # CCTODO
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename
                 base = os.path.basename(source)

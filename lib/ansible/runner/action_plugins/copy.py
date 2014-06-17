@@ -169,7 +169,7 @@ class ActionModule(object):
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
             # for dest being a dir via remote call below.
-            if dest.endswith("/"):
+            if dest.endswith("/"):  # CCTODO: Fixme for powershell
                 dest_file = os.path.join(dest, source_rel)
             else:
                 dest_file = dest
@@ -186,7 +186,7 @@ class ActionModule(object):
                     return ReturnData(conn=conn, result=result)
                 else:
                     # Append the relative source location to the destination and retry remote_md5.
-                    dest_file = os.path.join(dest, source_rel)
+                    dest_file = os.path.join(dest, source_rel) # CCTODO
                     remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
 
             if remote_md5 != '1' and not force:
@@ -228,7 +228,7 @@ class ActionModule(object):
 
                 # fix file permissions when the copy is done as a different user
                 if self.runner.sudo and self.runner.sudo_user != 'root' and not raw:
-                    self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp_path)
+                    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp_path)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
