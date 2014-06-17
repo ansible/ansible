@@ -1,7 +1,7 @@
 #!powershell
 # WANT_JSON
 
-$params = '{}' | ConvertFrom-Json;
+$params = New-Object psobject;
 If ($args.Length -gt 0)
 {
    $params = Get-Content $args[0] | ConvertFrom-Json;
@@ -19,7 +19,7 @@ If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'get_m
    $get_md5 = $params.get_md5;
 }
 
-$stat = '{}' | ConvertFrom-Json;
+$stat = New-Object psobject;
 If (Test-Path $path)
 {
    $stat | Add-Member -MemberType NoteProperty -Name exists -Value $TRUE;
@@ -45,7 +45,7 @@ If ($get_md5 -and $stat.exists -and -not $stat.isdir)
    $stat | Add-Member -MemberType NoteProperty -Name md5 -Value $path_md5;
 }
 
-$result = '{}' | ConvertFrom-Json;
+$result = New-Object psobject;
 $result | Add-Member -MemberType NoteProperty -Name stat -Value $stat;
 $result | Add-Member -MemberType NoteProperty -Name changed -Value $FALSE;
 echo $result | ConvertTo-Json;
