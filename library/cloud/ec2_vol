@@ -254,7 +254,11 @@ def create_volume(module, ec2, zone):
                                  changed=False)
     else:
         try:
-            volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
+            if boto_supports_volume_encryption():
+                volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
+            else:
+                volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
+
             while volume.status != 'available':
                 time.sleep(3)
                 volume.update()
@@ -335,6 +339,9 @@ def main():
 
     if not (id or name or volume_size):
         module.fail_json(msg="Cannot specify volume_size and either one of name or id")
+
+    if encrypted and not boto_supports_volume_encryption():
+        module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
 
     # Here we need to get the zone info for the instance. This covers situation where 
     # instance is specified but zone isn't.
