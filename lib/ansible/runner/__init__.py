@@ -942,6 +942,7 @@ class Runner(object):
         ''' execute a command string over SSH, return the output '''
 
         if not cmd:
+            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
             return dict(stdout='', stderr='')
 
         if executable is None:
