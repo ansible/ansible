@@ -132,7 +132,7 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
-    spot_price = module.params.get('spot_price')
+    spot_price = module.params.get('spot_price') if(module.params.get('spot_price') != 0.0) else None
     bdm = BlockDeviceMapping()
 
     if volumes:
