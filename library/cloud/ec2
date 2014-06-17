@@ -472,7 +472,9 @@ local_action:
 
 import sys
 import time
+import LooseVersion
 from ast import literal_eval
+from distutils.version
 
 try:
     import boto.ec2
@@ -608,6 +610,15 @@ def boto_supports_profile_name_arg(ec2):
     """
     run_instances_method = getattr(ec2, 'run_instances')
     return 'instance_profile_name' in run_instances_method.func_code.co_varnames
+
+def boto_supports_volume_encryption():
+    """
+    Check if Boto library supports encryption of EBS volumes (added in 2.29.0)
+
+    Returns:
+        True if boto library has the named param as an argument on the request_spot_instances method, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
 def create_block_device(module, ec2, volume):
     # Not aware of a way to determine this programatically
