@@ -91,12 +91,12 @@ import re
 
 def get_rubygems_path(module):
     if module.params['executable']:
-        return module.params['executable']
+        return module.params['executable'].split(' ')
     else:
-        return module.get_bin_path('gem', True)
+        return [ module.get_bin_path('gem', True) ]
 
 def get_rubygems_version(module):
-    cmd = [ get_rubygems_path(module), '--version' ]
+    cmd = get_rubygems_path(module) + [ '--version' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True)
 
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', out)
@@ -107,7 +107,7 @@ def get_rubygems_version(module):
 
 def get_installed_versions(module, remote=False):
 
-    cmd = [ get_rubygems_path(module) ]
+    cmd = get_rubygems_path(module)
     cmd.append('query')
     if remote:
         cmd.append('--remote')
@@ -144,7 +144,7 @@ def uninstall(module):
 
     if module.check_mode:
         return
-    cmd = [ get_rubygems_path(module) ]
+    cmd = get_rubygems_path(module)
     cmd.append('uninstall')
     if module.params['version']:
         cmd.extend([ '--version', module.params['version'] ])
@@ -165,7 +165,7 @@ def install(module):
     else:
         major = None
 
-    cmd = [ get_rubygems_path(module) ]
+    cmd = get_rubygems_path(module)
     cmd.append('install')
     if module.params['version']:
         cmd.extend([ '--version', module.params['version'] ])
