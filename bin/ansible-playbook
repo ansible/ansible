@@ -102,7 +102,6 @@ def main(args):
 
     if options.inventory_arguments is True:
         options.inventory = tuple([options.inventory, ' '.join(args)])
-    print options.inventory
     inventory = ansible.inventory.Inventory(options.inventory)
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0:
