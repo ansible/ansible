@@ -27,4 +27,23 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# Helper function to parse Ansible JSON arguments from a file passed as
+# the single argument to the module
+Function Parse-Args($arguments)
+{
+    $parameters = New-Object psobject;
+    If ($arguments.Length -gt 0)
+    {
+        $parameters = Get-Content $arguments[0] | ConvertFrom-Json;
+    }
+    $parameters;
+}
+
+# Helper function to set an "attribute" on a psobject instance in powershell.
+# This is a convenience to make adding Members to the object easier and
+# slightly more pythonic
+Function Set-Attr($obj, $name, $value)
+{
+    $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
+}
 

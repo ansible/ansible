@@ -1,11 +1,8 @@
 #!powershell
 # WANT_JSON
+# POWERSHELL_COMMON
 
-$params = New-Object psobject;
-If ($args.Length -gt 0)
-{
-   $params = Get-Content $args[0] | ConvertFrom-Json;
-}
+$params = Parse-Args $args;
 
 $src = '';
 If ($params.src.GetType)
@@ -28,6 +25,6 @@ $bytes = [System.IO.File]::ReadAllBytes($src);
 $content = [System.Convert]::ToBase64String($bytes);
 
 $result = New-Object psobject;
-$result | Add-Member -MemberType NoteProperty -Name content -Value $content;
-$result | Add-Member -MemberType NoteProperty -Name encoding -Value 'base64';
+Set-Attr $result "content" $content;
+Set-Attr $result "encoding" "base64";
 echo $result | ConvertTo-Json;
