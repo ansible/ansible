@@ -33,11 +33,8 @@ of the remote hosts::
 
 
     [windows]
-    windoze 
-
-    [windows:vars]
-    ansible_connection=winrm
-    ansible_ssh_port=5986 # Default for HTTPS, HTTP uses 5985
+    winserver1.example.com
+    winserver2.example.com 
 
 In group_vars/windows.yml, define the following inventory variables::
 
