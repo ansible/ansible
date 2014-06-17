@@ -8,6 +8,6 @@ If ($args.Length -gt 0)
 
 $data = 'FIXME';
 
-$result = '{}' | ConvertFrom-Json;
+$result = New-Object psobject;
 $result | Add-Member -MemberType NoteProperty -Name fixme -Value $data;
 echo $result | ConvertTo-Json;

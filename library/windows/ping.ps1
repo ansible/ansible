@@ -12,6 +12,6 @@ If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'data'
    $data = $params.data;
 }
 
-$result = '{}' | ConvertFrom-Json;
+$result = New-Object psobject;
 $result | Add-Member -MemberType NoteProperty -Name ping -Value $data;
 echo $result | ConvertTo-Json;

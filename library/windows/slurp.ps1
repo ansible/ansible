@@ -1,7 +1,7 @@
 #!powershell
 # WANT_JSON
 
-$params = '{}' | ConvertFrom-Json;
+$params = New-Object psobject;
 If ($args.Length -gt 0)
 {
    $params = Get-Content $args[0] | ConvertFrom-Json;
@@ -27,7 +27,7 @@ If (-not $src)
 $bytes = [System.IO.File]::ReadAllBytes($src);
 $content = [System.Convert]::ToBase64String($bytes);
 
-$result = '{}' | ConvertFrom-Json;
+$result = New-Object psobject;
 $result | Add-Member -MemberType NoteProperty -Name content -Value $content;
 $result | Add-Member -MemberType NoteProperty -Name encoding -Value 'base64';
 echo $result | ConvertTo-Json;
