@@ -11,19 +11,19 @@ short_description: Manage OpenStack Identity (keystone) users, tenants and roles
 description:
    - Manage users,tenants, roles from OpenStack.
 options:
-   login_user:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: false
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: false
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
-        - The tenant login_user belongs to
+        - The tenant os_username belongs to
      required: false
      default: None
      version_added: "1.3"
@@ -32,7 +32,7 @@ options:
         - The token to be uses in case the password is not specified
      required: false
      default: None
-   endpoint:
+   os_auth_url:
      description:
         - The keystone url for authentication
      required: false
@@ -95,14 +95,14 @@ else:
     keystoneclient_found = True
 
 
-def authenticate(endpoint, token, login_user, login_password, login_tenant_name):
+def authenticate(endpoint, token, os_username, os_password, os_tenant_name):
     """Return a keystone client object"""
 
     if token:
         return client.Client(endpoint=endpoint, token=token)
     else:
-        return client.Client(auth_url=endpoint, username=login_user,
-                             password=login_password, tenant_name=login_tenant_name)
+        return client.Client(auth_url=endpoint, username=os_username,
+                             password=os_password, tenant_name=os_tenant_name)
 
 
 def tenant_exists(keystone, tenant):
@@ -296,17 +296,17 @@ def main():
             email=dict(required=False),
             role=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
-            endpoint=dict(required=False,
-                          default="http://127.0.0.1:35357/v2.0"),
+            os_auth_url=dict(required=False,
+                             default="http://127.0.0.1:35357/v2.0"),
             token=dict(required=False),
-            login_user=dict(required=False),
-            login_password=dict(required=False),
-            login_tenant_name=dict(required=False)
+            os_username=dict(required=False),
+            os_password=dict(required=False),
+            os_tenant_name=dict(required=False)
         ),
         supports_check_mode=True,
-        mutually_exclusive=[['token', 'login_user'],
-                            ['token', 'login_password'],
-                            ['token', 'login_tenant_name']]
+        mutually_exclusive=[['token', 'os_username'],
+                            ['token', 'os_password'],
+                            ['token', 'os_tenant_name']]
     )
 
     if not keystoneclient_found:
@@ -319,20 +319,20 @@ def main():
     email = module.params['email']
     role = module.params['role']
     state = module.params['state']
-    endpoint = module.params['endpoint']
+    endpoint = module.params['os_auth_url']
     token = module.params['token']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_tenant_name = module.params['login_tenant_name']
+    os_username = module.params['os_username']
+    os_password = module.params['os_password']
+    os_tenant_name = module.params['os_tenant_name']
 
-    keystone = authenticate(endpoint, token, login_user, login_password, login_tenant_name)
+    keystone = authenticate(endpoint, token, os_username, os_password, os_tenant_name)
 
     check_mode = module.check_mode
 
     try:
         d = dispatch(keystone, user, password, tenant, tenant_description,
-                     email, role, state, endpoint, token, login_user,
-                     login_password, check_mode)
+                     email, role, state, endpoint, token, os_username,
+                     os_password, check_mode)
     except Exception, e:
         if check_mode:
             # If we have a failure in check mode
@@ -346,8 +346,8 @@ def main():
 
 def dispatch(keystone, user=None, password=None, tenant=None,
              tenant_description=None, email=None, role=None,
-             state="present", endpoint=None, token=None, login_user=None,
-             login_password=None, check_mode=False):
+             state="present", endpoint=None, token=None, os_username=None,
+             os_password=None, check_mode=False):
     """ Dispatch to the appropriate method.
 
         Returns a dict that will be passed to exit_json

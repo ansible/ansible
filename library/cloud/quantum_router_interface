@@ -32,22 +32,22 @@ short_description: Attach/Dettach a subnet's interface to a router
 description:
    - Attach/Dettach a subnet interface to a router, to provide a gateway for the subnet.
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - The tenant name of the login user
      required: true
      default: 'yes'
-   auth_url:
+   os_auth_url:
      description:
         - The keystone URL for authentication
      required: false
@@ -82,9 +82,9 @@ requirements: ["quantumclient", "keystoneclient"]
 
 EXAMPLES = '''
 # Attach tenant1's subnet to the external router
-- quantum_router_interface: state=present login_username=admin
-                            login_password=admin
-                            login_tenant_name=admin
+- quantum_router_interface: state=present os_username=admin
+                            os_password=admin
+                            os_tenant_name=admin
                             tenant_name=tenant1
                             router_name=external_route
                             subnet_name=t1subnet
@@ -96,10 +96,10 @@ _os_tenant_id = None
 
 def _get_ksclient(module, kwargs):
     try:
-        kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+        kclient = ksclient.Client(username=kwargs.get('os_username'),
+                                 password=kwargs.get('os_password'),
+                                 tenant_name=kwargs.get('os_tenant_name'),
+                                 auth_url=kwargs.get('os_auth_url'))
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
@@ -131,12 +131,12 @@ def _get_neutron_client(module, kwargs):
 def _set_tenant_id(module):
     global _os_tenant_id
     if not module.params['tenant_name']:
-        login_tenant_name = module.params['login_tenant_name']
+        os_tenant_name = module.params['os_tenant_name']
     else:
-        login_tenant_name = module.params['tenant_name']
+        os_tenant_name = module.params['tenant_name']
 
     for tenant in _os_keystone.tenants.list():
-        if tenant.name == login_tenant_name:
+        if tenant.name == os_tenant_name:
             _os_tenant_id = tenant.id
             break
     if not _os_tenant_id:
@@ -210,10 +210,10 @@ def  _remove_interface_router(neutron, module, router_id, subnet_id):
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
-            login_username                  = dict(default='admin'),
-            login_password                  = dict(required=True),
-            login_tenant_name               = dict(required='True'),
-            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+            os_username                  = dict(default='admin'),
+            os_password                  = dict(required=True),
+            os_tenant_name               = dict(required='True'),
+            os_auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
             region_name                     = dict(default=None),
             router_name                     = dict(required=True),
             subnet_name                     = dict(required=True),

@@ -24,22 +24,22 @@ short_description: Add/Delete images from glance
 description:
    - Add or Remove images from the glance repository.
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - The tenant name of the login user
      required: true
      default: 'yes'
-   auth_url:
+   os_auth_url:
      description:
         - The keystone url for authentication
      required: false
@@ -116,9 +116,9 @@ requirements: ["glanceclient", "keystoneclient"]
 
 EXAMPLES = '''
 # Upload an image from an HTTP URL
-- glance_image: login_username=admin
-                login_password=passme
-                login_tenant_name=admin
+- glance_image: os_username=admin
+                os_password=passme
+                os_tenant_name=admin
                 name=cirros
                 container_format=bare
                 disk_format=qcow2
@@ -136,12 +136,12 @@ except ImportError:
 
 def _get_ksclient(module, kwargs):
     try:
-        client = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
-    except Exception, e:
-        module.fail_json(msg="Error authenticating to the keystone: %s " % e.message)
+        client = ksclient.Client(username=kwargs.get('os_username'),
+                                 password=kwargs.get('os_password'),
+                                 tenant_name=kwargs.get('os_tenant_name'),
+                                 auth_url=kwargs.get('os_auth_url'))
+    except Exception, e:   
+        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     return client 
 
 
@@ -219,10 +219,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            login_username    = dict(default='admin'),
-            login_password    = dict(required=True),
-            login_tenant_name = dict(required=True),
-            auth_url          = dict(default='http://127.0.0.1:35357/v2.0/'),
+            os_username    = dict(default='admin'),
+            os_password    = dict(required=True),
+            os_tenant_name = dict(required=True),
+            os_auth_url          = dict(default='http://127.0.0.1:35357/v2.0/'),
             region_name       = dict(default=None),
             name              = dict(required=True),
             disk_format       = dict(default='qcow2', choices=['aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso']),

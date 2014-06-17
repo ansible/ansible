@@ -32,22 +32,22 @@ short_description: Add/Delete key pair from nova
 description:
    - Add or Remove key pair from nova .
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - The tenant name of the login user
      required: true
      default: 'yes'
-   auth_url:
+   os_auth_url:
      description:
         - The keystone url for authentication
      required: false
@@ -77,22 +77,22 @@ requirements: ["novaclient"]
 '''
 EXAMPLES = '''
 # Creates a key pair with the running users public key
-- nova_keypair: state=present login_username=admin
-                login_password=admin login_tenant_name=admin name=ansible_key
+- nova_keypair: state=present os_username=admin
+                os_password=admin os_tenant_name=admin name=ansible_key
                 public_key={{ lookup('file','~/.ssh/id_rsa.pub') }}
 
 # Creates a new key pair and the private key returned after the run.
-- nova_keypair: state=present login_username=admin login_password=admin
-                login_tenant_name=admin name=ansible_key
+- nova_keypair: state=present os_username=admin os_password=admin
+                os_tenant_name=admin name=ansible_key
 '''
 
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+        os_username                  = dict(default='admin'),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required='True'),
+        os_auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
         region_name                     = dict(default=None),
         name                            = dict(required=True),
         public_key                      = dict(default=None),
@@ -100,10 +100,10 @@ def main():
         ),
     )
 
-    nova = nova_client.Client(module.params['login_username'],
-                              module.params['login_password'],
-                              module.params['login_tenant_name'],
-                              module.params['auth_url'],
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
                               service_type='compute')
     try:
         nova.authenticate()

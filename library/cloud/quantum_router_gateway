@@ -32,22 +32,22 @@ short_description: set/unset a gateway interface for the router with the specifi
 description:
    - Creates/Removes a gateway interface from the router, used to associate a external network with a router to route external traffic.
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - The tenant name of the login user
      required: true
      default: 'yes'
-   auth_url:
+   os_auth_url:
      description:
         - The keystone URL for authentication
      required: false
@@ -77,18 +77,18 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 
 EXAMPLES = '''
 # Attach an external network with a router to allow flow of external traffic
-- quantum_router_gateway: state=present login_username=admin login_password=admin
-                          login_tenant_name=admin router_name=external_router
+- quantum_router_gateway: state=present os_username=admin os_password=admin
+                          os_tenant_name=admin router_name=external_router
                           network_name=external_network
 '''
 
 _os_keystone = None
 def _get_ksclient(module, kwargs):
     try:
-        kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+        kclient = ksclient.Client(username=kwargs.get('os_username'),
+                                 password=kwargs.get('os_password'),
+                                 tenant_name=kwargs.get('os_tenant_name'),
+                                 auth_url=kwargs.get('os_auth_url'))
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
@@ -176,10 +176,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec          = dict(
-            login_username     = dict(default='admin'),
-            login_password     = dict(required=True),
-            login_tenant_name  = dict(required='True'),
-            auth_url           = dict(default='http://127.0.0.1:35357/v2.0/'),
+            os_username     = dict(default='admin'),
+            os_password     = dict(required=True),
+            os_tenant_name  = dict(required='True'),
+            os_auth_url           = dict(default='http://127.0.0.1:35357/v2.0/'),
             region_name        = dict(default=None),
             router_name        = dict(required=True),
             network_name       = dict(required=True),

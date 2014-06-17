@@ -32,22 +32,22 @@ short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - The tenant name of the login user
      required: true
      default: 'yes'
-   auth_url:
+   os_auth_url:
      description:
         - The keystone url for authentication
      required: false
@@ -120,9 +120,9 @@ EXAMPLES = '''
 # Creates a new VM and attaches to a network and passes metadata to the instance
 - nova_compute:
        state: present
-       login_username: admin
-       login_password: admin
-       login_tenant_name: admin
+       os_username: admin
+       os_password: admin
+       os_tenant_name: admin
        name: vm1
        image_id: 4f905f38-e52a-43d2-b6ec-754a13ffb529
        key_name: ansible_key
@@ -226,10 +226,10 @@ def _get_server_state(module, nova):
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+        os_username                  = dict(default='admin'),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required='True'),
+        os_auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
         region_name                     = dict(default=None),
         name                            = dict(required=True),
         image_id                        = dict(default=None),
@@ -245,10 +245,10 @@ def main():
         ),
     )
 
-    nova = nova_client.Client(module.params['login_username'],
-                              module.params['login_password'],
-                              module.params['login_tenant_name'],
-                              module.params['auth_url'],
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
                               region_name=module.params['region_name'],
                               service_type='compute')
     try:

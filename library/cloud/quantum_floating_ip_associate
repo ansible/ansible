@@ -35,22 +35,22 @@ short_description: Associate or disassociate a particular floating IP with an in
 description:
    - Associates or disassociates a specific floating IP with a particular instance
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - the tenant name of the login user
      required: true
      default: true
-   auth_url:
+   os_auth_url:
      description:
         - the keystone url for authentication
      required: false
@@ -82,19 +82,19 @@ EXAMPLES = '''
 # Associate a specific floating IP with an Instance
 - quantum_floating_ip_associate:
            state=present
-           login_username=admin
-           login_password=admin
-           login_tenant_name=admin
+           os_username=admin
+           os_password=admin
+           os_tenant_name=admin
            ip_address=1.1.1.1
            instance_name=vm1
 '''
 
 def _get_ksclient(module, kwargs):
     try:
-        kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+        kclient = ksclient.Client(username=kwargs.get('os_username'),
+                                 password=kwargs.get('os_password'),
+                                 tenant_name=kwargs.get('os_tenant_name'),
+                                 auth_url=kwargs.get('os_auth_url'))
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
@@ -180,10 +180,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec                   = dict(
-            login_username                  = dict(default='admin'),
-            login_password                  = dict(required=True),
-            login_tenant_name               = dict(required='True'),
-            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+            os_username                  = dict(default='admin'),
+            os_password                  = dict(required=True),
+            os_tenant_name               = dict(required='True'),
+            os_auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
             region_name                     = dict(default=None),
             ip_address                      = dict(required=True),
             instance_name                   = dict(required=True),
@@ -192,8 +192,8 @@ def main():
     )
 
     try:
-        nova = nova_client.Client(module.params['login_username'], module.params['login_password'],
-                                 module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
+        nova = nova_client.Client(module.params['os_username'], module.params['os_password'],
+                                 module.params['os_tenant_name'], module.params['os_auth_url'], service_type='compute')
     except Exception, e:
         module.fail_json( msg = " Error in authenticating to nova: %s" % e.message)
     neutron = _get_neutron_client(module, module.params)

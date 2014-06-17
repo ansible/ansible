@@ -33,17 +33,17 @@ short_description: Creates/Removes networks from OpenStack
 description:
    - Add or Remove network from OpenStack.
 options:
-   login_username:
+   os_username:
      description:
         - login username to authenticate to keystone
      required: true
      default: admin
-   login_password:
+   os_password:
      description:
         - Password of login user
      required: true
      default: 'yes'
-   login_tenant_name:
+   os_tenant_name:
      description:
         - The tenant name of the login user
      required: true
@@ -53,7 +53,7 @@ options:
         - The name of the tenant for whom the network is created
      required: false
      default: None
-   auth_url:
+   os_auth_url:
      description:
         - The keystone url for authentication
      required: false
@@ -111,12 +111,12 @@ EXAMPLES = '''
 # Create a GRE backed Quantum network with tunnel id 1 for tenant1
 - quantum_network: name=t1network tenant_name=tenant1 state=present
                    provider_network_type=gre provider_segmentation_id=1
-                   login_username=admin login_password=admin login_tenant_name=admin
+                   os_username=admin os_password=admin os_tenant_name=admin
 
 # Create an external network
 - quantum_network: name=external_network state=present
                    provider_network_type=local router_external=yes
-                   login_username=admin login_password=admin login_tenant_name=admin
+                   os_username=admin os_password=admin os_tenant_name=admin
 '''
 
 _os_keystone = None
@@ -124,10 +124,10 @@ _os_tenant_id = None
 
 def _get_ksclient(module, kwargs):
     try:
-        kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+        kclient = ksclient.Client(username=kwargs.get('os_username'),
+                                 password=kwargs.get('os_password'),
+                                 tenant_name=kwargs.get('os_tenant_name'),
+                                 auth_url=kwargs.get('os_auth_url'))
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s" %e.message)
     global _os_keystone
@@ -159,7 +159,7 @@ def _get_neutron_client(module, kwargs):
 def _set_tenant_id(module):
     global _os_tenant_id
     if not module.params['tenant_name']:
-        tenant_name = module.params['login_tenant_name']
+        tenant_name = module.params['os_tenant_name']
     else:
         tenant_name = module.params['tenant_name']
 
@@ -232,10 +232,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec                   = dict(
-            login_username                  = dict(default='admin'),
-            login_password                  = dict(required=True),
-            login_tenant_name               = dict(required='True'),
-            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+            os_username                  = dict(default='admin'),
+            os_password                  = dict(required=True),
+            os_tenant_name               = dict(required='True'),
+            os_auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
             region_name                     = dict(default=None),
             name                            = dict(required=True),
             tenant_name                     = dict(default=None),
