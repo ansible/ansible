@@ -1,0 +1,169 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as nova_exc
+except ImportError:
+    print("failed=True msg='novaclient is required for this module to work'")
+
+DOCUMENTATION = '''
+---
+module: nova_security_group
+version_added: "1.0"
+short_description: Add/Delete security groups from nova
+description:
+   - Add or Remove security groups from nova
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   name:
+     description:
+        - Name that has to be given to the security group
+     required: true
+     default: None
+   descritpion:
+     description:
+        - Description for a security group
+     required: false
+     default: "None"
+   rules:
+     description:
+        - List of rules to add
+     required: false
+     default : None
+requirements: ["novaclient"]
+'''
+EXAMPLES = '''
+# Creates a new security group
+- nova_security_group: 
+            state: present 
+            os_username: admin
+            os_password: admin
+            os_tenant_name: admin
+            os_auth_url: http://1.1.1.1:5000/v2.0
+            name: test_group
+            description: This is a test
+            rules:
+                - ip_protocol: tcp
+                  from_port: 22
+                  to_port: 22
+                  cidr: 0.0.0.0/0
+                        
+'''
+
+def _group_present(module, nova):
+    group_id = None
+    changed = False
+    for s in nova.security_groups.list():
+        if s.name == module.params['name']:
+            group_id = s.id
+            break
+    if group_id == None:
+        try:
+            group = nova.security_groups.create(module.params['name'], module.params['description'])
+            changed = True
+            group_id = group.id
+        except nova_exc, e:
+            module.fail_json(msg="Error in creating the security group: %s" % str(e))
+    for rule in module.params['rules']:
+        try:
+            nova.security_group_rules.create(group_id, **rule)
+            changed = True
+        except nova_exc.BadRequest, br:
+            if 'rule already exists' not in br.message:
+                module.fail_json(msg='Error in creating group rule:%s' % br.message)
+        except nova_exc, e:
+            module.fail_json(msg="Error creating group rule:%s" % str(br))
+    group = nova.security_groups.get(group_id)
+    module.exit_json(changed=changed, id=group_id, info=group._info)
+
+
+def _group_absent(module, nova):
+    for s in nova.security_groups.list():
+        if s.name == module.params['name']:
+            try:
+                nova.security_groups.delete(s.id)
+            except nova_exc, e:
+                module.fail_json(msg="The security group deletion has failed: %s" % str(e))
+            module.exit_json(changed=True, result="group deleted")
+    module.exit_json(changed=False, result="not present")
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            os_username     = dict(required=True),
+            os_password     = dict(required=True),
+            os_tenant_name  = dict(required=True),
+            os_auth_url     = dict(required=True),
+            region_name     = dict(default=None),
+            state           = dict(default='present', choices=['present', 'absent']),
+            name            = dict(required=True),
+            description     = dict(default="None"),
+            rules           = dict(default=None),
+        ),
+    )
+
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'],
+                              service_type='compute')
+    try:
+        nova.authenticate()
+    except nova_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except nova_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    if module.params['state'] == 'present':
+        _group_present(module, nova)
+    if module.params['state'] == 'absent':
+        _group_absent(module, nova)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()
+
