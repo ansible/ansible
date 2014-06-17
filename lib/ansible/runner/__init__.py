@@ -198,7 +198,7 @@ class Runner(object):
         self.vault_pass       = vault_pass
         self.no_log           = no_log
 
-        if self.transport == 'smart':  # FIXME
+        if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
             # 'smart' is the default since 1.2.1/1.3
             cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
