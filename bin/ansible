@@ -45,12 +45,12 @@ class Cli(object):
         ''' create an options parser for bin/ansible '''
 
         parser = utils.base_parser(
-            constants=C, 
-            runas_opts=True, 
-            subset_opts=True, 
+            constants=C,
+            runas_opts=True,
+            subset_opts=True,
             async_opts=True,
-            output_opts=True, 
-            connect_opts=True, 
+            output_opts=True,
+            connect_opts=True,
             check_opts=True,
             diff_opts=False,
             usage='%prog <host-pattern> [options]'
@@ -135,7 +135,8 @@ class Cli(object):
 
             if not options.ask_vault_pass:
                 vault_pass = tmp_vault_pass
-
+        if options.inventory_arguments is True:
+            options.inventory = tuple([options.inventory, pattern])
         inventory_manager = inventory.Inventory(options.inventory)
         if options.subset:
             inventory_manager.subset(options.subset)
