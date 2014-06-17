@@ -138,6 +138,7 @@ user=root
 password=n<_665{vS43y
 """
 
+import re
 import ConfigParser
 import getpass
 import tempfile
@@ -248,6 +249,7 @@ def privileges_get(cursor, user,host):
         output[db] = privileges
     return output
 
+re_split_dot = re.compile(r'''((?:[^\.`]|`[^`]*`)+)''')
 def privileges_unpack(priv):
     """ Take a privileges string, typically passed as a parameter, and unserialize
     it into a dictionary, the same format as privileges_get() above. We have this
@@ -263,10 +265,11 @@ def privileges_unpack(priv):
     for item in priv.split('/'):
         pieces = item.split(':')
         if '.' in pieces[0]:
-            pieces[0] = pieces[0].split('.')
+            pieces[0] = re_split_dot.split(pieces[0])
+            pieces[0] = filter(lambda s: s and s != '.', pieces[0])
             for idx, piece in enumerate(pieces):
                 if pieces[0][idx] != "*":
-                    pieces[0][idx] = "`" + pieces[0][idx] + "`"
+                    pieces[0][idx] = "`" + pieces[0][idx].strip('`') + "`"
             pieces[0] = '.'.join(pieces[0])
 
         output[pieces[0]] = pieces[1].upper().split(',')
