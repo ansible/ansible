@@ -284,7 +284,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _compute_environment_string(self, conn, inject=None): # CCTODO: Changed this method signature
+    def _compute_environment_string(self, conn, inject=None):
         ''' what environment variables to use when running the command? '''
 
         enviro = {}
@@ -759,9 +759,7 @@ class Runner(object):
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
 
-        # CCTODO: Any reason not to do this regardless of connection type, and let the connection plugin ignore it?
-        if True:#actual_transport in [ 'paramiko', 'ssh', 'accelerate', 'winrm' ]:
-            actual_port = inject.get('ansible_ssh_port', port)
+        actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
         # and we need to transfer those, and only those, variables
