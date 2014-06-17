@@ -146,7 +146,7 @@ class PluginLoader(object):
             if self.class_name:
                 suffixes = ['.py']
             else:
-                suffixes = ['']
+                suffixes = ['', '.ps1']
 
         for suffix in suffixes:
             full_name = '%s%s' % (name, suffix)
