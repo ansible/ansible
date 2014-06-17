@@ -8,13 +8,13 @@ If ($args.Length -gt 0)
 }
 
 $src = '';
-If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'src')
+If ($params.src.GetType)
 {
    $src = $params.src;
 }
 Else
 {
-   If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'path')
+   If ($params.path.GetType)
    {
       $src = $params.path;
    }
