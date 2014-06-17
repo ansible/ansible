@@ -83,7 +83,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # create a mysql user with a random password using many different char sets:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,numbers,digits,hexdigits,punctuation') }}"
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
