@@ -148,9 +148,9 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
         cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
     cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        cmd = 'gunzip < ' + pipes.quote(target) + ' | ' + cmd
+        cmd = 'test -e ' + pipes.quote(target) + ' && gunzip < ' + pipes.quote(target) + ' | ' + cmd
     elif os.path.splitext(target)[-1] == '.bz2':
-        cmd = 'bunzip2 < ' + pipes.quote(target) + ' | ' + cmd
+        cmd = 'test -e ' + pipes.quote(target) + ' && bunzip2 < ' + pipes.quote(target) + ' | ' + cmd
     else:
         cmd += " < %s" % pipes.quote(target)
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
