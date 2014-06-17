@@ -72,11 +72,13 @@ options:
     description:
       - The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance.
     required: false
+    version_added: "1.7"
   associate_public_ip_address:
     description: 
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
     required: false
     default: false
+    version_added: "1.7"
 extends_documentation_fragment: aws
 """
 
