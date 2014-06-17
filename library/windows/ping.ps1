@@ -7,7 +7,7 @@ If ($args.Length -gt 0)
 }
 
 $data = 'pong';
-If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'data')
+If ($params.data.GetType)
 {
    $data = $params.data;
 }

@@ -8,13 +8,13 @@ If ($args.Length -gt 0)
 }
 
 $path = '';
-If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'path')
+If ($params.path.GetType)
 {
    $path = $params.path;
 }
 
 $get_md5 = $TRUE;
-If (($params | Get-Member | Select-Object -ExpandProperty Name) -contains 'get_md5')
+If ($params.get_md5.GetType)
 {
    $get_md5 = $params.get_md5;
 }
