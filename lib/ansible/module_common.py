@@ -47,17 +47,16 @@ class ModuleReplacer(object):
 
     from ansible.module_utils.basic import * 
 
-    will result in a template evaluation of
-
-    {{ include 'basic.py' }} 
+       ... will result in the insertion basic.py into the module
 
     from the module_utils/ directory in the source tree.
 
     All modules are required to import at least basic, though there will also
     be other snippets.
 
-    # POWERSHELL_COMMON will also map to 
-    {{ include 'powershell.ps1' }}
+    # POWERSHELL_COMMON
+
+    Also results in the inclusion of the common code in powershell.ps1
 
     """
 
