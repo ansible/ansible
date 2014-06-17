@@ -1,3 +1,20 @@
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+#
+# This file is part of Ansible.
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 import base64
 import os
 import re
@@ -5,34 +22,29 @@ import random
 import shlex
 import time
 
+def _escape(value, include_vars=False):
+    '''Return value escaped for use in PowerShell command.'''
+    # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
+    # http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
+    subs = [('\n', '`n'), ('\r', '`r'), ('\t', '`t'), ('\a', '`a'),
+            ('\b', '`b'), ('\f', '`f'), ('\v', '`v'), ('"', '`"'),
+            ('\'', '`\''), ('`', '``'), ('\x00', '`0')]
+    if include_vars:
+        subs.append(('$', '`$'))
+    pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
+    substs = [s for p, s in subs]
+    replace = lambda m: substs[m.lastindex - 1]
+    return re.sub(pattern, replace, value)
+
+def _encode_script(script, as_list=False):
+    '''Convert a PowerShell script to a single base64-encoded command.'''
+    encoded_script = base64.b64encode(script.encode('utf-16-le'))
+    cmd_parts = ['PowerShell', '-NoProfile', '-NonInteractive', '-EncodedCommand', encoded_script]
+    if as_list:
+        return cmd_parts
+    return ' '.join(cmd_parts)
+
 class ShellModule(object):
-
-    def __init__(self):
-        pass
-
-    def _escape(self, value, include_vars=False):
-        '''
-        Return value escaped for use in PowerShell command.
-        '''
-        # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
-        # http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
-        subs = [('\n', '`n'), ('\r', '`r'), ('\t', '`t'), ('\a', '`a'),
-                ('\b', '`b'), ('\f', '`f'), ('\v', '`v'), ('"', '`"'),
-                ('\'', '`\''), ('`', '``'), ('\x00', '`0')]
-        if include_vars:
-            subs.append(('$', '`$'))
-        pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
-        substs = [s for p, s in subs]
-        replace = lambda m: substs[m.lastindex - 1]
-        return re.sub(pattern, replace, value)
-
-    def _get_script_cmd(self, script):
-        '''
-        Convert a PowerShell script to a single base64-encoded command.
-        '''
-        encoded_script = base64.b64encode(script.encode('utf-16-le'))
-        return ' '.join(['PowerShell', '-NoProfile', '-NonInteractive',
-                         '-EncodedCommand', encoded_script])
 
     def env_prefix(self, **kwargs):
         return ''
@@ -44,22 +56,20 @@ class ShellModule(object):
         return ''
 
     def remove(self, path, recurse=False):
-        path = self._escape(path)
+        path = _escape(path)
         if recurse:
-            return self._get_script_cmd('''Remove-Item "%s" -Force -Recurse;''' % path)
+            return _encode_script('''Remove-Item "%s" -Force -Recurse;''' % path)
         else:
-            return self._get_script_cmd('''Remove-Item "%s" -Force;''' % path)
+            return _encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None):
-        if not basefile:
-            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        basefile = self._escape(basefile)
+    def mkdtemp(self, basefile, system=False, mode=None):
+        basefile = _escape(basefile)
         # FIXME: Support system temp path!
-        return self._get_script_cmd('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName;''' % basefile)
+        return _encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName;''' % basefile)
 
     def md5(self, path):
-        path = self._escape(path)
-        return self._get_script_cmd('''(Get-FileHash -Path "%s" -Algorithm MD5).Hash.ToLower();''' % path)
+        path = _escape(path)
+        return _encode_script('''(Get-FileHash -Path "%s" -Algorithm MD5).Hash.ToLower();''' % path)
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
         cmd_parts = shlex.split(cmd, posix=False)
@@ -68,5 +78,6 @@ class ShellModule(object):
         cmd_parts = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts]
         script = ' '.join(cmd_parts)
         if rm_tmp:
-            script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, self._escape(rm_tmp))
-        return self._get_script_cmd(script)
+            rm_tmp = _escape(rm_tmp)
+            script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)
+        return _encode_script(script)

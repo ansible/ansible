@@ -1,6 +1,6 @@
 # (c) 2014, Chris Church <chris@ninemoreminutes.com>
 #
-# This file is (not yet) part of Ansible.
+# This file is part of Ansible.
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import urlparse
 from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv, vvvv
+from ansible.runner.shell_plugins import powershell
 
 try:
     from winrm import Response
@@ -35,12 +36,6 @@ try:
     from winrm.protocol import Protocol
 except ImportError:
     raise errors.AnsibleError("winrm is not installed")
-
-# When running with unmodified Ansible (1.6.x), load local hacks.
-try:
-    _winrm_hacks = imp.load_source('_winrm_hacks', os.path.join(os.path.dirname(__file__), '_winrm_hacks.py'))
-except (ImportError, IOError):
-    _winrm_hacks = None
 
 _winrm_cache = {
     # 'user:pwhash@host:port': <protocol instance>
@@ -61,17 +56,12 @@ class Connection(object):
         self.protocol = None
         self.shell_id = None
         self.delegate = None
-        if _winrm_hacks:
-            _winrm_hacks.patch_module_finder(self)
 
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
-        if _winrm_hacks:
-            port = _winrm_hacks.get_port(self)
-        else:
-            port = self.port or 5986
+        port = self.port or 5986
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self.user, port, self.host), host=self.host)
         netloc = '%s:%d' % (self.host, port)
@@ -105,34 +95,8 @@ class Connection(object):
                         return protocol
                 vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host)
                 continue
-        # FIXME: Cache connection!!!
         if exc:
             raise exc
-
-    def _winrm_escape(self, value, include_vars=False):
-        '''
-        Return value escaped for use in PowerShell command.
-        '''
-        # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
-        # http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
-        subs = [('\n', '`n'), ('\r', '`r'), ('\t', '`t'), ('\a', '`a'),
-                ('\b', '`b'), ('\f', '`f'), ('\v', '`v'), ('"', '`"'),
-                ('\'', '`\''), ('`', '``'), ('\x00', '`0')]
-        if include_vars:
-            subs.append(('$', '`$'))
-        pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
-        substs = [s for p, s in subs]
-        replace = lambda m: substs[m.lastindex - 1]
-        return re.sub(pattern, replace, value)
-
-    def _winrm_get_script_cmd(self, script):
-        '''
-        Convert a PowerShell script to a single base64-encoded command.
-        '''
-        vvvv('WINRM SCRIPT: %s' % script, host=self.host)
-        encoded_script = base64.b64encode(script.encode('utf-16-le'))
-        return ['PowerShell', '-NoProfile', '-NonInteractive',
-                '-EncodedCommand', encoded_script]
 
     def _winrm_exec(self, command, args):
         vvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
@@ -152,27 +116,19 @@ class Connection(object):
                 self.protocol.cleanup_command(self.shell_id, command_id)
 
     def connect(self):
-        if not _winrm_hacks:
-            if not self.protocol:
-                self.protocol = self._winrm_connect()
-        # When using hacks, connect lazily on first command, to allow for
-        # runner to set self.delegate, needed if actual host vs. host name are
-        # different.
+        if not self.protocol:
+            self.protocol = self._winrm_connect()
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
         cmd = cmd.encode('utf-8')
         vvv("EXEC %s" % cmd, host=self.host)
         cmd_parts = shlex.split(cmd, posix=False)
         vvvv("WINRM PARTS %r" % cmd_parts, host=self.host)
         # For script/raw support.
-        if len(cmd_parts) == 1 and cmd_parts[0].lower().endswith('.ps1'):
-            cmd_parts = ['PowerShell', '-ExecutionPolicy', 'Unrestricted', '-File', cmd_parts[0]]
-        if _winrm_hacks:
-            cmd_parts = _winrm_hacks.filter_cmd_parts(self, cmd_parts)
-        if not cmd_parts:
-            vvv('WINRM NOOP')
-            return (0, '', '', '')
+        if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
+            script = 'PowerShell -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File ' + ' '.join(['"%s"' % x for x in cmd_parts])
+            cmd_parts = powershell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
         except Exception, e:
@@ -181,8 +137,6 @@ class Connection(object):
         return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
 
     def put_file(self, in_path, out_path):
-        if _winrm_hacks:
-            out_path = _winrm_hacks.fix_slashes(out_path)
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -205,19 +159,16 @@ class Connection(object):
                         $stream.Write($buffer, 0, $buffer.length) | Out-Null;
                         $stream.SetLength(%d) | Out-Null;
                         $stream.Close() | Out-Null;
-                    ''' % (buffer_size, self._winrm_escape(out_path), offset, b64_data, in_size)
-                    cmd_parts = self._winrm_get_script_cmd(script)
+                    ''' % (buffer_size, powershell._escape(out_path), offset, b64_data, in_size)
+                    cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
                         raise RuntimeError(result.std_err.encode('utf-8'))
-                    script = u''
                 except Exception: # IOError?
                     traceback.print_exc()
                     raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
-        if _winrm_hacks:
-            in_path = _winrm_hacks.fix_slashes(in_path)
         out_path = out_path.replace('\\', '/')
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         buffer_size = 2**20 # 1MB chunks
@@ -236,8 +187,8 @@ class Connection(object):
                         $bytes = $buffer[0..($bytesRead-1)];
                         [System.Convert]::ToBase64String($bytes);
                         $stream.Close() | Out-Null;
-                    ''' % (buffer_size, self._winrm_escape(in_path), offset)
-                    cmd_parts = self._winrm_get_script_cmd(script)
+                    ''' % (buffer_size, powershell._escape(in_path), offset)
+                    cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     data = base64.b64decode(result.std_out.strip())
                     out_file.write(data)

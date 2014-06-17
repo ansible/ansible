@@ -106,7 +106,6 @@ class ActionModule(object):
         # transfer the file to a remote tmp location
         source = source.replace('\x00', '')  # why does this happen here?
         args = args.replace('\x00', '')  # why does this happen here?
-        #tmp_src = os.path.join(tmp, os.path.basename(source)) # CCTODO
         tmp_src = conn.shell.join_path(tmp, os.path.basename(source))
         tmp_src = tmp_src.replace('\x00', '')
 
