@@ -140,6 +140,9 @@ def db_dump(module, host, user, password, db_name, target, port, socket=None):
     return rc, stdout, stderr
 
 def db_import(module, host, user, password, db_name, target, port, socket=None):
+    if not os.path.exists(target):
+        return module.fail_json(msg="target %s does not exist on the host" % target)
+
     cmd = module.get_bin_path('mysql', True)
     cmd += " --user=%s --password=%s" % (pipes.quote(user), pipes.quote(password))
     if socket is not None:
