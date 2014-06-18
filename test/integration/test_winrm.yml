@@ -1,0 +1,8 @@
+---
+
+- hosts: windows
+  gather_facts: false
+  roles: 
+    - { role: test_win_raw, tags: test_win_raw }
+    - { role: test_win_script, tags: test_win_script }
+    - { role: test_win_ping, tags: test_win_ping }

@@ -46,6 +46,9 @@ test_vault:
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE)
 
+test_winrm:
+	ansible-playbook test_winrm.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
 cloud: amazon rackspace
 
 cloud_cleanup: amazon_cleanup rackspace_cleanup
