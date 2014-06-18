@@ -33,6 +33,9 @@ class ShellModule(object):
     def join_path(self, *args):
         return os.path.join(*args)
 
+    def path_has_trailing_slash(self, path):
+        return path.endswith('/')
+
     def chmod(self, mode, path):
         path = pipes.quote(path)
         return 'chmod %s %s' % (mode, path)
