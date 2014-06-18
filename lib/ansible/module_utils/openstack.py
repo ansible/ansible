@@ -32,6 +32,7 @@ import os
 HAVE_NOVACLIENT = True
 HAVE_GLANCECLIENT = True
 HAVE_KEYSTONECLIENT = True
+HAVE_CINDERCLIENT = True
 
 try:
     from novaclient.v1_1 import client as nova_client
@@ -48,6 +49,12 @@ try:
     import glanceclient
 except ImportError:
     HAVE_GLANCECLIENT = False
+
+try:
+    from cinderclient.v1 import client as cinder_client
+    from cinderclient import exceptions as cinder_exceptions
+except:
+    HAVE_CINDERCLIENT = False
 
 OPENSTACK_OPTIONS = '''
    login_username:
@@ -172,6 +179,7 @@ class OpenStackCloud(object):
         self._nova_client = None
         self._glance_client = None
         self._keystone_client = None
+        self._cinder_client = None
 
     def get_name(self):
         return self.name
@@ -272,6 +280,37 @@ class OpenStackCloud(object):
                 raise OpenStackCloudException("Error connecting to glance")
         return self._glance_client
 
+    @property
+    def cinder_client(self):
+        if not HAVE_CINDERCLIENT:
+            raise OpenStackCloudException(
+                "cinderclient is required. Install python-cinderclient and try again")
+        if self._cinder_client is None:
+            # Make the connection
+            self._cinder_client = cinder_client.Client(
+                self.username,
+                self.password,
+                self.project_id,
+                self.auth_url,
+                region_name=self.region_name,
+            )
+
+            try:
+                self._cinder_client.authenticate()
+            except cinder_exceptions.Unauthorized, e:
+                raise OpenStackCloudException(
+                    "Invalid OpenStack Cinder credentials.: %s" % e.message)
+            except cinder_exceptions.AuthorizationFailure, e:
+                raise OpenStackCloudException(
+                    "Unable to authorize user: %s" % e.message)
+
+            if self._cinder_client is None:
+                raise OpenStackCloudException(
+                    "Failed to instantiate cinder client. This could mean that your"
+                    " credentials are wrong.")
+
+        return self._cinder_client
+
     def get_endpoint(self, service_type):
         try:
             endpoint = self.keystone_client.service_catalog.url_for(
@@ -322,4 +361,16 @@ class OpenStackCloud(object):
         for (image_id, name) in self.list_images().items():
             if name == image_name:
                 return image_id
+        return None
+
+    def get_volume_id(self, volume_name):
+        for v in self.cinder_client.volumes.list():
+            if v.display_name == volume_name:
+                return v.id
+        return None
+
+    def get_server_id(self, server_name):
+        for server in self.nova_client.servers.list():
+            if server.name == server_name:
+                return server.id
         return None
