@@ -1,5 +1,6 @@
 
 # Powershell script to upgrade a PowerShell 2.0 system to PowerShell 3.0
+# based on http://occasionalutility.blogspot.com/2013/11/everyday-powershell-part-7-powershell.html
 #
 # some Ansible modules that may use Powershell 3 features, so systems may need
 # to be upgraded.  This may be used by a sample playbook.  Refer to the windows
