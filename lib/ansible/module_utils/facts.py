@@ -740,7 +740,7 @@ class LinuxHardware(Hardware):
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/physical_block_size",512)
-                    part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
+                    part['size'] = module.pretty_bytes((float(part['sectors']) * 512))
                     d['partitions'][partname] = part
 
             d['rotational'] = get_file_content(sysdir + "/queue/rotational")
