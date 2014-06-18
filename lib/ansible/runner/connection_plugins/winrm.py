@@ -178,8 +178,8 @@ class Connection(object):
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise RuntimeError(result.std_err.encode('utf-8'))
-                except Exception: # IOError?
+                        raise IOError(result.std_err.encode('utf-8'))
+                except Exception:
                     traceback.print_exc()
                     raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
@@ -189,31 +189,61 @@ class Connection(object):
         buffer_size = 2**20 # 1MB chunks
         if not os.path.exists(os.path.dirname(out_path)):
             os.makedirs(os.path.dirname(out_path))
-        with open(out_path, 'wb') as out_file:
+        out_file = None
+        try:
             offset = 0
             while True:
                 try:
                     script = '''
-                        $bufferSize = %d;
-                        $stream = [System.IO.File]::OpenRead("%s");
-                        $stream.Seek(%d, [System.IO.SeekOrigin]::Begin) | Out-Null;
-                        $buffer = New-Object Byte[] $bufferSize;
-                        $bytesRead = $stream.Read($buffer, 0, $bufferSize);
-                        $bytes = $buffer[0..($bytesRead-1)];
-                        [System.Convert]::ToBase64String($bytes);
-                        $stream.Close() | Out-Null;
-                    ''' % (buffer_size, powershell._escape(in_path), offset)
+                        If (Test-Path -PathType Leaf "%(path)s")
+                        {
+                            $stream = [System.IO.File]::OpenRead("%(path)s");
+                            $stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin) | Out-Null;
+                            $buffer = New-Object Byte[] %(buffer_size)d;
+                            $bytesRead = $stream.Read($buffer, 0, %(buffer_size)d);
+                            $bytes = $buffer[0..($bytesRead-1)];
+                            [System.Convert]::ToBase64String($bytes);
+                            $stream.Close() | Out-Null;
+                        }
+                        ElseIf (Test-Path -PathType Container "%(path)s")
+                        {
+                            Write-Host "[DIR]";
+                        }
+                        Else
+                        {
+                            Write-Error "%(path)s does not exist";
+                            Exit 1;
+                        }
+                    ''' % dict(buffer_size=buffer_size, path=powershell._escape(in_path), offset=offset)
                     vvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self.host)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
-                    data = base64.b64decode(result.std_out.strip())
-                    out_file.write(data)
-                    if len(data) < buffer_size:
+                    if result.status_code != 0:
+                        raise IOError(result.std_err.encode('utf-8'))
+                    if result.std_out.strip() == '[DIR]':
+                        data = None
+                    else:
+                        data = base64.b64decode(result.std_out.strip())
+                    if data is None:
+                        if not os.path.exists(out_path):
+                            os.makedirs(out_path)
                         break
-                    offset += len(data)
-                except Exception: # IOError?
+                    else:
+                        if not out_file:
+                            # If out_path is a directory and we're expecting a file, bail out now.
+                            if os.path.isdir(out_path):
+                                break
+                            out_file = open(out_path, 'wb')
+                        out_file.write(data)
+                        if len(data) < buffer_size:
+                            break
+                        offset += len(data)
+                except Exception:
                     traceback.print_exc()
                     raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+        finally:
+            if out_file:
+                out_file.close()
 
     def close(self):
         if self.protocol and self.shell_id:

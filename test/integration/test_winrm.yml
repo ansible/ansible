@@ -6,3 +6,5 @@
     - { role: test_win_raw, tags: test_win_raw }
     - { role: test_win_script, tags: test_win_script }
     - { role: test_win_ping, tags: test_win_ping }
+    - { role: test_win_slurp, tags: test_win_slurp }
+    - { role: test_win_fetch, tags: test_win_fetch }
