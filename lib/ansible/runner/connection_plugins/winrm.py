@@ -27,7 +27,7 @@ import traceback
 import urlparse
 from ansible import errors
 from ansible import utils
-from ansible.callbacks import vvv, vvvv
+from ansible.callbacks import vvv, vvvv, verbose
 from ansible.runner.shell_plugins import powershell
 
 try:
@@ -40,6 +40,9 @@ except ImportError:
 _winrm_cache = {
     # 'user:pwhash@host:port': <protocol instance>
 }
+
+def vvvvv(msg, host=None):
+    verbose(msg, host=None, caplevel=4)
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -98,8 +101,11 @@ class Connection(object):
         if exc:
             raise exc
 
-    def _winrm_exec(self, command, args):
-        vvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
+    def _winrm_exec(self, command, args, from_exec=False):
+        if from_exec:
+            vvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
+        else:
+            vvvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
         if not self.protocol:
             self.protocol = self._winrm_connect()
         if not self.shell_id:
@@ -108,8 +114,12 @@ class Connection(object):
         try:
             command_id = self.protocol.run_command(self.shell_id, command, args)
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
-            vvvv('WINRM RESULT %r' % response, host=self.host)
-            vvvv('WINRM STDERR %s' % response.std_err, host=self.host)
+            if from_exec:
+                vvvv('WINRM RESULT %r' % response, host=self.host)
+            else:
+                vvvvv('WINRM RESULT %r' % response, host=self.host)
+            vvvvv('WINRM STDOUT %s' % response.std_out, host=self.host)
+            vvvvv('WINRM STDERR %s' % response.std_err, host=self.host)
             return response
         finally:
             if command_id:
@@ -122,15 +132,19 @@ class Connection(object):
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
         cmd = cmd.encode('utf-8')
-        vvv("EXEC %s" % cmd, host=self.host)
         cmd_parts = shlex.split(cmd, posix=False)
-        vvvv("WINRM PARTS %r" % cmd_parts, host=self.host)
+        if '-EncodedCommand' in cmd_parts:
+            encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
+            decoded_cmd = base64.b64decode(encoded_cmd)
+            vvv("EXEC %s" % decoded_cmd, host=self.host)
+        else:
+            vvv("EXEC %s" % cmd, host=self.host)
         # For script/raw support.
         if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
             script = powershell._build_file_cmd(cmd_parts)
             cmd_parts = powershell._encode_script(script, as_list=True)
         try:
-            result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
+            result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception, e:
             traceback.print_exc()
             raise errors.AnsibleError("failed to exec cmd %s" % cmd)
@@ -160,6 +174,7 @@ class Connection(object):
                         $stream.SetLength(%d) | Out-Null;
                         $stream.Close() | Out-Null;
                     ''' % (buffer_size, powershell._escape(out_path), offset, b64_data, in_size)
+                    vvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self.host)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
@@ -188,6 +203,7 @@ class Connection(object):
                         [System.Convert]::ToBase64String($bytes);
                         $stream.Close() | Out-Null;
                     ''' % (buffer_size, powershell._escape(in_path), offset)
+                    vvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self.host)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     data = base64.b64decode(result.std_out.strip())
