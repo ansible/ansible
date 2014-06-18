@@ -47,3 +47,20 @@ Function Set-Attr($obj, $name, $value)
     $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
 }
 
+# Helper function to convert a powershell object to JSON to echo it, exiting
+# the script
+Function Exit-Json($obj)
+{
+    echo $obj | ConvertTo-Json
+    Exit
+}
+
+# Helper function to add the "msg" property and "failed" property, convert the
+# powershell object to JSON and echo it, exiting the script
+Function Fail-Json($obj, $message)
+{
+    Set-Attr $obj "msg" $message
+    Set-Attr $obj "failed" $true
+    echo $obj | ConvertTo-Json
+    Exit
+}

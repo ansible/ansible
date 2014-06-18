@@ -44,4 +44,4 @@ $result = New-Object psobject @{
     encoding = "base64"
 };
 Set-Attr $result "content" $content;
-echo $result | ConvertTo-Json;
+Exit-Json $result;

@@ -61,4 +61,4 @@ If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
    Set-Attr $result.stat "md5" $path_md5;
 }
 
-echo $result | ConvertTo-Json;
+Exit-Json $result;
