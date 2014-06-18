@@ -24,6 +24,12 @@ import time
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
 
+# Primarily for testing, allow explicitly specifying PowerShell version via
+# an environment variable.
+_powershell_version = os.environ.get('POWERSHELL_VERSION', None)
+if _powershell_version:
+    _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
+
 def _escape(value, include_vars=False):
     '''Return value escaped for use in PowerShell command.'''
     # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
