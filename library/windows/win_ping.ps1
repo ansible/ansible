@@ -29,4 +29,4 @@ $result = New-Object psobject @{
     changed = $false
     ping = $data
 };
-echo $result | ConvertTo-Json;
+Exit-Json $result;
