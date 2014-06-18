@@ -129,6 +129,8 @@ def get_distribution():
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
+            if " " in distribution:
+                distribution = distribution.split()[0]
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
                 if 'Amazon' in distribution:
