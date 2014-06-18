@@ -28,6 +28,7 @@ version_added: "1.7"
 short_description: A windows version of the classic ping module.
 description:
      - Checks management connectivity of a windows host
+options: {}
 author: Chris Church
 '''
 
