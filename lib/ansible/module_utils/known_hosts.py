@@ -69,6 +69,9 @@ def get_fqdn(repo_url):
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
         parts = urlparse.urlparse(repo_url)
+        if 'ssh' not in parts[0] and 'git' not in parts[0]:
+            # don't try and scan a hostname that's not ssh
+            return None
         if parts[1] != '':
             result = parts[1]
         if "@" in result:
