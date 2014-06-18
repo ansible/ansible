@@ -17,33 +17,13 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
-
-$fact_path = "C:\ansible\facts.d"
-If ($params.fact_path.GetType)
-{
-   $fact_path = $params.fact_path;
-}
-
-$filter = "*"
-If ($params.filter.GetType)
-{
-    $filter = $params.filter;
-}
+# $params is not currently used in this module
+# $params = Parse-Args $args;
 
 $result = New-Object psobject @{
     ansible_facts = New-Object psobject
     changed = $false
 };
-
-If (Test-Path $fact_path)
-{
-    Get-ChildItem $fact_path -Filter *.fact | Foreach-Object
-    {
-        $facts = Get-Content $_ | ConvertFrom-Json
-        # TODO: Need to concatentate this with $result
-    }
-}
 
 $osversion = [Environment]::OSVersion
 
@@ -53,19 +33,5 @@ Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
 Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
 Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
-
-# Need to figure out how to filter the code. Below is a start but not implemented
-#If ($filter != "*")
-#{
-#    $filtered = New-Object psobject;
-#    $result.psobject.properties | Where
-#    {
-#        $_.Name -like $filter | 
-#    }
-#}
-#Else
-#{
-#    $filtered = $result;
-#}
 
 echo $result | ConvertTo-Json;
