@@ -151,13 +151,13 @@ Additionally, Powershell 3.0 or higher is needed for most modules.  You can actu
 ansible example playbook to upgrade your windows systems from Powershell 2.0 to 3.0 in order to take
 advantage of the *other* ansible modules.  
 
-Looking at an ansible checkout, copy the examples/scripts/upgrade_ps2_to_3.ps1 script from the repo into
+Looking at an ansible checkout, copy the examples/scripts/upgrade_to_ps3.ps1 script from the repo into
 your local directory, and run a playbook that looks like the following::
 
    - hosts: windows
      gather_facts: no
      tasks:
-       - script: upgrade_ps2_to_3.ps1
+       - script: upgrade_to_ps3.ps1
 
 The hosts in the above group will then be running a new enough version of Powershell to be managed
 by the full compliment of Ansible modules.
