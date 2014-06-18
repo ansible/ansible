@@ -19,8 +19,8 @@ No additional software needs to be installed on the remote machines for Ansible 
 
 .. _windows_installing:
 
-Installing
-``````````
+Installing on the Control Machine
+``````````````````````````````````
 
 On a Linux control machine::
 
@@ -54,6 +54,10 @@ Test your configuration like so, by trying to contact your Windows nodes.  Note 
 communication channel that leverages Windows remoting::
 
     ansible windows [-i inventory] -m ping --ask-vault-pass
+
+If you haven't done anything to prep your systems yet, this won't work yet.  This is covered in a later
+section about how to enable powershell remoting - and if neccessary - how to upgrade powershell to
+a version that is 3 or higher.
 
 .. _windows_what_modules_are_available:
 
@@ -128,7 +132,6 @@ If your Windows firewall is enabled, you must also run the following command to 
     # Windows 2008 / 2008R2
     $  NetSH ADVFirewall Set AllProfiles Settings remotemanagement Enable
 
-Best Practices
 By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
 
 An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in, as documented '
@@ -143,6 +146,23 @@ Alternatively, a self-signed SSL certificate can be generated in powershell usin
     $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
     $  Delete the http listener
     $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
+
+Additionally, Powershell 3.0 or higher is needed for most modules.  You can actually use a minimal
+ansible example playbook to upgrade your windows systems from Powershell 2.0 to 3.0 in order to take
+advantage of the *other* ansible modules.  
+
+Looking at an ansible checkout, copy the examples/scripts/upgrade_ps2_to_3.ps1 script from the repo into
+your local directory, and run a playbook that looks like the following::
+
+   - hosts: windows
+     gather_facts: no
+     tasks:
+       - script: upgrade_ps2_to_3.ps1
+
+The hosts in the above group will then be running a new enough version of Powershell to be managed
+by the full compliment of Ansible modules.
+
+
 
 .. _windows_and_linux_control_machine:
 
@@ -226,6 +246,8 @@ form of new modules, tweaks to existing modules, documentation, or something els
        How to write modules
    :doc:`playbooks`
        Learning ansible's configuration management language
+   `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
+       Windows specific module list, all implemented in powershell
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
