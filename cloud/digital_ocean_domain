@@ -59,7 +59,7 @@ EXAMPLES = '''
 
 # Create a droplet and a corresponding domain record
 
-- digital_cean_droplet: >
+- digital_ocean: >
       state=present
       name=test_droplet
       size_id=1
