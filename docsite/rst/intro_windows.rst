@@ -106,11 +106,38 @@ Additional modules may be submitted as pull requests to github.
 .. _windows_system_prep:
 
 System Prep
-```````````
+``````````
 
-In order for Ansible to manage your windows machines you will have to enable powershell remoting first::
+In order for Ansible to manage your windows machines, you will have to enable Powershell remoting first, which also enables WinRM::
 
-   How to do it goes here
+From the Windows host, launch the Powershell Client. For information on Powershell, visit 'Microsoft's Using Powershell article <http://technet.microsoft.com/en-us/library/dn425048.aspx>'
+
+In the powershell session, run the following to enable PS Remoting and set the execution policy
+
+.. code-block:: bash
+
+    $  Enable-PSRemoting -Force
+    $  Set-ExecutionPolicy RemoteSigned
+
+If your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile::
+
+ .. code-block:: bash
+
+    $  Windows 2012 / 2012R2
+    $  Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
+    $  Windows 2008 / 2008R2
+    $  NetSH ADVFirewall Set AllProfiles Settings remotemanagement Enable
+
+Best Practices
+By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
+
+.. code-block:: bash
+    $  Delete the http listener
+    $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
+    $  Create the https listener
+    $  Insert code here
+
+
 
 .. _windows_and_linux_control_machine:
 
