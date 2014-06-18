@@ -6,13 +6,16 @@ Windows Support
 .. _windows_how_does_it_work:
 
 Windows: How Does It Work
-``````````````````````````
+`````````````````````````
 
-Ansible manages Linux/Unix machines using SSH by default.  
+As you may have already read, Ansible manages Linux/Unix machines using SSH by default.  
 
-Starting in version 1.7, Ansible also contains support for managing Windows machines.
+Starting in version 1.7, Ansible also contains support for managing Windows machines.  This uses
+native powershell remoting, rather than SSH.
 
-Ansible will still run from a Linux guest, and uses the "winrm" Python module to talk to remote hosts.
+Ansible will still be run from a Linux guest, and uses the "winrm" Python module to talk to remote hosts.
+
+No additional software needs to be installed on the remote machines for Ansible to manage them, it still maintains the agentless properties that make it popular on Linux/Unix.
 
 .. _windows_installing:
 
@@ -28,9 +31,7 @@ On a Linux control machine::
 Inventory
 `````````
 
-Ansible's windows support will rely on a few standard variables to indicate the username, password, and connection type (windows)
-of the remote hosts::
-
+Ansible's windows support relies on a few standard variables to indicate the username, password, and connection type (windows) of the remote hosts.  These variables are most easily set up in inventory.  This is used instead of SSH-keys or passwords as normally fed into Ansible.
 
     [windows]
     winserver1.example.com
@@ -44,6 +45,8 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_ssh_pass: SekritPasswordGoesHere
     ansible_ssh_port: 5986
     ansible_connection: winrm
+
+Notice that the ssh_port is not actually for SSH, but this is a holdover from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
     
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
@@ -119,6 +122,71 @@ as it limits what technologies, features, and code we can use in the main projec
 will be required to manage Windows hosts.
   
 Cygwin is not supported, so please do not ask questions about Ansible running from Cygwin.
+
+.. _windows_facts:
+
+Windows Facts
+`````````````
+
+Just as with Linux/Unix, facts can be gathered for windows hosts, which will return things such as the operating system version.  To see what variables are available about a windows host, run the following::
+
+    ansible winhost.example.com -m setup
+
+Note that this command invocation is exactly the same as the Linux/Unix equivalent.
+
+.. _windows_playbook_example:
+
+Windows Playbook Examples
+`````````````````````````
+
+Look to the list of windows modules for most of what is possible, though also some modules like "raw" and "script" also work on Windows, as do "fetch" and "slurp".
+
+Here is an example of pushing and running a powershell script::
+
+    - name: test script module
+      hosts: windows
+      tasks:
+        - name: run test script
+          script: files/test_script.ps1
+
+Running individual commands uses the 'raw' module, as opposed to the shell or command module as is common on Linux/Unix operating systems::
+
+    - name: test raw module
+      hosts: windows
+      tasks:
+        - name: run ipconfig
+          raw: ipconfig
+          register: ipconfig
+        - debug: var=ipconfig
+
+And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned byt he win_stat module is slightly different than what is provided by the Linux equivalent.
+
+    - name: test stat module
+      hosts: windows
+      tasks:
+        - name: test stat module on file
+          win_stat: path="C:/Windows/win.ini"
+          register: stat_file
+
+        - debug: var=stat_file
+
+        - name: check stat_file result
+          assert: 
+              that: 
+                 - "stat_file.stat.exists"
+                 - "not stat_file.stat.isdir"
+                 - "stat_file.stat.size > 0" 
+                 - "stat_file.stat.md5"
+
+Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", and "fetch" modules are also available.  These modules do not start with a "win_" prefix.
+
+.. _windows_contributions:
+
+Windows Contributions
+`````````````````````
+
+Windows support in Ansible is still very new, and contributions are quite welcome, whether this is in the
+form of new modules, tweaks to existing modules, documentation, or something else.  Please stop by the ansible-devel mailing list if you would like to get involved and say hi.
 
 .. seealso::
 
