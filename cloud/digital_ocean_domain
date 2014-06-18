@@ -69,8 +69,8 @@ EXAMPLES = '''
 
 - digital_ocean_domain: >
       state=present
-      name={{ test_droplet.name }}.my.domain
-      ip={{ test_droplet.ip_address }}
+      name={{ test_droplet.droplet.name }}.my.domain
+      ip={{ test_droplet.droplet.ip_address }}
 '''
 
 import sys
