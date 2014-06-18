@@ -106,7 +106,7 @@ Additional modules may be submitted as pull requests to github.
 .. _windows_system_prep:
 
 System Prep
-``````````
+```````````
 
 In order for Ansible to manage your windows machines, you will have to enable Powershell remoting first, which also enables WinRM::
 
@@ -123,9 +123,10 @@ If your Windows firewall is enabled, you must also run the following command to 
 
  .. code-block:: bash
 
-    $  Windows 2012 / 2012R2
+    # Windows 2012 / 2012R2
     $  Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
-    $  Windows 2008 / 2008R2
+
+    # Windows 2008 / 2008R2
     $  NetSH ADVFirewall Set AllProfiles Settings remotemanagement Enable
 
 Best Practices
