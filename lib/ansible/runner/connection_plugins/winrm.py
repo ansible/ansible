@@ -42,7 +42,7 @@ _winrm_cache = {
 }
 
 def vvvvv(msg, host=None):
-    verbose(msg, host=None, caplevel=4)
+    verbose(msg, host=host, caplevel=4)
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
