@@ -67,8 +67,7 @@ Browse this index to see what is available.
 
 In many cases, it may not be neccessary to even write or use an Ansible module.
 
-In particular, the "win_script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very
-native way to do things, as in the following playbook:
+In particular, the "win_script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very native way to do things, as in the following playbook::
 
     - hosts: windows
       tasks:
@@ -108,9 +107,9 @@ Additional modules may be submitted as pull requests to github.
 System Prep
 ```````````
 
-In order for Ansible to manage your windows machines, you will have to enable Powershell remoting first, which also enables WinRM::
+In order for Ansible to manage your windows machines, you will have to enable Powershell remoting first, which also enables WinRM.
 
-From the Windows host, launch the Powershell Client. For information on Powershell, visit 'Microsoft's Using Powershell article <http://technet.microsoft.com/en-us/library/dn425048.aspx>'
+From the Windows host, launch the Powershell Client. For information on Powershell, visit `Microsoft's Using Powershell article <http://technet.microsoft.com/en-us/library/dn425048.aspx>`_.
 
 In the powershell session, run the following to enable PS Remoting and set the execution policy
 
@@ -134,9 +133,9 @@ By default, Powershell remoting enables an HTTP listener. The following commands
 
 An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in, as documented '
 
-A best practice for SSL certificates is generating them from an internal or external certificate authority. An existing certificate could be located in the computer account certificate store 'using the following article <http://technet.microsoft.com/en-us/library/cc754431.aspx#BKMK_computer>'.
+A best practice for SSL certificates is generating them from an internal or external certificate authority. An existing certificate could be located in the computer account certificate store `using the following article <http://technet.microsoft.com/en-us/library/cc754431.aspx#BKMK_computer>`_.
 
-Alternatively, a self-signed SSL certificate can be generated in powershell using 'the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>'. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using 'How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>'
+Alternatively, a self-signed SSL certificate can be generated in powershell using 'the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>'. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using `How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>`_
 
 .. code-block:: bash
 
@@ -192,7 +191,7 @@ Running individual commands uses the 'raw' module, as opposed to the shell or co
           register: ipconfig
         - debug: var=ipconfig
 
-And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned byt he win_stat module is slightly different than what is provided by the Linux equivalent.
+And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned byt he win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows
@@ -211,7 +210,7 @@ And for a final example, here's how to use the win_stat module to test for file 
                  - "stat_file.stat.size > 0" 
                  - "stat_file.stat.md5"
 
-Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", and "fetch" modules are also available.  These modules do not start with a "win_" prefix.
+Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", and "fetch" modules are also available.  These modules do not start with a "win" prefix.
 
 .. _windows_contributions:
 
@@ -231,4 +230,5 @@ form of new modules, tweaks to existing modules, documentation, or something els
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+
 
