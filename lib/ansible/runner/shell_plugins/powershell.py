@@ -85,7 +85,21 @@ class ShellModule(object):
 
     def md5(self, path):
         path = _escape(path)
-        return _encode_script('''(Get-FileHash -Path "%s" -Algorithm MD5).Hash.ToLower();''' % path)
+        script = '''
+            If (Test-Path -PathType Leaf "%(path)s")
+            {
+                (Get-FileHash -Path "%(path)s" -Algorithm MD5).Hash.ToLower();
+            }
+            ElseIf (Test-Path -PathType Container "%(path)s")
+            {
+                Write-Host "3";
+            }
+            Else
+            {
+                Write-Host "1";
+            }
+        ''' % dict(path=path)
+        return _encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
         cmd_parts = shlex.split(cmd, posix=False)

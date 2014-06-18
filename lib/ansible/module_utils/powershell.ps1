@@ -62,5 +62,5 @@ Function Fail-Json($obj, $message)
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
     echo $obj | ConvertTo-Json
-    Exit
+    Exit 1
 }

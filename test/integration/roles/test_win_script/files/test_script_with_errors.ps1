@@ -1,6 +1,4 @@
-# http://stackoverflow.com/questions/9948517/how-to-stop-a-powershell-script-on-the-first-error
-#$ErrorActionPreference = "Stop";
-# http://stackoverflow.com/questions/15777492/why-are-my-powershell-exit-codes-always-0
+# Test script to make sure we handle non-zero exit codes.
 
 trap
 {
