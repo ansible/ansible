@@ -27,7 +27,8 @@ module: win_msi
 version_added: "1.7"
 short_description: Installs and uninstalls Windows MSI files
 description:
-    - Installs or uninstalls a Windows MSI file that is already located on the target server
+    - Installs or uninstalls a Windows MSI file that is already located on the
+      target server
 options:
     path:
         description:
@@ -40,6 +41,10 @@ options:
             - present
             - absent
         default: present
+    creates:
+        description:
+            - Path to a file created by installing the MSI to prevent from
+              attempting to reinstall the package on every run
 author: Matt Martz
 '''
 

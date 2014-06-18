@@ -35,7 +35,7 @@ If ($params.extra_args.GetType)
     $extra_args = $params.extra_args;
 }
 
-If ($params.creates.GetType)
+If ($params.creates.GetType -and $params.state.GetType -and $params.state -ne "absent")
 {
     If (Test-File $creates)
     {
@@ -44,8 +44,6 @@ If ($params.creates.GetType)
 }
 
 $logfile = [IO.Path]::GetTempFileName();
-$stdoutfile = [IO.Path]::GetTempFileName();
-$stderrfile = [IO.Path]::GetTempFileName();
 if ($params.state.GetType -and $params.state -eq "absent")
 {
     msiexec.exe /x $params.path /qb /l $logfile $extra_args;
@@ -59,13 +57,7 @@ Set-Attr $result "changed" $true;
 
 $logcontents = Get-Content $logfile;
 Remove-Item $logfile;
-$stdoutcontents = Get-Content $stdoutfile;
-Remove-Item $stdoutfile;
-$stderrcontents = Get-Content $stderrfile;
-Remove-Item $stderrfile;
 
 Set-Attr $result "log" $logcontents;
-Set-Attr $result "stdout" $stdoutcontents;
-Set-Attr $result "stderr" $stderrcontents;
 
 Exit-Json $result;
