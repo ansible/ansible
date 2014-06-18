@@ -314,7 +314,7 @@ def main():
 
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
-    (rc, out, err) = module.run_command(cmd)
+    (rc, out, err) = module.run_command(cmd, use_unsafe_shell=True)
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
