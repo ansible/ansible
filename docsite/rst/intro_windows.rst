@@ -131,13 +131,18 @@ If your Windows firewall is enabled, you must also run the following command to 
 Best Practices
 By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
 
+An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in, as documented '
+
+A best practice for SSL certificates is generating them from an internal or external certificate authority. An existing certificate could be located in the computer account certificate store 'using the following article <http://technet.microsoft.com/en-us/library/cc754431.aspx#BKMK_computer>'.
+
+Alternatively, a self-signed SSL certificate can be generated in powershell using 'the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>'. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using 'How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>'
+
 .. code-block:: bash
+
+    $  Create the https listener
+    $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
     $  Delete the http listener
     $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
-    $  Create the https listener
-    $  Insert code here
-
-
 
 .. _windows_and_linux_control_machine:
 
