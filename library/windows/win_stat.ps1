@@ -28,36 +28,37 @@ If ($params.path.GetType)
 $get_md5 = $TRUE;
 If ($params.get_md5.GetType)
 {
-   $get_md5 = $params.get_md5;
+    $get_md5 = $params.get_md5;
 }
 
-$stat = New-Object psobject;
+$result = New-Object psobject @{
+    stat = New-Object psobject
+    changed = $false
+};
+
 If (Test-Path $path)
 {
-   Set-Attr $stat "exists" $TRUE;
+   Set-Attr $result.stat "exists" $TRUE;
    $info = Get-Item $path;
    If ($info.Directory) # Only files have the .Directory attribute.
    {
-      Set-Attr $stat "isdir" $FALSE;
-      Set-Attr $stat "size" $info.Length;
+      Set-Attr $result.stat "isdir" $FALSE;
+      Set-Attr $result.stat "size" $info.Length;
    }
    Else
    {
-      Set-Attr $stat "isdir" $TRUE;
+      Set-Attr $result.stat "isdir" $TRUE;
    }
 }
 Else
 {
-   Set-Attr $stat "exists" $FALSE;
+   Set-Attr $result.stat "exists" $FALSE;
 }
 
-If ($get_md5 -and $stat.exists -and -not $stat.isdir)
+If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
 {
    $path_md5 = (Get-FileHash -Path $path -Algorithm MD5).Hash.ToLower();
-   Set-Attr $stat "md5" $path_md5;
+   Set-Attr $result.stat "md5" $path_md5;
 }
 
-$result = New-Object psobject;
-Set-Attr $result "stat" $stat;
-Set-Attr $result "changed" $FALSE;
 echo $result | ConvertTo-Json;

@@ -25,6 +25,8 @@ If ($params.data.GetType)
    $data = $params.data;
 }
 
-$result = New-Object psobject;
-Set-Attr $result "ping" $data;
+$result = New-Object psobject @{
+    changed = $false
+    ping = $data
+};
 echo $result | ConvertTo-Json;

@@ -39,7 +39,9 @@ If (-not $src)
 $bytes = [System.IO.File]::ReadAllBytes($src);
 $content = [System.Convert]::ToBase64String($bytes);
 
-$result = New-Object psobject;
+$result = New-Object psobject @{
+    changed = $false
+    encoding = "base64"
+};
 Set-Attr $result "content" $content;
-Set-Attr $result "encoding" "base64";
 echo $result | ConvertTo-Json;
