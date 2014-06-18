@@ -49,7 +49,7 @@ $osversion = [Environment]::OSVersion
 
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME;
 Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
-Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform
+Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
 Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
 Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
