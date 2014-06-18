@@ -22,6 +22,8 @@ import random
 import shlex
 import time
 
+_common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
+
 def _escape(value, include_vars=False):
     '''Return value escaped for use in PowerShell command.'''
     # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
@@ -39,10 +41,14 @@ def _escape(value, include_vars=False):
 def _encode_script(script, as_list=False):
     '''Convert a PowerShell script to a single base64-encoded command.'''
     encoded_script = base64.b64encode(script.encode('utf-16-le'))
-    cmd_parts = ['PowerShell', '-NoProfile', '-NonInteractive', '-EncodedCommand', encoded_script]
+    cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
     if as_list:
         return cmd_parts
     return ' '.join(cmd_parts)
+
+def _build_file_cmd(cmd_parts):
+    '''Build command line to run a file, given list of file name plus args.'''
+    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts])
 
 class ShellModule(object):
 
@@ -75,8 +81,7 @@ class ShellModule(object):
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]
-        cmd_parts = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts]
-        script = ' '.join(cmd_parts)
+        script = _build_file_cmd(cmd_parts)
         if rm_tmp:
             rm_tmp = _escape(rm_tmp)
             script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)

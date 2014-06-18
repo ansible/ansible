@@ -127,7 +127,7 @@ class Connection(object):
         vvvv("WINRM PARTS %r" % cmd_parts, host=self.host)
         # For script/raw support.
         if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
-            script = 'PowerShell -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File ' + ' '.join(['"%s"' % x for x in cmd_parts])
+            script = powershell._build_file_cmd(cmd_parts)
             cmd_parts = powershell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
