@@ -1,4 +1,6 @@
 #!powershell
+# (c) 2014, Matt Martz <matt@sivel.net>, and others
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -44,7 +46,14 @@ If ($params.creates.GetType)
 $logfile = [IO.Path]::GetTempFileName();
 $stdoutfile = [IO.Path]::GetTempFileName();
 $stderrfile = [IO.Path]::GetTempFileName();
-msiexec.exe /i $params.path /qb /l $logfile $extra_args;
+if ($params.state.GetType -and $params.state -eq "absent")
+{
+    msiexec.exe /x $params.path /qb /l $logfile $extra_args;
+}
+Else
+{
+    msiexec.exe /i $params.path /qb /l $logfile $extra_args;
+}
 
 Set-Attr $result "changed" $true;
 
