@@ -1,0 +1,66 @@
+---
+
+- name: test win_ping
+  action: win_ping
+  register: win_ping_result
+
+- name: check win_ping result
+  assert:
+    that: 
+      - "not win_ping_result|failed"
+      - "not win_ping_result|changed"
+      - "win_ping_result.ping == 'pong'"
+
+- name: test win_ping with data
+  win_ping: data=blah
+  register: win_ping_with_data_result
+
+- name: check win_ping result with data
+  assert:
+    that:
+      - "not win_ping_with_data_result|failed"
+      - "not win_ping_with_data_result|changed"
+      - "win_ping_with_data_result.ping == 'blah'"
+
+- name: test ping.ps1 with data
+  ping.ps1: data=bleep
+  register: ping_ps1_result
+
+- name: check ping.ps1 result
+  assert:
+    that: 
+      - "not ping_ps1_result|failed"
+      - "not ping_ps1_result|changed"
+      - "ping_ps1_result.ping == 'bleep'"
+
+#- name: test ping.ps1 with invalid args
+#  ping.ps1: arg=invalid
+#  register: ping_ps1_invalid_args_result
+
+#- name: check that ping.ps1 with invalid args fails
+#  assert:
+#    that:
+#      - "ping_ps1_invalid_args_result|failed"
+#      - "ping_ps1_invalid_args_result.msg"
+
+- name: test local ping (should use default ping)
+  local_action: ping
+  register: local_ping_result
+
+- name: check local ping result
+  assert:
+    that: 
+      - "not local_ping_result|failed"
+      - "not local_ping_result|changed"
+      - "local_ping_result.ping == 'pong'"
+
+- name: test ping (should use ping.ps1)
+  action: ping
+  register: ping_result
+
+- name: check ping result
+  assert:
+    that:
+      - "not ping_result|failed"
+      - "not ping_result|changed"
+      - "ping_result.ping == 'pong'"
