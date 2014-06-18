@@ -29,13 +29,17 @@ import sys
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, filename=C.DEFAULT_HOST_LIST, script_args=None):
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
         self.filename = os.path.abspath(filename)
-        cmd = [ self.filename, "--list" ]
+        self.script_args = script_args
+        if self.script_args:
+            cmd = [ self.filename, "--list", self.script_args ]
+        else:
+            cmd = [ self.filename, "--list" ]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
@@ -60,7 +64,7 @@ class InventoryScript(object):
             raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
- 
+
             # in Ansible 1.3 and later, a "_meta" subelement may contain
             # a variable "hostvars" which contains a hash for each host
             # if this "hostvars" exists at all then do not call --host for each
