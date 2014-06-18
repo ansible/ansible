@@ -148,7 +148,7 @@ In particular, the "win_script" module can be used to run arbitrary powershell s
       tasks:
         - win_script: foo.ps1 --argument --other-argument
 
-.. _developers_developers_developers::
+.. _developers_developers_developers:
 
 Developers: Supported modules and how it works
 ``````````````````````````````````````````````
