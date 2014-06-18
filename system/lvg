@@ -116,7 +116,7 @@ def main():
     state = module.params['state']
     force = module.boolean(module.params['force'])
     pesize = module.params['pesize']
-    vgoptions = module.params.get('vg_options', '').split()
+    vgoptions = module.params['vg_options'].split()
 
     if module.params['pvs']:
         dev_string = ' '.join(module.params['pvs'])
