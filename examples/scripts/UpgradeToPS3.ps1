@@ -32,13 +32,13 @@ if (!(test-path $powershellpath))
 
 # .NET Framework 4.0 is necessary.
 
-if (($PSVersionTable.CLRVersion.Major) -lt 4)
-{
-    $DownloadUrl = "http://download.microsoft.com/download/B/A/4/BA4A7E71-2906-4B2D-A0E1-80CF16844F5F/dotNetFx45_Full_x86_x64.exe"
-    $FileName = $DownLoadUrl.Split('/')[-1]
-    download-file $downloadurl "$powershellpath\$filename"
-    ."$powershellpath\$filename" /quiet /norestart
-}
+#if (($PSVersionTable.CLRVersion.Major) -lt 2)
+#{
+#    $DownloadUrl = "http://download.microsoft.com/download/B/A/4/BA4A7E71-2906-4B2D-A0E1-80CF16844F5F/dotNetFx45_Full_x86_x64.exe"
+#    $FileName = $DownLoadUrl.Split('/')[-1]
+#    download-file $downloadurl "$powershellpath\$filename"
+#    ."$powershellpath\$filename" /quiet /norestart
+#}
 
 #You may need to reboot after the .NET install if so just run the script again.
 
@@ -53,7 +53,7 @@ $osminor = [environment]::OSVersion.Version.Minor
 
 if ($osminor -eq 1)
 {
-    $DownloadUrl = "http://download.microsoft.com/download/3/D/6/3D61D262-8549-4769-A660-230B67E15B25/Windows6.1-KB2819745-x86-MultiPkg.msu"
+    $DownloadUrl = "http://download.microsoft.com/download/E/7/6/E76850B8-DA6E-4FF5-8CCE-A24FC513FD16/Windows6.1-KB2506143-x64.msu"
 }
 elseif ($osminor -eq 0)
 {
