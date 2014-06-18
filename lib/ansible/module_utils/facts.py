@@ -721,7 +721,7 @@ class LinuxHardware(Hardware):
                     continue
             d = {}
             diskname = os.path.basename(sysdir)
-            for key in ['vendor', 'model']:
+            for key in ['vendor', 'model', 'rev', 'queue_depth', 'queue_type']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
             for key,test in [ ('removable','/removable'), \
