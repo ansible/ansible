@@ -81,7 +81,7 @@ class ShellModule(object):
     def mkdtemp(self, basefile, system=False, mode=None):
         basefile = _escape(basefile)
         # FIXME: Support system temp path!
-        return _encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName;''' % basefile)
+        return _encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
     def md5(self, path):
         path = _escape(path)
