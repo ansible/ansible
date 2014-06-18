@@ -216,9 +216,9 @@ Version Comparison Filters
 .. versionadded:: 1.6
 
 To compare a version number, such as checking if the ``ansible_distribution_version``
-version is greater than or equal to '12.04', you can use the ``version_compare`` filter::
+version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
 
-The `version_compare` filter can also be used to evaluate the `ansible_distribution_version`::
+The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
 
     {{ ansible_distribution_version | version_compare('12.04', '>=') }}
 
