@@ -218,12 +218,11 @@ Version Comparison Filters
 To compare a version number, such as checking if the ``ansible_distribution_version``
 version is greater than or equal to '12.04', you can use the ``version_compare`` filter::
 
-The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
+The `version_compare` filter can also be used to evaluate the `ansible_distribution_version`::
 
     {{ ansible_distribution_version | version_compare('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise
-it will return False.
+If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
 
 The ``version_compare`` filter accepts the following operators::
 
@@ -234,10 +233,10 @@ be used.  The default is ``False``, and if set as ``True`` will use more strict 
 
     {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
-.. _random_filter
+.. _random_filter:
 
 Random Number Filter
---------------------------
+--------------------
 
 .. versionadded:: 1.6
 
