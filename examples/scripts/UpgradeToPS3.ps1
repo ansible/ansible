@@ -1,4 +1,13 @@
-﻿# Upgrade to PowerShell 3.0
+
+# Powershell script to upgrade a PowerShell 2.0 system to PowerShell 3.0
+#
+# some Ansible modules that may use Powershell 3 features, so systems may need
+# to be upgraded.  This may be used by a sample playbook.  Refer to the windows
+# documentation on docs.ansible.com for details.
+# 
+# - hosts: windows
+#   tasks:
+#     - script: upgrade_to_ps3.ps1
 
 # Get version of OS
 
@@ -68,4 +77,4 @@ else
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
-."$powershellpath\$filename" /quiet /log "C:\powershell\install.log"
+."$powershellpath\$filename" /quiet
