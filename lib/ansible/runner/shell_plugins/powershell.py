@@ -58,6 +58,10 @@ class ShellModule(object):
     def join_path(self, *args):
         return os.path.join(*args).replace('/', '\\')
 
+    def path_has_trailing_slash(self, path):
+        # Allow Windows paths to be specified using either slash.
+        return path.endswith('/') or path.endswith('\\')
+
     def chmod(self, mode, path):
         return ''
 

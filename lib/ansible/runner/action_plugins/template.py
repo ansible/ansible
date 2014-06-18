@@ -79,7 +79,7 @@ class ActionModule(object):
                 source = utils.path_dwim(self.runner.basedir, source)
 
 
-        if dest.endswith("/"): # CCTODO
+        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
 

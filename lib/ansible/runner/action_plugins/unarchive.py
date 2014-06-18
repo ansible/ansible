@@ -54,7 +54,7 @@ class ActionModule(object):
             result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
-        dest = os.path.expanduser(dest)
+        dest = os.path.expanduser(dest) # CCTODO: Fix path for Windows hosts.
         source = template.template(self.runner.basedir, os.path.expanduser(source), inject)
         if copy:
             if '_original_file' in inject:
