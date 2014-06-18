@@ -26,6 +26,8 @@ $result = New-Object psobject @{
 };
 
 $osversion = [Environment]::OSVersion
+$memory = Get-WmiObject win32_Pysicalmemory
+$netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME;
 Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
@@ -33,5 +35,11 @@ Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
 Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
 Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
+
+Set-Attr $result.ansible_facts "ansible_totalmem" $memory.Capacity.ToString()
+
+$ips = @()
+Foreach ($ip in $netcfg.IPAddress) { If ($ip) { $ips += $ip } }
+Set-Attr $result.ansible_facts "ansible_ip_addresses" $ips
 
 Exit-Json $result;
