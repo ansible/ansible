@@ -67,6 +67,18 @@ options:
       - List of VPC subnets to use
     required: false
     default: None
+  instance_tags:
+    description:
+      - A hash/dictionary of tags to add to the group itself and any instance spawned from the group.
+      - Hash keys should be different from those in group_tags.
+    required: false
+    default: None
+  group_tags:
+    description:
+      - A hash/dictionary of tags to add to the group itself only.
+      - Hash keys should be different from those in instance_tags.
+    required: false
+    default: None
 extends_documentation_fragment: aws
 """
 
@@ -90,7 +102,7 @@ from ansible.module_utils.ec2 import *
 
 try:
     import boto.ec2.autoscale
-    from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup
+    from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup, Tag
     from boto.exception import BotoServerError
 except ImportError:
     print "failed=True msg='boto required for this module'"
@@ -109,6 +121,34 @@ def enforce_required_arguments(module):
         module.fail_json(msg="Missing required arguments for autoscaling group create/update: %s" % ",".join(missing_args))
 
 
+def get_tags(module):
+    instance_tags = module.params.get('instance_tags') or {}
+    group_tags = module.params.get('group_tags') or {}
+
+    if set(instance_tags.keys()).intersection(group_tags.keys()):
+        module.fail_json(msg='Cannot have duplicate key in instance_tags and group_tags')
+
+    for key, value in instance_tags.items():
+        yield tag_from_key_value(module, key, value)
+
+    for key, value in group_tags.items():
+        yield tag_from_key_value(module, key, value, propagate_at_launch=False)
+
+
+def tag_from_key_value(module, key, value, propagate_at_launch=True):
+    return Tag(
+        key=key,
+        value=value,
+        propagate_at_launch=propagate_at_launch,
+        resource_id=module.params.get('name'),
+        resource_type='auto-scaling-group',
+    )
+
+
+def serialize_tags(tags):
+    return sorted((x.key, str(x.value), x.propagate_at_launch) for x in tags)
+
+
 def create_autoscaling_group(connection, module):
     enforce_required_arguments(module)
 
@@ -124,6 +164,8 @@ def create_autoscaling_group(connection, module):
     launch_configs = connection.get_all_launch_configurations(names=[launch_config_name])
     
     as_groups = connection.get_all_groups(names=[group_name])
+
+    tags = list(get_tags(module))
 
     if not vpc_zone_identifier and not availability_zones:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
@@ -143,6 +185,7 @@ def create_autoscaling_group(connection, module):
                  max_size=max_size,
                  desired_capacity=desired_capacity,
                  vpc_zone_identifier=vpc_zone_identifier,
+                 tags=tags,
                  connection=connection)
 
         try:
@@ -153,6 +196,7 @@ def create_autoscaling_group(connection, module):
     else:
         as_group = as_groups[0]
         changed = False
+        tags_changed = False
         for attr in ('launch_config_name', 'max_size', 'min_size', 'desired_capacity',
                      'vpc_zone_identifier', 'availability_zones'):
             if getattr(as_group, attr) != module.params.get(attr):
@@ -163,11 +207,16 @@ def create_autoscaling_group(connection, module):
         if as_group.load_balancers != load_balancers:
             changed = True
             as_group.load_balancers = module.params.get('load_balancers')
+        # handle tags separately as the representation is different
+        if serialize_tags(as_group.tags) != serialize_tags(tags):
+            tags_changed = True
 
         try:
             if changed:
                 as_group.update()
-            module.exit_json(changed=changed)
+            if tags_changed:
+                connection.create_or_update_tags(tags)
+            module.exit_json(changed=changed or tags_changed)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
 
@@ -206,6 +255,8 @@ def main():
             max_size=dict(type='int'),
             desired_capacity=dict(type='int'),
             vpc_zone_identifier=dict(type='str'),
+            instance_tags=dict(type='dict'),
+            group_tags=dict(type='dict'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
