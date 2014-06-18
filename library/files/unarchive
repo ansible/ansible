@@ -49,6 +49,11 @@ options:
     required: no
     default: null
     version_added: "1.6"
+  tar_extra_args:
+    description:
+      - Add additional arguments to the tar command when unarchiving a tar archive.
+    required: false
+    default: null
 author: Dylan Martin
 todo:
     - detect changed/unchanged for .zip files
@@ -104,9 +109,10 @@ class ZipFile(object):
 # class to handle gzipped tar files
 class TgzFile(object):
     
-    def __init__(self, src, dest, module):
+    def __init__(self, src, dest, tar_extra_args, module):
         self.src = src
         self.dest = dest
+        self.tar_extra_args = tar_extra_args
         self.module = module
         self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'z'
@@ -120,7 +126,10 @@ class TgzFile(object):
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
-        cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
+        if self.tar_extra_args is not None:
+            cmd = '%s -C "%s" %s -x%sf "%s"' % (self.cmd_path, self.dest, self.tar_extra_args, self.zipflag, self.src)
+        else:
+            cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
@@ -137,9 +146,10 @@ class TgzFile(object):
 
 # class to handle tar files that aren't compressed
 class TarFile(TgzFile):
-    def __init__(self, src, dest, module):
+    def __init__(self, src, dest, tar_extra_args, module):
         self.src = src
         self.dest = dest
+        self.tar_extra_args = tar_extra_args
         self.module = module
         self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = ''
@@ -147,9 +157,10 @@ class TarFile(TgzFile):
 
 # class to handle bzip2 compressed tar files
 class TarBzip(TgzFile):
-    def __init__(self, src, dest, module):
+    def __init__(self, src, dest, tar_extra_args, module):
         self.src = src
         self.dest = dest
+        self.tar_extra_args = tar_extra_args
         self.module = module
         self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'j'
@@ -157,19 +168,20 @@ class TarBzip(TgzFile):
 
 # class to handle xz compressed tar files
 class TarXz(TgzFile):
-    def __init__(self, src, dest, module):
+    def __init__(self, src, dest, tar_extra_args, module):
         self.src = src
         self.dest = dest
+        self.tar_extra_args = tar_extra_args
         self.module = module
         self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'J'
 
 
 # try handlers in order and return the one that works or bail if none work
-def pick_handler(src, dest, module):
+def pick_handler(src, dest, tar_extra_args, module):
     handlers = [TgzFile, ZipFile, TarFile, TarBzip, TarXz]
     for handler in handlers:
-        obj = handler(src, dest, module)
+        obj = handler(src, dest, tar_extra_args, module)
         if obj.can_handle_archive():
             return obj
     module.fail_json(msg='Failed to find handler to unarchive. Make sure the required command to extract the file is installed.')
@@ -184,6 +196,7 @@ def main():
             dest              = dict(required=True),
             copy              = dict(default=True, type='bool'),
             creates           = dict(required=False),
+            tar_extra_args    = dict(required=False),
         ),
         add_file_common_args=True,
     )
@@ -192,6 +205,7 @@ def main():
     dest   = os.path.expanduser(module.params['dest'])
     copy   = module.params['copy']
     creates = module.params['creates']
+    tar_extra_args = module.params['tar_extra_args']
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -222,7 +236,7 @@ def main():
     if not os.access(os.path.dirname(dest), os.W_OK):
         module.fail_json(msg="Destination '%s' not writable" % (os.path.dirname(dest)))
 
-    handler = pick_handler(src, dest, module)
+    handler = pick_handler(src, dest, tar_extra_args, module)
 
     res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
