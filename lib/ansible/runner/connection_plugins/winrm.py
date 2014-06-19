@@ -158,11 +158,11 @@ class Connection(object):
             in_size = os.path.getsize(in_path)
             script_template = '''
                 $s = [System.IO.File]::OpenWrite("%s");
-                $s.Seek(%d, [System.IO.SeekOrigin]::Begin) | Out-Null;
+                [void]$s.Seek(%d, [System.IO.SeekOrigin]::Begin);
                 $b = [System.Convert]::FromBase64String("%s");
-                $s.Write($b, 0, $b.length) | Out-Null;
-                $s.SetLength(%d) | Out-Null;
-                $s.Close() | Out-Null;
+                [void]$s.Write($b, 0, $b.length);
+                [void]$s.SetLength(%d);
+                [void]$s.Close();
             '''
             # Determine max size of data we can pass per command.
             script = script_template % (powershell._escape(out_path), in_size, '', in_size)
