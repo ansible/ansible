@@ -159,6 +159,14 @@ def symmetric_difference(a, b):
 def union(a, b):
     return set(a).union(b)
 
+def min(a):
+    _min = __builtins__.get('min')
+    return _min(a);
+
+def max(a):
+    _max = __builtins__.get('max')
+    return _max(a);
+
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
     op_map = {
@@ -264,6 +272,8 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+            'min' : min,
+            'max' : max,
 
             # version comparison
             'version_compare': version_compare,
