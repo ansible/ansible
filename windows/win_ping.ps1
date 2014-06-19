@@ -19,14 +19,11 @@
 
 $params = Parse-Args $args;
 
-$data = 'pong';
-If ($params.data.GetType)
-{
-   $data = $params.data;
-}
+$data = Get-Attr $params "data" "pong";
 
 $result = New-Object psobject @{
     changed = $false
     ping = $data
 };
+
 Exit-Json $result;

@@ -19,21 +19,13 @@
 
 $params = Parse-Args $args;
 
-$path = $FALSE;
-If ($params.path.GetType)
-{
-   $path = $params.path;
-}
+$path = Get-Attr $params "path" $FALSE;
 If ($path -eq $FALSE)
 {
     Fail-Json (New-Object psobject) "missing required argument: path";
 }
 
-$get_md5 = $TRUE;
-If ($params.get_md5.GetType)
-{
-    $get_md5 = $params.get_md5 | ConvertTo-Bool;
-}
+$get_md5 = Get-Attr $params "get_md5" $TRUE | ConvertTo-Bool;
 
 $result = New-Object psobject @{
     stat = New-Object psobject
