@@ -86,17 +86,22 @@ if ($state -eq 'present') {
             Create-User $username $password
         }
         $result.changed = $true
+        $user_obj = Get-User $username
     }
     catch {
         Fail-Json $result $_.Exception.Message
     }
-    
 }
 else {
     # Remove user
     try {
-        Delete-User $bob
-        $result.changed = $true
+        if ($user_obj.GetType) {
+            Delete-User $user_obj
+            $result.changed = $true
+        }
+        else {
+            Set-Attr $result "msg" "User '$username' was not found"
+        }
     }
     catch {
         Fail-Json $result $_.Exception.Message
