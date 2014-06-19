@@ -1,0 +1,135 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Chatham Financial <oss@chathamfinancial.com>
+# (c) 2014, David Stygstra <david.stygstra@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: rabbitmq_cluster
+short_description: Manage RabbitMQ clustering
+description:
+  - Manage RabbitMQ clustering
+author: David Stygstra
+options:
+  node:
+    description:
+    - RabbitMQ node we wish to configure
+    required: false
+    default: rabbit
+  clusternode:
+    description:
+    - A RabbitMQ node in the cluster we wish to join
+    required: false
+  state:
+    description:
+    - Clustering state of this node
+    default: clustered
+    choices: [clustered, unclustered]
+'''
+
+EXAMPLES = '''
+# Ensure node is clustered with rabbit@host2
+- rabbitmq_cluster: clusternode=rabbit@host2 state=clustered
+
+# Ensure node is not in a cluster
+- rabbitmq_cluster: state=unclustered
+
+# Ensure rabbit@host1 is clustered with rabbit@host2
+- rabbitmq_cluster: node=rabbit@host1 clusternode=rabbit@host2 state=clustered
+'''
+
+import re
+
+
+class RabbitMqCluster(object):
+    def __init__(self, module, node):
+        self.module = module
+        self.node = node
+
+        self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+
+    def _exec(self, args, run_in_check_mode=False):
+        if not self.module.check_mode or run_in_check_mode:
+            cmd = [self._rabbitmqctl, '-q', '-n', self.node]
+            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
+            return out.splitlines()
+        return list()
+
+    def list(self):
+        status = self._exec(['cluster_status'], True)
+        status = '\n'.join(status)
+
+        # Matches node names like "rabbit@host1" or "'rabbit@example.com'".
+        # Assumes names contain no weird characters:
+        #   http://www.erlang.org/doc/reference_manual/data_types.html#id74687
+        nodes = re.findall(r"(?<=[\[,])(?:'[^@]|[a-z])[^@]*@[^\],]+", status)
+        nodes = set([n.strip("'") for n in nodes])
+
+        return list(nodes)
+
+    def in_cluster(self, clusternode):
+        return clusternode in self.list()
+
+    def in_any_cluster(self):
+        return len(self.list()) > 1
+
+    def join(self, clustername):
+        return self._exec(['stop_app']) + self._exec(['join_cluster', clustername]) + self._exec(['start_app'])
+
+    def reset(self):
+        return self._exec(['stop_app']) + self._exec(['reset']) + self._exec(['start_app'])
+
+
+def main():
+    arg_spec = dict(
+        node=dict(default='rabbit'),
+        clusternode=dict(default=None),
+        state=dict(default='clustered', choices=['clustered', 'unclustered']),
+    )
+
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        supports_check_mode=True
+    )
+
+    node = module.params['node']
+    clusternode = module.params['clusternode']
+    state = module.params['state']
+
+    rabbitmq_cluster = RabbitMqCluster(module, node)
+
+    changed = False
+    if state == 'present':
+        if clusternode is None:
+            module.fail_json(path=path,
+                             msg='clusternode required to join cluster')
+        if not rabbitmq_cluster.in_cluster(clusternode):
+            rabbitmq_cluster.join(clusternode)
+            changed = True
+    elif state == 'absent':
+        if rabbitmq_cluster.in_any_cluster():
+            rabbitmq_cluster.reset()
+            changed = True
+
+    module.exit_json(changed=changed, node=node, state=state)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
