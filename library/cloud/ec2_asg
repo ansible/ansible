@@ -70,8 +70,9 @@ options:
   tags:
     description:
       - List of tag dictionaries to use. Required keys are 'key', 'value'. Optional key is 'propagate_at_launch', which defaults to true.
-        required: false
-        default: None
+    required: false
+    default: None
+    version_added: "1.7"
 extends_documentation_fragment: aws
 """
 
