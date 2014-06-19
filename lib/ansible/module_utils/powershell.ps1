@@ -64,3 +64,26 @@ Function Fail-Json($obj, $message)
     echo $obj | ConvertTo-Json
     Exit 1
 }
+
+# Helper filter/pipeline function to convert a value to boolean following current
+# Ansible practices
+Function ConvertTo-Bool
+{
+    param(
+        [parameter(valuefrompipeline=$true)]
+        $obj
+    )
+
+    $boolean_strings = "yes", "on", "1", "true", 1
+    $obj_string = [string]$obj
+
+    if (($obj.GetType().Name -eq "Boolean" -and $obj) -or $boolean_strings -contains $obj_string.ToLower())
+    {
+        $true
+    }
+    Else
+    {
+        $false
+    }
+    return
+}
