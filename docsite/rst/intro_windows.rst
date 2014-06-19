@@ -120,23 +120,15 @@ bootstrapping!
 
 .. _getting_to_powershell_three_or_higher:
 
-Getting to Powershell 3.0 or higher on Remote Systems
-``````````````````````````````````````````````````````
+Getting to Powershell 3.0 or higher
+```````````````````````````````````
 
-Additionally, Powershell 3.0 or higher is needed for most modules.  You can actually use a minimal
-ansible example playbook to upgrade your windows systems from Powershell 2.0 to 3.0 in order to take
-advantage of the *other* ansible modules.
+Powershell 3.0 or higher is needed for most modules.  
 
-Looking at an ansible checkout, copy the examples/scripts/upgrade_to_ps3.ps1 script from the repo into
-your local directory, and run a playbook that looks like the following::
+Looking at an ansible checkout, copy the examples/scripts/upgrade_to_ps3.ps1 script onto the remote host
+and run a powershell console as an administrator:
 
-   - hosts: windows
-     gather_facts: no
-     tasks:
-       - script: upgrade_to_ps3.ps1
-
-The hosts in the above group will then be running a new enough version of Powershell to be managed
-by the full compliment of Ansible modules.
+    ./upgrade_to_ps3.ps1
 
 .. _what_windows_modules_are_available:
 
