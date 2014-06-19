@@ -1,6 +1,6 @@
 DOCUMENTATION = '''
 ---
-module: win_get_url
+module: win_feature
 version_added: "1.7"
 short_description: Fetches a file from a given URL
 description:
