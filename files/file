@@ -251,6 +251,9 @@ def main():
                 except OSError, e:
                     module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
+        if module.check_mode and not os.path.exists(path):
+            module.exit_json(dest=path, src=src, changed=changed)
+
         changed = module.set_fs_attributes_if_different(file_args, changed)
         module.exit_json(dest=path, src=src, changed=changed)
 
