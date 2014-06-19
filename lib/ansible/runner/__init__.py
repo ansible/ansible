@@ -1049,7 +1049,7 @@ class Runner(object):
                 output = output + ": %s" % result['stdout']
             raise errors.AnsibleError(output)
 
-        rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
+        rc = conn.shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')
         # Catch failure conditions, files should never be
         # written to locations in /.
         if rc == '/': 
