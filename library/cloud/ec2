@@ -1056,28 +1056,35 @@ def startstop_instances(module, ec2, instance_ids, state):
     """
     
     wait = module.params.get('wait')
+    termination_protection = module.boolean(module.params.get('termination_protection'))
     wait_timeout = int(module.params.get('wait_timeout'))
+
     changed = False
     instance_dict_array = []
     
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         module.fail_json(msg='instance_ids should be a list of instances, aborting')
 
-    # Check that our instances are not in the state we want to take them to
-    # and change them to our desired state
+    # Check (and eventually change) instances attributes and instances state
     running_instances_array = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
-           if inst.state != state:
-               instance_dict_array.append(get_instance_info(inst))
-               try:
-                   if state == 'running':
-                       inst.start()
-                   else:
-                       inst.stop()
-               except EC2ResponseError, e:
-                   module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
-               changed = True
+            # Check "termination_protection" attribute
+            if termination_protection is not None and inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
+                inst.modify_attribute('disableApiTermination', termination_protection)
+                changed = True
+
+            # Check instance state
+            if inst.state != state:
+                instance_dict_array.append(get_instance_info(inst))
+                try:
+                    if state == 'running':
+                        inst.start()
+                    else:
+                        inst.stop()
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
+                changed = True
 
     ## Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
@@ -1126,7 +1133,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             source_dest_check = dict(type='bool', default=True),
-            termination_protection = dict(type='bool', default=False),
+            termination_protection = dict(type='bool', default=None),
             state = dict(default='present'),
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
