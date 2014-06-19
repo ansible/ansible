@@ -63,16 +63,23 @@ If ($state -eq "present") {
 }
 Elseif ($state -eq "absent") {
     try {
-        $result = Remove-WindowsFeature -Name $name
+        if ($restart) {
+            $featureresult = Remove-WindowsFeature -Name $name -Restart
+        }
+        else {
+            $featureresult = Remove-WindowsFeature -Name $name
+        }
     }
     catch {
         Fail-Json $result $_.Exception.Message
     }
 }
 
-$feature_results = @()
-ForEach ($item in $result.FeatureResult) {
-    $feature_results += New-Object psobject @{
+# Loop through results and create a hash containing details about
+# each role/feature that is installed/removed
+$installed_features = @()
+ForEach ($item in $featureresult.FeatureResult) {
+    $installed_features += New-Object psobject @{
         id = $item.id.ToString()
         display_name = $item.DisplayName
         message = $item.Message.ToString()
