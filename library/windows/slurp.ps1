@@ -19,46 +19,28 @@
 
 $params = Parse-Args $args;
 
-$src = '';
-If ($params.src.GetType)
-{
-    $src = $params.src;
-}
-Else
-{
-    If ($params.path.GetType)
-    {
-        $src = $params.path;
-    }
-}
+$src = Get-Attr $params "src" (Get-Attr $params "path" $FALSE);
 If (-not $src)
 {
-    $result = New-Object psobject @{};
-    Fail-Json $result "missing required argument: src";
+    Fail-Json (New-Object psobject) "missing required argument: src";
 }
 
-If (Test-Path $src)
+If (Test-Path -PathType Leaf $src)
 {
-    If ((Get-Item $src).Directory) # Only files have the .Directory attribute.
-    {
-        $bytes = [System.IO.File]::ReadAllBytes($src);
-        $content = [System.Convert]::ToBase64String($bytes);
-
-        $result = New-Object psobject @{
-            changed = $false
-            encoding = "base64"
-        };
-        Set-Attr $result "content" $content;
-        Exit-Json $result;
-    }
-    Else
-    {
-        $result = New-Object psobject @{};
-        Fail-Json $result ("is a directory: " + $src);
-    }
+    $bytes = [System.IO.File]::ReadAllBytes($src);
+    $content = [System.Convert]::ToBase64String($bytes);
+    $result = New-Object psobject @{
+        changed = $false
+        encoding = "base64"
+        content = $content
+    };
+    Exit-Json $result;
+}
+ElseIf (Test-Path -PathType Container $src)
+{
+    Fail-Json (New-Object psobject) ("is a directory: " + $src);
 }
 Else
 {
-    $result = New-Object psobject @{};
-    Fail-Json $result ("file not found: " + $src);
+    Fail-Json (New-Object psobject) ("file not found: " + $src);
 }
