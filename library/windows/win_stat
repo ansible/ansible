@@ -27,7 +27,8 @@ description:
 options:
   path:
     description:
-      - The full path of the file/object to get the facts of
+      - The full path of the file/object to get the facts of; both forward and
+        back slashes are accepted.
     required: true
     default: null
     aliases: []
