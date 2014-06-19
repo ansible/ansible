@@ -952,13 +952,13 @@ def create_instances(module, ec2, override_count=None):
         for res in res_list:
             running_instances.extend(res.instances)
 
-        # Enabled by default by Amazon
-        if not source_dest_check:
+        # Enabled by default by AWS
+        if source_dest_check is False:
             for inst in res.instances:
                 inst.modify_attribute('sourceDestCheck', False)
 
-        # Disabled by default by Amazon
-        if termination_protection:
+        # Disabled by default by AWS
+        if termination_protection is True:
             for inst in res.instances:
                 inst.modify_attribute('disableApiTermination', True)
 
@@ -1054,9 +1054,10 @@ def startstop_instances(module, ec2, instance_ids, state):
     "changed" will be set to False.
 
     """
-    
-    wait = module.params.get('wait')
+
+    source_dest_check = module.boolean(module.params.get('source_dest_check'))
     termination_protection = module.boolean(module.params.get('termination_protection'))
+    wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
     changed = False
@@ -1069,6 +1070,11 @@ def startstop_instances(module, ec2, instance_ids, state):
     running_instances_array = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
+            # Check "termination_protection" attribute
+            if source_dest_check is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                inst.modify_attribute('sourceDestCheck', source_dest_check)
+                changed = True
+
             # Check "termination_protection" attribute
             if termination_protection is not None and inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
                 inst.modify_attribute('disableApiTermination', termination_protection)
@@ -1132,7 +1138,7 @@ def main():
             private_ip = dict(),
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
-            source_dest_check = dict(type='bool', default=True),
+            source_dest_check = dict(type='bool', default=None),
             termination_protection = dict(type='bool', default=None),
             state = dict(default='present'),
             exact_count = dict(type='int', default=None),
