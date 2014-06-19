@@ -28,10 +28,10 @@ function Get-User($user) {
 }
 
 function Create-User([string]$user, [string]$passwd) {
-   $user = $adsi.Create("User", $user)
-   $user.SetPassword($passwd)
-   $user.SetInfo()
-   $user
+   $adsiuser = $adsi.Create("User", $user)
+   $adsiuser.SetPassword($passwd)
+   $adsiuser.SetInfo()
+   $adsiuser
    return
 }
 
