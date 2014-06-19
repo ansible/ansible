@@ -177,6 +177,20 @@ options:
         version_added: "1.3"
         description:
             - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+    creategroup:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "1.7"
+        description:
+            - When C(yes), create group if it doesn't exist.
+    create_ssh_dir:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "1.7"
+        description:
+            - When C(yes), create a ssh directory (even if not creating an ssh key).
 '''
 
 EXAMPLES = '''
@@ -254,6 +268,8 @@ class User(object):
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
+        self.creategroup = module.params['creategroup']
+        self.create_ssh_dir = module.params['create_ssh_dir']
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
         else:
@@ -291,9 +307,14 @@ class User(object):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
-            cmd.append('-g')
-            cmd.append(self.group)
+                if self.creategroup:
+                    cmd.append('-U')
+                    cmd.append(self.group)
+                else:
+                    self.module.fail_json(msg="Group %s does not exist" % self.group)
+            else:
+                cmd.append('-g')
+                cmd.append(self.group)
         elif self.group_exists(self.name):
             # use the -N option (no user group) if a group already
             # exists with the same name as the user to prevent 
@@ -526,13 +547,7 @@ class User(object):
         if not os.path.exists(info[5]):
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
-        ssh_dir = os.path.dirname(ssh_key_file) 
-        if not os.path.exists(ssh_dir):
-            try:
-                os.mkdir(ssh_dir, 0700)
-                os.chown(ssh_dir, info[2], info[3])
-            except OSError, e:
-                return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
+        self.ssh_create_dir()
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
@@ -557,6 +572,17 @@ class User(object):
             os.chown(ssh_key_file, info[2], info[3])
             os.chown('%s.pub' % ssh_key_file, info[2], info[3])
         return (rc, out, err)
+
+    def ssh_create_dir(self):
+        ssh_key_file = self.get_ssh_key_path()
+        ssh_dir = os.path.dirname(ssh_key_file)
+        if not os.path.exists(ssh_dir):
+            try:
+                os.mkdir(ssh_dir, 0700)
+                os.chown(ssh_dir, info[2], info[3])
+                return True
+            except OSError, e:
+                return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
 
     def ssh_key_fingerprint(self):
         ssh_key_file = self.get_ssh_key_path()
@@ -1484,7 +1510,9 @@ def main():
             ssh_key_file=dict(default=None, type='str'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
             ssh_key_passphrase=dict(default=None, type='str'),
-            update_password=dict(default='always',choices=['always','on_create'],type='str')
+            update_password=dict(default='always',choices=['always','on_create'],type='str'),
+            creategroup=dict(default='no', type='bool'),
+            create_ssh_dir=dict(default='no', type='bool')
         ),
         supports_check_mode=True
     )
@@ -1551,6 +1579,10 @@ def main():
         result['uid'] = info[2]
         if user.groups is not None:
             result['groups'] = user.groups
+
+        if user.create_ssh_dir:
+            if user.create_dir():
+                result['changed'] = True
 
         # deal with ssh key
         if user.sshkeygen:
