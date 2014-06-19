@@ -77,7 +77,7 @@ In the powershell session, run the following to enable PS Remoting and set the e
     $  Enable-PSRemoting -Force
     $  Set-ExecutionPolicy RemoteSigned
 
-If your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile::
+If your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile:
 
  .. code-block:: bash
 
@@ -97,9 +97,9 @@ Alternatively, a self-signed SSL certificate can be generated in powershell usin
 
 .. code-block:: bash
 
-    $  Create the https listener
+    #  Create the https listener
     $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
-    $  Delete the http listener
+    #  Delete the http listener
     $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
     
 It's time to verify things are working::
