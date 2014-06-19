@@ -144,7 +144,7 @@ Latest Release Via Yum
 ++++++++++++++++++++++
 
 RPMs are available from yum for `EPEL
-<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
+<http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
 Fedora distributions. 
 
 Ansible itself can manage earlier operating
