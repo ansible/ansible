@@ -10,3 +10,5 @@
     - { role: test_win_slurp, tags: test_win_slurp }
     - { role: test_win_fetch, tags: test_win_fetch }
     - { role: test_win_stat, tags: test_win_stat }
+    - { role: test_win_get_url, tags: test_win_get_url }
+    - { role: test_win_msi, tags: test_win_msi }

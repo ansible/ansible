@@ -1,0 +1,41 @@
+# test code for the win_msi module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: use win_get_url module to download msi
+  win_get_url: url=http://downloads.sourceforge.net/project/sevenzip/7-Zip/9.22/7z922-x64.msi dest='C:\7z922-x64.msi'
+  register: win_get_url_result
+
+- name: install 7zip msi
+  win_msi: path="{{ win_get_url_result.win_get_url.dest }}"
+  register: win_msi_install_result
+
+- name: check win_msi install result
+  assert: 
+    that:
+      - "not win_msi_install_result|failed"
+      - "win_msi_install_result|changed"
+
+- name: uninstall 7zip msi
+  win_msi: path="{{ win_get_url_result.win_get_url.dest }}" state=absent
+  register: win_msi_uninstall_result
+
+- name: check win_msi uninstall result
+  assert: 
+    that:
+      - "not win_msi_uninstall_result|failed"
+      - "win_msi_uninstall_result|changed"
