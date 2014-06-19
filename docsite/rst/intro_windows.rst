@@ -102,7 +102,7 @@ Alternatively, a self-signed SSL certificate can be generated in powershell usin
     #  Delete the http listener
     $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
 
-Again, if your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile:
+Again, if your Windows firewall is enabled, the following command to allow firewall access to the HTTPS listener:
 
  .. code-block:: bash
 
