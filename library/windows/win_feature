@@ -1,0 +1,54 @@
+DOCUMENTATION = '''
+---
+module: win_get_url
+version_added: "1.7"
+short_description: Fetches a file from a given URL
+description:
+     - Fetches a file from a URL and saves to locally
+options:
+  name:
+    description:
+      - Names of roles or features to install as a single feature or a comma-separated list of features
+    required: true
+    default: null
+    aliases: []
+  state:
+    description:
+      - State of the features or roles on the system
+    required: false
+    choices: 
+      - present
+      - absent
+    default: present
+    aliases: []
+  restart:
+    description:
+      - Restarts the computer automatically when installation is complete, if restarting is required by the roles or features installed.
+    choices:
+      - yes
+      - no
+    default: null
+    aliases: []
+author: Paul Durivage
+'''
+
+EXAMPLES = '''
+# This installs IIS.
+# The names of features available for install can be run by running the following Powershell Command:
+# PS C:\Users\Administrator> Import-Module ServerManager; Get-WindowsFeature
+$ ansible -i hosts -m win_feature -a "name=Web-Server" all
+$ ansible -i hosts -m win_feature -a "name=Web-Server,Web-Common-Http" all
+
+
+# Playbook example
+---
+- name: Install IIS
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install IIS
+      win_feature:
+        name: "Web-Server"
+        state: absent
+        restart: yes
+'''
