@@ -180,6 +180,20 @@ Jinja2 provides a useful 'default' filter, that is often a better approach to fa
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+.. _list_filters:
+
+List Filters
+--------------------
+.. versionadded:: 1.7
+
+To get the minimum value from list of numbers::
+
+    {{ list1 | min }}
+
+To get the maximum value from a list of numbers::
+
+    {{ [3, 4, 2] | max }}
+
 .. _set_theory_filters:
 
 Set Theory Filters

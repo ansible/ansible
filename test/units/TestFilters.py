@@ -175,3 +175,11 @@ class TestFilters(unittest.TestCase):
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.0, 1.1, '<='))
 
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))
+
+    def test_min(self):
+        a = ansible.runner.filter_plugins.core.min([3, 2, 5, 4])
+        assert a == 2
+
+    def test_max(self):
+        a = ansible.runner.filter_plugins.core.max([3, 2, 5, 4])
+        assert a == 5
