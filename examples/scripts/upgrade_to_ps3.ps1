@@ -32,7 +32,6 @@ function download-file
     $client = new-object system.net.WebClient
     $client.Headers.Add("user-agent", "PowerShell")
     $client.downloadfile($path, $local)
-    write-host "file downloaded successfully"
 }
 
 if (!(test-path $powershellpath))
@@ -56,6 +55,7 @@ if (!(test-path $powershellpath))
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
 {
+    write-host "OS is new; upgrade not needed."
     Exit
 }
 
@@ -78,5 +78,6 @@ else
 
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
-
+write-host "Download successful"
+exit
 ."$powershellpath\$filename" /quiet /log "C:\powershell\install.log"
