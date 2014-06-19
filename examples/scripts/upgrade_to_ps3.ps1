@@ -78,5 +78,5 @@ else
 
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
-write-host "$powershellpath\$filename"
-."$powershellpath\$filename" /quiet /log "C:\powershell\install.log"
+
+Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet, /log "C:\powershell\install.log"
