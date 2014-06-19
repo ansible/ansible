@@ -101,6 +101,13 @@ Alternatively, a self-signed SSL certificate can be generated in powershell usin
     $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
     #  Delete the http listener
     $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
+
+Again, if your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile:
+
+ .. code-block:: bash
+
+    # Windows 2008 / 2008R2 / 2012 / 2012R2
+    $  netsh advfirewall firewall add rule name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
     
 It's time to verify things are working::
 
