@@ -61,8 +61,6 @@ If (-not $params.password.GetType)
     Fail-Json $result "missing required arguments: password"
 }
 
-$extra_args = $params "extra_args" "" 
-
 If ($params.state) {
     $state = $params.state.ToString().ToLower()
     If (($state -ne 'present') -and ($state -ne 'absent')) {
@@ -77,9 +75,6 @@ $username = Get-Attr $params "name"
 $password = Get-Attr $params "password"
 
 $user_obj = Get-User $username
-if (-not $user_obj) {
-    Fail-Json $result "Could not find user: $username"
-}
 
 if ($state -eq 'present') {
     # Add or update user
