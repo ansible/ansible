@@ -50,7 +50,12 @@ If ($params.restart) {
 
 If ($state -eq "present") {
     try {
-        $result = Add-WindowsFeature -Name $name
+        if ($restart) {
+            $featureresult = Add-WindowsFeature -Name $name -Restart
+        }
+        else {
+            $featureresult = Add-WindowsFeature -Name $name
+        }
     }
     catch {
         Fail-Json $result $_.Exception.Message
