@@ -47,6 +47,23 @@ Function Set-Attr($obj, $name, $value)
     $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
 }
 
+# Helper function to get an "attribute" from a psobject instance in powershell.
+# This is a convenience to make getting Members from an object easier and
+# slightly more pythonic
+# Example: $attr = Get-Attr $response "code" -default "1"
+Function Get-Attr($obj, $name, $default = $null)
+{
+    If ($obj.$name.GetType)
+    {
+        $obj.$name
+    }
+    Else
+    {
+        $default
+    }
+    return
+}
+
 # Helper function to convert a powershell object to JSON to echo it, exiting
 # the script
 Function Exit-Json($obj)
