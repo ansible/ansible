@@ -913,12 +913,6 @@ def create_instances(module, ec2, override_count=None):
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
-        if instance_tags:
-            try:
-                ec2.create_tags(instids, instance_tags)
-            except boto.exception.EC2ResponseError, e:
-                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
-
         # wait here until the instances are up
         num_running = 0
         wait_timeout = time.time() + wait_timeout
@@ -949,6 +943,13 @@ def create_instances(module, ec2, override_count=None):
         if not source_dest_check:
             for inst in res.instances:
                 inst.modify_attribute('sourceDestCheck', False)
+
+        # Leave this as late as possible to try and avoid InvalidInstanceID.NotFound
+        if instance_tags:
+            try:
+                ec2.create_tags(instids, instance_tags)
+            except boto.exception.EC2ResponseError, e:
+                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
 
     instance_dict_array = []
     created_instance_ids = []
