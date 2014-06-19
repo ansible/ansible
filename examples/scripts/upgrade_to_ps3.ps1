@@ -17,7 +17,6 @@
 # 6.2 is 2012
 # 6.3 is 2012 R2
 
-Start-Transcript "C:\powershell\scriptlog.txt"
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
@@ -33,6 +32,7 @@ function download-file
     $client = new-object system.net.WebClient
     $client.Headers.Add("user-agent", "PowerShell")
     $client.downloadfile($path, $local)
+    write-host "file downloaded successfully"
 }
 
 if (!(test-path $powershellpath))
@@ -78,5 +78,5 @@ else
 
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
-Stop-Transcript
+
 ."$powershellpath\$filename" /quiet /log "C:\powershell\install.log"
