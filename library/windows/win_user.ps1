@@ -56,11 +56,6 @@ If (-not $params.name.GetType)
     Fail-Json $result "missing required arguments: name"
 }
 
-If (-not $params.password.GetType)
-{
-    Fail-Json $result "missing required arguments: password"
-}
-
 If ($params.state) {
     $state = $params.state.ToString().ToLower()
     If (($state -ne 'present') -and ($state -ne 'absent')) {
@@ -69,6 +64,11 @@ If ($params.state) {
 }
 Elseif (!$params.state) {
     $state = "present"
+}
+
+If ((-not $params.password.GetType) -and ($state -eq 'present'))
+{
+    Fail-Json $result "missing required arguments: password"
 }
 
 $username = Get-Attr $params "name"
