@@ -31,23 +31,23 @@ On a Linux control machine::
 Inventory
 `````````
 
-Ansible's windows support relies on a few standard variables to indicate the username, password, and connection type (windows) of the remote hosts.  These variables are most easily set up in inventory.  This is used instead of SSH-keys or passwords as normally fed into Ansible.
+Ansible's windows support relies on a few standard variables to indicate the username, password, and connection type (windows) of the remote hosts.  These variables are most easily set up in inventory.  This is used instead of SSH-keys or passwords as normally fed into Ansible::
 
     [windows]
     winserver1.example.com
-    winserver2.example.com 
+    winserver2.example.com
 
 In group_vars/windows.yml, define the following inventory variables::
 
     ansible-vault edit group_vars/windows.yml
 
-    ansible_ssh_user: Administrator 
+    ansible_ssh_user: Administrator
     ansible_ssh_pass: SekritPasswordGoesHere
     ansible_ssh_port: 5986
     ansible_connection: winrm
 
 Notice that the ssh_port is not actually for SSH, but this is a holdover from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
-    
+
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
 Test your configuration like so, by trying to contact your Windows nodes.  Note this is not an ICMP ping, but tests the Ansible
@@ -79,12 +79,12 @@ In the powershell session, run the following to enable PS Remoting and set the e
 
 If your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile:
 
- .. code-block:: bash
+.. code-block:: bash
 
-    # Windows 2012 / 2012R2
+    #  Windows 2012 / 2012R2
     $  Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
 
-    # Windows 2008 / 2008R2
+    #  Windows 2008 / 2008R2
     $  NetSH ADVFirewall Set AllProfiles Settings remotemanagement Enable
 
 By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
@@ -99,16 +99,17 @@ Alternatively, a self-signed SSL certificate can be generated in powershell usin
 
     #  Create the https listener
     $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
+
     #  Delete the http listener
     $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
 
 Again, if your Windows firewall is enabled, the following command to allow firewall access to the HTTPS listener:
 
- .. code-block:: bash
+.. code-block:: bash
 
-    # Windows 2008 / 2008R2 / 2012 / 2012R2
+    #  Windows 2008 / 2008R2 / 2012 / 2012R2
     $  netsh advfirewall firewall add rule name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
-    
+
 It's time to verify things are working::
 
     ansible windows [-i inventory] -m ping --ask-vault-pass
@@ -124,7 +125,7 @@ Getting to Powershell 3.0 or higher on Remote Systems
 
 Additionally, Powershell 3.0 or higher is needed for most modules.  You can actually use a minimal
 ansible example playbook to upgrade your windows systems from Powershell 2.0 to 3.0 in order to take
-advantage of the *other* ansible modules.  
+advantage of the *other* ansible modules.
 
 Looking at an ansible checkout, copy the examples/scripts/upgrade_to_ps3.ps1 script from the repo into
 your local directory, and run a playbook that looks like the following::
@@ -171,10 +172,11 @@ Windows modules live in a "windows/" subfolder in the Ansible "library/" subtree
 Modules (ps1 files) should start as follows::
 
     #!powershell
+    # <license>
+
     # WANT_JSON
     # POWERSHELL_COMMON
 
-    # <license>
     # code goes here, reading in stdin as JSON and outputting JSON
 
 The above magic is neccessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few mpmore useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
@@ -189,7 +191,7 @@ You Must Have a Linux Control Machine
 Note running Ansible from a Windows control machine is NOT a goal of the project.  Refrain from asking for this feature,
 as it limits what technologies, features, and code we can use in the main project in the future.  A Linux control machine
 will be required to manage Windows hosts.
-  
+
 Cygwin is not supported, so please do not ask questions about Ansible running from Cygwin.
 
 .. _windows_facts:
@@ -240,11 +242,11 @@ And for a final example, here's how to use the win_stat module to test for file 
         - debug: var=stat_file
 
         - name: check stat_file result
-          assert: 
-              that: 
+          assert:
+              that:
                  - "stat_file.stat.exists"
                  - "not stat_file.stat.isdir"
-                 - "stat_file.stat.size > 0" 
+                 - "stat_file.stat.size > 0"
                  - "stat_file.stat.md5"
 
 Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", and "fetch" modules are also available.  These modules do not start with a "win" prefix.
