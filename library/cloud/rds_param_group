@@ -159,10 +159,15 @@ def set_parameter(param, value, immediate):
 
     elif param.type == 'integer':
         if isinstance(value, basestring):
-            for modifier in INT_MODIFIERS.keys():
-                if value.endswith(modifier):
-                    converted_value = int(value[:-1]) * INT_MODIFIERS[modifier]
-            converted_value = int(converted_value)
+            try:
+                for modifier in INT_MODIFIERS.keys():
+                    if value.endswith(modifier):
+                        converted_value = int(value[:-1]) * INT_MODIFIERS[modifier]
+                converted_value = int(converted_value)
+            except ValueError:
+                # may be based on a variable (ie. {foo*3/4}) so
+                # just pass it on through to boto
+                converted_value = str(value)
         elif type(value) == bool:
             converted_value = 1 if value else 0
         else:
@@ -190,7 +195,16 @@ def modify_group(group, params, immediate=False):
             param = group[key]
             new_value = new_params[key]
 
-            if param.value != new_value:
+            try:
+                old_value = param.value
+            except ValueError:
+                # some versions of boto have problems with retrieving
+                # integer values from params that may have their value
+                # based on a variable (ie. {foo*3/4}), so grab it in a
+                # way that bypasses the property functions
+                old_value = param._value
+
+            if old_value != new_value:
                 if not param.is_modifiable:
                     raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
