@@ -17,6 +17,7 @@
 # 6.2 is 2012
 # 6.3 is 2012 R2
 
+Start-Transcript "C:\powershell\scriptlog.txt"
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
@@ -77,5 +78,5 @@ else
 
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
-
-."$powershellpath\$filename" /quiet
+Stop-Transcript
+."$powershellpath\$filename" /quiet /log "C:\powershell\install.log"
