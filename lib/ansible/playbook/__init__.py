@@ -474,17 +474,19 @@ class PlayBook(object):
                 facts = result.get('ansible_facts', {})
                 self.SETUP_CACHE[host].update(facts)
             if task.register:
+                register = template(play.basedir, task.register, task.module_vars)
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                self.SETUP_CACHE[host][register] = result
 
         # also have to register some failed, but ignored, tasks
         if task.ignore_errors and task.register:
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
+                register = template(play.basedir, task.register, task.module_vars)
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                self.SETUP_CACHE[host][register] = result
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
