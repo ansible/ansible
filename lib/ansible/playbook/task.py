@@ -278,7 +278,7 @@ class Task(object):
                 self.tags.append(apply_tags)
             elif type(apply_tags) in [ int, float ]:
                 self.tags.append(str(apply_tags))
-            elif type(apply_tags) == list:
+            elif isinstance(apply_tags, list):
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
 

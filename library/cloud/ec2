@@ -499,7 +499,7 @@ def find_running_instances_by_count_tag(module, ec2, count_tag):
 def _set_none_to_blank(dictionary):
     result = dictionary
     for k in result.iterkeys():
-        if type(result[k]) == dict:
+        if isinstance(result[k], dict):
             result[k] = _set_non_to_blank(result[k])
         elif not result[k]:
             result[k] = ""
@@ -748,7 +748,7 @@ def create_instances(module, ec2, override_count=None):
         # Here we try to lookup the group id from the security group name - if group is set.
         if group_name:
             grp_details = ec2.get_all_security_groups()
-            if type(group_name) == list:
+            if isinstance(group_name, list):
                 group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
             elif type(group_name) == str:
                 for grp in grp_details:

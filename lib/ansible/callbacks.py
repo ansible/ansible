@@ -390,7 +390,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_ok(host, res)
 
     def on_unreachable(self, host, res):
-        if type(res) == dict:
+        if isinstance(res, dict):
             res = res.get('msg','')
         display("%s | FAILED => %s" % (host, res), stderr=True, color='red', runner=self.runner)
         if self.options.tree:
@@ -456,7 +456,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_unreachable(self, host, results):
         item = None
-        if type(results) == dict:
+        if isinstance(results, dict):
             item = results.get('item', None)
         if item:
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)

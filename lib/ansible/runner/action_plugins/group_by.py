@@ -61,7 +61,7 @@ class ActionModule(object):
             data.update(inject)
             data.update(inject['hostvars'][host])
             conds = self.runner.conditional
-            if type(conds) != list:
+            if not isinstance(conds, list):
                 conds = [ conds ]
             next_host = False
             for cond in conds:

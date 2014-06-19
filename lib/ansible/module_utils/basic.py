@@ -611,7 +611,7 @@ class AnsibleModule(object):
                 self.fail_json(msg="internal error: required and default are mutally exclusive for %s" % k)
             if aliases is None:
                 continue
-            if type(aliases) != list:
+            if not isinstance(aliases, list):
                 self.fail_json(msg='internal error: aliases must be a list')
             for alias in aliases:
                 self._legal_inputs.append(alias)
@@ -691,7 +691,7 @@ class AnsibleModule(object):
             choices = v.get('choices',None)
             if choices is None:
                 continue
-            if type(choices) == list:
+            if isinstance(choices, list):
                 if k in self.params:
                     if self.params[k] not in choices:
                         choices_str=",".join([str(c) for c in choices])
