@@ -37,8 +37,8 @@ Else {
 
 If ($params.state) {
     $state = $params.state.ToString().ToLower()
-    If (!($state -eq 'present') -or ($state -eq 'absent')) {
-        Fail-Json $result "state must be 'present' or 'absent'"
+    If (($state -ne 'present') -and ($state -ne 'absent')) {
+        Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
     }
 }
 
