@@ -46,6 +46,7 @@ def _escape(value, include_vars=False):
 
 def _encode_script(script, as_list=False):
     '''Convert a PowerShell script to a single base64-encoded command.'''
+    script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
     encoded_script = base64.b64encode(script.encode('utf-16-le'))
     cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
     if as_list:
