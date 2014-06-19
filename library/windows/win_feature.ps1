@@ -40,13 +40,20 @@ If ($params.state) {
         Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
     }
 }
+Elseif (!$params.state) {
+    $state = "present"
+}
+
+If ($params.restart) {
+    $restart = $params.restart | ConvertTo-Bool
+}
 
 If ($state -eq "present") {
     try {
         $result = Add-WindowsFeature -Name $name
     }
     catch {
-        Fail-Json $_.Exception.Message
+        Fail-Json $result $_.Exception.Message
     }
 }
 Elseif ($state -eq "absent") {
@@ -54,26 +61,28 @@ Elseif ($state -eq "absent") {
         $result = Remove-WindowsFeature -Name $name
     }
     catch {
-        Fail-Json $_.Exception.Message
+        Fail-Json $result $_.Exception.Message
     }
-}
-Else {
-    $state = "present"
 }
 
 $feature_results = @()
 ForEach ($item in $result.FeatureResult) {
     $feature_results += New-Object psobject @{
         id = $item.id.ToString()
+        display_name = $item.DisplayName
         message = $item.Message.ToString()
         restart_needed = $item.RestartNeeded.ToString()
         skip_reason = $item.SkipReason.ToString()
-        success = $item.Success
+        success = $item.Success.ToString()
     }
 }
-Set-Attr $result.win_feature "feature_result" $feature_results
-Set-Attr $result.win_feature "success" $result.Success
-Set-Attr $result.win_feature "exitcode" $result.ExitCode.ToString()
-Set-Attr $result.win_feature "restart_needed" $result.RestartNeeded.ToString()
+Set-Attr $result "feature_result" $installed_features
+Set-Attr $result "feature_success" $featureresult.Success.ToString()
+Set-Attr $result "feature_exitcode" $featureresult.ExitCode.ToString()
+Set-Attr $result "feature_restart_needed" $featureresult.RestartNeeded.ToString()
+
+If ($result.feature_result.Length -gt 0) {
+    $result.changed = $true
+}
 
 Exit-Json $result;
