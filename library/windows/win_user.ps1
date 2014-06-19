@@ -48,7 +48,7 @@ function Delete-User($user) {
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
-    changed = false
+    changed = $false
 };
 
 If (-not $params.name.GetType)
