@@ -101,7 +101,7 @@ class Connection(object):
         if exc:
             raise exc
 
-    def _winrm_exec(self, command, args, from_exec=False):
+    def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
             vvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
         else:
@@ -154,9 +154,23 @@ class Connection(object):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        buffer_size = 1024 # FIXME: Find max size or optimize.
         with open(in_path) as in_file:
             in_size = os.path.getsize(in_path)
+            script_template = '''
+                $s = [System.IO.File]::OpenWrite("%s");
+                $s.Seek(%d, [System.IO.SeekOrigin]::Begin) | Out-Null;
+                $b = [System.Convert]::FromBase64String("%s");
+                $s.Write($b, 0, $b.length) | Out-Null;
+                $s.SetLength(%d) | Out-Null;
+                $s.Close() | Out-Null;
+            '''
+            # Determine max size of data we can pass per command.
+            script = script_template % (powershell._escape(out_path), in_size, '', in_size)
+            cmd = powershell._encode_script(script)
+            # Encode script with no data, subtract its length from 8190 (max
+            # windows command length), divide by 2.67 (UTF16LE base64 command
+            # encoding), then by 1.35 again (data base64 encoding).
+            buffer_size = int(((8190 - len(cmd)) / 2.67) / 1.35)
             for offset in xrange(0, in_size, buffer_size):
                 try:
                     out_data = in_file.read(buffer_size)
@@ -164,16 +178,7 @@ class Connection(object):
                         if out_data.lower().startswith('#!powershell') and not out_path.lower().endswith('.ps1'):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
-                    script = '''
-                        $bufferSize = %d;
-                        $stream = [System.IO.File]::OpenWrite("%s");
-                        $stream.Seek(%d, [System.IO.SeekOrigin]::Begin) | Out-Null;
-                        $data = "%s";
-                        $buffer = [System.Convert]::FromBase64String($data);
-                        $stream.Write($buffer, 0, $buffer.length) | Out-Null;
-                        $stream.SetLength(%d) | Out-Null;
-                        $stream.Close() | Out-Null;
-                    ''' % (buffer_size, powershell._escape(out_path), offset, b64_data, in_size)
+                    script = script_template % (powershell._escape(out_path), offset, b64_data, in_size)
                     vvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self.host)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
