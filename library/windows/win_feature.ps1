@@ -58,6 +58,9 @@ Elseif ($state -eq "absent") {
         Fail-Json $_.Exception.Message
     }
 }
+Else {
+    $state = "present"
+}
 
 $feature_results = @()
 ForEach ($item in $result.FeatureResult) {
