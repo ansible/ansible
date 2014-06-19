@@ -1,7 +1,7 @@
 #!powershell
-# (c) 2014, Matt Martz <matt@sivel.net>, and others
-#
 # This file is part of Ansible
+#
+# Copyright 2014, Paul Durivage <paul.durivage@rackspace.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,13 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject;
-Set-Attr $result "changed" $false;
+$result = New-Object psobject @{
+    changed = false
+};
 
-If (-not $params.username.GetType)
+If (-not $params.name.GetType)
 {
-    Fail-Json $result "missing required arguments: username"
+    Fail-Json $result "missing required arguments: name"
 }
 
 If (-not $params.password.GetType)
@@ -34,43 +35,77 @@ If (-not $params.password.GetType)
     Fail-Json $result "missing required arguments: password"
 }
 
-$extra_args = ""
-If ($params.extra_args.GetType)
-{
-    $extra_args = $params.extra_args;
+$extra_args = $params "extra_args" "" 
+
+If ($params.state) {
+    $state = $params.state.ToString().ToLower()
+    If (($state -ne 'present') -and ($state -ne 'absent')) {
+        Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
+    }
+}
+Elseif (!$params.state) {
+    $state = "present"
 }
 
-If ($params.creates.GetType -and $params.state.GetType -and $params.state -ne "absent")
-{
-    If (Does-User-Exist $params.username)
-    {
-        Exit-Json $result;
+$username = Get-Attr $params "name"
+$password = Get-Attr $params "password"
+
+$user_obj = Get-User $username
+if (-not $user_obj) {
+    Fail-Json $result "Could not find user: $username"
+}
+
+if ($state -eq 'present') {
+    # Add or update user
+    try {
+        if ($user_obj) {
+            Update-Password $user_obj $password
+        }
+        else {
+            Create-User $username $password
+        }
+        $result.changed = $true
+    }
+    catch {
+        Fail-Json $result $_.Exception.Message
+    }
+    
+}
+else {
+    # Remove user
+    try {
+        Delete-User $bob
+        $result.changed = $true
+    }
+    catch {
+        Fail-Json $result $_.Exception.Message
     }
 }
 
-$logfile = [IO.Path]::GetTempFileName();
-if ($params.state.GetType -and $params.state -eq "absent")
-{
-    NET USER $params.username $params.password /ADD
+$adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
+
+function Get-User($user) {
+    $adsi.Children | where {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
+    return
 }
 
-Set-Attr $result "changed" $true;
+function Create-User([string]$user, [string]$passwd) {
+   $user = $adsi.Create("User", $user)
+   $user.SetPassword($passwd)
+   $user.SetInfo()
+   $user
+   return
+}
 
-$logcontents = Get-Content $logfile;
-Remove-Item $logfile;
+function Update-Password($user, [string]$passwd) {
+    $user.SetPassword($passwd)
+    $user.SetInfo()
+}
 
-Set-Attr $result "log" $logcontents;
+function Delete-User($user) {
+    $adsi.delete("user", $user.Name.Value)
+}
+
+Set-Attr $result "user" $user_obj; # Soemthing goes here.
 
 Exit-Json $result;
-
-Function Does-User-Exist($username)
-{
-$objComputer = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
-
-$colUsers = ($objComputer.psbase.children |
-    Where-Object {$_.psBase.schemaClassName -eq "User"} |
-        Select-Object -expand Name)
-
-$blnFound = $colUsers -eq $username
-
-}
