@@ -79,7 +79,7 @@ $user_obj = Get-User $username
 if ($state -eq 'present') {
     # Add or update user
     try {
-        if ($user_obj) {
+        if ($user_obj.GetType) {
             Update-Password $user_obj $password
         }
         else {
