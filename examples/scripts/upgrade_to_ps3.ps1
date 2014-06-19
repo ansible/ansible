@@ -79,4 +79,4 @@ else
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
 
-Start-Process -FilePath $powershellpath\$filename -WindowStyle Hidden 
+Start-Process -FilePath "$powershell\$filename" -ArgumentList /quiet
