@@ -19,6 +19,32 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+########
+$adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
+
+function Get-User($user) {
+    $adsi.Children | where {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
+    return
+}
+
+function Create-User([string]$user, [string]$passwd) {
+   $user = $adsi.Create("User", $user)
+   $user.SetPassword($passwd)
+   $user.SetInfo()
+   $user
+   return
+}
+
+function Update-Password($user, [string]$passwd) {
+    $user.SetPassword($passwd)
+    $user.SetInfo()
+}
+
+function Delete-User($user) {
+    $adsi.delete("user", $user.Name.Value)
+}
+########
+
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
@@ -82,30 +108,9 @@ else {
     }
 }
 
-$adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
-
-function Get-User($user) {
-    $adsi.Children | where {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
-    return
-}
-
-function Create-User([string]$user, [string]$passwd) {
-   $user = $adsi.Create("User", $user)
-   $user.SetPassword($passwd)
-   $user.SetInfo()
-   $user
-   return
-}
-
-function Update-Password($user, [string]$passwd) {
-    $user.SetPassword($passwd)
-    $user.SetInfo()
-}
-
-function Delete-User($user) {
-    $adsi.delete("user", $user.Name.Value)
-}
-
-Set-Attr $result "user" $user_obj; # Soemthing goes here.
+# Set-Attr $result "user" $user_obj
+Set-Attr $result "user_name" $user_obj.Name
+Set-Attr $result "user_fullname" $user_obj.FullName
+Set-Attr $result "user_path" $user_obj.Path
 
 Exit-Json $result;
