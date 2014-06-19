@@ -24,7 +24,6 @@ Import-Module Servermanager;
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
-    win_feature = New-Object psobject
     changed = $false
 }
 
