@@ -178,7 +178,8 @@ class _jinja2_vars(object):
                 raise KeyError("undefined variable: %s" % varname)
         var = self.vars[varname]
         # HostVars is special, return it as-is
-        if isinstance(var, dict) and type(var) != dict:
+        from ansible.runner import HostVars
+        if isinstance(var, HostVars):
             return var
         else:
             return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
