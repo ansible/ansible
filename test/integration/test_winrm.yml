@@ -8,3 +8,4 @@
     - { role: test_win_ping, tags: test_win_ping }
     - { role: test_win_slurp, tags: test_win_slurp }
     - { role: test_win_fetch, tags: test_win_fetch }
+    - { role: test_win_stat, tags: test_win_stat }
