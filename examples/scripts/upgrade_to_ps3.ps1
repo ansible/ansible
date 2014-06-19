@@ -28,6 +28,7 @@ $powershellpath = "C:\powershell"
 
 function download-file
 {
+    Get-Process | Out-File c:\powershell\whatisrunningrightnow.txt
     param ([string]$path, [string]$local)
     $client = new-object system.net.WebClient
     $client.Headers.Add("user-agent", "PowerShell")
@@ -78,6 +79,5 @@ else
 
 $FileName = $DownLoadUrl.Split('/')[-1]
 download-file $downloadurl "$powershellpath\$filename"
-write-host "Download successful"
-exit
+
 ."$powershellpath\$filename" /quiet /log "C:\powershell\install.log"
