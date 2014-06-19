@@ -288,14 +288,21 @@ def create_vpc(module, vpc_conn):
             pending = True
             wait_timeout = time.time() + wait_timeout
             while wait and wait_timeout > time.time() and pending:
-                pvpc = vpc_conn.get_all_vpcs(vpc.id)
-                if hasattr(pvpc, 'state'):
-                    if pvpc.state == "available":
-                        pending = False
-                elif hasattr(pvpc[0], 'state'):
-                    if pvpc[0].state == "available":
-                        pending = False
-                time.sleep(5)
+                try:
+                    pvpc = vpc_conn.get_all_vpcs(vpc.id)
+                    if hasattr(pvpc, 'state'):
+                        if pvpc.state == "available":
+                            pending = False
+                    elif hasattr(pvpc[0], 'state'):
+                        if pvpc[0].state == "available":
+                            pending = False
+                # sometimes vpc_conn.create_vpc() will return a vpc that can't be found yet by vpc_conn.get_all_vpcs()
+                # when that happens, just wait a bit longer and try again
+                except boto.exception.BotoServerError, e:
+                    if e.error_code != 'InvalidVpcID.NotFound':
+                        raise
+                if pending:
+                    time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
                 module.fail_json(msg = "wait for vpc availability timeout on %s" % time.asctime())
