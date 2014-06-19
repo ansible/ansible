@@ -73,8 +73,8 @@ ForEach ($item in $result.FeatureResult) {
     }
 }
 Set-Attr $result.win_feature "feature_result" $feature_results
-Set-Attr $result.win_feature "success" result.Success
-Set-Attr $result.win_feature "exitcode" result.ExitCode.ToString()
-Set-Attr $result.win_feature "restart_needed" result.RestartNeeded.ToString()
+Set-Attr $result.win_feature "success" $result.Success
+Set-Attr $result.win_feature "exitcode" $result.ExitCode.ToString()
+Set-Attr $result.win_feature "restart_needed" $result.RestartNeeded.ToString()
 
 Exit-Json $result;
