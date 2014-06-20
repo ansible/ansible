@@ -1296,9 +1296,18 @@ class HPUX(Hardware):
         data = int(re.sub(' +',' ',out).split(' ')[5].strip())
         self.facts['memfree_mb'] = pagesize * data / 1024 / 1024
         if self.facts['architecture'] == '9000/800':
-            rc, out, err = module.run_command("grep Physical /var/adm/syslog/syslog.log")
-            data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
-            self.facts['memtotal_mb'] = int(data) / 1024
+            try:
+                rc, out, err = module.run_command("grep Physical /var/adm/syslog/syslog.log")
+                data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
+                self.facts['memtotal_mb'] = int(data) / 1024
+            except AttributeError:
+                #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
+                #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
+                if os.access("/dev/kmem", os.R_OK):
+                    rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
+                    if not err:
+                      data = out
+                      self.facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
