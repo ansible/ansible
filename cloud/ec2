@@ -570,12 +570,16 @@ def get_instance_info(inst):
                      'root_device_type': inst.root_device_type,
                      'root_device_name': inst.root_device_name,
                      'state': inst.state,
-                     'hypervisor': inst.hypervisor,
-                     'ebs_optimized': inst.ebs_optimized}
+                     'hypervisor': inst.hypervisor}
     try:
         instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
     except AttributeError:
         instance_info['virtualization_type'] = None
+
+    try:
+        instance_info['ebs_optimized'] = getattr(inst, 'ebs_optimized')
+    except AttributeError:
+        instance_info['ebs_optimized'] = False
 
     return instance_info
 
