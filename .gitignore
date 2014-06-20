@@ -35,6 +35,7 @@ docsite/searchindex.js
 docsite/htmlout
 # deb building stuff...
 debian/
+deb-build
 # Vim swap files
 *.swp
 *.swo
