@@ -65,10 +65,8 @@ def cloud_identity(module, state, identity):
     )
     changed = False
 
-    for key, value in vars(identity).iteritems():
-        if (isinstance(value, NON_CALLABLES) and
-                not key.startswith('_')):
-            instance[key] = value
+    instance.update(rax_to_dict(identity))
+    instance['services'] = instance.get('services', {}).keys()
 
     if state == 'present':
         if not identity.authenticated:
