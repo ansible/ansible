@@ -3,9 +3,12 @@ Test bundled filters
 '''
 
 import os.path
+import random as rnd
+from string import letters
 import unittest, tempfile, shutil
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
+import itertools as it
 
 INVENTORY = inventory.Inventory(['localhost'])
 
@@ -175,3 +178,13 @@ class TestFilters(unittest.TestCase):
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.0, 1.1, '<='))
 
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))
+
+    def test_merge_dicts(self):
+        """Simple test for the filter - dicts are actually must be merged"""
+        pairs = zip(letters, it.count())
+        d1 = dict(rnd.sample(pairs, len(pairs)/2))
+        d2 = dict(rnd.sample(pairs, len(pairs)/2))
+        d1.update(d2)
+        expected_result = d1
+        actual_result = ansible.runner.filter_plugins.core.merge_dicts(d1, d2)
+        self.assertDictEqual(actual_result, expected_result)

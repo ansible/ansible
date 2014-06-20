@@ -210,6 +210,16 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
 .. _version_comparison_filters:
 
+Dictionary filters
+------------------
+
+.. versionadded:: 1.7
+
+Merges two dictionaries and returns a third. Original ones remain unchanged::
+
+    {{ dict_one | merge_dicts(dict_two) }}
+
+
 Version Comparison Filters
 --------------------------
 
