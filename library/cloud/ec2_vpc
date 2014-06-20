@@ -414,15 +414,17 @@ def create_vpc(module, vpc_conn):
         try:
             new_rt = vpc_conn.create_route_table(vpc.id)
             for route in rt['routes']:
-                r_gateway = route['gw']
-                if r_gateway == 'igw':
+                route_kwargs = {}
+                if route['gw'] == 'igw':
                     if not internet_gateway:
                         module.fail_json(
                             msg='You asked for an Internet Gateway ' \
                             '(igw) route, but you have no Internet Gateway'
                         )
-                    r_gateway = igw.id
-                vpc_conn.create_route(new_rt.id, route['dest'], r_gateway)
+                    route_kwargs['gateway_id'] = igw.id
+                else:
+                    route_kwargs['instance_id'] = route['gw']
+                vpc_conn.create_route(new_rt.id, route['dest'], **route_kwargs)
 
             # Associate with subnets
             for sn in rt['subnets']:
