@@ -13,9 +13,11 @@ As you may have already read, Ansible manages Linux/Unix machines using SSH by d
 Starting in version 1.7, Ansible also contains support for managing Windows machines.  This uses
 native powershell remoting, rather than SSH.
 
-Ansible will still be run from a Linux guest, and uses the "winrm" Python module to talk to remote hosts.
+Ansible will still be run from a Linux control machine, and uses the "winrm" Python module to talk to remote hosts.
 
 No additional software needs to be installed on the remote machines for Ansible to manage them, it still maintains the agentless properties that make it popular on Linux/Unix.
+
+Note that it is expected you have a basic understanding of Ansible prior to jumping into this section, so if you haven't written a Linux playbook first, it might be worthwhile to dig in there first.
 
 .. _windows_installing:
 
@@ -39,14 +41,15 @@ Ansible's windows support relies on a few standard variables to indicate the use
 
 In group_vars/windows.yml, define the following inventory variables::
 
-    ansible-vault edit group_vars/windows.yml
+    # it is suggested that these be encrypted with ansible-vault:
+    # ansible-vault edit group_vars/windows.yml
 
     ansible_ssh_user: Administrator
     ansible_ssh_pass: SekritPasswordGoesHere
     ansible_ssh_port: 5986
     ansible_connection: winrm
 
-Notice that the ssh_port is not actually for SSH, but this is a holdover from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
+Notice that the ssh_port is not actually for SSH, but this is a holdover variable name from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
@@ -89,11 +92,11 @@ If your Windows firewall is enabled, you must also run the following command to 
 
 By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
 
-An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in, as documented '
+An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in.
 
 A best practice for SSL certificates is generating them from an internal or external certificate authority. An existing certificate could be located in the computer account certificate store `using the following article <http://technet.microsoft.com/en-us/library/cc754431.aspx#BKMK_computer>`_.
 
-Alternatively, a self-signed SSL certificate can be generated in powershell using 'the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>'. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using `How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>`_
+Alternatively, a self-signed SSL certificate can be generated in powershell using `the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>`_. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using `How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>`_.
 
 .. code-block:: bash
 
@@ -115,19 +118,18 @@ It's time to verify things are working::
     ansible windows [-i inventory] -m ping --ask-vault-pass
 
 However, if you are still running Powershell 2.0 on remote systems, it's time to use Ansible to upgrade powershell
-before proceeding further, as some of the Ansible modules will require Powershell 3.0.  Thankfully it's self
-bootstrapping!
+before proceeding further, as some of the Ansible modules will require Powershell 3.0.  
+
+In the future, Ansible may provide a shortcut installer that automates these steps for prepping a Windows machine.
 
 .. _getting_to_powershell_three_or_higher:
 
 Getting to Powershell 3.0 or higher
 ```````````````````````````````````
 
-Powershell 3.0 or higher is needed for most modules.  
+Powershell 3.0 or higher is needed for most provided Ansible modules for Windows.
 
-Looking at an ansible checkout, copy the examples/scripts/upgrade_to_ps3.ps1 script onto the remote host
-and run a powershell console as an administrator:
-
+Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator::
     ./upgrade_to_ps3.ps1
 
 .. _what_windows_modules_are_available:
@@ -136,24 +138,26 @@ What modules are available
 ``````````````````````````
 
 Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, though there are various 
-Windows modules as listed in the "windows" subcategory of the Ansible module index.  
+Windows modules as listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.  
 
 Browse this index to see what is available.
 
 In many cases, it may not be neccessary to even write or use an Ansible module.
 
-In particular, the "win_script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very native way to do things, as in the following playbook::
+In particular, the "script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very native way to do things, as in the following playbook::
 
     - hosts: windows
       tasks:
-        - win_script: foo.ps1 --argument --other-argument
+        - script: foo.ps1 --argument --other-argument
+
+Note there are a few other Ansible modules that don't start with "win" that also function, including "slurp", "raw", and "setup" (which is how fact gathering works).
 
 .. _developers_developers_developers:
 
 Developers: Supported modules and how it works
 ``````````````````````````````````````````````
 
-Developing ansible modules are covered in a later section of the documentation, with a focus on Linux/Unix.
+Developing ansible modules are covered in a `later section of the documentation <http://developing_modules.html>`_, with a focus on Linux/Unix.
 What if you want to write Windows modules for ansible though?
 
 For Windows, ansible modules are implemented in Powershell.  Skim those Linux/Unix module development chapters before proceeding.
@@ -177,8 +181,8 @@ What modules you see in windows/ are just a start.  Additional modules may be su
 
 .. _windows_and_linux_control_machine:
 
-You Must Have a Linux Control Machine
-`````````````````````````````````````
+Reminder: You Must Have a Linux Control Machine
+```````````````````````````````````````````````
 
 Note running Ansible from a Windows control machine is NOT a goal of the project.  Refrain from asking for this feature,
 as it limits what technologies, features, and code we can use in the main project in the future.  A Linux control machine
