@@ -74,6 +74,18 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
+.. _allow_sudo_same_user:
+
+allow_sudo_same_user
+====================
+
+Most of the time, using *sudo* to run a command as the same user who is running
+*sudo* itself is unnecessary overhead, so Ansible does not allow it. However,
+depending on the *sudo* configuration, it may be necessary to run a command as
+the same user through *sudo*, such as to switch SELinux contexts. For this
+reason, you can set ``allow_sudo_same_user`` to ``True`` and disable this
+optimization.
+
 .. _ansible_managed:
 
 ansible_managed
