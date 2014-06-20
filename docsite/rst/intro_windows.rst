@@ -56,7 +56,7 @@ When using your playbook, don't forget to specify --ask-vault-pass to provide th
 Test your configuration like so, by trying to contact your Windows nodes.  Note this is not an ICMP ping, but tests the Ansible
 communication channel that leverages Windows remoting::
 
-    ansible windows [-i inventory] -m ping --ask-vault-pass
+    ansible windows [-i inventory] -m win_ping --ask-vault-pass
 
 If you haven't done anything to prep your systems yet, this won't work yet.  This is covered in a later
 section about how to enable powershell remoting - and if neccessary - how to upgrade powershell to
@@ -115,7 +115,7 @@ Again, if your Windows firewall is enabled, the following command to allow firew
 
 It's time to verify things are working::
 
-    ansible windows [-i inventory] -m ping --ask-vault-pass
+    ansible windows [-i inventory] -m win_ping --ask-vault-pass
 
 However, if you are still running Powershell 2.0 on remote systems, it's time to use Ansible to upgrade powershell
 before proceeding further, as some of the Ansible modules will require Powershell 3.0.  
@@ -129,8 +129,7 @@ Getting to Powershell 3.0 or higher
 
 Powershell 3.0 or higher is needed for most provided Ansible modules for Windows.
 
-Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator::
-    ./upgrade_to_ps3.ps1
+Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator.  You will now be running Powershell 3 and can try connectivity again using the win_ping technique referenced above.
 
 .. _what_windows_modules_are_available:
 
