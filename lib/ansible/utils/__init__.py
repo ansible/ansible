@@ -608,9 +608,9 @@ def md5s(data):
     return digest.hexdigest()
 
 def md5(filename):
-    ''' Return MD5 hex digest of local file, or None if file is not present. '''
+    ''' Return MD5 hex digest of local file, None if file is not present or a directory. '''
 
-    if not os.path.exists(filename):
+    if not os.path.exists(filename) or os.path.isdir(filename):
         return None
     digest = _md5()
     blocksize = 64 * 1024

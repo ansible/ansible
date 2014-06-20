@@ -139,21 +139,25 @@ class PluginLoader(object):
             if directory not in self._extra_dirs:
                 self._extra_dirs.append(directory)
 
-    def find_plugin(self, name):
+    def find_plugin(self, name, suffixes=None):
         ''' Find a plugin named name '''
 
-        if name in self._plugin_path_cache:
-            return self._plugin_path_cache[name]
+        if not suffixes:
+            if self.class_name:
+                suffixes = ['.py']
+            else:
+                suffixes = ['', '.ps1']
 
-        suffix = ".py"
-        if not self.class_name:
-            suffix = ""
+        for suffix in suffixes:
+            full_name = '%s%s' % (name, suffix)
+            if full_name in self._plugin_path_cache:
+                return self._plugin_path_cache[full_name]
 
-        for i in self._get_paths():
-            path = os.path.join(i, "%s%s" % (name, suffix))
-            if os.path.isfile(path):
-                self._plugin_path_cache[name] = path
-                return path
+            for i in self._get_paths():
+                path = os.path.join(i, full_name)
+                if os.path.isfile(path):
+                    self._plugin_path_cache[full_name] = path
+                    return path
 
         return None
 
@@ -210,6 +214,13 @@ connection_loader = PluginLoader(
     C.DEFAULT_CONNECTION_PLUGIN_PATH, 
     'connection_plugins', 
     aliases={'paramiko': 'paramiko_ssh'}
+)
+
+shell_loader = PluginLoader(
+    'ShellModule',
+    'ansible.runner.shell_plugins',
+    'shell_plugins',
+    'shell_plugins',
 )
 
 module_finder = PluginLoader(
