@@ -219,6 +219,12 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
     python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
 
+If you have ``openssl`` installed on your machine, you can generate a password with the following command:
+
+    openssl passwd -1 -salt SALT PASSWORD
+
+where ``SALT`` is a random collection of character you choose, and ``PASSWORD`` is the password that you want to encrypt.
+
 .. _commercial_support:
 
 Can I get training on Ansible or find commercial support?
