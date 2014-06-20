@@ -106,7 +106,7 @@ class ActionModule(object):
         # transfer the file to a remote tmp location
         source = source.replace('\x00', '')  # why does this happen here?
         args = args.replace('\x00', '')  # why does this happen here?
-        tmp_src = os.path.join(tmp, os.path.basename(source))
+        tmp_src = conn.shell.join_path(tmp, os.path.basename(source))
         tmp_src = tmp_src.replace('\x00', '')
 
         conn.put_file(source, tmp_src)
@@ -115,22 +115,22 @@ class ActionModule(object):
         # set file permissions, more permisive when the copy is done as a different user
         if ((self.runner.sudo and self.runner.sudo_user != 'root') or
                 (self.runner.su and self.runner.su_user != 'root')):
-            cmd_args_chmod = "chmod a+rx %s" % tmp_src
+            chmod_mode = 'a+rx'
             sudoable = False
         else:
-            cmd_args_chmod = "chmod +rx %s" % tmp_src
-        self.runner._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=sudoable, su=self.runner.su)
+            chmod_mode = '+rx'
+        self.runner._remote_chmod(conn, chmod_mode, tmp_src, tmp, sudoable=sudoable, su=self.runner.su)
 
         # add preparation steps to one ssh roundtrip executing the script
-        env_string = self.runner._compute_environment_string(inject)
-        module_args = env_string + tmp_src + ' ' + args
+        env_string = self.runner._compute_environment_string(conn, inject)
+        module_args = ' '.join([env_string, tmp_src, args])
 
         handler = utils.plugins.action_loader.get('raw', self.runner)
         result = handler.run(conn, tmp, 'raw', module_args, inject)
 
         # clean up after
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
-            self.runner._low_level_exec_command(conn, 'rm -rf %s >/dev/null 2>&1' % tmp, tmp)
+            self.runner._remove_tmp_path(conn, tmp)
 
         result.result['changed'] = True
 

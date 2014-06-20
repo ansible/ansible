@@ -1,0 +1,75 @@
+# test code for the script module when using winrm connection
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run simple test script
+  script: test_script.ps1
+  register: test_script_result
+
+- name: check that script ran
+  assert:
+    that:
+      - "test_script_result.rc == 0"
+      - "test_script_result.stdout"
+      - "'Woohoo' in test_script_result.stdout"
+      - "not test_script_result.stderr"
+      - "not test_script_result|failed"
+      - "test_script_result|changed"
+
+- name: run test script that takes arguments
+  script: test_script_with_args.ps1 /this /that /other
+  register: test_script_with_args_result
+
+- name: check that script ran and received arguments
+  assert:
+    that:
+      - "test_script_with_args_result.rc == 0"
+      - "test_script_with_args_result.stdout"
+      - "test_script_with_args_result.stdout_lines[0] == '/this'"
+      - "test_script_with_args_result.stdout_lines[1] == '/that'"
+      - "test_script_with_args_result.stdout_lines[2] == '/other'"
+      - "not test_script_with_args_result.stderr"
+      - "not test_script_with_args_result|failed"
+      - "test_script_with_args_result|changed"
+
+- name: run test script that has errors
+  script: test_script_with_errors.ps1
+  register: test_script_with_errors_result
+  ignore_errors: true
+
+- name: check that script ran but failed with errors
+  assert:
+    that:
+      - "test_script_with_errors_result.rc != 0"
+      - "not test_script_with_errors_result.stdout"
+      - "test_script_with_errors_result.stderr"
+      - "test_script_with_errors_result|failed"
+      - "test_script_with_errors_result|changed"
+
+- name: run simple batch file
+  script: test_script.bat
+  register: test_batch_result
+
+- name: check that batch file ran
+  assert:
+    that:
+      - "test_batch_result.rc == 0"
+      - "test_batch_result.stdout"
+      - "'batch' in test_batch_result.stdout"
+      - "not test_batch_result.stderr"
+      - "not test_batch_result|failed"
+      - "test_batch_result|changed"

@@ -57,19 +57,24 @@ class ActionModule(object):
             return ReturnData(conn=conn, result=results)
 
         source = os.path.expanduser(source)
+        source = conn.shell.join_path(source)
+        if os.path.sep not in conn.shell.join_path('a', ''):
+            source_local = source.replace('\\', '/')
+        else:
+            source_local = source
 
         if flat:
             if dest.endswith("/"):
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename
-                base = os.path.basename(source)
+                base = os.path.basename(source_local)
                 dest = os.path.join(dest, base)
             if not dest.startswith("/"):
                 # if dest does not start with "/", we'll assume a relative path
                 dest = utils.path_dwim(self.runner.basedir, dest)
         else:
             # files are saved in dest dir, with a subdir for each host, then the filename
-            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
+            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source_local)
 
         dest = os.path.expanduser(dest.replace("//","/"))
 

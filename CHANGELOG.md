@@ -3,6 +3,10 @@ Ansible Changes By Release
 
 ## 1.7 "Summer Nights" - Active Development
 
+Major new features:
+
+* Windows support (alpha) using native PowerShell remoting
+
 New inventory scripts:
 
 * SoftLayer
@@ -14,6 +18,13 @@ New Modules:
 * cloud: rax_meta
 * cloud: rax_scaling_group
 * cloud: rax_scaling_policy
+* windows: version of setup module
+* windows: version of slurp module
+* windows: win_feature
+* windows: win_get_url
+* windows: win_msi
+* windows: win_ping
+* windows: win_user
 
 ## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
 
