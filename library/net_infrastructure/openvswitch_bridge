@@ -1,6 +1,10 @@
 #!/usr/bin/python
 #coding: utf-8 -*-
 
+# (c) 2013, David Stygstra <david.stygstra@gmail.com>
+#
+# This file is part of Ansible
+#
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -18,6 +22,7 @@ DOCUMENTATION = '''
 ---
 module: openvswitch_bridge
 version_added: 1.4
+author: David Stygstra
 short_description: Manage Open vSwitch bridges
 requirements: [ ovs-vsctl ]
 description:
