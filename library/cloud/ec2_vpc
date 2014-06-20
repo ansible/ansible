@@ -422,7 +422,10 @@ def create_vpc(module, vpc_conn):
                             '(igw) route, but you have no Internet Gateway'
                         )
                     r_gateway = igw.id
-                vpc_conn.create_route(new_rt.id, route['dest'], r_gateway)
+                if r_gateway[:3] == 'igw':
+                    vpc_conn.create_route(new_rt.id, route['dest'], gateway_id=r_gateway)
+                else:
+                    vpc_conn.create_route(new_rt.id, route['dest'], instance_id=r_gateway)
 
             # Associate with subnets
             for sn in rt['subnets']:
