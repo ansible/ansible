@@ -221,9 +221,9 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
 If you have ``openssl`` installed on your machine, you can generate a password with the following command::
 
-    openssl passwd -1 -salt SALT PASSWORD
+    openssl passwd -1 -salt <salt> <password>
 
-where ``SALT`` is a random collection of character you choose, and ``PASSWORD`` is the password that you want to encrypt.
+where ``<salt>`` is a random set of characters of your choice, and ``<password>`` is the password that you want to encrypt.  Please review `the OpenSSL docs <https://www.openssl.org/docs/apps/passwd.html>`_ for more information.
 
 .. _commercial_support:
 
