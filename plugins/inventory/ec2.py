@@ -731,8 +731,8 @@ class Ec2Inventory(object):
     def to_normal(self, word):
         ''' Normalizes facts to something thats friendlier to YAML and Jinja. '''
 
-        word = re.sub("-", "_", word);
-        return re.sub("[__+]", "_", word);
+        word = re.sub("[-\s]", "_", word);
+        return re.sub("__+", "_", word);
 
 
     def json_format_dict(self, data, pretty=False):
