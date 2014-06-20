@@ -177,20 +177,29 @@ def main():
         while datetime.datetime.now() < end:
             if path:
                 try:
-                    f = open(path)
-                    try:
-                        if search_regex:
-                            if re.search(search_regex, f.read(), re.MULTILINE):
-                                break
-                            else:
-                                time.sleep(1)
-                        else:
-                            break
-                    finally:
-                        f.close()
-                except IOError:
-                    time.sleep(1)
-                    pass
+                    os.stat(path)
+                    if search_regex:
+                        try:
+                            f = open(path)
+                            try:
+                                if re.search(search_regex, f.read(), re.MULTILINE):
+                                    break
+                                else:
+                                    time.sleep(1)
+                            finally:
+                                f.close()
+                        except IOError:
+                            time.sleep(1)
+                            pass
+                    else:
+                        break
+                except OSError, e:
+                    # File not present
+                    if os.errno == 2:
+                        time.sleep(1)
+                    else:
+                        elapsed = datetime.datetime.now() - start
+                        module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
