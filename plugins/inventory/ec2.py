@@ -246,6 +246,12 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
+        # downcase auto generated facts and groups?
+        try:
+            self.downcase_facts = config.getboolean('ec2', 'downcase_facts');
+        except ConfigParser.NoOptionError, e:
+            self.downcase_facts = False
+
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
             self.nested_groups = config.getboolean('ec2', 'nested_groups')
@@ -576,6 +582,9 @@ class Ec2Inventory(object):
             value = getattr(instance, key)
             key = self.to_safe('ec2_' + key)
 
+            if self.downcase_facts:
+                key = key.lower()
+
             # Handle complex types
             # state/previous_state changed to properties in boto in https://github.com/boto/boto/commit/a23c379837f698212252720d2af8dec0325c9518
             if key == 'ec2__state':
@@ -587,7 +596,10 @@ class Ec2Inventory(object):
             elif type(value) in [int, bool]:
                 instance_vars[key] = value
             elif type(value) in [str, unicode]:
-                instance_vars[key] = value.strip()
+                if self.downcase_facts:
+                    instance_vars[key] = value.strip().lower()
+                else:
+                    instance_vars[key] = value.strip()
             elif type(value) == type(None):
                 instance_vars[key] = ''
             elif key == 'ec2_region':
@@ -597,13 +609,19 @@ class Ec2Inventory(object):
             elif key == 'ec2_tags':
                 for k, v in value.iteritems():
                     key = self.to_safe('ec2_tag_' + k)
+                    if self.downcase_facts:
+                        key = key.lower()
+                        v = v.lower()
                     instance_vars[key] = v
             elif key == 'ec2_groups':
                 group_ids = []
                 group_names = []
                 for group in value:
                     group_ids.append(group.id)
-                    group_names.append(group.name)
+                    if self.downcase_facts:
+                        group_names.append(group.name.lower())
+                    else:
+                        group_names.append(group.name)
                 instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
                 instance_vars["ec2_security_group_names"] = ','.join(group_names)
             else:
@@ -637,6 +655,11 @@ class Ec2Inventory(object):
     def push(self, my_dict, key, element):
         ''' Push an element onto an array that may not have been defined in
         the dict '''
+        if self.downcase_facts:
+            key = key.lower()
+            if type(element) in [str, unicode]:
+                element = element.lower()
+
         group_info = my_dict.setdefault(key, [])
         if isinstance(group_info, dict):
             host_list = group_info.setdefault('hosts', [])
