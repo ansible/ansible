@@ -25,9 +25,9 @@ DOCUMENTATION = '''
 ---
 module: win_feature
 version_added: "1.7"
-short_description: Fetches a file from a given URL
+short_description: Installs and uninstalls Windows Features
 description:
-     - Fetches a file from a URL and saves to locally
+     - Installs or uninstalls Windows Roles or Features
 options:
   name:
     description:
