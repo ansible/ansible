@@ -983,7 +983,7 @@ See :doc:`playbooks_roles` for more info about this::
     http_port: 80
 
 if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
-by inventory, you should but it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
+by inventory, you should put it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
 
     ---
     # file: roles/x/vars/main.yml
