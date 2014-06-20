@@ -51,7 +51,7 @@ endif
 DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
-DPUT_OPTS =
+DPUT_OPTS ?=
 ifeq ($(OFFICIAL),yes)
     DEB_RELEASE = 1ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
