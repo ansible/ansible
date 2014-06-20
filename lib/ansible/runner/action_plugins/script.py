@@ -123,7 +123,7 @@ class ActionModule(object):
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self.runner._compute_environment_string(conn, inject)
-        module_args = env_string + tmp_src + ' ' + args
+        module_args = ' '.join([env_string, tmp_src, args])
 
         handler = utils.plugins.action_loader.get('raw', self.runner)
         result = handler.run(conn, tmp, 'raw', module_args, inject)
