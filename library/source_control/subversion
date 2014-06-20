@@ -88,7 +88,6 @@ EXAMPLES = '''
 '''
 
 import re
-import tempfile
 
 
 class Subversion(object):
@@ -126,13 +125,10 @@ class Subversion(object):
         self._exec(["export", "-r", self.revision, self.repo, self.dest])
 
     def switch(self):
-        '''Change working directory's repo.'''
-        # switch to ensure we are pointing at correct repo.
-        self._exec(["switch", self.repo, self.dest])
-
-    def update(self):
-        '''Update existing svn working directory.'''
-        self._exec(["update", "-r", self.revision, self.dest])
+        '''Update working directory to potentially different branch or tag.'''
+        # Switch is very similar to update, but allows for switching to different branch or tag (from same repository)
+        # Automatically resolve conflicts by overwriting local changes with SVN.
+        self._exec(["switch", "-r", self.revision, "--force", "--accept", "theirs-full", self.repo, self.dest])
 
     def revert(self):
         '''Revert svn working directory.'''
@@ -140,29 +136,26 @@ class Subversion(object):
 
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
-        text = '\n'.join(self._exec(["info", self.dest]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
-        url = re.search(r'^URL:.*$', text, re.MULTILINE).group(0)
+        text = '\n'.join(self._exec(["info", "--xml", self.dest]))
+        rev = int(re.search(r'<entry.*revision="([0-9]+)">', text, re.DOTALL).group(1))
+        url = re.search(r'<url>([^<]+)</url>', text).group(1)
         return rev, url
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", self.dest])
-        # Match only revisioned files, i.e. ignore status '?'.
-        regex = re.compile(r'^[^?]')
+        # SVN provides the -q options to "svn status" which report only locally modified files
+        lines = self._exec(["status", "-q", self.dest])
         # Has local mods if more than 0 modifed revisioned files.
-        return len(filter(regex.match, lines)) > 0
+        return len(lines) > 0
 
     def needs_update(self):
-        curr, url = self.get_revision()
-        out2 = '\n'.join(self._exec(["info", "-r", "HEAD", self.dest]))
-        head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
-        rev1 = int(curr.split(':')[1].strip())
-        rev2 = int(head.split(':')[1].strip())
+        rev1, url = self.get_revision()
+        text = '\n'.join(self._exec(["info", "--xml", "-r", self.revision, self.dest]))
+        rev2 = int(re.search(r'<entry.*revision="([0-9]+)">', text, re.DOTALL).group(1))
         change = False
-        if rev1 < rev2:
+        if rev1 != rev2:
             change = True
-        return change, curr, head
+        return change, rev1, rev2
 
 
 # ===========================================
@@ -191,7 +184,6 @@ def main():
     svn_path = module.params['executable'] or module.get_bin_path('svn', True)
     export = module.params['export']
 
-    os.environ['LANG'] = 'C'
     svn = Subversion(module, dest, repo, revision, username, password, svn_path)
 
     if not os.path.exists(dest):
@@ -204,21 +196,15 @@ def main():
         else:
             svn.export()
     elif os.path.exists("%s/.svn" % (dest, )):
-        # Order matters. Need to get local mods before switch to avoid false
-        # positives. Need to switch before revert to ensure we are reverting to
-        # correct repo.
         if module.check_mode:
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()
         local_mods = svn.has_local_mods()
+        if local_mods and not force:
+            module.fail_json(msg="ERROR: modified files exist in the repository.")
         svn.switch()
-        if local_mods:
-            if force:
-                svn.revert()
-            else:
-                module.fail_json(msg="ERROR: modified files exist in the repository.")
-        svn.update()
+        svn.revert()
     else:
         module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
 
