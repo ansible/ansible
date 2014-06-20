@@ -219,7 +219,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
     python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
 
-If you have ``openssl`` installed on your machine, you can generate a password with the following command:
+If you have ``openssl`` installed on your machine, you can generate a password with the following command::
 
     openssl passwd -1 -salt SALT PASSWORD
 
