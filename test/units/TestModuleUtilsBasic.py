@@ -44,10 +44,10 @@ class TestModuleUtilsBasic(unittest.TestCase):
         os.write(self.tmp_fd, TEST_MODULE_DATA)
 
         # template the module code and eval it
-        module_data, module_style, shebang = ModuleReplacer().modify_module(self.tmp_path, {}, "", {})
+        module_info = ModuleReplacer().modify_module(self.tmp_path, {}, "", {})
 
         d = {}
-        exec(module_data, d, d)
+        exec(module_info.data, d, d)
         self.module = d['get_module']()
 
         # module_utils/basic.py screws with CWD, let's save it and reset

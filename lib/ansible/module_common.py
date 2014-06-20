@@ -20,6 +20,7 @@ from cStringIO import StringIO
 import inspect
 import os
 import shlex
+import collections
 
 # from Ansible
 from ansible import errors
@@ -29,6 +30,7 @@ from ansible import constants as C
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_MODULE_CHECKABLE = '\n#SUPPORTS_CHECK_MODE=True'
 
 class ModuleReplacer(object):
 
@@ -87,6 +89,8 @@ class ModuleReplacer(object):
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
+
+        module_checkable = REPLACER_MODULE_CHECKABLE in module_data
       
         output = StringIO()
         lines = module_data.split('\n')
@@ -119,7 +123,7 @@ class ModuleReplacer(object):
         if len(snippet_names) > 0 and not 'basic' in snippet_names:
             raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path) 
 
-        return (output.getvalue(), module_style)
+        return (output.getvalue(), module_style, module_checkable)
 
     # ******************************************************************************
 
@@ -130,7 +134,7 @@ class ModuleReplacer(object):
             # read in the module source
             module_data = f.read()
 
-            (module_data, module_style) = self._find_snippet_imports(module_data, module_path)
+            (module_data, module_style, module_checkable) = self._find_snippet_imports(module_data, module_path)
 
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
@@ -163,5 +167,5 @@ class ModuleReplacer(object):
                     lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
                     module_data = "\n".join(lines)
 
-            return (module_data, module_style, shebang)
+            return (collections.namedtuple('ModuleInfo', ('data', 'style', 'shebang', 'checkable'))(module_data, module_style, shebang, module_checkable))
 

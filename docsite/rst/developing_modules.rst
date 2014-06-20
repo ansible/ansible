@@ -291,6 +291,18 @@ system state is altered when the user enables check mode.
 If your module does not support check mode, when the user runs Ansible in check
 mode, your module will simply be skipped.
 
+.. versionadded:: 1.6
+
+To support check mode in non-python modules, insert a '#SUPPORTS_CHECK_MODE=True' in your source.
+The module argument CHECKMODE will be 'True' when check mode is enabled. For example::
+
+    #!/bin/bash
+    #SUPPORTS_CHECK_MODE=True
+    ... Parse args file, will contain 'CHECKMODE=True' if in check mode ...
+    if [ "$CHECKMODE" = 'True' ]; then
+       # Test and flag if changes are needed, but *don't* modify anything!
+       echo "ok=true changed=true"
+
 .. _module_dev_pitfalls:
 
 Common Pitfalls
