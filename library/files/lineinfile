@@ -163,7 +163,7 @@ def write_changes(module,lines,dest):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc,err))
     if valid:
-        module.atomic_move(tmpfile, dest)
+        module.atomic_move(tmpfile, os.path.realpath(dest))
 
 def check_file_attrs(module, changed, message):
 
