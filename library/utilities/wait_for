@@ -18,25 +18,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import socket
 import datetime
-import time
-import sys
+import os.path
 import re
+import socket
+import time
 
 DOCUMENTATION = '''
 ---
 module: wait_for
 short_description: Waits for a condition before continuing.
 description:
-     - Waiting for a port to become available is useful for when services 
-       are not immediately available after their init scripts return - 
-       which is true of certain Java application servers. It is also 
+     - Waiting for a port to become available is useful for when services
+       are not immediately available after their init scripts return -
+       which is true of certain Java application servers. It is also
        useful when starting guests with the M(virt) module and
-       needing to pause until they are ready. 
+       needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
-     - In 1.6 and later, this module can 
-       also be used to wait for a file to be available or absent on the 
+     - In 1.6 and later, this module can
+       also be used to wait for a file to be available or absent on the
        filesystem.
 version_added: "0.7"
 options:
@@ -77,7 +77,7 @@ options:
     required: false
     description:
       - with the path option can be used match a string in the file that must match before continuing.  Defaults to a multiline regex.
-   
+
 notes: []
 requirements: []
 author: Jeroen Hoekx, John Jarvis, Andrii Radyk
@@ -95,7 +95,7 @@ EXAMPLES = '''
 - wait_for: path=/tmp/foo search_regex=completed
 
 # wait until the lock file is removed
-- wait_for: path=/var/lock/file.lock state=absent 
+- wait_for: path=/var/lock/file.lock state=absent
 
 # wait until the process is finished and pid was destroyed
 - wait_for: path=/proc/3466/status state=absent
@@ -130,12 +130,12 @@ def main():
     state = params['state']
     path = params['path']
     search_regex = params['search_regex']
-    
+
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for")
     if path and state == 'stopped':
         module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
-        
+
     start = datetime.datetime.now()
 
     if delay:
@@ -176,21 +176,24 @@ def main():
         end = start + datetime.timedelta(seconds=timeout)
         while datetime.datetime.now() < end:
             if path:
-                try:
-                    f = open(path)
-                    try:
-                        if search_regex:
-                            if re.search(search_regex, f.read(), re.MULTILINE):
-                                break
-                            else:
-                                time.sleep(1)
-                        else:
-                            break
-                    finally:
-                        f.close()
-                except IOError:
+                if os.path.exists(path):
+                    if search_regex:
+                        try:
+                            f = open(path)
+                            try:
+                                if re.search(search_regex, f.read(),
+                                             re.MULTILINE):
+                                    break
+                                else:
+                                    time.sleep(1)
+                            finally:
+                                f.close()
+                        except IOError:
+                            module.fail_json(msg="Regex can't be searched because %s is not a regular file." % path)
+                    else:
+                        break
+                else:
                     time.sleep(1)
-                    pass
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
@@ -201,7 +204,6 @@ def main():
                     break
                 except:
                     time.sleep(1)
-                    pass
         else:
             elapsed = datetime.datetime.now() - start
             if port:
