@@ -539,6 +539,7 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(gitconfig):
+        os.chdir('/') # prevent permission denied (avoid accessing login user's home directory)
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
