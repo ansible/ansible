@@ -33,3 +33,4 @@
       - "setup_result.ansible_facts.ansible_hostname"
       - "setup_result.ansible_facts.ansible_ip_addresses"
       - "setup_result.ansible_facts.ansible_system"
+      - "setup_result.ansible_facts.ansible_totalmem"

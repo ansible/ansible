@@ -26,7 +26,7 @@ $result = New-Object psobject @{
 };
 
 $osversion = [Environment]::OSVersion
-$memory = Get-WmiObject win32_Pysicalmemory
+$memory = Get-WmiObject win32_Physicalmemory
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME;
