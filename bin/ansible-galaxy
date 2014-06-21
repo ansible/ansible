@@ -181,7 +181,7 @@ def build_option_parser(action):
             '-n', '--no-deps', dest='no_deps', action='store_true', default=False,
             help='Don\'t download roles listed as dependencies')
         parser.add_option(
-            '-r', '--role-file', dest='role_file',
+            '-r', '--role-file', dest='role_file', default=C.DEFAULT_ROLES_FILE,
             help='A file containing a list of roles to be imported')
     elif action == "remove":
         parser.set_usage("usage: %prog remove role1 role2 ...")
