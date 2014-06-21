@@ -125,7 +125,7 @@ EXAMPLES = '''
 # Run the equivalent of "apt-get update" as a separate step
 - apt: update_cache=yes
 
-# Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
+# Only run "update_cache=yes" if the last one is more than 3600 seconds ago
 - apt: update_cache=yes cache_valid_time=3600
 
 # Pass options to dpkg on run
