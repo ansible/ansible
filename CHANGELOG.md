@@ -25,6 +25,8 @@ New Modules:
 * windows: win_msi
 * windows: win_ping
 * windows: win_user
+* windows: win_service
+* windows: win_group
 
 ## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
 
