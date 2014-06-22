@@ -46,7 +46,7 @@ If ($params.start_mode) {
 $svcName = $params.name
 $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
 If (-not $svc) {
-    Fail-Json $result "Service not installed"
+    Fail-Json $result "Service '$svcName' not installed"
 }
 
 If ($startMode) {
@@ -60,15 +60,30 @@ If ($startMode) {
 
 If ($state) {
     If ($state -eq "started" -and $svc.Status -ne "Running") {
-        Start-Service -Name $svcName
+        try {
+            Start-Service -Name $svcName -ErrorAction Stop
+        }
+        catch {
+            Fail-Json $result $_.Exception.Message
+        }
         Set-Attr $result "changed" $true;
     }
     ElseIf ($state -eq "stopped" -and $svcName -ne "Stopped") {
-        Stop-Service -Name $svcName
+        try {
+            Stop-Service -Name $svcName -ErrorAction Stop
+        }
+        catch {
+            Fail-Json $result $_.Exception.Message
+        }
         Set-Attr $result "changed" $true;
     }
     ElseIf ($state -eq "restarted") {
-        Restart-Service -Name $svcName
+        try {
+            Restart-Service -Name $svcName -ErrorAction Stop
+        }
+        catch {
+            Fail-Json $result $_.Exception.Message
+        }
         Set-Attr $result "changed" $true;
     }
 }
