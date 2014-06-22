@@ -266,7 +266,7 @@ class Facts(object):
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
             for (path, name) in Facts.OSDIST_DICT.items():
-                if os.path.exists(path):
+                if os.path.exists(path) and os.path.getsize(path) > 0:
                     if self.facts['distribution'] == 'Fedora':
                         pass
                     elif name == 'RedHat':
