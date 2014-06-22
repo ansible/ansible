@@ -68,7 +68,7 @@ If ($state) {
         }
         Set-Attr $result "changed" $true;
     }
-    ElseIf ($state -eq "stopped" -and $svcName -ne "Stopped") {
+    ElseIf ($state -eq "stopped" -and $svc.Status -ne "Stopped") {
         try {
             Stop-Service -Name $svcName -ErrorAction Stop
         }
