@@ -1,4 +1,12 @@
 # Maintainer: Michel Blanc <mblanc@erasme.org>
+# Contributor: Buce <dmbuce@gmail.com>
+# Contributor: Bartłomiej Piotrowski <b@bpiotrowski.pl>
+# Contributor: cgtx <carl@carlgeorge.us>
+# Contributor: Daniel Wallace <danielwallace@gtmanfred.com>
+# Contributor: John Gosset <john.gosset@gmail.com>
+# Contributor: Joshua Lund <josh@joshlund.com>
+# Contributor: Matt Klich <matt.klich@readytalk.com>
+# Contributor: Michael DeHaan <michael@ansible.com>
 
 pkgname=ansible-git
 pkgver=1.1.4095.g3f2f5fe
@@ -43,7 +51,6 @@ package() {
   install -Dm644 COPYING $pkgdir/usr/share/doc/ansible/COPYING
   install -Dm644 CHANGELOG.md $pkgdir/usr/share/doc/ansible/CHANGELOG.md
 
-  install -dm755 ${pkgdir}/usr/share/man/man{1,3}
+  install -dm755 ${pkgdir}/usr/share/man/man1
   cp -dpr --no-preserve=ownership docs/man/man1/*.1 "$pkgdir/usr/share/man/man1"
-  cp -dpr --no-preserve=ownership docs/man/man3/*.3 "$pkgdir/usr/share/man/man3"
 }
