@@ -149,6 +149,11 @@ class Ec2Metadata(object):
                     break
             data['ansible_ec2_placement_region'] = region
 
+    def add_ec2_vpc_id(self, data):
+        mac = data.get('ansible_ec2_mac').replace(':','_')
+        vpc_id = data.get('ansible_ec2_network_interfaces_macs_' + mac + '_vpc_id')  
+        data['ansible_ec2_vpc_id'] = vpc_id
+
     def run(self):
         self.fetch(self.uri_meta) # populate _data
         data = self._mangle_fields(self._data, self.uri_meta)
@@ -156,6 +161,7 @@ class Ec2Metadata(object):
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
         self.fix_invalid_varnames(data)
         self.add_ec2_region(data)
+        self.add_ec2_vpc_id(data)
         return data
 
 def main():
