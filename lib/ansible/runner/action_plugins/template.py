@@ -87,7 +87,7 @@ class ActionModule(object):
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass)
         except Exception, e:
-            result = dict(failed=True, msg=str(e))
+            result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
         local_md5 = utils.md5s(resultant)
