@@ -32,11 +32,12 @@ class ActionModule(object):
         if 'vars' in self.inject:
             if '_original_file' in self.inject['vars']:
                 # roles
+                original_path = path
                 path = utils.path_dwim_relative(self.inject['_original_file'], 'files', path, self.runner.basedir)
-            elif 'inventory_dir' in self.inject['vars']:
-                # non-roles
-                abs_dir = os.path.abspath(self.inject['vars']['inventory_dir'])
-                path = os.path.join(abs_dir, path)
+                if original_path and original_path[-1] == '/' and path[-1] != '/':
+                    # make sure the dwim'd path ends in a trailing "/"
+                    # if the original path did
+                    path += '/'
 
         return path
 

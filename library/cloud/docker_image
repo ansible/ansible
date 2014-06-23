@@ -45,7 +45,7 @@ options:
     description:
        - Image tag to work with
     required: false
-    default: ""
+    default: "latest"
     aliases: []
   nocache:
     description:
@@ -97,7 +97,7 @@ Remove image from local docker storage:
 - hosts: web
   sudo: yes
   tasks:
-  - name: run tomcat servers
+  - name: remove image
     docker_image: name="my/app" state=absent
 
 '''
@@ -140,7 +140,10 @@ class DockerImageManager:
             if not chunk:
                 continue
 
-            chunk_json = json.loads(chunk)
+            try:
+                chunk_json = json.loads(chunk)
+            except ValueError:
+                continue
 
             if 'error' in chunk_json:
                 self.error_msg = chunk_json['error']
@@ -153,6 +156,12 @@ class DockerImageManager:
                 if match:
                     image_id = match.group(1)
 
+        # Just in case we skipped evaluating the JSON returned from build
+        # during every iteration, add an error if the image_id was never
+        # populated
+        if not image_id:
+            self.error_msg = 'Unknown error encountered'
+
         return image_id
 
     def has_changed(self):
@@ -164,7 +173,7 @@ class DockerImageManager:
         for i in images:
             # Docker-py version >= 0.3 (Docker API >= 1.8)
             if 'RepoTags' in i:
-                repotag = '%s:%s' % (getattr(self, 'name', ''), getattr(self, 'tag', 'latest'))
+                repotag = ':'.join([self.name, self.tag])
                 if not self.name or repotag in i['RepoTags']:
                     filtered_images.append(i)
             # Docker-py version < 0.3 (Docker API < 1.8)
@@ -188,7 +197,7 @@ def main():
         argument_spec = dict(
             path            = dict(required=False, default=None),
             name            = dict(required=True),
-            tag             = dict(required=False, default=""),
+            tag             = dict(required=False, default="latest"),
             nocache         = dict(default=False, type='bool'),
             state           = dict(default='present', choices=['absent', 'present', 'build']),
             docker_url      = dict(default='unix://var/run/docker.sock'),

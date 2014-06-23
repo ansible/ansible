@@ -47,7 +47,7 @@ author: Michael DeHaan
 EXAMPLES = '''
 - file: path=/etc/foo.conf owner=foo group=foo mode=0644
 - file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-- file: path=/tmp/{{ item.path }} dest={{ item.dest }} state=link
+- file: src=/tmp/{{ item.path }} dest={{ item.dest }} state=link
   with_items:
     - { path: 'x', dest: 'y' }
     - { path: 'z', dest: 'k' }
@@ -165,8 +165,15 @@ def main():
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
-            os.makedirs(path)
             changed = True
+            curpath = ''
+            for dirname in path.split('/'):
+                curpath = '/'.join([curpath, dirname])
+                if not os.path.exists(curpath):
+                    os.mkdir(curpath)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=curpath
+                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
@@ -182,19 +189,26 @@ def main():
 
     elif state in ['link','hard']:
 
-        absrc = src
-        if not os.path.isabs(absrc):
-            absrc = os.path.normpath('%s/%s' % (os.path.dirname(path), absrc))
+        if os.path.isdir(path) and not os.path.islink(path):
+            relpath = path
+        else:
+            relpath = os.path.dirname(path)
 
-        if not os.path.exists(absrc) and not force:
+        absrc = os.path.normpath('%s/%s' % (relpath, os.path.basename(src)))
+        if not os.path.exists(src) and not os.path.exists(absrc) and not force:
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
             if not os.path.isabs(src):
                 module.fail_json(msg="absolute paths are required")
-
-        elif prev_state in ['file', 'hard', 'directory'] and not force:
-            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+        elif prev_state == 'directory':
+            if not force:
+                module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
+            elif len(os.listdir(path)) > 0:
+                # refuse to replace a directory that has files in it
+                module.fail_json(path=path, msg='the directory %s is not empty, refusing to convert it' % path)
+        elif prev_state in ['file', 'hard'] and not force:
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, path))
 
         if prev_state == 'absent':
             changed = True
@@ -236,6 +250,9 @@ def main():
                         os.symlink(src, path)
                 except OSError, e:
                     module.fail_json(path=path, msg='Error while linking: %s' % str(e))
+
+        if module.check_mode and not os.path.exists(path):
+            module.exit_json(dest=path, src=src, changed=changed)
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
         module.exit_json(dest=path, src=src, changed=changed)

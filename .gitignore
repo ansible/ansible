@@ -35,6 +35,7 @@ docsite/searchindex.js
 docsite/htmlout
 # deb building stuff...
 debian/
+deb-build
 # Vim swap files
 *.swp
 *.swo
@@ -44,3 +45,9 @@ credentials.yml
 results.xml
 coverage.xml
 /test/units/cover-html
+# Development
+/test/develop
+venv
+Vagrantfile
+.vagrant
+ansible.egg-info/

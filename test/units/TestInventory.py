@@ -439,3 +439,7 @@ class TestInventory(unittest.TestCase):
         actual_host_names = [host.name for host in group_greek]
         print "greek : %s " % actual_host_names
         assert actual_host_names == ['zeus', 'morpheus']
+
+    def test_dir_inventory_skip_extension(self):
+        inventory = self.dir_inventory()
+        assert 'skipme' not in [h.name for h in inventory.get_hosts()]

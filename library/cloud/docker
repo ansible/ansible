@@ -184,7 +184,7 @@ options:
     aliases: []
     version_added: "1.6"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
-requirements: [ "docker-py >= 0.3.0" ]
+requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
 
 EXAMPLES = '''
@@ -306,6 +306,11 @@ try:
 except ImportError, e:
     HAS_DOCKER_PY = False
 
+try:
+    from docker.errors import APIError as DockerAPIError
+except ImportError:
+    from docker.client import APIError as DockerAPIError
+
 
 def _human_to_bytes(number):
     suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
@@ -375,15 +380,31 @@ class DockerManager:
 
         self.links = None
         if self.module.params.get('links'):
-            self.links = dict(map(lambda x: x.split(':'), self.module.params.get('links')))
+            self.links = self.get_links(self.module.params.get('links'))
 
         self.env = None
         if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env')))
+            self.env = dict(map(lambda x: x.split("=", 1), self.module.params.get('env')))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
+
+
+    def get_links(self, links):
+        """
+        Parse the links passed, if a link is specified without an alias then just create the alias of the same name as the link
+        """
+        processed_links = {}
+
+        for link in links:
+            parsed_link = link.split(':', 1)
+            if(len(parsed_link) == 2):
+                processed_links[parsed_link[0]] = parsed_link[1]
+            else:
+                processed_links[parsed_link[0]] = parsed_link[0]
+
+        return processed_links
 
 
     def get_exposed_ports(self, expose_list):
@@ -447,7 +468,6 @@ class DockerManager:
         return binds
 
 
-
     def get_split_image_tag(self, image):
         if '/' in image:
             image = image.split('/')[1]
@@ -484,8 +504,7 @@ class DockerManager:
         return inspect
 
     def get_deployed_containers(self):
-        # determine which images/commands are running already
-        containers = self.client.containers(all=True)
+        """determine which images/commands are running already"""
         image = self.module.params.get('image')
         command = self.module.params.get('command')
         if command:
@@ -499,13 +518,20 @@ class DockerManager:
         # docker will give us back the full image name including a tag in the container list if one exists.
         image, tag = self.get_split_image_tag(image)
 
-        for i in containers:
+        for i in self.client.containers(all=True):
             running_image, running_tag = self.get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
-            if (name and name in i['Names']) or \
-                    (not name and running_image == image and (not tag or tag == running_tag) and
-                    (not command or running_command == command)):
+            name_matches = False
+            if i["Names"]:
+                name_matches = (name and name in i['Names'])
+            image_matches = (running_image == image)
+            tag_matches = (not tag or running_tag == tag)
+            # if a container has an entrypoint, `command` will actually equal
+            # '{} {}'.format(entrypoint, command)
+            command_matches = (not command or running_command.endswith(command))
+
+            if name_matches or (name is None and image_matches and tag_matches and command_matches):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
@@ -515,7 +541,7 @@ class DockerManager:
     def get_running_containers(self):
         running = []
         for i in self.get_deployed_containers():
-            if i['State']['Running'] == True and i['State']['Ghost'] == False:
+            if i['State']['Running'] == True and i['State'].get('Ghost', False) == False:
                 running.append(i)
 
         return running
@@ -565,8 +591,7 @@ class DockerManager:
             'privileged':   self.module.params.get('privileged'),
             'links': self.links,
         }
-
-        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
+        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ > '0.3.0':
             params['dns'] = self.module.params.get('dns')
             params['volumes_from'] = self.module.params.get('volumes_from')
 
@@ -677,11 +702,11 @@ def main():
 
         # start/stop containers
         if state in [ "running", "present" ]:
-            
+
             # make sure a container with `name` exists, if not create and start it
             if name and "/" + name not in map(lambda x: x.get('Name'), deployed_containers):
                 containers = manager.create_containers(1)
-                if state == "present": #otherwise it get (re)started later anyways.. 
+                if state == "present": #otherwise it get (re)started later anyways..
                   manager.start_containers(containers)
                   running_containers = manager.get_running_containers()
                 deployed_containers = manager.get_deployed_containers()
@@ -690,21 +715,21 @@ def main():
                 # make sure a container with `name` is running
                 if name and "/" + name not in map(lambda x: x.get('Name'), running_containers):
                     manager.start_containers(deployed_containers)
-    
+
                 # start more containers if we don't have enough
                 elif delta > 0:
                     containers = manager.create_containers(delta)
                     manager.start_containers(containers)
-    
+
                 # stop containers if we have too many
                 elif delta < 0:
                     containers_to_stop = running_containers[0:abs(delta)]
                     containers = manager.stop_containers(containers_to_stop)
                     manager.remove_containers(containers_to_stop)
-    
+
                 facts = manager.get_running_containers()
             else:
-                acts = manager.get_deployed_containers()
+                facts = manager.get_deployed_containers()
 
         # stop and remove containers
         elif state == "absent":
@@ -730,7 +755,7 @@ def main():
 
         module.exit_json(failed=failed, changed=changed, msg=msg, ansible_facts=_ansible_facts(facts))
 
-    except docker.client.APIError, e:
+    except DockerAPIError, e:
         changed = manager.has_changed()
         module.exit_json(failed=True, changed=changed, msg="Docker API error: " + e.explanation)
 

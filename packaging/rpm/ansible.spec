@@ -1,11 +1,12 @@
 %define name ansible
+%define ansible_version $VERSION
 
 %if 0%{?rhel} == 5
 %define __python /usr/bin/python26
 %endif
 
 Name:      %{name}
-Version:   1.6
+Version:   %{ansible_version}
 Release:   1%{?dist}
 Url:       http://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
@@ -20,31 +21,42 @@ BuildArch: noarch
 # RHEL <=5
 %if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
+BuildRequires: python26-setuptools
 Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
 Requires: python26-keyczar
 Requires: python26-httplib2
+Requires: python26-setuptools
+%endif
+
+# RHEL == 6
+%if 0%{?rhel} == 6
+Requires: python-crypto2.6
 %endif
 
 # RHEL > 5
 %if 0%{?rhel} && 0%{?rhel} > 5
 BuildRequires: python2-devel
+BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
+Requires: python-setuptools
 %endif
 
 # FEDORA > 17
 %if 0%{?fedora} >= 18
 BuildRequires: python-devel
+BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
+Requires: python-setuptools
 %endif
 
 # SuSE/openSuSE
@@ -56,6 +68,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-yaml
 Requires: python-httplib2
+Requires: python-setuptools
 %endif
 
 Requires: sshpass
@@ -102,8 +115,23 @@ rm -rf %{buildroot}
 
 %changelog
 
-* Thu Mar 14 2014 Michael DeHaan <michael@ansible.com> - 1.6-0
-* (PENDING)
+* Mon Jun 09 2014 Michael DeHaan <michael@ansible.com> - 1.6.3
+- Release 1.6.3
+
+* Fri May 23 2014 Michael DeHaan <michael@ansible.com> - 1.6.2
+- Release 1.6.2
+
+* Wed May 07 2014 Michael DeHaan <michael@ansible.com> - 1.6.1
+- Release 1.6.1
+
+* Mon May 05 2014 Michael DeHaan <michael@ansible.com> - 1.6.0
+- Release 1.6.0
+
+* Fri Apr 18 2014 Michael DeHaan <michael@ansible.com> - 1.5.5
+- Release 1.5.5
+
+* Tue Apr 01 2014 Michael DeHaan <michael@ansible.com> - 1.5.4
+- Release 1.5.4
 
 * Thu Mar 13 2014 Michael DeHaan <michael@ansible.com> - 1.5.3
 - Release 1.5.3
@@ -117,7 +145,7 @@ rm -rf %{buildroot}
 * Fri Feb 28 2014 Michael DeHaan <michael@ansible.com> - 1.5.0
 - Release 1.5.0
 
-* Thu Feb 28 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
+* Fri Feb 28 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
 * Release 1.5
 
 * Wed Feb 12 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.5
@@ -141,7 +169,7 @@ rm -rf %{buildroot}
 * Fri Sep 13 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
 * Release 1.3.0
 
-* Thu Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
+* Fri Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
 * Release 1.2.2
 
 * Thu Jul 04 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-1
@@ -162,7 +190,7 @@ rm -rf %{buildroot}
 * Fri Oct 19 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.8-0
 - Release of 0.8
 
-* Thu Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
+* Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
 - Release of 0.7
 
 * Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.6-0

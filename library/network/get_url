@@ -90,6 +90,18 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  url_username:
+    description:
+      - The username for use in HTTP basic authentication. This parameter can be used
+        without C(url_password) for sites that allow empty passwords.
+    required: false
+    version_added: '1.6'
+  url_password:
+    description:
+      - The password for use in HTTP basic authentication. If the C(url_username)
+        parameter is not specified, the C(url_password) parameter will not be used.
+    required: false
+    version_added: '1.6'
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -271,7 +283,7 @@ def main():
         else:
             destination_checksum = module.sha256(dest)
 
-        if stripped_sha256sum != destination_checksum:
+        if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
 
@@ -281,7 +293,7 @@ def main():
     module.params['path'] = dest
     file_args = module.load_file_common_arguments(module.params)
     file_args['path'] = dest
-    changed = module.set_file_attributes_if_different(file_args, changed)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,

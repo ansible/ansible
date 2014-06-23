@@ -144,7 +144,7 @@ Latest Release Via Yum
 ++++++++++++++++++++++
 
 RPMs are available from yum for `EPEL
-<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
+<http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
 Fedora distributions. 
 
 Ansible itself can manage earlier operating
@@ -173,10 +173,11 @@ Latest Releases Via Apt (Ubuntu)
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
 
-Once configured, 
+To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
+    $ sudo apt-get install apt-add-repository
     $ sudo apt-add-repository ppa:rquillo/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
@@ -229,6 +230,10 @@ your version of Python, you can get pip by::
 Then install Ansible with::
 
    $ sudo pip install ansible
+
+If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+
+   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 

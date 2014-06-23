@@ -83,6 +83,7 @@ options:
         defaults.
     required: false
     version_added: "1.5"
+extends_documentation_fragment: files
 author: Michael DeHaan
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
@@ -111,7 +112,7 @@ def split_pre_existing_dir(dirname):
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return (head, [ tail ])
-    new_directory_list.insert(0, tail)
+    new_directory_list.append(tail)
     return (pre_existing_dir, new_directory_list)
 
 
@@ -123,7 +124,7 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     if len(new_directory_list) > 0:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
-        changed = module.set_directory_attributes_if_different(directory_args, changed)
+        changed = module.set_fs_attributes_if_different(directory_args, changed)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
     return changed
 
@@ -189,6 +190,15 @@ def main():
             md5sum_dest = module.md5(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):
+            try:
+                # os.path.exists() can return false in some
+                # circumstances where the directory does not have
+                # the execute bit for the current user set, in
+                # which case the stat() call will raise an OSError 
+                os.stat(os.path.dirname(dest))
+            except OSError, e:
+                if "permission denied" in str(e).lower():
+                    module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
     if not os.access(os.path.dirname(dest), os.W_OK):
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
@@ -204,6 +214,8 @@ def main():
                 os.unlink(dest)
                 open(dest, 'w').close()
             if validate:
+                if "%s" not in validate:
+                    module.fail_json(msg="validate must contain %%s: %s" % (validate))
                 (rc,out,err) = module.run_command(validate % src)
                 if rc != 0:
                     module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
@@ -222,7 +234,7 @@ def main():
 
     module.params['dest'] = dest
     file_args = module.load_file_common_arguments(module.params)
-    res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
+    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
 

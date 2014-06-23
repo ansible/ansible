@@ -142,12 +142,17 @@ def _get_server_state(module, nova):
     return server_info, server
 
 def _get_port_info(neutron, module, instance_id, internal_network_name=None):
+    subnet_id = None
     if internal_network_name:
-        kwargs = {
-            'name': internal_network_name,
-        }
+        kwargs = {'name': internal_network_name}
         networks = neutron.list_networks(**kwargs)
-        subnet_id = networks['networks'][0]['subnets'][0]
+        network_id = networks['networks'][0]['id']
+        kwargs = {
+            'network_id': network_id,
+            'ip_version': 4
+        }
+        subnets = neutron.list_subnets(**kwargs)
+        subnet_id = subnets['subnets'][0]['id']
     kwargs = {
             'device_id': instance_id,
     }
@@ -178,10 +183,11 @@ def _get_floating_ip(module, neutron, fixed_ip_address):
         return None, None
     return ips['floatingips'][0]['id'], ips['floatingips'][0]['floating_ip_address']
 
-def _create_floating_ip(neutron, module, port_id, net_id):
+def _create_floating_ip(neutron, module, port_id, net_id, fixed_ip):
     kwargs = {
             'port_id': port_id,
-            'floating_network_id': net_id
+            'floating_network_id': net_id,
+            'fixed_ip_address': fixed_ip
     }
     try:
         result = neutron.create_floatingip({'floatingip': kwargs})
@@ -251,7 +257,7 @@ def main():
         net_id = _get_net_id(neutron, module)
         if not net_id:
             module.fail_json(msg = "cannot find the network specified, please check")
-        _create_floating_ip(neutron, module, port_id, net_id)
+        _create_floating_ip(neutron, module, port_id, net_id, fixed_ip)
 
     if module.params['state'] == 'absent':
         if floating_ip:

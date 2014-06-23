@@ -49,7 +49,7 @@ except ImportError:
 class TimeoutError(Exception):
     pass
 
-def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
+def timeout(seconds=10, error_message="Timer expired"):
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
@@ -109,6 +109,8 @@ class Facts(object):
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
+                 { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
     def __init__(self):
@@ -303,7 +305,9 @@ class Facts(object):
                         self.facts['distribution_release'] = ora_prefix + data
                     elif name == 'SuSE':
                         data = get_file_content(path).splitlines()
-                        self.facts['distribution_release'] = data[2].split('=')[1].strip()
+                        for line in data:
+                            if '=' in line:
+                            	self.facts['distribution_release'] = line.split('=')[1].strip()
                     elif name == 'Debian':
                         data = get_file_content(path).split('\n')[0]
                         release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
@@ -735,7 +739,9 @@ class LinuxHardware(Hardware):
 
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
-                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
+                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/physical_block_size")
+                    if not part['sectorsize']:
+                        part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
                     d['partitions'][partname] = part
 
@@ -750,9 +756,9 @@ class LinuxHardware(Hardware):
             d['sectors'] = get_file_content(sysdir + "/size")
             if not d['sectors']:
                 d['sectors'] = 0
-            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
+            d['sectorsize'] = get_file_content(sysdir + "/queue/physical_block_size")
             if not d['sectorsize']:
-                d['sectorsize'] = 512
+                d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size",512)
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
@@ -1290,9 +1296,18 @@ class HPUX(Hardware):
         data = int(re.sub(' +',' ',out).split(' ')[5].strip())
         self.facts['memfree_mb'] = pagesize * data / 1024 / 1024
         if self.facts['architecture'] == '9000/800':
-            rc, out, err = module.run_command("grep Physical /var/adm/syslog/syslog.log")
-            data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
-            self.facts['memtotal_mb'] = int(data) / 1024
+            try:
+                rc, out, err = module.run_command("grep Physical /var/adm/syslog/syslog.log")
+                data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
+                self.facts['memtotal_mb'] = int(data) / 1024
+            except AttributeError:
+                #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
+                #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
+                if os.access("/dev/kmem", os.R_OK):
+                    rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
+                    if not err:
+                      data = out
+                      self.facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
@@ -1309,8 +1324,11 @@ class HPUX(Hardware):
         rc, out, err = module.run_command("model")
         self.facts['model'] = out.strip()
         if self.facts['architecture'] == 'ia64':
+            separator = ':'
+            if self.facts['distribution_version'] == "B.11.23":
+                separator = '='
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' | grep -v BMC", use_unsafe_shell=True)
-            self.facts['firmware_version'] = out.split(':')[1].strip()
+            self.facts['firmware_version'] = out.split(separator)[1].strip()
 
 
 class Darwin(Hardware):
@@ -1721,7 +1739,9 @@ class GenericBsdIfconfigNetwork(Network):
             if line:
                 words = line.split()
 
-                if re.match('^\S', line) and len(words) > 3:
+                if words[0] == 'pass':
+                    continue
+                elif re.match('^\S', line) and len(words) > 3:
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
                 elif words[0].startswith('options='):
@@ -1748,9 +1768,15 @@ class GenericBsdIfconfigNetwork(Network):
     def parse_interface_line(self, words):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
-        current_if['flags'] = self.get_options(words[1])
-        current_if['mtu'] = words[3]
+        current_if['flags']  = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later
+
+        if len(words) >= 5 : # Newer FreeBSD versions
+            current_if['metric'] = words[3]
+            current_if['mtu'] = words[5]
+        else:
+            current_if['mtu'] = words[3]
+
         return current_if
 
     def parse_options_line(self, words, current_if, ips):

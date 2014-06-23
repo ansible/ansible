@@ -53,7 +53,7 @@ Loops can be nested as well::
     - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
-        - [ 'alice', 'bob', 'eve' ]
+        - [ 'alice', 'bob' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable's name without templating it with '{{ }}'::
@@ -109,6 +109,8 @@ be used like this::
         - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
+            
+.. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
 Looping over Parallel Sets of Data
 ``````````````````````````````````
@@ -231,7 +233,7 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
       retries: 5
       delay: 10
 
-The above example run the shell module recursively till the module's result has "all systems go" in it's stdout or the task has 
+The above example run the shell module recursively till the module's result has "all systems go" in its stdout or the task has
 been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
 
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.

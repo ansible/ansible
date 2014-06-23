@@ -28,8 +28,8 @@ from ansible import constants as C
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
-REPLACER_LANG = "\"<<INCLUDE_ANSIBLE_MODULE_LANG>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_WINDOWS = "# POWERSHELL_COMMON"
 
 class ModuleReplacer(object):
 
@@ -47,14 +47,17 @@ class ModuleReplacer(object):
 
     from ansible.module_utils.basic import * 
 
-    will result in a template evaluation of
-
-    {{ include 'basic.py' }} 
+       ... will result in the insertion basic.py into the module
 
     from the module_utils/ directory in the source tree.
 
     All modules are required to import at least basic, though there will also
     be other snippets.
+
+    # POWERSHELL_COMMON
+
+    Also results in the inclusion of the common code in powershell.ps1
+
     """
 
     # ******************************************************************************
@@ -98,6 +101,10 @@ class ModuleReplacer(object):
             if REPLACER in line:
                 output.write(self.slurp(os.path.join(self.snippet_path, "basic.py")))
                 snippet_names.append('basic')
+            if REPLACER_WINDOWS in line:
+                ps_data = self.slurp(os.path.join(self.snippet_path, "powershell.ps1"))
+                output.write(ps_data)
+                snippet_names.append('powershell')
             elif line.startswith('from ansible.module_utils.'):
                 tokens=line.split(".")
                 import_error = False
@@ -117,8 +124,14 @@ class ModuleReplacer(object):
                 output.write(line)
                 output.write("\n")
 
-        if len(snippet_names) > 0 and not 'basic' in snippet_names:
-            raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path) 
+        if not module_path.endswith(".ps1"):
+            # Unixy modules
+            if len(snippet_names) > 0 and not 'basic' in snippet_names:
+                raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path) 
+        else:
+            # Windows modules
+            if len(snippet_names) > 0 and not 'powershell' in snippet_names:
+                raise errors.AnsibleError("missing required import in %s: # POWERSHELL_COMMON" % module_path) 
 
         return (output.getvalue(), module_style)
 
@@ -140,12 +153,10 @@ class ModuleReplacer(object):
                 encoded_args = repr(module_args.encode('utf-8'))
             except UnicodeDecodeError:
                 encoded_args = repr(module_args)
-            encoded_lang = repr(C.DEFAULT_MODULE_LANG)
             encoded_complex = repr(complex_args_json)
 
             # these strings should be part of the 'basic' snippet which is required to be included
             module_data = module_data.replace(REPLACER_ARGS, encoded_args)
-            module_data = module_data.replace(REPLACER_LANG, encoded_lang)
             module_data = module_data.replace(REPLACER_COMPLEX, encoded_complex)
 
             if module_style == 'new':
@@ -153,7 +164,6 @@ class ModuleReplacer(object):
                 if 'ansible_syslog_facility' in inject:
                     facility = inject['ansible_syslog_facility']
                 module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
-
 
             lines = module_data.split("\n")
             shebang = None

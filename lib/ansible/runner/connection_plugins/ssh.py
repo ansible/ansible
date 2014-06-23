@@ -17,6 +17,7 @@
 #
 
 import os
+import re
 import subprocess
 import shlex
 import pipes
@@ -41,7 +42,7 @@ class Connection(object):
         self.host = host
         self.ipv6 = ':' in self.host
         self.port = port
-        self.user = user
+        self.user = str(user)
         self.password = password
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
@@ -59,7 +60,8 @@ class Connection(object):
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
-            self.common_args += shlex.split(extra_args)
+            # make sure there is no empty string added as this can produce weird errors
+            self.common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
@@ -82,9 +84,9 @@ class Connection(object):
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
         elif self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.runner.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.private_key_file)]
         if self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
@@ -156,11 +158,16 @@ class Connection(object):
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
             # fail early if the sudo/su password is wrong
-            if self.runner.sudo and sudoable and self.runner.sudo_pass:
-                incorrect_password = gettext.dgettext(
-                    "sudo", "Sorry, try again.")
-                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
-                    raise errors.AnsibleError('Incorrect sudo password')
+            if self.runner.sudo and sudoable:
+                if self.runner.sudo_pass:
+                    incorrect_password = gettext.dgettext(
+                        "sudo", "Sorry, try again.")
+                    if stdout.endswith("%s\r\n%s" % (incorrect_password,
+                                                     prompt)):
+                        raise errors.AnsibleError('Incorrect sudo password')
+
+                if stdout.endswith(prompt):
+                    raise errors.AnsibleError('Missing sudo password')
 
             if self.runner.su and su and self.runner.su_pass:
                 incorrect_password = gettext.dgettext(
@@ -262,6 +269,7 @@ class Connection(object):
 
         if su and su_user:
             sudocmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
+            prompt_re = re.compile(prompt)
             ssh_cmd.append(sudocmd)
         elif not self.runner.sudo or not sudoable:
             prompt = None
@@ -302,7 +310,12 @@ class Connection(object):
             sudo_output = ''
             sudo_errput = ''
 
-            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
+            while True:
+                if success_key in sudo_output or \
+                    (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
+                    (self.runner.su_pass and prompt_re.match(sudo_output)):
+                    break
+
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
                                               [p.stdout], self.runner.timeout)
                 if p.stderr in rfd:
@@ -349,7 +362,7 @@ class Connection(object):
                 raise errors.AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         if p.returncode != 0 and controlpersisterror:
-            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
+            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
         if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 

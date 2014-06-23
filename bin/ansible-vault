@@ -20,6 +20,9 @@
 # example playbook to bootstrap this script in the examples/ dir which
 # installs ansible and sets it up to run on cron.
 
+#__requires__ = ['ansible']
+#import pkg_resources
+
 import os
 import sys
 import traceback

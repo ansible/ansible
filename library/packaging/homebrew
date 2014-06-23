@@ -44,6 +44,12 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    upgrade_all:
+        description:
+            - upgrade all homebrew packages
+        required: false
+        default: no
+        choices: [ "yes", "no" ]
     install_options:
         description:
             - options flags to install a package
@@ -56,7 +62,7 @@ EXAMPLES = '''
 - homebrew: name=foo state=present
 - homebrew: name=foo state=present update_homebrew=yes
 - homebrew: name=foo state=latest update_homebrew=yes
-- homebrew: update_homebrew=yes upgrade=yes
+- homebrew: update_homebrew=yes upgrade_all=yes
 - homebrew: name=foo state=head
 - homebrew: name=foo state=linked
 - homebrew: name=foo state=absent
@@ -92,6 +98,7 @@ class Homebrew(object):
         \s                  # spaces
         :                   # colons
         {sep}               # the OS-specific path separator
+        .                   # dots
         -                   # dashes
     '''.format(sep=os.path.sep)
 
@@ -99,6 +106,7 @@ class Homebrew(object):
         \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
         \s                  # spaces
         {sep}               # the OS-specific path separator
+        .                   # dots
         -                   # dashes
     '''.format(sep=os.path.sep)
 
@@ -121,6 +129,7 @@ class Homebrew(object):
          - a string containing only:
              - alphanumeric characters
              - dashes
+             - dots
              - spaces
              - colons
              - os.path.sep
@@ -145,6 +154,7 @@ class Homebrew(object):
          - a string containing only:
              - alphanumeric characters
              - dashes
+             - dots
              - spaces
              - os.path.sep
         '''
@@ -285,12 +295,14 @@ class Homebrew(object):
     # /class properties -------------------------------------------- }}}
 
     def __init__(self, module, path=None, packages=None, state=None,
-                 update_homebrew=False, install_options=None):
+                 update_homebrew=False, upgrade_all=False,
+                 install_options=None):
         if not install_options:
             install_options = list()
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, packages=packages,
                                   state=state, update_homebrew=update_homebrew,
+                                  upgrade_all=upgrade_all,
                                   install_options=install_options, )
 
         self._prep()
@@ -414,6 +426,9 @@ class Homebrew(object):
         if self.update_homebrew:
             self._update_homebrew()
 
+        if self.upgrade_all:
+            self._upgrade_all()
+
         if self.packages:
             if self.state == 'installed':
                 return self._install_packages()
@@ -453,6 +468,27 @@ class Homebrew(object):
             self.message = err.strip()
             raise HomebrewException(self.message)
     # /updated ------------------------------- }}}
+
+    # _upgrade_all --------------------------- {{{
+    def _upgrade_all(self):
+        rc, out, err = self.module.run_command([
+            self.brew_path,
+            'upgrade',
+        ])
+        if rc == 0:
+            if not out:
+                self.message = 'Homebrew packages already upgraded.'
+
+            else:
+                self.changed = True
+                self.message = 'Homebrew upgraded.'
+
+            return True
+        else:
+            self.failed = True
+            self.message = err.strip()
+            raise HomebrewException(self.message)
+    # /_upgrade_all -------------------------- }}}
 
     # installed ------------------------------ {{{
     def _install_current_package(self):
@@ -737,6 +773,11 @@ def main():
                 aliases=["update-brew"],
                 type='bool',
             ),
+            upgrade_all=dict(
+                default="no",
+                aliases=["upgrade"],
+                type='bool',
+            ),
             install_options=dict(
                 default=None,
                 aliases=['options'],
@@ -761,7 +802,7 @@ def main():
     state = p['state']
     if state in ('present', 'installed'):
         state = 'installed'
-    if state in ('head'):
+    if state in ('head', ):
         state = 'head'
     if state in ('latest', 'upgraded'):
         state = 'upgraded'
@@ -773,13 +814,14 @@ def main():
         state = 'absent'
 
     update_homebrew = p['update_homebrew']
+    upgrade_all = p['upgrade_all']
     p['install_options'] = p['install_options'] or []
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
 
     brew = Homebrew(module=module, path=path, packages=packages,
                     state=state, update_homebrew=update_homebrew,
-                    install_options=install_options)
+                    upgrade_all=upgrade_all, install_options=install_options)
     (failed, changed, message) = brew.run()
     if failed:
         module.fail_json(msg=message)

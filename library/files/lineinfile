@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+# (c) 2014, Ahti Kitsik <ak@ahtik.com>
 #
 # This file is part of Ansible
 #
@@ -25,7 +26,7 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: lineinfile
-author: Daniel Hokka Zakrisson
+author: Daniel Hokka Zakrisson, Ahti Kitsik
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
@@ -110,7 +111,7 @@ options:
   validate:
      required: false
      description:
-       - validation to run before copying into place. The command is passed 
+       - validation to run before copying into place. The command is passed
          securely so shell features like expansion and pipes won't work.
      required: false
      default: None
@@ -138,7 +139,7 @@ EXAMPLES = r"""
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"
 
-- lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\\1Xms${xms}m\\3' backrefs=yes
+- lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
 
 # Validate a the sudoers file before saving
 - lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
@@ -154,18 +155,20 @@ def write_changes(module,lines,dest):
     validate = module.params.get('validate', None)
     valid = not validate
     if validate:
+        if "%s" not in validate:
+            module.fail_json(msg="validate must contain %%s: %s" % (validate))
         (rc, out, err) = module.run_command(validate % tmpfile)
         valid = rc == 0
         if rc != 0:
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc,err))
     if valid:
-        module.atomic_move(tmpfile, dest)
+        module.atomic_move(tmpfile, os.path.realpath(dest))
 
 def check_file_attrs(module, changed, message):
 
     file_args = module.load_file_common_arguments(module.params)
-    if module.set_file_attributes_if_different(file_args, False):
+    if module.set_fs_attributes_if_different(file_args, False):
 
         if changed:
             message += " and "
@@ -249,6 +252,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # if insertafter=/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
     elif insertafter == 'EOF':
+
+        # If the file is not empty then ensure there's a newline before the added line
+        if len(lines)>0 and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
+            lines.append(os.linesep)
+
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True

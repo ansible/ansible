@@ -310,14 +310,19 @@ class Zfs(object):
                     self.set_property(prop, value) 
 
     def get_current_properties(self):
-        cmd = [self.module.get_bin_path('zfs', True)]
-        cmd.append('get -H all')
-        cmd.append(self.name)
-        rc, out, err = self.module.run_command(' '.join(cmd))
-        properties = dict()
-        for l in out.splitlines():
-            p, v = l.split('\t')[1:3]
-            properties[p] = v
+        def get_properties_by_name(propname):
+            cmd = [self.module.get_bin_path('zfs', True)]
+            cmd += ['get', '-H', propname, self.name]
+            rc, out, err = self.module.run_command(cmd)
+            return [l.split('\t')[1:3] for l in out.splitlines()]
+        properties = dict(get_properties_by_name('all'))
+        if 'share.*' in properties:
+            # Some ZFS pools list the sharenfs and sharesmb properties
+            # hierarchically as share.nfs and share.smb respectively.
+            del properties['share.*']
+            for p, v in get_properties_by_name('share.all'):
+                alias = p.replace('.', '')  # share.nfs -> sharenfs (etc)
+                properties[alias] = v
         return properties
 
     def run_command(self, cmd):

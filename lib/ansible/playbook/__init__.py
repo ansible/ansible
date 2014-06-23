@@ -179,7 +179,46 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _load_playbook_from_file(self, path, vars={}):
+    def _get_playbook_vars(self, play_ds, existing_vars):
+        '''
+        Gets the vars specified with the play and blends them 
+        with any existing vars that have already been read in
+        '''
+        new_vars = existing_vars.copy()
+        if 'vars' in play_ds:
+            if isinstance(play_ds['vars'], dict):
+                new_vars.update(play_ds['vars'])
+            elif isinstance(play_ds['vars'], list):
+                for v in play_ds['vars']:
+                    new_vars.update(v)
+        return new_vars
+
+    # *****************************************************
+
+    def _get_include_info(self, play_ds, basedir, existing_vars={}):
+        '''
+        Gets any key=value pairs specified with the included file
+        name and returns the merged vars along with the path
+        '''
+        new_vars = existing_vars.copy()
+        tokens = shlex.split(play_ds.get('include', ''))
+        for t in tokens[1:]:
+            (k,v) = t.split("=", 1)
+            new_vars[k] = template(basedir, v, new_vars)
+
+        return (new_vars, tokens[0])
+
+    # *****************************************************
+
+    def _get_playbook_vars_files(self, play_ds, existing_vars_files):
+        new_vars_files = list(existing_vars_files)
+        if 'vars_files' in play_ds:
+            new_vars_files = utils.list_union(new_vars_files, play_ds['vars_files'])
+        return new_vars_files
+
+    # *****************************************************
+
+    def _load_playbook_from_file(self, path, vars={}, vars_files=[]):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
@@ -201,36 +240,29 @@ class PlayBook(object):
                 # a playbook (list of plays) decided to include some other list of plays
                 # from another file.  The result is a flat list of plays in the end.
 
-                tokens = shlex.split(play['include'])
+                play_vars = self._get_playbook_vars(play, vars)
+                play_vars_files = self._get_playbook_vars_files(play, vars_files)
+                inc_vars, inc_path = self._get_include_info(play, basedir, play_vars)
+                play_vars.update(inc_vars)
 
-                incvars = vars.copy()
-                if 'vars' in play:
-                    if isinstance(play['vars'], dict):
-                        incvars.update(play['vars'])
-                    elif isinstance(play['vars'], list):
-                        for v in play['vars']:
-                            incvars.update(v)
-
-                # allow key=value parameters to be specified on the include line
-                # to set variables
-
-                for t in tokens[1:]:
-
-                    (k,v) = t.split("=", 1)
-                    incvars[k] = template(basedir, v, incvars)
-
-                included_path = utils.path_dwim(basedir, template(basedir, tokens[0], incvars))
-                (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                included_path = utils.path_dwim(basedir, template(basedir, inc_path, play_vars))
+                (plays, basedirs) = self._load_playbook_from_file(included_path, vars=play_vars, vars_files=play_vars_files)
                 for p in plays:
                     # support for parameterized play includes works by passing
                     # those variables along to the subservient play
                     if 'vars' not in p:
                         p['vars'] = {}
                     if isinstance(p['vars'], dict):
-                        p['vars'].update(incvars)
+                        p['vars'].update(play_vars)
                     elif isinstance(p['vars'], list):
                         # nobody should really do this, but handle vars: a=1 b=2
-                        p['vars'].extend([{k:v} for k,v in incvars.iteritems()])
+                        p['vars'].extend([{k:v} for k,v in play_vars.iteritems()])
+                    elif p['vars'] == None:
+                        # someone specified an empty 'vars:', so reset
+                        # it to the vars we currently have
+                        p['vars'] = play_vars.copy()
+                    # now add in the vars_files
+                    p['vars_files'] = utils.list_union(p.get('vars_files', []), play_vars_files)
 
                 accumulated_plays.extend(plays)
                 play_basedirs.extend(basedirs)
@@ -320,14 +352,14 @@ class PlayBook(object):
     def _trim_unavailable_hosts(self, hostlist=[]):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in self.inventory.list_hosts(hostlist) if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in hostlist if (h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
     def _run_task_internal(self, task):
         ''' run a particular module step in a playbook '''
 
-        hosts = self._trim_unavailable_hosts(task.play._play_hosts)
+        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts))
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
@@ -505,6 +537,7 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
+            basedir=self.basedir,
             pattern=play.hosts,
             module_name='setup',
             module_args={},

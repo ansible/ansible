@@ -18,6 +18,9 @@
 
 #######################################################
 
+#__requires__ = ['ansible']
+#import pkg_resources
+
 import sys
 import os
 import stat
@@ -107,30 +110,32 @@ def main(args):
     su_pass = None
     vault_pass = None
 
-    if not options.listhosts and not options.syntax and not options.listtasks:
+    options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
+
+    if options.listhosts or options.syntax or options.listtasks:
+        (_, _, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
+    else:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
-        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
         (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
 
-        if options.vault_password_file:
-            this_path = os.path.expanduser(options.vault_password_file)
-            try:
-                f = open(this_path, "rb")
-                tmp_vault_pass=f.read().strip()
-                f.close()
-            except (OSError, IOError), e:
-                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+    if options.vault_password_file:
+        this_path = os.path.expanduser(options.vault_password_file)
+        try:
+            f = open(this_path, "rb")
+            tmp_vault_pass=f.read().strip()
+            f.close()
+        except (OSError, IOError), e:
+            raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
 
-            if not options.ask_vault_pass:
-                vault_pass = tmp_vault_pass
+        if not options.ask_vault_pass:
+            vault_pass = tmp_vault_pass
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
@@ -204,7 +209,8 @@ def main(args):
             playnum = 0
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
-                play = ansible.playbook.Play(pb, play_ds, play_basedir)
+                play = ansible.playbook.Play(pb, play_ds, play_basedir,
+                                              vault_password=pb.vault_password)
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
 

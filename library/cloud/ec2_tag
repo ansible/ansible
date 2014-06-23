@@ -33,7 +33,7 @@ options:
       - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of an instance.
     required: false
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'list']
     aliases: []
   region:
     description:

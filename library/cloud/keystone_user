@@ -337,9 +337,9 @@ def main():
         if check_mode:
             # If we have a failure in check mode
             module.exit_json(changed=True,
-                             msg="exception: %s" % e.message)
+                             msg="exception: %s" % e)
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="exception: %s" % e)
     else:
         module.exit_json(**d)
 

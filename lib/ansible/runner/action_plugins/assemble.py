@@ -21,6 +21,7 @@ import os.path
 import pipes
 import shutil
 import tempfile
+import base64
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
@@ -118,7 +119,7 @@ class ActionModule(object):
 
             # fix file permissions when the copy is done as a different user
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+                self.runner._remote_chmod(conn, 'a+r', xfered, tmp)
 
             # run the copy module
             module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))

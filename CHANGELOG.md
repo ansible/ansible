@@ -1,7 +1,62 @@
 Ansible Changes By Release
 ==========================
 
-## 1.6 "And the Cradle Will Rock" - Active Development
+## 1.7 "Summer Nights" - Active Development
+
+Major new features:
+
+* Windows support (alpha) using native PowerShell remoting
+
+New inventory scripts:
+
+* SoftLayer
+* Windows Azure
+
+New Modules:
+
+* cloud: azure
+* cloud: rax_meta
+* cloud: rax_scaling_group
+* cloud: rax_scaling_policy
+* windows: version of setup module
+* windows: version of slurp module
+* windows: win_feature
+* windows: win_get_url
+* windows: win_msi
+* windows: win_ping
+* windows: win_user
+* windows: win_service
+* windows: win_group
+
+## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
+
+- Corrects a regression where handlers were run across all hosts, not just those that triggered the handler.
+- Fixed a bug in which modules did not support properly moving a file atomically when su was in use.
+- Fixed two bugs related to symlinks with directories when using the file module.
+- Fixed a bug related to MySQL master replication syntax.
+- Corrects a regression in the order of variable merging done by the internal runner code.
+- Various other minor bug fixes.
+
+## 1.6.2 "And the Cradle Will Rock" - May 23, 2014
+
+- If an improper locale is specified, core modules will now automatically revert to using the 'C' locale.
+- Modules using the fetch_url utility will now obey proxy environment variables.
+- The SSL validation step in fetch_url will likewise obey proxy settings, however only proxies using the http protocol are supported.
+- Fixed multiple bugs in docker module related to version changes upstream.
+- Fixed a bug in the ec2_group module where egress rules were lost when a VPC was specified.
+- Fixed two bugs in the synchronize module:
+  * a trailing slash might be lost when calculating relative paths, resulting in an incorrect destination.
+  * the sync might use the inventory directory incorrectly instead of the playbook or role directory.
+- Files will now only be chown'd on an atomic move if the src/dest uid/gid do not match.
+
+## 1.6.1 "And the Cradle Will Rock" - May 7, 2014
+
+- Fixed a bug in group_by, where systems were being grouped incorrectly.
+- Fixed a bug where file descriptors may leak to a child process when using accelerate.
+- Fixed a bug in apt_repository triggered when python-apt not being installed/available.
+- Fixed a bug in the apache2_module module, where modules were not being disabled correctly.
+
+## 1.6 "And the Cradle Will Rock" - May 5, 2014
 
 Major features/changes:
 
@@ -11,8 +66,8 @@ Major features/changes:
 * Accelerate improvements:
   - multiple users can connect with different keys, when `accelerate_multi_key = yes` is specified in the ansible.cfg.
   - daemon lifetime is now based on the time from the last activity, not the time from the daemon's launch.
-* ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures
-
+* ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures.
+* Added VMWare support with the vsphere_guest module.
 
 New Modules:
 
@@ -49,6 +104,7 @@ New Modules:
 * cloud: ec2_asg (configure autoscaling groups)
 * cloud: ec2_scaling_policy
 * cloud: ec2_metric_alarm
+* cloud: vsphere_guest
 
 Other notable changes:
 
@@ -66,8 +122,17 @@ Other notable changes:
 * added ability for module documentation YAML to utilize shared module snippets for common args
 * apt module now accepts "deb" parameter to install local dpkg files
 * regex_replace filter plugin added
+* added an inventory script for Docker
+* added an inventory script for Abiquo
+* the get_url module now accepts url_username and url_password as parameters, so sites which require
+  authentication no longer need to have them embedded in the url
 * ... to be filled in from changelogs ...
 * 
+
+## 1.5.5 "Love Walks In" - April 18, 2014
+
+- Security fix for vault, to ensure the umask is set to a restrictive mode before creating/editing vault files.
+- Backported apt_repository security fixes relating to filename/mode upon sources list file creation.
 
 ## 1.5.4 "Love Walks In" - April 1, 2014
 

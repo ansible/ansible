@@ -27,7 +27,7 @@ description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
 options:
-  pkg:
+  name:
     description:
       - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Wildcards (fnmatch) like apt* are also supported.
     required: false
@@ -90,7 +90,7 @@ options:
     default: 'force-confdef,force-confold'
   deb:
      description:
-       - Path to a local .deb package file to install.
+       - Path to a .deb package on the remote machine.
      required: false
      version_added: "1.6"
 requirements: [ python-apt, aptitude ]
@@ -102,22 +102,22 @@ notes:
 
 EXAMPLES = '''
 # Update repositories cache and install "foo" package
-- apt: pkg=foo update_cache=yes
+- apt: name=foo update_cache=yes
 
 # Remove "foo" package
-- apt: pkg=foo state=absent
+- apt: name=foo state=absent
 
 # Install the package "foo"
-- apt: pkg=foo state=present
+- apt: name=foo state=present
 
 # Install the version '1.00' of package "foo"
-- apt: pkg=foo=1.00 state=present
+- apt: name=foo=1.00 state=present
 
 # Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
-- apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes
+- apt: name=nginx state=latest default_release=squeeze-backports update_cache=yes
 
 # Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
-- apt: pkg=openjdk-6-jdk state=latest install_recommends=no
+- apt: name=openjdk-6-jdk state=latest install_recommends=no
 
 # Update all packages to the latest version
 - apt: upgrade=dist
@@ -125,7 +125,7 @@ EXAMPLES = '''
 # Run the equivalent of "apt-get update" as a separate step
 - apt: update_cache=yes
 
-# Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
+# Only run "update_cache=yes" if the last one is more than 3600 seconds ago
 - apt: update_cache=yes cache_valid_time=3600
 
 # Pass options to dpkg on run
@@ -432,11 +432,11 @@ def main():
 
     if not HAS_PYTHON_APT:
         try:
-            module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True)
+            module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True, check_rc=True)
             global apt, apt_pkg
             import apt
             import apt_pkg
-        except:
+        except ImportError:
             module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD

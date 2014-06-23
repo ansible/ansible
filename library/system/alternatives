@@ -53,7 +53,6 @@ EXAMPLES = '''
   alternatives: name=hadoop-conf link=/etc/hadoop/conf path=/etc/hadoop/conf.ansible
 '''
 
-UPDATE_ALTERNATIVES = '/usr/sbin/update-alternatives'
 DEFAULT_LINK_PRIORITY = 50
 
 def main():
@@ -70,6 +69,8 @@ def main():
     name = params['name']
     path = params['path']
     link = params['link']
+
+    UPDATE_ALTERNATIVES =  module.get_bin_path('update-alternatives',True)
 
     current_path = None
     all_alternatives = []
@@ -109,6 +110,8 @@ def main():
                     current_path = value
                 elif key == 'Alternative':
                     all_alternatives.append(value)
+                elif key == 'Link' and not link:
+                    link = value
 
     if current_path != path:
         try:
@@ -126,7 +129,7 @@ def main():
             )
 
             module.exit_json(changed=True)
-        except subprocess.CalledProcessError as cpe:
+        except subprocess.CalledProcessError, cpe:
             module.fail_json(msg=str(dir(cpe)))
     else:
         module.exit_json(changed=False)

@@ -643,7 +643,7 @@ class PlaybookCallbacks(object):
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
-        if prompt and default:
+        if prompt and default is not None:
             msg = "%s [%s]: " % (prompt, default)
         elif prompt:
             msg = "%s: " % prompt
@@ -651,9 +651,10 @@ class PlaybookCallbacks(object):
             msg = 'input for %s: ' % varname
 
         def prompt(prompt, private):
+            msg = prompt.encode(sys.stdout.encoding)
             if private:
-                return getpass.getpass(prompt)
-            return raw_input(prompt)
+                return getpass.getpass(msg)
+            return raw_input(msg)
 
 
         if confirm:

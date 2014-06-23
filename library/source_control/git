@@ -61,7 +61,7 @@ options:
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
     key_file:
-        requird: false
+        required: false
         default: None
         version_added: "1.5"
         description:
@@ -181,7 +181,15 @@ def get_submodule_update_params(module, git_path, cwd):
 
 def write_ssh_wrapper():
     module_dir = get_module_path()
-    fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+    try:
+        # make sure we have full permission to the module_dir, which
+        # may not be the case if we're sudo'ing to a non-root user
+        if os.access(module_dir, os.W_OK|os.R_OK|os.X_OK):
+            fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+        else:
+            raise OSError
+    except (IOError, OSError):
+        fd, wrapper_path = tempfile.mkstemp()
     fh = os.fdopen(fd, 'w+b')
     template = """#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
@@ -393,6 +401,9 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
+    (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to set a new url %s for %s: %s" % (repo, remote, out0 + err0))
     if bare:
         (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
     else:
@@ -429,7 +440,7 @@ def submodule_update(git_path, module, dest):
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
     return (rc, out, err)
 
-def switch_version(git_path, module, dest, remote, version):
+def switch_version(git_path, module, dest, remote, version, recursive):
     ''' once pulled, switch to a particular SHA, tag, or branch '''
     cmd = ''
     if version != 'HEAD':
@@ -455,8 +466,11 @@ def switch_version(git_path, module, dest, remote, version):
             module.fail_json(msg="Failed to checkout %s" % (version))
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
-    (rc, out2, err2) = submodule_update(git_path, module, dest)
-    return (rc, out1 + out2, err1 + err2)
+    if recursive:
+        (rc, out2, err2) = submodule_update(git_path, module, dest)
+        out1 += out2
+        err1 += err1
+    return (rc, out1, err1)
 
 # ===========================================
 
@@ -502,6 +516,7 @@ def main():
     if key_file or ssh_opts:
         ssh_wrapper = write_ssh_wrapper()
         set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+        module.add_cleanup_file(path=ssh_wrapper)
 
     # add the git repo's hostkey 
     if module.params['ssh_opts'] is not None:
@@ -565,7 +580,7 @@ def main():
     # switch to version specified regardless of whether
     # we cloned or pulled
     if not bare:
-        switch_version(git_path, module, dest, remote, version)
+        switch_version(git_path, module, dest, remote, version, recursive)
 
     # determine if we changed anything
     after = get_version(module, git_path, dest)

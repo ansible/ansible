@@ -28,6 +28,7 @@ from ansible import errors
 from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
+from jinja2.filters import environmentfilter
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -132,6 +133,10 @@ def search(value, pattern='', ignorecase=False):
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
+
+    if not isinstance(value, basestring):
+        value = str(value)
+
     if ignorecase:
         flags = re.I
     else:
@@ -181,9 +186,21 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
-def rand(end, start=0, step=1):
+@environmentfilter
+def rand(environment, end, start=None, step=None):
     r = SystemRandom()
-    return r.randrange(start, end, step)
+    if isinstance(end, (int, long)):
+        if not start:
+            start = 0
+        if not step:
+            step = 1
+        return r.randrange(start, end, step)
+    elif hasattr(end, '__iter__'):
+        if start or step:
+            raise errors.AnsibleFilterError('start and step can only be used with integer values')
+        return r.choice(end)
+    else:
+        raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''

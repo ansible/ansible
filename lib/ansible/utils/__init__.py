@@ -25,8 +25,9 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils.plugins import *
 from ansible.utils import template
+from ansible.utils.display_functions import *
+from ansible.utils.plugins import *
 from ansible.callbacks import display
 import ansible.constants as C
 import ast
@@ -42,17 +43,12 @@ import warnings
 import traceback
 import getpass
 import sys
-import textwrap
 import json
 
 #import vault
 from vault import VaultLib
 
 VERBOSITY=0
-
-# list of all deprecation messages to prevent duplicate display
-deprecations = {}
-warns = {}
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 
@@ -75,9 +71,28 @@ except:
 
 KEYCZAR_AVAILABLE=False
 try:
-    import keyczar.errors as key_errors
-    from keyczar.keys import AesKey
-    KEYCZAR_AVAILABLE=True
+    try:
+        # some versions of pycrypto may not have this?
+        from Crypto.pct_warnings import PowmInsecureWarning
+    except ImportError:
+        PowmInsecureWarning = RuntimeWarning
+
+    with warnings.catch_warnings(record=True) as warning_handler:
+        warnings.simplefilter("error", PowmInsecureWarning)
+        try:
+            import keyczar.errors as key_errors
+            from keyczar.keys import AesKey
+        except PowmInsecureWarning:
+            system_warning(
+                "The version of gmp you have installed has a known issue regarding " + \
+                "timing vulnerabilities when used with pycrypto. " + \
+                "If possible, you should update it (ie. yum update gmp)."
+            )
+            warnings.resetwarnings()
+            warnings.simplefilter("ignore")
+            import keyczar.errors as key_errors
+            from keyczar.keys import AesKey
+        KEYCZAR_AVAILABLE=True
 except ImportError:
     pass
 
@@ -464,32 +479,32 @@ Could be written as:
 
     return msg
 
-def process_yaml_error(exc, data, path=None):
+def process_yaml_error(exc, data, path=None, show_content=True):
     if hasattr(exc, 'problem_mark'):
         mark = exc.problem_mark
-        if mark.line -1 >= 0:
-            before_probline = data.split("\n")[mark.line-1]
-        else:
-            before_probline = ''
-        probline = data.split("\n")[mark.line]
-        arrow = " " * mark.column + "^"
-        msg = """Syntax Error while loading YAML script, %s
+        if show_content:
+            if mark.line -1 >= 0:
+                before_probline = data.split("\n")[mark.line-1]
+            else:
+                before_probline = ''
+            probline = data.split("\n")[mark.line]
+            arrow = " " * mark.column + "^"
+            msg = """Syntax Error while loading YAML script, %s
 Note: The error may actually appear before this position: line %s, column %s
 
 %s
 %s
 %s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
 
-        unquoted_var = None
-        if '{{' in probline and '}}' in probline:
-            if '"{{' not in probline or "'{{" not in probline:
-                unquoted_var = True
+            unquoted_var = None
+            if '{{' in probline and '}}' in probline:
+                if '"{{' not in probline or "'{{" not in probline:
+                    unquoted_var = True
 
-        msg = process_common_errors(msg, probline, mark.column)
-        if not unquoted_var:
-            msg = process_common_errors(msg, probline, mark.column)
-        else:
-            msg = msg + """
+            if not unquoted_var:
+                msg = process_common_errors(msg, probline, mark.column)
+            else:
+                msg = msg + """
 We could be wrong, but this one looks like it might be an issue with
 missing quotes.  Always quote template expression brackets when they 
 start a value. For instance:            
@@ -503,7 +518,14 @@ Should be written as:
       - "{{ foo }}"      
 
 """
-            msg = process_common_errors(msg, probline, mark.column)
+        else:
+            # most likely displaying a file with sensitive content,
+            # so don't show any of the actual lines of yaml just the
+            # line number itself
+            msg = """Syntax error while loading YAML script, %s
+The error appears to have been on line %s, column %s, but may actually
+be before there depending on the exact syntax problem.
+""" % (path, mark.line + 1, mark.column + 1)
 
     else:
         # No problem markers means we have to throw a generic
@@ -519,6 +541,7 @@ def parse_yaml_from_file(path, vault_password=None):
     ''' convert a yaml file to a data structure '''
 
     data = None
+    show_content = True
 
     try:
         data = open(path).read()
@@ -528,11 +551,12 @@ def parse_yaml_from_file(path, vault_password=None):
     vault = VaultLib(password=vault_password)
     if vault.is_encrypted(data):
         data = vault.decrypt(data)
+        show_content = False
 
     try:
         return parse_yaml(data, path_hint=path)
     except yaml.YAMLError, exc:
-        process_yaml_error(exc, data, path)
+        process_yaml_error(exc, data, path, show_content)
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
@@ -584,9 +608,9 @@ def md5s(data):
     return digest.hexdigest()
 
 def md5(filename):
-    ''' Return MD5 hex digest of local file, or None if file is not present. '''
+    ''' Return MD5 hex digest of local file, None if file is not present or a directory. '''
 
-    if not os.path.exists(filename):
+    if not os.path.exists(filename) or os.path.isdir(filename):
         return None
     digest = _md5()
     blocksize = 64 * 1024
@@ -884,10 +908,11 @@ def filter_leading_non_json_lines(buf):
     filter only leading lines since multiline JSON is valid.
     '''
 
+    kv_regex = re.compile(r'.*\w+=\w+.*')
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or "=" in line or line.startswith('{') or line.startswith('['):
+        if stop_filtering or kv_regex.match(line) or line.startswith('{') or line.startswith('['):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
@@ -925,9 +950,9 @@ def make_su_cmd(su_user, executable, cmd):
     """
     # TODO: work on this function
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-    prompt = 'assword: '
+    prompt = '[Pp]assword: ?$'
     success_key = 'SUDO-SUCCESS-%s' % randbits
-    sudocmd = '%s %s %s %s -c %s' % (
+    sudocmd = '%s %s %s -c "%s -c %s"' % (
         C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
@@ -977,6 +1002,23 @@ def is_list_of_strings(items):
         if not isinstance(x, basestring):
             return False
     return True
+
+def list_union(a, b):
+    result = []
+    for x in a:
+        if x not in result:
+            result.append(x)
+    for x in b:
+        if x not in result:
+            result.append(x)
+    return result
+
+def list_intersection(a, b):
+    result = []
+    for x in a:
+        if x in b and x not in result:
+            result.append(x)
+    return result
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
@@ -1100,36 +1142,6 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             terms = [ terms ]
 
     return terms
-
-def deprecated(msg, version, removed=False):
-    ''' used to print out a deprecation message.'''
-
-    if not removed and not C.DEPRECATION_WARNINGS:
-        return
-
-    if not removed:
-        if version:
-            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-        else:
-            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
-        new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
-    else:
-        raise errors.AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
-
-    wrapped = textwrap.wrap(new_msg, 79)
-    new_msg = "\n".join(wrapped) + "\n"
-
-    if new_msg not in deprecations:
-        display(new_msg, color='purple', stderr=True)
-        deprecations[new_msg] = 1
-
-def warning(msg):
-    new_msg = "\n[WARNING]: %s" % msg
-    wrapped = textwrap.wrap(new_msg, 79)
-    new_msg = "\n".join(wrapped) + "\n"
-    if new_msg not in warns:
-        display(new_msg, color='bright purple', stderr=True)
-        warns[new_msg] = 1
 
 def combine_vars(a, b):
 

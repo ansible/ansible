@@ -74,12 +74,10 @@ def package_installed(module, name):
 
 def package_latest(module, name, site):
     # Only supports one package
-    name = pipes.quote(name)
-    site = pipes.quote(site)
     cmd = [ 'pkgutil', '--single', '-c' ]
     if site is not None:
-        cmd += [ '-t', site ]
-    cmd.append(name)
+        cmd += [ '-t', pipes.quote(site) ]
+    cmd.append(pipes.quote(name))
     cmd += [ '| tail -1 | grep -v SAME' ]
     rc, out, err = module.run_command(' '.join(cmd), use_unsafe_shell=True)
     if rc == 1:

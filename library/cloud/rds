@@ -125,7 +125,7 @@ options:
     aliases: []
   vpc_security_groups:
     description:
-      - Comma separated list of one or more vpc security groups. Used only when command=create or command=modify.
+      - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
@@ -300,7 +300,7 @@ def main():
             multi_zone        = dict(type='bool', default=False),
             iops              = dict(required=False), 
             security_groups   = dict(required=False),
-            vpc_security_groups = dict(required=False),
+            vpc_security_groups = dict(type='list', required=False),
             port              = dict(required=False),
             upgrade           = dict(type='bool', default=False),
             option_group      = dict(required=False),
@@ -370,6 +370,9 @@ def main():
         else:
             return 'vpc_security_groups'
 
+    # Package up the optional parameters
+    params = {}
+
     # Validate parameters for each command
     if command == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
@@ -412,9 +415,6 @@ def main():
     for v in invalid_vars:
         if module.params.get(v):
             module.fail_json(msg = str("Parameter %s invalid for %s command" % (v, command)))
-
-    # Package up the optional parameters
-    params = {}
 
     if db_engine:
         params["engine"] = db_engine
@@ -465,7 +465,10 @@ def main():
         params["security_groups"] = security_groups.split(',')
 
     if vpc_security_groups:
-        params["vpc_security_groups"] = vpc_security_groups.split(',')
+        groups_list = []
+        for x in vpc_security_groups:
+            groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
+        params["vpc_security_groups"] = groups_list
 
     if new_instance_name:
         params["new_instance_id"] = new_instance_name
@@ -540,6 +543,12 @@ def main():
                             found = 1
                     if found == 0:
                         time.sleep(5)
+
+                # The name of the database has now changed, so we have
+                # to force result to contain the new instance, otherwise
+                # the call below to get_current_resource will fail since it
+                # will be looking for the old instance name.
+                result.id = new_instance_name
             else:
                 # Wait for a few seconds since it takes a while for AWS
                 # to change the instance from 'available' to 'modifying'
@@ -618,9 +627,14 @@ def main():
     if resource.status == 'available' and command != 'snapshot':
         d["endpoint"] = resource.endpoint[0]
         d["port"] = resource.endpoint[1]
+        if resource.vpc_security_groups is not None:
+            d["vpc_security_groups"] = ','.join(x.vpc_group for x in resource.vpc_security_groups)
+        else:
+            d["vpc_security_groups"] = None
     else:
         d["endpoint"] = None
         d["port"] = None
+        d["vpc_security_groups"] = None
 
     # ReadReplicaSourceDBInstanceIdentifier may or may not exist
     try:

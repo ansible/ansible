@@ -36,17 +36,11 @@ class InventoryDirectory(object):
         self.parsers = []
         self.hosts = {}
         self.groups = {}
- 
+
         for i in self.names:
-            
-            if i.endswith("~") or i.endswith(".orig") or i.endswith(".bak"):
-                continue
-            if i.endswith(".ini"):
-                # configuration file for an inventory script
-                continue
-            if i.endswith(".retry"):
-                # this file is generated on a failed playbook and should only be
-                # used when run specifically
+
+            # Skip files that end with certain extensions or characters
+            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
                 continue
             # Skip hidden files
             if i.startswith('.') and not i.startswith('./'):

@@ -200,7 +200,7 @@ def rax_slugify(value):
     return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
 
 
-def pyrax_object_to_dict(obj):
+def server_to_dict(obj):
     instance = {}
     for key in dir(obj):
         value = getattr(obj, key)
@@ -216,7 +216,7 @@ def pyrax_object_to_dict(obj):
 
 def create(module, names, flavor, image, meta, key_name, files,
            wait, wait_timeout, disk_config, group, nics,
-           extra_create_args):
+           extra_create_args, existing=[]):
 
     cs = pyrax.cloudservers
     changed = False
@@ -266,7 +266,7 @@ def create(module, names, flavor, image, meta, key_name, files,
             server.get()
         except:
             server.status == 'ERROR'
-        instance = pyrax_object_to_dict(server)
+        instance = server_to_dict(server)
         if server.status == 'ACTIVE' or not wait:
             success.append(instance)
         elif server.status == 'ERROR':
@@ -274,15 +274,18 @@ def create(module, names, flavor, image, meta, key_name, files,
         elif wait:
             timeout.append(instance)
 
+    untouched = [server_to_dict(s) for s in existing]
+    instances = success + untouched
+
     results = {
         'changed': changed,
         'action': 'create',
-        'instances': success + error + timeout,
+        'instances': instances,
         'success': success,
         'error': error,
         'timeout': timeout,
         'instance_ids': {
-            'instances': [i['id'] for i in success + error + timeout],
+            'instances': [i['id'] for i in instances],
             'success': [i['id'] for i in success],
             'error': [i['id'] for i in error],
             'timeout': [i['id'] for i in timeout]
@@ -300,7 +303,7 @@ def create(module, names, flavor, image, meta, key_name, files,
         module.exit_json(**results)
 
 
-def delete(module, instance_ids, wait, wait_timeout):
+def delete(module, instance_ids, wait, wait_timeout, kept=[]):
     cs = pyrax.cloudservers
 
     changed = False
@@ -318,7 +321,7 @@ def delete(module, instance_ids, wait, wait_timeout):
         else:
             changed = True
 
-        instance = pyrax_object_to_dict(server)
+        instance = server_to_dict(server)
         instances[instance['id']] = instance
 
     # If requested, wait for server deletion
@@ -332,6 +335,7 @@ def delete(module, instance_ids, wait, wait_timeout):
                     server.get()
                 except:
                     instances[instance_id]['status'] = 'DELETED'
+                    instances[instance_id]['rax_status'] = 'DELETED'
 
             if not filter(lambda s: s['status'] not in ('', 'DELETED',
                                                         'ERROR'),
@@ -347,15 +351,17 @@ def delete(module, instance_ids, wait, wait_timeout):
     success = filter(lambda s: s['status'] in ('', 'DELETED'),
                      instances.values())
 
+    instances = [server_to_dict(s) for s in kept]
+
     results = {
         'changed': changed,
         'action': 'delete',
-        'instances': success + error + timeout,
+        'instances': instances,
         'success': success,
         'error': error,
         'timeout': timeout,
         'instance_ids': {
-            'instances': [i['id'] for i in success + error + timeout],
+            'instances': [i['id'] for i in instances],
             'success': [i['id'] for i in success],
             'error': [i['id'] for i in error],
             'timeout': [i['id'] for i in timeout]
@@ -386,14 +392,20 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
     servers = []
 
-    for key, value in meta.items():
-        meta[key] = repr(value)
-
     # Add the group meta key
     if group and 'group' not in meta:
         meta['group'] = group
     elif 'group' in meta and group is None:
         group = meta['group']
+
+    # Normalize and ensure all metadata values are strings
+    for k, v in meta.items():
+        if isinstance(v, list):
+            meta[k] = ','.join(['%s' % i for i in v])
+        elif isinstance(v, dict):
+            meta[k] = json.dumps(v)
+        elif not isinstance(v, basestring):
+            meta[k] = '%s' % v
 
     # When using state=absent with group, the absent block won't match the
     # names properly. Use the exact_count functionality to decrease the count
@@ -501,11 +513,13 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
                 if len(servers) > count:
                     state = 'absent'
+                    kept = servers[:count]
                     del servers[:count]
                     instance_ids = []
                     for server in servers:
                         instance_ids.append(server.id)
-                    delete(module, instance_ids, wait, wait_timeout)
+                    delete(module, instance_ids, wait, wait_timeout,
+                           kept=kept)
                 elif len(servers) < count:
                     if auto_increment:
                         names = []
@@ -516,9 +530,15 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     else:
                         names = [name] * (count - len(servers))
                 else:
-                    module.exit_json(changed=False, action=None, instances=[],
+                    instances = []
+                    instance_ids = []
+                    for server in servers:
+                        instances.append(server_to_dict(server))
+                        instance_ids.append(server.id)
+                    module.exit_json(changed=False, action=None,
+                                     instances=instances,
                                      success=[], error=[], timeout=[],
-                                     instance_ids={'instances': [],
+                                     instance_ids={'instances': instance_ids,
                                                    'success': [], 'error': [],
                                                    'timeout': []})
         else:
@@ -568,7 +588,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 if len(servers) >= count:
                     instances = []
                     for server in servers:
-                        instances.append(pyrax_object_to_dict(server))
+                        instances.append(server_to_dict(server))
 
                     instance_ids = [i['id'] for i in instances]
                     module.exit_json(changed=False, action=None,
@@ -581,7 +601,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 names = [name] * (count - len(servers))
 
         create(module, names, flavor, image, meta, key_name, files,
-               wait, wait_timeout, disk_config, group, nics, extra_create_args)
+               wait, wait_timeout, disk_config, group, nics, extra_create_args,
+               existing=servers)
 
     elif state == 'absent':
         if instance_ids is None:

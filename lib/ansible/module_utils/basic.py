@@ -30,7 +30,6 @@
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
-MODULE_LANG = "<<INCLUDE_ANSIBLE_MODULE_LANG>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
@@ -44,6 +43,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # of an ansible module. The source of this common code lives
 # in lib/ansible/module_common.py
 
+import locale
 import os
 import re
 import pipes
@@ -129,6 +129,8 @@ def get_distribution():
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
+            if " " in distribution:
+                distribution = distribution.split()[0]
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
                 if 'Amazon' in distribution:
@@ -141,6 +143,18 @@ def get_distribution():
     else:
         distribution = None
     return distribution
+
+def get_distribution_version():
+    ''' return the distribution version '''
+    if platform.system() == 'Linux':
+        try:
+            distribution_version = platform.linux_distribution()[1]
+        except:
+            # FIXME: MethodMissing, I assume?
+            distribution_version = platform.dist()[1]
+    else:
+        distribution_version = None
+    return distribution_version
 
 def load_platform_subclass(cls, *args, **kwargs):
     '''
@@ -183,6 +197,7 @@ class AnsibleModule(object):
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
         self.no_log = no_log
+        self.cleanup_files = []
         
         self.aliases = {}
         
@@ -191,7 +206,10 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        os.environ['LANG'] = MODULE_LANG
+        # check the locale as set by the current environment, and
+        # reset to LANG=C if it's an invalid/unavailable locale
+        self._check_locale()
+
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = ['CHECKMODE', 'NO_LOG']
@@ -350,6 +368,31 @@ class AnsibleModule(object):
         gid = st.st_gid
         return (uid, gid)
 
+    def find_mount_point(self, path):
+        path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+        while not os.path.ismount(path):
+            path = os.path.dirname(path)
+        return path
+
+    def is_nfs_path(self, path):
+        """
+        Returns a tuple containing (True, selinux_context) if the given path
+        is on a NFS mount point, otherwise the return will be (False, None).
+        """
+        try:
+            f = open('/proc/mounts', 'r')
+            mount_data = f.readlines()
+            f.close()
+        except:
+            return (False, None)
+        path_mount_point = self.find_mount_point(path)
+        for line in mount_data:
+            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
+            if path_mount_point == mount_point and 'nfs' in fstype:
+                nfs_context = self.selinux_context(path_mount_point)
+                return (True, nfs_context)
+        return (False, None)
+
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
@@ -365,12 +408,16 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        for i in range(len(cur_context)):
-            if len(context) > i:
-                if context[i] is not None and context[i] != cur_context[i]:
-                    new_context[i] = context[i]
-                if context[i] is None:
-                    new_context[i] = cur_context[i]
+        (is_nfs, nfs_context) = self.is_nfs_path(path)
+        if is_nfs:
+            new_context = nfs_context
+        else:
+            for i in range(len(cur_context)):
+                if len(context) > i:
+                    if context[i] is not None and context[i] != cur_context[i]:
+                        new_context[i] = context[i]
+                    if context[i] is None:
+                        new_context[i] = cur_context[i]
 
         if cur_context != new_context:
             try:
@@ -533,6 +580,24 @@ class AnsibleModule(object):
             kwargs['state'] = 'absent'
         return kwargs
 
+    def _check_locale(self):
+        '''
+        Uses the locale module to test the currently set locale
+        (per the LANG and LC_CTYPE environment settings)
+        '''
+        try:
+            # setting the locale to '' uses the default locale
+            # as it would be returned by locale.getdefaultlocale()
+            locale.setlocale(locale.LC_ALL, '')
+        except locale.Error, e:
+            # fallback to the 'C' locale, which may cause unicode
+            # issues but is preferable to simply failing because
+            # of an unknown locale
+            locale.setlocale(locale.LC_ALL, 'C')
+            os.environ['LANG']     = 'C'
+            os.environ['LC_CTYPE'] = 'C'
+        except Exception, e:
+            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
     def _handle_aliases(self):
         aliases_results = {} #alias:canon
@@ -634,39 +699,6 @@ class AnsibleModule(object):
                         self.fail_json(msg=msg)
             else:
                 self.fail_json(msg="internal error: do not know how to interpret argument_spec")
-
-    def safe_eval(self, str, locals=None, include_exceptions=False):
-
-        # do not allow method calls to modules
-        if not isinstance(str, basestring):
-            # already templated to a datastructure, perhaps?
-            if include_exceptions:
-                return (str, None)
-            return str
-        if re.search(r'\w\.\w+\(', str):
-            if include_exceptions:
-                return (str, None)
-            return str
-        # do not allow imports
-        if re.search(r'import \w+', str):
-            if include_exceptions:
-                return (str, None)
-            return str
-        try:
-            result = None
-            if not locals:
-                result = eval(str)
-            else:
-                result = eval(str, None, locals)
-            if include_exceptions:
-                return (result, None)
-            else:
-                return result
-        except Exception, e:
-            if include_exceptions:
-                return (str, e)
-            return str
-
 
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
@@ -799,8 +831,8 @@ class AnsibleModule(object):
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''
         for arg in log_args:
-            if isinstance(log_args[arg], unicode):
-                msg = msg + arg + '=' + log_args[arg] + ' '
+            if isinstance(log_args[arg], basestring):
+                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
             else:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
         if msg:
@@ -810,7 +842,7 @@ class AnsibleModule(object):
 
         # 6655 - allow for accented characters
         try:
-            msg = unicode(msg).encode('utf8')
+            msg = msg.encode('utf8')
         except UnicodeDecodeError, e:
             pass
 
@@ -904,11 +936,20 @@ class AnsibleModule(object):
     def from_json(self, data):
         return json.loads(data)
 
+    def add_cleanup_file(self, path):
+        if path not in self.cleanup_files:
+            self.cleanup_files.append(path)
+
+    def do_cleanup_files(self):
+        for path in self.cleanup_files:
+            self.cleanup(path)
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(0)
 
@@ -917,6 +958,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(1)
 
@@ -964,7 +1006,7 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def cleanup(self,tmpfile):
+    def cleanup(self, tmpfile):
         if os.path.exists(tmpfile):
             try:
                 os.unlink(tmpfile)
@@ -994,6 +1036,18 @@ class AnsibleModule(object):
         creating = not os.path.exists(dest)
 
         try:
+            login_name = os.getlogin()
+        except OSError:
+            # not having a tty can cause the above to fail, so
+            # just get the LOGNAME environment variable instead
+            login_name = os.environ.get('LOGNAME', None)
+
+        # if the original login_name doesn't match the currently
+        # logged-in user, or if the SUDO_USER environment variable
+        # is set, then this user has switched their credentials
+        switched_user = login_name and login_name != pwd.getpwuid(os.getuid())[0] or os.environ.get('SUDO_USER')
+
+        try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
@@ -1007,7 +1061,7 @@ class AnsibleModule(object):
                 prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
 
             try: # leaves tmp file behind when sudo and  not root
-                if os.getenv("SUDO_USER") and os.getuid() != 0:
+                if switched_user and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
                     # copy2 will preserve some metadata
                     shutil.copy2(src, tmp_dest.name)
@@ -1016,15 +1070,22 @@ class AnsibleModule(object):
                 if self.selinux_enabled():
                     self.set_context_if_different(
                         tmp_dest.name, context, False)
-                if dest_stat:
+                tmp_stat = os.stat(tmp_dest.name)
+                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
                     os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
                 os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
-        if creating and os.getenv("SUDO_USER"):
-            os.chown(dest, os.getuid(), os.getgid())
+        if creating:
+            # make sure the file has the correct permissions
+            # based on the current value of umask
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(dest, 0666 ^ umask)
+            if switched_user:
+                os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
@@ -1090,6 +1151,7 @@ class AnsibleModule(object):
             # that are not balanced
             # source: http://blog.stevenlevithan.com/archives/match-quoted-string
             r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
+            r'^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$', 
             # TODO: add more regex checks here
         ]
         for re_str in clean_re_strings:
