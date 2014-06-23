@@ -68,6 +68,17 @@ options:
     required: false
     default: null
     aliases: []
+  instance_profile_name:
+    description:
+      - The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance.
+    required: false
+    version_added: "1.7"
+  associate_public_ip_address:
+    description: 
+      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
+    required: false
+    default: false
+    version_added: "1.7"
 extends_documentation_fragment: aws
 """
 
@@ -126,6 +137,8 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    instance_profile_name = module.params.get('instance_profile_name')
+    associate_public_ip_address = module.boolean(module.params.get('associate_public_ip_address'))
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -144,7 +157,9 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        instance_profile_name=instance_profile_name,
+        associate_public_ip_address=associate_public_ip_address)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -159,7 +174,9 @@ def create_launch_config(connection, module):
 
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=instance_type)
+                     security_groups=result.security_groups, instance_type=instance_type, 
+                     instance_profile_name=instance_profile_name, 
+                     associate_public_ip_address=associate_public_ip_address)
 
 
 def delete_launch_config(connection, module):
@@ -183,6 +200,8 @@ def main():
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
+            instance_profile_name=dict(type='str'),
+            associate_public_ip_address=dict(type='bool', default=False),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
