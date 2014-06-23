@@ -148,8 +148,8 @@ class Subversion(object):
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
         lines = self._exec(["status", self.dest])
-        # Match only revisioned files, i.e. ignore status '?'.
-        regex = re.compile(r'^[^?]')
+        # Match only revisioned files, i.e. ignore status '?'. And also ignore status 'X' for external.
+        regex = re.compile(r'^[^?X]...[^X]')
         # Has local mods if more than 0 modifed revisioned files.
         return len(filter(regex.match, lines)) > 0
 
