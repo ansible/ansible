@@ -7,3 +7,5 @@ include lib/ansible/module_common/*.ps1
 recursive-include docs *
 recursive-include library *
 include Makefile
+include VERSION
+include MANIFEST.in
