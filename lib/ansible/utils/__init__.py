@@ -908,11 +908,11 @@ def filter_leading_non_json_lines(buf):
     filter only leading lines since multiline JSON is valid.
     '''
 
-    kv_regex = re.compile(r'.*\w+=\w+.*')
+    kv_regex = re.compile(r'\w=\w')
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or kv_regex.match(line) or line.startswith('{') or line.startswith('['):
+        if stop_filtering or kv_regex.search(line) or line.startswith('{') or line.startswith('['):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
