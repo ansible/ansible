@@ -73,6 +73,18 @@ options:
     required: false
     default: None
     version_added: "1.7"
+  health_check_period:
+    description:
+      - Length of time in seconds after a new EC2 instance comes into service that Auto Scaling starts checking its health.
+    required: false
+    default: 500 seconds
+    version_added: "1.7"
+  health_check_type:
+    description:
+      - The service you want the health status from, Amazon EC2 or Elastic Load Balancer.
+    required: false
+    default: EC2
+    version_added: "1.7"
 extends_documentation_fragment: aws
 """
 
@@ -141,6 +153,8 @@ def create_autoscaling_group(connection, module):
     desired_capacity = module.params.get('desired_capacity')
     vpc_zone_identifier = module.params.get('vpc_zone_identifier')
     set_tags = module.params.get('tags')
+    health_check_period = module.params.get('health_check_period')
+    health_check_type = module.params.get('health_check_type')
     
     as_groups = connection.get_all_groups(names=[group_name])
 
@@ -173,7 +187,9 @@ def create_autoscaling_group(connection, module):
                  desired_capacity=desired_capacity,
                  vpc_zone_identifier=vpc_zone_identifier,
                  connection=connection,
-                 tags=asg_tags)
+                 tags=asg_tags,
+                 health_check_period=health_check_period,
+                 health_check_type=health_check_type)
 
         try:
             connection.create_auto_scaling_group(ag)
@@ -272,6 +288,8 @@ def main():
             vpc_zone_identifier=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             tags=dict(type='list', default=[]),
+            health_check_period=dict(type='int', default=300),
+            health_check_type=dict(default='EC2', chices=['EC2', 'ELB']),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
