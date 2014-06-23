@@ -367,7 +367,7 @@ def remove(m, pkgspec, cache, purge=False,
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
         m.exit_json(changed=True, stdout=out, stderr=err)
 
-def upgrade(m, mode="yes", force=False,
+def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     if m.check_mode:
         check_arg = '--simulate'
@@ -403,6 +403,10 @@ def upgrade(m, mode="yes", force=False,
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
                                     force_yes, check_arg, upgrade_command)
+
+    if default_release:
+        cmd += " -t '%s'" % (default_release,)
+
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
@@ -497,7 +501,8 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, dpkg_options)
+            upgrade(module, p['upgrade'], force_yes,
+                    p['default_release'], dpkg_options)
 
         if p['deb']:
             if p['state'] != "installed":
