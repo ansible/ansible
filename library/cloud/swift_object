@@ -1,0 +1,156 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: swift_object
+version_added: "1.0"
+short_description: Create/Delete OpenStack Swift Objects
+description:
+   - Create and Delete OpenStack Swift Containers
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   container:
+     description:
+       - Name of container
+     required: true
+     default: None
+   object:
+     description:
+       - Name of object
+     required: true
+     default: None
+   file:
+    description:
+       - Location of file to upload
+    required: true
+    default: None
+requirements: ["swiftclient"]
+'''
+try:
+    from swiftclient import client as swift_client
+    from swiftclient import exceptions as swift_exc
+except ImportError:
+    print('Cannot import swiftclient, exiting')
+EXAMPLES = '''
+# Creates a new VM and attaches to a network and passes metadata to the instance
+- nova_compute:
+       state: present
+       os_username: admin
+       os_password: admin
+       os_tenant_name: admin
+       name: derp
+'''
+def _check_container(swift, name):
+    for container in swift.get_account()[1]:
+        if container['name'] == name:
+            return True
+    return False
+
+def _check_object(swift, container, obj):
+    if not _check_container(swift, container):
+        return False
+    container_list = swift.get_container(container)[1]
+    for object_info in container_list:
+        if object_info['name'] == obj:
+            return True
+    return False
+
+def _upload_object(module, swift):
+    if not _check_container(swift, module.params['container']):
+        try:
+            swift.put_container(module.params['container'])
+        except swift_exc, e:
+            module.fail_json(msg='Error creating container:%s' % str(e))
+    if _check_object(swift, module.params['container'],
+                     module.params['object']):
+        module.exit_json(changed=False, result='Object already exists')
+    try:
+        with open(module.params['file'], 'rb') as f:
+            swift.put_object(module.params['container'],
+                             module.params['object'],
+                             f.read())
+    except swift_exc, e:
+        module.fail_json(msg='Error uploading file:%s' % str(e))
+    module.exit_json(changed=True, result='Object uploaded')
+
+def _delete_object(module, swift):
+    if not _check_object(swift,
+                         module.params['container'],
+                         module.params['object']):
+        module.exit_json(changed=False, result='No object to delete')
+    try:
+        swift.delete_object(module.params['container'],
+                            module.params['object'])
+    except Exception, e:
+        module.fail_json(msg='Error deleting object:%s' % str(e))
+    module.exit_json(changed=True, result='Object deleted')
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        state                        = dict(default='present', choices=['absent', 'present']),
+        container                    = dict(required=True),
+        object                       = dict(required=True),
+        file                         = dict(default=None),
+        ),
+    )
+
+    swift = swift_client.Connection(auth_version='2',
+                                    user=module.params['os_username'],
+                                    key=module.params['os_password'],
+                                    tenant_name=module.params['os_tenant_name'],
+                                    authurl=module.params['os_auth_url'])
+    try:
+        swift.head_account()
+    except swift_exc.ClientException:
+        module.fail_json(msg='Failed to authenticate swift client')
+
+    if module.params['state'] == 'present':
+        _upload_object(module, swift)
+    if module.params['state'] == 'absent':
+        _delete_object(module, swift)
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()
