@@ -424,7 +424,7 @@ class Runner(object):
 
         if "tmp" in tmp and ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             # deal with possible umask issues once sudo'ed to other user
-            self._remote_chmod(conn, 'a+r', remote_module_path)
+            self._remote_chmod(conn, 'a+r', remote_module_path, tmp)
 
         cmd = ""
         in_data = None
@@ -452,7 +452,7 @@ class Runner(object):
 
             if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
                 # deal with possible umask issues once sudo'ed to other user
-                self._remote_chmod(conn, 'a+r', argsfile)
+                self._remote_chmod(conn, 'a+r', argsfile, tmp)
 
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
