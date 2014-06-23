@@ -226,6 +226,7 @@ class FilterModule(object):
             'dirname': os.path.dirname,
             'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
+            'relpath': os.path.relpath,
 
             # failure testing
             'failed'  : failed,
