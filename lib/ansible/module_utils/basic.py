@@ -32,8 +32,8 @@
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, 'True', True]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, 'False', False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 # ansible modules can be written in any language.  To simplify
