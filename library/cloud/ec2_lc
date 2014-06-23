@@ -43,6 +43,11 @@ options:
     description:
       - The AMI unique identifier to be used for the group
     required: false
+  instance_monitoring:
+    version_added: "1.7"
+    description:
+      - Whether instances in group are launched with detailed monitoring
+    required: false
   key_name:
     description:
       - The SSH key name to be used for access to managed instances
@@ -78,6 +83,14 @@ EXAMPLES = '''
     key_name: default
     security_groups: 'group,group2'
     instance_type: t1.micro
+
+- ec2_lc:
+    name: detailed_monitoring
+    image_id: ami-XXX
+    key_name: default
+    security_groups: 'group,group2'
+    instance_type: t1.micro
+    instance_monitoring: True
 
 '''
 
@@ -126,6 +139,7 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    instance_monitoring = module.params.get('instance_monitoring')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -144,7 +158,8 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        instance_monitoring=instance_monitoring)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
