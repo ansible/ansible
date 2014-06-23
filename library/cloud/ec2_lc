@@ -33,6 +33,11 @@ options:
     description:
       - Unique name for configuration
     required: true
+  instance_profile_name:
+    version_added: "1.7"
+    description:
+      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
+    required: false
   instance_type:
     description:
       - instance type to use for the instance
@@ -72,6 +77,7 @@ extends_documentation_fragment: aws
 """
 
 EXAMPLES = '''
+# A simple example
 - ec2_lc:
     name: special
     image_id: ami-XXX
@@ -79,6 +85,46 @@ EXAMPLES = '''
     security_groups: 'group,group2'
     instance_type: t1.micro
 
+# A more advanced example that looks up an ami, creates a launch config with
+# an instance profile and user data script, and launches an autoscaling group
+
+- name: create an autoscaling group based on a launch configuration
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    profile: app-server-profile
+    keypair: my-key
+    instance_type: t1.micro
+    group: my-group
+    region: us-west-2
+    azs: us-west-2a,us-west-2b,us-west-2c
+  tasks:
+  - name: lookup ami id
+    ec2_ami_search: distro=ubuntu region={{ region }} release=trusty
+    register: ubuntu_image
+  # Note that launch configs cannot be updated -- only created or deleted
+  - name: ensure launch config exists
+    ec2_lc:
+      name: prod_lc
+      region: "{{ region }}"
+      image_id: "{{ ubuntu_image.ami }}"
+      key_name: "{{ keypair }}"
+      security_groups: "{{ group }}"
+      instance_type: "{{ instance_type }}"
+      instance_profile_name: "{{ profile }}"
+      user_data: |
+        #!/bin/bash
+        echo I bootstrapped!
+  - name: ensure asg exists
+    ec2_asg:
+      name: prod_asg
+      launch_config_name: prod_lc
+      min_size: 1
+      max_size: 1
+      region: "{{ region }}"
+      availability_zones: "{{ azs }}"
+      state: present
 '''
 
 import sys
@@ -126,6 +172,7 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    instance_profile_name = module.params.get('instance_profile_name')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -144,7 +191,8 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        instance_profile_name=instance_profile_name)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -159,7 +207,8 @@ def create_launch_config(connection, module):
 
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=instance_type)
+                     security_groups=result.security_groups, instance_type=instance_type,
+                     instance_profile_name=instance_profile_name)
 
 
 def delete_launch_config(connection, module):
@@ -183,6 +232,7 @@ def main():
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
+            instance_profile_name=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
