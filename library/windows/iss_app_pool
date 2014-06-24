@@ -23,7 +23,7 @@
 
 DOCUMENTATION = '''
 ---
-module: iis_apppool
+module: iis_app_pool
 version_added: "1.7"
 short_description: Add and remove IIS application pool
 description:
@@ -104,14 +104,14 @@ author: Chris Hoffman
 
 EXAMPLES = '''
   # Create an application pool
-  iis_apppool:
+  iis_app_pool:
     name: WebsiteAppPool
     identity_type: NetworkService
     managed_runtime_version: v4.0
     state: started
 
   # Create an application pool for SpecificUser that is stopped
-  iis_apppool:
+  iis_app_pool:
     name: WebsiteSpecificUserAppPool
     identity_type: SpecificUser
     username: user
@@ -120,17 +120,16 @@ EXAMPLES = '''
     state: stopped
 
   # Remove an application pool
-  iis_apppool:
+  iis_app_pool:
     name: WebsiteAppPool
     state: absent
 
   # Create an application pool with additional settings
-  iis_apppool:
+  iis_app_pool:
     name: WebsiteAppPool
     identity_type: ApplicationPoolIdentity
     additional_settings:
       - name: "recycling.periodicRestart.time"
         value: "00:00:00"
     state: started
-
 '''
