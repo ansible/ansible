@@ -209,21 +209,22 @@ The mkpasswd utility that is available on most Linux systems is a great option::
 
     mkpasswd --method=SHA-512
 
-If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
-generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
-password hashing library is installed.
+``mkpasswd`` is often bundled with the ``whois`` package (On Ubuntu, you can do ``sudo apt-get install whois``).  If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
+generate these passwords using Python standard library.  The only requirement is that this is run on the same operating where the encrypted password will be stored (this is due to the way the ``crypt`` implementation is system-dependent).
 
-    pip install passlib
+SHA512 password values can be generated with Python as follows::
 
-Once the library is ready, SHA512 password values can then be generated as follows::
+    python -c 'import crypt; print crypt.crypt("<password>", "$6$<salt>")'
 
-    python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
+where ``<password>`` is the password to generate a hash, and ``<salt>`` is a set of random characters provided by you.
 
-If you have ``openssl`` installed on your machine, you can generate a password with the following command::
+If you wish Python to automatically generate a randomized salt for you, use this slightly longer one-liner::
 
-    openssl passwd -1 -salt <salt> <password>
+    python -c 'import crypt,random,string; print crypt.crypt("<password>", "$6$" + "".join([ random.choice(string.digits + string.letters + string.punctuation) for x in range(12)]))'
 
-where ``<salt>`` is a random set of characters of your choice, and ``<password>`` is the password that you want to encrypt.  Please review `the OpenSSL docs <https://www.openssl.org/docs/apps/passwd.html>`_ for more information.
+*Obsolete Password Generation Methods*
+
+Do not use ``openssl passwd`` to generate password hashes.  This is due to the lack of a SHA-512 implementation in the OpenSSL library.  As a result, OpenSSL will create a less-secure MD5 password hash.
 
 .. _commercial_support:
 
