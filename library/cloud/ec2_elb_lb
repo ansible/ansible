@@ -52,13 +52,13 @@ options:
     default: false
   security_group_ids:
     description:
-      - A list of security groups to apply to the elb
+      - A list of security groups to apply to the elb using the security group id or group name 
     require: false
     default: None
     version_added: "1.6"
   health_check:
     description:
-      - An associative array of health check configuration settigs (see example)
+      - An associative array of health check configuration settings (see example)
     require: false
     default: None
   region:
@@ -210,11 +210,14 @@ EXAMPLES = """
 
 import sys
 import os
+from ansible import errors
+from ansible import utils
 
 try:
     import boto
     import boto.ec2.elb
     from boto.ec2.elb.healthcheck import HealthCheck
+    import boto.ec2.securitygroup
     from boto.regioninfo import RegionInfo
 except ImportError:
     print "failed=True msg='boto required for this module'"
@@ -225,7 +228,7 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, security_group_ids=None, 
+                 zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", region=None, **aws_connect_params):
 
@@ -247,6 +250,7 @@ class ElbManager(object):
         self.changed = False
         self.status = 'gone'
         self.elb_conn = self._get_elb_connection()
+        self.ec2_conn = self._get_ec2_connection()
         self.elb = self._get_elb()
 
     def ensure_ok(self):
@@ -324,6 +328,13 @@ class ElbManager(object):
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
 
+    def _get_ec2_connection(self):
+        try:
+            return connect_to_aws(boto.ec2, self.region,
+                                  **self.aws_connect_params)
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg=str(e))
+
     def _delete_elb(self):
         # True if succeeds, exception raised if not
         result = self.elb_conn.delete_load_balancer(name=self.name)
@@ -335,7 +346,7 @@ class ElbManager(object):
         listeners = [self._listener_as_tuple(l) for l in self.listeners]
         self.elb = self.elb_conn.create_load_balancer(name=self.name,
                                                       zones=self.zones,
-                                                      security_groups=self.security_group_ids,
+                                                      security_groups=self._get_validated_security_group_ids(),
                                                       complex_listeners=listeners,
                                                       subnets=self.subnets,
                                                       scheme=self.scheme)
@@ -479,7 +490,7 @@ class ElbManager(object):
                 self._attach_subnets(subnets_to_attach)
             if subnets_to_detach:
                 self._detach_subnets(subnets_to_detach)
-                
+
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
         if self.zones:
@@ -498,9 +509,30 @@ class ElbManager(object):
             if zones_to_disable:
                 self._disable_zones(zones_to_disable)
 
+    def _get_validated_security_group_ids(self):
+      valid_ids = []
+      if self.security_group_ids:
+        requested_groups = [] + self.security_group_ids
+        available = {}
+        for security_group in self.ec2_conn.get_all_security_groups():
+          available[security_group.name] = security_group.id
+          if security_group.name in requested_groups:
+            requested_groups.remove(security_group.name)
+            valid_ids.append(security_group.id)
+
+          if security_group.id in requested_groups:
+            requested_groups.remove(security_group.id)
+            valid_ids.append(security_group.id)
+
+        if len(requested_groups) != 0:
+          raise errors.AnsibleError("Requested security groups '%s' not found. Available groups are %s" % (requested_groups, available))
+
+      return list(set(valid_ids))
+
     def _set_security_groups(self):
-        if self.security_group_ids != None and set(self.elb.security_groups) != set(self.security_group_ids):
-            self.elb_conn.apply_security_groups_to_lb(self.name, self.security_group_ids)
+        security_groups = self._get_validated_security_group_ids()
+        if len(security_groups) > 0 and set(self.elb.security_groups) != set(security_groups):
+            self.elb_conn.apply_security_groups_to_lb(self.name, security_groups)
             self.Changed = True
 
     def _set_health_check(self):
@@ -591,11 +623,13 @@ def main():
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets,
                          scheme, region=region, **aws_connect_params)
-
-    if state == 'present':
-        elb_man.ensure_ok()
-    elif state == 'absent':
-        elb_man.ensure_gone()
+    try:
+      if state == 'present':
+          elb_man.ensure_ok()
+      elif state == 'absent':
+          elb_man.ensure_gone()
+    except errors.AnsibleError as e:
+      module.fail_json(msg = e.msg)
 
     ansible_facts = {'ec2_elb': 'info'}
     ec2_facts_result = dict(changed=elb_man.changed,
