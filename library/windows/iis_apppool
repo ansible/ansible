@@ -1,0 +1,136 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# this is a windows documentation stub.  actual code lives in the .ps1
+# file of the same name
+
+DOCUMENTATION = '''
+---
+module: iis_apppool
+version_added: "1.7"
+short_description: Add and remove IIS application pool
+description:
+    - Manage your IIS Application Pools
+options:
+  name:
+    description:
+      - Name of the application pool
+    required: true
+    default: null
+    aliases: []
+  identity_type:
+    description:
+      - Sets the process model identity type for the application pool
+    required: false
+    choices:
+      - LocalSystem
+      - LocalService
+      - NetworkService
+      - SpecificUser
+      - ApplicationPoolIdentity
+    default: ApplicationPoolIdentity
+    aliases: []
+  username:
+    description:
+      - The username for the application pool process when the identity type is set to SpecificUser
+      - Can only be set with new app pools or with force=yes
+    required: false
+    default: null
+    aliases: []
+  password:
+    description:
+      - The password for the application pool process when the identity type is set to SpecificUser
+      - Can only be set with new app pools or with force=yes
+    required: false
+    default: null
+    aliases: []
+  managed_runtime:
+    description:
+      - For ASP.NET applications, the version of the .NET framework to use
+      - IIS preloads the .NET version that is specified in the application pool
+    required: false
+    choices:
+      - v1.1
+      - v2.0
+      - v4.0
+      - No Managed Code
+    default: The default .NET version for new application pools on the machine
+    aliases: []
+  additional_settings:
+    description:
+      - a name/value hash of additional settings for the application pool; '{"name":"key","value":"key value"}'
+    required: false
+    default: null
+    aliases: []
+  force:
+    description:
+      - Force the application pool to be recreated, if it exists
+    required: false
+    choices:
+      - yes
+      - no
+    default: no
+    aliases: []
+  state:
+    description:
+      - Create or remove the application pool
+    required: false
+    choices:
+      - started
+      - stopped
+      - restarted
+      - absent
+    default: started
+    aliases: []
+author: Chris Hoffman
+'''
+
+EXAMPLES = '''
+  # Create an application pool
+  iis_apppool:
+    name: WebsiteAppPool
+    identity_type: NetworkService
+    managed_runtime_version: v4.0
+    state: started
+
+  # Create an application pool for SpecificUser that is stopped
+  iis_apppool:
+    name: WebsiteSpecificUserAppPool
+    identity_type: SpecificUser
+    username: user
+    password: Passw0rd!
+    managed_runtime_version: v4.0
+    state: stopped
+
+  # Remove an application pool
+  iis_apppool:
+    name: WebsiteAppPool
+    state: absent
+
+  # Create an application pool with additional settings
+  iis_apppool:
+    name: WebsiteAppPool
+    identity_type: ApplicationPoolIdentity
+    additional_settings:
+      - name: "recycling.periodicRestart.time"
+        value: "00:00:00"
+    state: started
+
+'''

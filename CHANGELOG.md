@@ -27,6 +27,7 @@ New Modules:
 * windows: win_user
 * windows: win_service
 * windows: win_group
+* windows: iis_apppool
 
 ## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
 
