@@ -123,6 +123,7 @@ from boto import ec2
 from boto import rds
 from boto import route53
 import ConfigParser
+import requests
 
 try:
     import json
@@ -246,6 +247,13 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
+        # just get things in our own VPC?
+        try:
+            self.same_vpc_only = config.getboolean('ec2', 'same_vpc_only');
+        except ConfigParser.NoOptionError, e:
+            self.same_vpc_only = False
+        self.same_vpc_id = None
+
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
             self.nested_groups = config.getboolean('ec2', 'nested_groups')
@@ -287,9 +295,20 @@ class Ec2Inventory(object):
         if self.route53_enabled:
             self.get_route53_records()
 
+        # if we are restricting to just the VPC we are running in then let's find out what that is
+        if self.same_vpc_only:
+            # get a list of macs and from there get any potential VPC
+            r = requests.get('http://instance-data.ec2.internal/2014-02-25/meta-data/network/interfaces/macs/')
+            macs = r.text.split('\n')
+            for mac in macs:
+                vpc_r = requests.get('http://instance-data.ec2.internal/2014-02-25/meta-data/network/interfaces/macs/' + mac + 'vpc-id')
+                mac_vpc_id = vpc_r.text
+                if mac_vpc_id:
+                    self.same_vpc_id = mac_vpc_id
+
         for region in self.regions:
             self.get_instances_by_region(region)
-            if self.rds_enabled:
+            if self.rds_enabled and not self.same_vpc_id:
                 self.get_rds_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
@@ -381,6 +400,10 @@ class Ec2Inventory(object):
 
         # if we need to exclude hosts that match a pattern, skip those
         if self.pattern_exclude and self.pattern_exclude.match(dest):
+            return
+
+        # Skip instance that aren't in our VPC if we care about that
+        if self.same_vpc_id and (not instance.vpc_id or instance.vpc_id != self.same_vpc_id):
             return
 
         # Add to index
