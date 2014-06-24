@@ -53,6 +53,17 @@ author: Michael DeHaan
 
 EXAMPLES = '''
 # Execute the command in remote shell; stdout goes to the specified
-# file on the remote
+# file on the remote.
 - shell: somescript.sh >> somelog.txt
+
+# Change the working directory to somedir/ before executing the command.
+- shell: somescript.sh >> somelog.txt chdir=somedir/
+
+# You can also use the 'args' form to provide the options. This command
+# will change the working directory to somedir/ and will only run when
+# somedir/somelog.txt doesn't exist.
+- shell: somescript.sh >> somelog.txt
+  args:
+    chdir: somedir/
+    creates: somelog.txt
 '''
