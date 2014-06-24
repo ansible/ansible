@@ -1067,21 +1067,31 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             )
         )
 
-    # builtin functions that are not safe to call
-    INVALID_CALLS = (
-       'classmethod', 'compile', 'delattr', 'eval', 'execfile', 'file',
-       'filter', 'help', 'input', 'object', 'open', 'raw_input', 'reduce',
-       'reload', 'repr', 'setattr', 'staticmethod', 'super', 'type',
-    )
+    # builtin functions that are safe to call
+    BUILTIN_WHITELIST = [
+        'abs', 'all', 'any', 'basestring', 'bin', 'bool', 'buffer', 'bytearray',
+        'bytes', 'callable', 'chr', 'cmp', 'coerce', 'complex', 'copyright', 'credits',
+        'dict', 'dir', 'divmod', 'enumerate', 'exit', 'float', 'format', 'frozenset',
+        'getattr', 'globals', 'hasattr', 'hash', 'hex', 'id', 'int', 'intern',
+        'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 'locals', 'long',
+        'map', 'max', 'memoryview', 'min', 'next', 'oct', 'ord', 'pow', 'print',
+        'property', 'quit', 'range', 'reversed', 'round', 'set', 'slice', 'sorted',
+        'str', 'sum', 'tuple', 'unichr', 'unicode', 'vars', 'xrange', 'zip',
+    ]
+
+    filter_list = []
+    for filter in filter_loader.all():
+        filter_list.extend(filter.filters().keys())
+
+    CALL_WHITELIST = BUILTIN_WHITELIST + filter_list + C.DEFAULT_CALLABLE_WHITELIST
 
     class CleansingNodeVisitor(ast.NodeVisitor):
         def generic_visit(self, node):
             if type(node) not in SAFE_NODES:
-                #raise Exception("invalid expression (%s) type=%s" % (expr, type(node)))
                 raise Exception("invalid expression (%s)" % expr)
             super(CleansingNodeVisitor, self).generic_visit(node)
         def visit_Call(self, call):
-            if call.func.id in INVALID_CALLS:
+            if call.func.id not in CALL_WHITELIST:
                 raise Exception("invalid function: %s" % call.func.id)
 
     if not isinstance(expr, basestring):
