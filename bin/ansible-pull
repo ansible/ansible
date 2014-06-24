@@ -114,8 +114,8 @@ def main(args):
                       help='directory to checkout repository to')
     #parser.add_option('-l', '--live', default=True, action='store_live',
     #                  help='Print the ansible-playbook output while running')
-    parser.add_option('-l', '--limit', dest="limit", action="append",
-                      help="further limit selected hosts to an additional pattern", default=[])
+    parser.add_option('-l', '--limit', dest="limit"
+                      help="further limit selected hosts to an additional pattern")
     parser.add_option('-U', '--url', dest='url', default=None,
                       help='URL of the playbook repository')
     parser.add_option('-C', '--checkout', dest='checkout',
@@ -213,8 +213,8 @@ def main(args):
         cmd += ' -e "%s"' % ev
     if options.ask_sudo_pass:
         cmd += ' -K'
-    for lim in options.limit:
-        cmd += ' -l "%s"' % lim
+    if options.limit:
+        cmd += ' -l "%s"' % options.limit
     os.chdir(options.dest)
 
     # RUN THE PLAYBOOK COMMAND
