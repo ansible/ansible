@@ -218,7 +218,7 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     
     if vpc_id == None and cidr == None:
         module.fail_json(
-            msg='You must specify either a vpc id or a cidr block + list of unique tags, aborting'
+            msg='You must specify either a vpc_id or a cidr block + list of unique tags, aborting'
         )
 
     found_vpcs = []
@@ -262,7 +262,7 @@ def create_vpc(module, vpc_conn):
         about the VPC and subnets that were launched 
     """
     
-    id = module.params.get('id')
+    id = module.params.get('vpc_id')
     cidr_block = module.params.get('cidr_block')
     instance_tenancy = module.params.get('instance_tenancy')
     dns_support = module.params.get('dns_support')
@@ -414,15 +414,17 @@ def create_vpc(module, vpc_conn):
         try:
             new_rt = vpc_conn.create_route_table(vpc.id)
             for route in rt['routes']:
-                r_gateway = route['gw']
-                if r_gateway == 'igw':
+                route_kwargs = {}
+                if route['gw'] == 'igw':
                     if not internet_gateway:
                         module.fail_json(
                             msg='You asked for an Internet Gateway ' \
                             '(igw) route, but you have no Internet Gateway'
                         )
-                    r_gateway = igw.id
-                vpc_conn.create_route(new_rt.id, route['dest'], r_gateway)
+                    route_kwargs['gateway_id'] = igw.id
+                else:
+                    route_kwargs['instance_id'] = route['gw']
+                vpc_conn.create_route(new_rt.id, route['dest'], **route_kwargs)
 
             # Associate with subnets
             for sn in rt['subnets']:

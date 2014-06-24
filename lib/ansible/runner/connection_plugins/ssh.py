@@ -94,8 +94,7 @@ class Connection(object):
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
-        if self.user != pwd.getpwuid(os.geteuid())[0]:
-            self.common_args += ["-o", "User="+self.user]
+        self.common_args += ["-o", "User=" + (self.user or self.user or pwd.getpwuid(os.geteuid())[0])]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self
@@ -220,9 +219,15 @@ class Connection(object):
             if not os.path.exists(hf):
                 hfiles_not_found += 1
                 continue
-            host_fh = open(hf)
-            data = host_fh.read()
-            host_fh.close()
+            try:
+                host_fh = open(hf)
+            except IOError, e:
+                hfiles_not_found += 1
+                continue
+            else:
+                data = host_fh.read()
+                host_fh.close()
+                
             for line in data.split("\n"):
                 if line is None or " " not in line:
                     continue

@@ -576,12 +576,17 @@ def get_instance_info(inst):
                      'root_device_type': inst.root_device_type,
                      'root_device_name': inst.root_device_name,
                      'state': inst.state,
-                     'hypervisor': inst.hypervisor,
-                     'ebs_optimized': inst.ebs_optimized}
+                     'hypervisor': inst.hypervisor}
+
     try:
         instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
     except AttributeError:
         instance_info['virtualization_type'] = None
+
+    try:
+        instance_info['ebs_optimized'] = getattr(inst, 'ebs_optimized')
+    except AttributeError:
+        instance_info['ebs_optimized'] = False
 
     return instance_info
 
@@ -920,12 +925,6 @@ def create_instances(module, ec2, override_count=None):
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
-        if instance_tags:
-            try:
-                ec2.create_tags(instids, instance_tags)
-            except boto.exception.EC2ResponseError, e:
-                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
-
         # wait here until the instances are up
         num_running = 0
         wait_timeout = time.time() + wait_timeout
@@ -961,6 +960,13 @@ def create_instances(module, ec2, override_count=None):
         if termination_protection is True:
             for inst in res.instances:
                 inst.modify_attribute('disableApiTermination', True)
+
+        # Leave this as late as possible to try and avoid InvalidInstanceID.NotFound
+        if instance_tags:
+            try:
+                ec2.create_tags(instids, instance_tags)
+            except boto.exception.EC2ResponseError, e:
+                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
 
     instance_dict_array = []
     created_instance_ids = []
@@ -1070,6 +1076,7 @@ def startstop_instances(module, ec2, instance_ids, state):
     running_instances_array = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
+
             # Check "termination_protection" attribute
             if source_dest_check is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
                 inst.modify_attribute('sourceDestCheck', source_dest_check)

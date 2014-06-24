@@ -140,6 +140,9 @@ def db_dump(module, host, user, password, db_name, target, port, socket=None):
     return rc, stdout, stderr
 
 def db_import(module, host, user, password, db_name, target, port, socket=None):
+    if not os.path.exists(target):
+        return module.fail_json(msg="target %s does not exist on the host" % target)
+
     cmd = module.get_bin_path('mysql', True)
     cmd += " --user=%s --password=%s" % (pipes.quote(user), pipes.quote(password))
     if socket is not None:
@@ -148,12 +151,42 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
         cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
     cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        cmd = 'gunzip < ' + pipes.quote(target) + ' | ' + cmd
+        gunzip_path = module.get_bin_path('gunzip')
+        if gunzip_path:
+            rc, stdout, stderr = module.run_command('%s %s' % (gunzip_path, target))
+            if rc != 0:
+                return rc, stdout, stderr
+            cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+            rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
+            if rc != 0:
+                return rc, stdout, stderr
+            gzip_path = module.get_bin_path('gzip')
+            if gzip_path:
+                rc, stdout, stderr = module.run_command('%s %s' % (gzip_path, os.path.splitext(target)[0]))
+            else:
+                module.fail_json(msg="gzip command not found")
+        else:
+            module.fail_json(msg="gunzip command not found")
     elif os.path.splitext(target)[-1] == '.bz2':
-        cmd = 'bunzip2 < ' + pipes.quote(target) + ' | ' + cmd
+        bunzip2_path = module.get_bin_path('bunzip2')
+        if bunzip2_path:
+            rc, stdout, stderr = module.run_command('%s %s' % (bunzip2_path, target))
+            if rc != 0:
+                return rc, stdout, stderr
+            cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+            rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
+            if rc != 0:
+                return rc, stdout, stderr
+            bzip2_path = module.get_bin_path('bzip2')
+            if bzip2_path:
+                rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
+            else:
+                module.fail_json(msg="bzip2 command not found")
+        else:
+            module.fail_json(msg="bunzip2 command not found")
     else:
         cmd += " < %s" % pipes.quote(target)
-    rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
 def db_create(cursor, db, encoding, collation):
