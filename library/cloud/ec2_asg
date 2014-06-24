@@ -209,6 +209,8 @@ def create_autoscaling_group(connection, module):
             existing_tags = as_group.tags
             existing_tag_map = dict((tag.key, tag) for tag in existing_tags)
             for tag in set_tags:
+                if 'key' not in tag:
+                    continue
                 if ( not tag['key'] in existing_tag_map or
                      existing_tag_map[tag['key']].value != tag['value'] or
                      ('propagate_at_launch' in tag and
