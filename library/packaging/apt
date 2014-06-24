@@ -421,7 +421,7 @@ def main():
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name']),
+            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
@@ -511,7 +511,7 @@ def main():
                         install_recommends=install_recommends,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = p['package'].split(',')
+        packages = p['package']
         latest = p['state'] == 'latest'
         for package in packages:
             if package.count('=') > 1:
