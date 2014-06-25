@@ -205,7 +205,7 @@ Ansible 1.4 will also make remote environment variables available via facts in t
 How do I generate crypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The mkpasswd utility that is available on most Linux systems is a great option::
+The mkpasswd utility that is available on most Debian-like Linux systems is a great option::
 
     mkpasswd --method=SHA-512
 
