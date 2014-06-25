@@ -39,7 +39,8 @@ AWS_REGIONS = ['ap-northeast-1',
                'sa-east-1',
                'us-east-1',
                'us-west-1',
-               'us-west-2']
+               'us-west-2',
+               'us-gov-west-1']
 
 
 def aws_common_argument_spec():
