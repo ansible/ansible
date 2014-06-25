@@ -173,7 +173,7 @@ The variable value will be used as is, but the template evaluation will raise an
 Defaulting Undefined Variables
 ------------------------------
 
-Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined.
+Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
 
     {{ some_variable | default(5) }}
 
