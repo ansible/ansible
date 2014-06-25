@@ -89,7 +89,7 @@ required.  You're now live!
 Reporting A Bug
 ---------------
 
-Ansible practices responsible disclosure - if this is a security related bug, email security@ansible.com instead of filing a ticket or posting to the Google Group and you will recieve a prompt response.
+Ansible practices responsible disclosure - if this is a security related bug, email security@ansible.com instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
 Bugs should be reported to [github.com/ansible/ansible](http://github.com/ansible/ansible) after 
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
