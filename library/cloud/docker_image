@@ -228,7 +228,7 @@ def main():
         if do_build:
             image_id = manager.build()
             if image_id:
-                msg = "Image builded: %s" % image_id
+                msg = "Image built: %s" % image_id
             else:
                 failed = True
                 msg = "Error: %s\nLog:%s" % (manager.error_msg, manager.get_log())
