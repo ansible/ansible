@@ -1,3 +1,4 @@
+httplib2
 jinja2
 nose
 paramiko
