@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+## 1.6.4 "And the Cradle Will Rock" - Jun 25, 2014
+
+- Security update to prevent local operations from executing as the result of specifically crafted untrusted data
+
 ## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
 
 - Corrects a regression where handlers were run across all hosts, not just those that triggered the handler.
