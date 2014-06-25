@@ -1,0 +1,7 @@
+httplib2
+jinja2
+nose
+paramiko
+passlib
+pycrypto>=2.6
+PyYAML
