@@ -99,7 +99,7 @@ def query_package(module, name):
 def matching_packages(module, name):
 
     ports_glob_path = module.get_bin_path('ports_glob', True)
-    rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name))
+    rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name), use_unsafe_shell=True)
     parts = out.split()
     occurrences = int(parts[0])
     if occurrences == 0:
