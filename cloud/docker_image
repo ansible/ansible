@@ -113,6 +113,11 @@ except ImportError, e:
     print "failed=True msg='failed to import python module: %s'" % e
     sys.exit(1)
 
+try:
+    from docker.errors import APIError as DockerAPIError
+except ImportError:
+    from docker.client import APIError as DockerAPIError
+
 class DockerImageManager:
 
     def __init__(self, module):
@@ -187,7 +192,7 @@ class DockerImageManager:
             try:
                 self.client.remove_image(i['Id'])
                 self.changed = True
-            except docker.APIError as e:
+            except DockerAPIError as e:
                 # image can be removed by docker if not used
                 pass
 
@@ -235,7 +240,7 @@ def main():
 
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
-    except docker.errors.APIError as e:
+    except DockerAPIError as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
 
     except RequestException as e:
