@@ -31,25 +31,25 @@ description:
 options:
   path:
     description:
-       - Path to directory with Dockerfile
+       - Path to directory with Dockerfile, if building from source. (Omit if pulling from repository.)
     required: false
     default: null
     aliases: []
   name:
     description:
-       - Image name to work with
+       - Name to apply to the resulting image if building from source, or repository to pull from otherwise
     required: true
     default: null
     aliases: []
   tag:
     description:
-       - Image tag to work with
+       - Image tag to pull from repository or apply when building
     required: false
     default: "latest"
     aliases: []
   nocache:
     description:
-      - Do not use cache with building
+      - Do not use cache (when building)
     required: false
     default: false
     aliases: []
@@ -61,10 +61,10 @@ options:
     aliases: []
   state:
     description:
-      - Set the state of the image
+      - Set the state of the image ("force"/"build" will attempt to pull or build the image even if it already exists on the host)
     required: false
     default: present
-    choices: [ "present", "absent", "build" ]
+    choices: [ "present", "absent", "build", "force" ]
     aliases: []
   timeout:
     description:
@@ -72,6 +72,28 @@ options:
     required: false
     default: 600
     aliases: []
+  source:
+    description:
+      - The source of the image that should exist
+    required: false
+    default: "local"
+    choices: [ "local", "repository" ]
+    aliases: []
+    version_added: "1.6"
+  username:
+    description:
+      - Registry username (if pulling from a private registry)
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
+  password:
+    description:
+      - Registry password (if pulling from a private registry)
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
 requirements: [ "docker-py" ]
 '''
 
@@ -90,7 +112,7 @@ Build new version of image:
   sudo: yes
   tasks:
   - name: check or build image
-    docker_image: path="/path/to/build/dir" name="my/app" state=build
+    docker_image: path="/path/to/build/dir" name="my/app" state=force
 
 Remove image from local docker storage:
 
@@ -99,6 +121,14 @@ Remove image from local docker storage:
   tasks:
   - name: remove image
     docker_image: name="my/app" state=absent
+
+Ensure the coreos/etcd has been pulled from the public Docker registry
+
+- hosts: web
+  sudo: yes
+  tasks
+  - name: Ensure coreos/etcd image exists
+    docker_image: source=repository name=coreos/etcd
 
 '''
 
@@ -164,6 +194,45 @@ class DockerImageManager:
 
         return image_id
 
+    def pull(self):
+        """Pull an image from index.docker.io or a hosted private registry"""
+        image = self.module.params.get('name')
+        tag = self.module.params.get('tag')
+        username = self.module.params.get('username')
+        namespace = image.split('/')[0]
+
+        if username:
+            self.client.login(username, password=self.module.params.get('password'), registry=namespace)
+
+        stream = self.client.pull(image, tag=tag, stream=True)
+        self.changed = True
+
+        last_status = None
+        last_id = None
+        for chunk in stream:
+            chunk_json = json.loads(chunk)
+            if 'error' in chunk_json:
+                self.error_msg = chunk_json['error']
+                return None
+            else:
+                # The stream from client.pull() is SUPER noisy.
+                #
+                # Rather than returning hundreds of lines where, for many, the
+                # only change from the previous line is a slight difference in
+                # an ASCII progress bar, we just keep a log of each line where
+                # either the id or status changed from the previous line. This
+                # should give the user a good idea of what's going on without
+                # overwhelming them with unnecessary information.
+                id = chunk_json['id']
+                status = chunk_json['status']
+                if status != last_status or id != last_id:
+                    self.log.append('[{}] {}... '.format(id, status))
+                    last_id = id
+                    last_status = status
+
+        return last_id
+
+
     def has_changed(self):
         return self.changed
 
@@ -199,48 +268,72 @@ def main():
             name            = dict(required=True),
             tag             = dict(required=False, default="latest"),
             nocache         = dict(default=False, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'build']),
+            state           = dict(default='present', choices=['absent', 'present', 'build', 'force']),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             timeout         = dict(default=600, type='int'),
-        )
+            source          = dict(default='local', choices=['local', 'repository']),
+            username        = dict(required=False, default=None),
+            password        = dict(required=False, default=None),
+        ),
+        mutually_exclusive = [
+            ['path', 'username'],
+            ['path', 'password'],
+            ['nocache', 'username'],
+            ['nocache', 'password']
+        ]
     )
+    ACTION_BUILD = 1
+    ACTION_PULL = 2
 
     try:
         manager = DockerImageManager(module)
         state = module.params.get('state')
-        failed = False
-        image_id = None
-        msg = ''
-        do_build = False
+        source = module.params.get('source')
 
         # build image if not exists
         if state == "present":
             images = manager.get_images()
-            if len(images) == 0:
-                do_build = True
-        # build image
-        elif state == "build":
-            do_build = True
+            if len(images) == 0 or state in ['force', 'build']:
+                if source == 'local':
+                    action = ACTION_BUILD
+                else:
+                    action = ACTION_PULL
         # remove image or images
         elif state == "absent":
             manager.remove_images()
 
-        if do_build:
-            image_id = manager.build()
+        if action:
+            image_id = None
+            verb = None
+            if action == ACTION_BUILD:
+                image_id = manager.build()
+                verb = 'built'
+            elif action == ACTION_PULL:
+                image_id = manager.pull()
+                verb = 'pulled'
             if image_id:
-                msg = "Image builded: %s" % image_id
+                result = dict(
+                    failed      = False,
+                    changed     = manager.has_changed(),
+                    image_id    = image_id,
+                    msg         = "Image %s %s" % (image_id, verb),
+                )
             else:
-                failed = True
-                msg = "Error: %s\nLog:%s" % (manager.error_msg, manager.get_log())
+                result = dict(
+                    failed      = True,
+                    changed     = manager.has_changed(),
+                    msg = "Error: %s" % manager.error_msg,
+                    log = manager.get_log(),
+                )
 
-        module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
+        module.exit_json(**result)
 
     except docker.client.APIError as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
 
     except RequestException as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg=repr(e))
-        
+
 # import module snippets
 from ansible.module_utils.basic import *
 
