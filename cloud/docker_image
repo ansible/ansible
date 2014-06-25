@@ -235,7 +235,7 @@ def main():
 
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
-    except docker.client.APIError as e:
+    except docker.errors.APIError as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
 
     except RequestException as e:
