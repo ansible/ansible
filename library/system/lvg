@@ -131,7 +131,6 @@ def main():
     vgoptions = module.params['vg_options'].split()
 
     if module.params['pvs']:
-        dev_string = ' '.join(module.params['pvs'])
         dev_list = module.params['pvs']
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
@@ -188,7 +187,7 @@ def main():
                     else:
                         module.fail_json(msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
                 vgcreate_cmd = module.get_bin_path('vgcreate')
-                rc,_,err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', str(pesize), vg, dev_string])
+                rc,_,err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', str(pesize), vg] + dev_list)
                 if rc == 0:
                     changed = True
                 else:
