@@ -107,10 +107,10 @@ EXAMPLES = '''
   yum: name=httpd state=latest
 
 - name: remove the Apache package
-  yum: name=httpd state=removed
+  yum: name=httpd state=absent
 
 - name: install the latest version of Apache from the testing repo
-  yum: name=httpd enablerepo=testing state=installed
+  yum: name=httpd enablerepo=testing state=present
 
 - name: upgrade all packages
   yum: name=* state=latest
