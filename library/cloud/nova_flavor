@@ -1,0 +1,171 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as exc
+except ImportError:
+    print("failed=True msg='novaclient is required for this module to work'")
+
+DOCUMENTATION = '''
+---
+module: nova_flavor
+version_added: "1.0"
+short_description: Add/Delete flavors from nova
+description:
+   - Add or Remove instance types ( flavors ) from nova
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: false
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   name:
+     description:
+       - Name of flavor
+     required: true
+   disk:
+     description:
+       - Flavor root disk
+     required: true
+   vcpus:
+     description:
+        - Virtual cpus for flavor
+     required: true
+   ram:
+     description:
+        - Ram for flavor
+     required: true
+   ephemeral:
+     description:
+        - Ephemeral disk for flavor
+     required: false
+     default: None
+   swap:
+     description:
+       - Swap disk for flavor
+     required: false
+     default: None
+requirements: ["novaclient"]
+'''
+EXAMPLES = '''
+# Creates a key pair with the running users public key
+- nova_flavor:
+    state: present
+    os_username: admin
+    os_password: admin
+    os_tenant_name: admin
+    os_auth_url: http://1.1.2.3:5000/v2.0
+    name: no-disk small
+    disk: 0
+    ram: 1024
+    vcpus: 2
+'''
+
+def _flavor_present(module, nova):
+    for flav in nova.flavors.list():
+        if flav.name == module.params['name']:
+            module.exit_json(change=False, result='Flavor exists')
+    flavor_args = {'name' : module.params['name'],
+                   'ram' : module.params['ram'],
+                   'vcpus' : module.params['vcpus'],
+                   'disk' : module.params['disk'],
+                   'ephemeral' : module.params['ephemeral'],
+                   'swap' : module.params['swap'],
+                  }
+    try:
+        flav = nova.flavors.create(**flavor_args)
+    except exc, e:
+        module.fail_json(msg='Error creating flavor:%s' % str(e))
+    module.exit_json(changed=True, id=flav.id, info=flav._info)
+
+def _flavor_absent(module, nova):
+    for flav in nova.flavors.list():
+        if flav.name == module.params['name']:
+            try:
+                nova.flavors.delete(flav.id)
+            except exc, e:
+                module.fail_json(msg='Error deleting flavor:%s' % str(e))
+    module.exit_json(change=True, result='Flavor deleted')
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                 = dict(required=True),
+        os_password                 = dict(required=True),
+        os_tenant_name              = dict(required=True),
+        os_auth_url                 = dict(required=True),
+        region_name                 = dict(default=None),
+        state                       = dict(default='present', choices=['absent', 'present']),
+        name                        = dict(required=True),
+        ram                         = dict(default=None),
+        vcpus                       = dict(default=None),
+        disk                        = dict(default=None),
+        ephemeral                   = dict(default=0),
+        swap                        = dict(default=0),
+        ),
+    )
+
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'],
+                              service_type='compute')
+    try:
+        nova.authenticate()
+    except exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % str(e))
+    except exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % str(e))
+    present_args = ['ram', 'vcpus', 'disk']
+    if module.params['state'] == 'present':
+        for arg in present_args:
+            if module.params[arg] is None:
+                module.fail_json(msg='Missing arg:%s and is required' % arg)
+        _flavor_present(module, nova)
+    if module.params['state'] == 'absent':
+        _flavor_absent(module, nova)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()
+
