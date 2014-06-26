@@ -1040,22 +1040,23 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     # visitor class defined below.
     SAFE_NODES = set(
         (
-            ast.Expression,
-            ast.Compare,
-            ast.Str,
-            ast.List,
-            ast.Tuple,
-            ast.Dict,
-            ast.Call,
-            ast.Load,
+            ast.Add,
+            ast.Attribute,
             ast.BinOp,
-            ast.UnaryOp,
+            ast.Call,
+            ast.Compare,
+            ast.Dict,
+            ast.Div,
+            ast.Expression,
+            ast.List,
+            ast.Load,
+            ast.Mult,
             ast.Num,
             ast.Name,
-            ast.Add,
+            ast.Str,
             ast.Sub,
-            ast.Mult,
-            ast.Div,
+            ast.Tuple,
+            ast.UnaryOp,
         )
     )
 
@@ -1089,10 +1090,12 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         def generic_visit(self, node):
             if type(node) not in SAFE_NODES:
                 raise Exception("invalid expression (%s)" % expr)
-            super(CleansingNodeVisitor, self).generic_visit(node)
-        def visit_Call(self, call):
-            if call.func.id not in CALL_WHITELIST:
-                raise Exception("invalid function: %s" % call.func.id)
+            elif isinstance(node, ast.Call):
+                if not isinstance(node.func, ast.Attribute) and node.func.id not in CALL_WHITELIST:
+                    raise Exception("invalid function: %s" % node.func.id)
+            # iterate over all child nodes
+            for child_node in ast.iter_child_nodes(node):
+                super(CleansingNodeVisitor, self).visit(child_node)
 
     if not isinstance(expr, basestring):
         # already templated to a datastructure, perhaps?
