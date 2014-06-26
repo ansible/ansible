@@ -1,0 +1,179 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as nova_exc
+except ImportError:
+    print("failed=True msg='novaclient is required for this module to work'")
+try:
+    from keystoneclient.v2_0 import client as keystone_client
+except ImportError:
+    print("failed=True msg='keystoneclient is required for this module to work'")
+
+DOCUMENTATION = '''
+---
+module: nova_quota
+version_added: "1.0"
+short_description: Set nova quotas
+description:
+   - Set values for nova quotas
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   tenant_name:
+     description:
+       - Name of quotas tenant
+     required: false
+     default: None
+   tenant_id:
+     description:
+      - ID of quotas tenant
+     required: false
+     default: None
+   ram:
+     description:
+     - Amount of ram for tenant in MB
+     required: false
+     default: None
+   cores:
+     description:
+      - Amount of cores for tenant
+     required: false
+     default: None
+   floating_ips:
+     description:
+      - Amount of floating_ips for tenant
+     required: false
+     default: None
+   security_groups:
+     description:
+      - Amount of security groups for tenant
+     required: false
+     default: None
+   security_group_rules:
+     description:
+      - Amount of security group rules for tenant
+     required: false
+     default: None
+requirements: ["novaclient", "keystoneclient"]
+'''
+EXAMPLES = '''
+# Updates a tenants nova quotas
+- nova_quota:
+    state: present
+    os_username: admin
+    os_password: admin
+    os_tenant_name: admin
+    os_auth_url: http://1.1.2.3:5000/v2.0
+    tenant_name: test-tenant
+    ram: 5120
+    cores: 40
+    instances: 32
+'''
+
+def _find_tenant(keystone, tenant_name):
+    for tenant in keystone.tenants.list():
+        if tenant.name == tenant_name:
+            return tenant.id
+    return None
+
+def _update_quotas(module, nova):
+    quota_args = {'tenant_id' : module.params['tenant_id'],
+                  'instances' : module.params['instances'],
+                  'ram'       : module.params['ram'],
+                  'cores'     : module.params['cores'],
+                  'floating_ips' : module.params['floating_ips'],
+                  'security_groups': module.params['security_groups'],
+                  'secuirty_group_rules' : module.params['security_group_rules'],
+                 }
+    try:
+        quotas = nova.quotas.update(**quota_args)
+    except nova_exc, e:
+        module.fail_json(msg='Error updating quotas:%s' % str(e))
+    module.exit_json(changed=True, info=quotas._info)
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        region_name                  = dict(default=None),
+        tenant_id                    = dict(default=None),
+        tenant_name                  = dict(default=None),
+        instances                    = dict(default=None),
+        ram                          = dict(default=None),
+        cores                        = dict(default=None),
+        floating_ips                 = dict(default=None),
+        security_groups              = dict(default=None),
+        security_group_rules         = dict(default=None),
+        ),
+        mutually_exclusive = [['tenant_name', 'tenant_id']],
+    )
+
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'],
+                              service_type='compute')
+    if module.params['tenant_name']:
+        keystone = keystone_client.Client(username=module.params['os_username'],
+                                          password=module.params['os_password'],
+                                          tenant_name=module.params['os_tenant_name'],
+                                          auth_url=module.params['os_auth_url'],
+                                          region_name=module.params['region_name'])
+        module.params['tenant_id'] = _find_tenant(keystone, module.params['tenant_name'])
+    if not module.params['tenant_id']:
+        module.fail_json(msg='Must specify tenant')
+
+    try:
+        nova.authenticate()
+    except nova_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % str(e))
+    except nova_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % str(e))
+    _update_quotas(module, nova)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()
+
