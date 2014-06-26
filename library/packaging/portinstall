@@ -99,15 +99,14 @@ def query_package(module, name):
 def matching_packages(module, name):
 
     ports_glob_path = module.get_bin_path('ports_glob', True)
-    rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name))
-    parts = out.split()
-    occurrences = int(parts[0])
+    rc, out, err = module.run_command("%s %s" % (ports_glob_path, name))
+    #counts the numer of packages found
+    occurrences = out.count('\n')
     if occurrences == 0:
         name_without_digits = re.sub('[0-9]', '', name)
         if name != name_without_digits:
-            rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name_without_digits))
-            parts = out.split()
-            occurrences = int(parts[0])
+            rc, out, err = module.run_command("%s %s" % (ports_glob_path, name_without_digits))
+            occurrences = out.count('\n')
     return occurrences
 
 
