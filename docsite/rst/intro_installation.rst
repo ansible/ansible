@@ -58,6 +58,7 @@ Managed Node Requirements
 On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
 * ``python-simplejson`` 
+* ``python-hashlib`` (required if using certain modules eg., ``known_hosts`` and ``s3``)
 
 .. note::
 
