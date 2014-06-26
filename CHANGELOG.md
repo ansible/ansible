@@ -28,6 +28,10 @@ New Modules:
 * windows: win_service
 * windows: win_group
 
+## 1.6.4, 1.6.5 "And the Cradle Will Rock" - Jun 25, 2014
+
+- Security updates related to evaluation of untrusted remote inputs
+
 ## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
 
 - Corrects a regression where handlers were run across all hosts, not just those that triggered the handler.
