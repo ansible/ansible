@@ -45,7 +45,6 @@ import getpass
 import sys
 import json
 
-#import vault
 from vault import VaultLib
 
 VERBOSITY=0
@@ -68,6 +67,11 @@ try:
     PASSLIB_AVAILABLE = True
 except:
     pass
+
+try:
+    import builtin
+except ImportError:
+    import __builtin__ as builtin
 
 KEYCZAR_AVAILABLE=False
 try:
@@ -1041,7 +1045,6 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     SAFE_NODES = set(
         (
             ast.Add,
-            ast.Attribute,
             ast.BinOp,
             ast.Call,
             ast.Compare,
@@ -1068,34 +1071,24 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             )
         )
 
-    # builtin functions that are safe to call
-    BUILTIN_WHITELIST = [
-        'abs', 'all', 'any', 'basestring', 'bin', 'bool', 'buffer', 'bytearray',
-        'bytes', 'callable', 'chr', 'cmp', 'coerce', 'complex', 'copyright', 'credits',
-        'dict', 'dir', 'divmod', 'enumerate', 'exit', 'float', 'format', 'frozenset',
-        'getattr', 'globals', 'hasattr', 'hash', 'hex', 'id', 'int', 'intern',
-        'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 'locals', 'long',
-        'map', 'max', 'memoryview', 'min', 'next', 'oct', 'ord', 'pow', 'print',
-        'property', 'quit', 'range', 'reversed', 'round', 'set', 'slice', 'sorted',
-        'str', 'sum', 'tuple', 'unichr', 'unicode', 'vars', 'xrange', 'zip',
-    ]
-
     filter_list = []
     for filter in filter_loader.all():
         filter_list.extend(filter.filters().keys())
 
-    CALL_WHITELIST = BUILTIN_WHITELIST + filter_list + C.DEFAULT_CALLABLE_WHITELIST
+    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list
 
     class CleansingNodeVisitor(ast.NodeVisitor):
-        def generic_visit(self, node):
+        def generic_visit(self, node, inside_call=False):
             if type(node) not in SAFE_NODES:
                 raise Exception("invalid expression (%s)" % expr)
             elif isinstance(node, ast.Call):
-                if not isinstance(node.func, ast.Attribute) and node.func.id not in CALL_WHITELIST:
-                    raise Exception("invalid function: %s" % node.func.id)
+                inside_call = True
+            elif isinstance(node, ast.Name) and inside_call:
+                if hasattr(builtin, node.id) and node.id not in CALL_WHITELIST:
+                    raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
             for child_node in ast.iter_child_nodes(node):
-                super(CleansingNodeVisitor, self).visit(child_node)
+                self.generic_visit(child_node, inside_call)
 
     if not isinstance(expr, basestring):
         # already templated to a datastructure, perhaps?
@@ -1103,9 +1096,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (expr, None)
         return expr
 
+    cnv = CleansingNodeVisitor()
     try:
         parsed_tree = ast.parse(expr, mode='eval')
-        cnv = CleansingNodeVisitor()
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
         result = eval(compiled, {}, locals)
