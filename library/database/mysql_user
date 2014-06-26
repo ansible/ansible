@@ -36,6 +36,12 @@ options:
       - set the user's password
     required: false
     default: null
+  password_is_hashed:
+    description:
+      - password value is specified as a hash that is used by mysql
+		required: false
+    default: no
+    version_added: '1.7'
   host:
     description:
       - the 'host' part of the MySQL username
@@ -157,14 +163,17 @@ def user_exists(cursor, user, host):
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(cursor, user, host, password, new_priv):
-    cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
+def user_add(cursor, user, host, password, new_priv, password_is_hashed):
+    if password_is_hashed:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user,host,password))
+    else:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, password, new_priv, append_privs):
+def user_mod(cursor, user, host, password, new_priv, append_privs, password_is_hashed):
     changed = False
     grant_option = False
 
@@ -172,11 +181,16 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
     if password is not None:
         cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
         current_pass_hash = cursor.fetchone()
-        cursor.execute("SELECT PASSWORD(%s)", (password,))
-        new_pass_hash = cursor.fetchone()
-        if current_pass_hash[0] != new_pass_hash[0]:
-            cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
-            changed = True
+        if password_is_hashed:
+            if current_pass_hash[0] != password:
+                cursor.execute("SET PASSWORD FOR %s@%s = %s", (user,host,password))
+                changed = True
+        else:
+            cursor.execute("SELECT PASSWORD(%s)", (password,))
+            new_pass_hash = cursor.fetchone()
+            if current_pass_hash[0] != new_pass_hash[0]:
+                cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
+                changed = True
 
     # Handle privileges.
     if new_priv is not None:
@@ -405,6 +419,7 @@ def main():
             priv=dict(default=None),
             append_privs=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
+            password_is_hashed=dict(type="bool", default="no"),
         )
     )
     user = module.params["user"]
@@ -414,6 +429,7 @@ def main():
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
     append_privs = module.boolean(module.params["append_privs"])
+    password_is_hashed = module.boolean(module.params['password_is_hashed'])
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -455,11 +471,11 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, password, priv, append_privs)
+            changed = user_mod(cursor, user, host, password, priv, append_privs, password_is_hashed)
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
-            changed = user_add(cursor, user, host, password, priv)
+            changed = user_add(cursor, user, host, password, priv, password_is_hashed)
     elif state == "absent":
         if user_exists(cursor, user, host):
             changed = user_delete(cursor, user, host)
