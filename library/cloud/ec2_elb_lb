@@ -93,6 +93,20 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
+  connection_draining_timeout:
+    description:
+      - Wait a specified timeout allowing connections to drain before terminating an instance
+    required: false
+    aliases: []
+    version_added: "1.7"
+  cross_az_load_balancing:
+    description:
+      - Distribute load across all configured Availablity Zones
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.7"
 
 extends_documentation_fragment: aws
 """
@@ -206,6 +220,23 @@ EXAMPLES = """
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
+
+# Create an ELB with connection draining and cross availability
+# zone load balancing
+- local_action:
+    module: ec2_elb_lb
+    name: "New ELB"
+    state: present
+    connection_draining_timeout: 60
+    cross_az_load_balancing: "yes"
+    region: us-east-1
+    zones:
+      - us-east-1a
+      - us-east-1d
+    listeners:
+      - protocols: http
+      - load_balancer_port: 80
+      - instance_port: 80
 """
 
 import sys
@@ -214,6 +245,7 @@ import os
 try:
     import boto
     import boto.ec2.elb
+    import boto.ec2.elb.attributes
     from boto.ec2.elb.healthcheck import HealthCheck
     from boto.regioninfo import RegionInfo
 except ImportError:
@@ -227,7 +259,8 @@ class ElbManager(object):
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, security_group_ids=None, 
                  health_check=None, subnets=None, purge_subnets=None,
-                 scheme="internet-facing", region=None, **aws_connect_params):
+                 scheme="internet-facing", connection_draining_timeout=None,
+                 cross_az_load_balancing=None,  region=None, **aws_connect_params):
 
         self.module = module
         self.name = name
@@ -240,6 +273,8 @@ class ElbManager(object):
         self.subnets = subnets
         self.purge_subnets = purge_subnets
         self.scheme = scheme
+        self.connection_draining_timeout = connection_draining_timeout
+        self.cross_az_load_balancing = cross_az_load_balancing
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -260,6 +295,8 @@ class ElbManager(object):
             self._set_elb_listeners()
             self._set_subnets()
         self._set_health_check()
+        self._set_connection_draining_timeout()
+        self._set_cross_az_load_balancing()
 
     def ensure_gone(self):
         """Destroy the ELB"""
@@ -308,6 +345,18 @@ class ElbManager(object):
                                      for l in self.listeners]
             else:
                 info['listeners'] = []
+
+            info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name,
+                                                                                 'ConnectionDraining').timeout
+
+            is_cross_az_lb_enabled = self.elb_conn.get_lb_attribute(self.name,
+                                                                    'CrossZoneLoadBalancing')
+
+            if is_cross_az_lb_enabled:
+                info['cross_az_load_balancing'] = 'yes'
+            else:
+                info['cross_az_load_balancing'] = 'no'
+
         return info
 
     def _get_elb(self):
@@ -533,6 +582,25 @@ class ElbManager(object):
                 self.elb.configure_health_check(self.elb.health_check)
                 self.changed = True
 
+    def _set_cross_az_load_balancing(self):
+        attributes = self.elb.get_attributes()
+        if self.cross_az_load_balancing == 'yes':
+            attributes.cross_zone_load_balancing.enabled = True
+        else:
+            attributes.cross_zone_load_balancing.enabled = False
+        self.elb_conn.modify_lb_attribute(self.name, 'CrossZoneLoadBalancing',
+                                          attributes.cross_zone_load_balancing.enabled)
+
+    def _set_connection_draining_timeout(self):
+        attributes = self.elb.get_attributes()
+        if self.connection_draining_timeout is not None:
+            attributes.connection_draining.enabled = True
+            attributes.connection_draining.timeout = self.connection_draining_timeout
+            self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
+        else:
+            attributes.connection_draining.enabled = False
+            self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
+
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
         protocol = self.health_check['ping_protocol'].upper()
@@ -557,7 +625,9 @@ def main():
             health_check={'default': None, 'required': False, 'type': 'dict'},
             subnets={'default': None, 'required': False, 'type': 'list'},
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
-            scheme={'default': 'internet-facing', 'required': False}
+            scheme={'default': 'internet-facing', 'required': False},
+            connection_draining_timeout={'default': None, 'required': False},
+            cross_az_load_balancing={'default': None, 'required': False}
         )
     )
 
@@ -580,6 +650,8 @@ def main():
     subnets = module.params['subnets']
     purge_subnets = module.params['purge_subnets']
     scheme = module.params['scheme']
+    connection_draining_timeout = module.params['connection_draining_timeout']
+    cross_az_load_balancing = module.params['cross_az_load_balancing']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -589,8 +661,9 @@ def main():
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
-                         subnets, purge_subnets,
-                         scheme, region=region, **aws_connect_params)
+                         subnets, purge_subnets, scheme,
+                         connection_draining_timeout, cross_az_load_balancing,
+                         region=region, **aws_connect_params)
 
     if state == 'present':
         elb_man.ensure_ok()
