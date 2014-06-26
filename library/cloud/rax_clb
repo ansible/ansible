@@ -92,6 +92,30 @@ options:
       - Virtual IP ID to use when creating the load balancer for purposes of
         sharing an IP with another load balancer of another protocol
     version_added: 1.5
+  https_redirect:
+    description:
+      - redirect HTTP traffic to HTTPS.
+      - only available for the HTTPS protocol, or HTTP with properly configured
+        SSL termination
+    choices:
+      - "yes"
+      - "no"
+    default: "no"
+    version_added: 1.6.5
+  ssl_termination:
+    description:
+      - >
+        Set up or reconfigure SSL termination for this load balancer. The hash
+        must contain the following keys: C(private_key): the private SSL key;
+        C(certificate): the public SSL certificate. The hash may contain the
+        following optional keys: C(secure_port): the port to listen for secure
+        traffic, default: 443; C(intermediate_certificate): an intermediate
+        certificate required to validate the provided SSL certificate;
+        C(enabled): if set to "no", temporarily disable SSL termination without
+        discarding existing SSL credentials; C(secure_traffic_only): if set to
+        "yes", the load balancer will only accept secure traffic. default: "no".
+    default: null
+    version_added: 1.6.5
   wait:
     description:
       - wait for the balancer to be in state 'running' before returning
@@ -176,13 +200,39 @@ def to_dict(obj):
 
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
-                        vip_type, timeout, wait, wait_timeout, vip_id):
+                        vip_type, timeout, wait, wait_timeout, vip_id,
+                        https_redirect, ssl_termination):
     for arg in (state, name, port, protocol, vip_type):
         if not arg:
             module.fail_json(msg='%s is required for rax_clb' % arg)
 
     if int(timeout) < 30:
         module.fail_json(msg='"timeout" must be greater than or equal to 30')
+
+    # Validate the SSL termination hash, if one was provided.
+    if ssl_termination:
+        ssl_keys = set(ssl_termination.keys())
+        missing = []
+
+        for required in ('private_key', 'certificate'):
+            if required not in ssl_keys:
+                missing.append(required)
+            ssl_keys.discard(required)
+
+        for optional in ('secure_port', 'intermediate_certificate', 'enabled',
+                         'secure_traffic_only'):
+            ssl_keys.discard(optional)
+
+        # Any remaining keys are unrecognized.
+        if missing or ssl_keys:
+            message = 'The ssl_termination hash '
+            if missing:
+                message += 'is missing the required keys %s' % ', '.join(missing)
+            if missing and ssl_keys:
+                message += ' and '
+            if ssl_keys:
+                message += 'has the unrecognized keys %s.' % ', '.join(ssl_keys)
+            module.fail_json(msg=message)
 
     changed = False
     balancers = []
@@ -213,6 +263,30 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                 balancer = clb.create(name, metadata=metadata, port=port,
                                       algorithm=algorithm, protocol=protocol,
                                       timeout=timeout, virtual_ips=virtual_ips)
+
+                if ssl_termination:
+                    attempts = wait_timeout / 5
+                    pyrax.utils.wait_for_build(balancer, interval=5,
+                                               attempts=attempts)
+
+                    balancer.add_ssl_termination(
+                        securePort=ssl_termination.get('secure_port', 443),
+                        privatekey=ssl_termination['private_key'],
+                        certificate=ssl_termination.get('certificate'),
+                        intermediateCertificate=
+                            ssl_termination.get('intermediate_certificate'),
+                        enabled=ssl_termination.get('enabled'),
+                        secureTrafficOnly=
+                            ssl_termination.get('secure_traffic_only'))
+
+                if https_redirect is not None:
+                    # Apply HTTPS redirection *after* setting up SSL.
+                    attempts = wait_timeout / 5
+                    pyrax.utils.wait_for_build(balancer, interval=5,
+                                               attempts=attempts)
+
+                    balancer.update(httpsRedirect=https_redirect)
+
                 changed = True
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
@@ -221,6 +295,8 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             setattr(balancer, 'metadata',
                     [dict(key=k, value=v) for k, v in
                      balancer.get_metadata().items()])
+            existing_ssl = balancer.get_ssl_termination()
+
             atts = {
                 'name': name,
                 'algorithm': algorithm,
@@ -239,6 +315,38 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             if balancer.metadata != metadata:
                 balancer.set_metadata(meta)
                 changed = True
+
+            if ssl_termination:
+                ssl_atts = {
+                    'securePort': ssl_termination.get('secure_port', 443),
+                    'privatekey': ssl_termination['private_key'],
+                    'certificate': ssl_termination['certificate'],
+                    'intermediateCertificate':
+                        ssl_termination.get('intermediate_certificate'),
+                    'enabled': ssl_termination.get('enabled'),
+                    'secureTrafficOnly':
+                        ssl_termination.get('secure_traffic_only')
+                }
+
+                ssl_changed = False
+                for ssl_att, value in ssl_atts.iteritems():
+                    if value and existing_ssl.get(ssl_att) != value:
+                        ssl_changed = True
+
+                if ssl_changed:
+                    balancer.add_ssl_termination(**ssl_atts)
+                    changed = True
+            elif existing_ssl:
+                # Remove the existing SSL termination.
+                balancer.delete_ssl_termination()
+                changed = True
+
+            # Update HTTPS redirection after potentially re-configuring
+            # SSL termination.
+            if https_redirect is not None:
+                if balancer.httpsRedirect != https_redirect:
+                    balancer.update(httpsRedirect=https_redirect)
+                    changed = True
 
             virtual_ips = [clb.VirtualIP(type=vip_type)]
             current_vip_types = set([v.type for v in balancer.virtual_ips])
@@ -300,6 +408,8 @@ def main():
             timeout=dict(type='int', default=30),
             type=dict(choices=['PUBLIC', 'SERVICENET'], default='PUBLIC'),
             vip_id=dict(),
+            https_redirect=dict(type='bool'),
+            ssl_termination=dict(type='dict'),
             wait=dict(type='bool'),
             wait_timeout=dict(default=300),
         )
@@ -322,13 +432,16 @@ def main():
     timeout = int(module.params.get('timeout'))
     vip_id = module.params.get('vip_id')
     vip_type = module.params.get('type')
+    https_redirect = module.params.get('https_redirect')
+    ssl_termination = module.params.get('ssl_termination')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
     setup_rax_module(module, pyrax)
 
     cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
-                        vip_type, timeout, wait, wait_timeout, vip_id)
+                        vip_type, timeout, wait, wait_timeout, vip_id,
+                        https_redirect, ssl_termination)
 
 
 # import module snippets
