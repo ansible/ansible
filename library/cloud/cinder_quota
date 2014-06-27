@@ -1,0 +1,166 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    from cinderclient.v1 import client as cinder_client
+    from cinderclient import exceptions as cinder_exc
+except ImportError:
+    print("failed=True msg='cinderclient is required for this module to work'")
+try:
+    from keystoneclient.v2_0 import client as keystone_client
+    from keystoneclient.openstack.common.apiclient import exceptions as key_exception
+except ImportError:
+    print("failed=True msg='keystoneclient is required for this module to work'")
+
+DOCUMENTATION = '''
+---
+module: cinder_quota
+version_added: "1.0"
+short_description: Set cinder quotas
+description:
+   - Set values for cinder quotas
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: 'yes'
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth url
+     required: true
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   tenant_name:
+     description:
+       - Name of quotas tenant
+     required: false
+     default: None
+   tenant_id:
+     description:
+      - ID of quotas tenant
+     required: false
+     default: None
+   volume:
+     description:
+       -Number of volumes for tenant
+     required: false
+     default: None
+   snapshots:
+     description:
+       -Number of volume snapshosts for tenant
+     required: false
+     default: None
+   gigabytes:
+     description:
+       -Amount of volume storage in GB
+     required: false
+     default: None
+requirements: ["cinderclient", "keystoneclient"]
+'''
+EXAMPLES = '''
+# Updates a tenants cinder quotas
+- cinder_quota:
+    state: present
+    os_username: admin
+    os_password: admin
+    os_tenant_name: admin
+    os_auth_url: http://1.1.2.3:5000/v2.0
+    tenant_name: test-tenant
+    volumes: 40
+    snapshots: 10
+    gigabytes = 1200
+'''
+
+def _find_tenant(keystone, tenant_name):
+    for tenant in keystone.tenants.list():
+        if tenant.name == tenant_name:
+            return tenant.id
+    return None
+
+def _update_quotas(module, cinder):
+    args = ['tenant_id', 'volumes', 'snapshots', 'gigabytes']
+    quota_args = dict()
+    for a in args:
+        if module.params[a]:
+            quota_args[a] = module.params[a]
+    try:
+        cinder.quotas.update(**quota_args)
+    except cinder_exc, e:
+        module.fail_json(msg='Error updating quotas:%s' % (str(e)))
+    quotas = cinder.quotas.get(module.params['tenant_id'])
+    module.exit_json(changed=True, info=quotas._info)
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        region_name                  = dict(default=None),
+        tenant_id                    = dict(default=None),
+        tenant_name                  = dict(default=None),
+        volumes                      = dict(default=None),
+        snapshots                    = dict(default=None),
+        gigabytes                    = dict(default=None),
+        ),
+        mutually_exclusive = [['tenant_name', 'tenant_id']],
+    )
+
+    cinder = cinder_client.Client(module.params['os_username'],
+                                  module.params['os_password'],
+                                  module.params['os_tenant_name'],
+                                  module.params['os_auth_url'],
+                                  region_name=module.params['region_name'])
+    try:
+        cinder.authenticate()
+    except cinder_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except cinder_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+    if module.params['tenant_name']:
+        try:
+            keystone = keystone_client.Client(username=module.params['os_username'],
+                                              password=module.params['os_password'],
+                                              tenant_name=module.params['os_tenant_name'],
+                                              auth_url=module.params['os_auth_url'],
+                                              region_name=module.params['region_name'])
+        except key_exception, e:
+            module.fail_json(msg='Error getting keystone client:%s' % str(e))
+        module.params['tenant_id'] = _find_tenant(keystone, module.params['tenant_name'])
+    if not module.params['tenant_id']:
+        module.fail_json(msg='Must specify tenant')
+    _update_quotas(module, cinder)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()
+
