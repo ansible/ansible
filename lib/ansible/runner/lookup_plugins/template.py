@@ -16,7 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.utils import template
+from ansible import errors
 import ansible.utils as utils
+import os
 
 class LookupModule(object):
 
@@ -26,8 +28,33 @@ class LookupModule(object):
     def run(self, terms, inject=None, **kwargs):
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
-
         ret = []
+
+        # this can happen if the variable contains a string, strictly not desired for lookup
+        # plugins, but users may try it, so make it work.
+        if not isinstance(terms, list):
+            terms = [ terms ]
+
         for term in terms:
-            ret.append(template.template_from_file(self.basedir, term, inject))
+            basedir_path  = utils.path_dwim(self.basedir, term)
+            relative_path = None
+            playbook_path = None
+
+            # Special handling of the template lookup, used primarily when the
+            # lookup is done from a role. If the template isn't found in the
+            # basedir of the current file, use dwim_relative to look in the
+            # role/templates/ directory, and finally the playbook directory
+            # itself (which will be relative to the current working dir)
+            if '_original_file' in inject:
+                relative_path = utils.path_dwim_relative(inject['_original_file'], 'templates', term, self.basedir, check=False)
+            if 'playbook_dir' in inject:
+                playbook_path = os.path.join(inject['playbook_dir'], term)
+
+            for path in (basedir_path, relative_path, playbook_path):
+                if path and os.path.exists(path):
+                    ret.append(template.template_from_file(self.basedir, path, inject))
+                    break
+            else:
+                raise errors.AnsibleError("could not locate template in lookup: %s" % term)
+                
         return ret
