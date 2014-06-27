@@ -82,6 +82,8 @@ class AzureInventory(object):
 
         if self.args.list_images:
             data_to_print = self.json_format_dict(self.get_images(), True)
+        elif self.args.list_storages:
+            data_to_print = self.json_format_dict(self.get_storages(), True)
         elif self.args.list:
             # Display list of nodes for inventory
             if len(self.inventory) == 0:
@@ -90,6 +92,11 @@ class AzureInventory(object):
                 data_to_print = self.json_format_dict(self.inventory, True)
 
         print data_to_print
+
+    def get_storages(self):
+        storage_accounts = self.sms.list_storage_accounts()
+        storages = [storage_service for storage_service in storage_accounts.storage_services]
+        return json.loads(json.dumps(storages, default=lambda o: o.__dict__))
 
     def get_images(self):
         images = []
@@ -141,6 +148,8 @@ class AzureInventory(object):
                            help='List nodes (default: True)')
         parser.add_argument('--list-images', action='store',
                            help='Get all available images.')
+        parser.add_argument('--list-storages', action='store_true',
+                            help='Get all available storages.')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                            help='Force refresh of cache by making API requests to Azure (default: False - use cache files)')
         self.args = parser.parse_args()
