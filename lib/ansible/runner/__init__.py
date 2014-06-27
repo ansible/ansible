@@ -796,6 +796,15 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
+	    actual_port_knock = inject.get('ansible_ssh_port_knock')
+	    if actual_port_knock:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.settimeout(0.0)
+		try:
+		    s.connect((actual_host, actual_port_knock))
+		except:
+		    pass
+
             conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
             if delegate_to or host != actual_host:
                 conn.delegate = host
