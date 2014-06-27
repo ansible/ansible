@@ -147,6 +147,17 @@ class Inventory(object):
         else:
             return fnmatch.fnmatch(str, pattern_str)
 
+    def _match_list(self, items, item_attr, pattern_str):
+        results = []
+        if not pattern_str.startswith('~'):
+            pattern = re.compile(fnmatch.translate(pattern_str))
+        else:
+            pattern = re.compile(pattern_str[1:])
+        for item in items:
+            if pattern.search(getattr(item, item_attr)):
+                results.append(item)
+        return results
+
     def get_hosts(self, pattern="all"):
         """ 
         find all host names matching a pattern string, taking into account any inventory restrictions or
@@ -297,20 +308,31 @@ class Inventory(object):
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
 
+        results = []
         hosts = []
         hostnames = set()
 
         # ignore any negative checks here, this is handled elsewhere
         pattern = pattern.replace("!","").replace("&", "")
 
-        results = []
+        def __append_host_to_results(host):
+            if host not in results and host.name not in hostnames:
+                hostnames.add(host.name)
+                results.append(host)
+
         groups = self.get_groups()
         for group in groups:
-            for host in group.get_hosts():
-                if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
-                    if host not in results and host.name not in hostnames:
-                        results.append(host)
-                        hostnames.add(host.name)
+            if pattern == 'all':
+                for host in group.get_hosts():
+                    __append_host_to_results(host)
+            else:
+                if self._match(group.name, pattern):
+                    for host in group.get_hosts():
+                        __append_host_to_results(host)
+                else:
+                    matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
+                    for host in matching_hosts:
+                        __append_host_to_results(host)
 
         if pattern in ["localhost", "127.0.0.1"] and len(results) == 0:
             new_host = self._create_implicit_localhost(pattern)
@@ -325,10 +347,8 @@ class Inventory(object):
         results = []
         groups = self.get_groups()
         for group in groups:
-            for hostn in group.get_hosts():
-                if host == hostn.name:
-                    results.append(group)
-                    continue
+            if host in group.get_hosts():
+                results.append(group)
         return results
 
     def groups_list(self):
