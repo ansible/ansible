@@ -22,6 +22,7 @@ import pipes
 import shutil
 import tempfile
 import base64
+import re
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
@@ -85,6 +86,7 @@ class ActionModule(object):
         dest = options.get('dest', None)
         delimiter = options.get('delimiter', None)
         remote_src = utils.boolean(options.get('remote_src', 'yes'))
+        regexp = options.get('regexp', None)
 
 
         if src is None or dest is None:
@@ -99,8 +101,12 @@ class ActionModule(object):
             # the source is local, so expand it here
             src = os.path.expanduser(src)
 
+        _re = None
+        if regexp is not None:
+            _re = re.compile(regexp)
+
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter)
+        path = self._assemble_from_fragments(src, delimiter, _re)
 
         pathmd5 = utils.md5s(path)
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
