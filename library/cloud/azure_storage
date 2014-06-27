@@ -1,0 +1,210 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: azure_storage
+short_description: create or deletes a storage account in Azure
+description:
+     - Creates or deletes Azure storage account when all existing containers inside the storage account are empty. This module has a dependency on python-azure >= 0.8.1
+version_added: "1.7"
+options:
+  name:
+    description:
+      - name of the storage.
+    required: true
+    default: null
+  location:
+    description:
+      - the Azure location to use (e.g. 'East US')
+    default: null
+  affinity_group:
+    description:
+      - the Azure affinity group to use
+    default: null
+  subscription_id:
+    description:
+      - Azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environement variable.
+    required: false
+    default: null
+  management_cert_path:
+    description:
+      - path to an Azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environement variable.
+    required: false
+    default: null
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 600
+    aliases: []
+  wait_timeout_redirects:
+    description:
+      - how long before wait gives up for redirects, in seconds
+    default: 300
+    aliases: []
+  state:
+    description:
+      - create or delete storage account
+    required: false
+    default: 'present'
+    aliases: []
+
+requirements: [ "azure" ]
+author: Martin Joehren
+'''
+
+EXAMPLES = '''
+# Note: None of these examples set subscription_id or management_cert_path
+# It is assumed that their matching environment variables are set.
+
+# Create storage account
+- local_action:
+    module: azure_storage
+    name: my-storage
+    location: 'East US'
+
+# Delete storage account
+- local_action:
+    module: azure_storage
+    name: my-storage
+    state: absent
+'''
+
+import base64
+import datetime
+import os
+import sys
+import time
+from urlparse import urlparse
+
+
+try:
+    import azure as windows_azure
+
+    from azure import WindowsAzureError, WindowsAzureMissingResourceError
+    from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
+                                         PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
+                                         ConfigurationSetInputEndpoint)
+except ImportError:
+    print
+    "failed=True msg='azure required for this module'"
+    sys.exit(1)
+
+import json
+
+
+
+def create_storage_account(module, azure):
+    """
+    Create new storage account
+
+    module : AnsibleModule object
+    azure: authenticated azure ServiceManagementService object
+
+    Returns:
+        True if a new storage account was created, false otherwise, raw json storage account object
+    """
+    name = module.params.get('name')
+    affinity_group = module.params.get('affinity_group')
+    location = module.params.get('location')
+    wait_timeout = int(module.params.get('wait_timeout'))
+
+    # Check if a storage account with the same name already exists
+    storage_name_available = azure.check_storage_account_name_availability(name)
+    if not storage_name_available.result:
+        storage_accounts = azure.list_storage_accounts()
+        if name in [storage_service.service_name for storage_service in storage_accounts.storage_services]:
+            try:
+                storage = azure.get_storage_account_properties(name)
+                return False, storage
+            except WindowsAzureError as e:
+                module.fail_json(msg="failed to lookup the storage information for %s, error was: %s" % (name, str(e)))
+        else:
+            module.fail_json(msg="storage account name %s is already in use by a different Azure account." % str(name))
+    else:
+        try:
+            result = azure.create_storage_account(service_name=name,
+                                                  description="Storage for " + str(name),
+                                                  label=name,
+                                                  affinity_group=affinity_group,
+                                                  location=location,
+                                                  geo_replication_enabled=True,
+                                                  extended_properties=None)
+
+            wait_for_completion(azure, result, wait_timeout, "create_storage_account")
+            storage = azure.get_storage_account_properties(name)
+            return (True, storage)
+        except WindowsAzureError as e:
+            module.fail_json(msg="failed to create the storage account %s, error was: %s" % (name, str(e)))
+
+def delete_storage_account(module, azure):
+    """
+    Deletes a storage account when no element is located in any existing container, e.g. vhd blob
+
+    module : AnsibleModule object
+    azure: authenticated azure ServiceManagementService object
+
+    Returns:
+        True if the storage was deleted, false otherwise
+    """
+
+    name = module.params.get('name')
+    changed = False
+    try:
+        azure.delete_storage_account(service_name=name)
+        changed = True
+    except WindowsAzureMissingResourceError as e:
+        pass  # no such storage account
+    except WindowsAzureError as e:
+        module.fail_json(msg="failed to delete the storage account %s, error was: %s" % (name, str(e)))
+    return changed
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.azure import *
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=True),
+            affinity_group=dict(choices=AZURE_LOCATIONS),
+            location=dict(choices=AZURE_LOCATIONS),
+            subscription_id=dict(no_log=True),
+            management_cert_path=dict(),
+            state=dict(default='present'),
+            wait_timeout=dict(default=600),
+            wait_timeout_redirects=dict(default=300)
+        ),
+        mutually_exclusive = [
+            ['location', 'affinity_group']]
+    )
+    # create azure ServiceManagementService object
+    subscription_id, management_cert_path = get_azure_creds(module)
+
+    azure = ServiceManagementService(subscription_id, management_cert_path)
+
+    if module.params.get('state') == 'absent':
+        changed = delete_storage_account(module, azure)
+        module.exit_json(changed=changed)
+    elif module.params.get('state') == 'present':
+        if not (module.params.get('location') or not module.params.get('affinity_group')):
+            module.fail_json(msg='location or affinity_group parameter is required for new storage')
+        (changed, storage) = create_storage_account(module, azure)
+        module.exit_json(changed=changed, storage=json.loads(json.dumps(storage, default=lambda o: o.__dict__)))
+
+
+main()
