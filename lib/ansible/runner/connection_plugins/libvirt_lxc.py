@@ -65,8 +65,14 @@ class Connection(object):
             local_cmd = '%s -q -c lxc:/// lxc-enter-namespace %s -- %s' % (self.cmd, self.lxc, cmd)
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
         ''' run a command on the chroot '''
+
+        if su or su_user:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         # We enter lxc as root so sudo stuff can be ignored
         local_cmd = self._generate_cmd(executable, cmd)
