@@ -325,7 +325,7 @@ class HomebrewCask(object):
             raise HomebrewCaskException(self.message)
 
         cmd = [self.brew_path, 'cask', 'list']
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, path_prefix=self.path[0])
 
         if 'nothing to list' in err:
             return False
@@ -353,7 +353,7 @@ class HomebrewCask(object):
         rc, out, err = self.module.run_command([
             self.brew_path,
             'update',
-        ])
+        ], path_prefix=self.path[0])
         if rc == 0:
             if out and isinstance(out, basestring):
                 already_updated = any(
@@ -399,7 +399,7 @@ class HomebrewCask(object):
                for opt in (self.brew_path, 'cask', 'install', self.current_cask)
                if opt]
 
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, path_prefix=self.path[0])
 
         if self._current_cask_is_installed():
             self.changed_count += 1
@@ -444,7 +444,7 @@ class HomebrewCask(object):
                for opt in (self.brew_path, 'cask', 'uninstall', self.current_cask)
                if opt]
 
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, path_prefix=self.path[0])
 
         if not self._current_cask_is_installed():
             self.changed_count += 1
