@@ -99,6 +99,7 @@ EXAMPLES = '''
 import platform
 import os
 import re
+import glob
 import tempfile
 import shlex
 import select
@@ -662,7 +663,9 @@ class LinuxService(Service):
                     self.changed = True
                     break
                 elif not self.enable and 'already exist' in line:
-                    self.changed = True
+                    # Check if those existing links are for starting the service
+                    already_enabled = bool(glob.glob('/etc/rc*.d/S[0-9][0-9]%s' % self.name))
+                    self.changed = already_enabled ^ self.enable
                     break
 
             # Debian compatibility
