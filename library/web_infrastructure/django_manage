@@ -40,6 +40,10 @@ options:
     description:
       - The Python path to the application's settings module, such as 'myapp.settings'.
     required: false
+  python:
+    description:
+      - The Python interpreter to use when running B(manage.py).
+    required: false
   pythonpath:
     description:
       - A directory to add to the Python path. Typically used to include the settings module if it is located external to the application directory.
@@ -107,6 +111,7 @@ EXAMPLES = """
       command=syncdb
       app_path={{ django_dir }}
       settings={{ settings_app_name }}
+      python={{ python27 }}
       pythonpath={{ settings_dir }}
       virtualenv={{ virtualenv_dir }}
 
@@ -201,6 +206,7 @@ def main():
             command     = dict(default=None, required=True),
             app_path    = dict(default=None, required=True),
             settings    = dict(default=None, required=False),
+            python      = dict(default='python', required=False),
             pythonpath  = dict(default=None, required=False, aliases=['python_path']),
             virtualenv  = dict(default=None, required=False, aliases=['virtual_env']),
 
@@ -219,6 +225,7 @@ def main():
 
     command = module.params['command']
     app_path = module.params['app_path']
+    python = module.params['python']
     virtualenv = module.params['virtualenv']
 
     for param in specific_params:
@@ -236,7 +243,7 @@ def main():
 
     _ensure_virtualenv(module)
 
-    cmd = "python manage.py %s" % (command, )
+    cmd = "%s manage.py %s" % (python, command)
 
     if command in noinput_commands:
         cmd = '%s --noinput' % cmd
