@@ -19,13 +19,18 @@ import textwrap
 
 from ansible import constants as C
 from ansible import errors
-from ansible.callbacks import display
 
-__all__ = ['deprecated', 'warning', 'system_warning']
+__all__ = ['deprecated', 'warning', 'system_warning', 'set_display_callback']
 
 # list of all deprecation messages to prevent duplicate display
 deprecations = {}
 warns = {}
+display = None
+
+def set_display_callback(_display):
+    global display
+
+    display = _display
 
 def deprecated(msg, version, removed=False):
     ''' used to print out a deprecation message.'''

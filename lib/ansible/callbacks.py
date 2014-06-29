@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import utils
 import sys
 import getpass
 import os
@@ -24,7 +23,7 @@ import random
 import fnmatch
 import tempfile
 import fcntl
-import constants
+from ansible import constants, utils
 from ansible.color import stringc
 
 import logging
@@ -703,3 +702,4 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_stats', stats)
 
 
+utils.set_display_callback(display)
