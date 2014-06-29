@@ -41,6 +41,16 @@ options:
       default in megabytes or optionally with one of [bBsSkKmMgGtTpPeE] units; or
       according to lvcreate(8) --extents as a percentage of [VG|PVS|FREE];
       resizing is not supported with percentages.
+  stripes:
+    version_added: "1.6"
+    description:
+    - The number of physical volumes to spread the logical volume across.
+    required: false
+  stripesize:
+    version_added: "1.6"
+    description:
+    - Size of data chunks written to each disk in kilobytes
+    required: false
   state:
     choices: [ "present", "absent" ]
     default: present
@@ -75,6 +85,9 @@ EXAMPLES = '''
 # Reduce the logical volume to 512m
 - lvol: vg=firefly lv=test size=512 force=yes
 
+# Create a logical volume striped across two disks with stripe size of 64k
+- lvol: vg=firefly lv=test size=512 stripes=2 stripesize=64 force=yes
+
 # Remove the logical volume.
 - lvol: vg=firefly lv=test state=absent force=yes
 '''
@@ -101,6 +114,8 @@ def main():
             vg=dict(required=True),
             lv=dict(required=True),
             size=dict(),
+            stripes=dict(),
+            stripesize=dict(),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
         ),
@@ -110,6 +125,8 @@ def main():
     vg = module.params['vg']
     lv = module.params['lv']
     size = module.params['size']
+    stripes = module.params['stripes']
+    stripesize = module.params['stripesize']
     state = module.params['state']
     force = module.boolean(module.params['force'])
     size_opt = 'L'
@@ -151,6 +168,15 @@ def main():
         unit = 'm'
     else:
         unit = size_unit
+  
+    if stripes:
+        stripes = ' --stripes=' + stripes + ' '
+    else:
+        stripes = ' '
+    if stripesize:
+        stripesize = ' --stripesize=' + stripesize + ' '
+    else:
+        stripesize = ' '
 
     rc, current_lvs, err = module.run_command(
         "lvs --noheadings -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
@@ -185,7 +211,7 @@ def main():
             if module.check_mode:
                 changed = True
             else:
-                rc, _, err = module.run_command("lvcreate -n %s -%s %s%s %s" % (lv, size_opt, size, size_unit, vg))
+                rc, _, err = module.run_command("lvcreate -n %s -%s %s%s %s %s %s" % (lv, size_opt, size, size_unit, stripes, stripesize, vg))
                 if rc == 0:
                     changed = True
                 else:
