@@ -44,6 +44,7 @@ options:
     description:
       - The Python interpreter to use when running B(manage.py).
     required: false
+    version_added: "1.7"
   pythonpath:
     description:
       - A directory to add to the Python path. Typically used to include the settings module if it is located external to the application directory.
