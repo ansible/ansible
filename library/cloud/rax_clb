@@ -236,6 +236,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
 
     changed = False
     balancers = []
+    attempts = wait_timeout / 5
 
     clb = pyrax.cloud_loadbalancers
     if not clb:
@@ -265,7 +266,6 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                                       timeout=timeout, virtual_ips=virtual_ips)
 
                 if ssl_termination:
-                    attempts = wait_timeout / 5
                     pyrax.utils.wait_for_build(balancer, interval=5,
                                                attempts=attempts)
 
@@ -281,7 +281,6 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
 
                 if https_redirect is not None:
                     # Apply HTTPS redirection *after* setting up SSL.
-                    attempts = wait_timeout / 5
                     pyrax.utils.wait_for_build(balancer, interval=5,
                                                attempts=attempts)
 
@@ -334,9 +333,16 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                         ssl_changed = True
 
                 if ssl_changed:
+                    if changed:
+                        pyrax.utils.wait_for_build(balancer, interval=5,
+                                                   attempts=attempts)
                     balancer.add_ssl_termination(**ssl_atts)
                     changed = True
             elif existing_ssl:
+                if changed:
+                    pyrax.utils.wait_for_build(balancer, interval=5,
+                                               attempts=attempts)
+
                 # Remove the existing SSL termination.
                 balancer.delete_ssl_termination()
                 changed = True
@@ -345,6 +351,9 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             # SSL termination.
             if https_redirect is not None:
                 if balancer.httpsRedirect != https_redirect:
+                    if changed:
+                        pyrax.utils.wait_for_build(balancer, interval=5,
+                                                   attempts=attempts)
                     balancer.update(httpsRedirect=https_redirect)
                     changed = True
 
@@ -356,7 +365,6 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                                      'be changed')
 
         if wait:
-            attempts = wait_timeout / 5
             pyrax.utils.wait_for_build(balancer, interval=5, attempts=attempts)
 
         balancer.get()
@@ -386,7 +394,6 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             instance = to_dict(balancer)
 
             if wait:
-                attempts = wait_timeout / 5
                 pyrax.utils.wait_until(balancer, 'status', ('DELETED'),
                                        interval=5, attempts=attempts)
         else:
