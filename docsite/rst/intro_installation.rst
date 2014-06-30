@@ -204,6 +204,21 @@ You may also wish to install from ports, run:
 .. code-block:: bash
 
     $ sudo make -C /usr/ports/sysutils/ansible install
+    
+.. _from_pkg_add:
+    
+Latest Releases Via pkg_add (OpenBSD)
++++++++++++++++++++++++++++++++++
+
+.. code-block:: bash
+
+    $ sudo pkg_add ansible
+
+You may also wish to install from ports, run:
+
+.. code-block:: bash
+
+    $ cd /usr/ports/sysutils/ansible && make install
 
 .. _from_brew:
 
