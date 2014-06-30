@@ -93,30 +93,6 @@ options:
       - In RackSpace use OS_TENANT_NAME
     required: false
     default: null
-  endpoint_type:
-    description:
-      - The endpoint type for novaclient
-      - In RackSpace use 'publicUrl'
-    required: false
-    default: null
-  service_type:
-    description:
-      - The service type you are managing.
-      - In RackSpace use 'compute'
-    required: false
-    default: null
-  service_name:
-    description:
-      - The service name you are managing.
-      - In RackSpace use 'cloudServersOpenStack'
-    required: false
-    default: null
-  insicure:
-    description:
-      - To no check security
-    required: false
-    default: false
-    choices: [ "true", "false" ]
 author: Marco Vito Moscaritolo
 notes:
   - This script assumes Ansible is being executed where the environment variables needed for novaclient have already been set on nova.ini file
