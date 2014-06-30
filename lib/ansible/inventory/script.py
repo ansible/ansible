@@ -49,7 +49,7 @@ class InventoryScript(object):
     def _parse(self, err):
 
         all_hosts = {}
-        self.raw  = utils.parse_json(self.data)
+        self.raw  = utils.parse_json(self.data, from_remote=True)
         all       = Group('all')
         groups    = dict(all=all)
         group     = None

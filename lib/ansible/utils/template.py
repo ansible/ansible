@@ -80,7 +80,6 @@ class Flags:
 
 FILTER_PLUGINS = None
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
-JINJA2_OVERRIDE='#jinja2:'
 
 def lookup(name, *args, **kwargs):
     from ansible import utils
@@ -227,16 +226,6 @@ def template_from_file(basedir, path, vars, vault_password=None):
         raise errors.AnsibleError("unable to process as utf-8: %s" % realpath)
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
-
-
-    # Get jinja env overrides from template
-    if data.startswith(JINJA2_OVERRIDE):
-        eol = data.find('\n')
-        line = data[len(JINJA2_OVERRIDE):eol]
-        data = data[eol+1:]
-        for pair in line.split(','):
-            (key,val) = pair.split(':')
-            setattr(environment,key.strip(),ast.literal_eval(val.strip()))
 
     environment.template_class = J2Template
     try:
