@@ -19,13 +19,21 @@
 DOCUMENTATION = '''
 ---
 module: rax_mon_check
-short_description: create / delete a Rackspace Cloud Monitoring check for an
+short_description: Create or delete a Rackspace Cloud Monitoring check for an
                    existing entity.
 description:
-- create / delete a Rackspace Cloud Monitoring check associated with an existing
-  entity.
-version_added: "1.6.2"
+- Create or delete a Rackspace Cloud Monitoring check associated with an
+  existing rax_mon_entity. A check is a specific test or measurement that is
+  performed, possibly from different monitoring zones, on the systems you
+  monitor. Rackspace monitoring module flow | rax_mon_entity ->
+  *rax_mon_check* -> rax_mon_notification -> rax_mon_notification_plan ->
+  rax_mon_alarm
+version_added: "1.7"
 options:
+  state:
+    description:
+    - Ensure that a check with this C(label) exists or does not exist.
+    choices: ["present", "absent"]
   entity_id:
     description:
     - ID of the rax_mon_entity to target with this check.
@@ -36,7 +44,9 @@ options:
     required: true
   check_type:
     description:
-    - The type of check to create.
+    - The type of check to create. C(remote.) checks may be created on any
+      rax_mon_entity. C(agent.) checks may only be created on rax_mon_entities
+      that have a non-null C(agent_id).
     choices:
     - remote.dns
     - remote.ftp-banner
@@ -52,56 +62,52 @@ options:
     - remote.ssh
     - remote.tcp
     - remote.telnet-banner
+    - agent.filesystem
+    - agent.memory
+    - agent.load_average
+    - agent.cpu
+    - agent.disk
+    - agent.network
+    - agent.plugin
     required: true
   monitoring_zones_poll:
     description:
     - Comma-separated list of the names of the monitoring zones the check should
-    - run from. Available monitoring zones include mzdfw, mzhkg, mziad, mzlon,
-    - mzord and mzsyd.
+      run from. Available monitoring zones include mzdfw, mzhkg, mziad, mzlon,
+      mzord and mzsyd.
     required: true
   target_hostname:
     description:
     - One of `target_hostname` and `target_alias` is required. The hostname this
-    - check should target. Must be a valid IPv4, IPv6, or FQDN.
-    required: false
-    default: null
+      check should target. Must be a valid IPv4, IPv6, or FQDN.
   target_alias:
     description:
-    - One of `target_alias` and `target_hostname` is required. Use the corresponding
-    - key in the entity's `ip_addresses` hash to resolve an IP address to target.
-    required: false
-    default: null
+    - One of `target_alias` and `target_hostname` is required. Use the
+      corresponding key in the entity's `ip_addresses` hash to resolve an IP
+      address to target.
   details:
     description:
     - Additional details specific to the check type. Must be a hash of strings
-    - between 1 and 255 characters long, or an array or object containing 0 to 256
-    - items.
-    required: false
-    default: nulls
+      between 1 and 255 characters long, or an array or object containing 0 to
+      256 items.
   disabled:
     description:
-    - Keep the check created, but don't actually use it yet.
-    required: false
+    - If "yes", ensure the check is created, but don't actually use it yet.
     choices: [ "yes", "no" ]
-    default: "no"
   metadata:
     description:
     - Hash of arbitrary key-value pairs to accompany this check if it fires.
-    - Keys and values must be strings between 1 and 255 characters long.
-    required: false
-    default: null
+      Keys and values must be strings between 1 and 255 characters long.
   period:
     description:
-    - Period in seconds for the check.
-    - Must be greater than the minimum period set on your account.
-    required: false
-    default: null
+    - The number of seconds between each time the check is performed. Must be
+      greater than the minimum period set on your account.
   timeout:
     description:
-    - Timeout in seconds for the check.
-    - Must be less than the period.
-    required: false
-    default: null
+    - The number of seconds this check will wait when attempting to collect
+      results. Must be less than the period.
+author: Ash Wilson
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -113,15 +119,16 @@ EXAMPLES = '''
   - name: Associate a check with an existing entity.
     rax_mon_check:
       credentials: ~/.rax_pub
+      state: present
       entity_id: "{{ the_entity['entity']['id'] }}"
-      label: ping-check
+      label: the_check
       check_type: remote.ping
       monitoring_zones_poll: mziad,mzord,mzdfw
       details:
         count: 10
       meta:
         hurf: durf
-    register: check
+    register: the_check
 '''
 
 try:

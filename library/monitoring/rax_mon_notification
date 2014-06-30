@@ -19,17 +19,18 @@
 DOCUMENTATION = '''
 ---
 module: rax_mon_notification
-short_description: create / delete a Rackspace Cloud Monitoring notification
+short_description: Create or delete a Rackspace Cloud Monitoring notification.
 description:
-- create / delete a Rackspace Cloud Monitoring notification to create a channel
-  that can be used to communicate alarms.
-version_added: "1.6.2"
+- Create or delete a Rackspace Cloud Monitoring notification that specifies a
+  channel that can be used to communicate alarms, such as email, webhooks, or
+  PagerDuty. Rackspace monitoring module flow | rax_mon_entity -> rax_mon_check ->
+  *rax_mon_notification* -> rax_mon_notification_plan -> rax_mon_alarm
+version_added: "1.7"
 options:
   state:
     description:
-    - Create or destroy the notification with this label.
+    - Ensure that the notification with this C(label) exists or does not exist.
     choices: ['present', 'absent']
-    default: present
   label:
     description:
     - Defines a friendly name for this notification. String between 1 and 255
@@ -38,32 +39,33 @@ options:
   notification_type:
     description:
     - A supported notification type.
-    choices:
-    - webhook
-    - email
-    - pagerduty
+    choices: ["webhook", "email", "pagerduty"]
     required: true
   details:
     description:
     - Dictionary of key-value pairs used to initialize the notification.
-    - Required keys and meanings vary with notification type.
+      Required keys and meanings vary with notification type. See
+      http://docs.rackspace.com/cm/api/v1.0/cm-devguide/content/
+      service-notification-types-crud.html for details.
     required: true
+author: Ash Wilson
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
-- name: Create a monitoring notification
+- name: Monitoring notification example
   gather_facts: False
   hosts: local
   connection: local
   tasks:
-  - name: Create a monitoring notification
+  - name: Email me when something goes wrong.
     rax_mon_entity:
       credentials: ~/.rax_pub
       label: omg
       type: email
       details:
-        address: me@gmail.com
-    register: notification
+        address: me@mailhost.com
+    register: the_notification
 '''
 
 try:

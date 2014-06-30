@@ -19,16 +19,20 @@
 DOCUMENTATION = '''
 ---
 module: rax_mon_notification_plan
-short_description: create / delete a Rackspace Cloud Monitoring notification plan
+short_description: Create or delete a Rackspace Cloud Monitoring notification
+                   plan.
 description:
-- create / delete a Rackspace Cloud Monitoring notification plan.
-version_added: "1.6.2"
+- Create or delete a Rackspace Cloud Monitoring notification plan by
+  associating existing rax_mon_notifications with severity levels. Rackspace
+  monitoring module flow | rax_mon_entity -> rax_mon_check ->
+  rax_mon_notification -> *rax_mon_notification_plan* -> rax_mon_alarm
+version_added: "1.7"
 options:
   state:
     description:
-    - Create or destroy the notification plan with this label.
+    - Ensure that the notification plan with this C(label) exists or does not
+      exist.
     choices: ['present', 'absent']
-    default: present
   label:
     description:
     - Defines a friendly name for this notification plan. String between 1 and
@@ -36,37 +40,36 @@ options:
     required: true
   critical_state:
     description:
-    - Notification list to use when the state is CRITICAL. Must be an array of
-      valid notification ids.
-    required: false
-    default: null
+    - Notification list to use when the alarm state is CRITICAL. Must be an
+      array of valid rax_mon_notification ids.
   warning_state:
     description:
-    - Notification list to use when the state is WARNING. Must be an array of
-      valid notification ids.
-    required: false
-    default: null
+    - Notification list to use when the alarm state is WARNING. Must be an array
+      of valid rax_mon_notification ids.
   ok_state:
     description:
-    - Notification list to use when the state is OK. Must be an array of valid
-      notification ids.
-    required: false
-    default: null
+    - Notification list to use when the alarm state is OK. Must be an array of
+      valid rax_mon_notification ids.
+author: Ash Wilson
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
-- name: Create a monitoring notification plan
+- name: Example notification plan
   gather_facts: False
   hosts: local
   connection: local
   tasks:
-  - name: Create a monitoring notification plan
+  - name: Establish who gets called when.
     rax_mon_notification_plan:
       credentials: ~/.rax_pub
+      state: present
       label: defcon1
-      critical_state: [ "{{ everyone['notification']['id'] }}" ]
-      warning_state: [ "{{ opsfloor['notification']['id'] }}" ]
-    register: notification_plan
+      critical_state:
+      - "{{ everyone['notification']['id'] }}"
+      warning_state:
+      - "{{ opsfloor['notification']['id'] }}"
+    register: defcon1
 '''
 
 try:

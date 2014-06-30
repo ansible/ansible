@@ -19,50 +19,60 @@
 DOCUMENTATION = '''
 ---
 module: rax_mon_entity
-short_description: create / delete a Rackspace Cloud Monitoring entity
+short_description: Create or delete a Rackspace Cloud Monitoring entity
 description:
-- create / delete a Rackspace Cloud Monitoring entity, which represents a device to monitor.
-version_added: "1.6.2"
+- Create or delete a Rackspace Cloud Monitoring entity, which represents a device
+  to monitor. Entities associate checks and alarms with a target system and
+  provide a convenient, centralized place to store IP addresses. Rackspace
+  monitoring module flow | *rax_mon_entity* -> rax_mon_check ->
+  rax_mon_notification -> rax_mon_notification_plan -> rax_mon_alarm
+version_added: "1.7"
 options:
-  name:
+  label:
     description:
     - Defines a name for this entity. Must be a non-empty string between 1 and
       255 characters long.
+    required: true
+  state:
+    description:
+    - Ensure that an entity with this C(name) exists or does not exist.
+    choices: ["present", "absent"]
   agent_id:
     description:
-    - Agent to which this entity is bound.
-    default: null
+    - Rackspace monitoring agent on the target device to which this entity is
+      bound. Necessary to collect C(agent.) rax_mon_checks against this entity.
   named_ip_addresses:
     description:
-    - Hash of IP addresses that may be referenced by name by checks added to this
-      entity. Must be a colon-separated C(name:ip-address) string. May be specified
-      more than once. Names must be between 1 and 64 characters; IP addresses
-      must be valid IPv4 or IPv6 addresses.
-    default: none
+    - Hash of IP addresses that may be referenced by name by rax_mon_checks
+      added to this entity. Must be a dictionary of with keys that are names
+      between 1 and 64 characters long, and values that are valid IPv4 or IPv6
+      addresses.
   metadata:
     description:
-    - Hash of arbitrary C(name), C(value) pairs that are passed during the
-      alerting phase. May be specified more than once. Name and value must both
-      be between 1 and 255 characters long.
+    - Hash of arbitrary C(name), C(value) pairs that are passed to associated
+      rax_mon_alarms. Names and values must all be between 1 and 255 characters
+      long.
+author: Ash Wilson
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
-- name: Create a monitoring entity
+- name: Entity example
   gather_facts: False
   hosts: local
   connection: local
   tasks:
-  - name: Create a monitoring entity
+  - name: Ensure an entity exists
     rax_mon_entity:
       credentials: ~/.rax_pub
-      name: my-entity
-      agent_id:
+      state: present
+      name: my_entity
       named_ip_addresses:
         web_box: 192.168.0.10
         db_box: 192.168.0.11
       meta:
         hurf: durf
-    register: entity
+    register: the_entity
 '''
 
 try:
