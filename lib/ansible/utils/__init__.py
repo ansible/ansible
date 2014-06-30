@@ -15,37 +15,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import re
-import os
-import shlex
-import yaml
+import ast
 import copy
-import optparse
+import difflib
+import getpass
+import json
 import operator
-from ansible import errors
-from ansible import __version__
+import optparse
+import os
+import pipes
+import random
+import re
+import shlex
+import stat
+import StringIO
+import sys
+import termios
+import time
+import traceback
+import tty
+import warnings
+
+import yaml
+
+from ansible import constants as C, errors, __version__
+from ansible.callbacks import display
 from ansible.utils import template
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
-from ansible.callbacks import display
-import ansible.constants as C
-import ast
-import time
-import StringIO
-import stat
-import termios
-import tty
-import pipes
-import random
-import difflib
-import warnings
-import traceback
-import getpass
-import sys
-import json
-
 from ansible.utils.vault import VaultLib
+
 
 VERBOSITY=0
 
