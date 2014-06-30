@@ -31,6 +31,8 @@ import getpass
 import ConfigParser
 import StringIO
 
+from string import maketrans
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -910,9 +912,10 @@ class OpenBSDHardware(Hardware):
         # total: 69268k bytes allocated = 0k used, 69268k available
         rc, out, err = module.run_command("/sbin/swapctl -sk")
         if rc == 0:
+            swaptrans = maketrans(' ', ' ')
             data = out.split()
-            self.facts['swapfree_mb'] = long(data[-2].translate(None, "kmg")) / 1024
-            self.facts['swaptotal_mb'] = long(data[1].translate(None, "kmg")) / 1024
+            self.facts['swapfree_mb'] = long(data[-2].translate(swaptrans, "kmg")) / 1024
+            self.facts['swaptotal_mb'] = long(data[1].translate(swaptrans, "kmg")) / 1024
 
     def get_processor_facts(self):
         processor = []
