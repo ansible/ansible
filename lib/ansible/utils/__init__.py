@@ -45,8 +45,7 @@ import getpass
 import sys
 import json
 
-#import vault
-from vault import VaultLib
+from ansible.utils.vault import VaultLib
 
 VERBOSITY=0
 
