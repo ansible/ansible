@@ -497,7 +497,7 @@ class Runner(object):
                 cmd2 = conn.shell.remove(tmp, recurse=True)
                 self._low_level_exec_command(conn, cmd2, tmp, sudoable=False)
 
-        data = utils.parse_json(res['stdout'])
+        data = utils.parse_json(res['stdout'], from_remote=True)
         if 'parsed' in data and data['parsed'] == False:
             data['msg'] += res['stderr']
         return ReturnData(conn=conn, result=data)
