@@ -68,6 +68,12 @@ options:
     required: false
     default: null
     aliases: []
+  kern_id:
+    description:
+      - Kernel id for the EC2 instance
+    required: false
+    default: null
+    aliases: []    
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
@@ -139,6 +145,7 @@ def create_launch_config(connection, module):
     instance_type = module.params.get('instance_type')
     spot_price = module.params.get('spot_price')
     instance_monitoring = module.params.get('instance_monitoring')
+    kern_id = module.params.get('kern_id')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -158,8 +165,9 @@ def create_launch_config(connection, module):
         user_data=user_data,
         block_device_mappings=[bdm],
         instance_type=instance_type,
-        spot_price=spot_price,
-        instance_monitoring=instance_monitoring)
+        instance_monitoring=instance_monitoring,
+        kern_id=kern_id,
+        spot_price=spot_price)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -196,6 +204,7 @@ def main():
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
             user_data=dict(type='str'),
+            kern_id=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
