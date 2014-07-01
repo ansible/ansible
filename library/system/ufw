@@ -108,6 +108,11 @@ options:
       - Delete rule.
     required: false
     choices: ['yes', 'no']
+  interface:
+    description:
+      - Specify interface for rule.
+    required: false
+    aliases: ['if']
 '''
 
 EXAMPLES = '''
