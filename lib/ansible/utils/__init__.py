@@ -1189,13 +1189,16 @@ def filter_leading_non_json_lines(buf):
         if stop_filtering or line.startswith('{') or line.startswith('['):
             stop_filtering = True
             filtered_lines.write(line + '\n')
-        elif '=' in line:
-            # Does line contain k=v?
+        else:
             eq_pos = line.find('=')
+            if eq_pos == -1:
+                # No equals present
+                continue
             leftchar, eql, rightchar = line[eq_pos-1:eq_pos+2]
             if leftchar.isalnum() and rightchar.isalnum():
                 stop_filtering = True
                 filtered_lines.write(line + '\n')
+
     return filtered_lines.getvalue()
 
 def boolean(value):
