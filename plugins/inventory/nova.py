@@ -39,6 +39,7 @@ NOVA_CONFIG_FILES = [os.getcwd() + "/nova.ini",
 NOVA_DEFAULTS = {
     'auth_system': None,
     'region_name': None,
+    'service_type': 'compute',
 }
 
 
