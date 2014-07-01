@@ -585,7 +585,7 @@ Ansible is a powerful orchestration tool, and rax modules allow you the opportun
 * Servers that are removed from a Cloud Load Balancer one-by-one, updated, verified, and returned to the load balancer pool
 * Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed
 * A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned
-* Servers and load balancers that have DNS receords created and destroyed on creation and decommissioning, respectively
+* Servers and load balancers that have DNS records created and destroyed on creation and decommissioning, respectively
 
 
 
