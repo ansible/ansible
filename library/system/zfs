@@ -177,7 +177,7 @@ options:
     description:
       - The sync property.
     required: False
-    choices: ['standard','always','disabled']
+    choices: ['standard','always','disabled','on','off']
   utf8only:
     description:
       - The utf8only property.
