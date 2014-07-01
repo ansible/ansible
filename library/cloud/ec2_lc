@@ -193,13 +193,13 @@ def create_launch_config(connection, module):
         user_data=user_data,
         block_device_mappings=[bdm],
         instance_type=instance_type,
-        instance_monitoring=instance_monitoring,
         kernel_id=kernel_id,
         spot_price=spot_price,
         ramdisk_id=ramdisk_id,
         instance_profile_name=instance_profile_name,
         ebs_optimized=ebs_optimized,
-        associate_public_ip_address=associate_public_ip_address)
+        associate_public_ip_address=associate_public_ip_address,
+        instance_monitoring=instance_monitoring)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -241,11 +241,11 @@ def main():
             instance_type=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
-            instance_monitoring=dict(default=False, type='bool'),
             ramdisk_id=dict(type='str'),
             instance_profile_name=dict(type='str'),
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
+            instance_monitoring=dict(default=False, type='bool'),
         )
     )
 
