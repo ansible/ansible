@@ -199,7 +199,7 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 		continue
 
     # Return server list
-    print json.dumps(groups)
+    print(json.dumps(groups, sort_keys=True, indent=2))
     sys.exit(0)
 
 #####################################################
@@ -228,7 +228,7 @@ elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
                 if key != 'os_manager':
                     results[key] = value
 
-    print json.dumps(results)
+    print(json.dumps(results, sort_keys=True, indent=2))
     sys.exit(0)
 
 else:
