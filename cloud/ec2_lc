@@ -97,6 +97,12 @@ options:
     required: false
     default: null
     aliases: []
+  ebs_optimized:
+    description:
+      - Specifies whether the instance is optimized for EBS I/O (true) or not (false).
+    required: false
+    default: false
+    aliases: []
 extends_documentation_fragment: aws
 """
 
@@ -160,6 +166,7 @@ def create_launch_config(connection, module):
     kernel_id = module.params.get('kernel_id')
     ramdisk_id = module.params.get('ramdisk_id')
     instance_profile_name = module.params.get('instance_profile_name')
+    ebs_optimized = module.params.get('ebs_optimized')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -183,7 +190,8 @@ def create_launch_config(connection, module):
         kernel_id=kernel_id,
         spot_price=spot_price,
         ramdisk_id=ramdisk_id,
-        instance_profile_name=instance_profile_name)
+        instance_profile_name=instance_profile_name,
+        ebs_optimized=ebs_optimized)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -228,6 +236,7 @@ def main():
             instance_monitoring=dict(default=False, type='bool'),
             ramdisk_id=dict(type='str'),
             instance_profile_name=dict(type='str'),
+            ebs_optimized=dict(default=False, type='bool'),
         )
     )
 
