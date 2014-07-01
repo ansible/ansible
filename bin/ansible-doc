@@ -113,6 +113,9 @@ def get_man_text(doc):
         if 'choices' in opt:
             choices = ", ".join(str(i) for i in opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
+        if 'default' in opt:
+            default = str(opt['default'])
+            desc = desc + " [Default: " + default + "]"
         text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
                              subsequent_indent=opt_indent))
 
