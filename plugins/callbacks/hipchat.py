@@ -138,7 +138,7 @@ class CallbackModule(object):
     def playbook_on_not_import_for_host(self, host, missing_file):
         pass
 
-    def playbook_on_play_start(self, pattern):
+    def playbook_on_play_start(self, name):
         """Display Playbook and play start messages"""
 
         # This block sends information about a playbook when it starts
@@ -167,7 +167,7 @@ class CallbackModule(object):
 
         # This is where we actually say we are starting a play
         self.send_msg("%s: Starting play: %s" %
-                      (self.playbook_name, pattern))
+                      (self.playbook_name, name))
 
     def playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
