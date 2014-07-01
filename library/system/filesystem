@@ -96,9 +96,9 @@ def main():
         mkfs = module.get_bin_path('mkfs', required=True)
         cmd = None
         if opts is None:
-            cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
+            cmd = "%s -F -t %s '%s'" % (mkfs, fstype, dev)
         else:
-            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, opts, dev)
+            cmd = "%s -F -t %s  %s '%s'" % (mkfs, fstype, opts, dev)
         rc,_,err = module.run_command(cmd)
         if rc == 0:
             changed = True
