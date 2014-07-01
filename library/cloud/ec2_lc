@@ -24,6 +24,13 @@ description:
 version_added: "1.6"
 author: Gareth Rushgrove
 options:
+  assign_public_ip:
+    description:
+      - associate a public IP with instances
+      required: false
+      choices: ['true', 'false']
+      default: 'true'
+    aliases: []
   state:
     description:
       - register or deregister the instance
@@ -125,6 +132,7 @@ def create_block_device(module, volume):
 
 
 def create_launch_config(connection, module):
+    assign_public_ip = module.params.get('assign_public_ip')
     name = module.params.get('name')
     image_id = module.params.get('image_id')
     key_name = module.params.get('key_name')
@@ -145,6 +153,7 @@ def create_launch_config(connection, module):
                 bdm[volume['device_name']] = create_block_device(module, volume)
 
     lc = LaunchConfiguration(
+        associate_public_ip_address=assign_public_ip,
         name=name,
         image_id=image_id,
         key_name=key_name,
@@ -184,6 +193,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
+            assign_public_ip=dict(type='bool', default=True),
             name=dict(required=True, type='str'),
             image_id=dict(type='str'),
             key_name=dict(type='str'),
