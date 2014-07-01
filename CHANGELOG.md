@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+## 1.6.6 "And the Cradle Will Rock" - Jul 01, 2014
+
+- Security updates to further protect against the incorrect execution of untrusted data
+
 ## 1.6.5 "And the Cradle Will Rock" - Jun 25, 2014
 
 - Additional tweaks to prevent the incorrect execution of untrusted data
