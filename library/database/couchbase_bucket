@@ -124,12 +124,11 @@ options:
 
 EXAMPLES = '''
 # Create a 100MB  bucket named 'test' that does not exist
-- couchbase_bucket: address='127.0.0.1'
-                    authType='sasl'
-                    saslPassword='password'
+- couchbase_bucket: address='127.0.0.1:8091'
+                    authType='none'
                     bucketType='couchbase'
                     name='test'
-                    proxyPort=8091
+                    proxyPort=11215
                     ramQuotaMB=100
                     replicaNumber=0
                     username='username'
@@ -138,12 +137,11 @@ EXAMPLES = '''
                     state='present'
 
 # Recreate a 100MB  bucket named'test' that does exist
-- couchbase_bucket: address='127.0.0.1'
-                    authType='sasl'
-                    saslPassword='password'
+- couchbase_bucket: address='127.0.0.1:8091'
+                    authType='none'
                     bucketType='couchbase'
                     name='test'
-                    proxyPort=8091
+                    proxyPort=11215
                     ramQuotaMB=100
                     replicaNumber=0
                     username='username'
@@ -152,12 +150,11 @@ EXAMPLES = '''
                     state='present'
 
 # Delete a bucket named 'test'
-- couchbase_bucket: address='127.0.0.1'
-                    authType='sasl'
-                    saslPassword='password'
+- couchbase_bucket: address='127.0.0.1:8091'
+                    authType='none'
                     bucketType='couchbase'
                     name='test'
-                    proxyPort=8091
+                    proxyPort=11215
                     ramQuotaMB=100
                     replicaNumber=0
                     username='username'
@@ -212,8 +209,7 @@ class CouchbaseBucketCreate(object):
 
     def _build_url(self, bucket_name=None):
         """Builds up the correct api based on the properties supplied"""
-        url = 'http://' + self.address + ':' + str(self.proxyPort) + '\
-            /pools/default/buckets'
+        url = 'http://' + self.address + '/pools/default/buckets'
         if bucket_name is not None:
             url = url + '/' + bucket_name
         return url
