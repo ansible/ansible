@@ -143,14 +143,37 @@ config = nova_load_config_file()
 if not config:
     sys.exit('Unable to find configfile in %s' % ', '.join(NOVA_CONFIG_FILES))
 
+# Load up connections info based on config and then environment
+# variables
+username = (get_fallback(config, 'username') or
+            os.environ.get('OS_USERNAME', None))
+api_key = (get_fallback(config, 'api_key') or
+           os.environ.get('OS_PASSWORD', None))
+auth_url = (get_fallback(config, 'auth_url') or
+            os.environ.get('OS_AUTH_URL', None))
+project_id = (get_fallback(config, 'project_id') or
+              os.environ.get('OS_TENANT_NAME', None))
+region_name = (get_fallback(config, 'region_name') or
+               os.environ.get('OS_REGION_NAME', None))
+auth_system = (get_fallback(config, 'auth_system') or
+               os.environ.get('OS_AUTH_SYSTEM', None))
+
+# Determine what type of IP is preferred to return
+prefer_private = False
+try:
+    prefer_private = config.getboolean('openstack', 'prefer_private')
+except ConfigParser.NoOptionError:
+    pass
+
 client = nova_client.Client(
-    version     = config.get('openstack', 'version'),
-    username    = config.get('openstack', 'username'),
-    api_key     = config.get('openstack', 'api_key'),
-    auth_url    = config.get('openstack', 'auth_url'),
-    region_name = config.get('openstack', 'region_name'),
-    project_id  = config.get('openstack', 'project_id'),
-    auth_system = config.get('openstack', 'auth_system')
+    version=config.get('openstack', 'version'),
+    username=username,
+    api_key=api_key,
+    auth_url=auth_url,
+    region_name=region_name,
+    project_id=project_id,
+    auth_system=auth_system,
+    service_type=config.get('openstack', 'service_type'),
 )
 
 # Default or added list option
