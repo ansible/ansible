@@ -148,8 +148,14 @@ NOVA_CONFIG_FILES = [os.getcwd() + "/nova.ini",
                      os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
                      "/etc/ansible/nova.ini"]
 
+NOVA_DEFAULTS = {
+    'auth_system': None,
+    'region_name': None,
+}
+
+
 def nova_load_config_file():
-    p = ConfigParser.SafeConfigParser()
+    p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
 
     for path in NOVA_CONFIG_FILES:
         if os.path.exists(path):
