@@ -274,6 +274,11 @@ def create_vpc(module, vpc_conn):
     wait_timeout = int(module.params.get('wait_timeout'))
     changed = False
 
+    if subnets is None:
+        subnets = []
+    if route_tables is None:
+        route_tables = []
+
     # Check for existing VPC by cidr_block + tags or id
     previous_vpc = find_vpc(module, vpc_conn, id, cidr_block)
 
@@ -408,7 +413,7 @@ def create_vpc(module, vpc_conn):
     if route_tables and not isinstance(route_tables, list):
         module.fail_json(msg='route tables need to be a list of dictionaries')
     
-# Work through each route table and update/create to match dictionary array
+    # Work through each route table and update/create to match dictionary array
     all_route_tables = []
     for rt in route_tables:
         try:
@@ -561,11 +566,11 @@ def main():
             wait_timeout = dict(default=300),
             dns_support = dict(type='bool', default=True),
             dns_hostnames = dict(type='bool', default=True),
-            subnets = dict(type='list'),
+            subnets = dict(type='list', default=[]),
             vpc_id = dict(),
             internet_gateway = dict(type='bool', default=False),
             resource_tags = dict(type='dict'),
-            route_tables = dict(type='list'),
+            route_tables = dict(type='list', default=[]),
             state = dict(choices=['present', 'absent'], default='present'),
         )
     )
