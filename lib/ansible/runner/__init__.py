@@ -674,6 +674,17 @@ class Runner(object):
             rd_result = dict(failed=all_failed, changed=all_changed, results=results, msg=msg)
             if not all_failed:
                 del rd_result['failed']
+            # allow set_facts action plugin to work with loops
+            if self.module_name == 'set_fact':
+                facts_list = {}
+                for res in rd_result['results']:
+                    for varname in res['ansible_facts'].keys():
+                        if varname in facts_list:
+                            facts_list[varname].append(res['ansible_facts'][varname])
+                        else:
+                            facts_list[varname]=[res['ansible_facts'][varname]]
+                rd_result['ansible_facts'] = facts_list
+                del rd_result['results']
             return ReturnData(host=host, comm_ok=all_comm_ok, result=rd_result)
         else:
             self.callbacks.on_skipped(host, None)
