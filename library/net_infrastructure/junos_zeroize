@@ -41,19 +41,19 @@ short_description: Erase all data, including configuration and log files, on a d
 description:
     - Execute the Junos OS B(request system zeroize) command to remove all
       configuration information on the Routing Engines and reset all key
-      values on a device running Junos OS. The command removes all data files, 
-      including customized configuration and log files, by unlinking the files 
-      from their directories. The command also removes all user-created files 
-      from the system including all plain-text passwords, secrets, and 
+      values on a device running Junos OS. The command removes all data files,
+      including customized configuration and log files, by unlinking the files
+      from their directories. The command also removes all user-created files
+      from the system including all plain-text passwords, secrets, and
       private keys for SSH, local encryption, local authentication, IPsec,
       RADIUS, TACACS+, and SNMP.
 
       This command reboots the device and sets it to the factory default
-      configuration. After the reboot, you must log in through the console 
+      configuration. After the reboot, you must log in through the console
       as root in order to access the device.
 requirements:
-    - py-junos-eznc >= 1.0.0
-    - netconify, if using I(console) option
+    - junos-eznc >= 1.0.0
+    - junos-netconify >= 0.1.1, when using the I(console) option
 options:
     host:
         description:
@@ -102,6 +102,7 @@ EXAMPLES = '''
 import os
 import logging
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -140,7 +141,11 @@ def main():
 
     if args.get('console') is None:
         # via NETCONF
-        from jnpr.junos import Device 
+        try:
+            from jnpr.junos import Device
+        except ImportError:
+            module.fail_json(msg='junos-eznc is required for this module')
+
         dev = Device(args['host'], user=args['user'], password=args['passwd'])
         try:
             use_notifier('LOGIN', 'host={0}'.format(args['host']))
@@ -156,7 +161,10 @@ def main():
         results['changed'] = True
         # no close, we're done after this point.
     else:
-        from netconify.cmdo import netconifyCmdo
+        try:
+            from netconify.cmdo import netconifyCmdo
+        except ImportError:
+            module.fail_json(msg='junos-netconify is required for this module')
         nc_args = []
         nc_args.append(args['console'])
         nc_args.append('--zeroize')

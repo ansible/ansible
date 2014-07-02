@@ -39,12 +39,12 @@ author: Jeremy Schulman, Juniper Networks
 version_added: "1.7"
 short_description: Shut down or reboot a device running Junos OS.
 description:
-    - Shut down (power off) or reboot a device running Junos OS. This includes 
-      all Routing Engines in a Virtual Chassis or a dual Routing Engine system. 
-      This is equivalent to executing either the Junos OS B(request system power-off) 
+    - Shut down (power off) or reboot a device running Junos OS. This includes
+      all Routing Engines in a Virtual Chassis or a dual Routing Engine system.
+      This is equivalent to executing either the Junos OS B(request system power-off)
       or B(request system reboot) operational command.
 requirements:
-    - py-junos-eznc >= 1.0.0
+    - junos-eznc >= 1.0.0
 options:
     host:
         description:
@@ -80,8 +80,13 @@ EXAMPLES = '''
     reboot=yes
 '''
 
-from jnpr.junos import Device
-from jnpr.junos.utils.sw import SW
+try:
+    from jnpr.junos import Device
+    from jnpr.junos.utils.sw import SW
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
+
 
 def main():
 
@@ -93,6 +98,9 @@ def main():
             passwd=dict(required=False, default=None),
             reboot=dict(required=False, choices=BOOLEANS, default=False)),
         supports_check_mode=False)
+
+    if not HAS_PYEZ:
+        module.fail_json(msg='junos-eznc is required for this module')
 
     args = module.params
     if args['shutdown'] != 'shutdown':

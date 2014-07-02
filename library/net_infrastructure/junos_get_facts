@@ -39,14 +39,14 @@ author: Jeremy Schulman, Juniper Networks
 version_added: "1.7"
 short_description: Retrieve facts for a device running Junos OS.
 description:
-    - Retrieve facts for a device running Junos OS, which includes information 
+    - Retrieve facts for a device running Junos OS, which includes information
       such as the serial number, product model, and Junos OS version.
       The module supports using both NETCONF and CONSOLE-based retrieval
       and returns the information as a JSON dictionary.
-      The information is similar to facts gathered by other IT frameworks. 
+      The information is similar to facts gathered by other IT frameworks.
 requirements:
-    - py-junos-eznc >= 1.0.0
-    - netconify if using the I(console) option
+    - junos-eznc >= 1.0.0
+    - junos-netconify >= 0.1.1, when using the I(console) option
 options:
     host:
         description:
@@ -70,15 +70,15 @@ options:
     savedir:
         description:
             - Path to the local server directory where device facts and
-              inventory files will be stored. This option is used only 
+              inventory files will be stored. This option is used only
               with the I(console) option.
-              Refer to the B(netconify) utility for details.        
+              Refer to the B(netconify) utility for details.
         required: false
         default: $CWD
     logfile:
         description:
             - Path on the local server where the progress status is logged
-              for debugging purposes. This option is used only with the 
+              for debugging purposes. This option is used only with the
               I(console) option.
         required: false
         default: None
@@ -108,6 +108,7 @@ EXAMPLES = '''
 
 import os
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -123,7 +124,10 @@ def main():
     m_results = dict(changed=False)
 
     if m_args['console'] is None:
-        from jnpr.junos import Device
+        try:
+            from jnpr.junos import Device
+        except ImportError:
+            module.fail_json(msg='junos-eznc is required for this module')
         # -----------
         # via NETCONF
         # -----------
@@ -142,7 +146,10 @@ def main():
         # -----------
         # via CONSOLE
         # -----------
-        from netconify.cmdo import netconifyCmdo
+        try:
+            from netconify.cmdo import netconifyCmdo
+        except ImportError:
+            module.fail_json(msg='junos-netconify is required for this module')
         import logging
 
         c_args = []

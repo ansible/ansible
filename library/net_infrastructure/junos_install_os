@@ -40,14 +40,14 @@ version_added: "1.7"
 short_description: Install a Junos OS image.
 description:
    - Install a Junos OS image on one or more Routing Engines.
-     This module supports installations on single Routing Engine devices, 
-     MX Series routers with dual Routing Engines, and EX Series switches in 
-     a non-mixed Virtual Chassis. This action is equivalent to performing the  
+     This module supports installations on single Routing Engine devices,
+     MX Series routers with dual Routing Engines, and EX Series switches in
+     a non-mixed Virtual Chassis. This action is equivalent to performing the
      Junos OS B(request system software add) operational command.
 
-     If the existing Junos OS version matches the desired version, 
+     If the existing Junos OS version matches the desired version,
      no action is performed, and the "changed" attribute reports False.
-     If the existing version does not match, then the module performs the 
+     If the existing version does not match, then the module performs the
      following actions
 
      (1) Computes the MD5 checksum of the package located on the server.
@@ -56,8 +56,8 @@ description:
      (4) Installs the Junos OS software package.
      (5) Reboots the device (default).
 
-     Running the module in check mode reports whether the current Junos OS 
-     version matches the desired version. 
+     Running the module in check mode reports whether the current Junos OS
+     version matches the desired version.
 
 requirements:
    - py-junos-eznc >= 1.0.0
@@ -90,7 +90,7 @@ options:
       default: "10"
    version:
       description:
-         - Junos OS version string as it would be reported by the 
+         - Junos OS version string as it would be reported by the
            B(show version) command
       required: true
    package:
@@ -116,7 +116,11 @@ EXAMPLES = '''
 import logging
 import re
 import os
-from jnpr.junos import Device
+try:
+    from jnpr.junos import Device
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
 
 
 def junos_install_os(module, dev):
@@ -215,6 +219,9 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    if not HAS_PYEZ:
+        module.fail_json(msg='junos-eznc is required for this module')
 
     args = module.params
 
