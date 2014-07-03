@@ -77,6 +77,11 @@ options:
       - if this option is specified, password-based ssh authentication will be disabled.
     required: false
     default: null
+  virtual_network_name:
+    description:
+      - Name of virtual network.
+    required: false
+    default: null
   hostname:
     description:
       - hostname to write /etc/hostname. Defaults to <name>.cloudapp.net.
@@ -233,6 +238,7 @@ def create_virtual_machine(module, azure):
     role_size = module.params.get('role_size')
     storage_account = module.params.get('storage_account')
     image = module.params.get('image')
+    virtual_network_name = module.params.get('virtual_network_name')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
@@ -295,7 +301,9 @@ def create_virtual_machine(module, azure):
                                                              system_config=linux_config,
                                                              network_config=network_config,
                                                              os_virtual_hard_disk=os_hd,
-                                                             role_size=role_size)
+                                                             role_size=role_size,
+                                                             role_type='PersistentVMRole',
+                                                             virtual_network_name=virtual_network_name)
             _wait_for_completion(azure, result, wait_timeout, "create_virtual_machine_deployment")
         except WindowsAzureError as e:
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
@@ -391,6 +399,7 @@ def main():
             user=dict(),
             password=dict(),
             image=dict(),
+            virtual_network_name=dict(default=None),
             state=dict(default='present'),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=600),
