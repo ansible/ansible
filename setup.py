@@ -38,6 +38,7 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
+         'ansible.cache',
          'ansible.utils',
          'ansible.utils.module_docs_fragments',
          'ansible.inventory',
