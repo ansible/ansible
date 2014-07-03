@@ -83,6 +83,8 @@ def main(args):
         help="start the playbook at the task matching this name")
     parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
         help="run handlers even if a task fails")
+    parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
+        help="flush to fact cache")
 
     options, args = parser.parse_args(args)
 
@@ -201,6 +203,10 @@ def main(args):
             vault_password=vault_pass,
             force_handlers=options.force_handlers
         )
+
+        if options.flush_cache:
+            display(callbacks.banner("FLUSHING FACT CACHE"))
+            pb.SETUP_CACHE.flush()
 
         if options.listhosts or options.listtasks or options.syntax:
             print ''
@@ -324,4 +330,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt, ke:
         display("ERROR: interrupted", color='red', stderr=True)
         sys.exit(1)
-

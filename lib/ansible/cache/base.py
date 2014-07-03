@@ -13,3 +13,6 @@ class BaseCacheModule(object):
 
     def delete(self, key):
         raise NotImplementedError("Subclasses of {} must implement the '{}' method".format(self.__class__.__name__, self.__name__))
+
+    def flush(self):
+        raise NotImplementedError("Subclasses of {} must implement the '{}' method".format(self.__class__.__name__, self.__name__))

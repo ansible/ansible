@@ -35,3 +35,6 @@ class CacheModule(object):
 
     def delete(self, key):
         del self._cache[key]
+
+    def flush(self):
+        self._cache = {}
