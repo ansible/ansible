@@ -1,0 +1,3 @@
+---
+- name: stop SimpleHTTPServer
+  shell: start-stop-daemon --stop --pidfile {{ output_dir }}/SimpleHTTPServer.pid --exec {{ py2.stdout }}
