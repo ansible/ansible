@@ -1,0 +1,120 @@
+# test code for the uri module
+# (c) 2014, Leonid Evdokimov <leon@darkk.net.ru>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: set role facts
+  set_fact:
+    http_port: 15260
+    files_dir: '{{ _original_file|dirname }}/../files'
+    checkout_dir: '{{ output_dir }}/git'
+
+- name: verify that python2 is installed so this test can continue
+  shell: which python2
+  register: py2
+
+- name: start SimpleHTTPServer
+  shell: start-stop-daemon --start --pidfile {{ output_dir }}/SimpleHTTPServer.pid --background --make-pidfile --chdir {{ files_dir }} --exec {{ py2.stdout }} -- -m SimpleHTTPServer {{ http_port }}
+  notify: stop SimpleHTTPServer
+
+- wait_for: port={{ http_port }}
+
+
+- name: md5 pass_json
+  stat: path={{ files_dir }}/{{ item }}.json get_md5=yes
+  register: pass_md5
+  with_sequence: start=0 end=4 format=pass%d
+
+- name: fetch pass_json
+  uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
+  register: pass
+  with_sequence: start=0 end=4 format=pass%d
+
+- name: check pass_json
+  assert:
+    that:
+      - '"json" in item.1'
+      - item.0.stat.md5 == item.1.raw_content | md5
+  with_together:
+    - pass_md5.results
+    - pass.results
+
+
+- name: md5 fail_json
+  stat: path={{ files_dir }}/{{ item }}.json get_md5=yes
+  register: fail_md5
+  with_sequence: start=0 end=30 format=fail%d
+
+- name: fetch fail_json
+  uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
+  register: fail
+  with_sequence: start=0 end=30 format=fail%d
+
+- name: check fail_json
+  assert:
+    that:
+      - item.0.stat.md5 == item.1.raw_content | md5
+      - '"json" not in item.1'
+  with_together:
+    - fail_md5.results
+    - fail.results
+
+
+- name: check content != raw_content
+  assert:
+    that: item.content != item.raw_content
+  with_items:
+    - '{{ pass.results.0 }}'
+    - '{{ fail.results.14 }}'
+    - '{{ fail.results.15 }}'
+    - '{{ fail.results.16 }}'
+    - '{{ fail.results.27 }}'
+
+- name: check content == raw_content
+  assert:
+    that: item.content == item.raw_content
+  with_items:
+    - '{{ pass.results.1 }}'
+    - '{{ pass.results.2 }}'
+    - '{{ pass.results.3 }}'
+    - '{{ pass.results.4 }}'
+    - '{{ fail.results.0 }}'
+    - '{{ fail.results.1 }}'
+    - '{{ fail.results.2 }}'
+    - '{{ fail.results.3 }}'
+    - '{{ fail.results.4 }}'
+    - '{{ fail.results.5 }}'
+    - '{{ fail.results.6 }}'
+    - '{{ fail.results.7 }}'
+    - '{{ fail.results.8 }}'
+    - '{{ fail.results.9 }}'
+    - '{{ fail.results.10 }}'
+    - '{{ fail.results.11 }}'
+    - '{{ fail.results.12 }}'
+    - '{{ fail.results.13 }}'
+    - '{{ fail.results.17 }}'
+    - '{{ fail.results.18 }}'
+    - '{{ fail.results.19 }}'
+    - '{{ fail.results.20 }}'
+    - '{{ fail.results.21 }}'
+    - '{{ fail.results.22 }}'
+    - '{{ fail.results.23 }}'
+    - '{{ fail.results.24 }}'
+    - '{{ fail.results.25 }}'
+    - '{{ fail.results.26 }}'
+    - '{{ fail.results.28 }}'
+    - '{{ fail.results.29 }}'
+    - '{{ fail.results.30 }}'
