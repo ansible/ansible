@@ -218,8 +218,8 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
     conditional = template.template(basedir, presented, inject)
     val = conditional.strip()
     if val == presented:
-        # the templating failed, meaning most likely a 
-        # variable was undefined. If we happened to be 
+        # the templating failed, meaning most likely a
+        # variable was undefined. If we happened to be
         # looking for an undefined variable, return True,
         # otherwise fail
         if "is undefined" in conditional:
@@ -242,7 +242,7 @@ def is_executable(path):
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 def unfrackpath(path):
-    ''' 
+    '''
     returns a path that is free of symlinks, environment
     variables, relative path traversals and symbols (~)
     example:
@@ -392,10 +392,10 @@ def process_common_errors(msg, probline, column):
 
     if ":{{" in replaced and "}}" in replaced:
         msg = msg + """
-This one looks easy to fix.  YAML thought it was looking for the start of a 
+This one looks easy to fix.  YAML thought it was looking for the start of a
 hash/dictionary and was confused to see a second "{".  Most likely this was
-meant to be an ansible template evaluation instead, so we have to give the 
-parser a small hint that we wanted a string instead. The solution here is to 
+meant to be an ansible template evaluation instead, so we have to give the
+parser a small hint that we wanted a string instead. The solution here is to
 just quote the entire value.
 
 For instance, if the original line was:
@@ -410,9 +410,9 @@ It should be written as:
 
     elif len(probline) and len(probline) > 1 and len(probline) > column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
-This one looks easy to fix.  There seems to be an extra unquoted colon in the line 
-and this is confusing the parser. It was only expecting to find one free 
-colon. The solution is just add some quotes around the colon, or quote the 
+This one looks easy to fix.  There seems to be an extra unquoted colon in the line
+and this is confusing the parser. It was only expecting to find one free
+colon. The solution is just add some quotes around the colon, or quote the
 entire line after the first colon.
 
 For instance, if the original line was:
@@ -424,7 +424,7 @@ It can be written as:
     copy: src=file.txt dest='/path/filename:with_colon.txt'
 
 Or:
-    
+
     copy: 'src=file.txt dest=/path/filename:with_colon.txt'
 
 
@@ -444,8 +444,8 @@ Or:
                 unbalanced = True
             if match:
                 msg = msg + """
-This one looks easy to fix.  It seems that there is a value started 
-with a quote, and the YAML parser is expecting to see the line ended 
+This one looks easy to fix.  It seems that there is a value started
+with a quote, and the YAML parser is expecting to see the line ended
 with the same kind of quote.  For instance:
 
     when: "ok" in result.stdout
@@ -463,9 +463,9 @@ or equivalently:
 
             if unbalanced:
                 msg = msg + """
-We could be wrong, but this one looks like it might be an issue with 
-unbalanced quotes.  If starting a value with a quote, make sure the 
-line ends with the same set of quotes.  For instance this arbitrary 
+We could be wrong, but this one looks like it might be an issue with
+unbalanced quotes.  If starting a value with a quote, make sure the
+line ends with the same set of quotes.  For instance this arbitrary
 example:
 
     foo: "bad" "wolf"
@@ -506,8 +506,8 @@ Note: The error may actually appear before this position: line %s, column %s
             else:
                 msg = msg + """
 We could be wrong, but this one looks like it might be an issue with
-missing quotes.  Always quote template expression brackets when they 
-start a value. For instance:            
+missing quotes.  Always quote template expression brackets when they
+start a value. For instance:
 
     with_items:
       - {{ foo }}
@@ -515,7 +515,7 @@ start a value. For instance:
 Should be written as:
 
     with_items:
-      - "{{ foo }}"      
+      - "{{ foo }}"
 
 """
         else:
@@ -753,9 +753,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
-    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true', 
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
         help='ask for su password')
-    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
+    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
         help='ask for vault password')
     parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
         help="vault password file")
@@ -1032,8 +1032,8 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
 
-    # this is the whitelist of AST nodes we are going to 
-    # allow in the evaluation. Any node type other than 
+    # this is the whitelist of AST nodes we are going to
+    # allow in the evaluation. Any node type other than
     # those listed here will raise an exception in our custom
     # visitor class defined below.
     SAFE_NODES = set(
@@ -1168,5 +1168,9 @@ def before_comment(msg):
     msg = msg.replace("**NOT_A_COMMENT**","#")
     return msg
 
+def update_hash(hash, key, new_value):
+    ''' used to avoid nested .update calls on the parent '''
 
-
+    value = hash.get(key, {})
+    value.update(new_value)
+    hash[key] = value

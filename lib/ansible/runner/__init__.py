@@ -46,6 +46,8 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
+from ansible.cache import FactCache
+from ansible.utils import update_hash
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -56,7 +58,7 @@ except ImportError:
     HAS_ATFORK=False
 
 multiprocessing_runner = None
-        
+
 OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
@@ -86,7 +88,7 @@ class HostVars(dict):
     def __init__(self, vars_cache, inventory, vault_password=None):
         self.vars_cache = vars_cache
         self.inventory = inventory
-        self.lookup = dict()
+        self.lookup = {}
         self.update(vars_cache)
         self.vault_password = vault_password
 
@@ -156,7 +158,7 @@ class Runner(object):
         # storage & defaults
         self.check            = check
         self.diff             = diff
-        self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+        self.setup_cache      = utils.default(setup_cache, lambda: ansible.cache.FactCache())
         self.vars_cache       = utils.default(vars_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
@@ -202,11 +204,11 @@ class Runner(object):
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
             # 'smart' is the default since 1.2.1/1.3
             cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = cmd.communicate() 
+            (out, err) = cmd.communicate()
             if "Bad configuration option" in err:
                 self.transport = "paramiko"
             else:
-                self.transport = "ssh" 
+                self.transport = "ssh"
 
         # save the original transport, in case it gets
         # changed later via options like accelerate
@@ -320,7 +322,7 @@ class Runner(object):
         delegate = {}
 
         # allow delegated host to be templated
-        delegate['host'] = template.template(self.basedir, host, 
+        delegate['host'] = template.template(self.basedir, host,
                                 remote_inject, fail_on_undefined=True)
 
         delegate['inject'] = remote_inject.copy()
@@ -336,14 +338,14 @@ class Runner(object):
 
         this_host = delegate['host']
 
-        # get the vars for the delegate by it's name        
+        # get the vars for the delegate by it's name
         try:
             this_info = delegate['inject']['hostvars'][this_host]
         except:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
 
-        # get the real ssh_address for the delegate        
+        # get the real ssh_address for the delegate
         # and allow ansible_ssh_host to be templated
         delegate['ssh_host'] = template.template(self.basedir,
                             this_info.get('ansible_ssh_host', this_host),
@@ -354,7 +356,7 @@ class Runner(object):
         delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
 
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
-        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', 
+        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file',
                                         self.private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
@@ -574,6 +576,7 @@ class Runner(object):
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
         combined_cache.setdefault(host, {}).update(self.vars_cache.get(host, {}))
+
         hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
 
         # use combined_cache and host_variables to template the module_vars
@@ -841,6 +844,7 @@ class Runner(object):
         until = self.module_vars.get('until', None)
         if until is not None and result.comm_ok:
             inject[self.module_vars.get('register')] = result.result
+
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 retries = self.module_vars.get('retries')
@@ -861,7 +865,7 @@ class Runner(object):
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
                 if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                    result.result['failed'] = True 
+                    result.result['failed'] = True
                     result.result['msg'] = "Task failed as maximum retries was encountered"
             else:
                 result.result['attempts'] = 0
@@ -915,6 +919,7 @@ class Runner(object):
                 if self.diff:
                     self.callbacks.on_file_diff(conn.host, result.diff)
                 self.callbacks.on_ok(host, data)
+
         return result
 
     def _early_needs_tmp_path(self, module_name, handler):
@@ -939,7 +944,7 @@ class Runner(object):
             # even when conn has pipelining, old style modules need tmp to store arguments
             return True
         return False
-    
+
 
     # *****************************************************
 
@@ -1070,7 +1075,7 @@ class Runner(object):
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         # Catch failure conditions, files should never be
         # written to locations in /.
-        if rc == '/': 
+        if rc == '/':
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 
@@ -1095,9 +1100,9 @@ class Runner(object):
         module_data
         ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
         module_remote_path = os.path.join(tmp, module_name)
-        
+
         self._transfer_str(conn, tmp, module_name, module_data)
-         
+
         return (module_remote_path, module_style, module_shebang)
 
     # *****************************************************
@@ -1159,7 +1164,7 @@ class Runner(object):
             for worker in workers:
                 worker.terminate()
                 worker.join()
-        
+
         results = []
         try:
             while not result_queue.empty():

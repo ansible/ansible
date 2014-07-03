@@ -22,6 +22,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
+import ansible.cache
 import os
 import shlex
 import collections
@@ -32,8 +33,9 @@ import pipes
 # the setup cache stores all variables about a host
 # gathered during the setup step, while the vars cache
 # holds all other variables about a host
-SETUP_CACHE = collections.defaultdict(dict)
+SETUP_CACHE = ansible.cache.FactCache()
 VARS_CACHE  = collections.defaultdict(dict)
+
 
 class PlayBook(object):
     '''
@@ -98,7 +100,7 @@ class PlayBook(object):
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
         check:            don't change anything, just try to detect some potential changes
         any_errors_fatal: terminate the entire execution immediately when one of the hosts has failed
-        force_handlers:   continue to notify and run handlers even if a task fails 
+        force_handlers:   continue to notify and run handlers even if a task fails
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -181,7 +183,7 @@ class PlayBook(object):
 
     def _get_playbook_vars(self, play_ds, existing_vars):
         '''
-        Gets the vars specified with the play and blends them 
+        Gets the vars specified with the play and blends them
         with any existing vars that have already been read in
         '''
         new_vars = existing_vars.copy()
@@ -461,6 +463,13 @@ class PlayBook(object):
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
+        def _register_play_vars(host, result):
+            # when 'register' is used, persist the result in the vars cache
+            # rather than the setup cache - vars should be transient between playbook executions
+            if 'stdout' in result and 'stdout_lines' not in result:
+                result['stdout_lines'] = result['stdout'].splitlines()
+            utils.update_hash(self.VARS_CACHE, host, {task.register: result})
+
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
             if 'results' in result:
@@ -469,22 +478,19 @@ class PlayBook(object):
                 for res in result['results']:
                     if type(res) == dict:
                         facts = res.get('ansible_facts', {})
-                        self.SETUP_CACHE[host].update(facts)
+                        utils.update_hash(self.SETUP_CACHE, host, facts)
             else:
+                # when facts are returned, persist them in the setup cache
                 facts = result.get('ansible_facts', {})
-                self.SETUP_CACHE[host].update(facts)
+                utils.update_hash(self.SETUP_CACHE, host, facts)
             if task.register:
-                if 'stdout' in result and 'stdout_lines' not in result:
-                    result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                _register_play_vars(host, result)
 
         # also have to register some failed, but ignored, tasks
         if task.ignore_errors and task.register:
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
-                if 'stdout' in result and 'stdout_lines' not in result:
-                    result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                _register_play_vars(host, result)
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
@@ -576,8 +582,8 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            self.SETUP_CACHE[host].update({'module_setup': True})
-            self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
+            utils.update_hash(self.SETUP_CACHE, host, {'module_setup': True})
+            utils.update_hash(self.SETUP_CACHE, host, result.get('ansible_facts', {}))
         return setup_results
 
     # *****************************************************
@@ -611,7 +617,7 @@ class PlayBook(object):
 
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
-        
+
         self.callbacks.on_play_start(play.name)
         # Get the hosts for this play
         play._play_hosts = self.inventory.list_hosts(play.hosts)
