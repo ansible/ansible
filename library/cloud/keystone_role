@@ -5,14 +5,13 @@ try:
     from keystoneclient.openstack.common.apiclient import exceptions as key_exception
 except ImportError:
     print("failed=True msg='keystoneclient is required'")
-
 DOCUMENTATION = '''
 ---
-module: keystone_user
+module: keystone_role
 version_added: "1.0"
-short_description: Manage OpenStack Identity (keystone) users
+short_description: Manage OpenStack Identity (keystone) roles
 description:
-   - Manage users from OpenStack.
+   - Manage roles from OpenStack.
 options:
    os_username:
      description:
@@ -31,7 +30,7 @@ options:
      default: None
    token:
      description:
-        - The token to be used in case the password is not specified
+        - The token to be uses in case the password is not specified
      required: false
      default: None
    os_auth_url:
@@ -40,28 +39,23 @@ options:
      required: true
      default: None
    region_name:
-     description:
+      description:
         - Region name
-     required: false
-     default: None
-   name:
+      required: false
+      default: None
+   user:
      description:
-        - The name of the user that has to added/removed from OpenStack
+        - The name of the user to edit roles
      required: true
-     default: None
-   password:
-     description:
-        - The password to be assigned to the user
-     required: false
      default: None
    tenant:
      description:
-        - Primary tenant for the new user
+        - Tenant to edit roles
      required: false
      default: None
-   email:
+   role:
      description:
-        - An email address for the user
+        - Role to give or remove from user
      required: false
      default: None
    state:
@@ -75,22 +69,22 @@ requirements: [ python-keystoneclient ]
 EXAMPLES = '''
 # Create a user
 - keystone_user:
-    name: batman
+    user: batman
     tenant: batcave
-    password: getoffmycomputeralfred
-    email: bruce@wayne.com
+    role: admin
     state: present
     os_username: admin
     os_password: password
     os_tenant_name: admin
     os_auth_url: http://10.0.2.15:5000/v2.0
 '''
+
 def authenticate(module):
     try:
         if module.params['token']:
             return key_v2.Client(auth_url=module.params['os_auth_url'],
                                  token=module.params['token'],
-                                 region_name=module.params['region_name'],)
+                                 region_name=module.params['region_name'])
         else:
             return key_v2.Client(username=module.params['os_username'],
                                  password=module.params['os_password'],
@@ -101,75 +95,93 @@ def authenticate(module):
         module.fail_json(msg='Error getting keystone client:%s' % str(e))
     return None
 
-def get_tenant(keystone, tenant_name):
+def _get_tenant(keystone, tenant_name):
     for tenant in keystone.tenants.list():
         if tenant.name == tenant_name:
             return tenant
     return None
 
-def get_user(keystone, user_name):
+def _get_user(keystone, user_name):
     for user in keystone.users.list():
         if user.name == user_name:
             return user
     return None
 
-def _user_present(module, keystone):
-    if not module.params['password']:
-        module.fail_json(msg='Need user password to create')
-    try:
-        user = get_user(keystone, module.params['name'])
-        if user is not None:
-            module.exit_json(changed=False, info=user._info, result='User exists')
-        tenant_id = None
-        if module.params['tenant']:
-            tenant_id = get_tenant(keystone, module.params['tenant'])
-    except key_exception, e:
-        module.fail_json(msg='Error getting item:%s' % str(e))
-    args = {'name' : module.params['name'],
-            'password' : module.params['password'],
-            'email'    : module.params['email'],
-            'tenant_id': tenant_id,
-           }
-    try:
-        user = keystone.users.create(**args)
-    except key_exception, e:
-        module.fail_json(msg='Error creating user:%s' % str(e))
-    module.exit_json(changed=True, info=user._info, result='User created')
+def _get_role(keystone, role_name):
+    for role in keystone.roles.list():
+        if role.name == role_name:
+            return role
+    return None
 
-def _user_absent(module, keystone):
+def _role_present(module, keystone):
     try:
-        user = get_user(keystone, module.params['name'])
+        tenant = _get_tenant(keystone, module.params['tenant'])
+        user = _get_user(keystone, module.params['user'])
+        role = _get_role(keystone, module.params['role'])
     except key_exception, e:
-        module.fail_json(msg='Error getting user list:%s' % str(e))
+        module.fail_json(msg='Error getting item name:%s' % str(e))
+    if tenant is None:
+        module.fail_json(msg='Cannot find tenant')
     if user is None:
-        module.exit_json(changed=False, result='User not found')
+        module.fail_json(msg='Cannot find user')
+    if role is None:
+        module.fail_json(msg='Cannot find role')
+    user_roles = keystone.users.list_roles(user.id, tenant=tenant.id)
+    for rol in user_roles:
+        if role.id == rol.id:
+            module.exit_json(changed=False, result='User has role', info=role._info)
     try:
-        keystone.users.delete(user.id)
+        keystone.tenants.add_user(tenant.id, user.id, role.id)
     except key_exception, e:
-        module.fail_json(msg='Error deleting user:%s' % str(e))
-    module.exit_json(changed=True, result='User deleted')
+        module.fail_json(msg='Cannot add user to tenant:%s' % str(e))
+    module.exit_json(changed=True, result='Added user to role', info=role._info)
+
+def _role_absent(module, keystone):
+    try:
+        tenant = _get_tenant(keystone, module.params['tenant'])
+        user = _get_user(keystone, module.params['user'])
+        role = _get_role(keystone, module.params['role'])
+    except key_exception, e:
+        module.fail_json(msg='Error getting item name:%s' % str(e))
+    if tenant is None:
+        module.fail_json(msg='Cannot find tenant')
+    if user is None:
+        module.fail_json(msg='Cannot find user')
+    if role is None:
+        module.fail_json(msg='Cannot find role')
+    user_roles = keystone.users.list_roles(user.id, tenant=tenant.id)
+    role_found = False
+    for rol in user_roles:
+        if role.id == rol.id:
+            role_found = True
+    if not role_found:
+        module.exit_json(changed=False, result='User does not have role')
+    try:
+        keystone.tenants.remove_user(tenant.id, user.id, role.id)
+    except key_exception, e:
+        module.fail_json(msg='Cannot remove user:%s' % e.message)
+    module.exit_json(changed=True, result='Removed user from role')
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name            = dict(required=True),
-            password        = dict(required=False),
-            tenant          = dict(required=False),
-            email           = dict(required=False),
+            user            = dict(required=True),
+            tenant          = dict(required=True),
+            role            = dict(required=True),
             state           = dict(default='present', choices=['present', 'absent']),
             os_auth_url     = dict(required=True),
             token           = dict(required=False),
-            os_username     = dict(required=True),
-            os_password     = dict(required=True),
-            os_tenant_name  = dict(required=True),
+            os_username     = dict(required=False),
+            os_password     = dict(required=False),
+            os_tenant_name  = dict(required=False),
             region_name     = dict(default=None),
         ),
     )
     keystone = authenticate(module)
     if module.params['state'] == 'present':
-        _user_present(module, keystone)
+        _role_present(module, keystone)
     if module.params['state'] == 'absent':
-        _user_absent(module, keystone)
+        _role_absent(module, keystone)
 
 # import module snippets
 from ansible.module_utils.basic import *
