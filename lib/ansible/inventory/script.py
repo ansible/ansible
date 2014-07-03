@@ -49,7 +49,10 @@ class InventoryScript(object):
     def _parse(self, err):
 
         all_hosts = {}
-        self.raw  = utils.parse_json(self.data, from_remote=True)
+
+        # not passing from_remote because data from CMDB is trusted
+        self.raw  = utils.parse_json(self.data)
+
         all       = Group('all')
         groups    = dict(all=all)
         group     = None
