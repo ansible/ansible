@@ -1,0 +1,350 @@
+#!/usr/bin/env python
+
+# (c) 2014, Nandor Sivok <dominis@haxor.hu>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+# ansible-shell is an interactive shell for ansible
+# with built-in tab completion for all the documented modules
+#
+# Available commands:
+#  cd - change host/group (you can use host patterns eg.: app*.dc*:!app01*)
+#  list - list available hosts in the current path
+#  serial - change serial
+#  sudo - sudo
+#  ! - forces shell module instead of the ansible module (!yum update -y)
+#
+# Configuration:
+# create a [ansible-shell] section in your ansbile.cfg
+#  cwd=app-servers - you can set your default host pattern
+#  serial=100 - default serial
+
+
+import cmd
+import ansible.runner
+from ansible.color import stringc, codeCodes
+import ansible.constants as C
+from ansible import utils
+from ansible import callbacks
+from ansible.inventory import Host
+import ansible.utils.module_docs as module_docs
+import sys
+import os
+import pwd
+import readline
+import rlcompleter
+import atexit
+from optparse import OptionParser
+
+
+class colorizer(object):
+    def __init__(self, color):
+        self.color = color
+
+    def __enter__(self):
+        sys.stdout.write("\033[")
+        sys.stdout.write(codeCodes[self.color])
+        sys.stdout.write("m")
+
+    def __exit__(self, *args):
+        sys.stdout.write("\033[0m")
+
+
+class AnsibleShell(cmd.Cmd):
+
+    modules = []
+
+    def __init__(self, options, args):
+        self.options = options
+        self.options.cwd = ''
+        self.options.serial = 2
+        self.ansible = ansible.runner.Runner(host_list=self.options.host_list)
+        self.groups = self.ansible.inventory.groups_list().keys()
+        self.hosts = self.ansible.inventory.groups_list()['all']
+        self.read_config_file()
+        self.intro = 'Welcome to the ansible-shell.\nType help or ? to list commands.\n'
+        self.set_prompt()
+        self.modules = self.list_modules()
+        for module in self.modules:
+            setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
+            setattr(self, 'help_' + module, lambda module=module: self.helpdefault(module))
+        cmd.Cmd.__init__(self)
+
+    def read_config_file(self):
+        allowed_items = {
+            # name: type
+            'cwd': 'str',
+            'serial': 'int',
+        }
+        config = C.load_config_file()
+        if config.has_section('ansible-shell'):
+            for item in config.items('ansible-shell'):
+                if item[0] in allowed_items.keys():
+                    value = vars(__builtins__)[allowed_items[item[0]]](item[1])
+                    setattr(self.options, item[0], value)
+
+    @staticmethod
+    def parse_opts():
+        parser = OptionParser()
+        parser.add_option("-s", "--sudo", default=False, action="store_true",
+                          dest='sudo', help="run operations with sudo (nopasswd)")
+        parser.add_option('-U', '--sudo-user', dest='sudo_user',
+                          help='desired sudo user (default=root)', default="root")
+        parser.add_option('-t', '--timeout', dest='timeout', default=5,
+                          help='timeout (default=5)')
+        parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
+                          dest='remote_user',
+                          help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+        parser.add_option('-p', '--step', default=False, action="store_true",
+                          dest='step',
+                          help='one-step-at-a-time: confirm each task before running')
+        parser.add_option('-i', '--inventory', default=C.DEFAULT_HOST_LIST,
+                          dest='host_list',
+                          help='Inventory file')
+
+        return parser.parse_args()
+
+    def get_names(self):
+        return dir(self)
+
+    def cmdloop(self):
+        try:
+            cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt:
+            self.intro = " "
+            self.cmdloop()
+
+    def set_prompt(self):
+        self.selected = self.ansible.inventory.list_hosts(self.options.cwd)
+        self.prompt = "%s@%s (%d)[s:%d]$ " % (self.options.remote_user, self.options.cwd, len(self.selected), self.options.serial)
+
+    def list_modules(self):
+        modules = []
+        for root, dirs, files in os.walk(C.DEFAULT_MODULE_PATH):
+            for basename in files:
+                modules.append(basename)
+
+        return modules
+
+    def confirm(self, module, module_args):
+        if not self.options.step:
+            return True
+
+        # print hosts
+        callbacks.display("HOSTS:","bright blue")
+        for host in self.selected:
+            hostname = host.name if isinstance(host, Host) else host
+            callbacks.display("\t%s" % hostname,"green")
+
+        callbacks.display("\nSUMMARY: host_num[%d] module[%s] module_args[%s] options[%s]\n" % (len(self.selected), module, module_args, self.options),"bright blue")
+
+        answer=False
+        try:
+            print "Do you confirm to execute?[y/N]:(default=No) ",
+            # cmd module use raw_input to read user command by default, to avoid our answer here 'logged' into history,
+            # use sys.stdin.readline instead of raw_input, see more at http://docs.python.org/2/library/cmd.html#cmd.Cmd.use_rawinput
+            answer = sys.stdin.readline()[:-1]
+        except:
+            answer = False
+        return utils.boolean(answer)
+
+    def default(self, arg, forceshell=False):
+        if arg.startswith("#"):
+            return False
+
+        if not self.options.cwd:
+            print "No host found"
+            return False
+
+        if arg.split()[0] in self.modules:
+            module = arg.split()[0]
+            module_args = ' '.join(arg.split()[1:])
+        else:
+            module = 'shell'
+            module_args = arg
+
+        if forceshell is True:
+            module = 'shell'
+            module_args = arg
+
+        if not self.confirm(module, module_args):
+            callbacks.display("Command canceled by user")
+            return
+
+        try:
+            opts = self.options
+            results = ansible.runner.Runner(
+                pattern=self.options.cwd, forks=self.options.serial,
+                module_name=module, module_args=module_args,
+                remote_user=opts.remote_user,
+                sudo=opts.sudo, sudo_user=opts.sudo_user,
+                timeout=int(opts.timeout),
+                host_list=opts.host_list
+            ).run()
+            if results is None:
+                print "No hosts found"
+                return False
+        except Exception as e:
+            print e.msg
+            return False
+
+        for (hostname, result) in results['contacted'].items():
+            print "=============== %-30s ================" % stringc(hostname, 'bright gray')
+
+            if 'stderr' in result.keys():
+                # this is a shell output
+                # maybe both stderr and stdout are set,so try to print them all
+                try:
+                    callbacks.display(result['stdout'], 'green')
+                    callbacks.display(result['stderr'], 'red')
+                except:
+                    pass
+            else:
+                # this is not a shell output
+                if 'failed' not in result.keys():
+                    callbacks.display(utils.jsonify(result,True), 'green')
+                else:
+                    callbacks.display(utils.jsonify(result,True), 'red')
+
+        # connect failed
+        for (hostname, result) in results['dark'].items():
+            print "=============== %s ================" % stringc(hostname, 'red')
+            callbacks.display(result['msg'], 'red')
+
+
+    def emptyline(self):
+        return
+
+    def do_shell(self, arg):
+        self.default(arg, True)
+
+    def do_serial(self, arg):
+        """Set the number of forks"""
+        if not arg:
+            print 'Usage: serial <number>'
+            return
+        self.options.serial = arg
+        self.set_prompt()
+
+    def do_cd(self, arg):
+        """Change active host/group"""
+        if not arg:
+            self.options.cwd = ''
+        elif arg == '..':
+            try:
+                self.options.cwd = self.ansible.inventory.groups_for_host(self.options.cwd)[1].name
+            except Exception:
+                self.options.cwd = ''
+        elif arg == '/':
+            self.options.cwd = 'all'
+        elif self.ansible.inventory.get_hosts(arg):
+            self.options.cwd = arg
+        else:
+            print "incorrect path"
+
+        self.set_prompt()
+
+    def do_list(self, arg):
+        """List the hosts in the current group"""
+        if arg == 'groups':
+            items = self.ansible.inventory.list_groups()
+        else:
+            items = self.selected
+        for item in items:
+            print item
+
+    def do_sudo(self, arg):
+        """Toggle whether plays run with sudo"""
+        self.options.sudo = not self.options.sudo
+        print "sudo changed to %s" % self.options.sudo
+
+    def do_remote_user(self, arg):
+        """Given a username, set the remote user plays are run by"""
+        if arg:
+            self.options.remote_user = arg
+            self.set_prompt()
+        else:
+            print "Please specify a remote user, e.g. `remote_user root`"
+
+    def do_sudo_user(self, arg):
+        """Given a username, set the user that plays are run by when using sudo"""
+        if arg:
+            self.options.sudo_user = arg
+        else:
+            print "Please specify a sudo user, e.g. `sudo_user jenkins`"
+            print "Current sudo user is %s" % self.options.sudo_user
+
+    def do_EOF(self, args):
+        sys.stdout.write('\n')
+        return -1
+
+    def do_exit(self, args):
+        """Exits from the console"""
+        return -1
+
+    def helpdefault(self, module_name):
+        if module_name in self.modules:
+            in_path = utils.plugins.module_finder.find_plugin(module_name)
+            oc, a = ansible.utils.module_docs.get_docstring(in_path)
+            print stringc(oc['short_description'], 'bright gray')
+            print 'Parameters:'
+            for opt in oc['options'].keys():
+                print '  ' + stringc(opt, 'white') + ' ' + oc['options'][opt]['description'][0]
+
+    def complete_cd(self, text, line, begidx, endidx):
+        mline = line.partition(' ')[2]
+        offs = len(mline) - len(text)
+
+        if self.options.cwd == '':
+            completions = self.hosts + self.groups
+        else:
+            completions = self.ansible.inventory.list_hosts(self.options.cwd)
+
+        return [s[offs:] for s in completions if s.startswith(mline)]
+
+    def completedefault(self, text, line, begidx, endidx):
+        if line.split()[0] in self.modules:
+            mline = line.split(' ')[-1]
+            offs = len(mline) - len(text)
+            completions = self.module_args(line.split()[0])
+
+            return [s[offs:] + '=' for s in completions if s.startswith(mline)]
+
+    def module_args(self, module_name):
+        in_path = utils.plugins.module_finder.find_plugin(module_name)
+        oc, a = ansible.utils.module_docs.get_docstring(in_path)
+        return oc['options'].keys()
+
+    def do_dump(self, a):
+        print readline.get_current_history_length()
+
+
+if __name__ == '__main__':
+    # This hack is to work around readline issues on a mac:
+    #  http://stackoverflow.com/a/7116997/541202
+    if 'libedit' in readline.__doc__:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+    histfile = os.path.join(os.path.expanduser("~"), ".ansible-shell_history")
+    try:
+        readline.read_history_file(histfile)
+    except IOError:
+        pass
+    atexit.register(readline.write_history_file, histfile)
+
+    (options, args) = AnsibleShell.parse_opts()
+    AnsibleShell(options, args).cmdloop()
+

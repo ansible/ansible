@@ -59,6 +59,7 @@ setup(name='ansible',
          'bin/ansible-doc',
          'bin/ansible-galaxy',
          'bin/ansible-vault',
+         'bin/ansible-shell',
       ],
       data_files=data_files
 )
