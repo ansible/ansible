@@ -110,3 +110,7 @@ class CacheModule(BaseCacheModule):
     def delete(self, key):
         self._cache.delete(self._make_key(key))
         self._keys.discard(key)
+
+    def flush(self):
+        for key in self.keys():
+            self.delete(key)

@@ -50,10 +50,12 @@ class FactCache(MutableMapping):
         return len(self._plugin.keys())
 
     def copy(self):
-        """
-        Return a primitive copy of the keys and values from the cache.
-        """
+        """ Return a primitive copy of the keys and values from the cache. """
         return dict([(k, v) for (k, v) in self.iteritems()])
 
     def keys(self):
         return self._plugin.keys()
+
+    def flush(self):
+        """ Flush the fact cache of all keys. """
+        self._plugin.flush()
