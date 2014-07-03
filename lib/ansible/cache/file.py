@@ -47,13 +47,13 @@ class CacheModule(MemoryCacheModule):
 
     def set(self, *args, **kwargs):
         super(CacheModule, self).set(*args, **kwargs)
-        self.flush()
+        self.fsync()
 
     def delete(self, *args, **kwargs):
         super(CacheModule, self).delete(*args, **kwargs)
-        self.flush()
+        self.fsync()
 
-    def flush(self):
+    def fsync(self):
         temp = tempfile.TemporaryFile('r+b')
 
         try:
@@ -63,3 +63,7 @@ class CacheModule(MemoryCacheModule):
                 shutil.copyfileobj(temp, f)
         finally:
             temp.close()
+
+    def flush(self):
+        super(CacheModule, self).flush()
+        self.fsync()
