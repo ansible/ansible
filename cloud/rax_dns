@@ -126,7 +126,7 @@ def rax_dns(module, comment, email, name, state, ttl):
                 changed = True
                 domain.get()
             except Exception, e:
-                module.fail_json('%s' % e.message)
+                module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
         try:
