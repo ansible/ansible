@@ -48,14 +48,27 @@ $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
 If (-not $svc) {
     Fail-Json $result "Service '$svcName' not installed"
 }
+# Use service name instead of display name for remaining actions.
+If ($svcName -ne $svc.ServiceName) {
+    $svcName = $svc.ServiceName
+}
 
+Set-Attr $result "name" $svc.ServiceName
+Set-Attr $result "display_name" $svc.DisplayName
+
+$svcMode = Get-WmiObject -Class Win32_Service -Property StartMode -Filter "Name='$svcName'"
 If ($startMode) {
-    $svcMode = Get-WmiObject -Class Win32_Service -Property StartMode -Filter "Name='$svcName'"
-
     If ($svcMode.StartMode.ToLower() -ne $startMode) {
         Set-Service -Name $svcName -StartupType $startMode
         Set-Attr $result "changed" $true
+        Set-Attr $result "start_mode" $startMode
     }
+    Else {
+        Set-Attr $result "start_mode" $svcMode.StartMode.ToLower()
+    }
+}
+Else {
+    Set-Attr $result "start_mode" $svcMode.StartMode.ToLower()
 }
 
 If ($state) {
@@ -87,5 +100,7 @@ If ($state) {
         Set-Attr $result "changed" $true;
     }
 }
+$svc.Refresh()
+Set-Attr $result "state" $svc.Status.ToString().ToLower()
 
 Exit-Json $result;
