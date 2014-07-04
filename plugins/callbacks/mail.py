@@ -66,12 +66,6 @@ class CallbackModule(object):
         body += 'A complete dump of the error:\n\n' + str(res)
         mail(sender=sender, subject=subject, body=body)
                   
-    def runner_on_error(self, host, msg):
-        sender = '"Ansible: %s" <root>' % host
-        subject = 'Error: %s' % msg.strip('\r\n').split('\n')[0]
-        body = 'An error occured for host ' + host + ' with the following message:\n\n' + msg
-        mail(sender=sender, subject=subject, body=body)
-
     def runner_on_unreachable(self, host, res):
         sender = '"Ansible: %s" <root>' % host
         if isinstance(res, basestring):
