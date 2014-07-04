@@ -47,7 +47,7 @@ class ReturnData(object):
 
         if self.host is None:
             raise Exception("host not set")
-        if type(self.result) != dict:
+        if not isinstance(self.result, dict):
             raise Exception("dictionary result expected")
 
     def communicated_ok(self):

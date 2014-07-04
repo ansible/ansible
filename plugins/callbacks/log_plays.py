@@ -32,7 +32,7 @@ if not os.path.exists("/var/log/ansible/hosts"):
     os.makedirs("/var/log/ansible/hosts")
 
 def log(host, category, data):
-    if type(data) == dict:
+    if isinstance(data, dict):
         if 'verbose_override' in data:
             # avoid logging extraneous data from facts
             data = 'omitted'

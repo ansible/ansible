@@ -91,7 +91,7 @@ def _load_vars_from_path(path, results, vault_password=None):
     # regular file
     elif stat.S_ISREG(pathstat.st_mode):
         data = utils.parse_yaml_from_file(path, vault_password=vault_password)
-        if type(data) != dict:
+        if not isinstance(data, dict):
             raise errors.AnsibleError(
                 "%s must be stored as a dictionary/hash" % path)
 

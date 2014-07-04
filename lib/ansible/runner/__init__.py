@@ -258,7 +258,7 @@ class Runner(object):
     def _transfer_str(self, conn, tmp, name, data):
         ''' transfer string to remote file '''
 
-        if type(data) == dict:
+        if isinstance(data, dict):
             data = utils.jsonify(data)
 
         afd, afile = tempfile.mkstemp()
@@ -291,7 +291,7 @@ class Runner(object):
         if self.environment:
             enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
             enviro = utils.safe_eval(enviro)
-            if type(enviro) != dict:
+            if not isinstance(enviro, dict):
                 raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
 
         return conn.shell.env_prefix(**enviro)
@@ -602,7 +602,7 @@ class Runner(object):
             items_terms = self.module_vars.get('items_lookup_terms', '')
             items_terms = template.template(basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
-            if type(items) != list:
+            if not isinstance(items, list):
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
             if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
@@ -623,7 +623,7 @@ class Runner(object):
             if isinstance(complex_args, basestring):
                 complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
                 complex_args = utils.safe_eval(complex_args)
-                if type(complex_args) != dict:
+                if not isinstance(complex_args, dict):
                     raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
@@ -647,7 +647,7 @@ class Runner(object):
                 if isinstance(self.complex_args, basestring):
                     complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
                     complex_args = utils.safe_eval(complex_args)
-                    if type(complex_args) != dict:
+                    if not isinstance(complex_args, dict):
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
                 result = self._executor_internal_inner(
                      host,
@@ -693,7 +693,7 @@ class Runner(object):
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
-        if type(module_args) == dict:
+        if isinstance(module_args, dict):
             for (k,v) in module_args.iteritems():
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
@@ -710,7 +710,7 @@ class Runner(object):
         else:
             handler = utils.plugins.action_loader.get('async', self)
 
-        if type(self.conditional) != list:
+        if not isinstance(self.conditional, list):
             self.conditional = [ self.conditional ]
 
         for cond in self.conditional:

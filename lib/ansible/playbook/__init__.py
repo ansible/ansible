@@ -227,13 +227,13 @@ class PlayBook(object):
         accumulated_plays = []
         play_basedirs = []
 
-        if type(playbook_data) != list:
+        if not isinstance(playbook_data, list):
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list, got %s" % type(playbook_data))
 
         basedir = os.path.dirname(path) or '.'
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
-            if type(play) != dict:
+            if not isinstance(play, dict):
                 raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
 
             if 'include' in play:
@@ -468,7 +468,7 @@ class PlayBook(object):
                 # task ran with_ lookup plugin, so facts are encapsulated in
                 # multiple list items in the results key
                 for res in result['results']:
-                    if type(res) == dict:
+                    if isinstance(res, dict):
                         facts = res.get('ansible_facts', {})
                         self.SETUP_CACHE[host].update(facts)
             else:

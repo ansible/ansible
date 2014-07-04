@@ -71,7 +71,7 @@ class Play(object):
             self.tags = []
         elif type(self.tags) in [ str, unicode ]:
             self.tags = self.tags.split(",")
-        elif type(self.tags) != list:
+        elif not isinstance(self.tags, list):
             self.tags = []
 
         # We first load the vars files from the datastructure
@@ -94,7 +94,7 @@ class Play(object):
         self._update_vars_files_for_host(None)
 
         # apply any extra_vars specified on the command line now
-        if type(self.playbook.extra_vars) == dict:
+        if isinstance(self.playbook.extra_vars, dict):
             self.vars = utils.combine_vars(self.vars, self.playbook.extra_vars)
 
         # template everything to be efficient, but do not pre-mature template
@@ -172,7 +172,7 @@ class Play(object):
         orig_path = template(self.basedir,role,self.vars)
 
         role_vars = {}
-        if type(orig_path) == dict:
+        if isinstance(orig_path, dict):
             # what, not a path?
             role_name = orig_path.get('role', None)
             if role_name is None:
@@ -330,7 +330,7 @@ class Play(object):
             if os.path.exists(filename):
                 new_default_vars = utils.parse_yaml_from_file(filename, vault_password=self.vault_password)
                 if new_default_vars:
-                    if type(new_default_vars) != dict:
+                    if not isinstance(new_default_vars, dict):
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
 
                     default_vars = utils.combine_vars(default_vars, new_default_vars)
@@ -347,7 +347,7 @@ class Play(object):
 
         if roles is None:
             roles = []
-        if type(roles) != list:
+        if not isinstance(roles, list):
             raise errors.AnsibleError("value of 'roles:' must be a list")
 
         new_tasks = []
@@ -356,7 +356,7 @@ class Play(object):
         defaults_files = []
 
         pre_tasks = ds.get('pre_tasks', None)
-        if type(pre_tasks) != list:
+        if not isinstance(pre_tasks, list):
             pre_tasks = []
         for x in pre_tasks:
             new_tasks.append(x)
@@ -429,13 +429,13 @@ class Play(object):
         handlers   = ds.get('handlers', None)
         vars_files = ds.get('vars_files', None)
 
-        if type(tasks) != list:
+        if not isinstance(tasks, list):
             tasks = []
-        if type(handlers) != list:
+        if not isinstance(handlers, list):
             handlers = []
-        if type(vars_files) != list:
+        if not isinstance(vars_files, list):
             vars_files = []
-        if type(post_tasks) != list:
+        if not isinstance(post_tasks, list):
             post_tasks = []
 
         new_tasks.extend(tasks)
@@ -587,7 +587,7 @@ class Play(object):
                             y['role_name'] = new_role
                 loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                 results += loaded
-            elif type(x) == dict:
+            elif isinstance(x, dict):
                 task = Task(
                     self, x,
                     module_vars=task_vars,
@@ -645,7 +645,7 @@ class Play(object):
         vars = {}
 
         # translate a list of vars into a dict
-        if type(self.vars) == list:
+        if isinstance(self.vars, list):
             for item in self.vars:
                 if getattr(item, 'items', None) is None:
                     raise errors.AnsibleError("expecting a key-value pair in 'vars' section")
@@ -654,7 +654,7 @@ class Play(object):
         else:
             vars.update(self.vars)
 
-        if type(self.vars_prompt) == list:
+        if isinstance(self.vars_prompt, list):
             for var in self.vars_prompt:
                 if not 'name' in var:
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
@@ -674,7 +674,7 @@ class Play(object):
                                      vname, private, prompt, encrypt, confirm, salt_size, salt, default
                                   )
 
-        elif type(self.vars_prompt) == dict:
+        elif isinstance(self.vars_prompt, dict):
             for (vname, prompt) in self.vars_prompt.iteritems():
                 prompt_msg = "%s: " % prompt
                 if vname not in self.playbook.extra_vars:
@@ -685,7 +685,7 @@ class Play(object):
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
-        if type(self.playbook.extra_vars) == dict:
+        if isinstance(self.playbook.extra_vars, dict):
             vars = utils.combine_vars(vars, self.playbook.extra_vars)
 
         return vars
@@ -792,7 +792,7 @@ class Play(object):
 
             data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
             if data:
-                if type(data) != dict:
+                if not isinstance(data, dict):
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
                 if host is not None:
                     if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
@@ -812,7 +812,7 @@ class Play(object):
                         self.vars = utils.combine_vars(self.vars, data)
 
         # Enforce that vars_files is always a list
-        if type(self.vars_files) != list:
+        if not isinstance(self.vars_files, list):
             self.vars_files = [ self.vars_files ]
 
         # Build an inject if this is a host run started by self.update_vars_files
@@ -825,7 +825,7 @@ class Play(object):
             inject = None            
 
         for filename in self.vars_files:
-            if type(filename) == list:
+            if isinstance(filename, list):
                 # loop over all filenames, loading the first one, and failing if none found
                 found = False
                 sequence = []

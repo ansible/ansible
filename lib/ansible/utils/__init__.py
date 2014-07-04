@@ -394,9 +394,9 @@ def smush_braces(data):
 def smush_ds(data):
     # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
     # so we do not have to call smush elsewhere
-    if type(data) == list:
+    if isinstance(data, list):
         return [ smush_ds(x) for x in data ]
-    elif type(data) == dict:
+    elif isinstance(data, dict):
         for (k,v) in data.items():
             data[k] = smush_ds(v)
         return data

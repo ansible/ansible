@@ -64,7 +64,7 @@ class InventoryParserYaml(object):
 
         # first add all groups
         for item in yaml:
-            if type(item) == dict and 'group' in item:
+            if isinstance(item, dict) and 'group' in item:
                 group = Group(item['group'])
 
                 for subresult in item.get('hosts',[]):
@@ -73,14 +73,14 @@ class InventoryParserYaml(object):
                         host = self._make_host(subresult)
                         group.add_host(host)
                         grouped_hosts.append(host)
-                    elif type(subresult) == dict:
+                    elif isinstance(subresult, dict):
                         host = self._make_host(subresult['host'])
                         vars = subresult.get('vars',{})
-                        if type(vars) == list:
+                        if isinstance(vars, list):
                             for subitem in vars:
                                 for (k,v) in subitem.items():
                                     host.set_variable(k,v)
-                        elif type(vars) == dict:
+                        elif isinstance(vars, dict):
                             for (k,v) in subresult.get('vars',{}).items():
                                 host.set_variable(k,v)
                         else:
@@ -89,12 +89,12 @@ class InventoryParserYaml(object):
                         grouped_hosts.append(host)
 
                 vars = item.get('vars',{})
-                if type(vars) == dict:
+                if isinstance(vars, dict):
                     for (k,v) in item.get('vars',{}).items():
                         group.set_variable(k,v)
-                elif type(vars) == list:
+                elif isinstance(vars, list):
                     for subitem in vars:
-                        if type(subitem) != dict:
+                        if not isinstance(subitem, dict):
                             raise errors.AnsibleError("expected a dictionary")
                         for (k,v) in subitem.items():
                             group.set_variable(k,v)
@@ -109,7 +109,7 @@ class InventoryParserYaml(object):
                 if host not in grouped_hosts:
                     ungrouped.add_host(host)
 
-            elif type(item) == dict and 'host' in item:
+            elif isinstance(item, dict) and 'host' in item:
                 host = self._make_host(item['host'])
 
                 vars = item.get('vars', {})
