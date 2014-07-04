@@ -130,6 +130,13 @@ options:
     required: false
     default: null
     aliases: []
+  user_data_file:
+    version_added: "1.7"
+    description:
+      - file containg opaque blob of data which is made available to the ec2 instance
+    required: false
+    default: null
+    aliases: []
   instance_tags:
     version_added: "1.0"
     description:
@@ -731,6 +738,7 @@ def create_instances(module, ec2, override_count=None):
     wait_timeout = int(module.params.get('wait_timeout'))
     spot_wait_timeout = int(module.params.get('spot_wait_timeout'))
     placement_group = module.params.get('placement_group')
+    user_data_file = module.params.get('user_data_file')
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
@@ -790,6 +798,12 @@ def create_instances(module, ec2, override_count=None):
     else:
         changed = True
         try:
+
+            if user_data_file != None:
+                f = open(user_data_file)
+                user_data = f.read()
+                f.close()
+
             params = {'image_id': image,
                       'key_name': key_name,
                       'monitoring_enabled': monitoring,
@@ -1112,6 +1126,7 @@ def main():
             spot_wait_timeout = dict(default=600),
             placement_group = dict(),
             user_data = dict(),
+            user_data_file = dict(),
             instance_tags = dict(type='dict'),
             vpc_subnet_id = dict(),
             assign_public_ip = dict(type='bool', default=False),
@@ -1132,7 +1147,8 @@ def main():
         mutually_exclusive = [
                                 ['exact_count', 'count'],
                                 ['exact_count', 'state'],
-                                ['exact_count', 'instance_ids']
+                                ['exact_count', 'instance_ids'],
+                                ['user_data', 'user_data_file']
                              ],
     )
 
