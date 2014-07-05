@@ -80,9 +80,7 @@ class AzureInventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
-        if self.args.list_images:
-            data_to_print = self.json_format_dict(self.get_images(), True)
-        elif self.args.list:
+        if self.args.list:
             # Display list of nodes for inventory
             if len(self.inventory) == 0:
                 data_to_print = self.get_inventory_from_cache()
@@ -90,13 +88,6 @@ class AzureInventory(object):
                 data_to_print = self.json_format_dict(self.inventory, True)
 
         print data_to_print
-
-    def get_images(self):
-        images = []
-        for image in self.sms.list_os_images():
-            if str(image.label).lower().find(self.args.list_images.lower()) >= 0:
-                images.append(vars(image))
-        return json.loads(json.dumps(images, default=lambda o: o.__dict__))
 
     def is_cache_valid(self):
         """Determines if the cache file has expired, or if it is still valid."""
@@ -139,8 +130,6 @@ class AzureInventory(object):
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Azure')
         parser.add_argument('--list', action='store_true', default=True,
                            help='List nodes (default: True)')
-        parser.add_argument('--list-images', action='store',
-                           help='Get all available images.')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                            help='Force refresh of cache by making API requests to Azure (default: False - use cache files)')
         self.args = parser.parse_args()
