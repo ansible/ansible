@@ -332,7 +332,6 @@ class Play(object):
                 if new_default_vars:
                     if type(new_default_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
-
                     default_vars = utils.combine_vars(default_vars, new_default_vars)
 
         return default_vars
