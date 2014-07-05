@@ -26,6 +26,7 @@ import operator
 from ansible import errors
 from ansible import __version__
 from ansible.utils import template
+from ansible.utils.clean_data import clean_data_struct
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
@@ -313,37 +314,6 @@ def json_loads(data):
 
     return json.loads(data)
 
-def _clean_data(orig_data):
-    ''' remove template tags from a string '''
-    data = orig_data
-    if isinstance(orig_data, basestring):
-        for pattern,replacement in (('{{','{#'), ('}}','#}'), ('{%','{#'), ('%}','#}')):
-            data = data.replace(pattern, replacement)
-    return data
-
-def _clean_data_struct(orig_data):
-    '''
-    walk a complex data structure, and use _clean_data() to
-    remove any template tags that may exist
-    '''
-    if isinstance(orig_data, dict):
-        data = orig_data.copy()
-        for key in data:
-            new_key = _clean_data_struct(key)
-            new_val = _clean_data_struct(data[key])
-            if key != new_key:
-                del data[key]
-            data[new_key] = new_val
-    elif isinstance(orig_data, list):
-        data = orig_data[:]
-        for i in range(0, len(data)):
-            data[i] = _clean_data_struct(data[i])
-    elif isinstance(orig_data, basestring):
-        data = _clean_data(orig_data)
-    else:
-        data = orig_data
-    return data
-
 def parse_json(raw_data, from_remote=False):
     ''' this version for module return data only '''
 
@@ -379,7 +349,7 @@ def parse_json(raw_data, from_remote=False):
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
 
     if from_remote:
-        results = _clean_data_struct(results)
+        results = clean_data_struct(results)
 
     return results
 
