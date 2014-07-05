@@ -60,7 +60,6 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge', 'db.m3.medium', 'db.m3.large', 'db.m3.xlarge', 'db.m3.2xlarge', 'db.cr1.8xlarge' ]
   username:
     description:
       - Master database username. Used only when command=create.
@@ -290,7 +289,7 @@ def main():
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
             size              = dict(required=False), 
-            instance_type     = dict(aliases=['type'], choices=['db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge', 'db.m3.medium', 'db.m3.large', 'db.m3.xlarge', 'db.m3.2xlarge', 'db.cr1.8xlarge'], required=False),
+            instance_type     = dict(aliases=['type'], required=False),
             username          = dict(required=False),
             password          = dict(no_log=True, required=False),
             db_name           = dict(required=False),
