@@ -74,6 +74,8 @@ def get_fqdn(repo_url):
             return None
         if parts[1] != '':
             result = parts[1]
+            if ":" in result:
+                result = result.split(":")[0]
         if "@" in result:
             result = result.split("@", 1)[1]
 
