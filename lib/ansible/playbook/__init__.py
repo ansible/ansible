@@ -540,8 +540,7 @@ class PlayBook(object):
             if error_handler_name == template(play.basedir, x.name, x.module_vars):
                 found = True
                 self.callbacks.on_failure(host, x.name)
-                x.notified_by.append(host)
-                self._run_task(play, x, True)
+                x.notified_by.append(host)                
         if not found:
             raise errors.AnsibleError("error handler (%s) is not defined" % error_handler_name)
 
@@ -709,7 +708,8 @@ class PlayBook(object):
                         # if we got exactly no hosts on the first step (setup!) then the host group
                         # just didn't match anything and that's ok
                         return False
-
+                # run any task error handlers
+                self.run_error_handlers(play)
                 # Get a new list of what hosts are left as available, the ones that
                 # did not go fail/dark during the task
                 host_list = self._trim_unavailable_hosts(play._play_hosts)
