@@ -496,6 +496,7 @@ class PlayBook(object):
                         
         # flag which error handlers need to be run
         if len(task.on_failure) > 0:
+            task.ignore_errors = True
             for host, results in results.get('contacted',{}).iteritems():
               if (('failed' in results and bool(results['failed'])) or
                   ('failed_when_result' in results and [results['failed_when_result']] or ['rc' in results and results['rc'] != 0])[0]):
