@@ -20,44 +20,140 @@
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
-
 $result = New-Object psobject;
 Set-Attr $result "changed" $false;
 
-If (-not $params.path.GetType)
+If (!($params.path))
 {
     Fail-Json $result "missing required arguments: path"
 }
 
-$extra_args = ""
-If ($params.extra_args.GetType)
+if (!(test-path $params.path))
+{
+    Fail-Json $result "couldn't find a file at $($params.path)"
+}
+
+
+If ($params.extra_args)
 {
     $extra_args = $params.extra_args;
 }
-
-If ($params.creates.GetType -and $params.state.GetType -and $params.state -ne "absent")
+Else
 {
-    If (Test-File $creates)
+    $extra_args = ""
+}
+
+if ($params.msiversionString)
+{
+    $MsiVersionString = $params.MsiVersionString
+}
+
+if (!($params.state) -or ($params.state -eq ""))
+{
+    $params | add-member -MemberType NoteProperty -Name "state" -Value "present"
+}
+
+#at this point, we should have a working "state" setting
+if(($params.state -ne "present") -and ($params.state -ne "absent"))
+{
+    Fail-Json $result "need to set state to absent or present"
+}
+
+if ($params.msiName)
+{
+    $MsiName = $params.MsiName
+}
+
+if (($MsiVersionString) -and (!($MsiName)))
+{
+    #If msiversionstring is specified, we need msiname as well
+    Fail-Json $result "missing required arguments: MsiName"
+}
+
+
+If (($params.creates) -and ($params.state -ne "absent"))
+{
+    If (Test-Path ($params.creates))
     {
+        $exitreason = New-Object psobject @{
+        name = "File specified in creates parameter already exists"
+        }
+        Set-Attr $result "exit_reasion" $exitreason
         Exit-Json $result;
     }
 }
 
-$logfile = [IO.Path]::GetTempFileName();
-if ($params.state.GetType -and $params.state -eq "absent")
+
+If (($MsiName) -and ($MsiVersionString))
 {
-    msiexec.exe /x $params.path /qb /l $logfile $extra_args;
+    $AlreadyInstalledMsi = Get-WmiObject -Query "Select * from win32_product" | where {($_.Name -eq $MsiName) -and ($_.version -eq $MsiVersionString)}
+}
+Elseif ($MsiName)
+{
+    $AlreadyInstalledMsi = Get-WmiObject -Query "Select * from win32_product" | where {$_.Name -eq $MsiName}
 }
 Else
 {
-    msiexec.exe /i $params.path /qb /l $logfile $extra_args;
+    if ($params.state -eq "absent")
+    {
+        #existing msi check not specify, assume msi does exist
+        $AlreadyInstalledMsi = $true
+    }
+    if ($params.state -eq "present")
+    {
+        #existing msi check not specify, assume msi does exist
+        $AlreadyInstalledMsi = $false
+    }
+}
+
+$logfile = [IO.Path]::GetTempFileName();
+
+if (($AlreadyInstalledMsi) -and ($params.state -eq "absent"))
+{
+    #Already installed, perform uninstall
+    $msiresult = Start-Process msiexec.exe -ArgumentList "/x $($params.path) /qn /log $logfile $extra_args" -Wait -PassThru
+}
+Elseif((!$AlreadyInstalledMsi) -and ($params.state -eq "present"))
+{
+    #Not already installed, perform the install
+    $msiresult = Start-Process msiexec.exe -ArgumentList "/i $($params.path) /qn /log $logfile $extra_args" -Wait -PassThru
+}
+Elseif(($AlreadyInstalledMsi) -and ($params.state -eq "present"))
+{
+    #Do nothing
+    $exitreason = New-Object psobject @{
+        name = "state set to present, msi name and version specified already present"
+        }
+        Set-Attr $result "exit_reasion" $exitreason
+    Exit-Json $result;
+}
+Elseif((!$AlreadyInstalledMsi) -and ($params.state -eq "absent"))
+{
+    #Do nothing
+    $exitreason = New-Object psobject @{
+        name = "state set to absent, msi name and version specified already non-present"
+        }
+        Set-Attr $result "exit_reasion" $exitreason
+    Exit-Json $result;
+}
+Else
+{
+    $exitreason = New-Object psobject @{
+        name = "I have no idea what just happened."
+        }
+        Set-Attr $result "exit_reasion" $exitreason
+    Exit-Json $result;
+}
+
+if (($msiresult) -and ($msiresult.ExitCode -ne 0))
+{
+    Fail-Json $result "msiexec failed with exit code $($msiresult.ExitCode)"
 }
 
 Set-Attr $result "changed" $true;
 
 $logcontents = Get-Content $logfile;
-Remove-Item $logfile;
 
-Set-Attr $result "log" $logcontents;
+Set-Attr $result "log" $logfile;
 
 Exit-Json $result;

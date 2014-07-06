@@ -45,7 +45,15 @@ options:
         description:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run
-author: Matt Martz
+	msiname:
+		description:
+			- alternative way to check for the existence of an msi (can be used for both states (absent and present).
+			  The msiname can be found by looking at name property of the the win32_product object for the item.
+	msiversionstring
+	    description:
+		    - used in conjunction with msiname - you cannot specify msiversionstring only. 
+			  The msiversionstring can be found by looking at version property of the the win32_product object for the item.
+author: Matt Martz / Trond Hindenes
 '''
 
 EXAMPLES = '''
@@ -54,5 +62,7 @@ EXAMPLES = '''
 
 # Uninstall an MSI file
 - win_msi: path=C:\\\\7z920-x64.msi state=absent
+
+- win_msi: path=C:\\\\7z920-x64.msi msiname="myproduct" msiversionstring="3.2.0"
 '''
 
