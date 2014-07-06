@@ -459,8 +459,8 @@ class LinuxService(Service):
 
             # All Gentoo profiles keep openrc even if the profile is a systemd type
             # On-going https://bugs.gentoo.org/show_bug.cgi?id=504116
-            systemd_pid = int(self.execute_command('ps ax | head -n 2 | tail -n 1 | grep systemd')[0])
-            if check_systemd(self.name) and systemd_pid == 1:
+            systemd_pid = self.execute_command('ps ax | head -n 2 | tail -n 1 | grep systemd')[0]
+            if check_systemd(self.name) and systemd_pid == '1':
                 self.svc_cmd = location['systemctl']
         elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
             # upstart -- rather than being managed by one command, start/stop/restart are actual commands
