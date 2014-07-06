@@ -64,7 +64,7 @@
   failed_when: result is defined
   ignore_errors: yes
   on_failure: 
-    - include 2nd error handler
+    - error handler include
     
 - debug: var=error_handler_called
 
