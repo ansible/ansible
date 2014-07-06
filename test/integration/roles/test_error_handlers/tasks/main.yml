@@ -58,13 +58,13 @@
     
 - debug: var=error_handler_called
 
-- name: test the error handlers with include handlers and failed_when
+- name: test the error handlers with include handlers with duplicate names
   shell: echo 'test'
   register: result
   failed_when: result is defined
   ignore_errors: yes
   on_failure: 
-    - 3rd conditional error handler
+    - include 2nd error handler
     
 - debug: var=error_handler_called
 
