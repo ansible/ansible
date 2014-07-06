@@ -357,10 +357,15 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _run_task_internal(self, task):
+    def _run_task_internal(self, task, is_handler = False):
         ''' run a particular module step in a playbook '''
-
+        
         hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts))
+        
+        #include all hosts for error handlers
+        if is_handler:    
+            hosts = self.inventory.list_hosts(task.play._play_hosts)
+            
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
@@ -451,7 +456,7 @@ class PlayBook(object):
         task.ignore_errors =  utils.check_conditional(cond , play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
 
         # load up an appropriate ansible runner to run the task in parallel
-        results = self._run_task_internal(task)
+        results = self._run_task_internal(task, is_handler)
 
         # if no hosts are matched, carry on
         hosts_remaining = True
@@ -460,7 +465,7 @@ class PlayBook(object):
             results = {}
 
         contacted = results.get('contacted', {})
-        self.stats.compute(results, ignore_errors=task.ignore_errors)
+        self.stats.compute(results, ignore_errors=task.ignore_errors, on_failure=task.on_failure)
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
@@ -803,12 +808,12 @@ class PlayBook(object):
                         self.inventory.restrict_to(error_handler.notified_by)
 
                         # Resolve the variables first
-                        handler_name = template(play.basedir, error_handler.name, error_handler.module_vars)
-                        if handler_name not in fired_names:
+                        error_handler_name = template(play.basedir, error_handler.name, error_handler.module_vars)
+                        if error_handler_name not in fired_names:
                             self._run_task(play, error_handler, True)
-                        # prevent duplicate error handler includes from running more than once
-                        fired_names[handler_name] = 1
-
+                        # prevent duplicate error handler includes from running more than once - **disabled **TODO: make it optional?
+                        #fired_names[error_handler_name] = 1                        
+                            
                         self.inventory.lift_restriction()
                         new_list = error_handler.notified_by[:]
                         for host in error_handler.notified_by:

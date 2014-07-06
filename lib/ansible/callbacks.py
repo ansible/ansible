@@ -211,11 +211,11 @@ class AggregateStats(object):
         prev = (getattr(self, what)).get(host, 0)
         getattr(self, what)[host] = prev+1
 
-    def compute(self, runner_results, setup=False, poll=False, ignore_errors=False):
+    def compute(self, runner_results, setup=False, poll=False, ignore_errors=False, on_failure=False):
         ''' walk through all results and increment stats '''
 
         for (host, value) in runner_results.get('contacted', {}).iteritems():
-            if not ignore_errors and (('failed' in value and bool(value['failed'])) or
+            if ((not ignore_errors) or (ignore_errors and on_failure))  and (('failed' in value and bool(value['failed'])) or
                 ('failed_when_result' in value and [value['failed_when_result']] or ['rc' in value and value['rc'] != 0])[0]):
                 self._increment('failures', host)
             elif 'skipped' in value and bool(value['skipped']):

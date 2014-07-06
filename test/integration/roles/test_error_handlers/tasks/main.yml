@@ -17,17 +17,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-- name: reset error_handler_called variable to false for all hosts
-  set_fact:
-    error_handler_called: False
-
 - name: test the error handlers with a single handler
   shell: wall 'beep'
   ignore_errors: yes
   on_failure: 
     - 1st error handler
-
-- debug: var=error_handler_called
+  tags: ['role_single']  
  
 - name: test the error handlers with multi error handlers
   shell: wall 'beep'
@@ -35,8 +30,7 @@
   on_failure: 
     - 1st error handler
     - 2nd error handler
-    
-- debug: var=error_handler_called 
+  tags: ['role_multi']  
 
 - name: test the error handlers with multi conditional error handlers
   shell: wall 'beep'
@@ -45,8 +39,7 @@
     - 1st error handler
     - 2nd error handler
     - 3rd conditional error handler
-    
-- debug: var=error_handler_called  
+  tags: ['role_multi_cond'] 
 
 - name: test the error handlers with failed_when
   shell: echo 'test'
@@ -55,8 +48,7 @@
   ignore_errors: yes
   on_failure: 
     - 1st error handler
-    
-- debug: var=error_handler_called
+  tags: ['role_failed_when']    
 
 - name: test the error handlers with include handlers with duplicate names
   shell: echo 'test'
@@ -64,9 +56,8 @@
   failed_when: result is defined
   ignore_errors: yes
   on_failure: 
-    - include 2nd error handler
-    
-- debug: var=error_handler_called
+    - 3rd conditional error handler
+  tags: ['role_include']     
 
 - name: validate the error handler ran
   assert:
