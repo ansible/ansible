@@ -40,14 +40,21 @@
     - 2nd error handler
     - 3rd conditional error handler
   tags: ['role_multi_cond'] 
-
-- name: test the error handlers with failed_when
-  shell: echo 'test'
+  
+- name: make sure one of the hosts doesnt fail
+  set_fact:
+    skip_host: True
+  when: inventory_hostname == 'localhost'
+  tags: ['role_failed_when']
+  
+- name: test the error handlers with failed_when and multiple hosts
+  shell: hostname
   register: result
-  failed_when: result is defined
+  failed_when: result is defined and skip_host == True
   ignore_errors: yes
   on_failure: 
     - 1st error handler
+    - 2nd error handler
   tags: ['role_failed_when']    
 
 - name: test the error handlers with include handlers with duplicate names
