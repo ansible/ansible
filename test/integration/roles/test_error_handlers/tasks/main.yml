@@ -21,7 +21,7 @@
   set_fact:
     error_handler_called: False
 
-- name: notify the error handler for current task
+- name: test the error handlers with a single handler
   shell: wall 'beep'
   ignore_errors: yes
   on_failure: 
@@ -29,9 +29,8 @@
 
 - debug: var=error_handler_called
  
-- name: notify the error handler for current task using failed_when and multi error handlers
-  shell: echo 'test'
-  failed_when: result.failed is defined and result.failed == false
+- name: test the error handlers with multi error handlers
+  shell: wall 'beep'
   ignore_errors: yes
   on_failure: 
     - 1st error handler
