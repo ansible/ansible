@@ -5,3 +5,18 @@
   connection: local
   roles:
   - { role: test_error_handlers }
+
+
+- name: test error handlers in playbook
+  hosts: all
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: test the error handlers with a single handler
+      shell: wall 'beep'
+      ignore_errors: yes
+      on_failure: 
+        - playbook error handler    
+  error_handlers:
+    - name: playbook error handler
+      debug: msg="Play Failed"  

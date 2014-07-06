@@ -1,0 +1,10 @@
+- name: include 1st error handler
+  set_fact: 
+    error_handler_called: True
+    
+- name: include 2nd error handler
+  debug: msg="include error handler called"  
+  
+- name: 3rd conditional error handler
+  debug: msg="another include error handler"
+
