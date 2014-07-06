@@ -23,7 +23,7 @@
 
 - name: notify the error handler for current task using failed_when
   shell: wall 'beep'
-  failed_when: result.stderr != ''
+  failed_when: result.stdout == ''
   on_failure: 
     - 1st error handler
 
