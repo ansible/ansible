@@ -7,7 +7,7 @@
   - { role: test_error_handlers }
 
 
-- name: test error handlers in playbook
+- name: test single error handlers in playbook
   hosts: all
   gather_facts: False
   connection: local
@@ -20,3 +20,24 @@
   error_handlers:
     - name: playbook error handler
       debug: msg="Play Failed"  
+      
+
+- name: test multiple error handlers in playbook
+  hosts: all
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: test the error handlers with multiple handler
+      shell: wall 'beep'
+      ignore_errors: yes
+      on_failure: 
+        - playbook error handler 1   
+        - playbook error handler 2   
+        - playbook error handler 3   
+  error_handlers:
+    - name: playbook error handler 1
+      debug: msg="Play Failed"      
+    - name: playbook error handler 2
+      debug: msg="Do something here"     
+    - name: playbook error handler 3
+      debug: msg="Do something else.. fire fail?"        
