@@ -1,6 +1,6 @@
 ---
 - name: test error handlers
-  hosts: testgroup
+  hosts: all
   gather_facts: False
   connection: local
   roles:
