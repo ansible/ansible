@@ -48,7 +48,7 @@
     
 - debug: var=error_handler_called  
 
-- name: test the error handlers with failed_when and single handlers
+- name: test the error handlers with failed_when
   shell: echo 'test'
   register: result
   failed_when: result is defined

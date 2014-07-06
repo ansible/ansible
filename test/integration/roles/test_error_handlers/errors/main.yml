@@ -7,4 +7,7 @@
   
 - name: 3rd conditional error handler
   debug: msg="3rd error handler will never be called"
-  when: inventory_hostname == none
+  when: inventory_hostname == none  
+  
+- name: include error handler
+  include: include_handler.yml
