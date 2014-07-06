@@ -30,7 +30,7 @@
 - debug: var=error_handler_called
  
 - name: notify the error handler for current task using failed_when and multi error handlers
-  shell: ping localhost
+  shell: echo 'test'
   failed_when: result is defined
   ignore_errors: yes
   on_failure: 
