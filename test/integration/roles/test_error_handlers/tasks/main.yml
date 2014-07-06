@@ -46,6 +46,16 @@
     - 2nd error handler
     - 3rd conditional error handler
     
+- debug: var=error_handler_called  
+
+- name: test the error handlers with failed_when and single handlers
+  shell: echo 'test'
+  register: result
+  failed_when: result is defined
+  ignore_errors: yes
+  on_failure: 
+    - 1st error handler
+    
 - debug: var=error_handler_called
 
 - name: validate the error handler ran
