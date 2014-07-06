@@ -4,3 +4,8 @@
     
 - name: 2nd error handler
   debug: msg="2nd error handler called"
+  when: inventory_hostname = none    
+  
+- name: 3rd conditional error handler
+  debug: msg="3rd error handler will never be called"
+  when: inventory_hostname = none
