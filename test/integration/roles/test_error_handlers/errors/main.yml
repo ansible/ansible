@@ -1,0 +1,12 @@
+- name: 1st error handler
+  set_fact: 
+    error_handler_called: True
+    
+- name: 2nd error handler
+  debug: msg="2nd error handler called"  
+  
+- name: 3rd conditional error handler
+  debug: msg="3rd error handler will never be called"
+  when: inventory_hostname == none  
+  
+- include: include_handler.yml

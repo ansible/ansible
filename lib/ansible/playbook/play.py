@@ -34,8 +34,8 @@ class Play(object):
        'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password'
+       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks', '_error_handlers',
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password', 'error_handlers'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -45,7 +45,7 @@ class Play(object):
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user', 'vault_password'
+       'su', 'su_user', 'vault_password', 'error_handlers'
     ]
 
     # *************************************************
@@ -101,9 +101,11 @@ class Play(object):
         # tasks/handlers as they may have inventory scope overrides
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
+        _error_handlers = ds.pop('error_handlers', [])
         ds = template(basedir, ds, self.vars)
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
+        ds['error_handlers'] = _error_handlers
 
         self._ds = ds
 
@@ -117,6 +119,7 @@ class Play(object):
         self.name             = ds.get('name', self.hosts)
         self._tasks           = ds.get('tasks', [])
         self._handlers        = ds.get('handlers', [])
+        self._error_handlers  = ds.get('error_handlers', [])
         self.remote_user      = ds.get('remote_user', ds.get('user', self.playbook.remote_user))
         self.remote_port      = ds.get('port', self.playbook.remote_port)
         self.sudo             = ds.get('sudo', self.playbook.sudo)
@@ -149,8 +152,9 @@ class Play(object):
         if self.playbook.inventory.basedir() is not None:
             load_vars['inventory_dir'] = self.playbook.inventory.basedir()
 
-        self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
-        self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
+        self._tasks            = self._load_tasks(self._ds.get('tasks', []), load_vars)
+        self._handlers         = self._load_tasks(self._ds.get('handlers', []), load_vars)
+        self._error_handlers   = self._load_tasks(self._ds.get('error_handlers', []), load_vars)
 
         # apply any missing tags to role tasks
         self._late_merge_role_tags()
@@ -340,9 +344,10 @@ class Play(object):
         # a role is a name that auto-includes the following if they exist
         #    <rolename>/tasks/main.yml
         #    <rolename>/handlers/main.yml
+        #    <rolename>/errors/main.yml
         #    <rolename>/vars/main.yml
         #    <rolename>/library
-        # and it auto-extends tasks/handlers/vars_files/module paths as appropriate if found
+        # and it auto-extends tasks/handlers/vars_files/module/errors paths as appropriate if found
 
         if roles is None:
             roles = []
@@ -351,6 +356,7 @@ class Play(object):
 
         new_tasks = []
         new_handlers = []
+        new_error_handlers = []
         new_vars_files = []
         defaults_files = []
 
@@ -380,23 +386,25 @@ class Play(object):
                 if k in role_vars:
                     special_vars[k] = role_vars[k]
 
-            task_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
-            handler_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
-            vars_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
-            meta_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
-            defaults_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
+            task_basepath            = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
+            handler_basepath         = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
+            error_handlers_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'errors'))
+            vars_basepath            = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            meta_basepath            = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
+            defaults_basepath        = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
-            task      = self._resolve_main(task_basepath)
-            handler   = self._resolve_main(handler_basepath)
-            vars_file = self._resolve_main(vars_basepath)
-            meta_file = self._resolve_main(meta_basepath)
-            defaults_file = self._resolve_main(defaults_basepath)
+            task            = self._resolve_main(task_basepath)
+            handler         = self._resolve_main(handler_basepath)
+            error_handler   = self._resolve_main(error_handlers_basepath)
+            vars_file       = self._resolve_main(vars_basepath)
+            meta_file       = self._resolve_main(meta_basepath)
+            defaults_file   = self._resolve_main(defaults_basepath)
 
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             missing = lambda f: not os.path.isfile(f)
-            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(library):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, library))
+            if missing(task) and missing(handler) and missing(error_handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s or %s" % (role_path, task, handler, error_handler, vars_file, defaults_file, meta_file, library))
 
             if isinstance(role, dict):
                 role_name = role['role']
@@ -415,7 +423,13 @@ class Play(object):
                 for k in special_keys:
                     if k in special_vars:
                         nt[k] = special_vars[k]
-                new_handlers.append(nt)
+                new_handlers.append(nt)           
+            if os.path.isfile(error_handler):
+                nt = dict(include=pipes.quote(error_handler), vars=role_vars, role_name=role_name)
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
+                new_error_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
             if os.path.isfile(defaults_file):
@@ -423,15 +437,18 @@ class Play(object):
             if os.path.isdir(library):
                 utils.plugins.module_finder.add_directory(library)
 
-        tasks      = ds.get('tasks', None)
-        post_tasks = ds.get('post_tasks', None)
-        handlers   = ds.get('handlers', None)
-        vars_files = ds.get('vars_files', None)
+        tasks            = ds.get('tasks', None)
+        post_tasks       = ds.get('post_tasks', None)
+        handlers         = ds.get('handlers', None)
+        error_handlers   = ds.get('error_handlers', None)
+        vars_files       = ds.get('vars_files', None)
 
         if type(tasks) != list:
             tasks = []
         if type(handlers) != list:
-            handlers = []
+            handlers = []       
+        if type(error_handlers) != list:
+            error_handlers = []
         if type(vars_files) != list:
             vars_files = []
         if type(post_tasks) != list:
@@ -445,10 +462,12 @@ class Play(object):
         new_tasks.append(dict(meta='flush_handlers'))
 
         new_handlers.extend(handlers)
+        new_error_handlers.extend(error_handlers)
         new_vars_files.extend(vars_files)
 
         ds['tasks'] = new_tasks
         ds['handlers'] = new_handlers
+        ds['error_handlers'] = new_error_handlers
         ds['vars_files'] = new_vars_files
         ds['role_names'] = role_names
 
@@ -627,6 +646,10 @@ class Play(object):
     def handlers(self):
         ''' return handler objects for this play '''
         return self._handlers
+        
+    def error_handlers(self):
+        ''' return error handler objects for this play '''
+        return self._error_handlers
 
     # *************************************************
 
@@ -715,7 +738,9 @@ class Play(object):
             if not task.meta:
                 all_tags.extend(task.tags)
         for handler in self._handlers:
-            all_tags.extend(handler.tags)
+            all_tags.extend(handler.tags)     
+        for error_handler in self._error_handlers:
+            all_tags.extend(error_handler.tags)
 
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)

@@ -31,7 +31,7 @@ class Task(object):
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-        'su', 'su_user', 'su_pass', 'no_log',
+        'su', 'su_user', 'su_pass', 'no_log', 'on_failure',
     ]
 
     # to prevent typos and such
@@ -41,7 +41,7 @@ class Task(object):
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-         'su', 'su_user', 'su_pass', 'no_log',
+         'su', 'su_user', 'su_pass', 'no_log', 'on_failure',
     ]
 
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
@@ -213,6 +213,7 @@ class Task(object):
         self.async_poll_interval = template.template_from_string(play.basedir, self.async_poll_interval, self.module_vars)
         self.async_poll_interval = int(self.async_poll_interval)
         self.notify = ds.get('notify', [])
+        self.on_failure = ds.get('on_failure', [])
         self.first_available_file = ds.get('first_available_file', None)
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
@@ -231,6 +232,10 @@ class Task(object):
         # notify can be a string or a list, store as a list
         if isinstance(self.notify, basestring):
             self.notify = [ self.notify ]
+            
+        # on_failure can be a string or a list, store as a list
+        if isinstance(self.on_failure, basestring):
+            self.on_failure = [ self.on_failure ]
 
         # split the action line into a module name + arguments
         tokens = self.action.split(None, 1)
