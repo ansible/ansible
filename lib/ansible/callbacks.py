@@ -578,6 +578,9 @@ class PlaybookCallbacks(object):
 
     def on_notify(self, host, handler):
         call_callback_module('playbook_on_notify', host, handler)
+        
+    def on_failure(self, host, error_handler):
+        call_callback_module('playbook_on_failure', host, error_handler)
 
     def on_no_hosts_matched(self):
         display("skipping: no hosts matched", color='cyan')

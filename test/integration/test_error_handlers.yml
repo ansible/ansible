@@ -1,0 +1,7 @@
+---
+- name: test error handlers
+  hosts: testgroup
+  gather_facts: False
+  connection: local
+  roles:
+  - { role: test_error_handlers }

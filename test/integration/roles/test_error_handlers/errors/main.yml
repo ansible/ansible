@@ -1,0 +1,3 @@
+- name: 1st error handler
+  set_fact: 
+    error_handler_called: True

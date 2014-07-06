@@ -493,6 +493,14 @@ class PlayBook(object):
                 if results.get('changed', False):
                     for handler_name in task.notify:
                         self._flag_handler(play, template(play.basedir, handler_name, task.module_vars), host)
+                        
+        # flag which error handlers need to be run
+        if len(task.on_failure) > 0:
+            for host, results in results.get('contacted',{}).iteritems():
+              if (('failed' in results and bool(results['failed'])) or
+                  ('failed_when_result' in results and [results['failed_when_result']] or ['rc' in results and results['rc'] != 0])[0]):
+                    for error_handler_name in task.on_failure:
+                        self._flag_error_handler(play, template(play.basedir, error_handler_name, task.module_vars), host)
 
         ansible.callbacks.set_task(self.callbacks, None)
         ansible.callbacks.set_task(self.runner_callbacks, None)
@@ -515,6 +523,27 @@ class PlayBook(object):
                 x.notified_by.append(host)
         if not found:
             raise errors.AnsibleError("change handler (%s) is not defined" % handler_name)
+
+    # *****************************************************
+    
+    # *****************************************************
+
+    def _flag_error_handler(self, play, handler_name, host):
+        '''
+        if a task has any on_failure elements, flag error handlers for run
+        at end of task execution for hosts that have indicated
+        failed task
+        '''
+
+        found = False
+        for x in play.error_handlers():
+            if error_handler_name == template(play.basedir, x.name, x.module_vars):
+                found = True
+                self.callbacks.on_failure(host, x.name)
+                x.notified_by.append(host)
+                self._run_task(play, x, True)
+        if not found:
+            raise errors.AnsibleError("error handler (%s) is not defined" % error_handler_name)
 
     # *****************************************************
 
@@ -757,6 +786,36 @@ class PlayBook(object):
                                 while host in new_list:
                                     new_list.remove(host)
                         handler.notified_by = new_list
+
+                continue
+
+        return True
+
+    def run_error_handlers(self, play):
+        on_hosts = play._play_hosts
+        hosts_count = len(on_hosts)
+        for task in play.tasks():
+            if task.meta is not None:
+
+                fired_names = {}
+                for error_handler in play.error_handlers():
+                    if len(error_handler.notified_by) > 0:
+                        self.inventory.restrict_to(error_handler.notified_by)
+
+                        # Resolve the variables first
+                        handler_name = template(play.basedir, error_handler.name, error_handler.module_vars)
+                        if handler_name not in fired_names:
+                            self._run_task(play, error_handler, True)
+                        # prevent duplicate error handler includes from running more than once
+                        fired_names[handler_name] = 1
+
+                        self.inventory.lift_restriction()
+                        new_list = error_handler.notified_by[:]
+                        for host in error_handler.notified_by:
+                            if host in on_hosts:
+                                while host in new_list:
+                                    new_list.remove(host)
+                        error_handler.notified_by = new_list
 
                 continue
 
