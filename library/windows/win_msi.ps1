@@ -24,33 +24,88 @@ $params = Parse-Args $args;
 $result = New-Object psobject;
 Set-Attr $result "changed" $false;
 
-If (-not $params.path.GetType)
+If (!($params.path))
 {
     Fail-Json $result "missing required arguments: path"
 }
 
-$extra_args = ""
-If ($params.extra_args.GetType)
+if (!(test-path $params.path))
+{
+    Fail-Json $result "couldn't find a file at $($params.path)"
+}
+
+
+If ($params.extra_args)
 {
     $extra_args = $params.extra_args;
 }
-
-If ($params.creates.GetType -and $params.state.GetType -and $params.state -ne "absent")
+Else
 {
-    If (Test-File $creates)
+    $extra_args = ""
+}
+
+if ($params.MsiVersionString)
+{
+    $MsiVersionString = $params.MsiVersionString
+}
+
+if ($params.MsiName)
+{
+    $MsiName = $params.MsiName
+}
+
+if (($MsiVersionString) -and (!($MsiName)))
+{
+    #If msiversionstring is specified, we need msiname as well
+    Fail-Json $result "missing required arguments: MsiName"
+}
+
+
+If (($params.creates) -and ($params.state -ne "absent"))
+{
+    If (Test-Path ($params.creates))
     {
         Exit-Json $result;
     }
 }
 
-$logfile = [IO.Path]::GetTempFileName();
-if ($params.state.GetType -and $params.state -eq "absent")
+if ($MsiName)
 {
-    msiexec.exe /x $params.path /qb /l $logfile $extra_args;
+    $AlreadyInstalledMsi = Get-WmiObject -Query "Select * from win32_product" | where {$_.Name -eq $MsiName}
+}
+ElseIf (($MsiName) -and ($MsiVersionString))
+{
+    $AlreadyInstalledMsi = Get-WmiObject -Query "Select * from win32_product" | where {($_.Name -eq $MsiName) -and ($_.version -eq $MsiVersionString)}
 }
 Else
 {
+    if ($params.state -eq "absent")
+    {
+        #existing msi check not specify, assume msi does exist
+        $AlreadyInstalledMsi = $true
+    }
+    if ($params.state -eq "present")
+    {
+        #existing msi check not specify, assume msi does exist
+        $AlreadyInstalledMsi = $false
+    }
+}
+
+if (($AlreadyInstalledMsi) -and ($params.state -eq "absent"))
+{
+    #Already installed, perform uninstall
+    msiexec.exe /x $params.path /qb /l $logfile $extra_args;
+}
+Elseif((!$AlreadyInstalledMsi) -and ($params.state -eq "present"))
+{
+    #Not already installed, perform the install
+    $logfile = [IO.Path]::GetTempFileName();
     msiexec.exe /i $params.path /qb /l $logfile $extra_args;
+}
+Else
+{
+    #Do nothing
+    Exit-Json $result;
 }
 
 Set-Attr $result "changed" $true;
