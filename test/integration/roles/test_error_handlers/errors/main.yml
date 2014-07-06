@@ -9,5 +9,4 @@
   debug: msg="3rd error handler will never be called"
   when: inventory_hostname == none  
   
-- name: error handler include
-  include: include_handler.yml
+- include: include_handler.yml
