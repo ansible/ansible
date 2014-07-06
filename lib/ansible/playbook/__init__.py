@@ -528,7 +528,7 @@ class PlayBook(object):
     
     # *****************************************************
 
-    def _flag_error_handler(self, play, handler_name, host):
+    def _flag_error_handler(self, play, error_handler_name, host):
         '''
         if a task has any on_failure elements, flag error handlers for run
         at end of task execution for hosts that have indicated
