@@ -21,12 +21,22 @@
   set_fact:
     error_handler_called: False
 
-- name: notify the error handler for current task using failed_when
+- name: notify the error handler for current task
   shell: wall 'beep'
   ignore_errors: yes
   on_failure: 
     - 1st error handler
 
+- debug: var=error_handler_called
+ 
+- name: notify the error handler for current task using failed_when and multi error handlers
+  shell: ping localhost
+  failed_when: result is defined
+  ignore_errors: yes
+  on_failure: 
+    - 1st error handler
+    - 2nd error handler
+    
 - debug: var=error_handler_called
 
 - name: validate the error handler ran
