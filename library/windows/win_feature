@@ -52,6 +52,22 @@ options:
       - no
     default: null
     aliases: []
+  includesubfeatures:
+    description:
+      - Adds all subfeatures of the specified feature
+    choices:
+      - yes
+      - no
+    default: null
+    aliases: []
+  includemanagementtools:
+    description:
+      - Adds the corresponding management tools to the specified feature
+    choices:
+      - yes
+      - no
+    default: null
+    aliases: []
 author: Paul Durivage
 '''
 
@@ -74,4 +90,8 @@ $ ansible -i hosts -m win_feature -a "name=Web-Server,Web-Common-Http" all
         name: "Web-Server"
         state: absent
         restart: yes
+        includesubfeatures: yes
+        includemanagementtools: yes
+
+
 '''
