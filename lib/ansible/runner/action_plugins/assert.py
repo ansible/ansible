@@ -38,7 +38,7 @@ class ActionModule(object):
             args.update(complex_args)
         args.update(utils.parse_kv(module_args))
 
-        msg = ''
+        msg = 'assertion failed'
 
         if 'msg' in args:
             msg = args['msg']
@@ -52,6 +52,6 @@ class ActionModule(object):
         for that in args['that']:
             result = utils.check_conditional(that, self.runner.basedir, inject, fail_on_undefined=True)
             if not result:
-                return ReturnData(conn=conn, result=dict(failed=True, assertion=that, evaluated_to=result))
+                return ReturnData(conn=conn, result=dict(failed=True, msg=msg, assertion=that, evaluated_to=result))
 
         return ReturnData(conn=conn, result=dict(msg='all assertions passed'))
