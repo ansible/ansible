@@ -28,7 +28,8 @@ class Group(object):
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
-        self.clear_hosts_cache()
+        self._hosts_cache = None
+        #self.clear_hosts_cache()
         if self.name is None:
             raise Exception("group name is required")
 
