@@ -50,6 +50,7 @@ try:
 except:
     HAS_SSL=False
 
+import base64
 import os
 import re
 import socket
@@ -287,6 +288,7 @@ def url_argument_spec():
         validate_certs = dict(default='yes', type='bool'),
         url_username = dict(required=False),
         url_password = dict(required=False),
+        force_basic_auth = dict(default='no', type='bool')
     )
 
 
@@ -386,6 +388,12 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     # add the custom agent header, to help prevent issues 
     # with sites that block the default urllib agent string 
     request.add_header('User-agent', module.params.get('http_agent'))
+
+    force_basic_auth = module.params.get('force_basic_auth', False)
+
+    if force_basic_auth:
+        basic_auth_pair = base64.b64encode('{0}:{1}'.format(username, password))
+        request.add_header('Authorization', 'Basic {0}'.format(basic_auth_pair))
 
     # if we're ok with getting a 304, set the timestamp in the 
     # header, otherwise make sure we don't get a cached copy
