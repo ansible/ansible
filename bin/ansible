@@ -136,7 +136,7 @@ class Cli(object):
             if not options.ask_vault_pass:
                 vault_pass = tmp_vault_pass
 
-        inventory_manager = inventory.Inventory(options.inventory)
+        inventory_manager = inventory.Inventory(options.inventory, vault_password=vault_pass)
         if options.subset:
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
