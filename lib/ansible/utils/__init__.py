@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import sys
 import re
 import os
@@ -620,18 +621,19 @@ def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''
 
-    result = copy.deepcopy(a)
+    result = {}
 
-    # next, iterate over b keys and values
-    for k, v in b.iteritems():
-        # if there's already such key in a
-        # and that key contains dict
-        if k in result and isinstance(result[k], dict):
-            # merge those dicts recursively
-            result[k] = merge_hash(a[k], v)
-        else:
-            # otherwise, just copy a value from b to a
-            result[k] = v
+    for dicts in a, b:
+        # next, iterate over b keys and values
+        for k, v in dicts.iteritems():
+            # if there's already such key in a
+            # and that key contains dict
+            if k in result and isinstance(result[k], dict):
+                # merge those dicts recursively
+                result[k] = merge_hash(a[k], v)
+            else:
+                # otherwise, just copy a value from b to a
+                result[k] = v
 
     return result
 
@@ -1208,5 +1210,112 @@ def before_comment(msg):
     msg = msg.replace("**NOT_A_COMMENT**","#")
     return msg
 
+def load_vars(basepath, results, vault_password=None):
+    """
+    Load variables from any potential yaml filename combinations of basepath,
+    returning result.
+    """
 
+    paths_to_check = [ "".join([basepath, ext])
+                       for ext in C.YAML_FILENAME_EXTENSIONS ]
+
+    found_paths = []
+
+    for path in paths_to_check:
+        found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+        if found:
+            found_paths.append(path)
+
+
+    # disallow the potentially confusing situation that there are multiple
+    # variable files for the same name. For example if both group_vars/all.yml
+    # and group_vars/all.yaml
+    if len(found_paths) > 1:
+        raise errors.AnsibleError("Multiple variable files found. "
+            "There should only be one. %s" % ( found_paths, ))
+
+    return results
+
+## load variables from yaml files/dirs
+#  e.g. host/group_vars
+#
+def _load_vars_from_path(path, results, vault_password=None):
+    """
+    Robustly access the file at path and load variables, carefully reporting
+    errors in a friendly/informative way.
+
+    Return the tuple (found, new_results, )
+    """
+
+    try:
+        # in the case of a symbolic link, we want the stat of the link itself,
+        # not its target
+        pathstat = os.lstat(path)
+    except os.error, err:
+        # most common case is that nothing exists at that path.
+        if err.errno == errno.ENOENT:
+            return False, results
+        # otherwise this is a condition we should report to the user
+        raise errors.AnsibleError(
+            "%s is not accessible: %s."
+            " Please check its permissions." % ( path, err.strerror))
+
+    # symbolic link
+    if stat.S_ISLNK(pathstat.st_mode):
+        try:
+            target = os.path.realpath(path)
+        except os.error, err2:
+            raise errors.AnsibleError("The symbolic link at %s "
+                "is not readable: %s.  Please check its permissions."
+                % (path, err2.strerror, ))
+        # follow symbolic link chains by recursing, so we repeat the same
+        # permissions checks above and provide useful errors.
+        return _load_vars_from_path(target, results)
+
+    # directory
+    if stat.S_ISDIR(pathstat.st_mode):
+
+        # support organizing variables across multiple files in a directory
+        return True, _load_vars_from_folder(path, results, vault_password=vault_password)
+
+    # regular file
+    elif stat.S_ISREG(pathstat.st_mode):
+        data = parse_yaml_from_file(path, vault_password=vault_password)
+        if type(data) != dict:
+            raise errors.AnsibleError(
+                "%s must be stored as a dictionary/hash" % path)
+
+        # combine vars overrides by default but can be configured to do a
+        # hash merge in settings
+        results = combine_vars(results, data)
+        return True, results
+
+    # something else? could be a fifo, socket, device, etc.
+    else:
+        raise errors.AnsibleError("Expected a variable file or directory "
+            "but found a non-file object at path %s" % (path, ))
+
+def _load_vars_from_folder(folder_path, results, vault_password=None):
+    """
+    Load all variables within a folder recursively.
+    """
+
+    # this function and _load_vars_from_path are mutually recursive
+
+    try:
+        names = os.listdir(folder_path)
+    except os.error, err:
+        raise errors.AnsibleError(
+            "This folder cannot be listed: %s: %s."
+             % ( folder_path, err.strerror))
+
+    # evaluate files in a stable order rather than whatever order the
+    # filesystem lists them.
+    names.sort()
+
+    # do not parse hidden files or dirs, e.g. .svn/
+    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
+    for path in paths:
+        _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+    return results
 
