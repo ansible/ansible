@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 #############################################
-
 import fnmatch
 import os
 import sys
@@ -404,8 +403,11 @@ class Inventory(object):
         return vars
 
     def add_group(self, group):
-        self.groups.append(group)
-        self._groups_list = None  # invalidate internal cache 
+        if group.name not in self.groups_list():
+            self.groups.append(group)
+            self._groups_list = None  # invalidate internal cache 
+        else:
+            raise errors.AnsibleError("group already in inventory: %s" % group.name)
 
     def list_hosts(self, pattern="all"):
 
