@@ -464,6 +464,8 @@ class PlayBook(object):
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
+            if result.get('skipped', False):
+                continue
             if 'results' in result:
                 # task ran with_ lookup plugin, so facts are encapsulated in
                 # multiple list items in the results key
