@@ -23,7 +23,7 @@
 
 DOCUMENTATION = '''
 ---
-module: win_domainjoin
+module: win_domain_membership
 version_added: "1.7"
 short_description: Adds a computer to an Active Directory domain
 description:
@@ -65,8 +65,8 @@ author: Trond Hindenes
 
 EXAMPLES = '''
 # This adds the computer to the domain mytestdomain.com.
-$ ansible -i hosts -m win_domainjoin -a "domainname=mytestdomain.com domainusername=administrator@mytestdomain.com domainpassword=Hello123" all
-$ ansible -i hosts -m win_domainjoin -a "domainname=mytestdomain.com domainusername=administrator@mytestdomain.com domainpassword=Hello123 OUPath=OU=Servers,DC=mytestdomain,DC=com" all
+$ ansible -i hosts -m win_domain_membership -a "domainname=mytestdomain.com domainusername=administrator@mytestdomain.com domainpassword=Hello123" all
+$ ansible -i hosts -m win_domain_membership -a "domainname=mytestdomain.com domainusername=administrator@mytestdomain.com domainpassword=Hello123 OUPath=OU=Servers,DC=mytestdomain,DC=com" all
 
 
 # Playbook example
@@ -76,7 +76,7 @@ $ ansible -i hosts -m win_domainjoin -a "domainname=mytestdomain.com domainusern
   gather_facts: false
   tasks:
     - name: Join Domain
-      win_domainjoin:
+      win_domain_membership:
         domainname: "mytestdomain.com"
 		domainusername: "administrator@mytestdomain.com"
 		domainpassword: "Hello123"
