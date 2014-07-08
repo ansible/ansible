@@ -206,7 +206,7 @@ class Inventory(object):
                 pattern_exclude.append(p)
             elif p.startswith("&"):
                 pattern_intersection.append(p)
-            else:
+            elif p:
                 pattern_regular.append(p)
 
         # if no regular pattern was given, hence only exclude and/or intersection
@@ -355,12 +355,10 @@ class Inventory(object):
         self._pattern_cache = {}
 
     def groups_for_host(self, host):
-        results = []
-        groups = self.get_groups()
-        for group in groups:
-            if host in group.get_hosts():
-                results.append(group)
-        return results
+        if host in self._hosts_cache:
+            return self._hosts_cache[host].get_groups()
+        else:
+            return []
 
     def groups_list(self):
         if not self._groups_list:
