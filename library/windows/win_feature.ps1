@@ -47,15 +47,34 @@ Elseif (!$params.state) {
 If ($params.restart) {
     $restart = $params.restart | ConvertTo-Bool
 }
+Else
+{
+    $restart = $false
+}
+
+if ($params.includesubfeatures)
+{
+    $includesubfeatures = $params.includesubfeatures | ConvertTo-Bool
+}
+Else
+{
+    $includesubfeatures = $false
+}
+
+if ($params.includemanagementtools)
+{
+    $includemanagementtools = $params.includemanagementtools | ConvertTo-Bool
+}
+Else
+{
+    $includemanagementtools = $false
+}
+
+
 
 If ($state -eq "present") {
     try {
-        if ($restart) {
-            $featureresult = Add-WindowsFeature -Name $name -Restart
-        }
-        else {
-            $featureresult = Add-WindowsFeature -Name $name
-        }
+        $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools
     }
     catch {
         Fail-Json $result $_.Exception.Message
@@ -63,12 +82,7 @@ If ($state -eq "present") {
 }
 Elseif ($state -eq "absent") {
     try {
-        if ($restart) {
-            $featureresult = Remove-WindowsFeature -Name $name -Restart
-        }
-        else {
-            $featureresult = Remove-WindowsFeature -Name $name
-        }
+        $featureresult = Remove-WindowsFeature -Name $name -Restart:$restart
     }
     catch {
         Fail-Json $result $_.Exception.Message
