@@ -224,6 +224,7 @@ def main():
     # convert the template parameters ansible passes into a tuple for boto
     template_parameters_tup = [(k, v) for k, v in template_parameters.items()]
     stack_outputs = {}
+    stack_parameters = {}
 
     try:
         cf_region = Region(region)
@@ -285,6 +286,10 @@ def main():
         for output in stack.outputs:
             stack_outputs[output.key] = output.value
         result['stack_outputs'] = stack_outputs
+
+        for parameter in stack.parameters:
+            stack_parameters[parameter.key] = parameter.value
+        result['stack_parameters'] = stack_parameters
 
     # absent state is different because of the way delete_stack works.
     # problem is it it doesn't give an error if stack isn't found
