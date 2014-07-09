@@ -548,7 +548,7 @@ class LinuxHardware(Hardware):
             if key in LinuxHardware.MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
-            if key in LinuxHardware.MEMORY_FACTS or LinuxHardware.EXTRA_MEMORY_FACTS:
+            if key in LinuxHardware.MEMORY_FACTS or key in LinuxHardware.EXTRA_MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
                 memstats[key.lower()] = long(val) / 1024
         self.facts['memory_mb'] = {
