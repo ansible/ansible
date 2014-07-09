@@ -48,6 +48,14 @@ options:
       - Password of the user to connect to vcenter as.
     required: true
     default: null
+  vm_folder:
+    description:
+      - The name of the vm folder to create the VM in.
+    version_added: "1.7"
+  parent_folder:
+    description:
+      - If vm_folder is specified, the parent folder for vm_folder to be created in. Only needed if vm_folder does not yet exist and you want the folder created in a subfolder of datacenter
+    version_added: "1.7"
   resource_pool:
     description:
       - The name of the resource_pool to create the VM in.
@@ -593,7 +601,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     module.exit_json(changed=False)
 
 
-def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state):
+def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state, vm_folder, parent_folder):
 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
@@ -793,6 +801,29 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
             add_nic(module, vsphere_client, nfmor, config, devices,
                     nictype, network, network_type)
 
+    # set vmfmor if vm_folder is specified 
+    if vm_folder:
+        if not parent_folder:
+            parent_folder = 'vm'        
+
+        # Search for folder if found, set vmfor -- if not, create it
+        folder_found = None
+        folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+        for f in folders:
+            get_folder_name = folders[f]
+            if vm_folder == get_folder_name:
+                folder_found = True
+                vmfmor = f
+                break
+        if not folder_found:
+            create_vm_folder(module, vsphere_client, vm_folder, parent_folder)
+            folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+            for f in folders:
+                get_folder_name = folders[f]
+                if vm_folder == get_folder_name:
+                    vmfmor = f 
+                    break
+
     config.set_element_deviceChange(devices)
     create_vm_request.set_element_config(config)
     folder_mor = create_vm_request.new__this(vmfmor)
@@ -831,6 +862,29 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
             ansible_facts=gather_facts(vm),
             changed=True,
             changes="Created VM %s" % guest)
+
+def create_vm_folder(module, vsphere_client, folder_name, parent_folder_name):
+    folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+    found = None
+    for f in folders:
+        get_folder_name = folders[f]
+        if get_folder_name == parent_folder_name:
+            found = True
+            vm_folder = f
+            break
+
+    if not found:
+        module.fail_json(
+            msg="Can not Create folder %s, Parent Folder %s does not exist" %
+            (folder_name, parent_folder_name))
+
+    # Create folder
+    request = VI.CreateFolderRequestMsg()
+    _this = request.new__this(vm_folder)
+    _this.set_attribute_type(vm_folder.get_attribute_type())
+    request.set_element__this(_this)
+    request.set_element_name(folder_name)
+    vsphere_client._proxy.CreateFolder(request)
 
 
 def delete_vm(vsphere_client, module, guest, vm, force):
@@ -1061,6 +1115,8 @@ def main():
             guest=dict(required=True, type='str'),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
+            vm_folder=dict(required=False, type='str', default=None),
+            parent_folder=dict(required=False, type='str', default=None),
             vm_hardware=dict(required=False, type='dict', default={}),
             vm_extra_config=dict(required=False, type='dict', default={}),
             resource_pool=dict(required=False, default=None, type='str'),
@@ -1102,6 +1158,8 @@ def main():
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
+    vm_folder = module.params['vm_folder']
+    parent_folder = module.params['parent_folder']
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1200,7 +1258,9 @@ def main():
                 vm_hardware=vm_hardware,
                 vm_disk=vm_disk,
                 vm_nic=vm_nic,
-                state=state
+                state=state,
+                vm_folder=vm_folder,
+                parent_folder=parent_folder
             )
 
     viserver.disconnect()
