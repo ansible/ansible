@@ -222,6 +222,16 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
+        # Return all EC2/RDS instances
+        if config.has_option('ec2', 'all_instances'):
+            self.all_instances = config.getboolean('ec2', 'all_instances')
+        else:
+            self.all_instances = False
+        if config.has_option('ec2', 'all_rds_instances'):
+            self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
+        else:
+            self.all_rds_instances = False
+
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
         if not os.path.exists(cache_dir):
@@ -326,8 +336,8 @@ class Ec2Inventory(object):
         ''' Adds an instance to the inventory and index, as long as it is
         addressable '''
 
-        # Only want running instances
-        if instance.state != 'running':
+        # Only want running instances unless all_instances is True
+        if not self.all_instances and instance.state != 'running':
             return
 
         # Select the best destination address
@@ -390,8 +400,8 @@ class Ec2Inventory(object):
         ''' Adds an RDS instance to the inventory and index, as long as it is
         addressable '''
 
-        # Only want available instances
-        if instance.status != 'available':
+        # Only want available instances unless all_rds_instances is True
+        if not self.all_rds_instances and instance.status != 'available':
             return
 
         # Select the best destination address
