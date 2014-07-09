@@ -521,7 +521,8 @@ class LinuxHardware(Hardware):
     """
 
     platform = 'Linux'
-    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree', 'Buffers', 'Cached', 'SwapCached']
+    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+    EXTRA_MEMORY_FACTS = ['Buffers', 'Cached', 'SwapCached']
 
     def __init__(self):
         Hardware.__init__(self)
@@ -546,8 +547,11 @@ class LinuxHardware(Hardware):
             key = data[0]
             if key in LinuxHardware.MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
+                self.facts["%s_mb" % key.lower()] = long(val) / 1024
+            if key in LinuxHardware.MEMORY_FACTS or LinuxHardware.EXTRA_MEMORY_FACTS:
+                val = data[1].strip().split(' ')[0]
                 memstats[key.lower()] = long(val) / 1024
-        self.facts['memory'] = {
+        self.facts['memory_mb'] = {
                     'real' : {
                         'total': memstats['memtotal'],
                         'used': (memstats['memtotal'] - memstats['memfree']),
