@@ -389,8 +389,6 @@ class LinuxService(Service):
         location = dict()
 
         for binary in binaries:
-            location[binary] = None
-        for binary in binaries:
             location[binary] = self.module.get_bin_path(binary)
 
         def check_systemd(name):
