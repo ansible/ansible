@@ -300,6 +300,13 @@ Create containers with options specified as strings and lists as comma-separated
   sudo: yes
   tasks:
   docker: image=namespace/image_name links=postgresql:db,redis:redis
+
+Create and run a container using the hosts network stack:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  docker: image=nginx net=host
 '''
 
 HAS_DOCKER_PY = True
