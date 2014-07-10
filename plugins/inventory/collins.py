@@ -93,10 +93,18 @@ class CollinsDefaults(object):
     LOG_FORMAT = '%(asctime)-15s %(message)s'
 
 
+class Error(Exception):
+    pass
+
+
+class MaxRetriesError(Error):
+    pass
+
+
 class CollinsInventory(object):
 
     def __init__(self):
-        """ Main execution path """
+        """ Constructs CollinsInventory object and reads all configuration. """
 
         self.inventory = dict()  # A list of groups and the hosts in that group
         self.cache = dict()  # Details about hosts in the inventory
@@ -109,7 +117,28 @@ class CollinsInventory(object):
             filename=self.log_location)
         self.log = logging.getLogger('CollinsInventory')
 
+    def _asset_get_attribute(self, asset, attrib):
+        """ Returns a user-defined attribute from an asset if it exists; otherwise,
+            returns None. """
+
+        if 'ATTRIBS' in asset:
+            for attrib_block in asset['ATTRIBS'].keys():
+                if attrib in asset['ATTRIBS'][attrib_block]:
+                    return asset['ATTRIBS'][attrib_block][attrib]
+        return None
+
+    def _asset_has_attribute(self, asset, attrib):
+        """ Returns whether a user-defined attribute is present on an asset. """
+
+        if 'ATTRIBS' in asset:
+            for attrib_block in asset['ATTRIBS'].keys():
+                if attrib in asset['ATTRIBS'][attrib_block]:
+                    return True
+        return False
+
     def run(self):
+        """ Main execution path """
+
         # Updates cache if cache is not present or has expired.
         successful = True
         if self.args.refresh_cache:
@@ -158,9 +187,8 @@ class CollinsInventory(object):
         # Locates all assets matching the provided query, exhausting pagination.
         while True:
             if num_retries == self.collins_max_retries:
-                self.log.error("Maximum of %s retries reached; giving up",
+                raise MaxRetriesError("Maximum of %s retries reached; giving up" % \
                     self.collins_max_retries)
-                break
             query_parameters['page'] = cur_page
             query_url = "%s?%s" % (
                 (CollinsDefaults.ASSETS_API_ENDPOINT % self.collins_host),
@@ -248,20 +276,6 @@ class CollinsInventory(object):
         parser.add_argument('--pretty',
             action='store_true', default=False, help='Pretty print all JSON output')
         self.args = parser.parse_args()
-
-    def _asset_has_attribute(self, asset, attrib):
-        if 'ATTRIBS' in asset:
-            for attrib_block in asset['ATTRIBS'].keys():
-                if attrib in asset['ATTRIBS'][attrib_block]:
-                    return True
-        return False
-
-    def _asset_get_attribute(self, asset, attrib):
-        if 'ATTRIBS' in asset:
-            for attrib_block in asset['ATTRIBS'].keys():
-                if attrib in asset['ATTRIBS'][attrib_block]:
-                    return asset['ATTRIBS'][attrib_block][attrib]
-        return None
 
     def update_cache(self):
         """ Make calls to Collins and saves the output in a cache """
@@ -351,6 +365,9 @@ class CollinsInventory(object):
         return True
 
     def push(self, dictionary, key, value):
+        """ Adds a value to a list at a dictionary key, creating the list if it doesn't
+            exist. """
+
         if key not in dictionary:
             dictionary[key] = []
         dictionary[key].append(value)
