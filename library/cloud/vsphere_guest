@@ -93,6 +93,7 @@ options:
       - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware version of existing vm is not supported.
     required: false
     default: null
+    version_added: "1.7"
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
