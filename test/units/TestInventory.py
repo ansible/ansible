@@ -274,6 +274,14 @@ class TestInventory(unittest.TestCase):
         print "EXPECTED=%s" % sorted(expected_hosts)
         assert sorted(hosts) == sorted(expected_hosts)
 
+    def test_regex_grouping(self):
+        inventory = self.simple_inventory()
+        hosts = inventory.list_hosts("~(cer[a-z]|berc)(erus00[13])")
+        expected_hosts = ['cerberus001', 'cerberus003']
+        print "HOSTS=%s" % sorted(hosts)
+        print "EXPECTED=%s" % sorted(expected_hosts)
+        assert sorted(hosts) == sorted(expected_hosts)
+
     def test_complex_enumeration(self):
 
 
