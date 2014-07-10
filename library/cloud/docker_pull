@@ -182,7 +182,10 @@ class DockerPuller(object):
                 # either the id or status changed from the previous line. This
                 # should give the user a good idea of what's going on without
                 # overwhelming them with unnecessary information.
-                current_update = (json_chunk.get('id'), json_chunk.get('status'))
+                current_update = (
+                    json_chunk.get('id'),
+                    json_chunk.get('status'),
+                )
                 if current_update != last_update:
                     # TODO: should we avoid use .format? what is the
                     # python version we should support for ansible?
@@ -212,11 +215,12 @@ def main():
     try:
         puller = DockerPuller(module)
         last_update = puller.pull()
-        # TODO: return the last id?
+        image_id = last_update[0]
         module.exit_json(
             failed=True,
             changed=puller.changed,
             msg='\n'.join(puller.pulling_logs),
+            image_id=image_id,
         )
     except DockerAPIError as e:
         module.exit_json(
