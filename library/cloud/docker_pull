@@ -190,10 +190,8 @@ class DockerPuller(object):
                     json_chunk.get('status'),
                 )
                 if current_update != last_update:
-                    # TODO: should we avoid use .format? what is the
-                    # python version we should support for ansible?
                     self.pulling_logs.append(
-                        '[{}] {} ...'.format(*current_update),
+                        '[%s] %s' % current_update,
                     )
                     last_update = current_update
 
@@ -244,13 +242,13 @@ def main():
         puller = DockerPuller(module)
         result = puller.pull()
         if not result:
-            msg = 'Error: %s'.format(puller.error_msg)
+            msg = 'Error: %s' % puller.error_msg
         else:
-            msg = 'Image {} pulled'.format(result['Id'])
+            msg = 'Image %s pulled' % result['Id']
             extra_result['image'] = result
     except DockerAPIError as e:
         failed = True
-        msg = 'Docker API error: {}'.format(e.explanation)
+        msg = 'Docker API error: %s' % e.explanation
     except RequestException as e:
         failed = True
         msg = repr(e)
