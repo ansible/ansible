@@ -56,6 +56,7 @@ options:
       - The name or ARN of the instance profile associated with the IAM role for the instance
     required: false
     default: null
+    version_added: "1.7"
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
