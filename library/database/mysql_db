@@ -265,7 +265,7 @@ def main():
             login_host=dict(default="localhost"),
             login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
-            db=dict(required=True, aliases=['name']),
+            name=dict(required=True, aliases=['db']),
             encoding=dict(default=""),
             collation=dict(default=""),
             target=dict(default=None),
