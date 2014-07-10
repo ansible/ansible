@@ -156,6 +156,9 @@ class DockerPuller(object):
         password = self.module.params.get('password')
         repository = self.module.params.get('repository')
 
+        # get existing matched images
+        old_images = self.get_images()
+
         if username:
             # TODO: should we return error when email and password
             # is not present?
@@ -193,9 +196,32 @@ class DockerPuller(object):
                         '[{}] {} ...'.format(*current_update),
                     )
                     last_update = current_update
-        # TODO: see if the image id changed from the existing one
-        self.changed = True
-        return last_update
+
+        new_images = self.get_images()
+
+        if not old_images or old_images[0]['Id'] != new_images[0]['Id']:
+            self.changed = True
+        return new_images[0]
+
+    def get_images(self):
+        filtered_images = []
+        images = self.client.images()
+        for img in images:
+            # Docker-py version >= 0.3 (Docker API >= 1.8)
+            if 'RepoTags' in img:
+                repotag = '%s:%s' % (
+                    getattr(self, 'name', ''),
+                    getattr(self, 'tag', 'latest'),
+                )
+                if not self.name or repotag in img['RepoTags']:
+                    filtered_images.append(img)
+            # Docker-py version < 0.3 (Docker API < 1.8)
+            elif (
+                (not self.name or self.name == img['Repository']) and
+                (not self.tag or self.tag == img['Tag'])
+            ):
+                filtered_images.append(img)
+        return filtered_images
 
 
 def main():
@@ -220,9 +246,8 @@ def main():
         if not result:
             msg = 'Error: %s'.format(puller.error_msg)
         else:
-            image_id = result[0]
-            msg = 'Image {} pulled'.format(image_id)
-            extra_result['image_id'] = image_id
+            msg = 'Image {} pulled'.format(result['Id'])
+            extra_result['image'] = result
     except DockerAPIError as e:
         failed = True
         msg = 'Docker API error: {}'.format(e.explanation)
