@@ -291,7 +291,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             tags=dict(type='list', default=[]),
             health_check_period=dict(type='int', default=300),
-            health_check_type=dict(default='EC2', chices=['EC2', 'ELB']),
+            health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
