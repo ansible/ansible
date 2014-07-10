@@ -152,7 +152,7 @@
     - "result.stat.md5 == '661603660051991b79429c2dc68d9a67'"
 
 - name: run a validation script that succeeds
-  lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 5$" validate="/bin/true %s"
+  lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 5$" validate="true %s"
   register: result
 
 - name: assert that the file validated after removing a line
