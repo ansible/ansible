@@ -235,6 +235,10 @@ class Inventory(object):
         a tuple of (start, stop) or None
         """
 
+        # Do not parse regexes for enumeration info
+        if pattern.startswith('~'):
+            return (pattern, None)
+
         # The regex used to match on the range, which can be [x] or [x-y].
         pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
         m = pattern_re.match(pattern)
