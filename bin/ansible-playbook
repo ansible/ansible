@@ -83,6 +83,9 @@ def main(args):
         help="start the playbook at the task matching this name")
     parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
         help="run handlers even if a task fails")
+    parser.add_option('--list-all-groups', dest='listgroups', action='store_true',
+        help='outputs a list of groups available in the given inventory; does '
+             'not execute anything else')
 
     options, args = parser.parse_args(args)
 
@@ -104,6 +107,11 @@ def main(args):
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0:
         raise errors.AnsibleError("provided hosts list is empty")
+
+    if options.listgroups:
+        for group in inventory.list_groups():
+            callbacks.display('    %s' % group)
+        sys.exit(0)
 
     sshpass = None
     sudopass = None
