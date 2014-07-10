@@ -678,6 +678,7 @@ def main():
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             user            = dict(default=None),
+            net             = dict(default='bridge'),
             password        = dict(),
             email           = dict(),
             hostname        = dict(default=None),
