@@ -83,7 +83,27 @@ requirements: [ "docker-py" ]
 '''
 
 EXAMPLES = '''
-FIXME:
+Pull an image from the default public repository
+
+- hosts: db
+  sudo: yes
+  tasks:
+  - name: pull postgresql docker image
+    docker_pull: name="paintedfox/postgresq"
+
+Pull an image from a private repository
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: pull my web app image
+    docker_pull: >
+        name="my/app"
+        tag=v1.0.0
+        repository="https://example.com/v1/"
+        username=eggs
+        password=spams
+        email=eggs@example.com
 
 '''
 
@@ -184,7 +204,7 @@ class DockerPuller(object):
                 # an ASCII progress bar, we just keep a log of each line where
                 # either the id or status changed from the previous line. This
                 # should give the user a good idea of what's going on without
-                # overwhelming them with unnecessary information.
+                # overwhelming them with unnecessary informa    tion.
                 current_update = (
                     json_chunk.get('id'),
                     json_chunk.get('status'),
