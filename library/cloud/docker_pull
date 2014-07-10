@@ -142,12 +142,8 @@ class DockerPuller(object):
         )
 
         self.changed = False
-        self._pulling_logs = []
+        self.pulling_logs = []
         self.error_msg = None
-
-    @property
-    def pulling_logs(self):
-        return '\n'.join(self._pulling_logs)
 
     def pull(self):
         """Pull an image from index.docker.io or a hosted private registry
@@ -193,7 +189,7 @@ class DockerPuller(object):
                 if current_update != last_update:
                     # TODO: should we avoid use .format? what is the
                     # python version we should support for ansible?
-                    self._pulling_logs.append(
+                    self.pulling_logs.append(
                         '[{}] {} ...'.format(*current_update),
                     )
                     last_update = current_update
@@ -237,8 +233,8 @@ def main():
     module.exit_json(
         failed=failed,
         changed=puller.changed,
-        log=puller.pulling_logs,
         msg=msg,
+        log=puller.pulling_logs,
         **extra_result
     )
 
