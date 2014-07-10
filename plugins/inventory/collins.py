@@ -93,13 +93,6 @@ class CollinsDefaults(object):
     LOG_FORMAT = '%(asctime)-15s %(message)s'
 
 
-def to_safe(word):
-    """ Converts 'bad' characters in a string to underscores so they
-        can be used as Ansible groups """
-
-    return re.sub("[^A-Za-z0-9\-]", "_", word)
-
-
 class CollinsInventory(object):
 
     def __init__(self):
@@ -317,14 +310,15 @@ class CollinsInventory(object):
             # Adds an asset index to the Ansible inventory based upon unpacking
             # the name of the asset's current STATE from its dictionary.
             if 'STATE' in asset['ASSET'] and asset['ASSET']['STATE']:
-                state_inventory_key = to_safe('STATE-%s' % asset['ASSET']['STATE']['NAME'])
+                state_inventory_key = self.to_safe(
+                    'STATE-%s' % asset['ASSET']['STATE']['NAME'])
                 self.push(self.inventory, state_inventory_key, asset_identifier)
 
             # Indexes asset by all user-defined Collins attributes.
             if 'ATTRIBS' in asset:
                 for attrib_block in asset['ATTRIBS'].keys():
                     for attrib in asset['ATTRIBS'][attrib_block].keys():
-                        attrib_key = to_safe(
+                        attrib_key = self.to_safe(
                             '%s-%s' % (attrib, asset['ATTRIBS'][attrib_block][attrib]))
                         self.push(self.inventory, attrib_key, asset_identifier)
 
@@ -333,7 +327,7 @@ class CollinsInventory(object):
                 if attribute not in CollinsDefaults.SPECIAL_ATTRIBUTES:
                     attribute_val = asset['ASSET'][attribute]
                     if attribute_val is not None:
-                        attrib_key = to_safe('%s-%s' % (attribute, attribute_val))
+                        attrib_key = self.to_safe('%s-%s' % (attribute, attribute_val))
                         self.push(self.inventory, attrib_key, asset_identifier)
 
             # Indexes asset by hardware product information.
@@ -341,7 +335,7 @@ class CollinsInventory(object):
                 if 'PRODUCT' in asset['HARDWARE']['BASE']:
                     product = asset['HARDWARE']['BASE']['PRODUCT']
                     if product:
-                        product_key = to_safe(
+                        product_key = self.to_safe(
                             'HARDWARE-PRODUCT-%s' % asset['HARDWARE']['BASE']['PRODUCT'])
                         self.push(self.inventory, product_key, asset_identifier)
 
@@ -413,6 +407,12 @@ class CollinsInventory(object):
         cache = open(filename, 'w')
         cache.write(json_data)
         cache.close()
+
+    def to_safe(self, word):
+        """ Converts 'bad' characters in a string to underscores so they
+            can be used as Ansible groups """
+
+        return re.sub("[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """ Converts a dict to a JSON object and dumps it as a formatted string """
