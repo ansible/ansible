@@ -598,10 +598,11 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
     # Datacenter managed object reference
-    dcmor = [k for k,
-             v in vsphere_client.get_datacenters().items() if v == datacenter][0]
-
-    if dcmor is None:
+    dclist = [k for k,
+             v in vsphere_client.get_datacenters().items() if v == datacenter];
+    if dclist:
+        dcmor=dclist[0]
+    else:
         vsphere_client.disconnect()
         module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
 
@@ -702,7 +703,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     vmfiles.set_element_vmPathName(datastore_name)
     config.set_element_files(vmfiles)
     config.set_element_name(guest)
-    if vm_extra_config['notes'] is not None:
+    if 'notes' in vm_extra_config:
         config.set_element_annotation(vm_extra_config['notes'])
     config.set_element_memoryMB(int(vm_hardware['memory_mb']))
     config.set_element_numCPUs(int(vm_hardware['num_cpus']))
@@ -814,9 +815,8 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         module.fail_json(msg="Error creating vm: %s" %
                          task.get_error_message())
     else:
-        vm = None
-        if vm_extra_config or state in ['powered_on', 'powered_off']:
-            vm = vsphere_client.get_vm_by_name(guest)
+        # We always need to get the vm because we are going to gather facts
+        vm = vsphere_client.get_vm_by_name(guest)
 
         # VM was created. If there is any extra config options specified, set
         # them here , disconnect from vcenter, then exit.
