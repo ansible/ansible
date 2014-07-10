@@ -183,6 +183,13 @@ options:
     default: false
     aliases: []
     version_added: "1.6"
+  net:
+    description:
+      - Specify network mode
+    required: false
+    default: bridge
+    aliases: []
+    version_added: "1.6"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
