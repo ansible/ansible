@@ -224,6 +224,7 @@ class FilterModule(object):
             # path
             'basename': os.path.basename,
             'dirname': os.path.dirname,
+            'splitext': os.path.splitext,
             'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
             'relpath': os.path.relpath,
