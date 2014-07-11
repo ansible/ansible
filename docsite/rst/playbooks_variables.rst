@@ -278,6 +278,11 @@ To get the directory from a path::
 
     {{ path | dirname }}
 
+To split the file extension from a path::
+
+    # e.g., '/foo/bar.txt' => ('/foo/bar', 'txt')
+    {{ path | splitext }}
+
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
