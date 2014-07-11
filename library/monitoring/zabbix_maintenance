@@ -25,7 +25,7 @@ module: zabbix_maintenance
 short_description: Create Zabbix maintenance windows
 description:
     - This module will let you create Zabbix maintenance windows.
-version_added: "1.6"
+version_added: "1.7"
 author: Alexander Bulimov
 requirements:
     - zabbix-api python module
@@ -55,17 +55,21 @@ options:
         default: null
     host_names:
         description:
-            - Hosts to manage maintenance window for. Separate multiple hosts with commas.
+            - Hosts to manage maintenance window for.
+              Separate multiple hosts with commas.
               C(host_name) is an alias for C(host_names).
-              B(Required) option when C(state) is I(present) and no C(host_groups) specified.
+              B(Required) option when C(state) is I(present)
+              and no C(host_groups) specified.
         required: false
         default: null
         aliases: [ "host_name" ]
     host_groups:
         description:
-            - Host groups to manage maintenance window for. Separate multiple groups with commas.
+            - Host groups to manage maintenance window for.
+              Separate multiple groups with commas.
               C(host_group) is an alias for C(host_groups).
-              B(Required) option when C(state) is I(present) and no C(host_names) specified.
+              B(Required) option when C(state) is I(present)
+              and no C(host_names) specified.
         required: false
         default: null
         aliases: [ "host_group" ]
@@ -102,7 +106,7 @@ notes:
 EXAMPLES = '''
 # Create maintenance window named "Update of www1"
 # for host www1.example.com for 90 minutes
-- zabbix_maintenance: name="Update of www1" 
+- zabbix_maintenance: name="Update of www1"
                       host_name=www1.example.com
                       state=present
                       minutes=90
@@ -138,13 +142,15 @@ EXAMPLES = '''
                       login_password=pAsSwOrD
 '''
 
-import datetime, time
+import datetime
+import time
 
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
+
 
 def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, period, name, desc):
     end_time = start_time + period
@@ -169,6 +175,7 @@ def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, p
         return 1, None, str(e)
     return 0, None, None
 
+
 def get_maintenance_id(zbx, name):
     try:
         result = zbx.maintenance.get(
@@ -188,12 +195,14 @@ def get_maintenance_id(zbx, name):
 
     return 0, maintenance_ids, None
 
+
 def delete_maintenance(zbx, maintenance_id):
     try:
-        result = zbx.maintenance.delete(maintenance_id)
+        zbx.maintenance.delete(maintenance_id)
     except BaseException as e:
         return 1, None, str(e)
     return 0, None, None
+
 
 def check_maintenance(zbx, name):
     try:
@@ -205,6 +214,7 @@ def check_maintenance(zbx, name):
     except BaseException as e:
         return 1, None, str(e)
     return 0, result, None
+
 
 def get_group_ids(zbx, host_groups):
     group_ids = []
@@ -223,11 +233,12 @@ def get_group_ids(zbx, host_groups):
             return 1, None, str(e)
 
         if not result:
-            return 1, None, "Group id for group %s not found"%group
+            return 1, None, "Group id for group %s not found" % group
 
         group_ids.append(result[0]["groupid"])
 
     return 0, group_ids, None
+
 
 def get_host_ids(zbx, host_names):
     host_ids = []
@@ -246,7 +257,7 @@ def get_host_ids(zbx, host_names):
             return 1, None, str(e)
 
         if not result:
-            return 1, None, "Host id for host %s not found"%host
+            return 1, None, "Host id for host %s not found" % host
 
         host_ids.append(result[0]["hostid"])
 
@@ -288,12 +299,11 @@ def main():
     else:
         maintenance_type = 1
 
-
     try:
         zbx = ZabbixAPI(server_url)
         zbx.login(login_user, login_password)
     except BaseException as e:
-        module.fail_json(msg="Failed to connect to Zabbix server: %s"%e)
+        module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     changed = False
 
@@ -301,25 +311,25 @@ def main():
 
         now = datetime.datetime.now()
         start_time = time.mktime(now.timetuple())
-        period = 60 * int(minutes) #N * 60 seconds
+        period = 60 * int(minutes)  # N * 60 seconds
 
         if host_groups:
             (rc, group_ids, error) = get_group_ids(zbx, host_groups)
             if rc != 0:
-                module.fail_json(msg="Failed to get group_ids: %s"%error)
+                module.fail_json(msg="Failed to get group_ids: %s" % error)
         else:
             group_ids = []
 
         if host_names:
             (rc, host_ids, error) = get_host_ids(zbx, host_names)
             if rc != 0:
-                module.fail_json(msg="Failed to get host_ids: %s"%error)
+                module.fail_json(msg="Failed to get host_ids: %s" % error)
         else:
             host_ids = []
 
         (rc, exists, error) = check_maintenance(zbx, name)
         if rc != 0:
-            module.fail_json(msg="Failed to check maintenance %s existance: %s"%(name, error))
+            module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
 
         if not exists:
             if not host_names and not host_groups:
@@ -332,18 +342,18 @@ def main():
                 if rc == 0:
                     changed = True
                 else:
-                    module.fail_json(msg="Failed to create maintenance: %s"%error)
+                    module.fail_json(msg="Failed to create maintenance: %s" % error)
 
     if state == "absent":
 
         (rc, exists, error) = check_maintenance(zbx, name)
         if rc != 0:
-            module.fail_json(msg="Failed to check maintenance %s existance: %s"%(name, error))
+            module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
 
         if exists:
             (rc, maintenance, error) = get_maintenance_id(zbx, name)
             if rc != 0:
-                module.fail_json(msg="Failed to get maintenance id: %s"%error)
+                module.fail_json(msg="Failed to get maintenance id: %s" % error)
 
             if maintenance:
                 if module.check_mode:
@@ -353,8 +363,7 @@ def main():
                     if rc == 0:
                         changed = True
                     else:
-                        module.fail_json(msg="Failed to remove maintenance: %s"%error)
-
+                        module.fail_json(msg="Failed to remove maintenance: %s" % error)
 
     module.exit_json(changed=changed)
 
