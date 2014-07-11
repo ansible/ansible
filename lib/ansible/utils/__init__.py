@@ -1281,9 +1281,11 @@ def _load_vars_from_path(path, results, vault_password=None):
     # regular file
     elif stat.S_ISREG(pathstat.st_mode):
         data = parse_yaml_from_file(path, vault_password=vault_password)
-        if type(data) != dict:
+        if data and type(data) != dict:
             raise errors.AnsibleError(
                 "%s must be stored as a dictionary/hash" % path)
+        elif data is None:
+            data = {}
 
         # combine vars overrides by default but can be configured to do a
         # hash merge in settings
