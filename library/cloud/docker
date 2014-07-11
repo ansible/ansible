@@ -183,6 +183,13 @@ options:
     default: false
     aliases: []
     version_added: "1.6"
+  net:
+    description:
+      - Specify network mode
+    required: false
+    default: bridge
+    aliases: []
+    version_added: "1.6"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
@@ -293,6 +300,13 @@ Create containers with options specified as strings and lists as comma-separated
   sudo: yes
   tasks:
   docker: image=namespace/image_name links=postgresql:db,redis:redis
+
+Create and run a container using the hosts network stack:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  docker: image=nginx net=host
 '''
 
 HAS_DOCKER_PY = True
@@ -589,6 +603,7 @@ class DockerManager:
             'port_bindings': self.port_bindings,
             'publish_all_ports': self.module.params.get('publish_all_ports'),
             'privileged':   self.module.params.get('privileged'),
+            'network_mode':   self.module.params.get('net'),
             'links': self.links,
         }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ > '0.3.0':
@@ -663,6 +678,7 @@ def main():
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             user            = dict(default=None),
+            net             = dict(default='bridge'),
             password        = dict(),
             email           = dict(),
             hostname        = dict(default=None),
