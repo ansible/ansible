@@ -156,7 +156,7 @@ class RpmKey:
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
-        return re.match('(0x)?(0-9a-f){8}', keystr, flags=re.IGNORECASE)
+        return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
 
     def execute_command(self, cmd):
         if self.syslogging:
