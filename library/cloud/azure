@@ -87,6 +87,14 @@ options:
       - hostname to write /etc/hostname. Defaults to <name>.cloudapp.net.
     required: false
     default: null
+  service_name:
+    description:
+      - Name of cloud service and its required only in add role state.
+    required: true
+  ssh_port:
+    description:
+      - ssh public port. its used only in add role state.
+    required: false
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
@@ -106,9 +114,10 @@ options:
     aliases: []
   state:
     description:
-      - create or terminate instances
+      - create terminate or add instances
     required: false
     default: 'present'
+    choices: "present", "absent", "add_role"
     aliases: []
 
 requirements: [ "azure" ]
@@ -136,6 +145,21 @@ EXAMPLES = '''
     module: azure
     name: my-virtual-machine
     state: absent
+
+# Add role example
+- local_action:
+    module: azure
+    name: my-virtual-machine
+    role_size: Small
+    image: b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB
+    location: 'East US'
+    user: ubuntu
+    password: ComplexPassword
+    service_name: cloud-service-name
+    ssh_port: 2222
+    storage_account: my-storage-account
+    wait: yes
+    state: add_role
 '''
 
 import base64
@@ -230,7 +254,7 @@ def create_virtual_machine(module, azure):
     """
     name = module.params.get('name')
     hostname = module.params.get('hostname') or name + ".cloudapp.net"
-    endpoints = module.params.get('endpoints').split(',')
+    endpoints = (module.params.get('endpoints') or '22').split(',')
     ssh_cert_path = module.params.get('ssh_cert_path')
     user = module.params.get('user')
     password = module.params.get('password')
@@ -308,13 +332,109 @@ def create_virtual_machine(module, azure):
         except WindowsAzureError as e:
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
 
-
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
         return (changed, urlparse(deployment.url).hostname, deployment)
     except WindowsAzureError as e:
         module.fail_json(msg="failed to lookup the deployment information for %s, error was: %s" % (name, str(e)))
 
+def add_virtual_machine(module, azure):
+    """
+    Adds a virtual machine to an existing deployment
+
+    module : AnsibleModule object
+    azure: authenticated azure ServiceManagementService object
+
+    Returns:
+        True if a new virtual machine was created, false otherwise
+    """
+    name = module.params.get('name')
+    hostname = module.params.get('hostname') or name + ".cloudapp.net"
+    endpoints = [] if not module.params.get('endpoints') else module.params.get('endpoints').split(',')
+    ssh_cert_path = module.params.get('ssh_cert_path')
+    ssh_port =  module.params.get('ssh_port')
+    user = module.params.get('user')
+    password = module.params.get('password')
+    location = module.params.get('location')
+    role_size = module.params.get('role_size')
+    storage_account = module.params.get('storage_account')
+    cloud_service_name = module.params.get('service_name')
+    deployment_name = module.params.get('deployment_name') or cloud_service_name
+    image = module.params.get('image')
+    virtual_network_name = module.params.get('virtual_network_name')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+
+    # Check if a deployment with the same name already exists
+    cloud_service_name_available = azure.check_hosted_service_name_availability(name)
+    if not cloud_service_name_available.result:
+        changed = False
+    else:
+        changed = True
+
+        # Create linux configuration
+        disable_ssh_password_authentication = not password
+        linux_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
+
+        # Add ssh certificates if specified
+        if ssh_cert_path:
+            fingerprint, pkcs12_base64 = get_ssh_certificate_tokens(module, ssh_cert_path)
+            # Add certificate to cloud service
+            result = azure.add_service_certificate(name, pkcs12_base64, 'pfx', '')
+            _wait_for_completion(azure, result, wait_timeout, "add_service_certificate")
+
+            # Create ssh config
+            ssh_config = SSH()
+            ssh_config.public_keys = PublicKeys()
+            authorized_keys_path = u'/home/%s/.ssh/authorized_keys' % user
+            ssh_config.public_keys.public_keys.append(PublicKey(path=authorized_keys_path, fingerprint=fingerprint))
+            # Append ssh config to linux machine config
+            linux_config.ssh = ssh_config
+
+        # Create network configuration
+        network_config = ConfigurationSetInputEndpoints()
+        network_config.configuration_set_type = 'NetworkConfiguration'
+        network_config.subnet_names = []
+        if ssh_port:
+            network_config.input_endpoints.append(ConfigurationSetInputEndpoint(name='TCP-%s' % ssh_port,
+                                                                                protocol='TCP',
+                                                                                port=ssh_port,
+                                                                                local_port=22))
+        for port in endpoints:
+            network_config.input_endpoints.append(ConfigurationSetInputEndpoint(name='TCP-%s' % port,
+                                                                                protocol='TCP',
+                                                                                port=port,
+                                                                                local_port=port))
+
+        # First determine where to store disk
+        today = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        disk_prefix = u'%s-%s' % (name, name)
+        media_link = u'http://%s.blob.core.windows.net/vhds/%s-%s.vhd' % (storage_account, disk_prefix, today)
+        # Create system hard disk
+        os_hd = OSVirtualHardDisk(image, media_link)
+
+        # Spin up virtual machine
+        try:
+            result = azure.add_role(service_name=cloud_service_name,
+                                    deployment_name=deployment_name,
+                                    role_name=name,
+                                    system_config=linux_config,
+                                    os_virtual_hard_disk=os_hd,
+                                    network_config=network_config,
+                                    availability_set_name=None,
+                                    data_virtual_hard_disks=None,
+                                    role_size=None,
+                                    role_type='PersistentVMRole')
+            _wait_for_completion(azure, result, wait_timeout, "add_role")
+        except WindowsAzureError as e:
+            module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
+
+
+    try:
+        deployment = azure.get_deployment_by_name(service_name=cloud_service_name, deployment_name=deployment_name)
+        return (changed, urlparse(deployment.url).hostname, deployment)
+    except WindowsAzureError as e:
+        module.fail_json(msg="failed to lookup the deployment information for %s, error was: %s" % (name, str(e)))
 
 def terminate_virtual_machine(module, azure):
     """
@@ -395,14 +515,17 @@ def main():
             subscription_id=dict(no_log=True),
             storage_account=dict(),
             management_cert_path=dict(),
-            endpoints=dict(default='22'),
+            endpoints=dict(),
+            ssh_port=dict(),
+            deployment_name=dict(),
             user=dict(),
             password=dict(),
             image=dict(),
+            service_name=dict(),
             virtual_network_name=dict(default=None),
             state=dict(default='present'),
             wait=dict(type='bool', default=False),
-            wait_timeout=dict(default=600),
+            wait_timeout=dict(default=300),
             wait_timeout_redirects=dict(default=300)
         )
     )
@@ -419,7 +542,21 @@ def main():
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
         (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
-
+    elif module.params.get('state') == 'add_role':
+        # Changed is always set to true when provisioning new instances
+        if not module.params.get('name'):
+            module.fail_json(msg='name parameter is required for new instance')
+        if not module.params.get('image'):
+            module.fail_json(msg='image parameter is required for new instance')
+        if not module.params.get('user'):
+            module.fail_json(msg='user parameter is required for new instance')
+        if not module.params.get('location'):
+            module.fail_json(msg='location parameter is required for new instance')
+        if not module.params.get('service_name'):
+            module.fail_json(msg='service name parameter is required for adding a new instance')
+        if not module.params.get('storage_account'):
+            module.fail_json(msg='storage_account parameter is required for new instance')
+        (changed, public_dns_name, deployment) = add_virtual_machine(module, azure)
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('name'):
