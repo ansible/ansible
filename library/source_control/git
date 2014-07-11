@@ -101,9 +101,7 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.2"
         description:
-            - If C(yes), repository will be updated using the supplied
-              remote.  Otherwise the repo will be left untouched.
-              Prior to 1.2, this was always 'yes' and could not be disabled.
+            - If C(no), just returns information about the repository without updating.
     executable:
         required: false
         default: null
