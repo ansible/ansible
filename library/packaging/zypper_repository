@@ -125,12 +125,12 @@ def main():
 
     repo = module.params['repo']
     state = module.params['state']
-    name = module.params['name']
+    local_name = module.params['name']
     description = module.params['description']
     disable_gpg_check = module.params['disable_gpg_check']
 
     def exit_unchanged():
-        module.exit_json(changed=False, repo=repo, state=state, name=name)
+        module.exit_json(changed=False, repo=repo, state=state, name=local_name)
 
     rc, stdout, stderr, exists = repo_exists(module, repo)
     fail_if_rc_is_null(module, rc, stdout, stderr)
@@ -138,12 +138,10 @@ def main():
     if state == 'present':
         if exists:
             exit_unchanged()
-
-        result = add_repo(module, repo, name, description, disable_gpg_check)
+        result = add_repo(module, repo, local_name, description, disable_gpg_check)
     elif state == 'absent':
         if not exists:
             exit_unchanged()
-
         result = remove_repo(module, repo)
 
     rc, stdout, stderr, changed = result
