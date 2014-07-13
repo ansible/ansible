@@ -48,6 +48,20 @@ options:
         required: false
         choices: [ present, latest, absent ]
         default: "present"
+    refresh:
+        description:
+        - execute a zypper ref before ensuring the state.
+        required: false
+        choices: [ "yes", "no" ]
+        default: "no"
+    without_recommends:
+        description:
+        - Disables the additional recommended package installation.
+          This helps for example not to install git web automatically when
+          installing git.
+        required: false
+        choices: [ "yes", "no" ]
+        default: "no"
     disable_gpg_check:
         description:
           - Whether to disable to GPG signature checking of the package
@@ -112,8 +126,12 @@ def package_present(module, package_name, installed_state, disable_gpg_check, wi
             cmd.append('--no-gpg-check')
 
         cmd.extend(['install', '--auto-agree-with-licenses'])
-        cmd.append(name)
-        rc, stdout, stderr = m.run_command(cmd, check_rc=False)
+
+        if without_recommends:
+            cmd.extend('--no-recommends')
+
+        cmd.append(package_name)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc == 0:
             changed = True
@@ -170,26 +188,45 @@ def package_absent(module, package_name, installed_state):
 
     return rc, stdout, stderr, changed
 
+
+def repository_refresh(module, disable_gpg_check):
+    """
+    :param module: the running module
+    :param disable_gpg_check: should we disable the gpg check?
+    :return: return code, stdout and stderr and a bool indicator for success.
+    """
+    cmd = ['/usr/bin/zypper', '--non-interactive']
+    if disable_gpg_check:
+        cmd.append('--no-gpg-check')
+    cmd.append('ref')
+
+    rc, stdout, stderr = module.run_command(cmd)
+
+    return rc, stdout, stderr, rc == 0
+
+
 # ===========================================
 # Main control flow
-
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, aliases=['pkg']),
-            state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
-            disable_gpg_check = dict(required=False, default='no', type='bool'),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['pkg']),
+            state=dict(required=False,
+                       default='present',
+                       choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            disable_gpg_check=dict(required=False, default='no', type='bool'),
+            refresh=dict(required=False, default='no', type='bool'),
+            without_recommends=dict(required=False, default='no', type='bool'),
         ),
-        supports_check_mode = False
+        supports_check_mode=False
     )
 
-
     params = module.params
-
-    name  = params['name']
+    local_name = params['name']
     state = params['state']
     disable_gpg_check = params['disable_gpg_check']
-
+    refresh = params['refresh']
+    without_recommends = params['without_recommends']
     rc = 0
     stdout = ''
     stderr = ''
@@ -199,8 +236,17 @@ def main():
     installed_state = get_package_state(module, local_name)
 
     # Perform requested action
+    changed = False
+    if refresh:
+        rc, stdout, stderr, success = repository_refresh(module, disable_gpg_check)
+        if rc != 0:
+            if stderr:
+                module.fail_json(msg=stderr)
+            else:
+                module.fail_json(msg=stdout)
+
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_present(module, local_name, installed_state, disable_gpg_check, without_recommends)
     elif state in ['absent', 'removed']:
         (rc, stdout, stderr, changed) = package_absent(module, local_name, installed_state)
     elif state == 'latest':
