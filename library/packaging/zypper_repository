@@ -95,7 +95,7 @@ def add_repo(module, repo, alias, description, disable_gpg_check):
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     changed = rc == 0
-    return (rc, stdout, stderr, changed)
+    return rc, stdout, stderr, changed
 
 
 def remove_repo(module, repo):
@@ -103,7 +103,7 @@ def remove_repo(module, repo):
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     changed = rc == 0
-    return (rc, stdout, stderr, changed)
+    return rc, stdout, stderr, changed
 
 
 def fail_if_rc_is_null(module, rc, stdout, stderr):
