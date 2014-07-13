@@ -85,7 +85,9 @@ JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 
 
 def lookup(name, *args, **kwargs):
     from ansible import utils
-    instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
+    basedir = kwargs.get('basedir',None)
+    vault_password = kwargs.get('vault_password',None)
+    instance = utils.plugins.lookup_loader.get(name.lower(), basedir=basedir, vault_password=vault_password)
     vars = kwargs.get('vars', None)
 
     if instance is not None:
@@ -103,7 +105,7 @@ def lookup(name, *args, **kwargs):
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True, vault_password=None):
     ''' templates a data structure by traversing it and substituting for other data structures '''
     from ansible import utils
 
@@ -115,7 +117,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
     
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
-                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+                varname = template_from_string(basedir, varname, vars, fail_on_undefined, vault_password)
 
                 if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
                     eval_results = utils.safe_eval(varname, locals=vars, include_exceptions=True)
@@ -125,11 +127,11 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
             return varname
     
         elif isinstance(varname, (list, tuple)):
-            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
+            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined, vault_password=vault_password) for v in varname]
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
-                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
+                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined, vault_password=vault_password)
             return d
         else:
             return varname
@@ -214,6 +216,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
 
     def my_lookup(*args, **kwargs):
         kwargs['vars'] = vars
+        kwargs['vault_password'] = vault_password
         return lookup(*args, basedir=basedir, **kwargs)
     def my_finalize(thing):
         return thing if thing is not None else ''
@@ -312,7 +315,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
 
     return result
 
-def template_from_string(basedir, data, vars, fail_on_undefined=False):
+def template_from_string(basedir, data, vars, fail_on_undefined=False, vault_password=None):
     ''' run a string through the (Jinja2) templating engine '''
 
     try:
@@ -349,6 +352,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         def my_lookup(*args, **kwargs):
             kwargs['vars'] = vars
+            kwargs['vault_password'] = vault_password
             return lookup(*args, basedir=basedir, **kwargs)
 
         t.globals['lookup'] = my_lookup
