@@ -478,7 +478,7 @@ class Runner(object):
             elif 'NO_LOG' in args:
                 return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot use no_log: with old-style modules"))
 
-            args = template.template(self.basedir, args, inject)
+            args = template.template(self.basedir, args, inject, vault_password=self.vault_pass)
 
             # decide whether we need to transfer JSON or key=value
             argsfile = None
@@ -607,7 +607,7 @@ class Runner(object):
         # since some of the variables we'll be replacing may be contained there too
         module_vars_inject = utils.combine_vars(host_variables, combined_cache.get(host, {}))
         module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
-        module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
+        module_vars = template.template(self.basedir, self.module_vars, module_vars_inject, vault_password=self.vault_pass)
 
         inject = {}
 
@@ -655,7 +655,7 @@ class Runner(object):
                     basedir = filesdir
 
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = template.template(basedir, items_terms, inject)
+            items_terms = template.template(basedir, items_terms, inject, vault_password=self.vault_pass)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
@@ -704,7 +704,7 @@ class Runner(object):
 
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
-            complex_args = _safe_template_complex_args(self.complex_args, inject)
+            complex_args = _safe_template_complex_args(self.complex_args, inject, vault_password=self.vault_pass)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
@@ -723,8 +723,7 @@ class Runner(object):
                 this_inject = inject.copy()
                 this_inject['item'] = x
 
-                complex_args = _safe_template_complex_args(self.complex_args, this_inject)
-
+                complex_args = _safe_template_complex_args(self.complex_args, this_inject,vault_password=self.vault_pass)
                 result = self._executor_internal_inner(
                      host,
                      self.module_name,
@@ -762,9 +761,9 @@ class Runner(object):
 
         # late processing of parameterized sudo_user (with_items,..)
         if self.sudo_user_var is not None:
-            self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
+            self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject, vault_password=self.vault_pass)
         if self.su_user_var is not None:
-            self.su_user = template.template(self.basedir, self.su_user_var, inject)
+            self.su_user = template.template(self.basedir, self.su_user_var, inject, vault_password=self.vault_pass)
 
         # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
@@ -845,8 +844,8 @@ class Runner(object):
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
-        actual_pass = template.template(self.basedir, actual_pass, inject)
-        self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject)
+        actual_pass = template.template(self.basedir, actual_pass, inject, vault_password=self.vault_pass)
+        self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject, vault_password=self.vault_pass)
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
@@ -902,7 +901,7 @@ class Runner(object):
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
-            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars,vault_password=self.vault_pass)
             num_args_post = self._count_module_args(module_args)
             if num_args_pre != num_args_post:
                 raise errors.AnsibleError("A variable inserted a new parameter into the module args. " + \
@@ -911,7 +910,7 @@ class Runner(object):
             # like the command/shell module (ie. #USE_SHELL)
             if '#USE_SHELL' in module_args:
                 raise errors.AnsibleError("A variable tried to add #USE_SHELL to the module arguments.")
-            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars,vault_password=self.vault_pass)
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
@@ -956,7 +955,7 @@ class Runner(object):
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
                     inject[self.module_vars.get('register')] = result.result
-                    cond = template.template(self.basedir, until, inject, expand_lists=False)
+                    cond = template.template(self.basedir, until, inject, expand_lists=False, vault_password=self.vault_pass)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
                 if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
