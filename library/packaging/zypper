@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Patrick Callahan <pmc@patrickcallahan.com>
+# edited 2014, Mario Mueller <mario@xenji.com>
 # based on
 #     openbsd_pkg
 #         (c) 2013
@@ -29,7 +30,7 @@
 DOCUMENTATION = '''
 ---
 module: zypper
-author: Patrick Callahan
+author: Patrick Callahan, with contributions from Mario Mueller
 version_added: "1.2"
 short_description: Manage packages on SuSE and openSuSE
 description:
@@ -84,6 +85,12 @@ EXAMPLES = '''
 
 # Remove the "nmap" package
 - zypper: name=nmap state=absent
+
+# Install "git" without the zypper recommendations
+- zypper: name=git state=present without_recommends=yes
+
+# Install vim and refresh the metadata before installing it.
+- zypper: name=vim state=present refresh=yes
 '''
 
 
