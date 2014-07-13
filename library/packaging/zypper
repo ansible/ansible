@@ -72,35 +72,39 @@ EXAMPLES = '''
 - zypper: name=nmap state=absent
 '''
 
+
 # Function used for getting the name of a currently installed package.
-def get_current_name(m, name):
+def get_current_name(module, package_name):
     cmd = '/bin/rpm -q --qf \'%{NAME}-%{VERSION}\''
-    (rc, stdout, stderr) = m.run_command("%s %s" % (cmd, name))
+    (rc, stdout, stderr) = module.run_command("%s %s" % (cmd, package_name))
 
     if rc != 0:
-        return (rc, stdout, stderr)
+        return rc, stdout, stderr
 
     syntax = "%s"
 
+    current_name = ''
     for line in stdout.splitlines():
-        if syntax % name in line:
+        if syntax % package_name in line:
             current_name = line.split()[0]
 
     return current_name
 
-# Function used to find out if a package is currently installed.
-def get_package_state(m, name):
-    cmd = ['/bin/rpm', '--query', '--info', name]
 
-    rc, stdout, stderr = m.run_command(cmd, check_rc=False)
+# Function used to find out if a package is currently installed.
+def get_package_state(module, package_name):
+    cmd = ['/bin/rpm', '--query', '--info', package_name]
+
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
         return True
     else:
         return False
 
+
 # Function used to make sure a package is present.
-def package_present(m, name, installed_state, disable_gpg_check):
+def package_present(module, package_name, installed_state, disable_gpg_check, without_recommends):
     if installed_state is False:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
@@ -112,60 +116,59 @@ def package_present(m, name, installed_state, disable_gpg_check):
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
         if rc == 0:
-            changed=True
+            changed = True
         else:
-            changed=False
+            changed = False
     else:
         rc = 0
         stdout = ''
         stderr = ''
-        changed=False
+        changed = False
 
-    return (rc, stdout, stderr, changed)
+    return rc, stdout, stderr, changed
+
 
 # Function used to make sure a package is the latest available version.
-def package_latest(m, name, installed_state, disable_gpg_check):
-
+def package_latest(module, package_name, installed_state, disable_gpg_check):
     if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
-        pre_upgrade_name = ''
-        post_upgrade_name = ''
+        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', package_name]
 
         # Compare the installed package before and after to know if we changed anything.
-        pre_upgrade_name = get_current_name(m, name)
+        pre_upgrade_name = get_current_name(module, package_name)
 
-        rc, stdout, stderr = m.run_command(cmd, check_rc=False)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
-        post_upgrade_name = get_current_name(m, name)
+        post_upgrade_name = get_current_name(module, package_name)
 
         if pre_upgrade_name == post_upgrade_name:
             changed = False
         else:
             changed = True
 
-        return (rc, stdout, stderr, changed)
+        return rc, stdout, stderr, changed
 
     else:
         # If package was not installed at all just make it present.
-        return package_present(m, name, installed_state, disable_gpg_check)
+        return package_present(module, package_name, installed_state, disable_gpg_check)
+
 
 # Function used to make sure a package is not installed.
-def package_absent(m, name, installed_state):
+def package_absent(module, package_name, installed_state):
     if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'remove', name]
-        rc, stdout, stderr = m.run_command(cmd)
+        cmd = ['/usr/bin/zypper', '--non-interactive', 'remove', package_name]
+        rc, stdout, stderr = module.run_command(cmd)
 
         if rc == 0:
-            changed=True
+            changed = True
         else:
-            changed=False
+            changed = False
     else:
         rc = 0
         stdout = ''
         stderr = ''
-        changed=False
+        changed = False
 
-    return (rc, stdout, stderr, changed)
+    return rc, stdout, stderr, changed
 
 # ===========================================
 # Main control flow
@@ -190,20 +193,18 @@ def main():
     rc = 0
     stdout = ''
     stderr = ''
-    result = {}
-    result['name'] = name
-    result['state'] = state
+    result = {'name': local_name, 'state': state}
 
     # Get package state
-    installed_state = get_package_state(module, name)
+    installed_state = get_package_state(module, local_name)
 
     # Perform requested action
     if state in ['installed', 'present']:
         (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check)
     elif state in ['absent', 'removed']:
-        (rc, stdout, stderr, changed) = package_absent(module, name, installed_state)
+        (rc, stdout, stderr, changed) = package_absent(module, local_name, installed_state)
     elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_latest(module, local_name, installed_state, disable_gpg_check)
 
     if rc != 0:
         if stderr:
@@ -212,7 +213,6 @@ def main():
             module.fail_json(msg=stdout)
 
     result['changed'] = changed
-
     module.exit_json(**result)
 
 # import module snippets
