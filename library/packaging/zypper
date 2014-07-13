@@ -128,7 +128,7 @@ def package_present(module, package_name, installed_state, disable_gpg_check, wi
         cmd.extend(['install', '--auto-agree-with-licenses'])
 
         if without_recommends:
-            cmd.extend('--no-recommends')
+            cmd.append('--no-recommends')
 
         cmd.append(package_name)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
