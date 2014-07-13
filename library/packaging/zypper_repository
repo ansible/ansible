@@ -135,6 +135,7 @@ def main():
     rc, stdout, stderr, exists = repo_exists(module, repo)
     fail_if_rc_is_null(module, rc, stdout, stderr)
 
+    result = list()
     if state == 'present':
         if exists:
             exit_unchanged()
