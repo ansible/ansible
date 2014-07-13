@@ -206,7 +206,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=state_map.keys()),
             name=dict(default=None, required=False),
-            version=dict(default=None, required=False),
+            version=dict(default=None, required=False, type='str'),
             requirements=dict(default=None, required=False),
             virtualenv=dict(default=None, required=False),
             virtualenv_site_packages=dict(default='no', type='bool'),
