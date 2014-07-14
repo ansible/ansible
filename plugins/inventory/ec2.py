@@ -240,7 +240,11 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
+
+        if config.has_option('ec2', 'treat_csv_in_tags_as_multiple'):
+            self.explode_csv = config.getboolean('ec2', 'treat_csv_in_tags_as_multiple')
+        else:
+            self.explode_csv = False
 
 
     def parse_cli_args(self):
@@ -285,12 +289,12 @@ class Ec2Inventory(object):
             if conn is None:
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
- 
+
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
-        
+
         except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
@@ -368,7 +372,7 @@ class Ec2Inventory(object):
         # Inventory: Group by key pair
         if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
-        
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -381,8 +385,14 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
+            if self.explode_csv and ',' in v:
+                v = v.split(',')
+                for value in v:
+                    key = self.to_safe("tag_" + k + "=" + value)
+                    self.push(self.inventory, key, dest)
+            else:
+                key = self.to_safe("tag_" + k + "=" + v)
+                self.push(self.inventory, key, dest)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled:
@@ -426,10 +436,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.availability_zone, dest)
-        
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
@@ -524,6 +534,9 @@ class Ec2Inventory(object):
                 instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
                 for k, v in value.iteritems():
+                    if self.explode_csv and ',' in v:
+                        v = v.split(',')
+
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
             elif key == 'ec2_groups':
