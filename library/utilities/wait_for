@@ -213,7 +213,9 @@ def main():
                         matched = False
                         while 1:
                             data += s.recv(1024)
-                            if re.search(search_regex, data, re.MULTILINE):
+                            if not data:
+                                break
+                            elif re.search(search_regex, data, re.MULTILINE):
                                 matched = True
                                 break
                         if matched:
