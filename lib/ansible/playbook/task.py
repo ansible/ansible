@@ -31,7 +31,7 @@ class Task(object):
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-        'su', 'su_user', 'su_pass', 'no_log',
+        'su', 'su_user', 'su_pass', 'no_log', 'run_once',
     ]
 
     # to prevent typos and such
@@ -41,7 +41,7 @@ class Task(object):
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-         'su', 'su_user', 'su_pass', 'no_log',
+         'su', 'su_user', 'su_pass', 'no_log', 'run_once',
     ]
 
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
@@ -122,6 +122,7 @@ class Task(object):
         self.environment  = ds.get('environment', {})
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false"))
+        self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 
         #Code to allow do until feature in a Task 
         if 'until' in ds:
