@@ -164,6 +164,10 @@ class PlayBook(object):
 
         self.basedir     = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
+
+        # let inventory know the playbook basedir so it can load more vars
+        self.inventory.set_playbook_basedir(self.basedir)
+
         vars = extra_vars.copy()
         vars['playbook_dir'] = self.basedir
         if self.inventory.basedir() is not None:
@@ -257,6 +261,10 @@ class PlayBook(object):
                     elif isinstance(p['vars'], list):
                         # nobody should really do this, but handle vars: a=1 b=2
                         p['vars'].extend([{k:v} for k,v in play_vars.iteritems()])
+                    elif p['vars'] == None:
+                        # someone specified an empty 'vars:', so reset
+                        # it to the vars we currently have
+                        p['vars'] = play_vars.copy()
                     # now add in the vars_files
                     p['vars_files'] = utils.list_union(p.get('vars_files', []), play_vars_files)
 
@@ -318,8 +326,9 @@ class PlayBook(object):
             ansible.callbacks.set_play(self.runner_callbacks, play)
             if not self._run_play(play):
                 break
-            ansible.callbacks.set_play(self.callbacks, None)
-            ansible.callbacks.set_play(self.runner_callbacks, None)
+
+        ansible.callbacks.set_play(self.callbacks, None)
+        ansible.callbacks.set_play(self.runner_callbacks, None)
 
         # summarize the results
         results = {}
@@ -355,7 +364,7 @@ class PlayBook(object):
     def _run_task_internal(self, task):
         ''' run a particular module step in a playbook '''
 
-        hosts = self._trim_unavailable_hosts(task.play._play_hosts)
+        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts))
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(

@@ -191,7 +191,6 @@
     that:
        - 'result.changed'
        - 'result.group_id.startswith("sg-")'
-       - 'result.item == ""'
 
 # ============================================================
 - name: test state=present (expected changed=false)
@@ -209,7 +208,6 @@
     that:
        - 'not result.changed'
        - 'result.group_id.startswith("sg-")'
-       - 'result.item == ""'
 
 # ============================================================
 - name: test state=absent (expected changed=true)
@@ -228,7 +226,6 @@
     that:
        - 'result.changed'
        - 'not result.group_id'
-       - 'result.item == ""'
 
 # ============================================================
 - name: test state=absent (expected changed=false)
@@ -247,4 +244,3 @@
     that:
        - 'not result.changed'
        - 'not result.group_id'
-       - 'result.item == ""'

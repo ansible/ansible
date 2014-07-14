@@ -28,6 +28,7 @@ from ansible import errors
 from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
+from jinja2.filters import environmentfilter
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -132,6 +133,10 @@ def search(value, pattern='', ignorecase=False):
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
+
+    if not isinstance(value, basestring):
+        value = str(value)
+
     if ignorecase:
         flags = re.I
     else:
@@ -181,7 +186,8 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
-def rand(end, start=None, step=None):
+@environmentfilter
+def rand(environment, end, start=None, step=None):
     r = SystemRandom()
     if isinstance(end, (int, long)):
         if not start:
@@ -220,6 +226,7 @@ class FilterModule(object):
             'dirname': os.path.dirname,
             'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
+            'relpath': os.path.relpath,
 
             # failure testing
             'failed'  : failed,

@@ -34,6 +34,7 @@ This documentation covers the current released version of Ansible (1.5.3) and al
    tower
    community
    galaxy
+   test_strategies
    faq
    glossary
    YAMLSyntax

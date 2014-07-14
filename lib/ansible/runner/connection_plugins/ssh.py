@@ -17,6 +17,7 @@
 #
 
 import os
+import re
 import subprocess
 import shlex
 import pipes
@@ -83,9 +84,9 @@ class Connection(object):
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
         elif self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.runner.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.private_key_file)]
         if self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
@@ -93,8 +94,7 @@ class Connection(object):
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
-        if self.user != pwd.getpwuid(os.geteuid())[0]:
-            self.common_args += ["-o", "User="+self.user]
+        self.common_args += ["-o", "User=" + (self.user or pwd.getpwuid(os.geteuid())[0])]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self
@@ -219,9 +219,15 @@ class Connection(object):
             if not os.path.exists(hf):
                 hfiles_not_found += 1
                 continue
-            host_fh = open(hf)
-            data = host_fh.read()
-            host_fh.close()
+            try:
+                host_fh = open(hf)
+            except IOError, e:
+                hfiles_not_found += 1
+                continue
+            else:
+                data = host_fh.read()
+                host_fh.close()
+                
             for line in data.split("\n"):
                 if line is None or " " not in line:
                     continue
@@ -268,6 +274,7 @@ class Connection(object):
 
         if su and su_user:
             sudocmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
+            prompt_re = re.compile(prompt)
             ssh_cmd.append(sudocmd)
         elif not self.runner.sudo or not sudoable:
             prompt = None
@@ -308,7 +315,12 @@ class Connection(object):
             sudo_output = ''
             sudo_errput = ''
 
-            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
+            while True:
+                if success_key in sudo_output or \
+                    (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
+                    (self.runner.su_pass and prompt_re.match(sudo_output)):
+                    break
+
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
                                               [p.stdout], self.runner.timeout)
                 if p.stderr in rfd:

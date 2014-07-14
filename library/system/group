@@ -121,7 +121,7 @@ class Group(object):
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
-            return (True, '', '')
+	    return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -206,7 +206,7 @@ class AIX(Group):
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
-            return (True, '', '')
+            return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -245,7 +245,7 @@ class FreeBsdGroup(Group):
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
-                return (True, '', '')
+                return (0, '', '')
             return self.execute_command(cmd)
         return (None, '', '')
 
@@ -287,7 +287,7 @@ class OpenBsdGroup(Group):
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
-            return (True, '', '')
+            return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -329,7 +329,7 @@ class NetBsdGroup(Group):
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
-            return (True, '', '')
+            return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 

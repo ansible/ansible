@@ -44,7 +44,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
+       'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
        'su', 'su_user', 'vault_password'
     ]
 
@@ -332,7 +332,6 @@ class Play(object):
                 if new_default_vars:
                     if type(new_default_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
-
                     default_vars = utils.combine_vars(default_vars, new_default_vars)
 
         return default_vars
@@ -526,7 +525,6 @@ class Play(object):
 
             if 'include' in x:
                 tokens = shlex.split(str(x['include']))
-                items = ['']
                 included_additional_conditions = list(additional_conditions)
                 include_vars = {}
                 for k in x:
@@ -572,24 +570,22 @@ class Play(object):
                 if 'role_name' in x:
                     new_role = x['role_name']
 
-                for item in items:
-                    mv = task_vars.copy()
-                    mv['item'] = item
-                    for t in tokens[1:]:
-                        (k,v) = t.split("=", 1)
-                        mv[k] = template(self.basedir, v, mv)
-                    dirname = self.basedir
-                    if original_file:
-                        dirname = os.path.dirname(original_file)
-                    include_file = template(dirname, tokens[0], mv)
-                    include_filename = utils.path_dwim(dirname, include_file)
-                    data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
-                    if 'role_name' in x and data is not None:
-                        for y in data:
-                            if isinstance(y, dict) and 'include' in y:
-                                y['role_name'] = new_role
-                    loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
-                    results += loaded
+                mv = task_vars.copy()
+                for t in tokens[1:]:
+                    (k,v) = t.split("=", 1)
+                    mv[k] = template(self.basedir, v, mv)
+                dirname = self.basedir
+                if original_file:
+                    dirname = os.path.dirname(original_file)
+                include_file = template(dirname, tokens[0], mv)
+                include_filename = utils.path_dwim(dirname, include_file)
+                data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
+                if 'role_name' in x and data is not None:
+                    for y in data:
+                        if isinstance(y, dict) and 'include' in y:
+                            y['role_name'] = new_role
+                loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
+                results += loaded
             elif type(x) == dict:
                 task = Task(
                     self, x,

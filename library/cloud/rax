@@ -31,7 +31,18 @@ options:
         created servers. Only applicable when used with the I(group) attribute
         or meta key.
     default: yes
+    choices:
+      - "yes"
+      - "no"
     version_added: 1.5
+  config_drive:
+    description:
+      - Attach read-only configuration drive to server as label config-2
+    default: no
+    choices:
+      - "yes"
+      - "no"
+    version_added: 1.7
   count:
     description:
       - number of instances to launch
@@ -55,6 +66,9 @@ options:
       - Explicitly ensure an exact count of instances, used with
         state=active/present
     default: no
+    choices:
+      - "yes"
+      - "no"
     version_added: 1.4
   extra_client_args:
     description:
@@ -119,6 +133,11 @@ options:
       - present
       - absent
     default: present
+  user_data:
+    description:
+      - Data to be uploaded to the servers config drive. This option implies
+        I(config_drive). Can be a file path or a string
+    version_added: 1.7
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
@@ -200,7 +219,7 @@ def rax_slugify(value):
     return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
 
 
-def pyrax_object_to_dict(obj):
+def server_to_dict(obj):
     instance = {}
     for key in dir(obj):
         value = getattr(obj, key)
@@ -214,19 +233,31 @@ def pyrax_object_to_dict(obj):
     return instance
 
 
-def create(module, names, flavor, image, meta, key_name, files,
-           wait, wait_timeout, disk_config, group, nics,
-           extra_create_args):
-
+def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
+           files={}, wait=True, wait_timeout=300, disk_config=None,
+           group=None, nics=[], extra_create_args={}, user_data=None,
+           config_drive=False, existing=[]):
     cs = pyrax.cloudservers
     changed = False
 
-    # Handle the file contents
+    if user_data:
+        config_drive = True
+
+    if user_data and os.path.isfile(user_data):
+        try:
+            f = open(user_data)
+            user_data = f.read()
+            f.close()
+        except Exception, e:
+            module.fail_json(msg='Failed to load %s' % user_data)
+
+     # Handle the file contents
     for rpath in files.keys():
         lpath = os.path.expanduser(files[rpath])
         try:
             fileobj = open(lpath, 'r')
             files[rpath] = fileobj.read()
+            fileobj.close()
         except Exception, e:
             module.fail_json(msg='Failed to load %s' % lpath)
     try:
@@ -237,6 +268,8 @@ def create(module, names, flavor, image, meta, key_name, files,
                                              key_name=key_name,
                                              files=files, nics=nics,
                                              disk_config=disk_config,
+                                             config_drive=config_drive,
+                                             userdata=user_data,
                                              **extra_create_args))
     except Exception, e:
         module.fail_json(msg='%s' % e.message)
@@ -266,7 +299,7 @@ def create(module, names, flavor, image, meta, key_name, files,
             server.get()
         except:
             server.status == 'ERROR'
-        instance = pyrax_object_to_dict(server)
+        instance = server_to_dict(server)
         if server.status == 'ACTIVE' or not wait:
             success.append(instance)
         elif server.status == 'ERROR':
@@ -274,15 +307,18 @@ def create(module, names, flavor, image, meta, key_name, files,
         elif wait:
             timeout.append(instance)
 
+    untouched = [server_to_dict(s) for s in existing]
+    instances = success + untouched
+
     results = {
         'changed': changed,
         'action': 'create',
-        'instances': success + error + timeout,
+        'instances': instances,
         'success': success,
         'error': error,
         'timeout': timeout,
         'instance_ids': {
-            'instances': [i['id'] for i in success + error + timeout],
+            'instances': [i['id'] for i in instances],
             'success': [i['id'] for i in success],
             'error': [i['id'] for i in error],
             'timeout': [i['id'] for i in timeout]
@@ -300,7 +336,7 @@ def create(module, names, flavor, image, meta, key_name, files,
         module.exit_json(**results)
 
 
-def delete(module, instance_ids, wait, wait_timeout):
+def delete(module, instance_ids=[], wait=True, wait_timeout=300, kept=[]):
     cs = pyrax.cloudservers
 
     changed = False
@@ -318,7 +354,7 @@ def delete(module, instance_ids, wait, wait_timeout):
         else:
             changed = True
 
-        instance = pyrax_object_to_dict(server)
+        instance = server_to_dict(server)
         instances[instance['id']] = instance
 
     # If requested, wait for server deletion
@@ -332,6 +368,7 @@ def delete(module, instance_ids, wait, wait_timeout):
                     server.get()
                 except:
                     instances[instance_id]['status'] = 'DELETED'
+                    instances[instance_id]['rax_status'] = 'DELETED'
 
             if not filter(lambda s: s['status'] not in ('', 'DELETED',
                                                         'ERROR'),
@@ -347,15 +384,17 @@ def delete(module, instance_ids, wait, wait_timeout):
     success = filter(lambda s: s['status'] in ('', 'DELETED'),
                      instances.values())
 
+    instances = [server_to_dict(s) for s in kept]
+
     results = {
         'changed': changed,
         'action': 'delete',
-        'instances': success + error + timeout,
+        'instances': instances,
         'success': success,
         'error': error,
         'timeout': timeout,
         'instance_ids': {
-            'instances': [i['id'] for i in success + error + timeout],
+            'instances': [i['id'] for i in instances],
             'success': [i['id'] for i in success],
             'error': [i['id'] for i in error],
             'timeout': [i['id'] for i in timeout]
@@ -373,10 +412,12 @@ def delete(module, instance_ids, wait, wait_timeout):
         module.exit_json(**results)
 
 
-def cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                 wait, wait_timeout, disk_config, count, group,
-                 instance_ids, exact_count, networks, count_offset,
-                 auto_increment, extra_create_args):
+def cloudservers(module, state=None, name=None, flavor=None, image=None,
+                 meta={}, key_name=None, files={}, wait=True, wait_timeout=300,
+                 disk_config=None, count=1, group=None, instance_ids=[],
+                 exact_count=False, networks=[], count_offset=0,
+                 auto_increment=False, extra_create_args={}, user_data=None,
+                 config_drive=False):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     if not cnw:
@@ -386,14 +427,20 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
     servers = []
 
-    for key, value in meta.items():
-        meta[key] = repr(value)
-
     # Add the group meta key
     if group and 'group' not in meta:
         meta['group'] = group
     elif 'group' in meta and group is None:
         group = meta['group']
+
+    # Normalize and ensure all metadata values are strings
+    for k, v in meta.items():
+        if isinstance(v, list):
+            meta[k] = ','.join(['%s' % i for i in v])
+        elif isinstance(v, dict):
+            meta[k] = json.dumps(v)
+        elif not isinstance(v, basestring):
+            meta[k] = '%s' % v
 
     # When using state=absent with group, the absent block won't match the
     # names properly. Use the exact_count functionality to decrease the count
@@ -501,11 +548,13 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
                 if len(servers) > count:
                     state = 'absent'
+                    kept = servers[:count]
                     del servers[:count]
                     instance_ids = []
                     for server in servers:
                         instance_ids.append(server.id)
-                    delete(module, instance_ids, wait, wait_timeout)
+                    delete(module, instance_ids=instance_ids, wait=wait,
+                           wait_timeout=wait_timeout, kept=kept)
                 elif len(servers) < count:
                     if auto_increment:
                         names = []
@@ -516,9 +565,15 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     else:
                         names = [name] * (count - len(servers))
                 else:
-                    module.exit_json(changed=False, action=None, instances=[],
+                    instances = []
+                    instance_ids = []
+                    for server in servers:
+                        instances.append(server_to_dict(server))
+                        instance_ids.append(server.id)
+                    module.exit_json(changed=False, action=None,
+                                     instances=instances,
                                      success=[], error=[], timeout=[],
-                                     instance_ids={'instances': [],
+                                     instance_ids={'instances': instance_ids,
                                                    'success': [], 'error': [],
                                                    'timeout': []})
         else:
@@ -568,7 +623,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 if len(servers) >= count:
                     instances = []
                     for server in servers:
-                        instances.append(pyrax_object_to_dict(server))
+                        instances.append(server_to_dict(server))
 
                     instance_ids = [i['id'] for i in instances]
                     module.exit_json(changed=False, action=None,
@@ -580,8 +635,12 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
                 names = [name] * (count - len(servers))
 
-        create(module, names, flavor, image, meta, key_name, files,
-               wait, wait_timeout, disk_config, group, nics, extra_create_args)
+        create(module, names=names, flavor=flavor, image=image,
+               meta=meta, key_name=key_name, files=files, wait=wait,
+               wait_timeout=wait_timeout, disk_config=disk_config, group=group,
+               nics=nics, extra_create_args=extra_create_args,
+               user_data=user_data, config_drive=config_drive,
+               existing=servers)
 
     elif state == 'absent':
         if instance_ids is None:
@@ -614,7 +673,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                                            'success': [], 'error': [],
                                            'timeout': []})
 
-        delete(module, instance_ids, wait, wait_timeout)
+        delete(module, instance_ids=instance_ids, wait=wait,
+               wait_timeout=wait_timeout)
 
 
 def main():
@@ -622,6 +682,7 @@ def main():
     argument_spec.update(
         dict(
             auto_increment=dict(default=True, type='bool'),
+            config_drive=dict(default=False, type='bool'),
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
             disk_config=dict(choices=['auto', 'manual']),
@@ -639,6 +700,7 @@ def main():
             networks=dict(type='list', default=['public', 'private']),
             service=dict(),
             state=dict(default='present', choices=['present', 'absent']),
+            user_data=dict(no_log=True),
             wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=300),
         )
@@ -660,6 +722,7 @@ def main():
                              'playbook pertaining to the "rax" module')
 
     auto_increment = module.params.get('auto_increment')
+    config_drive = module.params.get('config_drive')
     count = module.params.get('count')
     count_offset = module.params.get('count_offset')
     disk_config = module.params.get('disk_config')
@@ -678,6 +741,7 @@ def main():
     name = module.params.get('name')
     networks = module.params.get('networks')
     state = module.params.get('state')
+    user_data = module.params.get('user_data')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
@@ -696,10 +760,14 @@ def main():
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
-    cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                 wait, wait_timeout, disk_config, count, group,
-                 instance_ids, exact_count, networks, count_offset,
-                 auto_increment, extra_create_args)
+    cloudservers(module, state=state, name=name, flavor=flavor,
+                 image=image, meta=meta, key_name=key_name, files=files,
+                 wait=wait, wait_timeout=wait_timeout, disk_config=disk_config,
+                 count=count, group=group, instance_ids=instance_ids,
+                 exact_count=exact_count, networks=networks,
+                 count_offset=count_offset, auto_increment=auto_increment,
+                 extra_create_args=extra_create_args, user_data=user_data,
+                 config_drive=config_drive)
 
 
 # import module snippets

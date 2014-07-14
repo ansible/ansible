@@ -389,8 +389,6 @@ class LinuxService(Service):
         location = dict()
 
         for binary in binaries:
-            location[binary] = None
-        for binary in binaries:
             location[binary] = self.module.get_bin_path(binary)
 
         def check_systemd(name):
@@ -480,7 +478,7 @@ class LinuxService(Service):
     def get_systemd_status_dict(self):
         (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
         if rc != 0:
-            self.module.fail_json('failure %d running systemctl show for %r: %s' % (self.__systemd_unit, rc, err))
+            self.module.fail_json(msg='failure %d running systemctl show for %r: %s' % (rc, self.__systemd_unit, err))
         return dict(line.split('=', 1) for line in out.splitlines())
 
     def get_systemd_service_status(self):

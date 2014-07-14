@@ -70,3 +70,23 @@ resources.  Running these tests may result in additional fees associated with
 your cloud account.  Care is taken to ensure that created resources are
 removed.  However, it is advisable to inspect your AWS console to ensure no
 unexpected resources are running.
+
+Windows Tests
+=============
+
+These tests exercise the winrm connection plugin and Windows modules.  You'll
+need to define an inventory with a remote Windows 2008 or 2012 Server to use
+for testing, and enable PowerShell Remoting to continue.
+
+Running these tests may result in changes to your Windows host, so don't run
+them against a production/critical Windows environment.
+
+Enable PowerShell Remoting (run on the Windows host via Remote Desktop):
+    Enable-PSRemoting -Force
+
+Define Windows inventory:
+    cp inventory.winrm.template inventory.winrm
+    ${EDITOR:-vi} inventory.winrm
+
+Run the tests:
+    make test_winrm

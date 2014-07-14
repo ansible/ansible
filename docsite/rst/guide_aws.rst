@@ -266,7 +266,7 @@ Example 4
         - debug: var=hostvars[inventory_hostname]
 
         # just show the instance-id
-        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance-id'] }}"
+        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance_id'] }}"
 
 
     # Using the instanceid, call the ec2 module
@@ -288,7 +288,7 @@ Example 4
                region={{ region }}
                instance_ids={{ item }}
                wait=true
-          with_items: hostvars[inventory_hostname]['ansible_ec2_instance-id']
+          with_items: hostvars[inventory_hostname]['ansible_ec2_instance_id']
 
 
 .. note:: more examples of this are pending.   You may also be interested in the ec2_ami module for taking AMIs of running instances.
@@ -309,7 +309,7 @@ In the future look here for more topics.
        An introduction to playbooks
    :doc:`playbooks_delegation`
        Delegation, useful for working with loud balancers, clouds, and locally executed steps.
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

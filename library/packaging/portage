@@ -362,7 +362,7 @@ def main():
     if p['sync']:
         sync_repositories(module, webrsync=(p['sync'] == 'web'))
         if not p['package']:
-            return
+            module.exit_json(msg='Sync successfully finished.')
 
     packages = p['package'].split(',') if p['package'] else []
 

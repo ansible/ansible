@@ -11,9 +11,6 @@ whether the hosts match other criteria.   There are many options to control exec
 
 Let's dig into what they are.
 
-.. contents::
-   :depth: 2
-
 The When Statement
 ``````````````````
 

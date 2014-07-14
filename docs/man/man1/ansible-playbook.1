@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ansible-playbook
 .\"    Author: :doctype:manpage
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 02/12/2014
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 05/26/2014
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.5
+.\"    Source: Ansible 1.7
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "02/12/2014" "Ansible 1\&.5" "System administration commands"
+.TH "ANSIBLE\-PLAYBOOK" "1" "05/26/2014" "Ansible 1\&.7" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -91,72 +91,12 @@ Prompt for the password to use for playbook plays that request sudo access, if a
 Desired sudo user (default=root)\&.
 .RE
 .PP
-\fB\-S\fR, \fB\-\-su\fR
-.RS 4
-run operations with su\&.
-.RE
-.PP
-\fB\-\-ask\-su\-pass\fR
-.RS 4
-Prompt for the password to use for playbook plays that request su access, if any\&.
-.RE
-.PP
-\fB\-R\fR, \fISU_USER\fR, \fB\-\-sudo\-user=\fR\fISU_USER\fR
-.RS 4
-Desired su user (default=root)\&.
-.RE
-.PP
-\fB\-\-ask\-vault\-pass\fR
-.RS 4
-Ask for vault password\&.
-.RE
-.PP
-\fB\-\-vault\-password\-file=\fR\fIVAULT_PASSWORD_FILE\fR
-.RS 4
-Vault password file\&.
-.RE
-.PP
-\fB\-\-force\-handlers\fR
-.RS 4
-Run play handlers even if a task fails\&.
-.RE
-.PP
-\fB\-\-list\-hosts\fR
-.RS 4
-Outputs a list of matching hosts without executing anything else\&.
-.RE
-.PP
-\fB\-\-list\-tasks\fR
-.RS 4
-List all tasks that would be executed\&.
-.RE
-.PP
-\fB\-\-start\-at\-task=\fR\fISTART_AT\fR
-.RS 4
-Start the playbook at the task matching this name\&.
-.RE
-.PP
-\fB\-\-step\fR
-.RS 4
-one-step-at-a-time: confirm each task before running\&.
-.RE
-.PP
-\fB\-\-syntax\-check\fR
-.RS 4
-Perform a syntax check on the playbook, but do not execute it\&.
-.RE
-.PP
-\fB\-\-private\-key\fR
-.RS 4
-Use this file to authenticate the connection\&.
-.RE
-.PP
-\fB\-t\fR, \fITAGS\fR, \fB\fI\-\-tags=\fR\fR\fB\*(AqTAGS\fR
+\fB\-t\fR, \fITAGS\fR, \fB\-\-tags=\fR\fITAGS\fR
 .RS 4
 Only run plays and tasks tagged with these values\&.
 .RE
 .PP
-\fB\fI\-\-skip\-tags=\fR\fR\fB\*(AqSKIP_TAGS\fR
+\fB\-\-skip\-tags=\fR\fISKIP_TAGS\fR
 .RS 4
 Only run plays and tasks whose tags do not match these values\&.
 .RE
@@ -207,13 +147,6 @@ is mostly useful for crontab or kickstarts\&.
 .RS 4
 Further limits the selected host/group patterns\&.
 .RE
-
-.PP
-\fB\-\-version\fR
-.RS 4
-Show program's version number and exit\&.
-.RE
-
 .SH "ENVIRONMENT"
 .sp
 The following environment variables may be specified\&.

@@ -61,7 +61,7 @@ options:
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
     key_file:
-        requird: false
+        required: false
         default: None
         version_added: "1.5"
         description:
@@ -101,9 +101,7 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.2"
         description:
-            - If C(yes), repository will be updated using the supplied
-              remote.  Otherwise the repo will be left untouched.
-              Prior to 1.2, this was always 'yes' and could not be disabled.
+            - If C(no), just returns information about the repository without updating.
     executable:
         required: false
         default: null
@@ -401,6 +399,9 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
+    (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to set a new url %s for %s: %s" % (repo, remote, out0 + err0))
     if bare:
         (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
     else:

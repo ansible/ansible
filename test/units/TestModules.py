@@ -15,7 +15,9 @@ class TestModules(unittest.TestCase):
         for path in paths:
             for (dirpath, dirnames, filenames) in os.walk(path):
                 for filename in filenames:
-                    module_list.append(os.path.join(dirpath, filename))
+                    (path, ext) = os.path.splitext(filename)
+                    if ext != ".ps1":
+                        module_list.append(os.path.join(dirpath, filename))
         return module_list
 
     def test_ast_parse(self):

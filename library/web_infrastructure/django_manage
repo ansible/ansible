@@ -144,6 +144,7 @@ def _ensure_virtualenv(module):
             _fail(module, vcmd, out_venv, err_venv)
 
     os.environ["PATH"] = "%s:%s" % (vbin, os.environ["PATH"])
+    os.environ["VIRTUAL_ENV"] = venv_param
 
 def createcachetable_filter_output(line):
     return "Already exists" not in line

@@ -95,6 +95,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 
     changed = False
     cp = ConfigParser.ConfigParser()
+    cp.optionxform = identity
 
     try:
         f = open(filename)
@@ -151,6 +152,19 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
     return changed
 
 # ==============================================================
+# identity
+
+def identity(arg):
+    """
+    This function simply returns its argument. It serves as a
+    replacement for ConfigParser.optionxform, which by default
+    changes arguments to lower case. The identity function is a
+    better choice than str() or unicode(), because it is
+    encoding-agnostic.
+    """
+    return arg
+
+# ==============================================================
 # main
 
 def main():
@@ -179,7 +193,7 @@ def main():
     changed = do_ini(module, dest, section, option, value, state, backup)
 
     file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_file_attributes_if_different(file_args, changed)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
 
     # Mission complete
     module.exit_json(dest=dest, changed=changed, msg="OK")
