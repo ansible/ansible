@@ -28,6 +28,11 @@ New Modules:
 * windows: win_service
 * windows: win_group
 
+Other notable changes:
+
+* Inventory speed improvements for very large inventories.
+* Vault password files can now be executable, to support scripts that fetch the vault password.
+
 ## 1.6.6 "And the Cradle Will Rock" - Jul 01, 2014
 
 - Security updates to further protect against the incorrect execution of untrusted data
