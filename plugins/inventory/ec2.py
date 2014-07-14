@@ -240,7 +240,7 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
+
 
 
     def parse_cli_args(self):
@@ -285,12 +285,12 @@ class Ec2Inventory(object):
             if conn is None:
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
- 
+
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
-        
+
         except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
@@ -298,7 +298,7 @@ class Ec2Inventory(object):
             sys.exit(1)
 
     def get_rds_instances_by_region(self, region):
-	''' Makes an AWS API call to the list of RDS instances in a particular
+        ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
 
         try:
@@ -368,7 +368,7 @@ class Ec2Inventory(object):
         # Inventory: Group by key pair
         if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
-        
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -426,10 +426,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.availability_zone, dest)
-        
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
