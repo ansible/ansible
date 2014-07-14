@@ -582,6 +582,9 @@ class Inventory(object):
             # get host vars from host_vars/ files
             for host in self.get_hosts():
                 host.vars = utils.combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
+            # invalidate cache
+            self._vars_per_host = {}
+            self._vars_per_group = {}
 
     def get_host_vars(self, host, new_pb_basedir=False):
         """ Read host_vars/ files """
