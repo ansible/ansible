@@ -585,11 +585,11 @@ class Inventory(object):
 
     def get_host_vars(self, host, new_pb_basedir=False):
         """ Read host_vars/ files """
-        return self._get_hostgroup_vars(host=host, group=None, new_pb_basedir=False)
+        return self._get_hostgroup_vars(host=host, group=None, new_pb_basedir=new_pb_basedir)
 
     def get_group_vars(self, group, new_pb_basedir=False):
         """ Read group_vars/ files """
-        return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=False)
+        return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=new_pb_basedir)
 
     def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False):
         """
