@@ -39,6 +39,8 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
+from distutils.version import LooseVersion
+
 # import module snippets
 from ansible.module_utils.basic import *
 
@@ -297,7 +299,7 @@ class RedHat5Hostname(Hostname):
 class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
-    if float(get_distribution_version()) >= 7:
+    if LooseVersion(get_distribution_version()) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
         strategy_class = RedHatStrategy
@@ -305,7 +307,7 @@ class RedHatServerHostname(Hostname):
 class RedHatWorkstationHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux workstation'
-    if float(get_distribution_version()) >= 7:
+    if LooseVersion(get_distribution_version()) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
         strategy_class = RedHatStrategy
@@ -313,18 +315,22 @@ class RedHatWorkstationHostname(Hostname):
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
-    if float(get_distribution_version()) >= 7:
-        strategy_class = FedoraStrategy
-    else:
-        strategy_class = RedHatStrategy
+    strategy_class = RedHatStrategy
+
+class CentOSLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Centos linux'
+    strategy_class = FedoraStrategy
+
+class ScientificHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Scientific'
+    strategy_class = RedHatStrategy
 
 class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Scientific'
-    if float(get_distribution_version()) >= 7:
-        strategy_class = FedoraStrategy
-    else:
-        strategy_class = RedHatStrategy
+    distribution = 'Scientific linux'
+    strategy_class = FedoraStrategy
 
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
