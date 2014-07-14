@@ -30,7 +30,7 @@ options:
     required: true
   public_key:
     description:
-      - Public Key string to upload
+      - Public Key string to upload. Can be a file path or string
     default: null
   state:
     description:
@@ -43,6 +43,7 @@ author: Matt Martz
 notes:
   - Keypairs cannot be manipulated, only created and deleted. To "update" a
     keypair you must first delete and then recreate.
+  - The ability to specify a file path for the public key was added in 1.7
 extends_documentation_fragment: rackspace.openstack
 '''
 
@@ -116,6 +117,14 @@ def rax_keypair(module, name, public_key, state):
     keypair = {}
 
     if state == 'present':
+        if os.path.isfile(public_key):
+            try:
+                f = open(public_key)
+                public_key = f.read()
+                f.close()
+            except Exception, e:
+                module.fail_json(msg='Failed to load %s' % public_key)
+
         try:
             keypair = cs.keypairs.find(name=name)
         except cs.exceptions.NotFound:
