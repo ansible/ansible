@@ -51,6 +51,10 @@ class ActionModule(object):
 
             module_args = "%s content=%s" % (module_args, pipes.quote(content))
 
+        # propagate checkmode to module
+        if self.runner.noop_on_check(inject):
+            module_args += " CHECKMODE=True"
+
         return self.runner._execute_module(conn, tmp, 'ldap', module_args,
                 inject=inject, complex_args=complex_args)
 
