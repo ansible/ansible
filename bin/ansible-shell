@@ -128,7 +128,7 @@ class AnsibleShell(cmd.Cmd):
 
     def set_prompt(self):
         self.selected = self.ansible.inventory.list_hosts(self.options.cwd)
-        self.prompt = "%s@%s (%d)[s:%d]$ " % (self.options.remote_user, self.options.cwd, len(self.selected), self.options.serial)
+        self.prompt = "%s@%s (%d)[s:%s]$ " % (self.options.remote_user, self.options.cwd, len(self.selected), self.options.serial)
 
     def list_modules(self):
         modules = []
