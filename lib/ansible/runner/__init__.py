@@ -144,6 +144,7 @@ class Runner(object):
         vault_pass=None,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
+        run_once=False,                     # option to enable/disable host bypass loop for a given task
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -197,6 +198,7 @@ class Runner(object):
         self.su_pass          = su_pass
         self.vault_pass       = vault_pass
         self.no_log           = no_log
+        self.run_once         = run_once
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -1200,7 +1202,7 @@ class Runner(object):
         if self.forks == 0 or self.forks > len(hosts):
             self.forks = len(hosts)
 
-        if p and getattr(p, 'BYPASS_HOST_LOOP', None):
+        if (p and (getattr(p, 'BYPASS_HOST_LOOP', None)) or self.run_once):
 
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
