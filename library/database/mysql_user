@@ -40,7 +40,7 @@ options:
     description:
       - the hash of the user's password to be passed directly to mysql. This is mutually exclusive with the plain text password.
 		required: false
-    default: no
+    default: null
     version_added: '1.7'
   host:
     description:
