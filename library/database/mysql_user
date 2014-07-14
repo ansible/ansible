@@ -33,12 +33,12 @@ options:
     default: null
   password:
     description:
-      - set the user's password
+      - set the user's plain text password
     required: false
     default: null
-  password_is_hashed:
+  password_hash:
     description:
-      - password value is specified as a hash that is used by mysql
+      - the hash of the user's password to be passed directly to mysql. This is mutually exclusive with the plain text password.
 		required: false
     default: no
     version_added: '1.7'
@@ -135,6 +135,15 @@ mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 # Example using login_unix_socket to connect to server
 - mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock
 
+# Example using a mysql password hash for a user
+- mysql_user: name=bob password_hash=*973D12C21B4F274E09461F56EEAB92AB7B6FC20A priv=*.*:ALL state=present
+
+# To get the password hash, first connect to mysql
+# then use the mysql database
+use mysql;
+# then grab the password from the user in user table
+select User,Password from user;
+
 # Example .my.cnf file for setting the root password
 # Note: don't use quotes around the password, because the mysql_user module
 # will include them in the password but the mysql client will not
@@ -163,9 +172,9 @@ def user_exists(cursor, user, host):
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(cursor, user, host, password, new_priv, password_is_hashed):
-    if password_is_hashed:
-        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user,host,password))
+def user_add(cursor, user, host, password, password_hash, new_priv):
+    if password_hash:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user,host,password_hash))
     else:
         cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     if new_priv is not None:
@@ -173,19 +182,19 @@ def user_add(cursor, user, host, password, new_priv, password_is_hashed):
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, password, new_priv, append_privs, password_is_hashed):
+def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs):
     changed = False
     grant_option = False
 
     # Handle passwords.
-    if password is not None:
+    if password is not None or password_hash is not None:
         cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
         current_pass_hash = cursor.fetchone()
-        if password_is_hashed:
-            if current_pass_hash[0] != password:
-                cursor.execute("SET PASSWORD FOR %s@%s = %s", (user,host,password))
+        if password_hash is not None:
+            if current_pass_hash[0] != password_hash:
+                cursor.execute("SET PASSWORD FOR %s@%s = %s", (user,host,password_hash))
                 changed = True
-        else:
+        if password is not None:
             cursor.execute("SELECT PASSWORD(%s)", (password,))
             new_pass_hash = cursor.fetchone()
             if current_pass_hash[0] != new_pass_hash[0]:
@@ -414,22 +423,22 @@ def main():
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
+            password_hash=dict(default=None),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             append_privs=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
-            password_is_hashed=dict(type="bool", default="no"),
         )
     )
     user = module.params["user"]
     password = module.params["password"]
+    password_hash = module.params["password_hash"]
     host = module.params["host"]
     state = module.params["state"]
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
     append_privs = module.boolean(module.params["append_privs"])
-    password_is_hashed = module.boolean(module.params['password_is_hashed'])
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -439,6 +448,9 @@ def main():
             priv = privileges_unpack(priv)
         except:
             module.fail_json(msg="invalid privileges string")
+
+    if password is not None and password_hash is not None:
+        module.fail_json(msg="password and password_hash arguments are mutually exclusive")
 
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
@@ -471,11 +483,11 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, password, priv, append_privs, password_is_hashed)
+            changed = user_mod(cursor, user, host, password, password_hash, priv, append_privs)
         else:
-            if password is None:
-                module.fail_json(msg="password parameter required when adding a user")
-            changed = user_add(cursor, user, host, password, priv, password_is_hashed)
+            if password is None and password_hash is None:
+                module.fail_json(msg="a password or password_hash parameter is required when adding a user")
+            changed = user_add(cursor, user, host, password, password_hash, priv)
     elif state == "absent":
         if user_exists(cursor, user, host):
             changed = user_delete(cursor, user, host)
