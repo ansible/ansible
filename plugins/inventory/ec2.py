@@ -22,6 +22,12 @@ you need to define:
 
     export EC2_URL=http://hostname_of_your_cc:port/services/Eucalyptus
 
+If you're using boto profiles (requires boto>=2.24.0) you can choose a profile 
+using the --profile command line argument (e.g. ec2.py --profile prod) or using
+the EC2_PROFILE variable:
+
+    EC2_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml
+
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
 When run against a specific host, this script returns the following variables:
@@ -144,9 +150,20 @@ class Ec2Inventory(object):
         # Index of hostname (address) to instance ID
         self.index = {}
 
-        # Read settings and parse CLI arguments
-        self.read_settings()
+        # Parse CLI arguments and read settings
         self.parse_cli_args()
+        self.read_settings()
+
+        # boto profile to use (if any)
+        # Make sure that profile_name is not passed at all if not set
+        # as pre 2.24 boto will fall over otherwise
+        if self.args.profile:
+            if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
+                sys.stderr.write("boto version must be >= 2.24 to use profile\n")
+                sys.exit(1)
+            self.profile = dict(profile_name=self.args.profile)
+        else:
+            self.profile = dict()
 
         # Cache
         if self.args.refresh_cache:
@@ -234,13 +251,14 @@ class Ec2Inventory(object):
 
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
+        if self.args.profile:
+            cache_dir = os.path.join(cache_dir, 'profile_' + self.args.profile)
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
 
 
     def parse_cli_args(self):
@@ -253,6 +271,8 @@ class Ec2Inventory(object):
                            help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                            help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
+        parser.add_argument('--profile', action='store', default=os.environ.get('EC2_PROFILE'),
+                           help='Use boto profile for connections to EC2')
         self.args = parser.parse_args()
 
 
@@ -270,6 +290,21 @@ class Ec2Inventory(object):
         self.write_to_cache(self.index, self.cache_path_index)
 
 
+    def boto_fix_security_token_in_profile(self, conn):
+        ''' monkey patch for boto issue boto/boto#2100 '''
+        profile = 'profile ' + self.profile.get('profile_name')
+        if boto.config.has_option(profile, 'aws_security_token'):
+            conn.provider.set_security_token(boto.config.get(profile, 'aws_security_token'))
+        return conn
+
+
+    def connect_to_aws(self, module, region):
+        conn = module.connect_to_region(region, **self.profile)
+        if 'profile_name' in self.profile:
+            conn = self.boto_fix_security_token_in_profile(conn)
+        return conn
+
+
     def get_instances_by_region(self, region):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
@@ -279,30 +314,31 @@ class Ec2Inventory(object):
                 conn = boto.connect_euca(host=self.eucalyptus_host)
                 conn.APIVersion = '2010-08-31'
             else:
-                conn = ec2.connect_to_region(region)
+                conn = self.connect_to_aws(ec2, region)
 
             # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
             if conn is None:
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
- 
+
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
-        
+
         except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
             print e
             sys.exit(1)
 
+
     def get_rds_instances_by_region(self, region):
-	''' Makes an AWS API call to the list of RDS instances in a particular
+        ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
 
         try:
-            conn = rds.connect_to_region(region)
+            conn = self.connect_to_aws(rds, region)
             if conn:
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
@@ -319,7 +355,7 @@ class Ec2Inventory(object):
             conn = boto.connect_euca(self.eucalyptus_host)
             conn.APIVersion = '2010-08-31'
         else:
-            conn = ec2.connect_to_region(region)
+            conn = self.connect_to_aws(ec2, region)
 
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
@@ -368,7 +404,7 @@ class Ec2Inventory(object):
         # Inventory: Group by key pair
         if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
-        
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -426,10 +462,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.availability_zone, dest)
-        
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
