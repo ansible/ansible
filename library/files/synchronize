@@ -58,7 +58,7 @@ options:
     version_added: "1.6"
   compress:
     description:
-      - Compress file data during the transfer. You should leave this enabled unlessit causes problems.
+      - Compress file data during the transfer. In most cases, leave this enabled unless it causes problems.
     choices: [ 'yes', 'no' ]
     default: 'yes'
     required: false
