@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: apt_repository
-short_description: Add and remove APT repositores
+short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 notes:
