@@ -78,6 +78,47 @@ options:
     required: false
     default: null
     aliases: []
+
+  alias:
+    description:
+      - The value of the hosted zone ID, CanonicalHostedZoneNameId, or a LoadBalancer.
+    required: false
+    default: null
+    version_added: "1.6"
+  alias_zone:
+    description:
+      - The name of the zone the alias should exist in.
+    required: false
+    default: null
+    version_added: "1.6"
+  alias_eval_health:
+    description:
+      - Wehter or not to set the Evaluate Health option for this record
+    required: false
+    default: false
+    version_added: "1.6"
+  identifier:
+    description:
+      - Used for weight or latency based routing policy. 
+    required: false
+    default: null
+    version_added: "1.6"
+  weight:
+    description:
+      - Sets the weight for weight based routing. 
+    default: null
+    version_added: "1.6"
+  region:
+    description:
+      - Sets the region for region based latecy routing. 
+    required: false
+    default: null
+    version_added: "1.6"
+  health_check:
+    description:
+      - Sets the value of the health check for weighted routing. 
+
+
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
@@ -128,6 +169,56 @@ EXAMPLES = '''
       ttl=7200
       value="\"bar\""
 
+# Adds an alias from boo.foo.com to alias.foo.com
+- route53: >
+      command=create
+      record=yes
+      ttl=3600
+      type=A
+      zone=foo.com
+      alias=alias.foo.com
+      alias_zone=foo.com
+      record=alias.foo.com
+      value=boo.foo.com
+
+   
+# Add alias record with health from boo.foo.com to alias.foo.com
+- route53: >
+      command=create
+      record=yes
+      ttl=3600
+      type=A
+      zone=foo.com
+      alias_eval_health=yes
+      alias=alias.foo.com
+      alias_zone=foo.com
+      record=alias.foo.com
+      value=boo.foo.com
+
+
+# Add a weighted record 
+- route53: >
+      command=create
+      record=yes
+      ttl=3600
+      type=A
+      zone=foo.com
+      weight=100
+      identifier=us-west-1c
+      record=alias.foo.com
+      value=boo.foo.com
+
+# Add a latency record 
+- route53: >
+      command=create
+      record=yes
+      ttl=3600
+      type=A
+      zone=foo.com
+      region=us-west-1
+      identifier=us-west-1c
+      record=alias.foo.com
+      value=boo.foo.com
 
 '''
 
@@ -159,13 +250,20 @@ def commit(changes):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            command         = dict(choices=['get', 'create', 'delete'], required=True),
-            zone            = dict(required=True),
-            record          = dict(required=True),
-            ttl             = dict(required=False, default=3600),
-            type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
-            value           = dict(required=False), 
-            overwrite       = dict(required=False, type='bool')
+            command           = dict(choices=['get', 'create', 'delete'], required=True),
+            zone              = dict(required=True),
+            record            = dict(required=True),
+            ttl               = dict(required=False, default=3600),
+            type              = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
+            value             = dict(required=False), 
+            overwrite         = dict(required=False, type='bool'),
+            alias_zone        = dict(register=False),
+            alias             = dict(register=False),
+            alias_eval_health = dict(register=False, type='bool', default=False),
+            identifier        = dict(register=False, default=None),
+            weight            = dict(register=False, default=None),
+            region            = dict(register=False, default=None),
+            health_check      = dict(register=False, default=None),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -176,6 +274,13 @@ def main():
     record_in             = module.params.get('record')
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
+    alias_zone_in         = module.params.get('alias_zone')
+    alias_in              = module.params.get('alias')
+    alias_eval_health_in  = module.params.get('alias_eval_health') 
+    identifier_in         = module.params.get('identifier')
+    weight_in             = module.params.get('weight')
+    region_in             = module.params.get('region')
+    health_check_in       = module.params.get('health_check')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -192,6 +297,11 @@ def main():
 
     if record_in[-1:] != '.':
         record_in += "."
+
+    if not alias_zone_in:
+        alias_zone_in = zone_in
+    elif alias_zone_in[-1:] !=' .':
+        alias_zone_in += "."
 
     if command_in == 'create' or command_in == 'delete':
         if not value_in:
@@ -215,6 +325,11 @@ def main():
         errmsg = "Zone %s does not exist in Route53" % zone_in
         module.fail_json(msg = errmsg)
 
+    # Verify that the requested alisa zone is already defined in Route53
+    if alias_zone_in and not alias_zone_in in zones:
+        errmsg = "Zone %s does not exist in Route53" % zone_in
+        module.fail_json(msg = errmsg)
+
     record = {}
     
     found_record = False
@@ -225,12 +340,19 @@ def main():
         decoded_name = rset.name.replace(r'\052', '*')
         decoded_name = decoded_name.replace(r'\100', '@')
 
-        if rset.type == type_in and decoded_name == record_in:
+        if rset.type == type_in and decoded_name == record_in or (rset.type == 'CNAME' and value_in in rset.resource_records):
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
             record['record'] = decoded_name
             record['ttl'] = rset.ttl
+            record['alias_dns_name'] = rset.alias_dns_name
+            record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
+            record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
+            record['health_check'] = rset.health_check
+            record['identifier'] = rset.identifier
+            record['region'] = rset.region
+            record['weight'] = rset.weight   
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
             if value_list == sorted(rset.resource_records) and record['ttl'] == ttl_in and command_in == 'create':
@@ -248,12 +370,23 @@ def main():
         if not module.params['overwrite']:
             module.fail_json(msg = "Record already exists with different value. Set 'overwrite' to replace it")
         else:
-            change = changes.add_change("DELETE", record_in, type_in, record['ttl'])
+            change = changes.add_change("DELETE", record_in, record['type'], record['ttl'],
+                                                  alias_hosted_zone_id=record['alias_hosted_zone_id'], 
+                                                  alias_dns_name=record['alias_dns_name'] ,
+                                                  identifier=record['identifier'],
+                                                  weight=record['weight'],  
+                                                  region=record['region'],  
+                                                  alias_evaluate_target_health=record['alias_evaluate_target_health'], 
+                                                  health_check=record['health_check'])
         for v in record['values']:
             change.add_value(v)
 
+
     if command_in == 'create' or command_in == 'delete':
-        change = changes.add_change(command_in.upper(), record_in, type_in, ttl_in)
+        change = changes.add_change(command_in.upper(), record_in, type_in, ttl_in,
+                                                  alias_hosted_zone_id=zones[alias_zone_in], alias_dns_name=alias_in, identifier=identifier_in,
+                                                  weight=weight_in, region=region_in,  
+                                                  alias_evaluate_target_health=alias_eval_health_in, health_check=health_check_in)
         for v in value_list:
             change.add_value(v)
 
