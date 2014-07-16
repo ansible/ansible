@@ -588,7 +588,6 @@ class DockerManager:
             'binds': self.binds,
             'port_bindings': self.port_bindings,
             'publish_all_ports': self.module.params.get('publish_all_ports'),
-            'privileged':   self.module.params.get('privileged'),
             'links': self.links,
         }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ > '0.3.0':
