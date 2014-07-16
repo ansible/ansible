@@ -76,6 +76,14 @@ options:
     version_added: "1.3"
     required: false
     default: null
+  md5sum:
+    description:
+      - Performs the same service as sha256sum but using a MD5 checksum. This option
+        cannot be set at the same time as sha256sum. MD5 checksum verification is 
+        available for usage on systems with Python 2.4, whereas SHA-256 checksum
+        verification is not.
+    required: false
+    default: null
   use_proxy:
     description:
       - if C(no), it will not use a proxy, even if one is defined in
@@ -126,6 +134,28 @@ try:
     HAS_HASHLIB=True
 except ImportError:
     HAS_HASHLIB=False
+
+
+# ==============================================================
+# Checksum verification
+def verify_checksum(module, method_name, expected_checksum, destination_checksum, dest):
+    """
+    Verify a MD5 or SHA256 checksum. 
+
+    Function takes as arguments the module object and the name of the verification 
+    method used to check the file. The expected checksum, the checksum of the actual
+    file and the path to the destination file also need to be provided.
+    """
+    # Remove any non-alphanumeric characters, including the infamous
+    # Unicode zero-width space
+    stripped_checksum = re.sub(r'\W+', '', expected_checksum)
+    if stripped_checksum.lower() != destination_checksum:
+        os.remove(dest)
+        module.fail_json(
+            msg="The %s checksum for %s did not match %s; it was %s" % 
+            (method_name, dest, expected_checksum, destination_checksum)
+        )
+
 
 # ==============================================================
 # url handling
@@ -189,9 +219,10 @@ def main():
 
     argument_spec = url_argument_spec()
     argument_spec.update(
-        url = dict(required=True),
-        dest = dict(required=True),
-        sha256sum = dict(default=''),
+        url=dict(required=True),
+        dest=dict(required=True),
+        sha256sum=dict(default=''),
+        md5sum=dict(default=None),
     )
 
     module = AnsibleModule(
@@ -204,6 +235,7 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
     sha256sum = module.params['sha256sum']
+    expected_md5sum = module.params['md5sum']
     use_proxy = module.params['use_proxy']
 
     dest_is_dir = os.path.isdir(dest)
@@ -272,20 +304,19 @@ def main():
 
     # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
-    if sha256sum != '':
-        # Remove any non-alphanumeric characters, including the infamous
-        # Unicode zero-width space
-        stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
+    if sha256sum and expected_md5sum:
+        module.fail_json(msg="You cannot verify both sha256 and md5 checksums at the same time! You must choose one or the other.")
 
+    if sha256sum:
         if not HAS_HASHLIB:
             os.remove(dest)
             module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
-        else:
-            destination_checksum = module.sha256(dest)
+        destination_checksum = module.sha256(dest)
+        verify_checksum(module, "SHA-256", sha256sum, destination_checksum, dest)
 
-        if stripped_sha256sum.lower() != destination_checksum:
-            os.remove(dest)
-            module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
+    if expected_md5sum:
+        verify_checksum(module, "MD5", expected_md5sum, md5sum_src, dest)
+
 
     os.remove(tmpsrc)
 
@@ -296,8 +327,16 @@ def main():
     changed = module.set_fs_attributes_if_different(file_args, changed)
 
     # Mission complete
-    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
-        sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
+    module.exit_json(
+        url=url, 
+        dest=dest, 
+        src=tmpsrc, 
+        md5sum=md5sum_src,
+        expected_md5sum=expected_md5sum,
+        sha256sum=sha256sum,
+        changed=changed, 
+        msg=info.get('msg', '')
+    )
 
 # import module snippets
 from ansible.module_utils.basic import *
