@@ -62,7 +62,7 @@ class Play(object):
         self.vars_prompt      = ds.get('vars_prompt', {})
         self.playbook         = playbook
         self.vars             = self._get_vars()
-        self.basedir          = basedir
+        self.basedir          = playbook.basedir
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
         self.vault_password   = vault_password

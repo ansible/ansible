@@ -162,7 +162,7 @@ class PlayBook(object):
         if self.module_path is not None:
             utils.plugins.module_finder.add_directory(self.module_path)
 
-        self.basedir     = os.path.dirname(playbook) or '.'
+        self.basedir     = os.path.realpath(os.path.dirname(playbook or '.'))
         utils.plugins.push_basedir(self.basedir)
 
         # let inventory know the playbook basedir so it can load more vars
