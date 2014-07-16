@@ -78,6 +78,12 @@ options:
     required: false
     default: null
     aliases: []
+  retry_interval:
+    description:
+      - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many domain names, the default of 500 seconds may be too long.
+    required: false
+    default: 500
+    aliases: []
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
@@ -142,7 +148,7 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-def commit(changes):
+def commit(changes, retry_interval):
     """Commit changes, but retry PriorRequestNotComplete errors."""
     retry = 10
     while True:
@@ -154,7 +160,7 @@ def commit(changes):
             code = code.split("</Code>")[0]
             if code != 'PriorRequestNotComplete' or retry < 0:
                 raise e
-            time.sleep(500)
+            time.sleep(retry_interval)
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -165,7 +171,8 @@ def main():
             ttl             = dict(required=False, default=3600),
             type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             value           = dict(required=False), 
-            overwrite       = dict(required=False, type='bool')
+            overwrite       = dict(required=False, type='bool'),
+            retry_interval  = dict(required=False, default=500)
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -176,6 +183,7 @@ def main():
     record_in             = module.params.get('record')
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
+    retry_interval_in     = module.params.get('retry_interval')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -258,7 +266,7 @@ def main():
             change.add_value(v)
 
     try:
-        result = commit(changes)
+        result = commit(changes, retry_interval_in)
     except boto.route53.exception.DNSServerError, e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
