@@ -1095,15 +1095,21 @@ def startstop_instances(module, ec2, instance_ids, state):
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
         
-            # Check "termination_protection" attribute
-            if source_dest_check is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                inst.modify_attribute('sourceDestCheck', source_dest_check)
-                changed = True
+            # Check "source_dest_check" attribute
+            try:
+                if inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                    inst.modify_attribute('sourceDestCheck', source_dest_check)
+                    changed = True
+            except Exception as error:
+                pass
 
             # Check "termination_protection" attribute
-            if termination_protection is not None and inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
-                inst.modify_attribute('disableApiTermination', termination_protection)
-                changed = True
+            try:
+                if inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
+                    inst.modify_attribute('disableApiTermination', termination_protection)
+                    changed = True
+            except Exception as error:
+                pass
 
             # Check instance state
             if inst.state != state:
