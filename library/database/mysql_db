@@ -282,6 +282,9 @@ def main():
     state = module.params["state"]
     target = module.params["target"]
 
+    # make sure the target path is expanded for ~ and $HOME
+    target = os.path.expandvars(os.path.expanduser(target))
+
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
     # ~/.my.cnf.
