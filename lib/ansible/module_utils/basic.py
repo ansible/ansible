@@ -185,6 +185,8 @@ def get_distribution_version():
     if platform.system() == 'Linux':
         try:
             distribution_version = platform.linux_distribution()[1]
+            if not distribution_version and os.path.isfile('/etc/system-release'):
+                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
         except:
             # FIXME: MethodMissing, I assume?
             distribution_version = platform.dist()[1]
