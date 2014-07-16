@@ -275,7 +275,8 @@ class ElbManager(object):
         if not check_elb:
             info = {
                 'name': self.name,
-                'status': self.status
+                'status': self.status,
+                'found': False
             }
         else:
             info = {
@@ -285,7 +286,8 @@ class ElbManager(object):
                 'security_group_ids': check_elb.security_groups,
                 'status': self.status,
                 'subnets': self.subnets,
-                'scheme': check_elb.scheme
+                'scheme': check_elb.scheme,
+                'found': True
             }
 
             if check_elb.health_check:
@@ -367,32 +369,33 @@ class ElbManager(object):
         listeners_to_keep = []
 
         # Check for any listeners we need to create or overwrite
-        for listener in self.listeners:
-            listener_as_tuple = self._listener_as_tuple(listener)
+        if self.listeners:
+            for listener in self.listeners:
+                listener_as_tuple = self._listener_as_tuple(listener)
 
-            # First we loop through existing listeners to see if one is
-            # already specified for this port
-            existing_listener_found = None
-            for existing_listener in self.elb.listeners:
-                # Since ELB allows only one listener on each incoming port, a
-                # single match on the incomping port is all we're looking for
-                if existing_listener[0] == listener['load_balancer_port']:
-                    existing_listener_found = existing_listener.get_complex_tuple()
-                    break
+                # First we loop through existing listeners to see if one is
+                # already specified for this port
+                existing_listener_found = None
+                for existing_listener in self.elb.listeners:
+                    # Since ELB allows only one listener on each incoming port, a
+                    # single match on the incomping port is all we're looking for
+                    if existing_listener[0] == listener['load_balancer_port']:
+                        existing_listener_found = existing_listener.get_complex_tuple()
+                        break
 
-            if existing_listener_found:
-                # Does it match exactly?
-                if listener_as_tuple != existing_listener_found:
-                    # The ports are the same but something else is different,
-                    # so we'll remove the exsiting one and add the new one
-                    listeners_to_remove.append(existing_listener_found)
-                    listeners_to_add.append(listener_as_tuple)
+                if existing_listener_found:
+                    # Does it match exactly?
+                    if listener_as_tuple != existing_listener_found:
+                        # The ports are the same but something else is different,
+                        # so we'll remove the exsiting one and add the new one
+                        listeners_to_remove.append(existing_listener_found)
+                        listeners_to_add.append(listener_as_tuple)
+                    else:
+                        # We already have this listener, so we're going to keep it
+                        listeners_to_keep.append(existing_listener_found)
                 else:
-                    # We already have this listener, so we're going to keep it
-                    listeners_to_keep.append(existing_listener_found)
-            else:
-                # We didn't find an existing listener, so just add the new one
-                listeners_to_add.append(listener_as_tuple)
+                    # We didn't find an existing listener, so just add the new one
+                    listeners_to_add.append(listener_as_tuple)
 
         # Check for any extraneous listeners we need to remove, if desired
         if self.purge_listeners:
@@ -581,16 +584,18 @@ def main():
     purge_subnets = module.params['purge_subnets']
     scheme = module.params['scheme']
 
-    if state == 'present' and not listeners:
-        module.fail_json(msg="At least one port is required for ELB creation")
-
-    if state == 'present' and not (zones or subnets):
-        module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
-
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets,
                          scheme, region=region, **aws_connect_params)
+
+    elb_info = elb_man.get_info()
+
+    if state == 'present' and not listeners and not elb_info["found"]:
+        module.fail_json(msg="At least one port is required for ELB creation")
+
+    if state == 'present' and not (zones or subnets) and not elb_info["found"]:
+        module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
 
     if state == 'present':
         elb_man.ensure_ok()
