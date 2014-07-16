@@ -105,6 +105,9 @@ def get_opt(options, k, defval=""):
 #-------------------------------------------------------------------------------------
 
 def _read_password(filename):
+    if filename.startswith("~"):
+        filename = os.path.expanduser(filename)
+
     f = open(filename, "rb")
     data = f.read()
     f.close
