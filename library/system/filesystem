@@ -90,6 +90,20 @@ def main():
 
     ### create fs
 
+    if force:
+        if fstype == 'ext2':
+            force_flag='-F'
+        elif fstype == 'ext3':
+            force_flag='-F'
+        elif fstype == 'ext4':
+            force_flag='-F'
+        elif fstype == 'xfs':
+            force_flag='-f'
+        else: 
+            module.fail_json(msg="Don't know the correct flag to force filesystem type %s"%(fstype), rc=rc, err=err)
+    else:
+        force_flag=''
+
     if module.check_mode:
         changed = True
     else:
@@ -98,7 +112,7 @@ def main():
         if opts is None:
             cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
         else:
-            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, opts, dev)
+            cmd = "%s -t %s %s %s '%s'" % (mkfs, fstype, force_flag, opts, dev)
         rc,_,err = module.run_command(cmd)
         if rc == 0:
             changed = True
