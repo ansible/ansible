@@ -58,6 +58,29 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
         aliases: []
+    type:
+        required: false
+        default: yast2
+        choices: [ "yast2", "rpm-md", "plaindir" ]
+        description:
+          - Type of the repository. Could either be 
+            yast2, rpm-md, or plaindir.
+    check:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        aliases: []
+        description:
+          - Probe given URI directly.
+    refresh:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        aliases: []
+        description:
+          - Enable autorefresh of the repository. 
+            The autorefresh is disabled by default 
+            when adding new repositories. 
 notes: []
 requirements: [ zypper ]
 '''
@@ -79,14 +102,25 @@ def repo_exists(module, repo):
     return (rc, stdout, stderr, repo in stdout)
 
 
-def add_repo(module, repo, alias, description, disable_gpg_check):
-    cmd = ['/usr/bin/zypper', 'ar', '--check', '--refresh']
+def add_repo(module, repo, alias, description, disable_gpg_check, type, docheck, dorefresh):
+    cmd = ['/usr/bin/zypper', 'ar' ]
 
     if description:
         cmd.extend(['--name', description])
 
     if disable_gpg_check:
         cmd.append('--no-gpgcheck')
+
+    if type:
+        cmd.extend(['--type', type])
+
+    if docheck:
+        cmd.append('--check')
+    else:
+        cmd.append('--no-check')
+
+    if dorefresh:
+        cmd.append('--refresh')
 
     cmd.append(repo)
 
@@ -119,6 +153,9 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             description=dict(required=False),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
+            type = dict(choices=['yast2', 'rpm-md', 'plaindir'], default='yast2'),
+            check = dict(required=False, default='yes', type='bool'),
+            refresh = dict(required=False, default='yes', type='bool'),
         ),
         supports_check_mode=False,
     )
@@ -128,6 +165,9 @@ def main():
     name = module.params['name']
     description = module.params['description']
     disable_gpg_check = module.params['disable_gpg_check']
+    type = module.params['type']
+    docheck = module.params['check']
+    dorefresh = module.params['refresh']
 
     def exit_unchanged():
         module.exit_json(changed=False, repo=repo, state=state, name=name)
@@ -139,7 +179,7 @@ def main():
         if exists:
             exit_unchanged()
 
-        result = add_repo(module, repo, name, description, disable_gpg_check)
+        result = add_repo(module, repo, name, description, disable_gpg_check, type, docheck, dorefresh)
     elif state == 'absent':
         if not exists:
             exit_unchanged()

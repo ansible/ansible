@@ -59,6 +59,12 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
         aliases: []
+    from_repo:
+        description:
+          - Select  packages from specified repository. This option currently
+            implies --name, but allows using wildcards for specifying packages.
+        required: false
+        default: ""
 
 notes: []
 # informational: requirements for nodes
@@ -72,6 +78,9 @@ EXAMPLES = '''
 
 # Remove the "nmap" package
 - zypper: name=nmap state=absent
+
+# Make sure, nmap is installed from repository 'internal'
+- zypper: name=nmap state=present from_repo=internal
 '''
 
 # Function used for getting the name of a currently installed package.
@@ -102,7 +111,7 @@ def get_package_state(m, name):
         return False
 
 # Function used to make sure a package is present.
-def package_present(m, name, installed_state, disable_gpg_check):
+def package_present(m, name, installed_state, disable_gpg_check, from_repo):
     if installed_state is False:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
@@ -110,6 +119,10 @@ def package_present(m, name, installed_state, disable_gpg_check):
             cmd.append('--no-gpg-check')
 
         cmd.extend(['install', '--auto-agree-with-licenses'])
+
+        if from_repo:
+            cmd.extend(['--from'], from_repo)
+
         cmd.append(name)
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
@@ -126,10 +139,14 @@ def package_present(m, name, installed_state, disable_gpg_check):
     return (rc, stdout, stderr, changed)
 
 # Function used to make sure a package is the latest available version.
-def package_latest(m, name, installed_state, disable_gpg_check):
+def package_latest(m, name, installed_state, disable_gpg_check, from_repo):
 
     if installed_state is True:
         cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
+
+        if from_repo:
+            cmd.extend(['--from'], from_repo)
+
         pre_upgrade_name = ''
         post_upgrade_name = ''
 
@@ -178,6 +195,7 @@ def main():
             name = dict(required=True, aliases=['pkg']),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
+            from_repo = dict(required=False),
         ),
         supports_check_mode = False
     )
@@ -188,6 +206,7 @@ def main():
     name  = params['name']
     state = params['state']
     disable_gpg_check = params['disable_gpg_check']
+    from_repo = params['from_repo']
 
     rc = 0
     stdout = ''
@@ -201,11 +220,11 @@ def main():
 
     # Perform requested action
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check, from_repo)
     elif state in ['absent', 'removed']:
         (rc, stdout, stderr, changed) = package_absent(module, name, installed_state)
     elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check, from_repo)
 
     if rc != 0:
         if stderr:
