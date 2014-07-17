@@ -181,7 +181,7 @@ options:
 
 EXAMPLES = '''
 # Add the user 'johnd' with a specific uid and a primary group of 'admin'
-- user: name=johnd comment="John Doe" uid=1040
+- user: name=johnd comment="John Doe" uid=1040 group=admin
 
 # Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
 - user: name=james shell=/bin/bash groups=admins,developers append=yes
@@ -440,7 +440,7 @@ class User(object):
     def group_exists(self,group):
         try:
             if group.isdigit():
-                if grp.getgrgid(group):
+                if grp.getgrgid(int(group)):
                     return True
             else:
                 if grp.getgrnam(group):

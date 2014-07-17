@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
+# (c) 2014, Ahti Kitsik <ak@ahtik.com>
 #
 # This file is part of Ansible
 #
@@ -18,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import pipes
 import re
 import os
 import tempfile
@@ -25,7 +27,7 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: lineinfile
-author: Daniel Hokka Zakrisson
+author: Daniel Hokka Zakrisson, Ahti Kitsik
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
@@ -110,8 +112,10 @@ options:
   validate:
      required: false
      description:
-       - validation to run before copying into place. The command is passed 
-         securely so shell features like expansion and pipes won't work.
+       - validation to run before copying into place. 
+         Use %s in the command to indicate the current file to validate.
+         The command is passed securely so shell features like
+         expansion and pipes won't work.
      required: false
      default: None
      version_added: "1.4"
@@ -162,7 +166,7 @@ def write_changes(module,lines,dest):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc,err))
     if valid:
-        module.atomic_move(tmpfile, dest)
+        module.atomic_move(tmpfile, os.path.realpath(dest))
 
 def check_file_attrs(module, changed, message):
 
@@ -251,6 +255,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # if insertafter=/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
     elif insertafter == 'EOF':
+
+        # If the file is not empty then ensure there's a newline before the added line
+        if len(lines)>0 and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
+            lines.append(os.linesep)
+
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True
@@ -353,9 +362,14 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        # Replace the newline character with an actual newline. Don't replace
-		# escaped \\n, hence sub and not str.replace.
-        line = re.sub(r'\n', os.linesep, params['line'])
+        # Replace escape sequences like '\n' while being sure 
+        # not to replace octal escape sequences (\ooo) since they
+        # match the backref syntax
+        if backrefs:
+            line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', params['line'])
+        else:
+            line = params['line']
+        line = module.safe_eval(pipes.quote(line))
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)

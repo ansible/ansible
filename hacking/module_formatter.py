@@ -123,6 +123,12 @@ def list_modules(module_dir):
         if os.path.isdir(d):
             files2 = glob.glob("%s/*" % d)
             for f in files2:
+
+                if f.endswith(".ps1"):
+                    # windows powershell modules have documentation stubs in python docstring
+                    # format (they are not executed) so skip the ps1 format files
+                    continue
+
                 tokens = f.split("/")
                 module = tokens[-1]
                 category = tokens[-2]

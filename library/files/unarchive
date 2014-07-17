@@ -120,8 +120,8 @@ class TgzFile(object):
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
-        cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
-        rc, out, err = self.module.run_command(cmd)
+        cmd = '%s -x%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
+        rc, out, err = self.module.run_command(cmd, cwd=self.dest)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
@@ -234,7 +234,9 @@ def main():
 
     # do the unpack
     try:
-        results = handler.unarchive()
+        res_args['extract_results'] = handler.unarchive()
+        if res_args['extract_results']['rc'] != 0:
+            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
     except IOError:
         module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
 

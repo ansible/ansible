@@ -76,9 +76,9 @@ options:
     version_added: "1.4"
     required: false
     description:
-      - with the path option can be used match a string in the file that must match before continuing.  Defaults to a multiline regex.
-   
-notes: []
+      - Can be used to match a string in either a file or a socket connection. Defaults to a multiline regex.
+notes:
+  - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
 author: Jeroen Hoekx, John Jarvis, Andrii Radyk
 '''
@@ -99,6 +99,9 @@ EXAMPLES = '''
 
 # wait until the process is finished and pid was destroyed
 - wait_for: path=/proc/3466/status state=absent
+
+# Wait 300 seconds for port 22 to become open and contain "OpenSSH", don't start checking for 10 seconds
+- local_action: wait_for port=22 host="{{ inventory_hostname }}" search_regex=OpenSSH delay=10
 
 '''
 
@@ -177,35 +180,62 @@ def main():
         while datetime.datetime.now() < end:
             if path:
                 try:
-                    f = open(path)
-                    try:
-                        if search_regex:
-                            if re.search(search_regex, f.read(), re.MULTILINE):
-                                break
-                            else:
-                                time.sleep(1)
-                        else:
-                            break
-                    finally:
-                        f.close()
-                except IOError:
-                    time.sleep(1)
-                    pass
+                    os.stat(path)
+                    if search_regex:
+                        try:
+                            f = open(path)
+                            try:
+                                if re.search(search_regex, f.read(), re.MULTILINE):
+                                    break
+                                else:
+                                    time.sleep(1)
+                            finally:
+                                f.close()
+                        except IOError:
+                            time.sleep(1)
+                            pass
+                    else:
+                        break
+                except OSError, e:
+                    # File not present
+                    if os.errno == 2:
+                        time.sleep(1)
+                    else:
+                        elapsed = datetime.datetime.now() - start
+                        module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
                 try:
                     s.connect( (host, port) )
-                    s.shutdown(socket.SHUT_RDWR)
-                    s.close()
-                    break
+                    if search_regex:
+                        data = ''
+                        matched = False
+                        while 1:
+                            data += s.recv(1024)
+                            if not data:
+                                break
+                            elif re.search(search_regex, data, re.MULTILINE):
+                                matched = True
+                                break
+                        if matched:
+                            s.shutdown(socket.SHUT_RDWR)
+                            s.close()
+                            break
+                    else:
+                        s.shutdown(socket.SHUT_RDWR)
+                        s.close()
+                        break
                 except:
                     time.sleep(1)
                     pass
         else:
             elapsed = datetime.datetime.now() - start
             if port:
-                module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                if search_regex:
+                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
+                else:
+                    module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
             elif path:
                 if search_regex:
                     module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)

@@ -90,7 +90,7 @@ options:
     default: 'force-confdef,force-confold'
   deb:
      description:
-       - Path to a local .deb package file to install.
+       - Path to a .deb package on the remote machine.
      required: false
      version_added: "1.6"
 requirements: [ python-apt, aptitude ]
@@ -125,7 +125,7 @@ EXAMPLES = '''
 # Run the equivalent of "apt-get update" as a separate step
 - apt: update_cache=yes
 
-# Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
+# Only run "update_cache=yes" if the last one is more than 3600 seconds ago
 - apt: update_cache=yes cache_valid_time=3600
 
 # Pass options to dpkg on run
@@ -367,7 +367,7 @@ def remove(m, pkgspec, cache, purge=False,
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
         m.exit_json(changed=True, stdout=out, stderr=err)
 
-def upgrade(m, mode="yes", force=False,
+def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     if m.check_mode:
         check_arg = '--simulate'
@@ -403,6 +403,10 @@ def upgrade(m, mode="yes", force=False,
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
                                     force_yes, check_arg, upgrade_command)
+
+    if default_release:
+        cmd += " -t '%s'" % (default_release,)
+
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
@@ -417,7 +421,7 @@ def main():
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name']),
+            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
@@ -497,7 +501,8 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, dpkg_options)
+            upgrade(module, p['upgrade'], force_yes,
+                    p['default_release'], dpkg_options)
 
         if p['deb']:
             if p['state'] != "installed":
@@ -506,7 +511,7 @@ def main():
                         install_recommends=install_recommends,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = p['package'].split(',')
+        packages = p['package']
         latest = p['state'] == 'latest'
         for package in packages:
             if package.count('=') > 1:

@@ -1,0 +1,72 @@
+# test code for the win_ping module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: test win_ping
+  action: win_ping
+  register: win_ping_result
+
+- name: check win_ping result
+  assert:
+    that: 
+      - "not win_ping_result|failed"
+      - "not win_ping_result|changed"
+      - "win_ping_result.ping == 'pong'"
+
+- name: test win_ping with data
+  win_ping: data=blah
+  register: win_ping_with_data_result
+
+- name: check win_ping result with data
+  assert:
+    that:
+      - "not win_ping_with_data_result|failed"
+      - "not win_ping_with_data_result|changed"
+      - "win_ping_with_data_result.ping == 'blah'"
+
+#- name: test local ping (should use default ping)
+#  local_action: ping
+#  register: local_ping_result
+
+#- name: check local ping result
+#  assert:
+#    that: 
+#      - "not local_ping_result|failed"
+#      - "not local_ping_result|changed"
+#      - "local_ping_result.ping == 'pong'"
+
+- name: test win_ping.ps1 with data
+  win_ping.ps1: data=bleep
+  register: win_ping_ps1_result
+
+- name: check win_ping.ps1 result with data
+  assert:
+    that: 
+      - "not win_ping_ps1_result|failed"
+      - "not win_ping_ps1_result|changed"
+      - "win_ping_ps1_result.ping == 'bleep'"
+
+#- name: test win_ping with invalid args
+#  win_ping: arg=invalid
+#  register: win_ping_ps1_invalid_args_result
+
+#- name: check that win_ping.ps1 with invalid args fails
+#  assert:
+#    that:
+#      - "win_ping_ps1_invalid_args_result|failed"
+#      - "win_ping_ps1_invalid_args_result.msg"
+

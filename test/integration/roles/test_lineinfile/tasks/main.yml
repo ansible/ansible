@@ -114,7 +114,7 @@
     - "result.stat.md5 == 'd5955ee042139dfef16dbe3a7334475f'"
 
 - name: replace a line with backrefs
-  lineinfile: dest={{output_dir}}/test.txt state=present line="This is line 3" backrefs=yes regexp="^(REF) .* \1$"
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is line 3" backrefs=yes regexp="^(REF) .* \\1$"
   register: result
 
 - name: assert that the line with backrefs was changed
@@ -208,4 +208,89 @@
   assert:
     that:
     - "result.stat.md5 == 'fef1d487711facfd7aa2c87d788c19d9'"
+
+# Test EOF in cases where file has no newline at EOF
+- name: testnoeof deploy the file for lineinfile
+  copy: src=testnoeof.txt dest={{output_dir}}/testnoeof.txt
+  register: result
+
+- name: testnoeof insert a line at the end of the file
+  lineinfile: dest={{output_dir}}/testnoeof.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: testempty assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: insert a multiple lines at the end of the file
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\\n character" insertafter="EOF"
+  register: result
+
+- name: assert that the multiple lines was inserted
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: testnoeof stat the no newline EOF test after the insert at the end
+  stat: path={{output_dir}}/testnoeof.txt
+  register: result
+
+- name: testnoeof assert test md5 matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.md5 == 'f75c9d51f45afd7295000e63ce655220'"
+
+# Test EOF with empty file to make sure no unneccessary newline is added
+- name: testempty deploy the testempty file for lineinfile
+  copy: src=testempty.txt dest={{output_dir}}/testempty.txt
+  register: result
+
+- name: testempty insert a line at the end of the file
+  lineinfile: dest={{output_dir}}/testempty.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: testempty assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: testempty stat the test after the insert at the end
+  stat: path={{output_dir}}/testempty.txt
+  register: result
+
+- name: testempty assert test md5 matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.md5 == '357dcbee8dfb4436f63bab00a235c45a'"
+
+- stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after insert the multiple lines
+  assert:
+    that:
+    - "result.stat.md5 == 'c2510d5bc8fdef8e752b8f8e74c784c2'"
+
+- name: replace a line with backrefs included in the line
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New \\1 created with the backref" backrefs=yes regexp="^This is (line 4)$"
+  register: result
+
+- name: assert that the line with backrefs was changed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line replaced'"
+
+- name: stat the test after the backref line was replaced
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.md5 == '65f955c2a9722fd43d07103d7756ff9b'"
 

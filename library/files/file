@@ -189,12 +189,13 @@ def main():
 
     elif state in ['link','hard']:
 
-        if os.path.isdir(path):
+        if os.path.isdir(path) and not os.path.islink(path):
             relpath = path
         else:
             relpath = os.path.dirname(path)
+
         absrc = os.path.normpath('%s/%s' % (relpath, os.path.basename(src)))
-        if not os.path.exists(absrc) and not force:
+        if not os.path.exists(src) and not os.path.exists(absrc) and not force:
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
@@ -249,6 +250,9 @@ def main():
                         os.symlink(src, path)
                 except OSError, e:
                     module.fail_json(path=path, msg='Error while linking: %s' % str(e))
+
+        if module.check_mode and not os.path.exists(path):
+            module.exit_json(dest=path, src=src, changed=changed)
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
         module.exit_json(dest=path, src=src, changed=changed)

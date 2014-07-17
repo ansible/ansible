@@ -14,7 +14,9 @@ else
 CREDENTIALS_ARG =
 endif
 
-all: non_destructive destructive check_mode test_hash test_handlers test_group_by
+VAULT_PASSWORD_FILE = vault-password
+
+all: non_destructive destructive check_mode test_hash test_handlers test_group_by test_vault
 
 non_destructive:
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
@@ -37,6 +39,15 @@ test_hash:
 
 test_var_precedence:
 	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e 'extra_var=extra_var'
+
+test_vault:
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-tasks
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-hosts
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE)
+
+test_winrm:
+	ansible-playbook test_winrm.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 cloud: amazon rackspace
 

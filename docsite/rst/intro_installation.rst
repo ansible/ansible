@@ -144,7 +144,7 @@ Latest Release Via Yum
 ++++++++++++++++++++++
 
 RPMs are available from yum for `EPEL
-<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
+<http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
 Fedora distributions. 
 
 Ansible itself can manage earlier operating
@@ -171,15 +171,18 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ansible>`_.
 
-Once configured, 
+To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-add-repository ppa:rquillo/ansible
+    $ sudo apt-get install software-properties-common
+    $ sudo apt-add-repository ppa:ansible/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
+
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 

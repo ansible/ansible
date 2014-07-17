@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc 
+module: ec2_vpc
 short_description: configure AWS virtual private clouds
 description:
     - Create or terminates AWS virtual private clouds.  This module has a dependency on python-boto.
@@ -58,8 +58,8 @@ options:
     aliases: []
   resource_tags:
     description:
-      - 'A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exits, a new VPC will be created.  VPC tags not on this list will be ignored.'
-    required: false
+      - 'A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exits, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7, specifying a resource tag was optional.'
+    required: true
     default: null
     aliases: []
     version_added: "1.6"
@@ -96,13 +96,13 @@ options:
     aliases: []
   region:
     description:
-      - region in which the resource exists. 
+      - region in which the resource exists.
     required: false
     default: null
     aliases: ['aws_region', 'ec2_region']
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: None
     aliases: ['ec2_secret_key', 'secret_key' ]
@@ -143,7 +143,7 @@ EXAMPLES = '''
         state: present
         cidr_block: 172.22.0.0/16
         resource_tags: { "Environment":"Development" }
-        subnets: 
+        subnets:
           - cidr: 172.22.1.0/24
             az: us-west-2c
             resource_tags: { "Environment":"Dev", "Tier" : "Web" }
@@ -155,10 +155,10 @@ EXAMPLES = '''
             resource_tags: { "Environment":"Dev", "Tier" : "DB" }
         internet_gateway: True
         route_tables:
-          - subnets: 
+          - subnets:
               - 172.22.2.0/24
               - 172.22.3.0/24
-            routes: 
+            routes:
               - dest: 0.0.0.0/0
                 gw: igw
           - subnets:
@@ -173,8 +173,8 @@ EXAMPLES = '''
       local_action:
         module: ec2_vpc
         state: absent
-        vpc_id: vpc-aaaaaaa 
-        region: us-west-2  
+        vpc_id: vpc-aaaaaaa
+        region: us-west-2
 If you have added elements not managed by this module, e.g. instances, NATs, etc then
 the delete will fail until those dependencies are removed.
 '''
@@ -215,10 +215,10 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     Returns:
         A VPC object that matches either an ID or CIDR and one or more tag values
     """
-    
+
     if vpc_id == None and cidr == None:
         module.fail_json(
-            msg='You must specify either a vpc id or a cidr block + list of unique tags, aborting'
+            msg='You must specify either a vpc_id or a cidr block + list of unique tags, aborting'
         )
 
     found_vpcs = []
@@ -228,10 +228,10 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     # Check for existing VPC by cidr_block or id
     if vpc_id is not None:
         found_vpcs = vpc_conn.get_all_vpcs(None, {'vpc-id': vpc_id, 'state': 'available',})
-    
+
     else:
         previous_vpcs = vpc_conn.get_all_vpcs(None, {'cidr': cidr, 'state': 'available'})
-        
+
         for vpc in previous_vpcs:
             # Get all tags for each of the found VPCs
             vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
@@ -259,10 +259,10 @@ def create_vpc(module, vpc_conn):
 
     Returns:
         A dictionary with information
-        about the VPC and subnets that were launched 
+        about the VPC and subnets that were launched
     """
-    
-    id = module.params.get('id')
+
+    id = module.params.get('vpc_id')
     cidr_block = module.params.get('cidr_block')
     instance_tenancy = module.params.get('instance_tenancy')
     dns_support = module.params.get('dns_support')
@@ -270,9 +270,15 @@ def create_vpc(module, vpc_conn):
     subnets = module.params.get('subnets')
     internet_gateway = module.params.get('internet_gateway')
     route_tables = module.params.get('route_tables')
+    vpc_spec_tags = module.params.get('resource_tags')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
     changed = False
+
+    if subnets is None:
+        subnets = []
+    if route_tables is None:
+        route_tables = []
 
     # Check for existing VPC by cidr_block + tags or id
     previous_vpc = find_vpc(module, vpc_conn, id, cidr_block)
@@ -288,14 +294,21 @@ def create_vpc(module, vpc_conn):
             pending = True
             wait_timeout = time.time() + wait_timeout
             while wait and wait_timeout > time.time() and pending:
-                pvpc = vpc_conn.get_all_vpcs(vpc.id)
-                if hasattr(pvpc, 'state'):
-                    if pvpc.state == "available":
-                        pending = False
-                elif hasattr(pvpc[0], 'state'):
-                    if pvpc[0].state == "available":
-                        pending = False
-                time.sleep(5)
+                try:
+                    pvpc = vpc_conn.get_all_vpcs(vpc.id)
+                    if hasattr(pvpc, 'state'):
+                        if pvpc.state == "available":
+                            pending = False
+                    elif hasattr(pvpc[0], 'state'):
+                        if pvpc[0].state == "available":
+                            pending = False
+                # sometimes vpc_conn.create_vpc() will return a vpc that can't be found yet by vpc_conn.get_all_vpcs()
+                # when that happens, just wait a bit longer and try again
+                except boto.exception.BotoServerError, e:
+                    if e.error_code != 'InvalidVpcID.NotFound':
+                        raise
+                if pending:
+                    time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
                 module.fail_json(msg = "wait for vpc availability timeout on %s" % time.asctime())
@@ -306,16 +319,15 @@ def create_vpc(module, vpc_conn):
     # Done with base VPC, now change to attributes and features.
 
     # Add resource tags
-    vpc_spec_tags = module.params.get('resource_tags')
     vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
 
-    if vpc_spec_tags and not set(vpc_spec_tags.items()).issubset(set(vpc_tags.items())):
+    if not set(vpc_spec_tags.items()).issubset(set(vpc_tags.items())):
         new_tags = {}
 
-        for (key, value) in set(vpc_spec_tags.items()): 
+        for (key, value) in set(vpc_spec_tags.items()):
             if (key, value) not in set(vpc_tags.items()):
                 new_tags[key] = value
-      
+
         if new_tags:
             vpc_conn.create_tags(vpc.id, new_tags)
 
@@ -330,9 +342,9 @@ def create_vpc(module, vpc_conn):
     # Process all subnet properties
     if subnets and not isinstance(subnets, list):
         module.fail_json(msg='subnets needs to be a list of cidr blocks')
-    
+
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
-    
+
     # First add all new subnets
     for subnet in subnets:
         add_subnet = True
@@ -356,7 +368,7 @@ def create_vpc(module, vpc_conn):
                 changed = True
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
-    
+
     # Now delete all absent subnets
     for csubnet in current_subnets:
         delete_subnet = True
@@ -373,7 +385,7 @@ def create_vpc(module, vpc_conn):
     # Handle Internet gateway (create/delete igw)
     igw = None
     igws = vpc_conn.get_all_internet_gateways(filters={'attachment.vpc-id': vpc.id})
-    if len(igws) > 1: 
+    if len(igws) > 1:
         module.fail_json(msg='EC2 returned more than one Internet Gateway for id %s, aborting' % vpc.id)
     if internet_gateway:
         if len(igws) != 1:
@@ -407,22 +419,26 @@ def create_vpc(module, vpc_conn):
     # allow control of the 'main' routing table.
     if route_tables and not isinstance(route_tables, list):
         module.fail_json(msg='route tables need to be a list of dictionaries')
-    
-# Work through each route table and update/create to match dictionary array
+
+    # Work through each route table and update/create to match dictionary array
     all_route_tables = []
     for rt in route_tables:
         try:
             new_rt = vpc_conn.create_route_table(vpc.id)
             for route in rt['routes']:
-                r_gateway = route['gw']
-                if r_gateway == 'igw':
+                route_kwargs = {}
+                if route['gw'] == 'igw':
                     if not internet_gateway:
                         module.fail_json(
                             msg='You asked for an Internet Gateway ' \
                             '(igw) route, but you have no Internet Gateway'
                         )
-                    r_gateway = igw.id
-                vpc_conn.create_route(new_rt.id, route['dest'], r_gateway)
+                    route_kwargs['gateway_id'] = igw.id
+                elif route['gw'].startswith('i-'):
+                    route_kwargs['instance_id'] = route['gw']
+                else:
+                    route_kwargs['gateway_id'] = route['gw']
+                vpc_conn.create_route(new_rt.id, route['dest'], **route_kwargs)
 
             # Associate with subnets
             for sn in rt['subnets']:
@@ -454,7 +470,7 @@ def create_vpc(module, vpc_conn):
                 msg='Unable to create and associate route table {0}, error: ' \
                 '{1}'.format(rt, e)
             )
-        
+
 
     # Now that we are good to go on our new route tables, delete the
     # old ones except the 'main' route table as boto can't set the main
@@ -481,11 +497,11 @@ def create_vpc(module, vpc_conn):
     created_vpc_id = vpc.id
     returned_subnets = []
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
-    
+
     for sn in current_subnets:
         returned_subnets.append({
             'resource_tags': dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': sn.id})),
-            'cidr': sn.cidr_block, 
+            'cidr': sn.cidr_block,
             'az': sn.availability_zone,
             'id': sn.id,
         })
@@ -511,9 +527,9 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     vpc_dict = {}
     terminated_vpc_id = ''
     changed = False
-    
+
     vpc = find_vpc(module, vpc_conn, vpc_id, cidr)
-    
+
     if vpc is not None:
         if vpc.state == 'available':
             terminated_vpc_id=vpc.id
@@ -559,11 +575,11 @@ def main():
             wait_timeout = dict(default=300),
             dns_support = dict(type='bool', default=True),
             dns_hostnames = dict(type='bool', default=True),
-            subnets = dict(type='list'),
+            subnets = dict(type='list', default=[]),
             vpc_id = dict(),
             internet_gateway = dict(type='bool', default=False),
-            resource_tags = dict(type='dict'),
-            route_tables = dict(type='list'),
+            resource_tags = dict(type='dict', required=True),
+            route_tables = dict(type='list', default=[]),
             state = dict(choices=['present', 'absent'], default='present'),
         )
     )
@@ -575,12 +591,12 @@ def main():
     state = module.params.get('state')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-   
+
     # If we have a region specified, connect to its endpoint.
-    if region: 
+    if region:
         try:
             vpc_conn = boto.vpc.connect_to_region(
-                region, 
+                region,
                 aws_access_key_id=aws_access_key,
                 aws_secret_access_key=aws_secret_key
             )
@@ -588,7 +604,7 @@ def main():
             module.fail_json(msg = str(e))
     else:
         module.fail_json(msg="region must be specified")
-    
+
     if module.params.get('state') == 'absent':
         vpc_id = module.params.get('vpc_id')
         cidr = module.params.get('cidr_block')

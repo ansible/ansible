@@ -245,7 +245,16 @@ def delete_monitor(api, monitor):
 
 def check_string_property(api, monitor, str_property):
 
-    return str_property == api.LocalLB.Monitor.get_template_string_property([monitor], [str_property['type']])[0]
+    try:
+        return str_property == api.LocalLB.Monitor.get_template_string_property([monitor], [str_property['type']])[0]
+    except bigsuds.OperationFailed, e:
+        # happens in check mode if not created yet
+        if "was not found" in str(e):
+            return True
+        else:
+            # genuine exception
+            raise
+    return True
 
 
 def set_string_property(api, monitor, str_property):
@@ -255,7 +264,16 @@ def set_string_property(api, monitor, str_property):
 
 def check_integer_property(api, monitor, int_property):
 
-    return int_property == api.LocalLB.Monitor.get_template_integer_property([monitor], [int_property['type']])[0]
+    try:
+        return int_property == api.LocalLB.Monitor.get_template_integer_property([monitor], [int_property['type']])[0]
+    except bigsuds.OperationFailed, e:
+        # happens in check mode if not created yet
+        if "was not found" in str(e):
+            return True
+        else:
+            # genuine exception
+            raise
+    return True
 
 
 def set_integer_property(api, monitor, int_property):

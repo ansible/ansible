@@ -3,7 +3,72 @@ Ansible Changes By Release
 
 ## 1.7 "Summer Nights" - Active Development
 
-Pending!
+Major new features:
+
+* Windows support (alpha) using native PowerShell remoting
+* Tasks can now specify `run_once: true`, meaning they will be executed exactly once. This can be combined with delegate_to to trigger actions you want done just the one time versus for every host in inventory.
+
+New inventory scripts:
+
+* SoftLayer
+* Windows Azure
+
+New Modules:
+
+* cloud: azure
+* cloud: rax_meta
+* cloud: rax_scaling_group
+* cloud: rax_scaling_policy
+* windows: version of setup module
+* windows: version of slurp module
+* windows: win_feature
+* windows: win_get_url
+* windows: win_msi
+* windows: win_ping
+* windows: win_user
+* windows: win_service
+* windows: win_group
+
+Other notable changes:
+
+* Inventory speed improvements for very large inventories.
+* Vault password files can now be executable, to support scripts that fetch the vault password.
+
+## 1.6.6 "And the Cradle Will Rock" - Jul 01, 2014
+
+- Security updates to further protect against the incorrect execution of untrusted data
+
+## 1.6.4, 1.6.5 "And the Cradle Will Rock" - Jun 25, 2014
+
+- Security updates related to evaluation of untrusted remote inputs
+
+## 1.6.3 "And the Cradle Will Rock" - Jun 09, 2014
+
+- Corrects a regression where handlers were run across all hosts, not just those that triggered the handler.
+- Fixed a bug in which modules did not support properly moving a file atomically when su was in use.
+- Fixed two bugs related to symlinks with directories when using the file module.
+- Fixed a bug related to MySQL master replication syntax.
+- Corrects a regression in the order of variable merging done by the internal runner code.
+- Various other minor bug fixes.
+
+## 1.6.2 "And the Cradle Will Rock" - May 23, 2014
+
+- If an improper locale is specified, core modules will now automatically revert to using the 'C' locale.
+- Modules using the fetch_url utility will now obey proxy environment variables.
+- The SSL validation step in fetch_url will likewise obey proxy settings, however only proxies using the http protocol are supported.
+- Fixed multiple bugs in docker module related to version changes upstream.
+- Fixed a bug in the ec2_group module where egress rules were lost when a VPC was specified.
+- Fixed two bugs in the synchronize module:
+  * a trailing slash might be lost when calculating relative paths, resulting in an incorrect destination.
+  * the sync might use the inventory directory incorrectly instead of the playbook or role directory.
+- Files will now only be chown'd on an atomic move if the src/dest uid/gid do not match.
+
+## 1.6.1 "And the Cradle Will Rock" - May 7, 2014
+
+- Fixed a bug in group_by, where systems were being grouped incorrectly.
+- Fixed a bug where file descriptors may leak to a child process when using accelerate.
+- Fixed a bug in apt_repository triggered when python-apt not being installed/available.
+- Fixed a bug in the apache2_module module, where modules were not being disabled correctly.
 
 ## 1.6 "And the Cradle Will Rock" - May 5, 2014
 

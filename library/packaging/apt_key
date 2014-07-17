@@ -153,8 +153,12 @@ def download_key(module, url):
     # and reuse here
     if url is None:
         module.fail_json(msg="needed a URL but was not specified")
+
     try:
         rsp, info = fetch_url(module, url)
+        if info['status'] != 200:
+            module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
+
         return rsp.read()
     except Exception:
         module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())

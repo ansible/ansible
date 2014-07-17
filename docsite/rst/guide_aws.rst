@@ -266,7 +266,7 @@ Example 4
         - debug: var=hostvars[inventory_hostname]
 
         # just show the instance-id
-        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance-id'] }}"
+        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance_id'] }}"
 
 
     # Using the instanceid, call the ec2 module
@@ -288,7 +288,7 @@ Example 4
                region={{ region }}
                instance_ids={{ item }}
                wait=true
-          with_items: hostvars[inventory_hostname]['ansible_ec2_instance-id']
+          with_items: hostvars[inventory_hostname]['ansible_ec2_instance_id']
 
 
 .. note:: more examples of this are pending.   You may also be interested in the ec2_ami module for taking AMIs of running instances.

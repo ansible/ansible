@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import sys
 import re
 import os
@@ -44,8 +45,8 @@ import traceback
 import getpass
 import sys
 import json
+import subprocess
 
-#import vault
 from vault import VaultLib
 
 VERBOSITY=0
@@ -68,6 +69,11 @@ try:
     PASSLIB_AVAILABLE = True
 except:
     pass
+
+try:
+    import builtin
+except ImportError:
+    import __builtin__ as builtin
 
 KEYCZAR_AVAILABLE=False
 try:
@@ -147,6 +153,32 @@ def decrypt(key, msg):
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
+
+def read_vault_file(vault_password_file):
+    """Read a vault password from a file or if executable, execute the script and
+    retrieve password from STDOUT
+    """
+    if vault_password_file:
+        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
+        if is_executable(this_path):
+            try:
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+            except OSError, e:
+                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(this_path), e))
+            stdout, stderr = p.communicate()
+            vault_pass = stdout.strip('\r\n')
+        else:
+            try:
+                f = open(this_path, "rb")
+                vault_pass=f.read().strip()
+                f.close()
+            except (OSError, IOError), e:
+                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+
+        return vault_pass
+    else:
+        return None
 
 def err(msg):
     ''' print an error message to stderr '''
@@ -309,7 +341,38 @@ def json_loads(data):
 
     return json.loads(data)
 
-def parse_json(raw_data):
+def _clean_data(orig_data):
+    ''' remove template tags from a string '''
+    data = orig_data
+    if isinstance(orig_data, basestring):
+        for pattern,replacement in (('{{','{#'), ('}}','#}'), ('{%','{#'), ('%}','#}')):
+            data = data.replace(pattern, replacement)
+    return data
+
+def _clean_data_struct(orig_data):
+    '''
+    walk a complex data structure, and use _clean_data() to
+    remove any template tags that may exist
+    '''
+    if isinstance(orig_data, dict):
+        data = orig_data.copy()
+        for key in data:
+            new_key = _clean_data_struct(key)
+            new_val = _clean_data_struct(data[key])
+            if key != new_key:
+                del data[key]
+            data[new_key] = new_val
+    elif isinstance(orig_data, list):
+        data = orig_data[:]
+        for i in range(0, len(data)):
+            data[i] = _clean_data_struct(data[i])
+    elif isinstance(orig_data, basestring):
+        data = _clean_data(orig_data)
+    else:
+        data = orig_data
+    return data
+
+def parse_json(raw_data, from_remote=False):
     ''' this version for module return data only '''
 
     orig_data = raw_data
@@ -318,7 +381,7 @@ def parse_json(raw_data):
     data = filter_leading_non_json_lines(raw_data)
 
     try:
-        return json.loads(data)
+        results = json.loads(data)
     except:
         # not JSON, but try "Baby JSON" which allows many of our modules to not
         # require JSON and makes writing modules in bash much simpler
@@ -328,7 +391,6 @@ def parse_json(raw_data):
         except:
             print "failed to parse json: "+ data
             raise
-
         for t in tokens:
             if "=" not in t:
                 raise errors.AnsibleError("failed to parse: %s" % orig_data)
@@ -343,7 +405,11 @@ def parse_json(raw_data):
             results[key] = value
         if len(results.keys()) == 0:
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
-        return results
+
+    if from_remote:
+        results = _clean_data_struct(results)
+
+    return results
 
 def smush_braces(data):
     ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
@@ -582,18 +648,19 @@ def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''
 
-    result = copy.deepcopy(a)
+    result = {}
 
-    # next, iterate over b keys and values
-    for k, v in b.iteritems():
-        # if there's already such key in a
-        # and that key contains dict
-        if k in result and isinstance(result[k], dict):
-            # merge those dicts recursively
-            result[k] = merge_hash(a[k], v)
-        else:
-            # otherwise, just copy a value from b to a
-            result[k] = v
+    for dicts in a, b:
+        # next, iterate over b keys and values
+        for k, v in dicts.iteritems():
+            # if there's already such key in a
+            # and that key contains dict
+            if k in result and isinstance(result[k], dict):
+                # merge those dicts recursively
+                result[k] = merge_hash(a[k], v)
+            else:
+                # otherwise, just copy a value from b to a
+                result[k] = v
 
     return result
 
@@ -608,9 +675,9 @@ def md5s(data):
     return digest.hexdigest()
 
 def md5(filename):
-    ''' Return MD5 hex digest of local file, or None if file is not present. '''
+    ''' Return MD5 hex digest of local file, None if file is not present or a directory. '''
 
-    if not os.path.exists(filename):
+    if not os.path.exists(filename) or os.path.isdir(filename):
         return None
     digest = _md5()
     blocksize = 64 * 1024
@@ -757,8 +824,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for su password')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
         help='ask for vault password')
-    parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
-        help="vault password file")
+    parser.add_option('--vault-password-file', default=constants.DEFAULT_VAULT_PASSWORD_FILE,
+        dest='vault_password_file', help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -1003,21 +1070,22 @@ def is_list_of_strings(items):
             return False
     return True
 
-def _listify(a):
-    if not isinstance(a, (list, tuple)):
-        return [a,]
-    else:
-        return a
-
 def list_union(a, b):
-    set_a = set(_listify(a))
-    set_b = set(_listify(b))
-    return list(set_a.union(set_b))
+    result = []
+    for x in a:
+        if x not in result:
+            result.append(x)
+    for x in b:
+        if x not in result:
+            result.append(x)
+    return result
 
 def list_intersection(a, b):
-    set_a = set(_listify(a))
-    set_b = set(_listify(b))
-    return list(set_a.intersection(set_b))
+    result = []
+    for x in a:
+        if x in b and x not in result:
+            result.append(x)
+    return result
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
@@ -1037,22 +1105,22 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     # visitor class defined below.
     SAFE_NODES = set(
         (
-            ast.Expression,
-            ast.Compare,
-            ast.Str,
-            ast.List,
-            ast.Tuple,
-            ast.Dict,
-            ast.Call,
-            ast.Load,
+            ast.Add,
             ast.BinOp,
-            ast.UnaryOp,
+            ast.Call,
+            ast.Compare,
+            ast.Dict,
+            ast.Div,
+            ast.Expression,
+            ast.List,
+            ast.Load,
+            ast.Mult,
             ast.Num,
             ast.Name,
-            ast.Add,
+            ast.Str,
             ast.Sub,
-            ast.Mult,
-            ast.Div,
+            ast.Tuple,
+            ast.UnaryOp,
         )
     )
 
@@ -1064,22 +1132,24 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             )
         )
 
-    # builtin functions that are not safe to call
-    INVALID_CALLS = (
-       'classmethod', 'compile', 'delattr', 'eval', 'execfile', 'file',
-       'filter', 'help', 'input', 'object', 'open', 'raw_input', 'reduce',
-       'reload', 'repr', 'setattr', 'staticmethod', 'super', 'type',
-    )
+    filter_list = []
+    for filter in filter_loader.all():
+        filter_list.extend(filter.filters().keys())
+
+    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list
 
     class CleansingNodeVisitor(ast.NodeVisitor):
-        def generic_visit(self, node):
+        def generic_visit(self, node, inside_call=False):
             if type(node) not in SAFE_NODES:
-                #raise Exception("invalid expression (%s) type=%s" % (expr, type(node)))
                 raise Exception("invalid expression (%s)" % expr)
-            super(CleansingNodeVisitor, self).generic_visit(node)
-        def visit_Call(self, call):
-            if call.func.id in INVALID_CALLS:
-                raise Exception("invalid function: %s" % call.func.id)
+            elif isinstance(node, ast.Call):
+                inside_call = True
+            elif isinstance(node, ast.Name) and inside_call:
+                if hasattr(builtin, node.id) and node.id not in CALL_WHITELIST:
+                    raise Exception("invalid function: %s" % node.id)
+            # iterate over all child nodes
+            for child_node in ast.iter_child_nodes(node):
+                self.generic_visit(child_node, inside_call)
 
     if not isinstance(expr, basestring):
         # already templated to a datastructure, perhaps?
@@ -1087,9 +1157,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (expr, None)
         return expr
 
+    cnv = CleansingNodeVisitor()
     try:
         parsed_tree = ast.parse(expr, mode='eval')
-        cnv = CleansingNodeVisitor()
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
         result = eval(compiled, {}, locals)
@@ -1167,5 +1237,114 @@ def before_comment(msg):
     msg = msg.replace("**NOT_A_COMMENT**","#")
     return msg
 
+def load_vars(basepath, results, vault_password=None):
+    """
+    Load variables from any potential yaml filename combinations of basepath,
+    returning result.
+    """
 
+    paths_to_check = [ "".join([basepath, ext])
+                       for ext in C.YAML_FILENAME_EXTENSIONS ]
+
+    found_paths = []
+
+    for path in paths_to_check:
+        found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+        if found:
+            found_paths.append(path)
+
+
+    # disallow the potentially confusing situation that there are multiple
+    # variable files for the same name. For example if both group_vars/all.yml
+    # and group_vars/all.yaml
+    if len(found_paths) > 1:
+        raise errors.AnsibleError("Multiple variable files found. "
+            "There should only be one. %s" % ( found_paths, ))
+
+    return results
+
+## load variables from yaml files/dirs
+#  e.g. host/group_vars
+#
+def _load_vars_from_path(path, results, vault_password=None):
+    """
+    Robustly access the file at path and load variables, carefully reporting
+    errors in a friendly/informative way.
+
+    Return the tuple (found, new_results, )
+    """
+
+    try:
+        # in the case of a symbolic link, we want the stat of the link itself,
+        # not its target
+        pathstat = os.lstat(path)
+    except os.error, err:
+        # most common case is that nothing exists at that path.
+        if err.errno == errno.ENOENT:
+            return False, results
+        # otherwise this is a condition we should report to the user
+        raise errors.AnsibleError(
+            "%s is not accessible: %s."
+            " Please check its permissions." % ( path, err.strerror))
+
+    # symbolic link
+    if stat.S_ISLNK(pathstat.st_mode):
+        try:
+            target = os.path.realpath(path)
+        except os.error, err2:
+            raise errors.AnsibleError("The symbolic link at %s "
+                "is not readable: %s.  Please check its permissions."
+                % (path, err2.strerror, ))
+        # follow symbolic link chains by recursing, so we repeat the same
+        # permissions checks above and provide useful errors.
+        return _load_vars_from_path(target, results)
+
+    # directory
+    if stat.S_ISDIR(pathstat.st_mode):
+
+        # support organizing variables across multiple files in a directory
+        return True, _load_vars_from_folder(path, results, vault_password=vault_password)
+
+    # regular file
+    elif stat.S_ISREG(pathstat.st_mode):
+        data = parse_yaml_from_file(path, vault_password=vault_password)
+        if data and type(data) != dict:
+            raise errors.AnsibleError(
+                "%s must be stored as a dictionary/hash" % path)
+        elif data is None:
+            data = {}
+
+        # combine vars overrides by default but can be configured to do a
+        # hash merge in settings
+        results = combine_vars(results, data)
+        return True, results
+
+    # something else? could be a fifo, socket, device, etc.
+    else:
+        raise errors.AnsibleError("Expected a variable file or directory "
+            "but found a non-file object at path %s" % (path, ))
+
+def _load_vars_from_folder(folder_path, results, vault_password=None):
+    """
+    Load all variables within a folder recursively.
+    """
+
+    # this function and _load_vars_from_path are mutually recursive
+
+    try:
+        names = os.listdir(folder_path)
+    except os.error, err:
+        raise errors.AnsibleError(
+            "This folder cannot be listed: %s: %s."
+             % ( folder_path, err.strerror))
+
+    # evaluate files in a stable order rather than whatever order the
+    # filesystem lists them.
+    names.sort()
+
+    # do not parse hidden files or dirs, e.g. .svn/
+    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
+    for path in paths:
+        _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+    return results
 
