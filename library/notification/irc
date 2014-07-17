@@ -57,6 +57,11 @@ options:
     description:
       - Channel name
     required: true
+  key:
+    description:
+      - Channel key
+    required: false
+    version_added: 1.7
   passwd:
     description:
       - Server password
@@ -93,7 +98,7 @@ import socket
 from time import sleep
 
 
-def send_msg(channel, msg, server='localhost', port='6667',
+def send_msg(channel, msg, server='localhost', port='6667', key=None,
              nick="ansible", color='none', passwd=False, timeout=30):
     '''send message to IRC'''
 
@@ -133,7 +138,11 @@ def send_msg(channel, msg, server='localhost', port='6667',
             raise Exception('Timeout waiting for IRC server welcome response')
         sleep(0.5)
 
-    irc.send('JOIN %s\r\n' % channel)
+    if key:
+        irc.send('JOIN %s %s\r\n' % (channel, key))
+    else:
+        irc.send('JOIN %s\r\n' % channel)
+
     join = ''
     start = time.time()
     while 1:
@@ -166,6 +175,7 @@ def main():
             color=dict(default="none", choices=["yellow", "red", "green",
                                                  "blue", "black", "none"]),
             channel=dict(required=True),
+            key=dict(),
             passwd=dict(),
             timeout=dict(type='int', default=30)
         ),
@@ -178,11 +188,12 @@ def main():
     msg = module.params["msg"]
     color = module.params["color"]
     channel = module.params["channel"]
+    key = module.params["key"]
     passwd = module.params["passwd"]
     timeout = module.params["timeout"]
 
     try:
-        send_msg(channel, msg, server, port, nick, color, passwd, timeout)
+        send_msg(channel, msg, server, port, key, nick, color, passwd, timeout)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
