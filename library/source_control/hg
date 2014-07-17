@@ -170,13 +170,10 @@ class Hg(object):
             ['pull', '-R', self.dest, self.repo])
 
     def update(self):
-        return self._command(['update', '-R', self.dest])
+        return self._command(['update', '-R', self.dest, '-r', self.revision])
 
     def clone(self):
         return self._command(['clone', self.repo, self.dest, '-r', self.revision])
-
-    def switch_version(self):
-        return self._command(['update', '-r', self.revision, '-R', self.dest])
 
 # ===========================================
 
@@ -223,11 +220,10 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
 
-        (rc, out, err) = hg.update()
-        if rc != 0:
-            module.fail_json(msg=err)
+    (rc, out, err) = hg.update()
+    if rc != 0:
+        module.fail_json(msg=err)
 
-    hg.switch_version()
     after = hg.get_revision()
     if before != after or cleaned:
         changed = True
