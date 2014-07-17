@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: mongodb_replset
 author: Jakub Jirutka
-version_added: "unknown"
+version_added: "1.7"
 short_description: Initiate or extend replica set.
 description:
   - This module allows to initiate a new replica set or add new members to an
