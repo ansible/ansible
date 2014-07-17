@@ -142,6 +142,8 @@ def main():
 
     if rc != 0:
         output = parse_out(err)
+        if not output:
+            output = parse_out(out)
         module.fail_json(msg=output)
     else:
         output = parse_out(out)
