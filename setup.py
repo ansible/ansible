@@ -9,7 +9,7 @@ from ansible import __version__, __author__
 try:
     from setuptools import setup
 except ImportError:
-    print "Ansible now needs setuptools in order to build. " + \
+    print "Ansible now needs setuptools in order to build. " \
           "Install it using your package manager (usually python-setuptools) or via pip (pip install setuptools)."
     sys.exit(1)
 
