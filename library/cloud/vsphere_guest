@@ -130,6 +130,7 @@ EXAMPLES = '''
       vcpu.hotadd: yes
       mem.hotadd:  yes
       notes: This is a test VM
+      folder: AutoDeploys
     vm_disk:
       disk1:
         size_gb: 10
@@ -621,7 +622,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     if vm_extra_config['folder']:
         if vm_extra_config['folder'] not in vsphere_client._get_managed_objects(MORTypes.Folder).values():
             vsphere_client.disconnect()
-            module.fail_json(msg="Cannot find folder named: %s" % vm_extra_config['folder'])
+            module.fail_json(msg="Could not find folder named: %s" % vm_extra_config['folder'])
 
         for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
             if name == vm_extra_config['folder']:
