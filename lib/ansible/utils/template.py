@@ -322,7 +322,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         def my_finalize(thing):
             return thing if thing is not None else ''
 
-        environment = jinja2.Environment(trim_blocks=True, keep_trailing_newline=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 

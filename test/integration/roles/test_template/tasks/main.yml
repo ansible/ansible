@@ -63,10 +63,4 @@
   assert: 
     that: 
       - "file_result.changed != True"
-
-# VERIFY STRING TEMPLATE PRESERVES NEWLINE
-
-- name: ensure template strings preserve newline
-  assert:
-    that:
-      - "newline_no_template_string == newline_template_string"
+        
