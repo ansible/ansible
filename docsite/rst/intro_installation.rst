@@ -171,14 +171,14 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ansible>`_.
 
 To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
     $ sudo apt-get install software-properties-common
-    $ sudo apt-add-repository ppa:rquillo/ansible
+    $ sudo apt-add-repository ppa:ansible/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
 
