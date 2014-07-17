@@ -91,7 +91,7 @@ def run_setup(module):
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
     if facter_path is not None:
-        rc, out, err = module.run_command(facter_path + " --json")
+        rc, out, err = module.run_command(facter_path + " --puppet --json")
         facter = True
         try:
             facter_ds = json.loads(out)
