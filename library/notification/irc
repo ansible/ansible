@@ -47,6 +47,11 @@ options:
       - The message body.
     required: true
     default: null
+  ssl:
+    description:
+      - Use SSL when connecting
+    required: false
+    version_added: 1.7
   color:
     description:
       - Text color for the message. ("none" is a valid option in 1.6 or later, in 1.6 and prior, the default color is black, not "none"). 
@@ -94,12 +99,13 @@ EXAMPLES = '''
 
 import re
 import socket
+from ssl import wrap_socket
 
 from time import sleep
 
 
-def send_msg(channel, msg, server='localhost', port='6667', key=None,
-             nick="ansible", color='none', passwd=False, timeout=30):
+def send_msg(channel, msg, server='localhost', port='6667', ssl=False,
+             key=None, nick='ansible', color='none', passwd=False, timeout=30):
     '''send message to IRC'''
 
     colornumbers = {
@@ -119,6 +125,8 @@ def send_msg(channel, msg, server='localhost', port='6667', key=None,
     message = colortext + msg
 
     irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if ssl:
+        irc = wrap_socket(irc)
     irc.connect((server, int(port)))
     if passwd:
         irc.send('PASS %s\r\n' % passwd)
@@ -170,6 +178,7 @@ def main():
         argument_spec=dict(
             server=dict(default='localhost'),
             port=dict(default=6667),
+            ssl=dict(default=False),
             nick=dict(default='ansible'),
             msg=dict(required=True),
             color=dict(default="none", choices=["yellow", "red", "green",
@@ -184,6 +193,7 @@ def main():
 
     server = module.params["server"]
     port = module.params["port"]
+    ssl = module.params["ssl"]
     nick = module.params["nick"]
     msg = module.params["msg"]
     color = module.params["color"]
@@ -193,7 +203,8 @@ def main():
     timeout = module.params["timeout"]
 
     try:
-        send_msg(channel, msg, server, port, key, nick, color, passwd, timeout)
+        send_msg(channel, msg, server, port, ssl, key, nick, color, passwd,
+                 timeout)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
