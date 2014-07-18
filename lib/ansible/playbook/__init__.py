@@ -78,6 +78,7 @@ class PlayBook(object):
         su_pass          = False,
         vault_password   = False,
         force_handlers   = False,
+        roles_paths      = None,
     ):
 
         """
@@ -99,6 +100,7 @@ class PlayBook(object):
         check:            don't change anything, just try to detect some potential changes
         any_errors_fatal: terminate the entire execution immediately when one of the hosts has failed
         force_handlers:   continue to notify and run handlers even if a task fails 
+        roles_paths:      additional directories to search for roles
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -149,6 +151,7 @@ class PlayBook(object):
         self.su_pass          = su_pass
         self.vault_password   = vault_password
         self.force_handlers   = force_handlers
+        self.roles_paths      = roles_paths
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self

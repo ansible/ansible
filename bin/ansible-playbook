@@ -83,6 +83,9 @@ def main(args):
         help="start the playbook at the task matching this name")
     parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
         help="run handlers even if a task fails")
+    parser.add_option('-r', '--roles_path', dest='roles_paths', action='append',
+        default=map(os.path.expanduser, C.DEFAULT_ROLES_PATH.split(os.pathsep)),
+        help="add further additional directories to search for roles (default %default)")
 
     options, args = parser.parse_args(args)
 
@@ -188,7 +191,8 @@ def main(args):
             su_pass=su_pass,
             su_user=options.su_user,
             vault_password=vault_pass,
-            force_handlers=options.force_handlers
+            force_handlers=options.force_handlers,
+            roles_paths=options.roles_paths,
         )
 
         if options.listhosts or options.listtasks or options.syntax:

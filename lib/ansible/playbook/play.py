@@ -34,7 +34,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
+       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks', 'roles_paths',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password'
     ]
 
@@ -66,6 +66,7 @@ class Play(object):
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
         self.vault_password   = vault_password
+        self.roles_paths      = self.playbook.roles_paths
 
         if self.tags is None:
             self.tags = []
@@ -186,10 +187,8 @@ class Play(object):
             utils.path_dwim(self.basedir, os.path.join('roles', orig_path)),
             utils.path_dwim(self.basedir, orig_path)
         ]
-
-        if C.DEFAULT_ROLES_PATH:
-            search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
-            for loc in search_locations:
+        if self.roles_paths:
+            for loc in self.roles_paths:
                 loc = os.path.expanduser(loc)
                 possible_paths.append(utils.path_dwim(loc, orig_path))
 
