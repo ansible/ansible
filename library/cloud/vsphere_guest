@@ -935,6 +935,7 @@ def gather_facts(vm):
         'hw_product_uuid': vm.properties.config.uuid,
         'hw_processor_count': vm.properties.config.hardware.numCPU,
         'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
+        'guest_primary_ipaddress': vm.properties.guest.ipAddress,
     }
 
     ifidx = 0
