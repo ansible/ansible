@@ -46,6 +46,7 @@ options:
       - "Source address to add/remove to/from firewalld. Can be format address or network/mask. The timeout option is ignored with this option."
     required: false
     default: null
+    version_added: 1.7
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
