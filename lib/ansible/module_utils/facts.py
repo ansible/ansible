@@ -1397,7 +1397,7 @@ class Darwin(Hardware):
 
         rc, out, err = module.run_command("sysctl hw.usermem")
         if rc == 0:
-            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024
+            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
 class Network(Facts):
     """
