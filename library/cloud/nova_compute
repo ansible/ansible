@@ -111,6 +111,7 @@ options:
      description:
         - The availability zone the instance should be in
      required: false
+     version_added: "1.7"
      default: None
    user_data:
      description:
