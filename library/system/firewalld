@@ -41,6 +41,11 @@ options:
       - "Rich rule to add/remove to/from firewalld"
     required: false
     default: null
+  source:
+    description:
+      - "Source address to add/remove to/from firewalld. Can be format address or network/mask. The timeout option is ignored with this option."
+    required: false
+    default: null
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
@@ -73,6 +78,7 @@ EXAMPLES = '''
 - firewalld: port=8081/tcp permanent=true state=disabled
 - firewalld: zone=dmz service=http permanent=true state=enabled
 - firewalld: rich_rule='rule service name="ftp" audit limit value="1/m" accept' permanent=true state=enabled
+- firewalld: zone=drop source=192.168.0.100/24 permanent=true state=enabled
 '''
 
 import os
@@ -202,12 +208,49 @@ def set_rich_rule_disabled_permanent(zone, rule):
     fw_zone.update(fw_settings)
 
 
+################
+# source handling
+#
+def get_source_enabled(zone, source):
+    if source in fw.getSources(zone):
+        return True
+    else:
+        return False
+
+def set_source_enabled(zone, source):
+    fw.addSource(zone, source)
+
+def set_source_disabled(zone, source):
+    fw.removeSource(zone, source)
+
+def get_source_enabled_permanent(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    if source in fw_settings.getSources():
+        return True
+    else:
+        return False
+
+def set_source_enabled_permanent(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.addSource(source)
+    fw_zone.update(fw_settings)
+
+def set_source_disabled_permanent(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.removeSource(source)
+    fw_zone.update(fw_settings)
+
+
 def main():
 
     module = AnsibleModule(
         argument_spec = dict(
             service=dict(required=False,default=None),
             port=dict(required=False,default=None),
+            source=dict(required=False,default=None),
             rich_rule=dict(required=False,default=None),
             zone=dict(required=False,default=None),
             permanent=dict(type='bool',required=True),
@@ -226,6 +269,7 @@ def main():
     msgs = []
     service = module.params['service']
     rich_rule = module.params['rich_rule']
+    source = module.params['source']
 
     if module.params['port'] != None:
         port, protocol = module.params['port'].split('/')
@@ -258,9 +302,11 @@ def main():
         modification_count += 1
     if rich_rule != None:
         modification_count += 1
+    if source != None:
+        modification_count += 1
 
     if modification_count > 1:
-        module.fail_json(msg='can only operate on port, service or rich_rule at once')
+        module.fail_json(msg='can only operate on port, service, rich_rule, or source at once')
 
     if service != None:
         if permanent:
@@ -386,6 +432,48 @@ def main():
 
         if changed == True:
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
+
+    if source != None:
+        if permanent:
+            is_enabled = get_source_enabled_permanent(zone, source)
+            msgs.append('Permanent operation')
+
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    set_source_enabled_permanent(zone, source)
+                    changed=True
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    set_source_disabled_permanent(zone, source)
+                    changed=True
+        else:
+            is_enabled = get_source_enabled(zone, source)
+            msgs.append('Non-permanent operation')
+
+
+            if desired_state == "enabled":
+                if is_enabled == False:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    set_source_enabled(zone, source)
+                    changed=True
+            elif desired_state == "disabled":
+                if is_enabled == True:
+                    if module.check_mode:
+                        module.exit_json(changed=True)
+
+                    set_source_disabled(zone, source)
+                    changed=True
+
+        if changed == True:
+            msgs.append("Changed source %s to %s" % (source, desired_state))
 
     module.exit_json(changed=changed, msg=', '.join(msgs))
 
