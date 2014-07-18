@@ -91,11 +91,7 @@ def main():
     ### create fs
 
     if force:
-        if fstype == 'ext2':
-            force_flag='-F'
-        elif fstype == 'ext3':
-            force_flag='-F'
-        elif fstype == 'ext4':
+        if fstype.startswith('ext'):
             force_flag='-F'
         elif fstype == 'xfs':
             force_flag='-f'
@@ -110,7 +106,7 @@ def main():
         mkfs = module.get_bin_path('mkfs', required=True)
         cmd = None
         if opts is None:
-            cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
+            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, force_flag, dev)
         else:
             cmd = "%s -t %s %s %s '%s'" % (mkfs, fstype, force_flag, opts, dev)
         rc,_,err = module.run_command(cmd)
