@@ -154,22 +154,29 @@ class Ec2Inventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
-        # Data to print
+        # Assign self.data
         if self.args.host:
-            data_to_print = self.get_host_info()
+            self.data = self.get_host_info(self.args.host)
 
         elif self.args.list:
             # Display list of instances for inventory
             if self.inventory == self._empty_inventory():
-                data_to_print = self.get_inventory_from_cache()
+                self.data = self.get_inventory_from_cache()
             else:
-                data_to_print = self.json_format_dict(self.inventory, True)
+                self.data = self.inventory
 
-        print data_to_print
 
+    def print_data(self):
+        '''
+        Print self.data object in format json string
+        '''
+        if self.data:
+            print self.json_format_dict(self.data, True)
 
     def is_cache_valid(self):
-        ''' Determines if the cache files have expired, or if it is still valid '''
+        '''
+        Determines if the cache files have expired, or if it is still valid
+        '''
 
         if os.path.isfile(self.cache_path_cache):
             mod_time = os.path.getmtime(self.cache_path_cache)
@@ -543,24 +550,24 @@ class Ec2Inventory(object):
 
         return instance_vars
 
-    def get_host_info(self):
+    def get_host_info(self, host):
         ''' Get variables about a specific host '''
 
         if len(self.index) == 0:
             # Need to load index from cache
             self.load_index_from_cache()
 
-        if not self.args.host in self.index:
+        if not host in self.index:
             # try updating the cache
             self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
+            if not host in self.index:
                 # host migh not exist anymore
                 return self.json_format_dict({}, True)
 
-        (region, instance_id) = self.index[self.args.host]
+        (region, instance_id) = self.index[host]
 
         instance = self.get_instance(region, instance_id)
-        return self.json_format_dict(self.get_host_info_dict_from_instance(instance), True)
+        return self.get_host_info_dict_from_instance(instance)
 
     def push(self, my_dict, key, element):
         ''' Pushed an element onto an array that may not have been defined in
@@ -578,7 +585,7 @@ class Ec2Inventory(object):
 
         cache = open(self.cache_path_cache, 'r')
         json_inventory = cache.read()
-        return json_inventory
+        return json.loads(json_inventory)
 
 
     def load_index_from_cache(self):
@@ -615,6 +622,7 @@ class Ec2Inventory(object):
             return json.dumps(data)
 
 
-# Run the script
-Ec2Inventory()
-
+if __name__ == "__main__":
+    # Get + print the EC2Inventory
+    ec2inv = Ec2Inventory()
+    ec2inv.print_data()
