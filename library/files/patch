@@ -71,8 +71,6 @@ EXAMPLES = '''
 '''
 
 import os
-import subprocess
-from subprocess import PIPE
 from os import path, R_OK, W_OK
 
 
@@ -80,34 +78,27 @@ class PatchError(Exception):
     pass
 
 
-def run(args):
-    cmd = subprocess.Popen(args, shell=True, stdout=PIPE, stderr=PIPE)
-    out, err = cmd.communicate()
-    rc = cmd.returncode
-    return (rc, out, err)
-
-
-def is_already_applied(patch_file, basedir, dest_file=None, strip=0):
+def is_already_applied(patch_func, patch_file, basedir, dest_file=None, strip=0):
     opts = ['--quiet', '--reverse', '--forward', '--dry-run',
-            "--strip=%s" % strip, "--directory='%s'" % basedir]
+            "--strip=%s" % strip, "--directory='%s'" % basedir,
+            "--input='%s'" % patch_file]
     if dest_file:
-        opts.append(dest_file)
-    reverse_cmd = "patch %s < '%s'" % (' '.join(opts), patch_file)
+        opts.append("'%s'" % dest_file)
 
-    (rc, _, _) = run(reverse_cmd)
+    (rc, _, _) = patch_func(opts)
     return rc == 0
 
 
-def apply_patch(patch_file, basedir, dest_file=None, strip=0, dry_run=False):
+def apply_patch(patch_func, patch_file, basedir, dest_file=None, strip=0, dry_run=False):
     opts = ['--quiet', '--forward', '--batch', '--reject-file=-',
-            "--strip=%s" % strip, "--directory='%s'" % basedir]
+            "--strip=%s" % strip, "--directory='%s'" % basedir,
+            "--input='%s'" % patch_file]
     if dry_run:
         opts.append('--dry-run')
     if dest_file:
-        opts.append(dest_file)
-    patch_cmd = "patch %s < '%s'" % (' '.join(opts), patch_file)
+        opts.append("'%s'" % dest_file)
 
-    (rc, out, err) = run(patch_cmd)
+    (rc, out, err) = patch_func(opts)
     if rc != 0:
         msg = out if not err else err
         raise PatchError(msg)
@@ -140,10 +131,13 @@ def main():
     if not p.basedir:
         p.basedir = path.dirname(p.dest)
 
+    patch_bin = module.get_bin_path('patch')
+    patch_func = lambda opts: module.run_command("%s %s" % (patch_bin, ' '.join(opts)))
+
     changed = False
-    if not is_already_applied(p.src, p.basedir, dest_file=p.dest, strip=p.strip):
+    if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip):
         try:
-            apply_patch(p.src, p.basedir, dest_file=p.dest, strip=p.strip,
+            apply_patch(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip,
                         dry_run=module.check_mode)
             changed = True
         except PatchError, e:
