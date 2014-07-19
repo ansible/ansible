@@ -388,8 +388,13 @@ def enforce_state(module, params):
             do_write = True
 
     if do_write:
+        if module.check_mode:
+            module.exit_json(changed=True)
         writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
         params['changed'] = True
+    else:
+        if module.check_mode:
+            module.exit_json(changed=False)
 
     return params
 
@@ -404,7 +409,8 @@ def main():
            state       = dict(default='present', choices=['absent','present']),
            key_options = dict(required=False, type='str'),
            unique      = dict(default=False, type='bool'),
-        )
+        ),
+        supports_check_mode=True
     )
 
     results = enforce_state(module, module.params)
