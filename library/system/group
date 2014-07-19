@@ -48,13 +48,7 @@ options:
         choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-    
-    non_unique:
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
-        description:
-            - Allow to create/modify groups to have a non-unique GID. Will be ignored for AIX platforms
+
 '''
 
 EXAMPLES = '''
@@ -64,7 +58,7 @@ EXAMPLES = '''
 
 import grp
 import syslog
-
+import platform
 
 class Group(object):
     """
@@ -92,7 +86,6 @@ class Group(object):
         self.name       = module.params['name']
         self.gid        = module.params['gid']
         self.system     = module.params['system']
-        self.non_unique = module.params['non_unique']
         self.syslogging = False
 
     def execute_command(self, cmd):
@@ -112,8 +105,6 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-                if self.non_unique:
-                    cmd.append('-o')
             elif key == 'system' and kwargs[key] == True:
                 cmd.append('-r')
         cmd.append(self.name)
@@ -127,8 +118,6 @@ class Group(object):
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
                     cmd.append('-g')
                     cmd.append(kwargs[key])
-                    if self.non_unique:
-                        cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -173,8 +162,6 @@ class SunOS(Group):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-                if self.non_unique:
-                    cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -247,8 +234,6 @@ class FreeBsdGroup(Group):
         cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
         if self.gid is not None:
             cmd.append('-g %d' % int(self.gid))
-            if self.non_unique:
-                cmd.append('-o')
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
@@ -289,19 +274,16 @@ class OpenBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
-            if self.non_unique:
-                cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
+        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
-            if self.non_unique:
-                cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -334,19 +316,16 @@ class NetBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
-            if self.non_unique:
-                cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
         cmd = [self.module.get_bin_path('groupmod', True)]
         info = self.group_info()
+        cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append('%d' % int(self.gid))
-            if self.non_unique:
-                cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -358,12 +337,11 @@ class NetBsdGroup(Group):
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(
+        argument_spec = dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             gid=dict(default=None, type='str'),
             system=dict(default=False, type='bool'),
-            non_unique=dict(default=False, type='bool'),
         ),
         supports_check_mode=True
     )
