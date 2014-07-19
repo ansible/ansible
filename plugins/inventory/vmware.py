@@ -70,15 +70,15 @@ def cache_available(cache_item, config):
         dpath = os.path.expanduser(config.get('cache', 'dir'))
 
         try:
-            existing = os.stat( '/'.join([dpath,cache_item]))
+            existing = os.stat('/'.join([dpath,cache_item]))
         except:
             # cache doesn't exist or isn't accessible
             return False
 
         if config.has_option('cache', 'max_age'):
             maxage = config.get('cache', 'max_age')
-
-            if (existing.st_mtime - int(time.time())) <= maxage:
+            fileage = int( time.time() - existing.st_mtime )
+            if (maxage > fileage):
                 return True
 
     return False
@@ -87,10 +87,8 @@ def get_host_info(host):
     ''' Get variables about a specific host '''
 
     hostinfo = {
-                'vmware_name' : host.name,
-                'vmware_parent': host.parent.name,
-               }
-
+        'vmware_name' : host.name,
+    }
     for k in host.capability.__dict__.keys():
         if k.startswith('_'):
            continue
