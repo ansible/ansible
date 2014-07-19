@@ -6,7 +6,7 @@
 #
 # This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modifysp
+# Ansible is free software: you can redistribute it and/or modifys
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
@@ -69,7 +69,7 @@ options:
     required: False
   dedupditto:
     description:
-      - Sets a threshold for number of copies. If the  reference count for a deduplicated block goes above this threshold, another ditto copy of the block is stored automatically.
+      - Sets a threshold for number of copies. If the reference count for a deduplicated block goes above this threshold, another ditto copy of the block is stored automatically.
     required: False
   devices:
     description:
