@@ -6,7 +6,7 @@
 #
 # This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
+# Ansible is free software: you can redistribute it and/or modifysp
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
@@ -184,6 +184,7 @@ class Zpool(object):
         zil_dev = properties.pop('zil_dev', None)
         l2arc_dev = properties.pop('l2arc_dev', None)
         zpool_devs = properties.pop('zpool_devs', None)
+        spare = properties.pop('spare', None)
         force = properties.pop('force', None)
         action = 'create'
 
@@ -202,6 +203,8 @@ class Zpool(object):
             cmd.append('cache %s' % l2arc_dev)
         if zil_dev:
             cmd.append('log %s' % zil_dev)
+        if spare:
+            cmd.append('spare %s' % spare)
         (rc, err, out) = self.module.run_command(' '.join(cmd))
         if rc == 0:
             self.changed=True
