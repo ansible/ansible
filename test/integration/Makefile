@@ -56,6 +56,12 @@ cloud_cleanup: amazon_cleanup rackspace_cleanup
 amazon_cleanup:
 	python cleanup_ec2.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
 
+gce_setup:
+	python setup_gce.py "$(CLOUD_RESOURCE_PREFIX)"
+
+gce_cleanup:
+	python cleanup_gce.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
+
 rackspace_cleanup:
 	@echo "FIXME - cleanup_rax.py not yet implemented"
 	@# python cleanup_rax.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
@@ -68,6 +74,13 @@ amazon: $(CREDENTIALS_FILE)
 	ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_SSH_PIPELINING=no BOTO_CONFIG=/dev/null ansible-playbook amazon.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make amazon_cleanup ; \
+    exit $$RC;
+
+gce: $(CREDENTIALS_FILE)
+	CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make gce_setup ; \
+    ansible-playbook gce.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make gce_cleanup ; \
     exit $$RC;
 
 rackspace: $(CREDENTIALS_FILE)
