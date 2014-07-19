@@ -288,6 +288,11 @@ will evaluate to True when check mode is enabled. For example::
 Remember that, as module developer, you are responsible for ensuring that no
 system state is altered when the user enables check mode.
 
+To test check_mode using the hacking/test-module script, you can simply append
+CHECKMODE=True to the arguments as follows::
+
+    ansible/hacking/test-module -m foo -a "name=bar CHECKMODE=True"
+
 If your module does not support check mode, when the user runs Ansible in check
 mode, your module will simply be skipped.
 
