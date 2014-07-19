@@ -135,7 +135,7 @@ options:
       - The devices to use for the zpool
     required: False
     required: False
-author: Stan Hiller
+author: Stan Hiller, based on ZFS module from Johan Wiren
 '''
 
 EXAMPLES = '''
