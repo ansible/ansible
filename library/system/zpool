@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+# Original ZFS module code (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
+# Zpool-specific portions (c) 2014, Stanley Hiller <stan@consultingsysadmin.com>
 #
 # This file is part of Ansible
 #
