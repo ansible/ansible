@@ -70,6 +70,13 @@ options:
     required: false
     default: null
     version_added: "1.4"
+  clear_keys:
+    description:
+      - Whether this module should clear all keys in the authorized_keys file before adding a new one.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "1.7"
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
@@ -108,6 +115,7 @@ EXAMPLES = '''
 #    path = path to the user's authorized_keys file (default: ~/.ssh/authorized_keys)
 #    manage_dir = whether to create, and control ownership of the directory (default: true)
 #    state = absent|present (default: present)
+#    clear_keys = whether to clear all keys before adding a new one (default: false)
 #
 # see example in examples/playbooks
 
@@ -332,9 +340,14 @@ def enforce_state(module, params):
     manage_dir  = params.get("manage_dir", True)
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
+    clear_keys  = params.get("clear_keys")
 
-    # extract indivial keys into an array, skipping blank lines and comments
-    key = [s for s in key.splitlines() if s and not s.startswith('#')]
+    # an array of passed SSH keys
+    keys = []
+    # 'key' is a string of all keys separated by a comma
+    for split_key in key.split(','):
+        # extract indivial keys into an array, skipping blank lines and comments
+        keys += [s for s in split_key.splitlines() if s and not s.startswith('#')]
 
 
     # check current state -- just get the filename, don't create file
@@ -342,8 +355,12 @@ def enforce_state(module, params):
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
     existing_keys = readkeys(module, params["keyfile"])
 
+    # All parsed new keys will be saved here.
+    # We will need this later if clear_keys is True
+    parsed_new_keys = {}
+
     # Check our new keys, if any of them exist we'll continue.
-    for new_key in key:
+    for new_key in keys:
         parsed_new_key = parsekey(module, new_key)
         if key_options is not None:
             parsed_options = parseoptions(module, key_options)
@@ -371,6 +388,8 @@ def enforce_state(module, params):
 
         # handle idempotent state=present
         if state=="present":
+            parsed_new_keys[parsed_new_key[0]] = parsed_new_key
+            
             if len(non_matching_keys) > 0:
                 for non_matching_key in non_matching_keys:
                     if non_matching_key[0] in existing_keys:
@@ -386,6 +405,13 @@ def enforce_state(module, params):
                 continue
             del existing_keys[parsed_new_key[0]]
             do_write = True
+
+    # If clear_keys is True and the lengths of parsed_new_keys and existing_keys are different,
+    # that means there are keys in the authorized_keys file which need ot be delete, so we only
+    # need to write parsed_new_keys
+    if clear_keys and len(parsed_new_keys) != len(existing_keys):
+        existing_keys = parsed_new_keys
+        do_write = True
 
     if do_write:
         writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
@@ -404,6 +430,7 @@ def main():
            state       = dict(default='present', choices=['absent','present']),
            key_options = dict(required=False, type='str'),
            unique      = dict(default=False, type='bool'),
+           clear_keys  = dict(default=False, type='bool'),
         )
     )
 
