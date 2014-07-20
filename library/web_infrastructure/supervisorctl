@@ -178,7 +178,7 @@ def main():
             if status_filter(status):
                 to_take_action_on.append(process_name)
 
-        if len(to_take_action_on) == 0:
+        if not to_take_action_on:
             module.exit_json(changed=False, name=name, state=state)
         if module.check_mode:
             module.exit_json(changed=True)
@@ -197,7 +197,7 @@ def main():
     processes = get_matched_processes()
 
     if state == 'present':
-        if len(processes) > 0:
+        if processes:
             module.exit_json(changed=False, name=name, state=state)
 
         if module.check_mode:

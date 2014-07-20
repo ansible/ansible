@@ -147,7 +147,7 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
         if not query_package_provides(module, package):
             packages += "'%s' " % package
 
-    if len(packages) != 0:
+    if packages:
         if no_suggests:
             no_suggests_yes = '--no-suggests'
         else:

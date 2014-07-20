@@ -546,7 +546,7 @@ class Ec2Inventory(object):
     def get_host_info(self):
         ''' Get variables about a specific host '''
 
-        if len(self.index) == 0:
+        if not self.index:
             # Need to load index from cache
             self.load_index_from_cache()
 

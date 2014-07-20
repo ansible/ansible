@@ -323,7 +323,7 @@ class CronTab(object):
 
         self.lines = newlines
 
-        if len(newlines) == 0:
+        if not newlines:
             return True
         else:
             return False # TODO add some more error testing
@@ -479,14 +479,14 @@ def main():
     old_job = crontab.find_job(name)
 
     if do_install:
-        if len(old_job) == 0:
+        if not old_job:
             crontab.add_job(name, job)
             changed = True
-        if len(old_job) > 0 and old_job[1] != job:
+        if old_job and old_job[1] != job:
             crontab.update_job(name, job)
             changed = True
     else:
-        if len(old_job) > 0:
+        if old_job:
             crontab.remove_job(name)
             changed = True
 

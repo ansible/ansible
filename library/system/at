@@ -104,7 +104,7 @@ def get_matching_jobs(module, at_cmd, script_file):
     atq_command = "%s" % atq_cmd
     rc, out, err = module.run_command(atq_command, check_rc=True)
     current_jobs = out.splitlines()
-    if len(current_jobs) == 0:
+    if not current_jobs:
         return matching_jobs
 
     # Read script_file into a string.
@@ -182,7 +182,7 @@ def main():
 
     # if unique if existing return unchanged
     if unique:
-        if len(get_matching_jobs(module, at_cmd, script_file)) != 0:
+        if get_matching_jobs(module, at_cmd, script_file):
             if command:
                 os.unlink(script_file)
             module.exit_json(**result)

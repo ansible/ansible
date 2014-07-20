@@ -371,7 +371,7 @@ def enforce_state(module, params):
 
         # handle idempotent state=present
         if state == "present":
-            if len(non_matching_keys) > 0:
+            if non_matching_keys:
                 for non_matching_key in non_matching_keys:
                     if non_matching_key[0] in existing_keys:
                         del existing_keys[non_matching_key[0]]

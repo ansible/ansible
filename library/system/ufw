@@ -202,7 +202,7 @@ def main():
     command_keys = ['state', 'default', 'rule', 'logging']
     commands = dict((key, params[key]) for key in command_keys if params[key])
 
-    if len(commands) < 1:
+    if not commands:
         module.fail_json(msg="Not any of the command arguments %s given" % commands)
 
     if('interface' in params and 'direction' not in params):

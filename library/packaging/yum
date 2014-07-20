@@ -510,7 +510,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             # if any of the packages are involved in a transaction, fail now
             # so that we don't hang on the yum operation later
             conflicts = transaction_exists(pkglist)
-            if len(conflicts) > 0:
+            if conflicts:
                 res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
                 module.fail_json(**res)
 
@@ -683,7 +683,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             # if any of the packages are involved in a transaction, fail now
             # so that we don't hang on the yum operation later
             conflicts = transaction_exists(pkglist)
-            if len(conflicts) > 0:
+            if conflicts:
                 res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
                 module.fail_json(**res)
 

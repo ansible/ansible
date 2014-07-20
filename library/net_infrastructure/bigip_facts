@@ -1604,7 +1604,7 @@ def main():
     try:
         facts = {}
 
-        if len(include) > 0:
+        if include:
             f5 = F5(server, user, password, session)
             saved_active_folder = f5.get_active_folder()
             saved_recursive_query_state = f5.get_recursive_query_state()

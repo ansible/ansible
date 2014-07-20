@@ -257,7 +257,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     elif insertafter == 'EOF':
 
         # If the file is not empty then ensure there's a newline before the added line
-        if len(lines)>0 and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
+        if lines and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
             lines.append(os.linesep)
 
         lines.append(line + os.linesep)

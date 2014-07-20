@@ -709,7 +709,7 @@ class AnsibleModule(object):
         for check in spec:
             counts = [ self._count_terms([field]) for field in check ]
             non_zero = [ c for c in counts if c > 0 ]
-            if len(non_zero) > 0:
+            if non_zero:
                 if 0 in counts:
                     self.fail_json(msg="parameters are required together: %s" % check)
 
@@ -720,7 +720,7 @@ class AnsibleModule(object):
             required = v.get('required', False)
             if required and k not in self.params:
                 missing.append(k)
-        if len(missing) > 0:
+        if missing:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
 
     def _check_argument_values(self):

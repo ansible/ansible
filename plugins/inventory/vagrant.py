@@ -116,7 +116,7 @@ elif options.host:
     ssh_config = get_ssh_config()
 
     details = filter(lambda x: (x['HostName'] == options.host), ssh_config)
-    if len(details) > 0:
+    if details:
         #pass through the port, in case it's non standard.
         result = details[0]
         result['ansible_ssh_port'] = result['Port']

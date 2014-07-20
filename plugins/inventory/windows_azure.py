@@ -84,7 +84,7 @@ class AzureInventory(object):
             data_to_print = self.json_format_dict(self.get_images(), True)
         elif self.args.list:
             # Display list of nodes for inventory
-            if len(self.inventory) == 0:
+            if not self.inventory:
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)

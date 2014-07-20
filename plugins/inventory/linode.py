@@ -134,7 +134,7 @@ class LinodeInventory(object):
             data_to_print = self.get_host_info()
         elif self.args.list:
             # Display list of nodes for inventory
-            if len(self.inventory) == 0:
+            if not self.inventory:
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
@@ -236,7 +236,7 @@ class LinodeInventory(object):
     def get_host_info(self):
         """Get variables about a specific host."""
 
-        if len(self.index) == 0:
+        if not self.index:
             # Need to load index from cache
             self.load_index_from_cache()
 

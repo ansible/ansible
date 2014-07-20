@@ -211,9 +211,9 @@ def main():
         for addr in [x.strip() for x in blindcopies.split(',')]:
             addr_list.append( parseaddr(addr)[1] )
 
-    if len(to_list) > 0:
+    if to_list:
         msg['To'] = ", ".join(to_list)
-    if len(cc_list) > 0:
+    if cc_list:
         msg['Cc'] = ", ".join(cc_list)
 
     part = MIMEText(body + "\n\n", _charset=charset)

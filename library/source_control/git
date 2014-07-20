@@ -305,7 +305,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         # cannot check for a specific sha1 on remote
         return version
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
-    if len(out) < 1:
+    if not out:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
     rev = out.split()[0]
     return rev
