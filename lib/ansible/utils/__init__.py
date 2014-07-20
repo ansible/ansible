@@ -1166,11 +1166,13 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             )
         )
 
-    filter_list = []
+    filter_list = set()
     for filter in filter_loader.all():
-        filter_list.extend(filter.filters().keys())
+        # Allow user filter_plugins to omit either filters or tests.
+        filter_list.update(getattr(filter, "filters", list)())
+        filter_list.update(getattr(filter, "tests", list)())
 
-    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list
+    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + list(filter_list)
 
     class CleansingNodeVisitor(ast.NodeVisitor):
         def generic_visit(self, node, inside_call=False):

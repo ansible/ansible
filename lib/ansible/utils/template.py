@@ -34,27 +34,29 @@ import traceback
 
 from ansible.utils.string_functions import count_newlines_from_end
 
-class Globals(object):
+class FilterPlugins(object):
 
-    FILTERS = None
+    FILTERS = None # Jinja2 filters
+    TESTS = None   # Jinja2 tests
 
     def __init__(self):
         pass
 
-def _get_filters():
-    ''' return filter plugin instances '''
-
-    if Globals.FILTERS is not None:
-        return Globals.FILTERS
-
-    from ansible import utils
-    plugins = [ x for x in utils.plugins.filter_loader.all()]
-    filters = {}
-    for fp in plugins:
-        filters.update(fp.filters())
-    Globals.FILTERS = filters
-
-    return Globals.FILTERS
+    @staticmethod
+    def initialized():
+        ''' return the FilterPlugins class with its FILTERS and TESTS loaded '''
+        if FilterPlugins.FILTERS is None or FilterPlugins.TESTS is None:
+            from ansible import utils
+            plugins = [ x for x in utils.plugins.filter_loader.all()]
+            filters = {}
+            tests = {}
+            for fp in plugins:
+                # Allow user filter_plugins to omit either filters or tests.
+                filters.update(getattr(fp, "filters", dict)())
+                tests.update(getattr(fp, "tests", dict)())
+            FilterPlugins.FILTERS = filters
+            FilterPlugins.TESTS = tests
+        return FilterPlugins
 
 def _get_extensions():
     ''' return jinja2 extensions to load '''
@@ -72,6 +74,15 @@ def _get_extensions():
         jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
 
     return jinja_exts
+
+def _get_environment(**kwargs):
+    ''' return a new copy of our customized jinja2 environment '''
+    initargs=dict(trim_blocks=True, extensions=_get_extensions())
+    initargs.update(kwargs)
+    environment = jinja2.Environment(**initargs)
+    environment.filters.update(FilterPlugins.initialized().FILTERS)
+    environment.tests.update(FilterPlugins.initialized().TESTS)
+    return environment
 
 class Flags:
     LEGACY_TEMPLATE_WARNING = False
@@ -218,8 +229,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     def my_finalize(thing):
         return thing if thing is not None else ''
 
-    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
-    environment.filters.update(_get_filters())
+    environment = _get_environment(loader=loader)
     environment.globals['lookup'] = my_lookup
     environment.globals['finalize'] = my_finalize
     if fail_on_undefined:
@@ -322,8 +332,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         def my_finalize(thing):
             return thing if thing is not None else ''
 
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
-        environment.filters.update(_get_filters())
+        environment = _get_environment(undefined=StrictUndefined, finalize=my_finalize)
         environment.template_class = J2Template
 
         if '_original_file' in vars:

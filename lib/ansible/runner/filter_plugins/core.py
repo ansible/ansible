@@ -206,6 +206,7 @@ class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
     def filters(self):
+        # For backwards compatibility, some Ansible tests are also registered as filters.
         return {
             # base 64
             'b64decode': base64.b64decode,
@@ -271,5 +272,30 @@ class FilterModule(object):
 
             # random numbers
             'random': rand,
+        }
+
+    def tests(self):
+        return {
+
+            # failure testing
+            'failed'  : failed,
+            'success' : success,
+
+            # changed testing
+            'changed' : changed,
+
+            # skip testing
+            'skipped' : skipped,
+
+            # value as boolean
+            'bool': bool,
+
+            # regex
+            'match': match,
+            'search': search,
+            'regex': regex,
+
+            # version comparison
+            'version_compare': version_compare,
         }
 

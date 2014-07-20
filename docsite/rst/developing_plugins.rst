@@ -52,7 +52,10 @@ If you find yourself wanting to write a vars_plugin, it's more likely you should
 Filter Plugins
 --------------
 
-If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.  Most of the time, when someone comes up with an idea for a new filter they would like to make available in a playbook, we'll just include them in 'core.py' instead.
+If you want more Jinja2 filters (filters like to_yaml and to_json are provided by default) or tests (tests like
+match and version_compare are provided by default) to be available in a Jinja2 template, they can be extended by
+writing a filter plugin. Most of the time, when someone comes up with an idea for a new filter or test plugin
+they would like to make available in a playbook, we'll just include them in 'core.py' instead.
 
 Jump into `lib/ansible/runner/filter_plugins/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/filter_plugins>`_ for details.
 
