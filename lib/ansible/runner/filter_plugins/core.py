@@ -19,14 +19,13 @@ import base64
 import json
 import os.path
 import yaml
-import types
 import pipes
 import glob
 import re
-import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s
-from distutils.version import LooseVersion, StrictVersion
+# TODO: hack to make tests pass; update tests instead
+from ansible.runner.test_plugins.core import *
 from random import SystemRandom
 from jinja2.filters import environmentfilter
 
@@ -42,46 +41,6 @@ def to_nice_json(a, *args, **kw):
     '''Make verbose, human readable JSON'''
     return json.dumps(a, indent=4, sort_keys=True, *args, **kw)
 
-def failed(*a, **kw):
-    ''' Test if task result yields failed '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
-    if rc != 0 or failed:
-        return True
-    else:
-        return False
-
-def success(*a, **kw):
-    ''' Test if task result yields success '''
-    return not failed(*a, **kw)
-
-def changed(*a, **kw):
-    ''' Test if task result yields changed '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if not 'changed' in item:
-        changed = False
-        if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
-            for result in item['results']:
-                changed = changed or result.get('changed', False)
-    else:
-        changed = item.get('changed', False)
-    return changed
-
-def skipped(*a, **kw):
-    ''' Test if task result yields skipped '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|skipped expects a dictionary")
-    skipped = item.get('skipped', False)
-    return skipped
-
 def mandatory(a):
     ''' Make a variable mandatory '''
     try:
@@ -91,17 +50,6 @@ def mandatory(a):
     else:
         return a
 
-def bool(a):
-    ''' return a bool for the arg '''
-    if a is None or type(a) == bool:
-        return a
-    if type(a) in types.StringTypes:
-        a = a.lower()
-    if a in ['yes', 'on', '1', 'true', 1]:
-        return True
-    else:
-        return False
-
 def quote(a):
     ''' return its argument quoted for shell usage '''
     return pipes.quote(a)
@@ -109,27 +57,6 @@ def quote(a):
 def fileglob(pathname):
     ''' return list of matched files for glob '''
     return glob.glob(pathname)
-
-def regex(value='', pattern='', ignorecase=False, match_type='search'):
-    ''' Expose `re` as a boolean filter using the `search` method by default.
-        This is likely only useful for `search` and `match` which already
-        have their own filters.
-    '''
-    if ignorecase:
-        flags = re.I
-    else:
-        flags = 0
-    _re = re.compile(pattern, flags=flags)
-    _bool = __builtins__.get('bool')
-    return _bool(getattr(_re, match_type, 'search')(value))
-
-def match(value, pattern='', ignorecase=False):
-    ''' Perform a `re.match` returning a boolean '''
-    return regex(value, pattern, ignorecase, 'match')
-
-def search(value, pattern='', ignorecase=False):
-    ''' Perform a `re.search` returning a boolean '''
-    return regex(value, pattern, ignorecase, 'search')
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
@@ -158,33 +85,6 @@ def symmetric_difference(a, b):
 
 def union(a, b):
     return set(a).union(b)
-
-def version_compare(value, version, operator='eq', strict=False):
-    ''' Perform a version comparison on a value '''
-    op_map = {
-        '==': 'eq', '=':  'eq', 'eq': 'eq',
-        '<':  'lt', 'lt': 'lt',
-        '<=': 'le', 'le': 'le',
-        '>':  'gt', 'gt': 'gt',
-        '>=': 'ge', 'ge': 'ge',
-        '!=': 'ne', '<>': 'ne', 'ne': 'ne'
-    }
-
-    if strict:
-        Version = StrictVersion
-    else:
-        Version = LooseVersion
-
-    if operator in op_map:
-        operator = op_map[operator]
-    else:
-        raise errors.AnsibleFilterError('Invalid operator type')
-
-    try:
-        method = getattr(py_operator, operator)
-        return method(Version(str(value)), Version(str(version)))
-    except Exception, e:
-        raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
 @environmentfilter
 def rand(environment, end, start=None, step=None):
@@ -228,21 +128,8 @@ class FilterModule(object):
             'realpath': os.path.realpath,
             'relpath': os.path.relpath,
 
-            # failure testing
-            'failed'  : failed,
-            'success' : success,
-
-            # changed testing
-            'changed' : changed,
-
-            # skip testing
-            'skipped' : skipped,
-
             # variable existence
             'mandatory': mandatory,
-
-            # value as boolean
-            'bool': bool,
 
             # quote string for shell usage
             'quote': quote,
@@ -254,9 +141,6 @@ class FilterModule(object):
             'fileglob': fileglob,
 
             # regex
-            'match': match,
-            'search': search,
-            'regex': regex,
             'regex_replace': regex_replace,
 
             # list
@@ -265,9 +149,6 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
-
-            # version comparison
-            'version_compare': version_compare,
 
             # random numbers
             'random': rand,

@@ -37,6 +37,7 @@ from ansible.utils.string_functions import count_newlines_from_end
 class Globals(object):
 
     FILTERS = None
+    TESTS = None
 
     def __init__(self):
         pass
@@ -56,6 +57,21 @@ def _get_filters():
 
     return Globals.FILTERS
 
+def _get_tests():
+    ''' return test plugin instances '''
+
+    if Globals.TESTS is not None:
+        return Globals.TESTS
+
+    from ansible import utils
+    plugins = [ x for x in utils.plugins.test_loader.all()]
+    tests = {}
+    for tp in plugins:
+        tests.update(tp.tests())
+    Globals.TESTS = tests
+
+    return Globals.TESTS
+
 def _get_extensions():
     ''' return jinja2 extensions to load '''
 
@@ -72,6 +88,16 @@ def _get_extensions():
         jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
 
     return jinja_exts
+
+def _get_environment(**kwargs):
+    ''' return a new copy of our customized jinja2 environment '''
+    initargs=dict(trim_blocks=True, extensions=_get_extensions())
+    initargs.update(kwargs)
+    environment = jinja2.Environment(**initargs)
+    environment.filters.update(_get_filters())
+    environment.filters.update(_get_tests())
+    environment.tests.update(_get_tests())
+    return environment
 
 class Flags:
     LEGACY_TEMPLATE_WARNING = False
@@ -218,8 +244,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     def my_finalize(thing):
         return thing if thing is not None else ''
 
-    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
-    environment.filters.update(_get_filters())
+    environment = _get_environment(loader=loader)
     environment.globals['lookup'] = my_lookup
     environment.globals['finalize'] = my_finalize
     if fail_on_undefined:
@@ -322,8 +347,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         def my_finalize(thing):
             return thing if thing is not None else ''
 
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
-        environment.filters.update(_get_filters())
+        environment = _get_environment(undefined=StrictUndefined, finalize=my_finalize)
         environment.template_class = J2Template
 
         if '_original_file' in vars:
