@@ -15,8 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 import collections
+import os
 import sys
 import time
+import threading
+from itertools import chain
 
 from ansible import constants as C
 from ansible.cache.base import BaseCacheModule
@@ -26,6 +29,74 @@ try:
 except ImportError:
     print 'python-memcached is required for the memcached fact cache'
     sys.exit(1)
+
+
+class ProxyClientPool(object):
+    """
+    Memcached connection pooling for thread/fork safety. Inspired by py-redis
+    connection pool.
+
+    Available connections are maintained in a deque and released in a FIFO manner.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.max_connections = kwargs.pop('max_connections', 1024)
+        self.connection_args = args
+        self.connection_kwargs = kwargs
+        self.reset()
+
+    def reset(self):
+        self.pid = os.getpid()
+        self._num_connections = 0
+        self._available_connections = collections.deque(maxlen=self.max_connections)
+        self._locked_connections = set()
+        self._lock = threading.Lock()
+
+    def _check_safe(self):
+        if self.pid != os.getpid():
+            with self._lock:
+                if self.pid == os.getpid():
+                    # bail out - another thread already acquired the lock
+                    return
+                self.disconnect_all()
+                self.reset()
+
+    def get_connection(self):
+        self._check_safe()
+        try:
+            connection = self._available_connections.popleft()
+        except IndexError:
+            connection = self.create_connection()
+        self._locked_connections.add(connection)
+        return connection
+
+    def create_connection(self):
+        if self._num_connections >= self.max_connections:
+            raise RuntimeError("Too many memcached connections")
+        self._num_connections += 1
+        return memcache.Client(*self.connection_args, **self.connection_kwargs)
+
+    def release_connection(self, connection):
+        self._check_safe()
+        self._locked_connections.remove(connection)
+        self._available_connections.append(connection)
+
+    def disconnect_all(self):
+        for conn in chain(self._available_connections, self._locked_connections):
+            conn.disconnect_all()
+
+    def __getattr__(self, name):
+        def wrapped(*args, **kwargs):
+            return self._proxy_client(name, *args, **kwargs)
+        return wrapped
+
+    def _proxy_client(self, name, *args, **kwargs):
+        conn = self.get_connection()
+
+        try:
+            return getattr(conn, name)(*args, **kwargs)
+        finally:
+            self.release_connection(conn)
 
 
 class CacheModuleKeys(collections.MutableSet):
@@ -74,7 +145,7 @@ class CacheModule(BaseCacheModule):
 
         self._timeout = C.CACHE_PLUGIN_TIMEOUT
         self._prefix = C.CACHE_PLUGIN_PREFIX
-        self._cache = memcache.Client(connection, debug=0)
+        self._cache = ProxyClientPool(connection, debug=0)
         self._keys = CacheModuleKeys(self._cache, self._cache.get(CacheModuleKeys.PREFIX) or [])
 
     def _make_key(self, key):
@@ -87,7 +158,7 @@ class CacheModule(BaseCacheModule):
 
     def get(self, key):
         value = self._cache.get(self._make_key(key))
-        # guard against the key not being removed from the zset;
+        # guard against the key not being removed from the keyset;
         # this could happen in cases where the timeout value is changed
         # between invocations
         if value is None:
