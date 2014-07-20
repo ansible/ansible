@@ -210,10 +210,7 @@ class CronTab(object):
             syslog.syslog(syslog.LOG_NOTICE, 'ansible: "%s"' % message)
 
     def is_empty(self):
-        if len(self.lines) == 0:
-            return True
-        else:
-            return False
+        return not self.lines
 
     def write(self, backup_file=None):
         """
