@@ -395,7 +395,14 @@ class LinuxService(Service):
 
         def check_systemd(name):
             # verify service is managed by systemd
-            if not location.get('systemctl', None):
+
+            # sd_booted(3) reimplemented in pure Python
+            # systemd.daemon.booted() could also be used
+            try:
+                st = os.lstat("/run/systemd/system/")
+                if not stat.S_ISDIR(st.st_mode):
+                    return False
+            except OSError:
                 return False
 
             # default to .service if the unit type is not specified
