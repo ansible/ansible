@@ -65,7 +65,9 @@ options:
         as well as just configured in I(fstab). C(absent) and C(present) only deal with
         I(fstab). C(mounted) will also automatically create the mount point
         directory if it doesn't exist. If C(absent) changes anything, it will
-        remove the mount point directory.
+        remove the mount point directory. If fstype is C(swap), then C(mounted) and
+        C(unmounted) will cause I(swapon) or I(swapoff) to be called, respectively.
+
     required: true
     choices: [ "present", "absent", "mounted", "unmounted" ]
     default: null
@@ -226,6 +228,54 @@ def umount(module, **kwargs):
     else:
         return rc, out+err
 
+def swaponoff(module, prog, **kwargs):
+    """ mount up a path or remount if needed """
+    prog_bin = module.get_bin_path(prog)
+
+    src = kwargs['src']
+    cmd = [ prog_bin, src ]
+
+    rc, out, err = module.run_command(cmd)
+    if rc == 0:
+        return 0, ''
+    else:
+        return rc, out+err
+
+def fstype_swap(module, state, **kwargs):
+    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    args = dict(
+        swaps  = '/proc/swaps'
+    )
+    args.update(kwargs)
+
+    src = args['src']
+    exists = False
+    for line in open(args['swaps'], 'r').readlines()[1:]:
+        sw = {}
+        sw['filename'], sw['type'], sw['size'], sw['used'], sw['priority']  = line.split()
+
+        if sw['filename'] == src:
+            exists = True
+            break
+
+    changed = False
+    if state == 'absent':
+        name, changed = unset_mount(**args)
+    if state in ['unmounted', 'absent'] and exists:
+        changed = True
+        res,msg  = swaponoff(module, 'swapoff', **args)
+        if res:
+            module.fail_json(msg="Error turning off swap %s: %s" % (src, msg))
+    if state in ['mounted', 'present']:
+        name, changed = set_mount(**args)
+    if state == 'mounted' and not exists:
+        changed = True
+        res,msg  = swaponoff(module, 'swapon', **args)
+        if res:
+            module.fail_json(msg="Error turning on swap %s: %s" % (src, msg))
+
+    module.exit_json(changed=changed, **args)
+
 def main():
 
     module = AnsibleModule(
@@ -266,6 +316,9 @@ def main():
     # mounted == add to fstab if not there and make sure it is mounted, if it has changed in fstab then remount it
 
     state = module.params['state']
+    if module.params['fstype'] == 'swap':
+        fstype_swap(module, state, **args)
+
     name  = module.params['name']
     if state == 'absent':
         name, changed = unset_mount(**args)
