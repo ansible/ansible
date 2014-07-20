@@ -172,7 +172,7 @@ def main():
         key = 'user.%s' % key
 
 
-    if (state == 'present' or value is not None):
+    if state == 'present' or value is not None:
         current=get_xattr(module,path,key,follow)
         if current is None or not key in current or value != current[key]:
             if not module.check_mode:

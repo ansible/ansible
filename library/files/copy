@@ -181,7 +181,7 @@ def main():
     if os.path.exists(dest):
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
-        if (os.path.isdir(dest)):
+        if os.path.isdir(dest):
             basename = os.path.basename(src)
             if original_basename:
                 basename = original_basename

@@ -223,7 +223,7 @@ def server_to_dict(obj):
     instance = {}
     for key in dir(obj):
         value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
+        if isinstance(value, NON_CALLABLES) and not key.startswith('_'):
             key = rax_slugify(key)
             instance[key] = value
 

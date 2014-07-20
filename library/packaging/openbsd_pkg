@@ -113,7 +113,7 @@ def get_package_state(name, pkg_spec, module):
 
     rc, stdout, stderr = execute_command(command, module)
 
-    if (stderr):
+    if stderr:
         module.fail_json(msg="failed in get_package_state(): " + stderr)
 
     if rc == 0:

@@ -142,7 +142,7 @@ def asg_to_dict(obj):
             for policy in value:
                 policies.append(asg_to_dict(policy))
             instance[key] = policies
-        elif (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
+        elif isinstance(value, NON_CALLABLES) and not key.startswith('_'):
             instance[key] = value
     return instance
 
