@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 
 import collections
-import pickle
+import cPickle
 import sys
 import time
 
@@ -40,13 +40,13 @@ class PickledRedis(StrictRedis):
         pickled_value = super(PickledRedis, self).get(name)
         if pickled_value is None:
             return None
-        return pickle.loads(pickled_value)
+        return cPickle.loads(pickled_value)
 
     def set(self, name, value, *args, **kwargs):
-        return super(PickledRedis, self).set(name, pickle.dumps(value), *args, **kwargs)
+        return super(PickledRedis, self).set(name, cPickle.dumps(value), *args, **kwargs)
 
     def setex(self, name, time, value):
-        return super(PickledRedis, self).setex(name, time, pickle.dumps(value))
+        return super(PickledRedis, self).setex(name, time, cPickle.dumps(value))
 
 
 class CacheModule(BaseCacheModule):
