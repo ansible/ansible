@@ -185,6 +185,8 @@ def get_distribution_version():
     if platform.system() == 'Linux':
         try:
             distribution_version = platform.linux_distribution()[1]
+            if not distribution_version and os.path.isfile('/etc/system-release'):
+                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
         except:
             # FIXME: MethodMissing, I assume?
             distribution_version = platform.dist()[1]
@@ -854,6 +856,8 @@ class AnsibleModule(object):
                 (k, v) = x.split("=",1)
             except Exception, e:
                 self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
+            if k in params:
+                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)

@@ -89,6 +89,13 @@ options:
     required: false
     default: "false"
     aliases: []
+  disks:
+    description:
+      - a list of persistent disks to attach to the instance; a string value gives the name of the disk; alternatively, a dictionary value can define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry will be the boot disk (which must be READ_WRITE).
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.7"
   state:
     description:
       - desired state of the resource
@@ -209,8 +216,16 @@ def get_instance_info(inst):
         netname = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
     except:
         netname = None
+    if 'disks' in inst.extra:
+        disk_names = [disk_info['source'].split('/')[-1]
+                      for disk_info
+                      in sorted(inst.extra['disks'],
+                                key=lambda disk_info: disk_info['index'])]
+    else:
+        disk_names = []
     return({
         'image': not inst.image is None and inst.image.split('/')[-1] or None,
+        'disks': disk_names,
         'machine_type': inst.size,
         'metadata': metadata,
         'name': inst.name,
@@ -240,6 +255,7 @@ def create_instances(module, gce, instance_names):
     metadata = module.params.get('metadata')
     network = module.params.get('network')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
+    disks = module.params.get('disks')
     state = module.params.get('state')
     tags = module.params.get('tags')
     zone = module.params.get('zone')
@@ -248,6 +264,16 @@ def create_instances(module, gce, instance_names):
     changed = False
 
     lc_image = gce.ex_get_image(image)
+    lc_disks = []
+    disk_modes = []
+    for i, disk in enumerate(disks or []):
+        if isinstance(disk, dict):
+            lc_disks.append(gce.ex_get_volume(disk['name']))
+            disk_modes.append(disk['mode'])
+        else:
+            lc_disks.append(gce.ex_get_volume(disk))
+            # boot disk is implicitly READ_WRITE
+            disk_modes.append('READ_ONLY' if i > 0 else 'READ_WRITE')
     lc_network = gce.ex_get_network(network)
     lc_machine_type = gce.ex_get_size(machine_type)
     lc_zone = gce.ex_get_zone(zone)
@@ -282,7 +308,9 @@ def create_instances(module, gce, instance_names):
 
     for name in instance_names:
         pd = None
-        if persistent_boot_disk:
+        if lc_disks:
+            pd = lc_disks[0]
+        elif persistent_boot_disk:
             try:
                 pd = gce.create_volume(None, "%s" % name, image=lc_image)
             except ResourceExistsError:
@@ -298,6 +326,28 @@ def create_instances(module, gce, instance_names):
         except GoogleBaseError, e:
             module.fail_json(msg='Unexpected error attempting to create ' + \
                     'instance %s, error: %s' % (name, e.value))
+
+        for i, lc_disk in enumerate(lc_disks):
+            # Check whether the disk is already attached
+            if (len(inst.extra['disks']) > i):
+                attached_disk = inst.extra['disks'][i]
+                if attached_disk['source'] != lc_disk.extra['selfLink']:
+                    module.fail_json(
+                        msg=("Disk at index %d does not match: requested=%s found=%s" % (
+                            i, lc_disk.extra['selfLink'], attached_disk['source'])))
+                elif attached_disk['mode'] != disk_modes[i]:
+                    module.fail_json(
+                        msg=("Disk at index %d is in the wrong mode: requested=%s found=%s" % (
+                            i, disk_modes[i], attached_disk['mode'])))
+                else:
+                    continue
+            gce.attach_volume(inst, lc_disk, ex_mode=disk_modes[i])
+            # Work around libcloud bug: attached volumes don't get added
+            # to the instance metadata. get_instance_info() only cares about
+            # source and index.
+            if len(inst.extra['disks']) != i+1:
+                inst.extra['disks'].append(
+                    {'source': lc_disk.extra['selfLink'], 'index': i})
 
         if inst:
             new_instances.append(inst)
@@ -351,6 +401,7 @@ def main():
             name = dict(),
             network = dict(default='default'),
             persistent_boot_disk = dict(type='bool', default=False),
+            disks = dict(type='list'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
                     default='present'),
             tags = dict(type='list'),

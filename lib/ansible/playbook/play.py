@@ -55,7 +55,7 @@ class Play(object):
 
         for x in ds.keys():
             if not x in Play.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
+                raise errors.AnsibleError("%s is not a legal parameter at this level in an Ansible Playbook" % x)
 
         # allow all playbook keys to be set by --extra-vars
         self.vars             = ds.get('vars', {})

@@ -313,11 +313,15 @@ def main():
     collation = module.params["collation"]
     state = module.params["state"]
     target = module.params["target"]
+
+    # make sure the target path is expanded for ~ and $HOME
+    if target is not None:
+        target = os.path.expandvars(os.path.expanduser(target))
+
     defaults_file = module.params["defaults_file"]
-    
     # load my.cnf specified or use default ~/.my.cnf
     mycnf_params = load_mycnf(defaults_file)
-    
+
     # load the module params
     login_user = module.params["login_user"]
     login_password = module.params["login_password"]

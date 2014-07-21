@@ -6,6 +6,7 @@ Ansible Changes By Release
 Major new features:
 
 * Windows support (alpha) using native PowerShell remoting
+* Tasks can now specify `run_once: true`, meaning they will be executed exactly once. This can be combined with delegate_to to trigger actions you want done just the one time versus for every host in inventory.
 
 New inventory scripts:
 
