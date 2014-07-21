@@ -438,7 +438,7 @@ class Runner(object):
             elif 'NO_LOG' in args:
                 return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot use no_log: with old-style modules"))
 
-            args = template.template(self.basedir, args, inject)
+            args = template.template(self.basedir, args, inject, vault_password=self.vault_pass)
 
             # decide whether we need to transfer JSON or key=value
             argsfile = None
@@ -566,7 +566,7 @@ class Runner(object):
         # since some of the variables we'll be replacing may be contained there too
         module_vars_inject = utils.combine_vars(host_variables, combined_cache.get(host, {}))
         module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
-        module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
+        module_vars = template.template(self.basedir, self.module_vars, module_vars_inject, vault_password=self.vault_pass)
 
         inject = {}
         inject = utils.combine_vars(inject, self.default_vars)
@@ -602,7 +602,7 @@ class Runner(object):
                     basedir = filesdir
 
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = template.template(basedir, items_terms, inject)
+            items_terms = template.template(basedir, items_terms, inject, vault_password=self.vault_pass)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
@@ -623,7 +623,7 @@ class Runner(object):
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
             if isinstance(complex_args, basestring):
-                complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
+                complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True, vault_password=self.vault_pass)
                 complex_args = utils.safe_eval(complex_args)
                 if type(complex_args) != dict:
                     raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
@@ -647,7 +647,7 @@ class Runner(object):
 
                 # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
                 if isinstance(self.complex_args, basestring):
-                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
+                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True, vault_password=self.vault_pass)
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
@@ -688,9 +688,9 @@ class Runner(object):
 
         # late processing of parameterized sudo_user (with_items,..)
         if self.sudo_user_var is not None:
-            self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
+            self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject, vault_password=self.vault_pass)
         if self.su_user_var is not None:
-            self.su_user = template.template(self.basedir, self.su_user_var, inject)
+            self.su_user = template.template(self.basedir, self.su_user_var, inject, vault_password=self.vault_pass)
 
         # allow module args to work as a dictionary
         # though it is usually a string
@@ -779,8 +779,8 @@ class Runner(object):
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
-        actual_pass = template.template(self.basedir, actual_pass, inject)
-        self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject)
+        actual_pass = template.template(self.basedir, actual_pass, inject, vault_password=self.vault_pass)
+        self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject, vault_password=self.vault_pass)
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
@@ -826,8 +826,8 @@ class Runner(object):
 
         # render module_args and complex_args templates
         try:
-            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
-            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars, vault_password=self.vault_pass)
+            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars, vault_password=self.vault_pass)
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
@@ -853,7 +853,7 @@ class Runner(object):
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
                     inject[self.module_vars.get('register')] = result.result
-                    cond = template.template(self.basedir, until, inject, expand_lists=False)
+                    cond = template.template(self.basedir, until, inject, expand_lists=False, vault_password=self.vault_pass)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
                 if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
