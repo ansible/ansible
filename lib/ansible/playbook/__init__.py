@@ -304,7 +304,7 @@ class PlayBook(object):
             # if the play contains no tasks, assume we just want to gather facts
             # in this case there are actually 3 meta tasks (handler flushes) not 0
             # tasks, so that's why there's a check against 3
-            if (len(matched_tags) > 0 or len(play.tasks()) == 3):
+            if len(matched_tags) > 0 or len(play.tasks()) == 3:
                 plays.append(play)
 
         # if the playbook is invoked with --tags or --skip-tags that don't

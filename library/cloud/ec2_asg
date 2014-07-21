@@ -206,7 +206,7 @@ def create_autoscaling_group(connection, module):
                 changed = True
                 setattr(as_group, attr, module.params.get(attr))
 
-        if len(set_tags) > 0:
+        if set_tags:
             existing_tags = as_group.tags
             existing_tag_map = dict((tag.key, tag) for tag in existing_tags)
             for tag in set_tags:

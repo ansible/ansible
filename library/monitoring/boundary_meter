@@ -122,7 +122,7 @@ def create_meter(module, name, apiid, apikey):
 
     meters = search_meter(module, name, apiid, apikey)
 
-    if len(meters) > 0:
+    if meters:
         # If the meter already exists, do nothing
         module.exit_json(status="Meter " + name + " already exists",changed=False)
     else:
@@ -169,7 +169,7 @@ def get_meter_id(module, name, apiid, apikey):
     # In order to delete the meter we need its id
     meters = search_meter(module, name, apiid, apikey)
 
-    if len(meters) > 0:
+    if meters:
         return meters[0]['id']
     else:
         return None

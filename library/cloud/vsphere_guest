@@ -560,7 +560,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
             changes['cpu'] = vm_hardware['num_cpus']
 
-    if len(changes):
+    if changes:
 
         if shutdown and vm.is_powered_on():
             try:

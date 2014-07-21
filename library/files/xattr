@@ -172,31 +172,31 @@ def main():
         key = 'user.%s' % key
 
 
-    if (state == 'present' or value is not None):
-        current=get_xattr(module,path,key,follow)
+    if state == 'present' or value is not None:
+        current = get_xattr(module,path,key,follow)
         if current is None or not key in current or value != current[key]:
             if not module.check_mode:
                 res = set_xattr(module,path,key,value,follow)
-            changed=True
-        res=current
-        msg="%s set to %s" % (key, value)
+            changed = True
+        res = current
+        msg = "%s set to %s" % (key, value)
     elif state == 'absent':
-        current=get_xattr(module,path,key,follow)
+        current = get_xattr(module,path,key,follow)
         if current is not None and key in current:
             if not module.check_mode:
                 res = rm_xattr(module,path,key,follow)
-            changed=True
-        res=current
-        msg="%s removed" % (key)
+            changed = True
+        res = current
+        msg = "%s removed" % (key)
     elif state == 'keys':
-        res=get_xattr_keys(module,path,follow)
-        msg="returning all keys"
+        res = get_xattr_keys(module,path,follow)
+        msg = "returning all keys"
     elif state == 'all':
-        res=get_xattr(module,path,None,follow)
-        msg="dumping all"
+        res = get_xattr(module,path,None,follow)
+        msg = "dumping all"
     else:
-        res=get_xattr(module,path,key,follow)
-        msg="returning %s" % key
+        res = get_xattr(module,path,key,follow)
+        msg = "returning %s" % key
 
     module.exit_json(changed=changed, msg=msg, xattr=res)
 

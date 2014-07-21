@@ -122,7 +122,7 @@ def install_packages(module, pkgspec):
         if not query_package_provides(module, package):
             packages += "'%s' " % package
 
-    if len(packages) != 0:
+    if packages:
 
         cmd = ("%s -y install %s > /dev/null" % (APT_PATH, packages))
 

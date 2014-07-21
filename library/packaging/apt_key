@@ -117,7 +117,7 @@ REQUIRED_EXECUTABLES=['gpg', 'grep', 'apt-key']
 
 def check_missing_binaries(module):
     missing = [e for e in REQUIRED_EXECUTABLES if not find_executable(e)]
-    if len(missing):
+    if missing:
         module.fail_json(msg="binaries are missing", names=missing)
 
 def all_keys(module, keyring, short_format):

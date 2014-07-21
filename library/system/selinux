@@ -71,7 +71,7 @@ def get_config_state(configfile):
     myfile.close()
     for line in lines:
         stateline = re.match('^SELINUX=.*$', line)
-        if (stateline):
+        if stateline:
             return(line.split('=')[1].strip())
 
 def get_config_policy(configfile):
@@ -80,7 +80,7 @@ def get_config_policy(configfile):
     myfile.close()
     for line in lines:
         stateline = re.match('^SELINUXTYPE=.*$', line)
-        if (stateline):
+        if stateline:
             return(line.split('=')[1].strip())
 
 # setter subroutines
@@ -97,11 +97,11 @@ def set_config_state(state, configfile):
     myfile.close()
 
 def set_state(state):
-    if (state == 'enforcing'):
+    if state == 'enforcing':
         selinux.security_setenforce(1)
-    elif (state == 'permissive'):
+    elif state == 'permissive':
         selinux.security_setenforce(0)
-    elif (state == 'disabled'):
+    elif state == 'disabled':
         pass
     else:
         msg = 'trying to set invalid runtime state %s' % state
@@ -139,9 +139,9 @@ def main():
     runtime_enabled       = selinux.is_selinux_enabled()
     runtime_policy        = selinux.selinux_getpolicytype()[1]
     runtime_state         = 'disabled'
-    if (runtime_enabled):
+    if runtime_enabled:
         # enabled means 'enforcing' or 'permissive'
-        if (selinux.security_getenforce()):
+        if selinux.security_getenforce():
             runtime_state = 'enforcing'
         else:
             runtime_state = 'permissive'
@@ -149,7 +149,7 @@ def main():
     config_state          = get_config_state(configfile)
 
     # check to see if policy is set if state is not 'disabled'
-    if (state != 'disabled'):
+    if state != 'disabled':
         if not policy:
             module.fail_json(msg='policy is required if state is not \'disabled\'')
     else:
@@ -157,34 +157,34 @@ def main():
             policy = config_policy
 
     # check changed values and run changes
-    if (policy != runtime_policy):
+    if policy != runtime_policy:
         if module.check_mode:
             module.exit_json(changed=True)
         # cannot change runtime policy
         msgs.append('reboot to change the loaded policy')
         changed=True
 
-    if (policy != config_policy):
+    if policy != config_policy:
         if module.check_mode:
             module.exit_json(changed=True)
         msgs.append('config policy changed from \'%s\' to \'%s\'' % (config_policy, policy))
         set_config_policy(policy, configfile)
         changed=True
 
-    if (state != runtime_state):
+    if state != runtime_state:
         if module.check_mode:
             module.exit_json(changed=True)
-        if (state == 'disabled'):
+        if state == 'disabled':
             msgs.append('state change will take effect next reboot')
         else:
-            if (runtime_enabled):
+            if runtime_enabled:
                 set_state(state)
                 msgs.append('runtime state changed from \'%s\' to \'%s\'' % (runtime_state, state))
             else:
                 msgs.append('state change will take effect next reboot')
         changed=True
 
-    if (state != config_state):
+    if state != config_state:
         if module.check_mode:
             module.exit_json(changed=True)
         msgs.append('config state changed from \'%s\' to \'%s\'' % (config_state, state))

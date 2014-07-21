@@ -221,7 +221,7 @@ def main():
         # build image if not exists
         if state == "present":
             images = manager.get_images()
-            if len(images) == 0:
+            if not images:
                 do_build = True
         # build image
         elif state == "build":

@@ -170,9 +170,8 @@ class HostDict(UserDict):
         else:
             for k, v in dict.items():
                 self[k] = v
-        if len(kwargs):
-            for k, v in kwargs.items():
-                self[k] = v
+        for k, v in kwargs.items():
+            self[k] = v
 
 
 def write_stderr(string):

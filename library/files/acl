@@ -232,7 +232,7 @@ def main():
     msg = ""
     currentacls = get_acls(module,path,follow)
 
-    if (state == 'present'):
+    if state == 'present':
         matched = False
         for oldentry in currentacls:
             if oldentry.count(":") == 0:

@@ -269,7 +269,7 @@ def main():
     filt = globals().get(command + "_filter_output", None)
     if filt:
         filtered_output = filter(filt, out.split('\n'))
-        if len(filtered_output):
+        if filtered_output:
             changed = filtered_output
 
     module.exit_json(changed=changed, out=out, cmd=cmd, app_path=app_path, virtualenv=virtualenv,

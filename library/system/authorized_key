@@ -370,8 +370,8 @@ def enforce_state(module, params):
 
 
         # handle idempotent state=present
-        if state=="present":
-            if len(non_matching_keys) > 0:
+        if state == "present":
+            if non_matching_keys:
                 for non_matching_key in non_matching_keys:
                     if non_matching_key[0] in existing_keys:
                         del existing_keys[non_matching_key[0]]
@@ -381,7 +381,7 @@ def enforce_state(module, params):
                 existing_keys[parsed_new_key[0]] = parsed_new_key
                 do_write = True
 
-        elif state=="absent":
+        elif state == "absent":
             if not matched:
                 continue
             del existing_keys[parsed_new_key[0]]

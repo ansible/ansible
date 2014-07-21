@@ -329,7 +329,7 @@ def create_instances(module, gce, instance_names):
 
         for i, lc_disk in enumerate(lc_disks):
             # Check whether the disk is already attached
-            if (len(inst.extra['disks']) > i):
+            if len(inst.extra['disks']) > i:
                 attached_disk = inst.extra['disks'][i]
                 if attached_disk['source'] != lc_disk.extra['selfLink']:
                     module.fail_json(

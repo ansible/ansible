@@ -243,7 +243,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                 matches = fnmatch.filter(
                     [pkg.name for pkg in cache], pkgname_or_fnmatch_pattern)
 
-            if len(matches) == 0:
+            if not matches:
                 m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_or_fnmatch_pattern))
             else:
                 new_pkgspec.extend(matches)
@@ -262,7 +262,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if not installed or (upgrade and upgradable):
             packages += "'%s' " % package
 
-    if len(packages) != 0:
+    if packages:
         if force:
             force_yes = '--force-yes'
         else:
@@ -346,7 +346,7 @@ def remove(m, pkgspec, cache, purge=False,
         if installed or (has_files and purge):
             packages += "'%s' " % package
 
-    if len(packages) == 0:
+    if not packages:
         m.exit_json(changed=False)
     else:
         if purge:

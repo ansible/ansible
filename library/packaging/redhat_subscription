@@ -296,7 +296,7 @@ class RhsmPools(object):
             # Remove leading+trailing whitespace
             line = line.strip()
             # An empty line implies the end of a output group
-            if len(line) == 0:
+            if not line:
                 continue
             # If a colon ':' is found, parse
             elif ':' in line:
