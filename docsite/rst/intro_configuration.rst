@@ -490,6 +490,18 @@ Allows disabling of warnings related to potential issues on the system running a
 
 These may include warnings about 3rd party packages or other conditions that should be resolved if possible.
 
+.. _test_plugins:
+
+test_plugins
+==============
+
+This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
+different locations::
+
+   test_plugins = /usr/share/ansible_plugins/test_plugins
+
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
 .. _timeout:
 
 timeout

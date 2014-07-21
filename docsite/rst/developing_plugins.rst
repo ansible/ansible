@@ -56,6 +56,15 @@ If you want more Jinja2 filters available in a Jinja2 template (filters like to_
 
 Jump into `lib/ansible/runner/filter_plugins/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/filter_plugins>`_ for details.
 
+.. _developing_test_plugins:
+
+Test Plugins
+--------------
+
+If you want more Jinja2 tests available in a Jinja2 template (tests like match and version_compare are provided by default), they can be extended by writing a test plugin.  Test plugins are also automatically available as Jinja2 filters. Most of the time, when someone comes up with an idea for a new test they would like to make available in a playbook, we'll just include them in 'core.py' instead.
+
+Jump into `lib/ansible/runner/test_plugins/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/test_plugins>`_ for details.
+
 .. _developing_callbacks:
 
 Callbacks

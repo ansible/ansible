@@ -251,6 +251,13 @@ filter_loader = PluginLoader(
     'filter_plugins'
 )
 
+test_loader = PluginLoader(
+    'TestModule',
+    'ansible.runner.test_plugins',
+    C.DEFAULT_TEST_PLUGIN_PATH,
+    'test_plugins'
+)
+
 fragment_loader = PluginLoader(
     'ModuleDocFragment',
     'ansible.utils.module_docs_fragments',
