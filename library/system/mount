@@ -267,6 +267,13 @@ def main():
     if module.params['fstab'] is not None:
         args['fstab'] = module.params['fstab']
 
+    # if fstab file does not exist, we first need to create it. This mainly
+    # happens when fstab optin is passed to the module.
+    if not os.path.exists(args['fstab']):
+        if not os.path.exists(os.path.dirname(args['fstab'])):
+            os.makedirs(os.path.dirname(args['fstab']))
+        open(args['fstab'],'a').close()
+
     # absent == remove from fstab and unmounted
     # unmounted == do not change fstab state, but unmount
     # present == add to fstab, do not change mount state
