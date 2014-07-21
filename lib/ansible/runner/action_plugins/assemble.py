@@ -122,14 +122,25 @@ class ActionModule(object):
                 self.runner._remote_chmod(conn, 'a+r', xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            new_module_args = dict(
+                src=xfered,
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             if self.runner.noop_on_check(inject):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
-                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject)
                 res.diff = dict(after=resultant)
                 return res
         else:
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
+            new_module_args = dict(
+                src=xfered,
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
+
+            return self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject)

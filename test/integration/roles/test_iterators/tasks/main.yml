@@ -19,7 +19,7 @@
 # WITH_ITEMS
 
 - name: test with_items
-  set_fact: "{{ item + '=moo' }}"
+  set_fact: "{{ item }}=moo"
   with_items:
     - 'foo'
     - 'bar'
@@ -36,7 +36,7 @@
 # WITH_NESTED
 
 - name: test with_nested
-  set_fact: "{{ item.0 + item.1 + '=x' }}"
+  set_fact: "{{ item.0 + item.1 }}=x"
   with_nested:
     - [ 'a', 'b' ]
     - [ 'c', 'd' ]        
@@ -57,7 +57,7 @@
 # WITH_SEQUENCE
 
 - name: test with_sequence
-  set_fact: "{{ 'x' + item + '=' + item }}"
+  set_fact: "{{ 'x' + item }}={{ item }}"
   with_sequence: start=0 end=3
 
 - name: verify with_sequence
@@ -71,7 +71,7 @@
 # WITH_RANDOM_CHOICE
 
 - name: test with_random_choice
-  set_fact: "{{ 'random=' + item }}"
+  set_fact: "random={{ item }}"
   with_random_choice:
     - "foo"
     - "bar" 
@@ -84,7 +84,7 @@
 # WITH_SUBELEMENTS
 
 - name: test with_subelements
-  set_fact: "{{ '_'+ item.0.id + item.1 + '=' + item.1 }}"
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
   with_subelements:
     - element_data
     - the_list
@@ -101,7 +101,7 @@
 
 - name: test with_together
   #shell: echo {{ item }}
-  set_fact: "{{ item.0 + '=' + item.1 }}"
+  set_fact: "{{ item.0 }}={{ item.1 }}"
   with_together:
     - [ 'a', 'b', 'c', 'd' ]
     - [ '1', '2', '3', '4' ]
@@ -124,7 +124,7 @@
 
 - name: test with_first_found
   #shell: echo {{ item }}
-  set_fact: "{{ 'first_found=' + item }}"
+  set_fact: "first_found={{ item }}"
   with_first_found:
     - "{{ output_dir + '/does_not_exist' }}"
     - "{{ output_dir + '/foo1' }}"
@@ -146,7 +146,7 @@
 
 - name: test with_lines
   #shell: echo "{{ item }}"
-  set_fact: "{{ item + '=set' }}" 
+  set_fact: "{{ item }}=set" 
   with_lines: for i in $(seq 1 5); do echo "l$i" ; done;
 
 - name: verify with_lines results
@@ -164,7 +164,7 @@
   register: list_data
 
 - name: create indexed list
-  set_fact: "{{ item[1] + item[0]|string + '=set' }}"
+  set_fact: "{{ item[1] + item[0]|string }}=set"
   with_indexed_items: list_data.stdout_lines  
 
 - name: verify with_indexed_items result
@@ -179,8 +179,7 @@
 # WITH_FLATTENED
 
 - name: test with_flattened
-  #shell: echo {{ item + "test" }}
-  set_fact: "{{ item + '=flattened' }}"
+  set_fact: "{{ item }}=flattened"
   with_flattened:
     - [ 'a__' ]
     - [ 'b__', ['c__', 'd__'] ]        
