@@ -24,6 +24,7 @@ from jinja2.exceptions import TemplateSyntaxError
 import yaml
 import json
 from ansible import errors
+from ansible.utils.clean_data import clean_data_struct
 import ansible.constants as C
 import time
 import subprocess
@@ -81,7 +82,6 @@ class Flags:
 FILTER_PLUGINS = None
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE = '#jinja2:'
-JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
 
 def lookup(name, *args, **kwargs):
     from ansible import utils
@@ -233,6 +233,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
         raise errors.AnsibleError("unable to read %s" % realpath)
 
     # Get jinja env overrides from template
+    sanatize = False
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
         line = data[len(JINJA2_OVERRIDE):eol]
@@ -240,9 +241,20 @@ def template_from_file(basedir, path, vars, vault_password=None):
         for pair in line.split(','):
             (key,val) = pair.split(':')
             key = key.strip()
-            if key in JINJA2_ALLOWED_OVERRIDES:
-                setattr(environment, key, ast.literal_eval(val.strip()))
+            if not sanatize and re.match('(block|variable|comment)_(start|end)_string', key):
+                sanatize = True
+            setattr(environment, key, ast.literal_eval(val.strip()))
 
+        if sanatize:
+            scrub_list = []
+            for entry in [ 'block_start_string', 'block_end_string', 'variable_start_string', 'variable_end_string']:
+                if re.search('start', entry):
+                    comment = 'comment_start_string'
+                else:
+                    comment = 'comment_end_string'
+
+                scrub_list.append((getattr(environment,entry),getattr(environment,comment)))
+            vars = clean_data_struct(vars, scrub_list)
 
     environment.template_class = J2Template
     try:
