@@ -184,38 +184,45 @@ class CommandModule(AnsibleModule):
         ''' read the input and return a dictionary and the arguments string '''
         args = MODULE_ARGS
         params = {}
-        params['chdir'] = None
-        params['creates'] = None
-        params['removes'] = None
-        params['shell'] = False
+        params['chdir']      = None
+        params['creates']    = None
+        params['removes']    = None
+        params['shell']      = False
         params['executable'] = None
         if "#USE_SHELL" in args:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
-        for m in r.finditer(args):
-            v = m.group(4).replace("\\", "")
-            if m.group(2) == "creates":
-                params['creates'] = v
-            elif m.group(2) == "removes":
-                params['removes'] = v
-            elif m.group(2) == "chdir":
-                v = os.path.expanduser(v)
-                v = os.path.abspath(v)
-                if not (os.path.exists(v) and os.path.isdir(v)):
-                    self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
-                params['chdir'] = v
-            elif m.group(2) == "executable":
-                v = os.path.expanduser(v)
-                v = os.path.abspath(v)
-                if not (os.path.exists(v)):
-                    self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
-                params['executable'] = v
-            elif m.group(2) == "NO_LOG":
-                params['NO_LOG'] = self.boolean(v)
-        args = r.sub("", args)
-        params['args'] = args
+        # use shlex to split up the args, while being careful to preserve
+        # single quotes so they're not removed accidentally
+        lexer = shlex.shlex(args, posix=True)
+        lexer.whitespace_split = True
+        lexer.quotes = '"'
+        lexer.ignore_quotes = "'"
+        items = list(lexer)
+
+        command_args = ''
+        for x in items:
+            if '=' in x:
+                # check to see if this is a special parameter for the command
+                k, v = x.split('=', 1)
+                if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
+                    if k == "chdir":
+                        v = os.path.abspath(os.path.expanduser(v))
+                        if not (os.path.exists(v) and os.path.isdir(v)):
+                            self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
+                    elif k == "executable":
+                        v = os.path.abspath(os.path.expanduser(v))
+                        if not (os.path.exists(v)):
+                            self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
+                    params[k] = v
+                else:
+                    # this isn't a valid parameter, so just append it back to the list of arguments
+                    command_args = "%s %s" % (command_args, x)
+            else:
+                # not a param, so just append it to the list of arguments
+                command_args = "%s %s" % (command_args, x)
+        params['args'] = command_args.strip()
         return (params, params['args'])
 
 main()
