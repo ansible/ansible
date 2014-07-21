@@ -841,7 +841,7 @@ def create_instances(module, ec2, override_count=None):
 
             if volumes:
                 bdm = BlockDeviceMapping()
-                for volume in volumes: 
+                for volume in filter(None, volumes):
                     if 'device_name' not in volume:
                         module.fail_json(msg = 'Device name must be set for volume')
                     # Minimum volume size is 1GB. We'll use volume size explicitly set to 0
