@@ -772,6 +772,8 @@ class AnsibleModule(object):
                 (k, v) = x.split("=",1)
             except Exception, e:
                 self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
+            if k in params:
+                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)
