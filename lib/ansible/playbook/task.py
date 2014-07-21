@@ -256,6 +256,10 @@ class Task(object):
         # make first_available_file accessable to Runner code
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
+            # make sure that the 'item' variable is set when using
+            # first_available_file (issue #8220)
+            if 'item' not in self.module_vars:
+                self.module_vars['item'] = ''
 
         if self.items_lookup_plugin is not None:
             self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
