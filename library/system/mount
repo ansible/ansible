@@ -69,7 +69,14 @@ options:
     required: true
     choices: [ "present", "absent", "mounted", "unmounted" ]
     default: null
-     
+  fstab:
+    description:
+      - file to use instead of C(/etc/fstab). You shouldn't use that option
+        unless you really know what you are doing. This might be useful if
+        you need to configure mountpoints in a chroot environment.
+    required: false
+    default: /etc/fstab
+
 notes: []
 requirements: []
 author: Seth Vidal
