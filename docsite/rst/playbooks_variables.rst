@@ -117,6 +117,16 @@ ships with many of these. See `builtin filters`_ in the official Jinja2 template
 
 In addition to those, Ansible supplies many more.
 
+.. _jinja2_tests:
+
+Jinja2 Tests
+````````````
+
+Tests in Jinja2 can be used in 'is' and 'is not' expressions as well as some filters like 'reject'. Jinja2 ships with
+many of these. See `builtin tests`_ in the official Jinja2 template documentation.
+
+In addition to those, any Ansible-supplied filters that return boolean values can also be used as tests.
+
 .. _filters_for_formatting_data:
 
 Filters For Formatting Data
@@ -1041,6 +1051,7 @@ how all of these things can work together.
 
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+.. _builtin tests: http://jinja.pocoo.org/docs/templates/#builtin-tests
 
 .. seealso::
 
