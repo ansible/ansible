@@ -193,36 +193,39 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        # use shlex to split up the args, while being careful to preserve
-        # single quotes so they're not removed accidentally
-        lexer = shlex.shlex(args, posix=True)
-        lexer.whitespace_split = True
-        lexer.quotes = '"'
-        lexer.ignore_quotes = "'"
-        items = list(lexer)
+        command_args_list = []
+        for line in args.split('\n'):
+            # use shlex to split up the args, while being careful to preserve
+            # single quotes so they're not removed accidentally
+            lexer = shlex.shlex(line, posix=True)
+            lexer.whitespace_split = True
+            lexer.quotes = '"'
+            lexer.ignore_quotes = "'"
+            items = list(lexer)
 
-        command_args = ''
-        for x in items:
-            if '=' in x:
-                # check to see if this is a special parameter for the command
-                k, v = x.split('=', 1)
-                if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
-                    if k == "chdir":
-                        v = os.path.abspath(os.path.expanduser(v))
-                        if not (os.path.exists(v) and os.path.isdir(v)):
-                            self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
-                    elif k == "executable":
-                        v = os.path.abspath(os.path.expanduser(v))
-                        if not (os.path.exists(v)):
-                            self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
-                    params[k] = v
+            command_args = ''
+            for x in items:
+                if '=' in x:
+                    # check to see if this is a special parameter for the command
+                    k, v = x.split('=', 1)
+                    if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
+                        if k == "chdir":
+                            v = os.path.abspath(os.path.expanduser(v))
+                            if not (os.path.exists(v) and os.path.isdir(v)):
+                                self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
+                        elif k == "executable":
+                            v = os.path.abspath(os.path.expanduser(v))
+                            if not (os.path.exists(v)):
+                                self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
+                        params[k] = v
+                    else:
+                        # this isn't a valid parameter, so just append it back to the list of arguments
+                        command_args = "%s %s" % (command_args, x)
                 else:
-                    # this isn't a valid parameter, so just append it back to the list of arguments
+                    # not a param, so just append it to the list of arguments
                     command_args = "%s %s" % (command_args, x)
-            else:
-                # not a param, so just append it to the list of arguments
-                command_args = "%s %s" % (command_args, x)
-        params['args'] = command_args.strip()
+            command_args_list.append(command_args.strip())
+        params['args'] = '\n'.join(command_args_list).strip()
         return (params, params['args'])
 
 main()
