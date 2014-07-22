@@ -212,6 +212,9 @@ def core(module):
 
         event_json = domain.destroy()
         module.exit_json(changed=True, event=event_json)
+        
+    else:
+        raise ValueError('Unknown state: {}'.format(state))
 
 
 def main():
