@@ -118,6 +118,31 @@ try:
 except ImportError:
     from docker.client import APIError as DockerAPIError
 
+
+def iterate_jsons(text):
+    """Try to iterate json chunks from a givn text input.
+
+    docker-py somehow (maybe a bug or what) returns a big chunk of
+    concatenated json chunks in stream mode. Looks like this
+
+        {"chunk": 1}{"chunk": 2}{"chunk": 3} ...
+
+    This method will try to parse json chunks by chunks and yield them back
+
+    """
+    # feed char by char and parse, see does it works
+    json_buffer = []
+    for char in text:
+        json_buffer.append(char)
+        whole_chunk = ''.join(json_buffer)
+        try:
+            json_chunk = json.loads(whole_chunk)
+        except ValueError:
+            continue
+        json_buffer = []
+        yield json_chunk
+
+
 class DockerImageManager:
 
     def __init__(self, module):
@@ -145,21 +170,17 @@ class DockerImageManager:
             if not chunk:
                 continue
 
-            try:
-                chunk_json = json.loads(chunk)
-            except ValueError:
-                continue
+            for chunk_json in iterate_jsons(chunk):
+                if 'error' in chunk_json:
+                    self.error_msg = chunk_json['error']
+                    return None
 
-            if 'error' in chunk_json:
-                self.error_msg = chunk_json['error']
-                return None
-
-            if 'stream' in chunk_json:
-                output = chunk_json['stream']
-                self.log.append(output)
-                match = re.search(success_search, output)
-                if match:
-                    image_id = match.group(1)
+                if 'stream' in chunk_json:
+                    output = chunk_json['stream']
+                    self.log.append(output)
+                    match = re.search(success_search, output)
+                    if match:
+                        image_id = match.group(1)
 
         # Just in case we skipped evaluating the JSON returned from build
         # during every iteration, add an error if the image_id was never
