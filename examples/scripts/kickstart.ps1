@@ -19,7 +19,8 @@
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
     [int]$CertValidityDays = 365,
-    $CreateSelfSignedCert = $true
+    $CreateSelfSignedCert = $true,
+    [string]$user = "ansible"
 )
 
 
@@ -255,7 +256,6 @@ $policy = New-Object -com HNetCfg.FwPolicy2
 #endregion
 
 #Start script
-$user = "ansible"
 $reboot = "FALSE"
 if (!(LocalUserExist $user)) {
 	$pass = Read-Host 'What is the ansible password?' -AsSecureString
