@@ -35,6 +35,12 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
     aliases: []
+  filtered_parameters:
+    description:
+      - a list of parameters which will be filtered from result['stack_parameters']
+    required: false
+    default: []
+    aliases: []
   template_parameters:
     description:
       - a list of hashes of all the template variables for the stack
@@ -193,6 +199,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
             stack_name=dict(required=True),
+            filtered_parameters=dict(required=False, type='list', default=[]),
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
@@ -209,6 +216,7 @@ def main():
     stack_name = module.params['stack_name']
     template_body = open(module.params['template'], 'r').read()
     disable_rollback = module.params['disable_rollback']
+    filtered_parameters = module.params['filtered_parameters']
     template_parameters = module.params['template_parameters']
     tags = module.params['tags']
 
@@ -288,7 +296,8 @@ def main():
         result['stack_outputs'] = stack_outputs
 
         for parameter in stack.parameters:
-            stack_parameters[parameter.key] = parameter.value
+            if parameter.key not in filtered_parameters:
+                stack_parameters[parameter.key] = parameter.value
         result['stack_parameters'] = stack_parameters
 
     # absent state is different because of the way delete_stack works.
