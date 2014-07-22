@@ -48,7 +48,7 @@ Your first commands
 Now that you've installed Ansible, it's time to get started with some basics.
 
 Edit (or create) your ``hosts`` inventory file. This file should normally be in ``/etc/ansible`` (or 
-``usr/local/etc/ansible`` if installed on Mac OS X using HomeBrew). Put one or more remote systems in it, for
+``/usr/local/etc/ansible`` if installed on Mac OS X using HomeBrew). Put one or more remote systems in it, for
 which you have your SSH key in their respective ``authorized_keys`` files::
 
     192.168.1.50
