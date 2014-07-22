@@ -7,8 +7,11 @@ Inventory
 
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
-Ansible's inventory file, which defaults to being saved in 
-the location /etc/ansible/hosts.
+Ansible's inventory file, which defaults to being saved 
+as the file ``/etc/ansible/hosts``.
+
+**NOTE:** If you install Ansible on Mac OS X using HomeBrew, you will need to create the ``hosts`` inventory file 
+in ``/usr/local/etc/`` for it to be automatically detected.
 
 Not only is this inventory configurable, but you can also use
 multiple inventory files at the same time (explained below) and also
@@ -19,7 +22,8 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI format and looks like this::
+The format for the ``/etc/ansible/hosts`` (or ``/usr/local/etc/ansible/hosts`` on a Mac OS X HomeBrew installation) 
+inventory file is an INI format and looks like this::
 
     mail.example.com
 
