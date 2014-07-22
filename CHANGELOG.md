@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-## 1.6.7 "And the Cradle Will Rock" - Jul 17, 2014
+## 1.6.8 "And the Cradle Will Rock" - Jul 22, 2014
+
+- Corrects a regression in the way shell and command parameters were being parsed
+
+## 1.6.7 "And the Cradle Will Rock" - Jul 21, 2014
 
 - Security fixes:
   * Strip lookup calls out of inventory variables and clean unsafe data

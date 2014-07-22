@@ -6,7 +6,8 @@ Active Development
 
 1.7    "Summer Nights" -------- CURRENT DEVEL BRANCH
 
-1.6.7  "The Cradle Will Rock" - 07-17-2014
+1.6.8  "The Cradle Will Rock" - 07-22-2014
+1.6.7  "The Cradle Will Rock" - 07-21-2014
 1.6.6  "The Cradle Will Rock" - 07-01-2014
 1.6.5  "The Cradle Will Rock" - 06-25-2014
 1.6.4  "The Cradle Will Rock" - 06-25-2014
