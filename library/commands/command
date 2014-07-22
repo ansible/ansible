@@ -84,6 +84,24 @@ EXAMPLES = '''
 - command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
 '''
 
+# This is a pretty complex regex, which functions as follows:
+#
+# 1. (^|\s)
+# ^ look for a space or the beginning of the line
+# 2. (creates|removes|chdir|executable|NO_LOG)=
+# ^ look for a valid param, followed by an '='
+# 3. (?P<quote>[\'"])?
+# ^ look for an optional quote character, which can either be
+#   a single or double quote character, and store it for later
+# 4. (.*?)
+# ^ match everything in a non-greedy manner until...
+# 5. (?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)
+# ^ a non-escaped space or a non-escaped quote of the same kind
+#   that was matched in the first 'quote' is found, or the end of
+#   the line is reached
+
+PARAM_REGEX = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+
 def main():
 
     # the command module is the one ansible module that does not take key=value args
@@ -193,7 +211,6 @@ class CommandModule(AnsibleModule):
         lexer.ignore_quotes = "'"
         items = list(lexer)
 
-        command_args = ''
         for x in items:
             if '=' in x:
                 # check to see if this is a special parameter for the command
@@ -208,13 +225,9 @@ class CommandModule(AnsibleModule):
                         if not (os.path.exists(v)):
                             self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
                     params[k] = v
-                else:
-                    # this isn't a valid parameter, so just append it back to the list of arguments
-                    command_args = "%s %s" % (command_args, x)
-            else:
-                # not a param, so just append it to the list of arguments
-                command_args = "%s %s" % (command_args, x)
-        params['args'] = command_args.strip()
+        # Remove any of the above k=v params from the args string
+        args = PARAM_REGEX.sub('', args)
+        params['args'] = args
         return (params, params['args'])
 
 main()
