@@ -8,7 +8,7 @@ Inventory
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible's inventory file, which defaults to being saved in 
-the location /etc/ansible/hosts.
+the location /usr/local/etc/ansible/hosts.
 
 Not only is this inventory configurable, but you can also use
 multiple inventory files at the same time (explained below) and also
@@ -19,7 +19,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI format and looks like this::
+The format for /usr/local/etc/ansible/hosts is an INI format and looks like this::
 
     mail.example.com
 
@@ -152,14 +152,14 @@ These variable files are in YAML format.  See :doc:`YAMLSyntax` if you are new t
 
 Assuming the inventory file path is::
 
-    /etc/ansible/hosts
+    /usr/local/etc/ansible/hosts
 
 If the host is named 'foosball', and in groups 'raleigh' and 'webservers', variables
 in YAML files at the following locations will be made available to the host::
 
-    /etc/ansible/group_vars/raleigh
-    /etc/ansible/group_vars/webservers
-    /etc/ansible/host_vars/foosball
+    /usr/local/etc/ansible/group_vars/raleigh
+    /usr/local/etc/ansible/group_vars/webservers
+    /usr/local/etc/ansible/host_vars/foosball
 
 For instance, suppose you have hosts grouped by datacenter, and each datacenter
 uses some different servers.  The data in the groupfile '/etc/ansible/group_vars/raleigh' for
