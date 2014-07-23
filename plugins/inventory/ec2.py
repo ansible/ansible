@@ -122,6 +122,7 @@ import boto
 from boto import ec2
 from boto import rds
 from boto import route53
+from boto import elasticache
 import ConfigParser
 
 try:
@@ -265,6 +266,7 @@ class Ec2Inventory(object):
         for region in self.regions:
             self.get_instances_by_region(region)
             self.get_rds_instances_by_region(region)
+            self.get_elasticache_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -312,6 +314,22 @@ class Ec2Inventory(object):
                 print "Looks like AWS RDS is down: "
                 print e
                 sys.exit(1)
+
+    def get_elasticache_instances_by_region(self, region):
+        try:
+            conn = elasticache.connect_to_region(region)
+            if conn:
+                response = conn.describe_cache_clusters(show_cache_node_info=True)
+                instances = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
+                for instance in instances:
+                    self.add_elasticache_instance(instance, region)
+
+        except boto.exception.BotoServerError, e:
+            if not e.reason == "Forbidden":
+                print "Looks like AWS ElastiCache is down: "
+                print e
+                sys.exit(1)
+
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
@@ -448,6 +466,27 @@ class Ec2Inventory(object):
 
         # Global Tag: all RDS instances
         self.push(self.inventory, 'rds', dest)
+
+
+    def add_elasticache_instance(self, instance, region):
+        inventory_id = 'elasticache:%s' % instance['CacheClusterId']
+
+        # Add to index
+        self.index[inventory_id] = [region, instance]
+
+        # Inventory: Group by instance ID (always a group of 1)
+        self.inventory[inventory_id] = [inventory_id]
+
+        # Inventory: Group by region
+        self.push(self.inventory, region, inventory_id)
+
+        # Inventory: Group by engine
+        self.push(self.inventory, 'elasticache_%s' % instance['Engine'], inventory_id)
+
+        # Global Tag: all elasticache instances
+        self.push(self.inventory, 'elasticache', inventory_id)
+
+        self.inventory["_meta"]["hostvars"][inventory_id] = instance
 
 
     def get_route53_records(self):
