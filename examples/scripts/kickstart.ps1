@@ -1,4 +1,5 @@
 # Powershell script to:
+# - upgrade to .NET framework 4.5
 # - upgrade a PowerShell 2.0 system to PowerShell 3.0
 # - configure WinRM
 # - set your firewall rules
@@ -6,8 +7,7 @@
 # - ask for a reboot once everything has completed
 # - runs idempotent
 #
-# based on http://occasionalutility.blogspot.com/2013/11/everyday-powershell-part-7-powershell.html
-# credit to: Matt Martz and trondhindenes
+# credit to: Matt Martz and Trond Hindenes
 #
 #   PS > kickstart.ps1
 #   it will ask for the ansible password
