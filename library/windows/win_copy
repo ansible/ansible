@@ -42,14 +42,8 @@ options:
 '''
 
 EXAMPLES = '''
-# Example from Ansible Playbooks
-- copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf
-
-# Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
-- copy: src=/mine/ntp.conf dest=/etc/ntp.conf
-
-# Copy a new "sudoers" file into place, after passing validation with visudo
-- copy: src=/mine/sudoers dest=/etc/sudoers validate='true'
+# Copy a new "check_mk config" and validate its authenticity
+- local_action: win_copy src=check_mk.ini dest="C:\\Program Files (x86)\\check_mk\\check_mk.ini" validate='true'
 '''
 
 def setUp():
@@ -61,7 +55,6 @@ def setUp():
 def tearDown():
     global ctx
     del ctx
-
 
 def auth_fn(ansible_hostname, share, ansible_workgroup, ansible_ssh_user, ansible_ssh_pass):
     return (workgroup, ansible_ssh_user, ansible_ssh_pass)
@@ -112,7 +105,6 @@ def validating(src, rfile, content):
     return result
 
 def main():
-
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
