@@ -49,7 +49,7 @@ EXAMPLES = '''
 - copy: src=/mine/ntp.conf dest=/etc/ntp.conf
 
 # Copy a new "sudoers" file into place, after passing validation with visudo
-- copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
+- copy: src=/mine/sudoers dest=/etc/sudoers validate='true'
 '''
 
 def setUp():
@@ -128,7 +128,7 @@ def main():
     src      = os.path.expanduser(module.params['src'])
     dest     = os.path.expanduser(module.params['dest'])
     share    = (src.split(':')[0]+'$').lower()
-    loc      = (src.split(':')[1]
+    loc      = src.split(':')[1]
     rfile    = 'smb://' + ansible_hostname + '/' + share + '/' + loc
     content  = os.path.expanduser(module.params['content'])
     force    = os.path.expanduser(module.params['force'])
