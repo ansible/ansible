@@ -127,9 +127,9 @@ def main():
 
     src      = os.path.expanduser(module.params['src'])
     dest     = os.path.expanduser(module.params['dest'])
-    share    = (src.split(':')[0]+'$').lower()
-    loc      = src.split(':')[1]
-    rfile    = 'smb://' + ansible_hostname + '/' + share + '/' + loc
+    share    = (dest.split(':')[0]+'$').lower()
+    loc      = dest.split(':')[1].replace('\\','/')
+    rfile    = 'smb://' + ansible_hostname + '/' + share + loc
     content  = os.path.expanduser(module.params['content'])
     force    = os.path.expanduser(module.params['force'])
     validate = os.path.expanduser(module.params['validate'])
