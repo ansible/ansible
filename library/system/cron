@@ -63,7 +63,7 @@ options:
     choices: [ "present", "absent" ]
   cron_file:
     description:
-      - If specified, uses this file in cron.d instead of an individual user's crontab.
+      - Create a file with this name in cron.d instead of an individual user's crontab. In Ansible 1.7 or later, if an absolute path is specified, this file can also be created outside of cron.d.
     required: false
     default: null
   backup:
@@ -169,7 +169,10 @@ class CronTab(object):
         self.syslogging = False
 
         if cron_file:
-            self.cron_file = '/etc/cron.d/%s' % cron_file
+            if cron_file.startswith('/'):
+                self.cron_file = cron_file
+            else:
+                self.cron_file = '/etc/cron.d/%s' % cron_file
         else:
             self.cron_file = None
 
