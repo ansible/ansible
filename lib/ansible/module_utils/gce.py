@@ -64,7 +64,5 @@ def gce_connect(module):
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    msg='Unexpected response: HTTP return_code['
-    msg+='%s], API error code[%s] and message: %s' % (
-        error.http_code, error.code, str(error.value))
-    return msg
+    import pprint
+    return 'Unexpected response: ' + pprint.pformat(vars(error))
