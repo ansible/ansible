@@ -43,7 +43,12 @@ options:
 
 EXAMPLES = '''
 # Copy a new "check_mk config" and validate its authenticity
-- local_action: win_copy src=check_mk.ini dest="C:\\Program Files (x86)\\check_mk\\check_mk.ini" validate='true'
+- win_copy: >
+    host='windowsmachine' 
+    src='check_mk.ini '
+    dest='C:\\Program Files (x86)\\check_mk\\check_mk.ini'
+    validate='true'
+  delegate_to: 'localhost'
 '''
 
 def setUp():
@@ -110,6 +115,7 @@ def main():
         argument_spec = dict(
             src               = dict(required=False),
             content           = dict(required=False, no_log=True),
+            host              = dict(required=False),
             dest              = dict(required=True),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
             validate          = dict(required=False, type='str'),
@@ -119,9 +125,10 @@ def main():
 
     src      = os.path.expanduser(module.params['src'])
     dest     = os.path.expanduser(module.params['dest'])
+    host     = os.path.expanduser(module.params['host'])
     share    = (dest.split(':')[0]+'$').lower()
     loc      = dest.split(':')[1].replace('\\','/')
-    rfile    = 'smb://' + ansible_hostname + '/' + share + loc
+    rfile    = 'smb://' + host + '/' + share + loc
     content  = os.path.expanduser(module.params['content'])
     force    = os.path.expanduser(module.params['force'])
     validate = os.path.expanduser(module.params['validate'])
