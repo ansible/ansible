@@ -1,0 +1,278 @@
+#!/usr/bin/env python
+
+DOCUMENTATION = """
+---
+module: datapipeline
+short_description: Creates and activates (or deletes) AWS Datapipelines.
+description:
+     - Creates and activates (or deletes) AWS Datapipelines.
+     - Requires a JSON format pipelineObjects definition, best created by exporting from the AWS console Datapipeline editor or by templating an existing pipeline.
+     - Returns information about all accessible Datapipelines and their descriptions (but not their definitions).
+     - Will be marked changed when called only if state is changed.
+     - The name and unique_id parameters are both used to uniquely identify an existing pipeline and must not be changed after a pipeline is activated.
+     - Once a pipeline is activated, it cannot be modified, only deleted (which is not instantaneous).
+version_added: "1.7"
+author: Ingmar Hupp
+options:
+  state:
+    description:
+      - Create or destroy the pipeline
+    required: true
+  name:
+    description:
+      - The name of the pipeline
+    required: true
+  unique_id:
+    description:
+      - An internal id which uniquely identifies this pipeline. Not to be confused with the pipeline id!
+    required: true
+  description:
+    description:
+      - An optional description for the pipeline.
+    required: false
+  definition:
+    description:
+      - The pipeline objects in JSON format, inside a property named 'pipelineObjects'. Required for state=present.
+    required: false
+
+extends_documentation_fragment: aws
+"""
+
+EXAMPLES = """
+# Back up DynamoDB to S3
+- name: Datapipeline for S3 export
+  local_action:
+    module: datapipeline
+    region: us-east-1
+    state: present
+    name: '[DDB daily backup] {{item}} to s3://mybucket/dynamodb/'
+    unique_id: 'ddb-daily-backup-{{item}}'
+    description: 'Daily scheduled backup of DynamoDB table {{item}} to s3://mybucket/dynamodb/{{item}}.'
+    definition: "{{lookup('template', '../templates/dynamodb-to-s3.json')}}"
+  with_items: dynamodb_tables_backup
+
+# Delete a pipeline
+- name: Datapipeline cleanup
+  local_action:
+    module: datapipeline
+    region: us-east-1
+    state: absent
+    name: 'Old pipeline'
+    unique_id: 'B64305A9-1C6F-4D07-B939-8B394F180478'
+"""
+
+MINIMUM_BOTO_VERSION = [2, 30, 0]
+
+try:
+    import boto
+    import boto.datapipeline as autoscale
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+if map(int, boto.Version.split('.')) < MINIMUM_BOTO_VERSION:
+    print "failed=True msg='boto version %s or higher required for this module'" % ".".join(map(str, MINIMUM_BOTO_VERSION))
+    sys.exit(1)
+
+
+def _fields2dict(fields):
+    """Converts a list of key/value pairs in AWS Datapipeline format into a Python dict."""
+    d = {}
+    for f in fields:
+        d[f['key']] = f['stringValue']
+    return d
+
+
+def DEBUG(msg, pprint=True):
+    """Write debug message to debug.log"""
+    if pprint:
+        from pprint import pprint
+    from datetime import datetime
+    with open("debug.log", "a") as f:
+        f.write("%s " % datetime.now())
+        if pprint:
+            pprint(msg, stream=f)
+        else:
+            f.write("%s\n" % msg)
+
+class DatapipelineManager(object):
+    """Manages AWS Datapipelines."""
+
+    def __init__(self, module, region=None, **aws_connect_params):
+        self.module = module
+        self.region = region
+        self.aws_connect_params = aws_connect_params
+
+        attributes_from_params = [
+            'state',
+            'name',
+            'unique_id',
+            'description',
+            'definition',
+        ]
+        for attr in attributes_from_params:
+            setattr(self, attr, module.params[attr])
+
+        self.changed = False
+
+        self.dp_conn = self._get_datapipeline_connection()
+
+
+        self.id = None
+        self._get_datapipeline()
+
+    def _get_datapipeline_connection(self):
+        try:
+            return connect_to_aws(boto.datapipeline, self.region, **self.aws_connect_params)
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg=str(e))
+
+    def _get_datapipeline(self):
+        self.all_pipelines = self._get_all_pipelines()
+        self.described_pipelines = self._describe_all_pipelines()
+        self.dp_desc = self.described_pipelines.get(self.unique_id, None)
+        if self.dp_desc:
+            self.id = self.dp_desc['pipelineId']
+
+    def _get_all_pipelines(self):
+        pipelines = {}
+        marker = None
+        while True:
+            resp = self.dp_conn.list_pipelines(marker=marker)
+            for p in resp['pipelineIdList']:
+                pid = p['id']
+                pipelines[pid] = p
+            if not resp['hasMoreResults']:
+                break
+            marker = resp['marker']
+        return pipelines
+
+    def _describe_all_pipelines(self):
+        if not self.all_pipelines:
+            return {}
+        total = len(self.all_pipelines)
+        done = 0
+        descs = {}
+        while True:
+            ids = sorted(self.all_pipelines.keys())[0:25]
+            done += len(ids)
+            resp = self.dp_conn.describe_pipelines(ids)
+            descriptions = resp['pipelineDescriptionList']
+            for p in descriptions:
+                fields = _fields2dict(p['fields'])
+                # Merge fields directly into here for easier handling, and remove the unparsed fields
+                del p['fields']
+                p.update(fields)
+                descs[p['uniqueId']] = p
+            if done >= total:
+                break
+        return descs
+
+    def _get_pipeline_definition(self):
+        return self.dp_conn.get_pipeline_definition(self.id)
+
+    def get_info(self):
+        info = dict(
+            name            = self.name,
+            unique_id       = self.unique_id,
+            id              = self.id,
+            all_pipelines   = self.all_pipelines,
+            described_pipelines   = self.described_pipelines,
+        )
+        return info
+
+    def _create_pipeline(self):
+        if not self.module.check_mode:
+            self.dp_conn.create_pipeline(self.name, self.unique_id, self.description)
+        self.changed = True
+        # After creating a new pipeline, look up its id and description.
+        self._get_datapipeline()
+
+    def _delete_pipeline(self):
+        if not self.module.check_mode:
+            self.dp_conn.delete_pipeline(self.id)
+        self.changed = True
+
+    def _put_pipeline_definition(self):
+        """Validates and updates pipeline definition."""
+        if not 'pipelineObjects' in self.definition:
+            self.module.fail_json(msg="Invalid definition - no pipelineObjects found.")
+        try:
+            self.dp_conn.validate_pipeline_definition(self.definition['pipelineObjects'], self.id)
+        except boto.exception.JSONResponseError as e:
+            if e.error_code == "ValidationException":
+                self.module.fail_json(msg="Pipeline definition failed validation: %s" % e.message)
+            else:
+                raise
+
+        if not self.module.check_mode:
+            self.dp_conn.put_pipeline_definition(self.definition['pipelineObjects'], self.id)
+        self.changed = True
+
+    def _activate_pipeline(self):
+        """Activates pipeline. A pipeline cannot be modified after it has been successfully activated."""
+        if not self.module.check_mode:
+            self.dp_conn.activate_pipeline(self.id)
+        self.changed = True
+
+    def ensure_present(self):
+        if self.id:
+            if self.name != self.dp_desc['name']:
+                self.module.fail_json(msg="Found pipeline with unique_id '%s', but its name '%s' does not match the specified name '%s'. Both name and unique_id must match for identifying a pipeline." % (self.unique_id, self.dp_desc['name'], self.name))
+            remote_definition = self._get_pipeline_definition()
+            state = self.dp_desc['@pipelineState']
+            if state in ['DELETING']:
+                self.module.fail_json(msg="Found matching pipeline, but it is in state %s (wait a few minutes for deletion to complete)" % state)
+            if remote_definition != self.definition:
+                if state in ['SCHEDULED', 'FINISHED']:
+                    self.module.fail_json(msg="Cannot update pipeline definition in state %s (delete and recreate instead)" % state)
+                self._put_pipeline_definition()
+            if remote_definition != self.definition or self.dp_desc['@pipelineState'] == 'PENDING':
+                self._activate_pipeline()
+        else:
+            self._create_pipeline()
+            self._put_pipeline_definition()
+            self._activate_pipeline()
+
+    def ensure_absent(self):
+        if self.id:
+            self._delete_pipeline()
+
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+        state           = dict(default='present', choices=['present', 'absent']),
+        name            = dict(required=True),
+        unique_id       = dict(required=True),
+        description     = dict(),
+        definition      = dict(),
+    ))
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
+
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    if not region:
+        module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
+
+    dpm = DatapipelineManager(module, region, **aws_connect_params)
+
+
+    if module.params['state'] == 'present':
+        if not module.params['definition']:
+            module.fail_json(msg="Definition is required for state=present.")
+        dpm.ensure_present()
+    elif module.params['state'] == 'absent':
+        dpm.ensure_absent()
+
+    module.exit_json(
+        changed=dpm.changed,
+        datapipeline=dpm.get_info(),
+    )
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
