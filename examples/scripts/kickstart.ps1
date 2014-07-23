@@ -1,4 +1,11 @@
-# Powershell script to upgrade a PowerShell 2.0 system to PowerShell 3.0, configure WinRM and set your firewall rules and create an ansible user
+# Powershell script to:
+# - upgrade a PowerShell 2.0 system to PowerShell 3.0
+# - configure WinRM
+# - set your firewall rules
+# - create an ansible user
+# - ask for a reboot once everything has completed
+# - runs idempotent
+#
 # based on http://occasionalutility.blogspot.com/2013/11/everyday-powershell-part-7-powershell.html
 # credit to: Matt Martz and trondhindenes
 #
@@ -6,13 +13,10 @@
 #   it will ask for the ansible password
 #   it will ask for a reboot
 #   
-
-# Get version of OS
-
-# 6.0 is 2008
-# 6.1 is 2008 R2
-# 6.2 is 2012
-# 6.3 is 2012 R2
+#   Run as kickstart.ps1 -Verbose to see the output when running.
+#
+#   Written by Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+#
 
 [CmdletBinding()]
 
