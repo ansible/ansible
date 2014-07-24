@@ -31,11 +31,15 @@ options:
     description:
       - Send a notification sound before the message.
     required: false
-    choices: ["56k", "bueller", "crickets", "dangerzone", "deeper",
-              "drama", "greatjob", "horn", "horror" , "inconceivable",
-              "live", "loggins", "noooo", "nyan", "ohmy", "ohyeah",
-              "pushit", "rimshot", "sax", "secret", "tada", "tmyk",
-              "trombone", "vuvuzela", "yeah", "yodel"]
+    choices: ["56k", "bell", "bezos", "bueller", "clowntown",
+              "cottoneyejoe", "crickets", "dadgummit", "dangerzone",
+              "danielsan", "deeper", "drama", "greatjob", "greyjoy",
+              "guarantee", "heygirl", "horn", "horror",
+              "inconceivable", "live", "loggins", "makeitso", "noooo",
+              "nyan", "ohmy", "ohyeah", "pushit", "rimshot",
+              "rollout", "rumble", "sax", "secret", "sexyback",
+              "story", "tada", "tmyk", "trololo", "trombone", "unix",
+              "vuvuzela", "what", "whoomp", "yeah", "yodel"]
 
 # informational: requirements for nodes
 requirements: [ urllib2, cgi ]
@@ -69,14 +73,20 @@ def main():
             room=dict(required=True),
             msg=dict(required=True),
             notify=dict(required=False,
-                        choices=["56k", "bueller", "crickets",
-                                 "dangerzone", "deeper", "drama",
-                                 "greatjob", "horn", "horror",
+                        choices=["56k", "bell", "bezos", "bueller",
+                                 "clowntown", "cottoneyejoe",
+                                 "crickets", "dadgummit", "dangerzone",
+                                 "danielsan", "deeper", "drama",
+                                 "greatjob", "greyjoy", "guarantee",
+                                 "heygirl", "horn", "horror",
                                  "inconceivable", "live", "loggins",
-                                 "noooo", "nyan", "ohmy", "ohyeah",
-                                 "pushit", "rimshot", "sax", "secret",
-                                 "tada", "tmyk", "trombone", "vuvuzela",
-                                 "yeah", "yodel"]),
+                                 "makeitso", "noooo", "nyan", "ohmy",
+                                 "ohyeah", "pushit", "rimshot",
+                                 "rollout", "rumble", "sax", "secret",
+                                 "sexyback", "story", "tada", "tmyk",
+                                 "trololo", "trombone", "unix",
+                                 "vuvuzela", "what", "whoomp", "yeah",
+                                 "yodel"]),
         ),
         supports_check_mode=False
     )
