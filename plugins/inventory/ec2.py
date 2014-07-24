@@ -223,6 +223,8 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
+        self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
+
         # Return all EC2/RDS instances
         if config.has_option('ec2', 'all_instances'):
             self.all_instances = config.getboolean('ec2', 'all_instances')
@@ -266,7 +268,8 @@ class Ec2Inventory(object):
         for region in self.regions:
             self.get_instances_by_region(region)
             self.get_rds_instances_by_region(region)
-            self.get_elasticache_instances_by_region(region)
+            if self.elasticache_enabled:
+                self.get_elasticache_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
