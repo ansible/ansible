@@ -34,14 +34,14 @@
 
 - assert:
     that:
-       result.cmd == 'echo "dog" '
+       result.cmd == 'echo "dog"'
 
 - shell: echo 'dog'
   register: result
 
 - assert:
     that:
-       result.cmd == 'echo \'dog\' '
+       result.cmd == 'echo \'dog\''
 
 - name: a quoted argument is not sent to the shell module as anything but a string parameter
   shell: echo 'dog' 'executable=/usr/bin/python'
@@ -51,7 +51,7 @@
  
 - assert:
     that:
-       result.cmd == "echo 'dog' 'executable=/usr/bin/python' "
+       result.cmd == "echo 'dog' 'executable=/usr/bin/python'"
 
 - name: it is valid to pass multiple key=value arguments because the shell doesn't check key=value arguments
   shell: echo quackquack=here quackquack=everywhere
@@ -59,7 +59,7 @@
  
 - assert:
     that:
-      result.cmd == 'echo quackquack=here quackquack=everywhere '
+      result.cmd == 'echo quackquack=here quackquack=everywhere'
 
 - name: the same is true with quoting
   shell: echo "quackquack=here quackquack=everywhere"
@@ -67,7 +67,7 @@
      
 - assert:
     that:
-      result.cmd == 'echo "quackquack=here quackquack=everywhere" ' 
+      result.cmd == 'echo "quackquack=here quackquack=everywhere"'
 
 - name: the same is true with quoting (B)
   shell: echo "quackquack=here" "quackquack=everywhere"
@@ -87,7 +87,7 @@
 
 - assert: 
      that:
-        result.cmd == "echo a=1 a=2 a=3 " 
+        result.cmd == "echo a=1 a=2 a=3" 
 
 - name: more shell duplicates
   shell: echo foo=bar foo=bar
@@ -95,7 +95,7 @@
 
 - assert:
     that:
-       result.cmd == "echo foo=bar foo=bar "
+       result.cmd == "echo foo=bar foo=bar"
 
 - name: multi-line inline shell commands (should use script module but hey) are a thing
   shell: "{{ multi_line }}"
@@ -115,4 +115,4 @@
 - assert:
     that:
        # command shouldn't end in spaces, amend test once fixed
-       - result.cmd == "echo foo --arg=a --arg=b "
+       - result.cmd == "echo foo --arg=a --arg=b"
