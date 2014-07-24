@@ -29,7 +29,6 @@ from ansible import __version__
 from ansible.utils import template
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
-from ansible.callbacks import display
 import ansible.constants as C
 import ast
 import time
