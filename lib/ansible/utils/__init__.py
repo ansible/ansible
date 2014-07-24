@@ -30,6 +30,7 @@ from ansible.utils import template
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
+from ansible.module_utils.basic import split_args
 import ansible.constants as C
 import ast
 import time
