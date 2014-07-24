@@ -133,8 +133,11 @@ def main():
     changed = False
 
     recurse = params['recurse']
-    if recurse and state != 'directory':
-        module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
+    if recurse:
+        if state not in ["directory", "absent"]:
+            module.fail_json(path=path, msg="recurse option requires state to be 'directory' or 'absent'")
+        if state == 'absent' and prev_state != 'directory':
+            module.fail_json(path=path, msg="recurse option with state 'absent' operates on directories only")
 
     if state == 'absent':
         if state != prev_state:
