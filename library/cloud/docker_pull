@@ -262,6 +262,7 @@ def main():
         puller = DockerPuller(module)
         result = puller.pull()
         if not result:
+            failed = True
             msg = 'Error: %s' % puller.error_msg
         else:
             msg = 'Image %s pulled' % result['Id']
