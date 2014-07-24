@@ -395,7 +395,7 @@ class Runner(object):
 
         return actual_user
 
-    def _count_module_args(self, args):
+    def _count_module_args(self, args, allow_dupes=False):
         '''
         Count the number of k=v pairs in the supplied module args. This is
         basically a specialized version of parse_kv() from utils with a few
@@ -405,23 +405,26 @@ class Runner(object):
         if args is not None:
             args = args.encode('utf-8')
             try:
-                lexer = shlex.shlex(args, posix=True)
+                lexer = shlex.shlex(args)
+                lexer.whitespace = '\t '
                 lexer.whitespace_split = True
-                lexer.quotes = '"'
-                lexer.ignore_quotes = "'"
-                vargs = list(lexer)
+                vargs = [x.decode('utf-8') for x in lexer]
             except ValueError, ve:
                 if 'no closing quotation' in str(ve).lower():
                     raise errors.AnsibleError("error parsing argument string '%s', try quoting the entire line." % args)
                 else:
                     raise
-            vargs = [x.decode('utf-8') for x in vargs]
             for x in vargs:
-                if "=" in x:
+                quoted = x.startswith('"') and x.endswith('"') or x.startswith("'") and x.endswith("'")
+                if "=" in x and not quoted:
                     k, v = x.split("=",1)
-                    if k in options:
-                        raise errors.AnsibleError("a duplicate parameter was found in the argument string (%s)" % k)
-                    options[k] = v
+                    is_shell_module = self.module_name in ('command', 'shell')
+                    is_shell_param = k in ('creates', 'removes', 'chdir', 'executable')
+                    if k in options and not allow_dupes:
+                        if not(is_shell_module and not is_shell_param):
+                            raise errors.AnsibleError("a duplicate parameter was found in the argument string (%s)" % k)
+                    if is_shell_module and is_shell_param or not is_shell_module:
+                        options[k] = v
         return len(options)
 
 
@@ -860,7 +863,7 @@ class Runner(object):
             # that no variables inadvertantly (or maliciously) add params
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
-            num_args_pre = self._count_module_args(module_args)
+            num_args_pre = self._count_module_args(module_args, allow_dupes=True)
             module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
             num_args_post = self._count_module_args(module_args)
             if num_args_pre != num_args_post:

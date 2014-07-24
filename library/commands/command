@@ -205,16 +205,21 @@ class CommandModule(AnsibleModule):
 
         # use shlex to split up the args, while being careful to preserve
         # single quotes so they're not removed accidentally
-        lexer = shlex.shlex(args, posix=True)
+        lexer = shlex.shlex(args)
+        lexer.whitespace = '\t '
         lexer.whitespace_split = True
-        lexer.quotes = '"'
-        lexer.ignore_quotes = "'"
         items = list(lexer)
 
         for x in items:
-            if '=' in x:
+            quoted = x.startswith('"') and x.endswith('"') or x.startswith("'") and x.endswith("'")
+            if '=' in x and not quoted:
                 # check to see if this is a special parameter for the command
                 k, v = x.split('=', 1)
+                # because we're not breaking out quotes in the shlex split
+                # above, the value of the k=v pair may still be quoted. If
+                # so, remove them.
+                if len(v) > 1 and (v.startswith('"') and v.endswith('"') or v.startswith("'") and v.endswith("'")):
+                    v = v[1:-1]
                 if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
                     if k == "chdir":
                         v = os.path.abspath(os.path.expanduser(v))
@@ -227,7 +232,7 @@ class CommandModule(AnsibleModule):
                     params[k] = v
         # Remove any of the above k=v params from the args string
         args = PARAM_REGEX.sub('', args)
-        params['args'] = args
+        params['args'] = args.strip()
         return (params, params['args'])
 
 main()
