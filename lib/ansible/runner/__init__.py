@@ -47,6 +47,7 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
+from ansible.module_utils.basic import split_args
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -403,14 +404,10 @@ class Runner(object):
         '''
         options = {}
         if args is not None:
-            args = args.encode('utf-8')
             try:
-                lexer = shlex.shlex(args)
-                lexer.whitespace = '\t '
-                lexer.whitespace_split = True
-                vargs = [x.decode('utf-8') for x in lexer]
-            except ValueError, ve:
-                if 'no closing quotation' in str(ve).lower():
+                vargs = split_args(args)
+            except Exception, e:
+                if "unbalanced jinja2 block or quotes" in str(e):
                     raise errors.AnsibleError("error parsing argument string '%s', try quoting the entire line." % args)
                 else:
                     raise
