@@ -62,6 +62,7 @@ def main():
             original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
+            protect = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
             validate = dict(required=False, default=None),
             src = dict(required=False, default=None),
@@ -73,6 +74,7 @@ def main():
     params = module.params
     state  = params['state']
     force = params['force']
+    protect = params['protect']
     diff_peek = params['diff_peek']
     src = params['src']
 
@@ -145,10 +147,13 @@ def main():
                     except Exception, e:
                         module.fail_json(msg="rmtree failed: %s" % str(e))
                 else:
-                    try:
-                        os.unlink(path)
-                    except Exception, e:
-                        module.fail_json(path=path, msg="unlinking failed: %s " % str(e))
+                    if prev_state in ['link','hard'] and protect:
+                         module.exit_json(path=path, changed=False, msg='file (%s) is %s. Links was protected' % (path, prev_state))
+                    else:
+                        try:
+                            os.unlink(path)
+                        except Exception, e:
+                            module.fail_json(path=path, msg="unlinking failed: %s " % str(e))
             module.exit_json(path=path, changed=True)
         else:
             module.exit_json(path=path, changed=False)
