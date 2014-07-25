@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+## 1.6.9 "And the Cradle Will Rock" - Jul 25, 2014
+
+- Further improvements to module parameter parsing to address additional regressions caused by security fixes
+
 ## 1.6.8 "And the Cradle Will Rock" - Jul 22, 2014
 
 - Corrects a regression in the way shell and command parameters were being parsed
