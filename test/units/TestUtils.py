@@ -706,6 +706,12 @@ class TestUtils(unittest.TestCase):
             ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', 'cookiechip\ndone']
         )
 
+        # test space preservation within quotes
+        _test_combo(
+            'content="1 2  3   4    "  foo=bar',
+            ['content="1 2  3   4    "', 'foo=bar']
+        )
+
         # invalid jinja2 nesting detection
         # invalid quote nesting detection
     
