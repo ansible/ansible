@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 import os
 import time
 import smbc
 import uuid
 import ansible
-
-from __future__ import absolute_import
 
 import base64
 import hashlib
@@ -38,11 +38,10 @@ class ActionModule(object):
     src     = options.get('src', None)
     content = options.get('content', None)
     locdest = options.get('dest', None)
-    host    = utils.boolean(options.get('host', 'no'))
+    host    = conn.host
     force   = utils.boolean(options.get('force', 'yes'))
 
-    dest     = os.path.expanduser(module.params['dest'])
-    host     = os.path.expanduser(module.params['host'])
+    dest     = options.get('dest')
     share    = (dest.split(':')[0]+'$').lower()
     loc      = dest.split(':')[1].replace('\\','/')
     dest     = 'smb://' + host + '/' + share + loc
@@ -68,7 +67,7 @@ class ActionModule(object):
       result = dict(failed=True, msg="Source %s not readable" % (src))
       return ReturnData(conn=conn, result=result)
        
-    md5sum_src = utlis.md5(src)
+    md5sum_src = utils.md5(src)
     md5sum_dest = None
 
     changed = False
@@ -82,7 +81,7 @@ class ActionModule(object):
       result = dict(failed=True, msg="can't transfer directories src=%s" % (src))
       return ReturnData(conn=conn, result=result)
 
-    if (check_file(rfile)):
+    if (self.check_file(dest)):
       md5sum_dest = winrm._remote.md5(self, conn, tmp, locdest)
       
       if not ( not (md5sum_src == md5sum_dest) and not force):
@@ -90,20 +89,21 @@ class ActionModule(object):
         return ReturnData(conn=conn, result=result)
     else:
       try:
-        upload(src, ctx, rfile)
+        self.upload(src, ctx, dest)
         changed = True
       except:
-        module.fail_json(msg="Failed to copy file.")
+        result = dict(failed=True, msg="Failed to copy file.")
+        return ReturnData(conn=conn, result=result)
 
       if ( len(content) > 0 ):
         os.remove(src)
 
-      if not validating(src, rfile, content):
+      if not self.validating(src, dest, content):
         result = dict(failed=True, msg="The validation has failed for the uploaded file.")
         return ReturnData(conn=conn, result=result)
 
     res_args = dict(
-        dest = dest, src = src, md5sum = md5sum_src, changed = changed
+        dest = locdest, src = src, md5sum = md5sum_src, changed = changed
     )
 
     result = dict(dest=dest, src=source, changed=changed)
@@ -122,7 +122,7 @@ class ActionModule(object):
   def auth_fn(ansible_hostname, share, ansible_workgroup, ansible_ssh_user, ansible_ssh_pass):
     return (workgroup, ansible_ssh_user, ansible_ssh_pass)
 
-  def upload(src, ctx, rfile)
+  def upload(src, ctx, rfile):
     sfile = open(src, 'rb')
     dfile = ctx.open(rfile, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
     for buf in sfile:
