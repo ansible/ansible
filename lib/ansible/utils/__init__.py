@@ -25,11 +25,10 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils import template
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
-from ansible.module_utils.basic import split_args
+from ansible.utils.splitter import split_args
 import ansible.constants as C
 import ast
 import time
@@ -203,6 +202,7 @@ def is_changed(result):
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
+    from ansible.utils import template
 
     if conditional is None or conditional == '':
         return True
@@ -296,6 +296,9 @@ def path_dwim(basedir, given):
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
     # (used by roles code)
+
+    from ansible.utils import template
+
 
     basedir = os.path.dirname(original)
     if os.path.islink(basedir):
@@ -1189,6 +1192,8 @@ def safe_eval(expr, locals={}, include_exceptions=False):
 
 
 def listify_lookup_plugin_terms(terms, basedir, inject):
+
+    from ansible.utils import template
 
     if isinstance(terms, basestring):
         # someone did:

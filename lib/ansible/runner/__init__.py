@@ -47,7 +47,7 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
-from ansible.module_utils.basic import split_args
+from ansible.utils.splitter import split_args
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
