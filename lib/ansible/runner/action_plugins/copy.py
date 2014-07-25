@@ -268,6 +268,7 @@ class ActionModule(object):
                 new_module_args = dict(
                     src=tmp_src,
                     dest=dest,
+                    original_basename=source_rel
                 )
                 if self.runner.noop_on_check(inject):
                     new_module_args['CHECKMODE'] = True
