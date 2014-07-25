@@ -138,11 +138,23 @@ def disassociate_ip_and_instance(ec2, address, instance_id, module):
 def find_address(ec2, public_ip, module):
     """ Find an existing Elastic IP address """
     
-    try:
-        addresses = ec2.get_all_addresses([public_ip])
-    except boto.exception.EC2ResponseError, e:
-        module.fail_json(msg=str(e.message))
-        
+    wait_timeout = 600 
+    wait_timeout = time.time() + wait_timeout
+
+    while wait_timeout > time.time():
+        try:
+            addresses = ec2.get_all_addresses([public_ip])
+            break
+        except boto.exception.EC2ResponseError, e:
+            if "Address '%s' not found." % public_ip in e.message :
+                pass
+            else:
+                module.fail_json(msg=str(e.message))
+        time.sleep(5)
+    
+    if wait_timeout <= time.time():
+        module.fail_json(msg = "wait for EIPs timeout on %s" % time.asctime())    
+
     return addresses[0]
 
 
