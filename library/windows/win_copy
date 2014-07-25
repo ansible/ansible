@@ -1,0 +1,46 @@
+# this is a virtual module that is entirely implemented server side
+
+DOCUMENTATION = '''
+---
+module: win_copy
+version_added: ""
+short_description: Copies files to remote locations.
+description:
+     - The M(win_copy) module copies a file on the local box to remote Windows locations.
+options:
+  src:
+    description:
+      - Local path to a file to copy to the remote Windows server; can be absolute or relative.
+    required: false
+    default: null
+    aliases: []
+  content:
+    description:
+      - When used instead of 'src', sets the contents of a file directly to the specified value.
+    required: false
+    default: null
+    aliases: []
+  dest:
+    description:
+      - Remote absolute path where the file should be copied to.
+    required: true
+    default: null
+    aliases: []
+  force:
+    description:
+      - Overwrites the existing file.
+    required: false
+    choices: [ "true", "false" ]
+    default: "true"
+    aliases: [ "thirsty" ]
+'''
+
+EXAMPLES = '''
+# Copy a new "check_mk config" but doesn't overwrite it if it exists, even if it's a different one.
+- win_copy: >
+    host='windowsmachine' 
+    src='check_mk.ini '
+    dest='C:\\Program Files (x86)\\check_mk\\check_mk.ini'
+    force='false'
+  delegate_to: 'localhost'
+'''
