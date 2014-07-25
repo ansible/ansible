@@ -143,13 +143,13 @@ def find_address(ec2, public_ip, module):
 
     while wait_timeout > time.time():
         try:
-          addresses = ec2.get_all_addresses([public_ip])
-          break
+            addresses = ec2.get_all_addresses([public_ip])
+            break
         except boto.exception.EC2ResponseError, e:
-          if "Address '%s' not found." % public_ip in e.message :
-              pass
-          else:
-              module.fail_json(msg=str(e.message))
+            if "Address '%s' not found." % public_ip in e.message :
+                pass
+            else:
+                module.fail_json(msg=str(e.message))
         time.sleep(5)
     
     if wait_timeout <= time.time():
