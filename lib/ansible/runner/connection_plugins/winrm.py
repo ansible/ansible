@@ -257,20 +257,9 @@ class Connection(object):
         while True:
           try:
             script = '''
-               If (Test-Path -PathType Leaf "%(path)s")
-               {
                   $md5 = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
                   $hash = [System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes("%(path)s"))).replace('-','').toLower()
                   Write-Host $hash;
-               }
-               ElseIf (Test-Path -PathType Container "%(path)s")
-               {
-                   Write-Host "3";
-               }
-               Else
-               {
-                   Write-Host "1";
-               }
             ''' % dict(path=powershell._escape(target))
             vvvv("WINRM MD5 hash of %s" % (target), host=self.host)
             cmd_parts = powershell._encode_script(script, as_list=True)
