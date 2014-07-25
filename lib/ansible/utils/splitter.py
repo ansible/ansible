@@ -139,7 +139,7 @@ def split_args(args):
 
         # finally, if we're at zero depth for all blocks and not inside quotes, and have not
         # yet appended anything to the list of params, we do so now
-        if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended:
+        if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
             params.append(token)
 
     # If we're done and things are not at zero depth or we're still inside quotes,
