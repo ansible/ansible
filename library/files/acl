@@ -34,7 +34,7 @@ options:
     default: query
     choices: [ 'query', 'present', 'absent' ]
     description:
-      - defines whether the ACL should be present or not.  The C(query) state gets the current acl C(present) without changing it, for use in 'register' operations.
+      - defines whether the ACL should be present or not.  The C(query) state gets the current acl without changing it, for use in 'register' operations.
 
   follow:
     required: false
