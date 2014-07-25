@@ -70,7 +70,11 @@ def split_args(args):
 
     # here we encode the args, so we have a uniform charset to
     # work with, and split on white space
-    args = args.encode('utf-8')
+    try:
+        args = args.encode('utf-8')
+        do_decode = True
+    except UnicodeDecodeError:
+        do_decode = False
     tokens = args.split()
 
     # iterate over the tokens, and reassemble any that may have been
@@ -146,7 +150,8 @@ def split_args(args):
         raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes")
 
     # finally, we decode each param back to the unicode it was in the arg string
-    params = [x.decode('utf-8') for x in params]
+    if do_decode:
+        params = [x.decode('utf-8') for x in params]
     return params
 
 def unquote(data):
