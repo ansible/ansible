@@ -76,6 +76,14 @@ options:
     version_added: "1.3"
     required: false
     default: null
+  md5sum:
+    description:
+      - If a MD5 checksum is passed to this parameter, the digest of the
+        destination file will be calculated after it is downloaded to ensure
+        its integrity and verify that the transfer completed successfully.
+    version_added: "1.8"
+    required: false
+    default: null
   use_proxy:
     description:
       - if C(no), it will not use a proxy, even if one is defined in
@@ -192,6 +200,7 @@ def main():
         url = dict(required=True),
         dest = dict(required=True),
         sha256sum = dict(default=''),
+        md5sum = dict(default='')
     )
 
     module = AnsibleModule(
@@ -204,6 +213,7 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
     sha256sum = module.params['sha256sum']
+    md5sum = module.params['md5sum']
     use_proxy = module.params['use_proxy']
 
     dest_is_dir = os.path.isdir(dest)
@@ -286,6 +296,17 @@ def main():
         if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
+
+    # Check the digest of the destination file and ensure that it matches the
+    # md5sum parameter if it is present
+    if md5sum != '':
+        # Remove any non-alphanumeric characters, including the infamous
+        # Unicode zero-width space
+        stripped_md5sum = re.sub(r'\W+', '', md5sum)
+
+        if stripped_md5sum.lower() != md5sum_src:
+            os.remove(dest)
+            module.fail_json(msg="The MD5 checksum for %s did not match %s; it was %s." % (dest, md5sum, md5sum_dest))
 
     os.remove(tmpsrc)
 
