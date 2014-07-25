@@ -703,8 +703,7 @@ class TestUtils(unittest.TestCase):
         _test_combo(
             # in memory of neighbors cat
             'a {% if x %} y {%else %} {{meow}} {% endif %} cookiechip\ndone',
-            # turning \n into a split point here seems a little off.  We'll see if other tests care.
-            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', 'cookiechip', 'done']
+            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', 'cookiechip\ndone']
         )
 
         # invalid jinja2 nesting detection
