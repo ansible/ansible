@@ -927,6 +927,13 @@ def gather_facts(vm):
     Gather facts for VM directly from vsphere.
     """
     vm.get_properties()
+
+    # attempt to get guest ipAddress -- If not exist set var to False
+    try:
+        guest_primary_ipaddress = vm.properties.guest.ipAddress
+    except AttributeError:
+        guest_primary_ipaddress = False
+
     facts = {
         'module_hw': True,
         'hw_name': vm.properties.name,
