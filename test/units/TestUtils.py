@@ -246,24 +246,6 @@ class TestUtils(unittest.TestCase):
         # Just a string
         self.assertEqual(ansible.utils.parse_json('foo'), dict(failed=True, parsed=False, msg='foo'))
 
-    def test_smush_braces(self):
-        self.assertEqual(ansible.utils.smush_braces('{{ foo}}'), '{{foo}}')
-        self.assertEqual(ansible.utils.smush_braces('{{foo }}'), '{{foo}}')
-        self.assertEqual(ansible.utils.smush_braces('{{ foo }}'), '{{foo}}')
-
-    def test_smush_ds(self):
-        # list
-        self.assertEqual(ansible.utils.smush_ds(['foo={{ foo }}']), ['foo={{foo}}'])
-
-        # dict
-        self.assertEqual(ansible.utils.smush_ds(dict(foo='{{ foo }}')), dict(foo='{{foo}}'))
-
-        # string
-        self.assertEqual(ansible.utils.smush_ds('foo={{ foo }}'), 'foo={{foo}}')
-
-        # int
-        self.assertEqual(ansible.utils.smush_ds(0), 0)
-
     def test_parse_yaml(self):
         #json
         self.assertEqual(ansible.utils.parse_yaml('{"foo": "bar"}'), dict(foo='bar'))
@@ -681,7 +663,6 @@ class TestUtils(unittest.TestCase):
 
     def test_split_args(self):
         # split_args is a smarter shlex.split for the needs of the way ansible uses it
-        # TODO: FIXME: should this survive, retire smush_ds
 
         def _split_info(input, desired, actual):
             print "SENT: ", input
