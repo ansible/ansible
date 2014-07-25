@@ -28,7 +28,7 @@ from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
-from ansible.utils.splitter import split_args
+from ansible.utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
 import time
@@ -418,28 +418,6 @@ def merge_module_args(current_args, new_args):
             module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
     return module_args.strip()
 
-def smush_braces(data):
-    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while '{{ ' in data:
-        data = data.replace('{{ ', '{{')
-    while ' }}' in data:
-        data = data.replace(' }}', '}}')
-    return data
-
-def smush_ds(data):
-    # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
-    # so we do not have to call smush elsewhere
-    if type(data) == list:
-        return [ smush_ds(x) for x in data ]
-    elif type(data) == dict:
-        for (k,v) in data.items():
-            data[k] = smush_ds(v)
-        return data
-    elif isinstance(data, basestring):
-        return smush_braces(data)
-    else:
-        return data
-
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
 
@@ -458,7 +436,7 @@ def parse_yaml(data, path_hint=None):
         # else this is pretty sure to be a YAML document
         loaded = yaml.safe_load(data)
 
-    return smush_ds(loaded)
+    return loaded
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
@@ -640,7 +618,7 @@ def parse_kv(args):
         # attempting to split a unicode here does bad things
         args = args.encode('utf-8')
         try:
-            vargs = shlex.split(args, posix=True)
+            vargs = split_args(args)
         except ValueError, ve:
             if 'no closing quotation' in str(ve).lower():
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
@@ -650,7 +628,7 @@ def parse_kv(args):
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)
-                options[k] = v
+                options[k] = unquote(v)
     return options
 
 def merge_hash(a, b):
