@@ -218,7 +218,6 @@ def load_platform_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
-
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
