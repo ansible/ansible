@@ -40,7 +40,6 @@ class ActionModule(object):
     locdest = options.get('dest', None)
     host    = utils.boolean(options.get('host', 'no'))
     force   = utils.boolean(options.get('force', 'yes'))
-    #validate   = utils.boolean(options.get('validate', 'yes'))
 
     dest     = os.path.expanduser(module.params['dest'])
     host     = os.path.expanduser(module.params['host'])
