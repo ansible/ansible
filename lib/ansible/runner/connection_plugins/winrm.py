@@ -250,6 +250,41 @@ class Connection(object):
             if out_file:
                 out_file.close()
 
+    def _remote.md5(self, conn, tmp, target):
+      ''' takes a remote md5sum, and returns 1 if no file '''
+      try:
+        offset = 0
+        while True:
+          try:
+            script = '''
+               If (Test-Path -PathType Leaf "%(path)s")
+               {
+                  $md5 = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
+                  $hash = [System.BitConverter]::ToString($md5.ComputeHash([System.IO.File]::ReadAllBytes("%(path)s"))).replace('-','').toLower()
+                  Write-Host $hash;
+               }
+               ElseIf (Test-Path -PathType Container "%(path)s")
+               {
+                   Write-Host "3";
+               }
+               Else
+               {
+                   Write-Host "1";
+               }
+            ''' % dict(path=powershell._escape(target))
+            vvvv("WINRM MD5 hash of %s" % (target), host=self.host)
+            cmd_parts = powershell._encode_script(script, as_list=True)
+            result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
+            if result.status_code != 0:
+              raise IOError(result.std_err.encode('utf-8'))
+            remote_md5 = result.std_out.strip()
+            return remote_md5
+
+          except Exception:
+            traceback.print_exc()
+            raise errors.AnsibleError("failed to md5 hash %s" % target)
+    
+
     def close(self):
         if self.protocol and self.shell_id:
             self.protocol.close_shell(self.shell_id)
