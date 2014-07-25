@@ -75,7 +75,7 @@ def split_args(args):
         do_decode = True
     except UnicodeDecodeError:
         do_decode = False
-    tokens = args.split()
+    tokens = args.split(' ')
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -94,8 +94,6 @@ def split_args(args):
     # now we loop over each split token, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
     for token in tokens:
-
-        token = token.strip()
 
         # store the previous quoting state for checking later
         was_inside_quotes = inside_quotes
