@@ -17,6 +17,7 @@ import ansible.utils
 import ansible.errors
 import ansible.constants as C
 import ansible.utils.template as template2
+from ansible.utils.splitter import split_args
 
 from ansible import __version__
 
@@ -677,4 +678,37 @@ class TestUtils(unittest.TestCase):
         del diff[0]
         diff = '\n'.join(diff)
         self.assertEqual(diff, unicode(standard_expected))
+
+    def test_split_args(self):
+        # split_args is a smarter shlex.split for the needs of the way ansible uses it
+        # TODO: FIXME: should this survive, retire smush_ds
+
+        def _split_info(input, desired, actual):
+            print "SENT: ", input
+            print "WANT: ", desired 
+            print "GOT: ", actual
+
+        def _test_combo(input, desired):
+            actual = split_args(input)
+            _split_info(input, desired, actual)
+            assert actual == desired
+
+        # trivial splitting
+        _test_combo('a b=c d=f',                   ['a', 'b=c', 'd=f' ])
+
+        # mixed quotes
+        _test_combo('a b=\'c\' d="e" f=\'g\'',     ['a', "b='c'", 'd="e"', "f='g'" ])
+
+        # with spaces
+        _test_combo('a "\'one two three\'"',       ['a', "'one two three'" ])
+
+        # TODO: ...
+        # jinja2 preservation
+        # jinja2 preservation with spaces
+        # invalid quote detection
+        # jinja2 loop blocks
+        # jinja2 with loop blocks and variable blocks
+        # invalid jinja2 nesting detection
+        # invalid quote nesting detection
+    
 
