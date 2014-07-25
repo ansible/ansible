@@ -250,7 +250,7 @@ class Connection(object):
             if out_file:
                 out_file.close()
 
-    def _remote.md5(self, conn, tmp, target):
+    def _remote_md5(self, conn, tmp, target):
       ''' takes a remote md5sum, and returns 1 if no file '''
       try:
         offset = 0
