@@ -20,8 +20,9 @@
 # otherwise ansible stops at the first one and we want to ensure STOP conditions for each
 
 - set_fact: 
-    test_file: "./ansible_test_file"  # FIXME, use set tempdir
+    test_file: "{{ output_dir }}/ansible_test_file"  # FIXME, use set tempdir
     test_input: "owner=test" 
+    bad_var: "{{ output_dir }}' owner=test"
     chdir: "mom chdir=/tmp"
   tags: common
 
@@ -42,4 +43,11 @@
   shell: echo hi {{ chdir }}
   failed_when: False
   tags: scenario3
+
+- name: test that we can't go all Little Bobby Droptables on a quoted var to add more
+  file: "name={{ bad_var }}"
+  failed_when: False
+  tags: scenario4
+
+
 
