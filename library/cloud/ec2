@@ -923,7 +923,7 @@ def create_instances(module, ec2, override_count=None):
         while wait_timeout > time.time() and num_running < len(instids):
             try: 
                 res_list = ec2.get_all_instances(instids)
-            except boto.exception.BotoSeverError, e:
+            except boto.exception.BotoServerError, e:
                 if e.error_code == 'InvalidInstanceID.NotFound':
                     time.sleep(1)
                     continue
