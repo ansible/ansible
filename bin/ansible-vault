@@ -143,7 +143,7 @@ def execute_decrypt(args, options, parser):
         this_editor = VaultEditor(cipher, password, f)
         this_editor.decrypt_file()
 
-    print "Decryption successful"
+    print("Decryption successful")
 
 def execute_edit(args, options, parser):
 
@@ -176,7 +176,7 @@ def execute_encrypt(args, options, parser):
         this_editor = VaultEditor(cipher, password, f)
         this_editor.encrypt_file()
 
-    print "Encryption successful"
+    print("Encryption successful")
 
 def execute_rekey(args, options, parser):
 
@@ -192,7 +192,7 @@ def execute_rekey(args, options, parser):
         this_editor = VaultEditor(cipher, password, f)
         this_editor.rekey_file(new_password)
 
-    print "Rekey successful"
+    print("Rekey successful")
 
 #-------------------------------------------------------------------------------------
 # MAIN
@@ -210,8 +210,8 @@ def main():
         fn(args, options, parser)
     except Exception, err:
         if options.debug:
-            print traceback.format_exc()
-        print "ERROR:",err
+            print(traceback.format_exc())
+        print("ERROR:",err)
         sys.exit(1)
 
 if __name__ == "__main__":

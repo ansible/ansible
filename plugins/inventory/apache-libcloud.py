@@ -79,7 +79,7 @@ class LibcloudInventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        print(data_to_print)
 
 
     def is_cache_valid(self):
@@ -277,9 +277,9 @@ class LibcloudInventory(object):
             else:
                 pass
                 # TODO Product codes if someone finds them useful
-                #print key
-                #print type(value)
-                #print value
+                #print(key)
+                #print(type(value))
+                #print(value)
 
         return self.json_format_dict(instance_vars, True)
 

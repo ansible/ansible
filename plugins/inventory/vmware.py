@@ -193,7 +193,7 @@ if __name__ == '__main__':
                         )
     except Exception, e:
         client = None
-        #print >> STDERR "Unable to login (only cache avilable): %s", str(e)
+        #sys.stderr.write("Unable to login (only cache avilable): %s", str(e))
 
     # acitually do the work
     if hostname is None:
@@ -202,4 +202,4 @@ if __name__ == '__main__':
         inventory = get_single_host(client, config, hostname)
 
     # return to ansible
-    print inventory
+    print(inventory)

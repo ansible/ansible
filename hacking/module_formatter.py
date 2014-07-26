@@ -110,7 +110,7 @@ def write_data(text, options, outputname, module):
         f.write(text.encode('utf-8'))
         f.close()
     else:
-        print text
+        print(text)
 
 #####################################################################################
 
@@ -186,7 +186,7 @@ def jinja2_environment(template_dir, typ):
 
 def process_module(module, options, env, template, outputname, module_map):
 
-    print "rendering: %s" % module
+    print("rendering: %s" % module)
 
     fname = module_map[module]
 
@@ -248,7 +248,7 @@ def process_category(category, categories, options, env, template, outputname):
 
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
-    print "*** recording category %s in %s ***" % (category, category_file_path)
+    print("*** recording category %s in %s ***" % (category, category_file_path))
 
     # TODO: start a new category file
 
@@ -286,13 +286,13 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        print >>sys.stderr, "--module-dir is required"
+        sys.stderr.write("--module-dir is required\n")
         sys.exit(1)
     if not os.path.exists(options.module_dir):
-        print >>sys.stderr, "--module-dir does not exist: %s" % options.module_dir
+        sys.stderr.write("--module-dir does not exist: %s\n" % options.module_dir)
         sys.exit(1)
     if not options.template_dir:
-        print "--template-dir must be specified"
+        print("--template-dir must be specified")
         sys.exit(1)
 
 #####################################################################################

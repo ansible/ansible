@@ -61,7 +61,7 @@ def get_config(env_var, config_var):
     if not result:
         result = get_from_rhc_config(config_var)
     if not result:
-        print "failed=True msg='missing %s'" % env_var
+        print("failed=True msg='missing %s'" % env_var)
         sys.exit(1)
     return result
 
@@ -109,8 +109,8 @@ for app in response:
     result[app_name]['vars']['ansible_ssh_user'] = user
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
-    print json.dumps(result)
+    print(json.dumps(result))
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print json.dumps({})
+    print(json.dumps({}))
 else:
-    print "Need a argument, either --list or --host <host>"
+    print("Need a argument, either --list or --host <host>")
