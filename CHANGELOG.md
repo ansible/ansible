@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 - Fixes an issue with the copy module when copying a directory that fails when changing file attributes and the target file already exists
 - Improved unicode handling when splitting args
+- Corrects a regression in 1.6.9 where multiple spaces were reduced to one in string args
 
 ## 1.6.9 "And the Cradle Will Rock" - Jul 24, 2014
 
