@@ -1,0 +1,13 @@
+
+- hosts: testhost
+  gather_facts: True
+  roles: 
+    - { role: test_includes, tags: test_includes }
+  tasks:
+    - include: roles/test_includes/tasks/not_a_role_task.yml
+    - assert:
+        that:
+          - "ca == 33000"
+          - "cb == 33001"
+          - "cc == 33002"
+          
