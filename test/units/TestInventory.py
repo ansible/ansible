@@ -27,8 +27,8 @@ class TestInventory(unittest.TestCase):
         if sort:
             left = sorted(left)
             right = sorted(right)
-        print left
-        print right
+        print(left)
+        print(right)
         assert left == right
 
     def empty_inventory(self):
@@ -233,7 +233,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.complex_inventory()
 
         vars = inventory.get_variables('rtp_a')
-        print vars
+        print(vars)
 
         expected = dict(
             a=1, b=2, c=3, d=10002, e=10003, f='10004 != 10005',
@@ -243,8 +243,8 @@ class TestInventory(unittest.TestCase):
             inventory_hostname='rtp_a', inventory_hostname_short='rtp_a',
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
-        print vars
-        print expected
+        print(vars)
+        print(expected)
         assert vars == expected
 
     def test_complex_group_names(self):
@@ -262,24 +262,24 @@ class TestInventory(unittest.TestCase):
         inventory = self.complex_inventory()
         hosts = inventory.list_hosts("nc:florida:!triangle:!orlando")
         expected_hosts = ['miami', 'rtp_a', 'rtp_b', 'rtp_c']
-        print "HOSTS=%s" % sorted(hosts)
-        print "EXPECTED=%s" % sorted(expected_hosts)
+        print("HOSTS=%s" % sorted(hosts))
+        print("EXPECTED=%s" % sorted(expected_hosts))
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_regex_exclude(self):
         inventory = self.complex_inventory()
         hosts = inventory.list_hosts("~rtp_[ac]")
         expected_hosts = ['rtp_a', 'rtp_c']
-        print "HOSTS=%s" % sorted(hosts)
-        print "EXPECTED=%s" % sorted(expected_hosts)
+        print("HOSTS=%s" % sorted(hosts))
+        print("EXPECTED=%s" % sorted(expected_hosts))
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_regex_grouping(self):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts("~(cer[a-z]|berc)(erus00[13])")
         expected_hosts = ['cerberus001', 'cerberus003']
-        print "HOSTS=%s" % sorted(hosts)
-        print "EXPECTED=%s" % sorted(expected_hosts)
+        print("HOSTS=%s" % sorted(hosts))
+        print("EXPECTED=%s" % sorted(expected_hosts))
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_complex_enumeration(self):
@@ -351,8 +351,8 @@ class TestInventory(unittest.TestCase):
 
         expected_hosts=['jupiter', 'saturn', 'zeus', 'hera', 'poseidon', 'thor', 'odin', 'loki']
 
-        print "Expected: %s"%(expected_hosts)
-        print "Got     : %s"%(hosts)
+        print("Expected: %s"%(expected_hosts))
+        print("Got     : %s"%(hosts))
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_script_all(self):
@@ -396,7 +396,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.script_inventory()
         vars = inventory.get_variables('thor')
 
-        print "VARS=%s" % vars
+        print("VARS=%s" % vars)
 
         assert vars == {'hammer':True,
                         'group_names': ['norse'],
@@ -415,7 +415,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.script_inventory()
         vars = inventory.get_variables('zeus')
 
-        print "VARS=%s" % vars
+        print("VARS=%s" % vars)
 
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
@@ -436,8 +436,8 @@ class TestInventory(unittest.TestCase):
                          'group_names': ['greek', 'major-god'],
                          'var_a': '3#4'}
 
-        print "HOST     VARS=%s" % host_vars
-        print "EXPECTED VARS=%s" % expected_vars
+        print("HOST     VARS=%s" % host_vars)
+        print("EXPECTED VARS=%s" % expected_vars)
 
         assert host_vars == expected_vars
 
@@ -445,7 +445,7 @@ class TestInventory(unittest.TestCase):
         inventory = self.dir_inventory()
         group_greek = inventory.get_hosts('greek')
         actual_host_names = [host.name for host in group_greek]
-        print "greek : %s " % actual_host_names
+        print("greek : %s " % actual_host_names)
         assert actual_host_names == ['zeus', 'morpheus']
 
     def test_dir_inventory_skip_extension(self):
@@ -464,8 +464,8 @@ class TestInventory(unittest.TestCase):
         actual_groups = {}
         for group in inventory.get_groups():
             actual_groups[group.name] = sorted([h.name for h in group.get_hosts()])
-            print "INVENTORY groups[%s].hosts=%s" % (group.name, actual_groups[group.name])
-            print "EXPECTED  groups[%s].hosts=%s" % (group.name, expected_groups[group.name])
+            print("INVENTORY groups[%s].hosts=%s" % (group.name, actual_groups[group.name]))
+            print("EXPECTED  groups[%s].hosts=%s" % (group.name, expected_groups[group.name]))
 
         assert actual_groups == expected_groups
 
@@ -480,8 +480,8 @@ class TestInventory(unittest.TestCase):
             groups = inventory.groups_for_host(host)
             names = sorted([g.name for g in groups])
             actual_groups_for_host[host] = names
-            print "INVENTORY groups_for_host(%s)=%s" % (host, names)
-            print "EXPECTED  groups_for_host(%s)=%s" % (host, expected)
+            print("INVENTORY groups_for_host(%s)=%s" % (host, names))
+            print("EXPECTED  groups_for_host(%s)=%s" % (host, expected))
 
         assert actual_groups_for_host == expected_groups_for_host
 
@@ -498,8 +498,8 @@ class TestInventory(unittest.TestCase):
 
         for (name, expected_hosts) in expected_groups.iteritems():
             inventory_groups[name] = sorted(inventory_groups.get(name, []))
-            print "INVENTORY groups_list['%s']=%s" % (name, inventory_groups[name])
-            print "EXPECTED  groups_list['%s']=%s" % (name, expected_hosts)
+            print("INVENTORY groups_list['%s']=%s" % (name, inventory_groups[name]))
+            print("EXPECTED  groups_list['%s']=%s" % (name, expected_hosts))
 
         assert inventory_groups == expected_groups
 
