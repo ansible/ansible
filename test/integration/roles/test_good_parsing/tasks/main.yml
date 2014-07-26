@@ -116,3 +116,22 @@
     that:
        # command shouldn't end in spaces, amend test once fixed
        - result.cmd == "echo foo --arg=a --arg=b"
+
+- name: create a test file to include
+  copy: 'dest={{ output_dir }}/test_include.yml content="- debug: var=param\n"'
+  register: result
+
+- name: assert that the test include file was created
+  assert:
+    that:
+       - result.changed
+
+- name: test includes with params
+  include: "{{ output_dir }}/test_include.yml param={{ test_input }}"
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+       - 'result.dest == "{{ output_dir|expanduser }}/test_include.yml"'
