@@ -187,7 +187,7 @@ def read_vault_file(vault_password_file):
 def err(msg):
     ''' print an error message to stderr '''
 
-    print >> sys.stderr, msg
+    sys.stderr.write("%s\n" % msg)
 
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
@@ -403,7 +403,7 @@ def parse_json(raw_data, from_remote=False, from_inventory=False):
         try:
             tokens = shlex.split(data)
         except:
-            print "failed to parse json: "+ data
+            print("failed to parse json: "+ data)
             raise
         for t in tokens:
             if "=" not in t:

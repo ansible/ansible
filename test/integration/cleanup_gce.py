@@ -36,7 +36,7 @@ def prompt_and_delete(item, prompt, assumeyes):
     assert hasattr(item, 'destroy'), "Class <%s> has no delete attribute" % item.__class__
     if assumeyes:
         item.destroy()
-        print ("Deleted %s" % item)
+        print("Deleted %s" % item)
 
 def parse_args():
     parser = optparse.OptionParser(usage="%s [options]" % (sys.argv[0],),
@@ -74,4 +74,4 @@ if __name__ == '__main__':
       # Delete matching disks
       delete_gce_resources(gce.list_volumes, 'name', opts)
     except KeyboardInterrupt, e:
-        print "\nExiting on user command."
+        print("\nExiting on user command.")

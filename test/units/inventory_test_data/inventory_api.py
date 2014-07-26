@@ -27,15 +27,16 @@ variables = {
 }
 
 if options.list_hosts == True:
-    print json.dumps(systems)
+    print(json.dumps(systems))
     sys.exit(0)
 
 if options.host is not None:
     if options.extra:
         k,v = options.extra.split("=")
         variables[options.host][k] = v
-    print json.dumps(variables[options.host])
+    print(json.dumps(variables[options.host]))
     sys.exit(0)
 
 parser.print_help()
 sys.exit(1)
+
