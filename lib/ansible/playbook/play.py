@@ -524,7 +524,7 @@ class Play(object):
                 task_vars['_original_file'] = original_file
 
             if 'include' in x:
-                tokens = shlex.split(str(x['include']))
+                tokens = utils.splitter.split_args(str(x['include']))
                 included_additional_conditions = list(additional_conditions)
                 include_vars = {}
                 for k in x:
