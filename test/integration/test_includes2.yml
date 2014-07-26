@@ -1,5 +1,14 @@
 
-- hosts: testhost
+- name: verify playbook includes can take parameters
+  hosts: testhost
+  tasks:
+    - assert: 
+        that:
+          - "parameter1 == 'asdf'"
+          - "parameter2 == 'jkl'"
+
+- name: verify task include logic
+  hosts: testhost
   gather_facts: True
   roles: 
     - { role: test_includes, tags: test_includes }
