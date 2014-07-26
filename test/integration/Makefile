@@ -16,7 +16,7 @@ endif
 
 VAULT_PASSWORD_FILE = vault-password
 
-all: non_destructive destructive check_mode test_hash test_handlers test_group_by test_vault parsing
+all: non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault parsing
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags common,scenario1; [ $$? -eq 3 ]
@@ -24,6 +24,9 @@ parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags common,scenario3; [ $$? -eq 3 ]
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags common,scenario4; [ $$? -eq 3 ]
 	ansible-playbook good_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+includes:
+	ansible-playbook test_includes.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS) 
 
 unicode:
 	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS)
