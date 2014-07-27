@@ -1,0 +1,230 @@
+#!/usr/bin/python
+#
+
+# (c) 2014, Victor Lin <hello@victorlin.me>
+#
+# This file is part of Ansible
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+######################################################################
+
+DOCUMENTATION = '''
+---
+module: haproxyctl
+author: Victor Lin
+version_added: "1.6"
+
+FIXME
+'''
+
+EXAMPLES = '''
+FIXME
+
+'''
+
+import socket
+import string
+import csv
+import StringIO
+
+
+class CommandError(RuntimeError):
+    pass
+
+
+class Command(object):
+
+    command_line = None
+
+    def __init__(self, module):
+        self.module = module
+        self.state = self.module.params.get('state')
+        self.name = self.module.params.get('name')
+
+    def get_command_line(self):
+        return self.command_line
+
+    def parse_result(self, result):
+        return result
+
+    def get_msg(self):
+        return 'Command %s executed' % self.get_command_line().strip()
+
+
+class InfoCommand(Command):
+    command_line = 'show info\n'
+
+    def parse_result(self, result):
+        lines = result.splitlines()
+        lines = map(string.strip, lines)
+        lines = filter(lambda line: line, lines)
+        pairs = map(
+            lambda line: map(string.strip, line.split(':', 1)),
+            lines,
+        )
+        result = dict(pairs)
+        return result
+
+
+class StatCommand(Command):
+    command_line = 'show stat\n'
+
+    def parse_result(self, result):
+        reader = csv.reader(StringIO.StringIO(result))
+        result = list(reader)
+        return result
+
+
+class ErrorsCommand(Command):
+    command_line = 'show errors\n'
+
+    def parse_result(self, result):
+        # TODO:
+        return result
+
+
+class ServerCommand(Command):
+    operation = None
+
+    def get_command_line(self):
+        return '%s server %s\n' % (self.operation, self.name)
+
+    def parse_result(self, result):
+        result = result.strip()
+        # TODO: I think maybe we should move this input check to before
+        # we send it into server?
+        if result.startswith("Require 'backend/server'"):
+            raise CommandError(result)
+        if result.startswith("No such server."):
+            raise CommandError(result)
+        return result
+
+    def get_msg(self):
+        return 'Server %s %s' % (self.name, self.state)
+
+
+class EnableServerCommand(ServerCommand):
+    operation = 'enable'
+
+
+class DisableServerCommand(ServerCommand):
+    operation = 'disable'
+
+
+class HaproxyControl(object):
+
+    def __init__(self, module):
+        self.module = module
+        self.state = self.module.params.get('state')
+        self.name = self.module.params.get('name')
+        self.socket = self.module.params.get('socket')
+
+        self.changed = False
+        self.msg = None
+        self.error_msg = None
+
+    def request(self):
+        """Send a request to haproxy stats socket
+
+        """
+        if self.state in ('enabled', 'disabled') and not self.name:
+            self.error_msg = 'name is required for enabled and disabled state'
+            return
+
+        unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        uri = self.socket
+        schema = 'unix://'
+        if uri.lower().startswith(schema):
+            uri = uri[len(schema):]
+        else:
+            self.error_msg = 'Only support unix socket for now'
+            return
+        unix_socket.connect(uri)
+
+        command_map = {
+            'info': InfoCommand,
+            'stat': StatCommand,
+            'errors': ErrorsCommand,
+            'enabled': EnableServerCommand,
+            'disabled': DisableServerCommand,
+        }
+        # TODO: support more commands if necessary
+        command_cls = command_map[self.state]
+        command = command_cls(self.module)
+        command_line = command.get_command_line()
+        unix_socket.send(command_line)
+
+        result = []
+        while True:
+            data = unix_socket.recv(1024)
+            if not data:
+                break
+            result.append(data)
+        result = ''.join(result)
+        if result.startswith('Unknown command.'):
+            self.error_msg = result
+            return
+        result = command.parse_result(result)
+        self.msg = command.get_msg()
+        return result
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=False),
+            state=dict(
+                required=True,
+                choices=[
+                    'info',
+                    'errors',
+                    'stat',
+                    'enabled',
+                    'disabled',
+                ]
+            ),
+            socket=dict(default='unix:///var/run/haproxy.sock'),
+        ),
+    )
+
+    try:
+        failed = False
+        extra_result = {}
+        ctrl = HaproxyControl(module)
+        result = ctrl.request()
+        if ctrl.error_msg:
+            failed = True
+            msg = 'Error: %s' % ctrl.error_msg
+        else:
+            msg = ctrl.msg
+            extra_result['result'] = result
+    except socket.error as error:
+        failed = True
+        msg = repr(error)
+    except CommandError as error:
+        failed = True
+        msg = error.args[0]
+
+    module.exit_json(
+        failed=failed,
+        changed=ctrl.changed,
+        msg=msg,
+        **extra_result
+    )
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
