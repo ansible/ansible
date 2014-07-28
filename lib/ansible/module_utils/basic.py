@@ -190,11 +190,8 @@ def get_distribution_version():
         except:
             # FIXME: MethodMissing, I assume?
             distribution_version = platform.dist()[1]
-        if type(distribution_version) == str:
-            distribution_version = 0
     else:
-        distribution_version = 0
-
+        distribution_version = None
     return distribution_version
 
 def load_platform_subclass(cls, *args, **kwargs):
