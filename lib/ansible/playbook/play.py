@@ -155,9 +155,7 @@ class Play(object):
         # apply any missing tags to role tasks
         self._late_merge_role_tags()
 
-        if self.sudo_user != 'root':
-            self.sudo = True
-
+    
         # place holder for the discovered hosts to be used in this play
         self._play_hosts = None
 

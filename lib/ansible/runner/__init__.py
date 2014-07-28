@@ -182,9 +182,14 @@ class Runner(object):
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
         self.background       = background
-        self.sudo             = sudo
-        self.sudo_user_var    = sudo_user
+        self.sudo             = None
+        self.sudo_var         = sudo
+        self.su               = None
+        self.su_var           = su
         self.sudo_user        = None
+        self.sudo_user_var    = sudo_user
+        self.su_user          = None
+        self.su_user_var      = su_user
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
@@ -194,10 +199,7 @@ class Runner(object):
         self.accelerate_port  = accelerate_port
         self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
-        self.su               = su
-        self.su_user_var      = su_user
-        self.su_user          = None
-        self.su_pass          = su_pass
+        self.su_pass          = su_pass        
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
@@ -722,8 +724,15 @@ class Runner(object):
         # late processing of parameterized sudo_user (with_items,..)
         if self.sudo_user_var is not None:
             self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
+        
         if self.su_user_var is not None:
             self.su_user = template.template(self.basedir, self.su_user_var, inject)
+
+        if self.sudo_var is not None:
+            self.sudo = template.template(self.basedir, self.sudo_var, inject)
+
+        if self.su_var is not None:
+            self.su = template.template(self.basedir, self.su_var, inject)
 
         # allow module args to work as a dictionary
         # though it is usually a string
@@ -767,10 +776,6 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
-        self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
-        self.sudo_user = inject.get('ansible_sudo_user', self.sudo_user)
-        self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
-        self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
         # select default root user in case self.sudo requested
