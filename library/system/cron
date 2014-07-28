@@ -449,7 +449,7 @@ def main():
 
     if cron_file and do_install:
         if not user:
-            module.fail_json(msg="To use file=... parameter you must specify user=... as well")
+            module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
 
     if reboot and special_time:
         module.fail_json(msg="reboot and special_time are mutually exclusive")
