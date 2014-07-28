@@ -151,7 +151,7 @@ class SysctlModule(object):
             self.write_file = True
 
         # use the sysctl command or not?
-        if self.args['sysctl_set']:
+        if self.args['sysctl_set']:            
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
@@ -269,6 +269,7 @@ class SysctlModule(object):
                 self.fixed_lines.append(line)
                 continue
             tmpline = line.strip()            
+            k, v = line.split('=',1)
             k = k.strip()
             v = v.strip()
             if k not in checked:
