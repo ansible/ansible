@@ -121,3 +121,7 @@
   include: test_include.yml param={{ test_input }}
   register: result
 
+- name: test includes with quoted params
+  include: test_include.yml param="this is a param"
+  register: result
+

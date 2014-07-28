@@ -573,6 +573,7 @@ class Play(object):
                 mv = task_vars.copy()
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
+                    v = utils.splitter.unquote(v)
                     mv[k] = template(self.basedir, v, mv)
                 dirname = self.basedir
                 if original_file:
