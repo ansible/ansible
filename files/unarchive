@@ -70,8 +70,8 @@ EXAMPLES = '''
 # Example from Ansible Playbooks
 - unarchive: src=foo.tgz dest=/var/lib/foo
 
-# Unarchive a file on a remote machine
-- unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=false
+# Unarchive a file that is already on the remote machine
+- unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
 '''
 
 import os
