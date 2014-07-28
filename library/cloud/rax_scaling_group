@@ -155,7 +155,8 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
 
     au = pyrax.autoscale
     cnw = pyrax.cloud_networks
-    if not au or not cnw:
+    cs = pyrax.cloudservers
+    if not au or not cnw or not cs:
         module.fail_json(msg='Failed to instantiate clients. This '
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
