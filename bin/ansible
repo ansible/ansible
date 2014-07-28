@@ -94,7 +94,7 @@ class Cli(object):
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
-            callbacks.display("No hosts matched")
+            callbacks.display("No hosts matched", stderr=True)
             sys.exit(0)
 
         if options.listhosts:
@@ -141,7 +141,7 @@ class Cli(object):
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
-            callbacks.display("No hosts matched")
+            callbacks.display("No hosts matched", stderr=True)
             sys.exit(0)
 
         if options.listhosts:
