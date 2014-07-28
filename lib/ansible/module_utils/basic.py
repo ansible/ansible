@@ -153,6 +153,7 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
+    regexp = dict(), # used by assemble
     delimiter = dict(), # used by assemble
     directory_mode = dict(), # used by copy
 )
