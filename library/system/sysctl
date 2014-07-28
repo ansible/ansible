@@ -220,13 +220,15 @@ class SysctlModule(object):
     def reload_sysctl(self):
         # do it
         if get_platform().lower() == 'freebsd':
-            sysctl_args = [self.sysctl_cmd, '-f', self.sysctl_file]
+            # freebsd doesn't support -p, so reload the sysctl service
+            rc,out,err = self.module.run_command('/sbin/sysctl -f /etc/sysctl.conf')
         else:
+            # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
-        if self.args['ignoreerrors']:
-            sysctl_args.insert(1, '-e')
+            if self.args['ignoreerrors']:
+                sysctl_args.insert(1, '-e')
 
-        rc,out,err = self.module.run_command(sysctl_args)
+            rc,out,err = self.module.run_command(sysctl_args)
 
         if rc != 0:
             self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
