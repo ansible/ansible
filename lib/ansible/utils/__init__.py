@@ -350,16 +350,69 @@ def json_loads(data):
     return json.loads(data)
 
 def _clean_data(orig_data, from_remote=False, from_inventory=False):
-    ''' remove template tags from a string '''
-    data = orig_data
-    if isinstance(orig_data, basestring):
-        sub_list = [('{%','{#'), ('%}','#}')]
-        if from_remote or (from_inventory and '{{' in data and LOOKUP_REGEX.search(data)):
-            # if from a remote, we completely disable any jinja2 blocks
-            sub_list.extend([('{{','{#'), ('}}','#}')])
-        for pattern,replacement in sub_list:
-            data = data.replace(pattern, replacement)
-    return data
+    ''' remove jinja2 template tags from a string '''
+
+    if not isinstance(orig_data, basestring):
+        return orig_data
+
+    data = StringIO.StringIO("")
+
+    # when the data is marked as having come from a remote, we always
+    # replace any print blocks (ie. {{var}}), however when marked as coming
+    # from inventory we only replace print blocks that contain a call to
+    # a lookup plugin (ie. {{lookup('foo','bar'))}})
+    replace_prints = from_remote or (from_inventory and '{{' in orig_data and LOOKUP_REGEX.search(orig_data) is not None)
+
+    # these variables keep track of opening block locations, as we only
+    # want to replace matched pairs of print/block tags
+    print_openings = []
+    block_openings = []
+
+    for idx,c in enumerate(orig_data):
+        # if the current character is an opening brace, check to
+        # see if this is a jinja2 token. Otherwise, if the current
+        # character is a closing brace, we backup one character to
+        # see if we have a closing.
+        if c == '{' and idx < len(orig_data) - 1:
+            token = orig_data[idx:idx+2]
+            # if so, and we want to replace this block, push
+            # this token's location onto the appropriate array
+            if token == '{{' and replace_prints:
+                print_openings.append(idx)
+            elif token == '{%':
+                block_openings.append(idx)
+            # finally we write the data to the buffer and write
+            data.seek(0, os.SEEK_END)
+            data.write(c)
+        elif c == '}' and idx > 0:
+            token = orig_data[idx-1:idx+1]
+            prev_idx = -1
+            if token == '%}' and len(block_openings) > 0:
+                prev_idx = block_openings.pop()
+            elif token == '}}' and len(print_openings) > 0:
+                prev_idx = print_openings.pop()
+            # if we have a closing token, and we have previously found
+            # the opening to the same kind of block represented by this
+            # token, replace both occurrences, otherwise we just write
+            # the current character to the buffer
+            if prev_idx != -1:
+                # replace the opening
+                data.seek(prev_idx, os.SEEK_SET)
+                data.write('{#')
+                # replace the closing
+                data.seek(-1, os.SEEK_END)
+                data.write('#}')
+            else:
+                data.seek(0, os.SEEK_END)
+                data.write(c)
+        else:
+            # not a jinja2 token, so we just write the current char
+            # to the output buffer
+            data.seek(0, os.SEEK_END)
+            data.write(c)
+    return_data = data.getvalue()
+    data.close()
+    return return_data
 
 def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
     '''

@@ -716,4 +716,35 @@ class TestUtils(unittest.TestCase):
         # invalid jinja2 nesting detection
         # invalid quote nesting detection
     
+    def test_clean_data(self):
+        # clean data removes jinja2 tags from data
+        self.assertEqual(
+            ansible.utils._clean_data('this is a normal string', from_remote=True),
+            'this is a normal string'
+        )
+        self.assertEqual(
+            ansible.utils._clean_data('this string has a {{variable}}', from_remote=True),
+            'this string has a {#variable#}'
+        )
+        self.assertEqual(
+            ansible.utils._clean_data('this string has a {{variable with a\nnewline}}', from_remote=True),
+            'this string has a {#variable with a\nnewline#}'
+        )
+        self.assertEqual(
+            ansible.utils._clean_data('this string is from inventory {{variable}}', from_inventory=True),
+            'this string is from inventory {{variable}}'
+        )
+        self.assertEqual(
+            ansible.utils._clean_data('this string is from inventory too but uses lookup {{lookup("foo","bar")}}', from_inventory=True),
+            'this string is from inventory too but uses lookup {#lookup("foo","bar")#}'
+        )
+        self.assertEqual(
+            ansible.utils._clean_data('this string has JSON in it: {"foo":{"bar":{"baz":"oops"}}}', from_remote=True),
+            'this string has JSON in it: {"foo":{"bar":{"baz":"oops"}}}'
+        )
+        self.assertEqual(
+            ansible.utils._clean_data('this string contains unicode: ¢ £ ¤ ¥', from_remote=True),
+            'this string contains unicode: ¢ £ ¤ ¥'
+        )
+
 
