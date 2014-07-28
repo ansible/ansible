@@ -27,6 +27,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import pprint
+
 USER_AGENT_PRODUCT="Ansible-gce"
 USER_AGENT_VERSION="v1"
 
@@ -64,5 +66,4 @@ def gce_connect(module):
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    import pprint
     return 'Unexpected response: ' + pprint.pformat(vars(error))
