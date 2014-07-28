@@ -155,7 +155,7 @@ class SysctlModule(object):
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
-                self.changed = True
+                self.changed = True 
                 self.set_proc = True
 
         # Do the work
@@ -280,13 +280,13 @@ class SysctlModule(object):
                             new_line = "%s=%s\n" % (k, self.args['value'])
                         else:
                             new_line = "%s = %s\n" % (k, self.args['value'])
-                        self.fixed_lines.append(new_line)
+                        self.fixed_lines.append(new_line)                    
                 else:
                     if get_platform().lower() == 'freebsd':
                         new_line = "%s=%s\n" % (k, v)
                     else:
                         new_line = "%s = %s\n" % (k, v)
-                    self.fixed_lines.append(new_line)
+                    self.fixed_lines.append(new_line)                    
 
         if self.args['name'] not in checked and self.args['state'] == "present":
             if get_platform().lower() == 'freebsd':
