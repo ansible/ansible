@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, and others
+# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, Trond Hindenes <trond@hindenes.com> and others
 #
 # This file is part of Ansible
 #
@@ -52,7 +52,23 @@ options:
       - no
     default: null
     aliases: []
-author: Paul Durivage
+  include_sub_features:
+    description:
+      - Adds all subfeatures of the specified feature
+    choices:
+      - yes
+      - no
+    default: null
+    aliases: []
+  include_management_tools:
+    description:
+      - Adds the corresponding management tools to the specified feature
+    choices:
+      - yes
+      - no
+    default: null
+    aliases: []
+author: Paul Durivage / Trond Hindenes
 '''
 
 EXAMPLES = '''
@@ -74,4 +90,8 @@ $ ansible -i hosts -m win_feature -a "name=Web-Server,Web-Common-Http" all
         name: "Web-Server"
         state: absent
         restart: yes
+        include_sub_features: yes
+        include_management_tools: yes
+
+
 '''
