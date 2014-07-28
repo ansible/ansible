@@ -138,6 +138,7 @@ def main():
 
     if module.check_mode:
         options.add("--dry-run")
+        del module.params['CHECKMODE']
 
     # Get composer command with fallback to default  
     command = module.params['command']
