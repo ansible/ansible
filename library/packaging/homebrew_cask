@@ -35,6 +35,10 @@ options:
         choices: [ 'installed', 'uninstalled' ]
         required: false
         default: present
+    target_dir:
+        description:
+            - target location for Application links
+        required: false
 '''
 EXAMPLES = '''
 - homebrew_cask: name=alfred state=present
@@ -251,10 +255,10 @@ class HomebrewCask(object):
             return cask
     # /class properties -------------------------------------------- }}}
 
-    def __init__(self, module, path=None, casks=None, state=None):
+    def __init__(self, module, path=None, casks=None, state=None, target_dir=None):
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, casks=casks,
-                                  state=state)
+                                  state=state, target_dir=target_dir)
 
         self._prep()
 
@@ -395,8 +399,13 @@ class HomebrewCask(object):
             )
             raise HomebrewCaskException(self.message)
 
+        target_dir=None
+        if self.target_dir:
+            target_dir="--appdir="+self.target_dir
+
+
         cmd = [opt
-               for opt in (self.brew_path, 'cask', 'install', self.current_cask)
+               for opt in (self.brew_path, 'cask', 'install', self.current_cask, target_dir)
                if opt]
 
         rc, out, err = self.module.run_command(cmd)
@@ -440,8 +449,12 @@ class HomebrewCask(object):
             )
             raise HomebrewCaskException(self.message)
 
+        target_dir=None
+        if self.target_dir:
+            target_dir="--appdir="+self.target_dir
+
         cmd = [opt
-               for opt in (self.brew_path, 'cask', 'uninstall', self.current_cask)
+               for opt in (self.brew_path, 'cask', 'uninstall', self.current_cask, target_dir)
                if opt]
 
         rc, out, err = self.module.run_command(cmd)
@@ -478,6 +491,7 @@ def main():
                     "absent", "removed", "uninstalled",
                 ],
             ),
+	    target_dir=dict(required=False),
         ),
         supports_check_mode=True,
     )
@@ -500,8 +514,10 @@ def main():
     if state in ('absent', 'removed', 'uninstalled'):
         state = 'absent'
 
+    target_dir = p['target_dir']
+
     brew_cask = HomebrewCask(module=module, path=path, casks=casks,
-                             state=state)
+                             state=state, target_dir=target_dir)
     (failed, changed, message) = brew_cask.run()
     if failed:
         module.fail_json(msg=message)
