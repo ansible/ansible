@@ -1257,7 +1257,10 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
         #    with_items: {{ alist }}
 
         stripped = terms.strip()
-        if not (stripped.startswith('{') or stripped.startswith('[')) and not stripped.startswith("/") and not stripped.startswith('set(['):
+        if not (stripped.startswith('{') or stripped.startswith('[')) and \
+           not stripped.startswith("/") and \
+           not stripped.startswith('set([') and \
+           not LOOKUP_REGEX.search(terms):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
