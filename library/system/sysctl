@@ -293,7 +293,7 @@ class SysctlModule(object):
                 new_line = "%s=%s\n" % (self.args['name'], self.args['value'])
             else:
                 new_line = "%s = %s\n" % (self.args['name'], self.args['value'])
-            self.fixed_lines.append(new_line)
+            self.fixed_lines.append(new_line)                    
 
     # Completely rewrite the sysctl file
     def write_sysctl(self):
