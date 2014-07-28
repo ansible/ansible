@@ -1,11 +1,14 @@
 Using Lookups
 =============
 
-Lookup plugins allow access of data in Ansible from outside sources.  This can include the filesystem
-but also external datastores.  These values are then made available using the standard templating system
+Lookup plugins allow access of data in Ansible from outside sources.  These plugins are evaluated on the Ansible control
+machine, and can include reading the filesystem but also contacting external datastores and services.  
+These values are then made available using the standard templating system
 in Ansible, and are typically used to load variables or templates with information from those systems.
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
+
+.. note:: Lookups occur on the local computer, not on the remote computer.
 
 .. contents:: Topics
 
@@ -21,7 +24,9 @@ Contents can be read off the filesystem as follows::
     - hosts: all
       vars:
          contents: "{{ lookup('file', '/etc/foo.txt') }}"
+
       tasks:
+
          - debug: msg="the value of foo.txt is {{ contents }}"
 
 .. _password_lookup:
@@ -29,9 +34,16 @@ Contents can be read off the filesystem as follows::
 The Password Lookup
 ```````````````````
 
-``password`` generates a random plaintext password and store it in
-a file at a given filepath.  Support for crypted save modes (as with vars_prompt) is pending.  If the
-file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
+.. note::
+
+    A great alternative to the password lookup plugin, if you don't need to generate random passwords on a per-host basis, would be to use :doc:`playbooks_vault`.  Read the documentation there and consider using it first, it will be more desirable for most applications.
+
+``password`` generates a random plaintext password and stores it in
+a file at a given filepath.  
+
+(Docs about crypted save modes are pending)
+ 
+If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
@@ -61,7 +73,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # create a mysql user with a random password using only ascii letters:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii') }}"
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         # create a mysql user with a random password using only digits:
@@ -71,7 +83,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # create a mysql user with a random password using many different char sets:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii,numbers,digits,hexdigits,punctuation') }}"
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
@@ -121,6 +133,7 @@ template)::
       motd_value: "{{ lookup('file', '/etc/motd') }}"
 
     tasks:
+
       - debug: msg="motd value is {{ motd_value }}"
 
 .. seealso::

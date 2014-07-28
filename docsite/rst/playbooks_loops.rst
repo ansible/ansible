@@ -53,7 +53,7 @@ Loops can be nested as well::
     - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
-        - [ 'alice', 'bob', 'eve' ]
+        - [ 'alice', 'bob' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable's name without templating it with '{{ }}'::
@@ -63,6 +63,31 @@ As with the case of 'with_items' above, you can use previously defined variables
       with_nested:
         - users
         - [ 'clientdb', 'employeedb', 'providerdb' ]
+
+.. _looping_over_hashes:
+
+Looping over Hashes
+```````````````````
+
+.. versionadded:: 1.5
+
+Suppose you have the following variable::
+
+    ---
+    users:
+      alice:
+        name: Alice Appleworth
+        telephone: 123-456-7890
+      bob:
+        name: Bob Bananarama
+        telephone: 987-654-3210
+
+And you want to print every user's name and phone number.  You can loop through the elements of a hash using ``with_dict`` like this::
+
+    tasks:
+      - name: Print phone records
+        debug: msg="User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
+        with_dict: users
 
 .. _looping_over_fileglobs:
 
@@ -84,6 +109,8 @@ be used like this::
         - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
+            
+.. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
 Looping over Parallel Sets of Data
 ``````````````````````````````````
@@ -206,7 +233,7 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
       retries: 5
       delay: 10
 
-The above example run the shell module recursively till the module's result has "all systems go" in it's stdout or the task has 
+The above example run the shell module recursively till the module's result has "all systems go" in its stdout or the task has
 been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
 
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
@@ -225,7 +252,7 @@ that matches a given criteria, and some of the filenames are determined by varia
     - name: INTERFACES | Create Ansible header for /etc/network/interfaces
       template: src={{ item }} dest=/etc/foo.conf
       with_first_found:
-        - "{{ansible_virtualization_type}_foo.conf"
+        - "{{ansible_virtualization_type}}_foo.conf"
         - "default_foo.conf"
 
 This tool also has a long form version that allows for configurable search paths.  Here's an example::

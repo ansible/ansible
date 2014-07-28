@@ -19,6 +19,7 @@
 
 ########################################################
 
+import os
 import sys
 
 from ansible.runner import Runner
@@ -75,6 +76,9 @@ class Cli(object):
                          "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
                          "mutually exclusive")
 
+        if (options.ask_vault_pass and options.vault_password_file):
+            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+
         return (options, args)
 
     # ----------------------------------------------
@@ -84,6 +88,7 @@ class Cli(object):
 
         pattern = args[0]
 
+        """
         inventory_manager = inventory.Inventory(options.inventory)
         if options.subset:
             inventory_manager.subset(options.subset)
@@ -101,26 +106,52 @@ class Cli(object):
                 and not options.module_args):
             callbacks.display("No argument passed to %s module" % options.module_name, color='red', stderr=True)
             sys.exit(1)
+        """
 
         sshpass = None
         sudopass = None
         su_pass = None
+        vault_pass = None
+
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        (sshpass, sudopass, su_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass)
+        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
+
+        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
+
+        # read vault_pass from a file
+        if not options.ask_vault_pass and options.vault_password_file:
+            vault_pass = utils.read_vault_file(options.vault_password_file)
+
+        inventory_manager = inventory.Inventory(options.inventory, vault_password=vault_pass)
+        if options.subset:
+            inventory_manager.subset(options.subset)
+        hosts = inventory_manager.list_hosts(pattern)
+        if len(hosts) == 0:
+            callbacks.display("No hosts matched")
+            sys.exit(0)
+
+        if options.listhosts:
+            for host in hosts:
+                callbacks.display('    %s' % host)
+            sys.exit(0)
+
+        if ((options.module_name == 'command' or options.module_name == 'shell')
+                and not options.module_args):
+            callbacks.display("No argument passed to %s module" % options.module_name, color='red', stderr=True)
+            sys.exit(1)
+
+
         if options.su_user or options.ask_su_pass:
             options.su = True
-        elif options.sudo_user or options.ask_sudo_pass:
-            options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
-
 
         runner = Runner(
             module_name=options.module_name,
@@ -143,7 +174,8 @@ class Cli(object):
             diff=options.check,
             su=options.su,
             su_pass=su_pass,
-            su_user=options.su_user
+            su_user=options.su_user,
+            vault_pass=vault_pass
         )
 
         if options.seconds:

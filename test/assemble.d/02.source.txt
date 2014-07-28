@@ -1,4 +1,0 @@
-# This is the third comment.
-[somegroup:vars]
-foo=bar
-# 無 可 無 非 常 無

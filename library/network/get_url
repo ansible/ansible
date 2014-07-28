@@ -83,6 +83,25 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+  url_username:
+    description:
+      - The username for use in HTTP basic authentication. This parameter can be used
+        without C(url_password) for sites that allow empty passwords.
+    required: false
+    version_added: '1.6'
+  url_password:
+    description:
+      - The password for use in HTTP basic authentication. If the C(url_username)
+        parameter is not specified, the C(url_password) parameter will not be used.
+    required: false
+    version_added: '1.6'
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -108,19 +127,6 @@ try:
 except ImportError:
     HAS_HASHLIB=False
 
-try:
-    import urllib2
-    HAS_URLLIB2 = True
-except ImportError:
-    HAS_URLLIB2 = False
-
-try:
-    import urlparse
-    import socket
-    HAS_URLPARSE = True
-except ImportError:
-    HAS_URLPARSE=False
-
 # ==============================================================
 # url handling
 
@@ -130,72 +136,6 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_do_get(module, url, dest, use_proxy, last_mod_time, force):
-    """
-    Get url and return request and info
-    Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
-    """
-
-    USERAGENT = 'ansible-httpget'
-    info = dict(url=url, dest=dest)
-    r = None
-    handlers = []
-
-    parsed = urlparse.urlparse(url)
-
-    if '@' in parsed[1]:
-        credentials, netloc = parsed[1].split('@', 1)
-        if ':' in credentials:
-            username, password = credentials.split(':', 1)
-        else:
-            username = credentials
-            password = ''
-        parsed = list(parsed)
-        parsed[1] = netloc
-
-        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        # this creates a password manager
-        passman.add_password(None, netloc, username, password)
-        # because we have put None at the start it will always
-        # use this username/password combination for  urls
-        # for which `theurl` is a super-url
-
-        authhandler = urllib2.HTTPBasicAuthHandler(passman)
-        # create the AuthHandler
-        handlers.append(authhandler)
-
-        #reconstruct url without credentials
-        url = urlparse.urlunparse(parsed)
-
-    if not use_proxy:
-        proxyhandler = urllib2.ProxyHandler({})
-        handlers.append(proxyhandler)
-
-    opener = urllib2.build_opener(*handlers)
-    urllib2.install_opener(opener)
-    request = urllib2.Request(url)
-    request.add_header('User-agent', USERAGENT)
-
-    if last_mod_time and not force:
-        tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
-        request.add_header('If-Modified-Since', tstamp)
-    else:
-        request.add_header('cache-control', 'no-cache')
-
-    try:
-        r = urllib2.urlopen(request)
-        info.update(r.info())
-        info['url'] = r.geturl()  # The URL goes in too, because of redirects.
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
-    except urllib2.HTTPError, e:
-        # Must not fail_json() here so caller can handle HTTP 304 unmodified
-        info.update(dict(msg=str(e), status=e.code))
-    except urllib2.URLError, e:
-        code = getattr(e, 'code', -1)
-        module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
-
-    return r, info
-
 def url_get(module, url, dest, use_proxy, last_mod_time, force):
     """
     Download data from the url and store in a temporary file.
@@ -203,7 +143,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force):
     Return (tempfile, info about the request)
     """
 
-    req, info = url_do_get(module, url, dest, use_proxy, last_mod_time, force)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time)
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
@@ -215,12 +155,12 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force):
     fd, tempname = tempfile.mkstemp()
     f = os.fdopen(fd, 'wb')
     try:
-        shutil.copyfileobj(req, f)
+        shutil.copyfileobj(rsp, f)
     except Exception, err:
         os.remove(tempname)
         module.fail_json(msg="failed to create temporary content file: %s" % str(err))
     f.close()
-    req.close()
+    rsp.close()
     return tempname, info
 
 def extract_filename_from_headers(headers):
@@ -247,21 +187,16 @@ def extract_filename_from_headers(headers):
 
 def main():
 
-    # does this really happen on non-ancient python?
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
-    if not HAS_URLPARSE:
-        module.fail_json(msg="urlparse is not installed")
+    argument_spec = url_argument_spec()
+    argument_spec.update(
+        url = dict(required=True),
+        dest = dict(required=True),
+        sha256sum = dict(default=''),
+    )
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            url = dict(required=True),
-            dest = dict(required=True),
-            force = dict(default='no', aliases=['thirsty'], type='bool'),
-            sha256sum = dict(default=''),
-            use_proxy = dict(default='yes', type='bool')
-        ),
+        argument_spec = argument_spec,
         add_file_common_args=True
     )
 
@@ -348,7 +283,7 @@ def main():
         else:
             destination_checksum = module.sha256(dest)
 
-        if stripped_sha256sum != destination_checksum:
+        if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
 
@@ -358,7 +293,7 @@ def main():
     module.params['path'] = dest
     file_args = module.load_file_common_arguments(module.params)
     file_args['path'] = dest
-    changed = module.set_file_attributes_if_different(file_args, changed)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
@@ -366,4 +301,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()

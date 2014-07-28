@@ -88,7 +88,7 @@ dependencies: []
 """
 
 default_readme_template = """Role Name
-========
+=========
 
 A brief description of the role goes here.
 
@@ -108,7 +108,7 @@ Dependencies
 A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
 
 Example Playbook
--------------------------
+----------------
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
@@ -170,10 +170,10 @@ def build_option_parser(action):
         parser.set_usage("usage: %prog init [options] role_name")
         parser.add_option(
             '-p', '--init-path', dest='init_path', default="./",
-            help='The path in which the skeleton role will be created.'
+            help='The path in which the skeleton role will be created. '
                  'The default is the current working directory.')
     elif action == "install":
-        parser.set_usage("usage: %prog install [options] [-f FILE | role_name(s)[,version] | tar_file(s)]")
+        parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | tar_file(s)]")
         parser.add_option(
             '-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
             help='Ignore errors and continue with the next specified role.')
@@ -181,7 +181,7 @@ def build_option_parser(action):
             '-n', '--no-deps', dest='no_deps', action='store_true', default=False,
             help='Don\'t download roles listed as dependencies')
         parser.add_option(
-            '-r', '--role-file', dest='role_file', 
+            '-r', '--role-file', dest='role_file',
             help='A file containing a list of roles to be imported')
     elif action == "remove":
         parser.set_usage("usage: %prog remove role1 role2 ...")
@@ -192,7 +192,7 @@ def build_option_parser(action):
     if action != "init":
         parser.add_option(
             '-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
-            help='The path to the directory containing your roles.'
+            help='The path to the directory containing your roles. '
                  'The default is the roles_path configured in your '
                  'ansible.cfg file (/etc/ansible/roles if not configured)')
 
@@ -655,7 +655,7 @@ def execute_install(args, options, parser):
 
         if role_name == "" or role_name.startswith("#"):
             continue
-        elif role_name.find(',') != -1:
+        elif ',' in role_name:
             role_name,role_version = role_name.split(',',1)
             role_name = role_name.strip()
             role_version = role_version.strip()

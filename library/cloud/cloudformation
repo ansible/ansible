@@ -68,6 +68,26 @@ options:
     default: null
     aliases: []
     version_added: "1.4"
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+    version_added: "1.5"
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
+    version_added: "1.5"
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    aliases: ['aws_region', 'ec2_region']
+    version_added: "1.5"
 
 requirements: [ "boto" ]
 author: James S. Martin
@@ -101,14 +121,6 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-AWS_REGIONS = ['ap-northeast-1',
-               'ap-southeast-1',
-               'ap-southeast-2',
-               'eu-west-1',
-               'sa-east-1',
-               'us-east-1',
-               'us-west-1',
-               'us-west-2']
 
 class Region:
     def __init__(self, region):
@@ -178,31 +190,29 @@ def stack_operation(cfn, stack_name, operation):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             stack_name=dict(required=True),
             template_parameters=dict(required=False, type='dict', default={}),
-            region=dict(aliases=['aws_region', 'ec2_region'], required=True, choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
-            disable_rollback=dict(default=False),
+            disable_rollback=dict(default=False, type='bool'),
             tags=dict(default=None)
         )
     )
 
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+    )
+
     state = module.params['state']
     stack_name = module.params['stack_name']
-    r = module.params['region']
     template_body = open(module.params['template'], 'r').read()
     disable_rollback = module.params['disable_rollback']
     template_parameters = module.params['template_parameters']
     tags = module.params['tags']
 
-    if not r:
-        if 'AWS_REGION' in os.environ:
-            r = os.environ['AWS_REGION']
-        elif 'EC2_REGION' in os.environ:
-            r = os.environ['EC2_REGION']
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     kwargs = dict()
     if tags is not None:
@@ -216,9 +226,12 @@ def main():
     stack_outputs = {}
 
     try:
-        region = Region(r)
+        cf_region = Region(region)
         cfn = boto.cloudformation.connection.CloudFormationConnection(
-            region=region)
+                  aws_access_key_id=aws_access_key, 
+                  aws_secret_access_key=aws_secret_key,
+                  region=cf_region,
+              )
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
     update = False
@@ -237,7 +250,7 @@ def main():
             operation = 'CREATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if 'AlreadyExistsException' in error_msg:
+            if 'AlreadyExistsException' in error_msg or 'already exists' in error_msg:
                 update = True
             else:
                 module.fail_json(msg=error_msg)
@@ -295,5 +308,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()

@@ -5,17 +5,24 @@ The Ansible Configuration File
 
 .. highlight:: bash
 
-Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
-right for most users, but that doesn't mean you might not want to change them.
+Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
+for most users, but there may be reasons you would want to change them.
 
-The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations::
+Changes can be made and used in a configuration file which will be processed in the following order::
 
-    * /etc/ansible/ansible.cfg
-    * ~/.ansible.cfg
+    * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
+    * .ansible.cfg (in the home directory)
+    * /etc/ansible/ansible.cfg
 
-If multiple file locations matching the above exist, the last location on the above list is used.  Settings in files
-are not merged together.
+Prior to 1.5 the order was::
+
+    * ansible.cfg (in the current directory)
+    * ANSIBLE_CONFIG (an environment variable)
+    * .ansible.cfg (in the home directory)
+    * /etc/ansible/ansible.cfg
+
+Ansible will process the above list and use the first file found. Settings in files are not merged.
 
 .. _getting_the_latest_configuration:
 
@@ -82,6 +89,8 @@ The default configuration shows who modified a file and when::
     ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
 
 This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
+
+Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
 
 .. _ask_pass:
 
@@ -202,6 +211,16 @@ is very very conservative::
 
    forks=5
 
+.. _gathering:
+
+gathering
+=========
+
+New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
+
+The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play.  The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
+
+The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.  This option can be useful for those wishing to save fact gathering time.
 
 hash_behaviour
 ==============
@@ -209,7 +228,7 @@ hash_behaviour
 Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
 of higher precedence wins, it will replace the other value.
 
-Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged together.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
+Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 
@@ -300,6 +319,13 @@ different locations::
    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
 
 .. _module_name:
 
@@ -396,7 +422,7 @@ remote_user
 ===========
 
 This is the default username ansible will connect as for /usr/bin/ansible-playbook.  Note that /usr/bin/ansible will
-always default to the current user::
+always default to the current user if this is not defined::
 
     remote_user = root
 
@@ -412,6 +438,10 @@ roles.  For instance, if there was a source control repository of common roles a
 choose to establish a convention to checkout roles in /opt/mysite/roles like so::
 
     roles_path = /opt/mysite/roles
+
+Additional paths can be provided separated by colon characters, in the same way as other pathstrings::
+
+    roles_path = /opt/mysite/roles:/opt/othersite/roles
 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
@@ -446,6 +476,19 @@ This is the default user to sudo to if ``--sudo-user`` is not specified or 'sudo
 playbook.  The default is the most logical: 'root'::
 
    sudo_user=root
+
+.. _system_warnings:
+
+system_warnings
+===============
+
+.. versionadded:: 1.6
+
+Allows disabling of warnings related to potential issues on the system running ansible itself (not on the managed hosts)::
+
+   system_warnings = True
+
+These may include warnings about 3rd party packages or other conditions that should be resolved if possible.
 
 .. _timeout:
 
@@ -552,12 +595,31 @@ cause scp to be used to transfer remote files instead::
 There's really no reason to change this unless problems are encountered, and then there's also no real drawback
 to managing the switch.  Most environments support SFTP by default and this doesn't usually need to be changed.
 
+
+.. _pipelining:
+
+pipelining
+==========
+
+Enabling pipelining reduces the number of SSH operations required to
+execute a module on the remote server, by executing many ansible modules without actual file transfer. 
+This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
+first disable 'requiretty' in /etc/sudoers on all managed hosts.
+
+By default, this option is disabled to preserve compatibility with
+sudoers configurations that have requiretty (the default on many distros), but is highly
+recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
+
+    pipelining=False
+
 .. _accelerate_settings:
 
 Accelerate Mode Settings
 ------------------------
 
-Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`
+Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
+a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
+not needed if you can.
 
 .. _accelerate_port:
 
@@ -594,4 +656,29 @@ This setting controls the timeout for the socket connect call, and should be kep
 
 Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be necessary to increase this timeout.
 
+.. _accelerate_daemon_timeout:
+
+accelerate_daemon_timeout
+=========================
+
+.. versionadded:: 1.6
+
+This setting controls the timeout for the accelerated daemon, as measured in minutes. The default daemon timeout is 30 minutes::
+
+    accelerate_daemon_timeout = 30
+
+Note, prior to 1.6, the timeout was hard-coded from the time of the daemon's launch. For version 1.6+, the timeout is now based on the last activity to the daemon and is configurable via this option.
+
+.. _accelerate_multi_key:
+
+accelerate_multi_key
+====================
+
+.. versionadded:: 1.6
+
+If enabled, this setting allows multiple private keys to be uploaded to the daemon. Any clients connecting to the daemon must also enable this option::
+
+    accelerate_multi_key = yes
+
+New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 

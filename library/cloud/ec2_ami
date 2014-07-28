@@ -22,24 +22,6 @@ short_description: create or destroy an image in ec2, return imageid
 description:
      - Creates or deletes ec2 images. This module has a dependency on python-boto >= 2.5
 options:
-  ec2_url:
-    description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
-    required: false
-    default: null
-    aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: ['ec2_access_key', 'access_key' ]
   instance_id:
     description:
       - instance id of the image to create
@@ -102,8 +84,8 @@ options:
     default: null
     aliases: []
 
-requirements: [ "boto" ]
 author: Evan Duffield <eduffield@iacquire.com>
+extends_documentation_fragment: aws
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
@@ -191,17 +173,17 @@ def create_image(module, ec2):
     # Wait until the image is recognized. EC2 API has eventual consistency,
     # such that a successful CreateImage API call doesn't guarantee the success
     # of subsequent DescribeImages API call using the new image id returned.
-    for i in range(30):
+    for i in range(wait_timeout):
         try:
             img = ec2.get_image(image_id)
             break
         except boto.exception.EC2ResponseError, e:
-            if e.error_code == 'InvalidAMIID.NotFound':
+            if 'InvalidAMIID.NotFound' in e.error_code and wait:
                 time.sleep(1)
             else:
-                raise
+                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
     else:
-        module.fail_json(msg = "timed out waiting for image to be recognized")
+        module.fail_json(msg="timed out waiting for image to be recognized")
 
     # wait here until the image is created
     wait_timeout = time.time() + wait_timeout
@@ -213,7 +195,6 @@ def create_image(module, ec2):
         module.fail_json(msg = "timed out waiting for image to be created")
 
     module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
-    sys.exit(0)
 
 
 def deregister_image(module, ec2):

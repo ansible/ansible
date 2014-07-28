@@ -61,6 +61,8 @@ options:
               except the primary group.
     append:
         required: false
+        default: "no"
+        choices: [ "yes", "no" ]
         description:
             - If C(yes), will only add groups, not set them to just the list
               in I(groups).
@@ -179,7 +181,10 @@ options:
 
 EXAMPLES = '''
 # Add the user 'johnd' with a specific uid and a primary group of 'admin'
-- user: name=johnd comment="John Doe" uid=1040
+- user: name=johnd comment="John Doe" uid=1040 group=admin
+
+# Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
+- user: name=james shell=/bin/bash groups=admins,developers append=yes
 
 # Remove the user 'johnd'
 - user: name=johnd state=absent remove=yes
@@ -289,6 +294,12 @@ class User(object):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
+        elif self.group_exists(self.name):
+            # use the -N option (no user group) if a group already
+            # exists with the same name as the user to prevent 
+            # errors from useradd trying to create a group when 
+            # USERGROUPS_ENAB is set in /etc/login.defs.
+            cmd.append('-N')
 
         if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
@@ -325,8 +336,14 @@ class User(object):
 
     def _check_usermod_append(self):
         # check if this version of usermod can append groups
+        usermod_path = self.module.get_bin_path('usermod', True)
 
-        cmd = [self.module.get_bin_path('usermod', True)]
+        # for some reason, usermod --help cannot be used by non root
+        # on RH/Fedora, due to lack of execute bit for others
+        if not os.access(usermod_path, os.X_OK):
+            return False
+
+        cmd = [usermod_path]
         cmd.append('--help')
         rc, data1, data2 = self.execute_command(cmd)
         helpout = data1 + data2
@@ -398,10 +415,10 @@ class User(object):
             cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
-            if self.move_home:
-                cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
+            if self.move_home:
+                cmd.append('-m')
 
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
@@ -423,7 +440,7 @@ class User(object):
     def group_exists(self,group):
         try:
             if group.isdigit():
-                if grp.getgrgid(group):
+                if grp.getgrgid(int(group)):
                     return True
             else:
                 if grp.getgrnam(group):
@@ -443,7 +460,7 @@ class User(object):
         if self.groups is None:
             return None
         info = self.user_info()
-        groups = set(self.groups.split(','))
+        groups = set(filter(None, self.groups.split(',')))
         for g in set(groups):
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
@@ -1180,6 +1197,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
@@ -1266,6 +1284,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))	
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)

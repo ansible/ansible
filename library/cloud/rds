@@ -60,7 +60,6 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge' ]
   username:
     description:
       - Master database username. Used only when command=create.
@@ -119,13 +118,19 @@ options:
     aliases: []
   security_groups:
     description:
-      - Comma separated list of one or more security groups.  Used only when command=create or command=modify. If a subnet is specified then this is treated as a list of VPC security groups.
+      - Comma separated list of one or more security groups.  Used only when command=create or command=modify.
+    required: false
+    default: null
+    aliases: []
+  vpc_security_groups:
+    description:
+      - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
   port:
     description:
-      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql, 1521 for Oracle, 1443 for SQL Server. Used only when command=create or command=replicate.
+      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql. Must be changed to 1521 for Oracle, 1443 for SQL Server, 5432 for PostgreSQL. Used only when command=create or command=replicate.
     required: false
     default: null
     aliases: []
@@ -277,14 +282,14 @@ def get_current_resource(conn, resource, command):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
             size              = dict(required=False), 
-            instance_type     = dict(aliases=['type'], choices=['db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge'], required=False),
+            instance_type     = dict(aliases=['type'], required=False),
             username          = dict(required=False),
             password          = dict(no_log=True, required=False),
             db_name           = dict(required=False),
@@ -294,23 +299,25 @@ def main():
             multi_zone        = dict(type='bool', default=False),
             iops              = dict(required=False), 
             security_groups   = dict(required=False),
+            vpc_security_groups = dict(type='list', required=False),
             port              = dict(required=False),
             upgrade           = dict(type='bool', default=False),
             option_group      = dict(required=False),
             maint_window      = dict(required=False),
             backup_window     = dict(required=False),
             backup_retention  = dict(required=False), 
-            region            = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS, required=False),
             zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
             subnet            = dict(required=False),
-            aws_secret_key    = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
-            aws_access_key    = dict(aliases=['ec2_access_key', 'access_key'], required=False),
             wait              = dict(type='bool', default=False),
             wait_timeout      = dict(default=300),
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
             new_instance_name = dict(required=False),
         )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
     )
 
     command            = module.params.get('command')
@@ -328,13 +335,14 @@ def main():
     multi_zone         = module.params.get('multi_zone')
     iops               = module.params.get('iops')
     security_groups    = module.params.get('security_groups')
+    vpc_security_groups = module.params.get('vpc_security_groups')
     port               = module.params.get('port')
     upgrade            = module.params.get('upgrade')
     option_group       = module.params.get('option_group')
     maint_window       = module.params.get('maint_window')
     subnet             = module.params.get('subnet')
     backup_window      = module.params.get('backup_window')
-    backup_retention   = module.params.get('module_retention')
+    backup_retention   = module.params.get('backup_retention')
     region             = module.params.get('region')
     zone               = module.params.get('zone')
     aws_secret_key     = module.params.get('aws_secret_key')
@@ -355,40 +363,49 @@ def main():
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
+    def invalid_security_group_type(subnet):
+        if subnet:
+            return 'security_groups'
+        else:
+            return 'vpc_security_groups'
+
+    # Package up the optional parameters
+    params = {}
+
     # Validate parameters for each command
     if command == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
-        invalid_vars  = [ 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
+        invalid_vars  = [ 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ] + [invalid_security_group_type(subnet)]
 
     elif command == 'replicate':
         required_vars = [ 'instance_name', 'source_instance' ]
-        invalid_vars  = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately', 'new_instance_name' ]
+        invalid_vars  = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'delete':
         required_vars = [ 'instance_name' ]
-        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately', 'new_instance_name' ]
+        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups' ,'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'facts':
         required_vars = [ 'instance_name' ]
-        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately', 'new_instance_name' ]
+        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'modify':
         required_vars = [ 'instance_name' ]
         if password:
             params["master_password"] = password
-        invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance' ]
+        invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance']
 
     elif command == 'promote':
         required_vars = [ 'instance_name' ]
-        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
+        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
     
     elif command == 'snapshot':
         required_vars = [ 'instance_name', 'snapshot']
-        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'apply_immediately', 'new_instance_name' ]
+        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'restore':
         required_vars = [ 'instance_name', 'snapshot', 'instance_type' ]
-        invalid_vars = [ 'db_engine', 'db_name', 'usernmae', 'password', 'engine_version',  'option_group', 'source_instance', 'apply_immediately', 'new_instance_name' ]
+        invalid_vars = [ 'db_engine', 'db_name', 'username', 'password', 'engine_version',  'option_group', 'source_instance', 'apply_immediately', 'new_instance_name', 'vpc_security_groups', 'security_groups' ]
  
     for v in required_vars:
         if not module.params.get(v):
@@ -397,9 +414,6 @@ def main():
     for v in invalid_vars:
         if module.params.get(v):
             module.fail_json(msg = str("Parameter %s invalid for %s command" % (v, command)))
-
-    # Package up the optional parameters
-    params = {}
 
     if db_engine:
         params["engine"] = db_engine
@@ -447,10 +461,13 @@ def main():
         params["iops"] = iops
 
     if security_groups:
-        if subnet:
-            params["vpc_security_groups"] = security_groups.split(',')
-        else:
-            params["security_groups"] = security_groups.split(',')
+        params["security_groups"] = security_groups.split(',')
+
+    if vpc_security_groups:
+        groups_list = []
+        for x in vpc_security_groups:
+            groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
+        params["vpc_security_groups"] = groups_list
 
     if new_instance_name:
         params["new_instance_id"] = new_instance_name
@@ -525,6 +542,12 @@ def main():
                             found = 1
                     if found == 0:
                         time.sleep(5)
+
+                # The name of the database has now changed, so we have
+                # to force result to contain the new instance, otherwise
+                # the call below to get_current_resource will fail since it
+                # will be looking for the old instance name.
+                result.id = new_instance_name
             else:
                 # Wait for a few seconds since it takes a while for AWS
                 # to change the instance from 'available' to 'modifying'
@@ -603,9 +626,14 @@ def main():
     if resource.status == 'available' and command != 'snapshot':
         d["endpoint"] = resource.endpoint[0]
         d["port"] = resource.endpoint[1]
+        if resource.vpc_security_groups is not None:
+            d["vpc_security_groups"] = ','.join(x.vpc_group for x in resource.vpc_security_groups)
+        else:
+            d["vpc_security_groups"] = None
     else:
         d["endpoint"] = None
         d["port"] = None
+        d["vpc_security_groups"] = None
 
     # ReadReplicaSourceDBInstanceIdentifier may or may not exist
     try:

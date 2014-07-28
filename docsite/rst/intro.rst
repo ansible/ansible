@@ -13,5 +13,5 @@ Before we dive into the really fun parts -- playbooks, configuration management,
    intro_patterns
    intro_adhoc
    intro_configuration
-
+   intro_windows
 

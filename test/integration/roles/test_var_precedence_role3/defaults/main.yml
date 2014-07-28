@@ -1,0 +1,7 @@
+---
+# should be overridden by vars_files in the main play
+vars_files_var: "BAD!"
+# should override the defaults var for role 1 and 2
+defaults_file_var: "last one wins"
+# should be overridden from the inventory value
+defaults_file_var_role3: "BAD!"

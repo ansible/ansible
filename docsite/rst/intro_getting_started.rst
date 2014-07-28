@@ -109,7 +109,7 @@ Host Key Checking
 
 Ansible 1.2.1 and later have host key checking enabled by default.  
 
-If a host is reinstalled and has a different key in 'known_hosts', this will result in a error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in a interactive experience if using Ansible, from say, cron.  You might not want this.
+If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron.  You might not want this.
 
 If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
 

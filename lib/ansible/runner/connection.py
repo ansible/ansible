@@ -20,23 +20,16 @@
 
 from ansible import utils
 from ansible.errors import AnsibleError
-import ansible.constants as C
 
-import os
-import os.path
-
-class Connection(object):
+class Connector(object):
     ''' Handles abstract connections to remote hosts '''
 
     def __init__(self, runner):
         self.runner = runner
 
     def connect(self, host, port, user, password, transport, private_key_file):
-        conn = None
         conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file)
         if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
         self.active = conn.connect()
         return self.active
-
-

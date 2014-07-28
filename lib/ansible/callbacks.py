@@ -115,6 +115,12 @@ def log_unflock(runner):
         except OSError:
             pass
 
+def set_playbook(callback, playbook):
+    ''' used to notify callback plugins of playbook context '''
+    callback.playbook = playbook
+    for callback_plugin in callback_plugins:
+        callback_plugin.playbook = playbook
+
 def set_play(callback, play):
     ''' used to notify callback plugins of context '''
     callback.play = play
@@ -179,6 +185,7 @@ def vvvv(msg, host=None):
     return verbose(msg, host=host, caplevel=3)
 
 def verbose(msg, host=None, caplevel=2):
+    msg = utils.sanitize_output(msg)
     if utils.VERBOSITY > caplevel:
         if host is None:
             display(msg, color='blue')
@@ -249,7 +256,7 @@ def regular_generic_msg(hostname, result, oneline, caption):
 
 def banner_cowsay(msg):
 
-    if msg.find(": [") != -1:
+    if ": [" in msg:
         msg = msg.replace("[","")
         if msg.endswith("]"):
             msg = msg[:-1]
@@ -336,9 +343,6 @@ class DefaultRunnerCallbacks(object):
     def on_ok(self, host, res):
         call_callback_module('runner_on_ok', host, res)
 
-    def on_error(self, host, msg):
-        call_callback_module('runner_on_error', host, msg)
-
     def on_skipped(self, host, item=None):
         call_callback_module('runner_on_skipped', host, item=item)
 
@@ -397,10 +401,6 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         display("%s | skipped" % (host), runner=self.runner)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
 
-    def on_error(self, host, err):
-        display("err: [%s] => %s\n" % (host, err), stderr=True, runner=self.runner)
-        super(CliRunnerCallbacks, self).on_error(host, err)
-
     def on_no_hosts(self):
         display("no hosts matched\n", stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_no_hosts()
@@ -448,6 +448,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_unreachable(self, host, results):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
+
         item = None
         if type(results) == dict:
             item = results.get('item', None)
@@ -459,7 +463,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
-
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -492,6 +498,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
 
         item = host_result.get('item', None)
 
@@ -527,19 +536,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 display(msg, color='yellow', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
-    def on_error(self, host, err):
-
-        item = err.get('item', None)
-        msg = ''
-        if item:
-            msg = "err: [%s] => (item=%s) => %s" % (host, item, err)
-        else:
-            msg = "err: [%s] => %s" % (host, err)
-
-        display(msg, color='red', stderr=True, runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_error(host, err)
-
     def on_skipped(self, host, item=None):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
+
         if constants.DISPLAY_SKIPPED_HOSTS:
             msg = ''
             if item:
@@ -636,7 +637,7 @@ class PlaybookCallbacks(object):
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
-        if prompt and default:
+        if prompt and default is not None:
             msg = "%s [%s]: " % (prompt, default)
         elif prompt:
             msg = "%s: " % prompt
@@ -644,9 +645,10 @@ class PlaybookCallbacks(object):
             msg = 'input for %s: ' % varname
 
         def prompt(prompt, private):
+            msg = prompt.encode(sys.stdout.encoding)
             if private:
-                return getpass.getpass(prompt)
-            return raw_input(prompt)
+                return getpass.getpass(msg)
+            return raw_input(msg)
 
 
         if confirm:
@@ -687,9 +689,9 @@ class PlaybookCallbacks(object):
         display(msg, color='cyan')
         call_callback_module('playbook_on_not_import_for_host', host, missing_file)
 
-    def on_play_start(self, pattern):
-        display(banner("PLAY [%s]" % pattern))
-        call_callback_module('playbook_on_play_start', pattern)
+    def on_play_start(self, name):
+        display(banner("PLAY [%s]" % name))
+        call_callback_module('playbook_on_play_start', name)
 
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)

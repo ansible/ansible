@@ -1,0 +1,123 @@
+# test code for the ping module
+# (c) 2014, Michael DeHaan <michael@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# various tests of things that should not cause parsing problems
+
+- set_fact: 
+    test_input: "a=1 a=2 a=3"
+
+- set_fact:
+    multi_line: |
+      echo old
+      echo mcdonald
+      echo had
+      echo a 
+      echo farm
+
+- shell: echo "dog"
+  register: result
+
+- assert:
+    that:
+       result.cmd == 'echo "dog"'
+
+- shell: echo 'dog'
+  register: result
+
+- assert:
+    that:
+       result.cmd == 'echo \'dog\''
+
+- name: a quoted argument is not sent to the shell module as anything but a string parameter
+  shell: echo 'dog' 'executable=/usr/bin/python'
+  register: result
+ 
+- debug: var=result.cmd
+ 
+- assert:
+    that:
+       result.cmd == "echo 'dog' 'executable=/usr/bin/python'"
+
+- name: it is valid to pass multiple key=value arguments because the shell doesn't check key=value arguments
+  shell: echo quackquack=here quackquack=everywhere
+  register: result
+ 
+- assert:
+    that:
+      result.cmd == 'echo quackquack=here quackquack=everywhere'
+
+- name: the same is true with quoting
+  shell: echo "quackquack=here quackquack=everywhere"
+  register: result
+     
+- assert:
+    that:
+      result.cmd == 'echo "quackquack=here quackquack=everywhere"'
+
+- name: the same is true with quoting (B)
+  shell: echo "quackquack=here" "quackquack=everywhere"
+  register: result
+
+- name: the same is true with quoting (C)
+  shell: echo "quackquack=here" 'quackquack=everywhere'
+  register: result
+
+- name: the same is true with quoting (D)
+  shell: echo "quackquack=here" 'quackquack=everywhere'
+  register: result
+
+- name: the same is true with quoting (E)
+  shell: echo {{ test_input }}
+  register: result
+
+- assert: 
+     that:
+        result.cmd == "echo a=1 a=2 a=3" 
+
+- name: more shell duplicates
+  shell: echo foo=bar foo=bar
+  register: result
+
+- assert:
+    that:
+       result.cmd == "echo foo=bar foo=bar"
+
+- name: multi-line inline shell commands (should use script module but hey) are a thing
+  shell: "{{ multi_line }}"
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+       result.stdout_lines == [ 'old', 'mcdonald', 'had', 'a', 'farm' ]
+
+- name: passing same arg to shell command is legit
+  shell: echo foo --arg=a --arg=b
+  failed_when: False # just catch the exit code, parse error is what I care about, but should register and compare result
+  register: result
+
+- assert:
+    that:
+       # command shouldn't end in spaces, amend test once fixed
+       - result.cmd == "echo foo --arg=a --arg=b"
+
+- name: test includes with params
+  include: test_include.yml param={{ test_input }}
+  register: result
+

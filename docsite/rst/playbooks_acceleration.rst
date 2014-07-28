@@ -3,6 +3,23 @@ Accelerated Mode
 
 .. versionadded:: 1.3
 
+You Might Not Need This!
+````````````````````````
+
+Are you running Ansible 1.5 or later?  If so, you may not need accelerate mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
+
+For users on 1.5 and later, accelerate mode only makes sense if you (A) are managing from an Enterprise Linux 6 or earlier host
+   and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
+
+If you can use pipelining, Ansible will reduce the amount of files transferred over the wire, 
+making everything much more efficient, and performance will be on par with accelerate mode in nearly all cases, possibly excluding very large file transfer.   Because less moving parts are involved, pipelining is better than accelerate mode for nearly all use cases.
+
+Accelerate mode remains around in support of EL6
+control machines and other constrained environments.
+
+Accelerate Mode Details
+```````````````````````
+
 While OpenSSH using the ControlPersist feature is quite fast and scalable, there is a certain small amount of overhead involved in
 using SSH connections.  While many people will not encounter a need, if you are running on a platform that doesn't have ControlPersist support (such as an EL6 control machine), you'll probably be even more interested in tuning options.
 
@@ -17,7 +34,7 @@ the SSH connection (this key is different for every host, and is also regenerate
 
 By default, Ansible will use port 5099 for the accelerated connection, though this is configurable. Once running, the daemon will accept connections for 30 minutes, after which time it will terminate itself and need to be restarted over SSH.
 
-Accelerated mode offers several improvements over the original fireball mode from which it was based:
+Accelerated mode offers several improvements over the (deprecated) original fireball mode from which it was based:
 
 * No bootstrapping is required, only a single line needs to be added to each play you wish to run in accelerated mode.
 * Support for sudo commands (see below for more details and caveats) is available.
@@ -27,9 +44,12 @@ Accelerated mode offers several improvements over the original fireball mode fro
 In order to use accelerated mode, simply add `accelerate: true` to your play::
 
     ---
+
     - hosts: all
       accelerate: true
+
       tasks:
+
       - name: some task
         command: echo {{ item }}
         with_items:
@@ -40,6 +60,7 @@ In order to use accelerated mode, simply add `accelerate: true` to your play::
 If you wish to change the port Ansible will use for the accelerated connection, just add the `accelerated_port` option::
 
     ---
+
     - hosts: all
       accelerate: true
       # default port is 5099
@@ -55,79 +76,11 @@ As noted above, accelerated mode also supports running tasks via sudo, however t
 * You must remove requiretty from your sudoers options.
 * Prompting for the sudo password is not yet supported, so the NOPASSWD option is required for sudo'ed commands.
 
-.. _fireball_mode:
+As of Ansible version `1.6`, you can also allow the use of multiple keys for connections from multiple Ansible management nodes. To do so, add the following option
+to your `ansible.cfg` configuration::
 
-Fireball Mode
-`````````````
+    accelerate_multi_key = yes
 
-.. versionadded:: 0.8 (deprecated as of 1.3)
-
-.. note::
-
-    The following section has been deprecated as of Ansible 1.3 in favor of the accelerated mode described above. This
-    documentation is here for users who may still be using the original fireball connection method only, and should not
-    be used for any new deployments.
-
-Ansible's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 and later by a new extra-fast
-connection type called 'fireball'.  It can only be used with playbooks and does require some additional setup
-outside the lines of Ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
-to use Ansible, though some users may appreciate it.
-
-Fireball mode works by launching a temporary 0mq daemon from SSH that by default lives for only 30 minutes before
-shutting off.  Fireball mode, once running, uses temporary AES keys to encrypt a session, and requires direct
-communication to given nodes on the configured port.  The default is 5099.  The fireball daemon runs as any user you
-set it down as.  So it can run as you, root, or so on.  If multiple users are running Ansible as the same batch of hosts,
-take care to use unique ports.
-
-Fireball mode is roughly 10 times faster than paramiko for communicating with nodes and may be a good option
-if you have a large number of hosts::
-
-    ---
-
-    # set up the fireball transport
-    - hosts: all
-      gather_facts: no
-      connection: ssh # or paramiko
-      sudo: yes
-      tasks:
-          - action: fireball
-
-    # these operations will occur over the fireball transport
-    - hosts: all
-      connection: fireball
-      tasks:
-          - shell: echo "Hello {{ item }}"
-            with_items:
-                - one
-                - two
-
-In order to use fireball mode, certain dependencies must be installed on both ends.   You can use this playbook as a basis for initial bootstrapping on
-any platform.  You will also need gcc and zeromq-devel installed from your package manager, which you can of course also get Ansible to install::
-
-    ---
-    - hosts: all
-      sudo: yes
-      gather_facts: no
-      connection: ssh
-      tasks:
-          - easy_install: name=pip
-          - pip: name={{ item }} state=present
-            with_items:
-              - pyzmq
-              - pyasn1
-              - PyCrypto
-              - python-keyczar
-
-Fedora and EPEL also have Ansible RPM subpackages available for fireball-dependencies.
-
-Also see the module documentation section.
-
-.. seealso::
-
-   :doc:`playbooks`
-       Introductory playbook information
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
-       Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+When enabled, the daemon will open a UNIX socket file (by default `$ANSIBLE_REMOTE_TEMP/.ansible-accelerate/.local.socket`). New connections over SSH can
+use this socket file to upload new keys to the daemon.
 

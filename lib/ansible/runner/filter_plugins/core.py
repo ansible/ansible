@@ -23,8 +23,12 @@ import types
 import pipes
 import glob
 import re
+import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s
+from distutils.version import LooseVersion, StrictVersion
+from random import SystemRandom
+from jinja2.filters import environmentfilter
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -127,6 +131,19 @@ def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
 
+def regex_replace(value='', pattern='', replacement='', ignorecase=False):
+    ''' Perform a `re.sub` returning a string '''
+
+    if not isinstance(value, basestring):
+        value = str(value)
+
+    if ignorecase:
+        flags = re.I
+    else:
+        flags = 0
+    _re = re.compile(pattern, flags=flags)
+    return _re.sub(replacement, value)
+
 def unique(a):
     return set(a)
 
@@ -141,6 +158,49 @@ def symmetric_difference(a, b):
 
 def union(a, b):
     return set(a).union(b)
+
+def version_compare(value, version, operator='eq', strict=False):
+    ''' Perform a version comparison on a value '''
+    op_map = {
+        '==': 'eq', '=':  'eq', 'eq': 'eq',
+        '<':  'lt', 'lt': 'lt',
+        '<=': 'le', 'le': 'le',
+        '>':  'gt', 'gt': 'gt',
+        '>=': 'ge', 'ge': 'ge',
+        '!=': 'ne', '<>': 'ne', 'ne': 'ne'
+    }
+
+    if strict:
+        Version = StrictVersion
+    else:
+        Version = LooseVersion
+
+    if operator in op_map:
+        operator = op_map[operator]
+    else:
+        raise errors.AnsibleFilterError('Invalid operator type')
+
+    try:
+        method = getattr(py_operator, operator)
+        return method(Version(str(value)), Version(str(version)))
+    except Exception, e:
+        raise errors.AnsibleFilterError('Version comparison: %s' % e)
+
+@environmentfilter
+def rand(environment, end, start=None, step=None):
+    r = SystemRandom()
+    if isinstance(end, (int, long)):
+        if not start:
+            start = 0
+        if not step:
+            step = 1
+        return r.randrange(start, end, step)
+    elif hasattr(end, '__iter__'):
+        if start or step:
+            raise errors.AnsibleFilterError('start and step can only be used with integer values')
+        return r.choice(end)
+    else:
+        raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -164,7 +224,9 @@ class FilterModule(object):
             # path
             'basename': os.path.basename,
             'dirname': os.path.dirname,
+            'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
+            'relpath': os.path.relpath,
 
             # failure testing
             'failed'  : failed,
@@ -195,6 +257,7 @@ class FilterModule(object):
             'match': match,
             'search': search,
             'regex': regex,
+            'regex_replace': regex_replace,
 
             # list
             'unique' : unique,
@@ -202,5 +265,11 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+
+            # version comparison
+            'version_compare': version_compare,
+
+            # random numbers
+            'random': rand,
         }
 

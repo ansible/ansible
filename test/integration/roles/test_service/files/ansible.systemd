@@ -1,0 +1,7 @@
+[Unit]
+Description=Ansible Test Service
+
+[Service]
+ExecStart=/usr/sbin/ansible_test_service
+ExecReload=/bin/true
+Type=forking

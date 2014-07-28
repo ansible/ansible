@@ -18,6 +18,9 @@
 
 #######################################################
 
+#__requires__ = ['ansible']
+#import pkg_resources
+
 import sys
 import os
 import stat
@@ -62,6 +65,8 @@ def main(args):
         check_opts=True,
         diff_opts=True
     )
+    #parser.add_option('--vault-password', dest="vault_password",
+    #    help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -76,6 +81,8 @@ def main(args):
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
         help="start the playbook at the task matching this name")
+    parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
+        help="run handlers even if a task fails")
 
     options, args = parser.parse_args(args)
 
@@ -90,31 +97,38 @@ def main(args):
                          "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
                          "mutually exclusive")
 
-    inventory = ansible.inventory.Inventory(options.inventory)
-    inventory.subset(options.subset)
-    if len(inventory.list_hosts()) == 0:
-        raise errors.AnsibleError("provided hosts list is empty")
+    if (options.ask_vault_pass and options.vault_password_file):
+            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
     sshpass = None
     sudopass = None
     su_pass = None
-    if not options.listhosts and not options.syntax and not options.listtasks:
+    vault_pass = None
+
+    options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
+
+    if options.listhosts or options.syntax or options.listtasks:
+        (_, _, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
+    else:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        (sshpass, sudopass, su_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass)
+        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
 
+    # read vault_pass from a file
+    if not options.ask_vault_pass and options.vault_password_file:
+        vault_pass = utils.read_vault_file(options.vault_password_file)
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
         elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
@@ -133,11 +147,13 @@ def main(args):
         if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
+    inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0:
+        raise errors.AnsibleError("provided hosts list is empty")
+
     # run all playbooks specified on the command line
     for playbook in args:
-
-        # let inventory know which playbooks are using so it can know the basedirs
-        inventory.set_playbook_basedir(os.path.dirname(playbook))
 
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
@@ -170,7 +186,9 @@ def main(args):
             diff=options.diff,
             su=options.su,
             su_pass=su_pass,
-            su_user=options.su_user
+            su_user=options.su_user,
+            vault_password=vault_pass,
+            force_handlers=options.force_handlers
         )
 
         if options.listhosts or options.listtasks or options.syntax:
@@ -180,14 +198,15 @@ def main(args):
             playnum = 0
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
-                play = ansible.playbook.Play(pb, play_ds, play_basedir)
+                play = ansible.playbook.Play(pb, play_ds, play_basedir,
+                                              vault_password=pb.vault_password)
                 label = play.name
-                if options.listhosts:
-                    hosts = pb.inventory.list_hosts(play.hosts)
-                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
-                    for host in hosts:
-                        print '    %s' % host
-                if options.listtasks:
+                hosts = pb.inventory.list_hosts(play.hosts)
+
+                # Filter all tasks by given tags
+                if pb.only_tags != 'all':
+                    if options.subset and not hosts:
+                        continue
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
 
                     # Remove skipped tasks
@@ -199,6 +218,13 @@ def main(args):
 
                     if unknown_tags:
                         continue
+
+                if options.listhosts:
+                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
+                    for host in hosts:
+                        print '    %s' % host
+
+                if options.listtasks:
                     print '  play #%d (%s):' % (playnum, label)
 
                     for task in play.tasks():

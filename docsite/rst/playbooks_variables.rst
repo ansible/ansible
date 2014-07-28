@@ -43,7 +43,7 @@ Easy enough, let's move on.
 Variables Defined in Inventory
 ``````````````````````````````
 
-We've actually already covered a lot about variables in another section, so so far this shouldn't be terribly new, but
+We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
 a bit of a refresher.
 
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
@@ -93,7 +93,7 @@ And that will provide the most basic form of variable substitution.
 
 This is also valid directly in playbooks, and you'll occasionally want to do things like::
 
-    template: src=foo.cfg.j2 dest={{ remote_install_path}}/foo.cfg
+    template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
 
 In the above example, we used a variable to help decide where to place a file.
 
@@ -101,7 +101,7 @@ Inside a template you automatically have access to all of the variables that are
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
-   templates are pure machine-parseable YAML.  This is an rather important feature as it means it is possible to code-generate
+   playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
@@ -113,9 +113,9 @@ Jinja2 Filters
 .. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these as documented on the official Jinja2 template documentation.
+ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to these, Ansible supplies many more.  
+In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
 
@@ -136,6 +136,7 @@ Filters Often Used With Conditionals
 The following tasks are illustrative of how filters can be used with conditionals::
 
     tasks:
+
       - shell: /usr/bin/foo
         register: result
         ignore_errors: True
@@ -166,6 +167,19 @@ This allows an explicit check with this feature off::
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
+
+.. _defaulting_undefined_variables:
+
+Defaulting Undefined Variables
+------------------------------
+
+Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
+
+    {{ some_variable | default(5) }}
+
+In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
+being raised.
+
 .. _set_theory_filters:
 
 Set Theory Filters
@@ -176,7 +190,7 @@ All these functions return a unique set from sets or lists.
 
 To get a unique set from a list::
 
-    {{ list1 |unique }}
+    {{ list1 | unique }}
 
 To get a union of two lists::
 
@@ -184,20 +198,77 @@ To get a union of two lists::
 
 To get the intersection of 2 lists (unique list of all items in both)::
 
-    {{ list1 |intersect(list2)}}
+    {{ list1 | intersect(list2) }}
 
 To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
-    {{ list1 |difference(list2)}}
+    {{ list1 | difference(list2) }}
 
 To get the symmetric difference of 2 lists (items exclusive to each list)::
 
-    {{ list1 |symmetric_difference(list2)}}
+    {{ list1 | symmetric_difference(list2) }}
+
+.. _version_comparison_filters:
+
+Version Comparison Filters
+--------------------------
+
+.. versionadded:: 1.6
+
+To compare a version number, such as checking if the ``ansible_distribution_version``
+version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
+
+The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
+
+    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
+
+If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
+
+The ``version_compare`` filter accepts the following operators::
+
+    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
+
+This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
+be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
+
+    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
+
+.. _random_filter:
+
+Random Number Filter
+--------------------
+
+.. versionadded:: 1.6
+
+This filter can be used similar to the default jinja2 random filter (returning a random item from a sequence of
+items), but can also generate a random number based on a range.
+
+To get a random item from a list::
+
+    {{ ['a','b','c']|random }} => 'c'
+
+To get a random number from 0 to supplied end::
+
+    {{ 59 |random}} * * * * root /script/from/cron
+
+Get a random number from 0 to 100 but in steps of 10::
+
+    {{ 100 |random(step=10) }}  => 70
+
+Get a random number from 1 to 100 but in steps of 10::
+
+    {{ 100 |random(1, 10) }}    => 31
+    {{ 100 |random(start=1, step=10) }}    => 51
+
 
 .. _other_useful_filters:
 
 Other Useful Filters
 --------------------
+
+To concatenate a list into a string::
+   
+   {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -206,6 +277,10 @@ To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 To get the directory from a path::
 
     {{ path | dirname }}
+
+To expand a path containing a tilde (`~`) character (new in version 1.5)::
+
+    {{ path | expanduser }}
 
 To work with Base64 encoded strings::
 
@@ -221,6 +296,28 @@ doesn't know it is a boolean value::
 
    - debug: msg=test
      when: some_string_value | bool
+
+To match strings against a regex, use the "match" or "search" filter::
+
+    vars:
+      url: "http://example.com/users/foo/resources/bar"
+
+    tasks:
+        - shell: "msg='matched pattern 1'"
+          when: url | match("http://example.com/users/.*/resources/.*")
+
+        - debug: "msg='matched pattern 2'"
+          when: url | search("/users/.*/resources/.*")
+
+'match' will require a complete match in the string, while 'search' will require a match inside of the string.
+
+To replace text in a string with regex, use the "regex_replace" filter::
+
+    # convert "ansible" to "able"    
+    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
+
+    # convert "foobar" to "bar"
+    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
@@ -524,6 +621,7 @@ Local Facts (Facts.d)
 .. versionadded:: 1.3
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
+
 Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
 in the API guide.  However, what if you want to have a simple way to provide system or user
 provided data for use in Ansible variables, without writing a fact module?  
@@ -563,6 +661,21 @@ And this data can be accessed in a template/playbook as::
 
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
+
+If you have a playbook that is copying over a custom fact and then running it, making an explicit call to re-run the setup module
+can allow that fact to be used during that particular play.  Otherwise, it will be available in the next play that gathers fact information.
+Here is an example of what that might look like::
+
+  - hosts: webservers
+    tasks: 
+      - name: create directory for ansible custom facts
+        file: state=directory recurse=yes path=/etc/ansible/facts.d
+      - name: install custom impi fact
+        copy: src=ipmi.fact dest=/etc/ansible/facts.d
+      - name: re-read facts after adding custom fact
+        setup: filter=ansible_local
+
+In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
 .. _registered_variables:
 
@@ -674,13 +787,16 @@ the main playbook.
 You can do this by using an external variables file, or files, just like this::
 
     ---
+
     - hosts: all
       remote_user: root
       vars:
         favcolor: blue
       vars_files:
         - /vars/external_vars.yml
+
       tasks:
+
       - name: this is just a placeholder
         command: /bin/echo foo
 
@@ -714,8 +830,10 @@ This is useful, for, among other things, setting the hosts group or the user for
 Example::
 
     ---
-    - remote_user: '{{ user }}'
-      hosts: '{{ hosts }}'
+
+    - hosts: '{{ hosts }}'
+      remote_user: '{{ user }}'
+
       tasks:
          - ...
 
@@ -748,12 +866,15 @@ As an example, the name of the Apache package may be different between CentOS an
 but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
+
     - hosts: all
       remote_user: root
       vars_files:
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
+
       tasks:
+
       - name: make sure apache is running
         service: name={{ apache }} state=running
 
@@ -811,7 +932,10 @@ If multiple variables of the same name are defined in different places, they win
     * -e variables always win
     * then comes "most everything else"
     * then comes variables defined in inventory
+    * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+
+.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
 That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of 
 control you might want over values.
@@ -854,11 +978,11 @@ See :doc:`playbooks_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
-    # if not overriden in inventory or as a parameter, this is the value that will be used
+    # if not overridden in inventory or as a parameter, this is the value that will be used
     http_port: 80
 
 if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
-by inventory, you should but it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
+by inventory, you should put it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
 
     ---
     # file: roles/x/vars/main.yml
@@ -905,15 +1029,18 @@ can set variables in there and make use of them in other roles and elsewhere in 
         - { role: something_else }
 
 .. note:: There are some protections in place to avoid the need to namespace variables.  
-          In the above, variables defined in common_settings are most definitely available to 'app_user' and 'something_else' tasks, but if
+          In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
           "something's" guaranteed to have foo set at 12, even if somewhere deep in common settings it set foo to 20.
 
 So, that's precedence, explained in a more direct way.  Don't worry about precedence, just think about if your role is defining a
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use -e.
 
-If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
+If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
 how all of these things can work together.
+
+.. _ansible-examples: https://github.com/ansible/ansible-examples
+.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
 .. seealso::
 

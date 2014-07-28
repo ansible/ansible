@@ -26,6 +26,9 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
+Note that the above system only governs the failure of the particular task, so if you have an undefined
+variable used, it will still raise an error that users will need to address.
+
 .. _controlling_what_defines_failure:
 
 Controlling What Defines Failure

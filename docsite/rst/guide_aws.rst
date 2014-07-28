@@ -103,7 +103,7 @@ Advanced Usage
 Host Inventory
 ++++++++++++++
 
-Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle his is to use the ec2 inventory plugin.
+Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the ec2 inventory plugin.
 
 Even for larger environments, you might have nodes spun up from Cloud Formations or other tooling.  You don't have to use Ansible to spin up guests.  Once these are created and you wish to configure them, the EC2 API can be used to return system grouping with the help of the EC2 inventory script. This script can be used to group resources by their security group or tags. Tagging is highly recommended in EC2 and can provide an easy way to sort between host groups and roles. The inventory script is documented doc:`api` section.
 
@@ -129,7 +129,7 @@ it will be automatically discoverable via a dynamic group like so::
        - ping
 
 Using this philosophy can be a great way to manage groups dynamically, without
-having to maintain seperate inventory.  
+having to maintain separate inventory.
 
 .. _aws_pull:
 
@@ -266,7 +266,7 @@ Example 4
         - debug: var=hostvars[inventory_hostname]
 
         # just show the instance-id
-        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance-id'] }}"
+        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance_id'] }}"
 
 
     # Using the instanceid, call the ec2 module
@@ -288,7 +288,7 @@ Example 4
                region={{ region }}
                instance_ids={{ item }}
                wait=true
-          with_items: hostvars[inventory_hostname]['ansible_ec2_instance-id']
+          with_items: hostvars[inventory_hostname]['ansible_ec2_instance_id']
 
 
 .. note:: more examples of this are pending.   You may also be interested in the ec2_ami module for taking AMIs of running instances.
@@ -309,7 +309,7 @@ In the future look here for more topics.
        An introduction to playbooks
    :doc:`playbooks_delegation`
        Delegation, useful for working with loud balancers, clouds, and locally executed steps.
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

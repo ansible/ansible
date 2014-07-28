@@ -24,9 +24,7 @@ short_description: utilize GCE persistent disk resources
 description:
     - This module can create and destroy unformatted GCE persistent disks
       U(https://developers.google.com/compute/docs/disks#persistentdisks).
-      It also supports attaching and detaching disks from running instances
-      but does not support creating boot disks from images or snapshots.  The
-      'gce' module supports creating instances with boot disks.
+      It also supports attaching and detaching disks from running instances.
       Full install/configuration instructions for the gce* modules can
       be found in the comments of ansible/test/gce_tests.py.
 options:
@@ -62,6 +60,20 @@ options:
     required: false
     default: 10
     aliases: []
+  image:
+    description:
+      - the source image to use for the disk
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.7"
+  snapshot:
+    description:
+      - the source snapshot to use for the disk
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.7"
   state:
     description:
       - desired state of the persistent disk
@@ -75,6 +87,27 @@ options:
     required: false
     default: "us-central1-b"
     aliases: []
+  service_account_email:
+    version_added: "1.6"
+    description:
+      - service account email
+    required: false
+    default: null
+    aliases: []
+  pem_file:
+    version_added: "1.6"
+    description:
+      - path to the pem file associated with the service account email
+    required: false
+    default: null
+    aliases: []
+  project_id:
+    version_added: "1.6"
+    description:
+      - your GCE project ID
+    required: false
+    default: null
+    aliases: []
 
 requirements: [ "libcloud" ]
 author: Eric Johnson <erjohnso@google.com>
@@ -82,67 +115,54 @@ author: Eric Johnson <erjohnso@google.com>
 
 EXAMPLES = '''
 # Simple attachment action to an existing instance
-- local_action: 
-    module: gce_pd 
+- local_action:
+    module: gce_pd
     instance_name: notlocalhost
-    size_gb: 5 
+    size_gb: 5
     name: pd
 '''
 
 import sys
 
-USER_AGENT_PRODUCT="Ansible-gce_pd"
-USER_AGENT_VERSION="v1beta15"
-
-try:                                                                            
-    from libcloud.compute.types import Provider                                 
-    from libcloud.compute.providers import get_driver                           
+try:
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError, ResourceInUseError
-    _ = Provider.GCE                                                            
-except ImportError:                                                             
+    _ = Provider.GCE
+except ImportError:
     print("failed=True " + \
         "msg='libcloud with GCE support is required for this module.'")
-    sys.exit(1)                                                                 
-                                                                                
-# Load in the libcloud secrets file                                             
-try:                                                                            
-    import secrets                                                              
-except ImportError:                                                             
-    secrets = None                                                              
-ARGS = getattr(secrets, 'GCE_PARAMS', ())                                       
-KWARGS = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})                             
-
-if not ARGS or not 'project' in KWARGS:
-    print("failed=True " + \
-        "msg='Missing GCE connection parameters in libcloud secrets file.'")
     sys.exit(1)
 
-def unexpected_error_msg(error):
-    msg='Unexpected response: HTTP return_code['
-    msg+='%s], API error code[%s] and message: %s' % (
-        error.http_code, error.code, str(error.value))
-    return msg
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            detach_only = dict(choice=BOOLEANS),
+            detach_only = dict(type='bool'),
             instance_name = dict(),
-            mode = dict(default='READ_ONLY',
-                choices=['READ_WRITE', 'READ_ONLY']),
+            mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
+            image = dict(),
+            snapshot = dict(),
             state = dict(default='present'),
             zone = dict(default='us-central1-b'),
+            service_account_email = dict(),
+            pem_file = dict(),
+            project_id = dict(),
         )
     )
+
+    gce = gce_connect(module)
 
     detach_only = module.params.get('detach_only')
     instance_name = module.params.get('instance_name')
     mode = module.params.get('mode')
     name = module.params.get('name')
     size_gb = module.params.get('size_gb')
+    image = module.params.get('image')
+    snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
 
@@ -150,13 +170,6 @@ def main():
         module.fail_json(
             msg='Must specify an instance name when detaching a disk',
             changed=False)
-
-    try:
-        gce = get_driver(Provider.GCE)(*ARGS, datacenter=zone, **KWARGS)
-        gce.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception, e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     disk = inst = None
     changed = is_attached = False
@@ -207,8 +220,20 @@ def main():
                     instance_name, zone), changed=False)
 
         if not disk:
+            if image is not None and snapshot is not None:
+                module.fail_json(
+                    msg='Cannot give both image (%s) and snapshot (%s)' % (
+                        image, snapshot), changed=False)
+            lc_image = None
+            lc_snapshot = None
+            if image is not None:
+                lc_image = gce.ex_get_image(image)
+            elif snapshot is not None:
+                lc_snapshot = gce.ex_get_snapshot(snapshot)
             try:
-                disk = gce.create_volume(size_gb, name, location=zone)
+                disk = gce.create_volume(
+                    size_gb, name, location=zone, image=lc_image,
+                    snapshot=lc_snapshot)
             except ResourceExistsError:
                 pass
             except QuotaExceededError:
@@ -217,6 +242,10 @@ def main():
             except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb
+            if image is not None:
+                json_output['image'] = image
+            if snapshot is not None:
+                json_output['snapshot'] = snapshot
             changed = True
         if inst and not is_attached:
             try:
@@ -251,5 +280,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.gce import *
 
 main()

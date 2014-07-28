@@ -47,6 +47,19 @@ options:
     description:
       - A hash, number, tag, or other identifier showing what revision was deployed
     required: false
+  url:
+    description:
+      - Optional URL to submit the notification to. Use to send notifications to Airbrake-compliant tools like Errbit.
+    required: false
+    default: "https://airbrake.io/deploys"
+    version_added: "1.5"
+  validate_certs:
+    description:
+      - If C(no), SSL certificates for the target url will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -59,28 +72,11 @@ EXAMPLES = '''
                        revision=4.2
 '''
 
-HAS_URLLIB = True
-try:
-    import urllib
-except ImportError:
-    HAS_URLLIB = False
-
-HAS_URLLIB2 = True
-try:
-    import urllib2
-except ImportError:
-    HAS_URLLIB2 = False
-
 # ===========================================
 # Module execution.
 #
 
 def main():
-
-    if not HAS_URLLIB:
-        module.fail_json(msg="urllib is not installed")
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -89,6 +85,8 @@ def main():
             user=dict(required=False),
             repo=dict(required=False),
             revision=dict(required=False),
+            url=dict(required=False, default='https://api.airbrake.io/deploys.txt'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -110,23 +108,23 @@ def main():
 
     params["api_key"] = module.params["token"]
 
+    url = module.params.get('url')
+
     # If we're in check mode, just exit pretending like we succeeded
     if module.check_mode:
         module.exit_json(changed=True)
 
     # Send the data to airbrake
-    try:
-        req = urllib2.Request("https://airbrake.io/deploys", urllib.urlencode(params))
-        result=urllib2.urlopen(req)
-    except Exception, e:
-        module.fail_json(msg="unable to update airbrake: %s" % e)
+    data = urllib.urlencode(params)
+    response, info = fetch_url(module, url, data=data)
+    if info['status'] == 200:
+        module.exit_json(changed=True)
     else:
-        if result.code == 200:
-            module.exit_json(changed=True)
-        else:
-            module.fail_json(msg="HTTP result code: %d" % result.code)
+        module.fail_json(msg="HTTP result code: %d connecting to %s" % (info['status'], url))
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()
 

@@ -30,7 +30,7 @@ _basedirs = []
 
 def push_basedir(basedir):
     # avoid pushing the same absolute dir more than once
-    basedir = os.path.abspath(basedir)
+    basedir = os.path.realpath(basedir)
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
 
@@ -99,7 +99,7 @@ class PluginLoader(object):
         ret = []
         ret += self._extra_dirs
         for basedir in _basedirs:
-            fullpath = os.path.abspath(os.path.join(basedir, self.subdir))
+            fullpath = os.path.realpath(os.path.join(basedir, self.subdir))
             if os.path.isdir(fullpath):
                 files = glob.glob("%s/*" % fullpath)
                 for file in files:
@@ -111,7 +111,7 @@ class PluginLoader(object):
         # look in any configured plugin paths, allow one level deep for subcategories 
         configured_paths = self.config.split(os.pathsep)
         for path in configured_paths:
-            path = os.path.abspath(os.path.expanduser(path))
+            path = os.path.realpath(os.path.expanduser(path))
             contents = glob.glob("%s/*" % path)
             for c in contents:
                 if os.path.isdir(c) and c not in ret:
@@ -131,7 +131,7 @@ class PluginLoader(object):
         ''' Adds an additional directory to the search path '''
 
         self._paths = None
-        directory = os.path.abspath(directory)
+        directory = os.path.realpath(directory)
 
         if directory is not None:
             if with_subdir:
@@ -139,21 +139,25 @@ class PluginLoader(object):
             if directory not in self._extra_dirs:
                 self._extra_dirs.append(directory)
 
-    def find_plugin(self, name):
+    def find_plugin(self, name, suffixes=None):
         ''' Find a plugin named name '''
 
-        if name in self._plugin_path_cache:
-            return self._plugin_path_cache[name]
+        if not suffixes:
+            if self.class_name:
+                suffixes = ['.py']
+            else:
+                suffixes = ['', '.ps1']
 
-        suffix = ".py"
-        if not self.class_name:
-            suffix = ""
+        for suffix in suffixes:
+            full_name = '%s%s' % (name, suffix)
+            if full_name in self._plugin_path_cache:
+                return self._plugin_path_cache[full_name]
 
-        for i in self._get_paths():
-            path = os.path.join(i, "%s%s" % (name, suffix))
-            if os.path.isfile(path):
-                self._plugin_path_cache[name] = path
-                return path
+            for i in self._get_paths():
+                path = os.path.join(i, full_name)
+                if os.path.isfile(path):
+                    self._plugin_path_cache[full_name] = path
+                    return path
 
         return None
 
@@ -212,6 +216,13 @@ connection_loader = PluginLoader(
     aliases={'paramiko': 'paramiko_ssh'}
 )
 
+shell_loader = PluginLoader(
+    'ShellModule',
+    'ansible.runner.shell_plugins',
+    'shell_plugins',
+    'shell_plugins',
+)
+
 module_finder = PluginLoader(
     '', 
     '', 
@@ -240,4 +251,9 @@ filter_loader = PluginLoader(
     'filter_plugins'
 )
 
-
+fragment_loader = PluginLoader(
+    'ModuleDocFragment',
+    'ansible.utils.module_docs_fragments',
+    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
+    '',
+)

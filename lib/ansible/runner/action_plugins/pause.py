@@ -77,11 +77,11 @@ class ActionModule(object):
         # Is 'prompt' a key in 'args'?
         elif 'prompt' in args:
             self.pause_type = 'prompt'
-            self.prompt = "[%s]\n%s: " % (hosts, args['prompt'])
+            self.prompt = "[%s]\n%s:\n" % (hosts, args['prompt'])
         # Is 'args' empty, then this is the default prompted pause
         elif len(args.keys()) == 0:
             self.pause_type = 'prompt'
-            self.prompt = "[%s]\nPress enter to continue: " % hosts
+            self.prompt = "[%s]\nPress enter to continue:\n" % hosts
         # I have no idea what you're trying to do. But it's so wrong.
         else:
             raise ae("invalid pause type given. must be one of: %s" % \
@@ -101,7 +101,7 @@ class ActionModule(object):
                 # Clear out any unflushed buffered input which would
                 # otherwise be consumed by raw_input() prematurely.
                 tcflush(sys.stdin, TCIFLUSH)
-                self.result['user_input'] = raw_input(self.prompt)
+                self.result['user_input'] = raw_input(self.prompt.encode(sys.stdout.encoding))
         except KeyboardInterrupt:
             while True:
                 print '\nAction? (a)bort/(c)ontinue: '

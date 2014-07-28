@@ -42,15 +42,18 @@ A task include file simply contains a flat list of tasks, like so::
 
     ---
     # possibly saved as tasks/foo.yml
+
     - name: placeholder foo
       command: /bin/foo
+
     - name: placeholder bar
       command: /bin/bar
 
 Include directives look like this, and can be mixed in with regular tasks in a playbook::
 
    tasks:
-    - include: tasks/foo.yml
+
+     - include: tasks/foo.yml
 
 You can also pass variables into includes.  We call this a 'parameterized include'.
 
@@ -120,7 +123,9 @@ For example::
     - name: this is a play at the top level of a file
       hosts: all
       remote_user: root
+
       tasks:
+
       - name: say hi
         tags: foo
         shell: echo "hi..."
@@ -205,12 +210,13 @@ If any files are not present, they are just ignored.  So it's ok to not have a '
 for instance.
 
 Note, you are still allowed to list tasks, vars_files, and handlers "loose" in playbooks without using roles,
-but roles are a good organizational feature and are highly recommended.  if there are loose things in the playbook,
+but roles are a good organizational feature and are highly recommended.  If there are loose things in the playbook,
 the roles are evaluated first.
 
 Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
 
     ---
+
     - hosts: webservers
       roles:
         - common
@@ -220,6 +226,7 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
 While it's probably not something you should do often, you can also conditionally apply roles like so::
 
     ---
+
     - hosts: webservers
       roles:
         - { role: some_role, when: "ansible_os_family == 'RedHat'" }
@@ -230,6 +237,7 @@ the documentation.
 Finally, you may wish to assign tags to the roles you specify. You can do so inline:::
 
     ---
+
     - hosts: webservers
       roles:
         - { role: foo, tags: ["bar", "baz"] }
@@ -240,13 +248,18 @@ If the play still has a 'tasks' section, those tasks are executed after roles ar
 If you want to define certain tasks to happen before AND after roles are applied, you can do this::
 
     ---
+
     - hosts: webservers
+
       pre_tasks:
         - shell: echo 'hello'
+
       roles:
         - { role: some_role }
+
       tasks:
         - shell: echo 'still busy'
+
       post_tasks:
         - shell: echo 'goodbye'
 
@@ -320,10 +333,45 @@ The resulting order of execution would be as follows::
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
 
+Embedding Modules In Roles
+``````````````````````````
+
+This is an advanced topic that should not be relevant for most users.
+
+If you write a custom module (see :doc:`developing_modules`) you may wish to distribute it as part of a role.  Generally speaking, Ansible as a project is very interested
+in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
+
+A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
+people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
+
+Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it.
+
+Assuming you had this::
+
+    roles/
+       my_custom_modules/
+           library/
+              module1
+              module2
+
+The module will be usable in the role itself, as well as any roles that are called *after* this role, as follows::
+
+
+    - hosts: webservers
+      roles:
+        - my_custom_modules
+        - some_other_role_using_my_custom_modules
+        - yet_another_role_using_my_custom_modules
+
+This can also be used, with some limitations, to modify modules in Ansible's core distribution, such as to use development versions of modules before they are released
+in production releases.  This is not always advisable as API signatures may change in core components, however, and is not always guaranteed to work.  It can be a handy
+way of carrying a patch against a core module, however, should you have good reason for this.  Naturally the project prefers that contributions be directed back
+to github whenever possible via a pull request.
+
 Ansible Galaxy
 ``````````````
 
-`Ansible Galaxy <http://galaxy.ansible.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+`Ansible Galaxy <http://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
 You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
 

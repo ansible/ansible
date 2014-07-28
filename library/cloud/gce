@@ -51,6 +51,27 @@ options:
     required: false
     default: null
     aliases: []
+  service_account_email:
+    version_added: 1.5.1
+    description:
+      - service account email
+    required: false
+    default: null
+    aliases: []
+  pem_file:
+    version_added: 1.5.1
+    description:
+      - path to the pem file associated with the service account email
+    required: false
+    default: null
+    aliases: []
+  project_id:
+    version_added: 1.5.1
+    description:
+      - your GCE project ID
+    required: false
+    default: null
+    aliases: []
   name:
     description:
       - identifier when working with a single instance
@@ -68,6 +89,13 @@ options:
     required: false
     default: "false"
     aliases: []
+  disks:
+    description:
+      - a list of persistent disks to attach to the instance; a string value gives the name of the disk; alternatively, a dictionary value can define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry will be the boot disk (which must be READ_WRITE).
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.7"
   state:
     description:
       - desired state of the resource
@@ -86,10 +114,11 @@ options:
       - the GCE zone to use
     required: true
     default: "us-central1-a"
-    choices: ["us-central1-a", "us-central1-b", "us-central2-a", "europe-west1-a", "europe-west1-b"]
     aliases: []
 
 requirements: [ "libcloud" ]
+notes:
+  - Either I(name) or I(instance_names) is required.
 author: Eric Johnson <erjohnso@google.com>
 '''
 
@@ -119,10 +148,14 @@ EXAMPLES = '''
     machine_type: n1-standard-1
     image: debian-6
     zone: us-central1-a
+    service_account_email: unique-email@developer.gserviceaccount.com
+    pem_file: /path/to/pem_file
+    project_id: project-id
   tasks:
     - name: Launch instances
       local_action: gce instance_names={{names}} machine_type={{machine_type}}
-                    image={{image}} zone={{zone}}
+                    image={{image}} zone={{zone}} service_account_email={{ service_account_email }}
+                    pem_file={{ pem_file }} project_id={{ project_id }}
       register: gce
     - name: Wait for SSH to come up
       local_action: wait_for host={{item.public_ip}} port=22 delay=10
@@ -150,9 +183,6 @@ EXAMPLES = '''
 
 import sys
 
-USER_AGENT_PRODUCT="Ansible-gce"
-USER_AGENT_VERSION="v1beta15"
-
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
@@ -171,25 +201,6 @@ except ImportError:
         "msg='GCE module requires python's 'ast' module, python v2.6+'")
     sys.exit(1)
 
-# Load in the libcloud secrets file
-try:
-    import secrets
-except ImportError:
-    secrets = None
-ARGS = getattr(secrets, 'GCE_PARAMS', ())
-KWARGS = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
-
-if not ARGS or not 'project' in KWARGS:
-    print("failed=True " + \
-        "msg='Missing GCE connection parametres in libcloud secrets file.'")
-    sys.exit(1)
-
-def unexpected_error_msg(error):
-    """Create an error string based on passed in error."""
-    msg='Unexpected response: HTTP return_code['
-    msg+='%s], API error code[%s] and message: %s' % (
-        error.http_code, error.code, str(error.value))
-    return msg
 
 def get_instance_info(inst):
     """Retrieves instance information from an instance object and returns it
@@ -205,8 +216,16 @@ def get_instance_info(inst):
         netname = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
     except:
         netname = None
+    if 'disks' in inst.extra:
+        disk_names = [disk_info['source'].split('/')[-1]
+                      for disk_info
+                      in sorted(inst.extra['disks'],
+                                key=lambda disk_info: disk_info['index'])]
+    else:
+        disk_names = []
     return({
         'image': not inst.image is None and inst.image.split('/')[-1] or None,
+        'disks': disk_names,
         'machine_type': inst.size,
         'metadata': metadata,
         'name': inst.name,
@@ -236,6 +255,7 @@ def create_instances(module, gce, instance_names):
     metadata = module.params.get('metadata')
     network = module.params.get('network')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
+    disks = module.params.get('disks')
     state = module.params.get('state')
     tags = module.params.get('tags')
     zone = module.params.get('zone')
@@ -244,6 +264,16 @@ def create_instances(module, gce, instance_names):
     changed = False
 
     lc_image = gce.ex_get_image(image)
+    lc_disks = []
+    disk_modes = []
+    for i, disk in enumerate(disks or []):
+        if isinstance(disk, dict):
+            lc_disks.append(gce.ex_get_volume(disk['name']))
+            disk_modes.append(disk['mode'])
+        else:
+            lc_disks.append(gce.ex_get_volume(disk))
+            # boot disk is implicitly READ_WRITE
+            disk_modes.append('READ_ONLY' if i > 0 else 'READ_WRITE')
     lc_network = gce.ex_get_network(network)
     lc_machine_type = gce.ex_get_size(machine_type)
     lc_zone = gce.ex_get_zone(zone)
@@ -278,7 +308,9 @@ def create_instances(module, gce, instance_names):
 
     for name in instance_names:
         pd = None
-        if persistent_boot_disk:
+        if lc_disks:
+            pd = lc_disks[0]
+        elif persistent_boot_disk:
             try:
                 pd = gce.create_volume(None, "%s" % name, image=lc_image)
             except ResourceExistsError:
@@ -294,6 +326,28 @@ def create_instances(module, gce, instance_names):
         except GoogleBaseError, e:
             module.fail_json(msg='Unexpected error attempting to create ' + \
                     'instance %s, error: %s' % (name, e.value))
+
+        for i, lc_disk in enumerate(lc_disks):
+            # Check whether the disk is already attached
+            if (len(inst.extra['disks']) > i):
+                attached_disk = inst.extra['disks'][i]
+                if attached_disk['source'] != lc_disk.extra['selfLink']:
+                    module.fail_json(
+                        msg=("Disk at index %d does not match: requested=%s found=%s" % (
+                            i, lc_disk.extra['selfLink'], attached_disk['source'])))
+                elif attached_disk['mode'] != disk_modes[i]:
+                    module.fail_json(
+                        msg=("Disk at index %d is in the wrong mode: requested=%s found=%s" % (
+                            i, disk_modes[i], attached_disk['mode'])))
+                else:
+                    continue
+            gce.attach_volume(inst, lc_disk, ex_mode=disk_modes[i])
+            # Work around libcloud bug: attached volumes don't get added
+            # to the instance metadata. get_instance_info() only cares about
+            # source and index.
+            if len(inst.extra['disks']) != i+1:
+                inst.extra['disks'].append(
+                    {'source': lc_disk.extra['selfLink'], 'index': i})
 
         if inst:
             new_instances.append(inst)
@@ -346,15 +400,19 @@ def main():
             metadata = dict(),
             name = dict(),
             network = dict(default='default'),
-            persistent_boot_disk = dict(type='bool', choices=BOOLEANS, default=False),
+            persistent_boot_disk = dict(type='bool', default=False),
+            disks = dict(type='list'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
                     default='present'),
             tags = dict(type='list'),
-            zone = dict(choices=['us-central1-a', 'us-central1-b',
-                    'us-central2-a', 'europe-west1-a', 'europe-west1-b'],
-                    default='us-central1-a'),
+            zone = dict(default='us-central1-a'),
+            service_account_email = dict(),
+            pem_file = dict(),
+            project_id = dict(),
         )
     )
+
+    gce = gce_connect(module)
 
     image = module.params.get('image')
     instance_names = module.params.get('instance_names')
@@ -367,13 +425,6 @@ def main():
     tags = module.params.get('tags')
     zone = module.params.get('zone')
     changed = False
-
-    try:
-        gce = get_driver(Provider.GCE)(*ARGS, datacenter=zone, **KWARGS)
-        gce.connection.user_agent_append("%s/%s" % (
-            USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception, e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     inames = []
     if isinstance(instance_names, list):
@@ -418,5 +469,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.gce import *
 
 main()

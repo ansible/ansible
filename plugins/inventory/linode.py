@@ -5,7 +5,7 @@ Linode external inventory script
 =================================
 
 Generates inventory that Ansible can understand by making API request to
-AWS Linode using the Chube library.
+Linode using the Chube library.
 
 NOTE: This script assumes Ansible is being executed where Chube is already
 installed and has a valid config at ~/.chube. If not, run:
@@ -71,21 +71,39 @@ just adapted that for Linode.
 ######################################################################
 
 # Standard imports
+import os
 import re
 import sys
 import argparse
 from time import time
+
 try:
     import json
 except ImportError:
     import simplejson as json
 
-# chube imports 'yaml', which is also the name of an inventory plugin,
-# so we remove the plugins dir from sys.path before importing it.
-old_path = sys.path
-sys.path = [d for d in sys.path if "ansible/plugins" not in d]
-from chube import *
-sys.path = old_path
+try:
+    from chube import load_chube_config
+    from chube import api as chube_api
+    from chube.datacenter import Datacenter
+    from chube.linode_obj import Linode
+except:
+    try:
+        # remove local paths and other stuff that may
+        # cause an import conflict, as chube is sensitive
+        # to name collisions on importing
+        old_path = sys.path
+        sys.path = [d for d in sys.path if d not in ('', os.getcwd(), os.path.dirname(os.path.realpath(__file__)))]
+
+        from chube import load_chube_config
+        from chube import api as chube_api
+        from chube.datacenter import Datacenter
+        from chube.linode_obj import Linode
+
+        sys.path = old_path
+    except Exception, e:
+        raise Exception("could not import chube")
+
 load_chube_config()
 
 # Imports for ansible
@@ -166,7 +184,7 @@ class LinodeInventory(object):
         try:
             for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
-        except api.linode_api.ApiError, e:
+        except chube_api.linode_api.ApiError, e:
             print "Looks like Linode's API is down:"
             print
             print e
@@ -176,7 +194,7 @@ class LinodeInventory(object):
         """Gets details about a specific node."""
         try:
             return Linode.find(api_id=linode_id)
-        except api.linode_api.ApiError, e:
+        except chube_api.linode_api.ApiError, e:
             print "Looks like Linode's API is down:"
             print
             print e
@@ -261,7 +279,11 @@ class LinodeInventory(object):
 
         node_vars["datacenter_city"] = self.get_datacenter_city(node)
         node_vars["public_ip"] = [addr.address for addr in node.ipaddresses if addr.is_public][0]
-        node_vars["private_ip"] = [addr.address for addr in node.ipaddresses if not addr.is_public][0]
+
+        private_ips = [addr.address for addr in node.ipaddresses if not addr.is_public]
+
+        if private_ips:
+            node_vars["private_ip"] = private_ips[0]
 
         return self.json_format_dict(node_vars, True)
 

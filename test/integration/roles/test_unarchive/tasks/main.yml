@@ -1,0 +1,113 @@
+# Test code for the unarchive module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: prep our file
+  copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
+
+- name: prep a tar file
+  shell: tar cvf test-unarchive.tar foo-unarchive.txt chdir={{output_dir}}
+
+- name: prep a tar.gz file
+  shell: tar cvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
+
+- name: prep a zip file
+  shell: tar cvf test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
+
+- name: create our tar unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar state=directory
+
+- name: unarchive a tar file
+  unarchive: src={{output_dir}}/test-unarchive.tar dest="{{output_dir | expanduser}}/test-unarchive-tar" copy=no
+  register: unarchive01
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive01.changed == true"
+
+- name: verify that the file was unarchived
+  file: path={{output_dir}}/test-unarchive-tar/foo-unarchive.txt state=file
+
+- name: remove our tar unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar state=absent
+
+- name: create our tar.gz unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+
+- name: unarchive a tar.gz file
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz copy=no
+  register: unarchive02
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive02.changed == true"
+
+- name: verify that the file was unarchived
+  file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
+
+- name: remove our tar.gz unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar-gz state=absent
+
+- name: create our tar.gz unarchive destination for creates
+  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+
+- name: unarchive a tar.gz file with creates set
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz copy=no creates={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  register: unarchive02b
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive02b.changed == true"
+
+- name: verify that the file was unarchived
+  file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
+
+- name: unarchive a tar.gz file with creates over an existing file
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz copy=no creates={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  register: unarchive02c
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "unarchive02c.changed == false"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar-gz state=absent
+
+- name: create our zip unarchive destination
+  file: path={{output_dir}}/test-unarchive-zip state=directory
+
+- name: unarchive a zip file
+  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip copy=no
+  register: unarchive03
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive03.changed == true"
+
+- name: verify that the file was unarchived
+  file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
+
+- name: remove our tar unarchive destination
+  file: path={{output_dir}}/test-unarchive-zip state=absent
+
+- name: remove our test file for the archive
+  file: path={{output_dir}}/foo-unarchive.txt state=absent

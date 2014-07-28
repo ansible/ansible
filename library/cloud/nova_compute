@@ -107,6 +107,12 @@ options:
         - The amount of time the module should wait for the VM to get into active state
      required: false
      default: 180
+   user_data:
+     description:
+        - Opaque blob of data which is made available to the instance
+     required: false
+     default: None
+     version_added: "1.6"
 requirements: ["novaclient"]
 '''
 
@@ -157,6 +163,8 @@ def _create_server(module, nova):
                 'meta' : module.params['meta'],
                 'key_name': module.params['key_name'],
                 'security_groups': module.params['security_groups'].split(','),
+                #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
+                'userdata': module.params['user_data'],
     }
     if not module.params['key_name']:
         del bootkwargs['key_name']
@@ -193,7 +201,12 @@ def _get_server_state(module, nova):
     try:
         servers = nova.servers.list(True, {'name': module.params['name']})
         if servers:
-            server = [x for x in servers if x.name == module.params['name']][0]
+            # the {'name': module.params['name']} will also return servers
+            # with names that partially match the server name, so we have to
+            # strictly filter here
+            servers = [x for x in servers if x.name == module.params['name']]
+            if servers:
+                server = servers[0]
     except Exception, e:
         module.fail_json(msg = "Error in getting the server list: %s" % e.message)
     if server and module.params['state'] == 'present':
@@ -227,7 +240,8 @@ def main():
         meta                            = dict(default=None),
         wait                            = dict(default='yes', choices=['yes', 'no']),
         wait_for                        = dict(default=180),
-        state                           = dict(default='present', choices=['absent', 'present'])
+        state                           = dict(default='present', choices=['absent', 'present']),
+        user_data                       = dict(default=None)
         ),
     )
 
@@ -235,12 +249,13 @@ def main():
                               module.params['login_password'],
                               module.params['login_tenant_name'],
                               module.params['auth_url'],
+                              region_name=module.params['region_name'],
                               service_type='compute')
     try:
         nova.authenticate()
-    except exc.Unauthorized, e:
+    except exceptions.Unauthorized, e:
         module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exc.AuthorizationFailure, e:
+    except exceptions.AuthorizationFailure, e:
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':

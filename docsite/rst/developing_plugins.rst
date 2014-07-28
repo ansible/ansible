@@ -14,7 +14,7 @@ as often.
 Connection Type Plugins
 -----------------------
 
-By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and an accelerated connection type named 'fireball' (superseded in 1.3 by :doc:`playbooks_acceleration`) -- there are also some minor players like 'chroot' and 'jail'.  All of these can be used
+By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and there are also some minor players like 'chroot' and 'jail'.  All of these can be used
 in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
 are covered in the :doc:`intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
 Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
@@ -96,7 +96,7 @@ Development
 +++++++++++
 
 More information will come later, though see the source of any of the existing callbacks and you should be able to get started quickly.
-They should be reasonably self explanatory.
+They should be reasonably self-explanatory.
 
 .. _distributing_plugins:
 

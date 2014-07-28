@@ -47,6 +47,14 @@ options:
     description:
     - Control if the logical volume exists.
     required: false
+  force:
+    version_added: "1.5"
+    choices: [ "yes", "no" ]
+    default: "no"
+    description:
+    - Shrink or remove operations of volumes requires this switch. Ensures that
+      that filesystems get never corrupted/destroyed by mistake.
+    required: false
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -65,14 +73,16 @@ EXAMPLES = '''
 - lvol: vg=firefly lv=test size=1024
 
 # Reduce the logical volume to 512m
-- lvol: vg=firefly lv=test size=512
+- lvol: vg=firefly lv=test size=512 force=yes
 
 # Remove the logical volume.
-- lvol: vg=firefly lv=test state=absent
+- lvol: vg=firefly lv=test state=absent force=yes
 '''
 
 import re
+
 decimal_point = re.compile(r"(\.|,)")
+
 
 def parse_lvs(data):
     lvs = []
@@ -84,13 +94,15 @@ def parse_lvs(data):
         })
     return lvs
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             vg=dict(required=True),
             lv=dict(required=True),
             size=dict(),
             state=dict(choices=["absent", "present"], default='present'),
+            force=dict(type='bool', default='no'),
         ),
         supports_check_mode=True,
     )
@@ -99,16 +111,14 @@ def main():
     lv = module.params['lv']
     size = module.params['size']
     state = module.params['state']
+    force = module.boolean(module.params['force'])
     size_opt = 'L'
     size_unit = 'm'
-
-    if state=='present' and not size:
-        module.fail_json(msg="No size given.")
 
     if size:
         # LVCREATE(8) -l --extents option with percentage
         if '%' in size:
-            size_parts = size.split('%',1)
+            size_parts = size.split('%', 1)
             size_percent = int(size_parts[0])
             if size_percent > 100:
                 module.fail_json(msg="Size percentage cannot be larger than 100%")
@@ -141,13 +151,15 @@ def main():
         unit = 'm'
     else:
         unit = size_unit
-    rc,current_lvs,err = module.run_command("lvs --noheadings -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
+
+    rc, current_lvs, err = module.run_command(
+        "lvs --noheadings -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
 
     if rc != 0:
         if state == 'absent':
-            module.exit_json(changed=False,stdout="Volume group %s does not exist." % vg, stderr=False)
+            module.exit_json(changed=False, stdout="Volume group %s does not exist." % vg, stderr=False)
         else:
-            module.fail_json(msg="Volume group %s does not exist."%vg, rc=rc, err=err)
+            module.fail_json(msg="Volume group %s does not exist." % vg, rc=rc, err=err)
 
     changed = False
 
@@ -160,6 +172,12 @@ def main():
     else:
         this_lv = None
 
+    if state == 'present' and not size:
+        if this_lv is None:
+            module.fail_json(msg="No size given.")
+        else:
+            module.exit_json(changed=False, vg=vg, lv=this_lv['name'], size=this_lv['size'])
+
     msg = ''
     if this_lv is None:
         if state == 'present':
@@ -167,21 +185,23 @@ def main():
             if module.check_mode:
                 changed = True
             else:
-                rc,_,err = module.run_command("lvcreate -n %s -%s %s%s %s"%(lv, size_opt, size, size_unit, vg))
+                rc, _, err = module.run_command("lvcreate -n %s -%s %s%s %s" % (lv, size_opt, size, size_unit, vg))
                 if rc == 0:
                     changed = True
                 else:
-                    module.fail_json(msg="Creating logical volume '%s' failed"%(lv), rc=rc, err=err)
+                    module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
     else:
         if state == 'absent':
             ### remove LV
             if module.check_mode:
                 module.exit_json(changed=True)
-            rc,_,err = module.run_command("lvremove --force %s/%s"%(vg,this_lv['name']))
+            if not force:
+                module.fail_json(msg="Sorry, no removal of logical volume %s without force=yes." % (this_lv['name']))
+            rc, _, err = module.run_command("lvremove --force %s/%s" % (vg, this_lv['name']))
             if rc == 0:
                 module.exit_json(changed=True)
             else:
-                module.fail_json(msg="Failed to remove logical volume %s"%(lv),rc=rc, err=err)
+                module.fail_json(msg="Failed to remove logical volume %s" % (lv), rc=rc, err=err)
 
         elif size_opt == 'l':
             module.exit_json(changed=False, msg="Resizing extents with percentage not supported.")
@@ -191,20 +211,25 @@ def main():
             if size > this_lv['size']:
                 tool = 'lvextend'
             elif size < this_lv['size']:
+                if not force:
+                    module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
                 tool = 'lvreduce --force'
 
             if tool:
                 if module.check_mode:
                     changed = True
                 else:
-                    rc,_,err = module.run_command("%s -%s %s%s %s/%s"%(tool, size_opt, size, size_unit, vg, this_lv['name']))
+                    rc, _, err = module.run_command("%s -%s %s%s %s/%s" % (tool, size_opt, size, size_unit, vg, this_lv['name']))
                     if rc == 0:
                         changed = True
+                    elif "matches existing size" in err:
+                        module.exit_json(changed=False, vg=vg, lv=this_lv['name'], size=this_lv['size'])
                     else:
-                        module.fail_json(msg="Unable to resize %s to %s%s"%(lv,size,size_unit),rc=rc,err=err)
+                        module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err)
 
-    module.exit_json(changed=changed,msg=msg)
+    module.exit_json(changed=changed, msg=msg)
 
 # import module snippets
 from ansible.module_utils.basic import *
+
 main()

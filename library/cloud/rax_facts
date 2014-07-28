@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_facts
@@ -22,52 +24,6 @@ description:
      - Gather facts for Rackspace Cloud Servers.
 version_added: "1.4"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  auth_endpoint:
-    description:
-      - The URI of the authentication service
-    default: https://identity.api.rackspacecloud.com/v2.0/
-    version_added: 1.5
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  env:
-    description:
-      - Environment as configured in ~/.pyrax.cfg,
-        see https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration
-    version_added: 1.5
-  identity_type:
-    description:
-      - Authentication machanism to use, such as rackspace or keystone
-    default: rackspace
-    version_added: 1.5
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
-  tenant_id:
-    description:
-      - The tenant ID used for authentication
-    version_added: 1.5
-  tenant_name:
-    description:
-      - The tenant name used for authentication
-    version_added: 1.5
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-  verify_ssl:
-    description:
-      - Whether or not to require SSL validation of API endpoints
-    version_added: 1.5
   address:
     description:
       - Server IP address to retrieve facts for, will match any IP assigned to
@@ -79,15 +35,8 @@ options:
     description:
       - Server name to retrieve facts for
     default: null
-requirements: [ "pyrax" ]
 author: Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -106,16 +55,13 @@ EXAMPLES = '''
         ansible_ssh_host: "{{ rax_accessipv4 }}"
 '''
 
-import sys
-import os
-
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
@@ -138,11 +84,17 @@ def rax_facts(module, address, name, server_id):
     changed = False
 
     cs = pyrax.cloudservers
+
+    if cs is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     ansible_facts = {}
 
     search_opts = {}
     if name:
-        search_opts = dict(name=name)
+        search_opts = dict(name='^%s$' % name)
         try:
             servers = cs.servers.list(search_opts=search_opts)
         except Exception, e:
@@ -189,6 +141,9 @@ def main():
         mutually_exclusive=[['address', 'id', 'name']],
         required_one_of=[['address', 'id', 'name']],
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     address = module.params.get('address')
     server_id = module.params.get('id')

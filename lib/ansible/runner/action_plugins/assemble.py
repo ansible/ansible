@@ -21,6 +21,7 @@ import os.path
 import pipes
 import shutil
 import tempfile
+import base64
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
@@ -31,18 +32,43 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def _assemble_from_fragments(self, src_path, delimiter=None):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None):
         ''' assemble a file from a directory of fragments '''
         tmpfd, temp_path = tempfile.mkstemp()
         tmp = os.fdopen(tmpfd,'w')
         delimit_me = False
+        add_newline = False
+
         for f in sorted(os.listdir(src_path)):
+            if compiled_regexp and not compiled_regexp.search(f):
+                continue
             fragment = "%s/%s" % (src_path, f)
-            if delimit_me and delimiter:
-                tmp.write(delimiter)
-            if os.path.isfile(fragment):
-                tmp.write(file(fragment).read())
+            if not os.path.isfile(fragment):
+                continue
+            fragment_content = file(fragment).read()
+
+            # always put a newline between fragments if the previous fragment didn't end with a newline.
+            if add_newline:
+                tmp.write('\n')
+
+            # delimiters should only appear between fragments
+            if delimit_me:
+                if delimiter:
+                    # un-escape anything like newlines
+                    delimiter = delimiter.decode('unicode-escape')
+                    tmp.write(delimiter)
+                    # always make sure there's a newline after the
+                    # delimiter, so lines don't run together
+                    if delimiter[-1] != '\n':
+                        tmp.write('\n')
+
+            tmp.write(fragment_content)
             delimit_me = True
+            if fragment_content.endswith('\n'):
+                add_newline = False
+            else:
+                add_newline = True
+
         tmp.close()
         return temp_path
 
@@ -52,12 +78,14 @@ class ActionModule(object):
         options  = {}
         if complex_args:
             options.update(complex_args)
+
         options.update(utils.parse_kv(module_args))
 
         src = options.get('src', None)
         dest = options.get('dest', None)
         delimiter = options.get('delimiter', None)
-        remote_src = options.get('remote_src', True)
+        remote_src = utils.boolean(options.get('remote_src', 'yes'))
+
 
         if src is None or dest is None:
             result = dict(failed=True, msg="src and dest are required")
@@ -65,6 +93,11 @@ class ActionModule(object):
 
         if remote_src:
             return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
+        elif '_original_file' in inject:
+            src = utils.path_dwim_relative(inject['_original_file'], 'files', src, self.runner.basedir)
+        else:
+            # the source is local, so expand it here
+            src = os.path.expanduser(src)
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter)
@@ -86,17 +119,28 @@ class ActionModule(object):
 
             # fix file permissions when the copy is done as a different user
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+                self.runner._remote_chmod(conn, 'a+r', xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            new_module_args = dict(
+                src=xfered,
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             if self.runner.noop_on_check(inject):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
-                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject)
                 res.diff = dict(after=resultant)
                 return res
         else:
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
+            new_module_args = dict(
+                src=xfered,
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
+
+            return self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject)

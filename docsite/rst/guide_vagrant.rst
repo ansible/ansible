@@ -7,13 +7,13 @@ Introduction
 ````````````
 
 Vagrant is a tool to manage virtual machine environments, and allows you to
-configure and use reproducable work environments on top of various
+configure and use reproducible work environments on top of various
 virtualization and cloud platforms. It also has integration with Ansible as a
 provisioner for these virtual machines, and the two tools work together well.
 
 This guide will describe how to use Vagrant and Ansible together.
 
-If you're not familar with Vagrant, you should visit `the documentation
+If you're not familiar with Vagrant, you should visit `the documentation
 <http://docs.vagrantup.com/v2/>`_.
 
 This guide assumes that you already have Ansible installed and working.

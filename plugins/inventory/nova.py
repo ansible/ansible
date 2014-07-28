@@ -17,118 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION = '''
----
-inventory: nova
-short_description: OpenStack external inventory script
-description:
-  - Generates inventory that Ansible can understand by making API request to OpenStack endpoint using the novaclient library.
-  - |
-    When run against a specific host, this script returns the following variables:
-        os_os-ext-sts_task_state
-        os_addresses
-        os_links
-        os_image
-        os_os-ext-sts_vm_state
-        os_flavor
-        os_id
-        os_rax-bandwidth_bandwidth
-        os_user_id
-        os_os-dcf_diskconfig
-        os_accessipv4
-        os_accessipv6
-        os_progress
-        os_os-ext-sts_power_state
-        os_metadata
-        os_status
-        os_updated
-        os_hostid
-        os_name
-        os_created
-        os_tenant_id
-        os__info
-        os__loaded
-
-    where some item can have nested structure.
-  - All information are set on B(nova.ini) file
-version_added: None
-options:
-  version:
-    description:
-      - OpenStack version to use.
-    required: true
-    default: null
-    choices: [ "1.1", "2" ]
-  username:
-    description:
-      - Username used to authenticate in OpenStack.
-    required: true
-    default: null
-  api_key:
-    description:
-      - Password used to authenticate in OpenStack, can be the ApiKey on some authentication system.
-    required: true
-    default: null
-  auth_url:
-    description:
-      - Authentication URL required to generate token.
-      - To manage RackSpace use I(https://identity.api.rackspacecloud.com/v2.0/)
-    required: true
-    default: null
-  auth_system:
-    description:
-      - Authentication system used to login
-      - To manage RackSpace install B(rackspace-novaclient) and insert I(rackspace)
-    required: true
-    default: null
-  region_name:
-    description:
-      - Region name to use in request
-      - In RackSpace some value can be I(ORD) or I(DWF).
-    required: true
-    default: null
-  project_id:
-    description:
-      - Project ID to use in connection
-      - In RackSpace use OS_TENANT_NAME
-    required: false
-    default: null
-  endpoint_type:
-    description:
-      - The endpoint type for novaclient
-      - In RackSpace use 'publicUrl'
-    required: false
-    default: null
-  service_type:
-    description:
-      - The service type you are managing.
-      - In RackSpace use 'compute'
-    required: false
-    default: null
-  service_name:
-    description:
-      - The service name you are managing.
-      - In RackSpace use 'cloudServersOpenStack'
-    required: false
-    default: null
-  insicure:
-    description:
-      - To no check security
-    required: false
-    default: false
-    choices: [ "true", "false" ]
-author: Marco Vito Moscaritolo
-notes:
-  - This script assumes Ansible is being executed where the environment variables needed for novaclient have already been set on nova.ini file
-  - For more details, see U(https://github.com/openstack/python-novaclient)
-examples:
-    - description: List instances
-      code: nova.py --list
-    - description: Instance property
-      code: nova.py --instance INSTANCE_IP
-'''
-
-
 import sys
 import re
 import os
@@ -144,23 +32,29 @@ except:
 # executed with no parameters, return the list of
 # all groups and hosts
 
-def nova_load_config_file():
-    p = ConfigParser.SafeConfigParser()
-    path1 = os.getcwd() + "/nova.ini"
-    path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini"))
-    path3 = "/etc/ansible/nova.ini"
+NOVA_CONFIG_FILES = [os.getcwd() + "/nova.ini",
+                     os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
+                     "/etc/ansible/nova.ini"]
 
-    if os.path.exists(path1):
-        p.read(path1)
-    elif os.path.exists(path2):
-        p.read(path2)
-    elif os.path.exists(path3):
-        p.read(path3)
-    else:
-        return None
-    return p
+NOVA_DEFAULTS = {
+    'auth_system': None,
+    'region_name': None,
+}
+
+
+def nova_load_config_file():
+    p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
+
+    for path in NOVA_CONFIG_FILES:
+        if os.path.exists(path):
+            p.read(path)
+            return p
+
+    return None
 
 config = nova_load_config_file()
+if not config:
+    sys.exit('Unable to find configfile in %s' % ', '.join(NOVA_CONFIG_FILES))
 
 client = nova_client.Client(
     version     = config.get('openstack', 'version'),
@@ -199,7 +93,7 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 		continue
 
     # Return server list
-    print json.dumps(groups)
+    print(json.dumps(groups, sort_keys=True, indent=2))
     sys.exit(0)
 
 #####################################################
@@ -228,7 +122,7 @@ elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
                 if key != 'os_manager':
                     results[key] = value
 
-    print json.dumps(results)
+    print(json.dumps(results, sort_keys=True, indent=2))
     sys.exit(0)
 
 else:

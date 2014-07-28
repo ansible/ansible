@@ -63,6 +63,14 @@ options:
     description:
       - The environment for this deployment
     required: false
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -75,28 +83,11 @@ EXAMPLES = '''
                        revision=1.0
 '''
 
-HAS_URLLIB = True
-try:
-    import urllib
-except ImportError:
-    HAS_URLLIB = False
-
-HAS_URLLIB2 = True
-try:
-    import urllib2
-except ImportError:
-    HAS_URLLIB2 = False
-
 # ===========================================
 # Module execution.
 #
 
 def main():
-
-    if not HAS_URLLIB:
-        module.fail_json(msg="urllib is not installed")
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -109,6 +100,7 @@ def main():
             user=dict(required=False),
             appname=dict(required=False),
             environment=dict(required=False),
+            validate_certs = dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -134,29 +126,20 @@ def main():
         module.exit_json(changed=True)
 
     # Send the data to NewRelic
-    try:
-        req = urllib2.Request("https://rpm.newrelic.com/deployments.xml", urllib.urlencode(params))
-        req.add_header('x-api-key',module.params["token"])
-        result=urllib2.urlopen(req)
-        # urlopen behaves differently in python 2.4 and 2.6 so we handle
-        # both cases here.  In python 2.4 it throws an exception if the
-        # return code is anything other than a 200.  In python 2.6 it
-        # doesn't throw an exception for any 2xx return codes.  In both
-        # cases we expect newrelic should return a 201 on success. So 
-        # to handle both cases, both the except & else cases below are
-        # effectively identical.
-    except Exception, e:
-        if e.code == 201:
-            module.exit_json(changed=True)
-        else:
-            module.fail_json(msg="unable to update newrelic: %s" % e)
+    url = "https://rpm.newrelic.com/deployments.xml"
+    data = urllib.urlencode(params)
+    headers = {
+        'x-api-key': module.params["token"],
+    }
+    response, info = fetch_url(module, url, data=data, headers=headers)
+    if info['status'] in (200, 201):
+        module.exit_json(changed=True)
     else:
-        if result.code == 201:
-            module.exit_json(changed=True)
-        else:
-            module.fail_json(msg="result code: %d" % result.code)
+        module.fail_json(msg="unable to update newrelic: %s" % info['msg'])
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()
 
