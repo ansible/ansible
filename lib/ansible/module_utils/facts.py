@@ -1381,7 +1381,9 @@ class Darwin(Hardware):
         return system_profile
 
     def get_mac_facts(self):
-        self.facts['model'] = self.sysctl['hw.model']
+        rc, out, err = module.run_command("sysctl hw.model")
+        if rc == 0:
+            self.facts['model'] = out.splitlines()[-1].split()[1]
         self.facts['osversion'] = self.sysctl['kern.osversion']
         self.facts['osrevision'] = self.sysctl['kern.osrevision']
 
@@ -1396,7 +1398,10 @@ class Darwin(Hardware):
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024
-        self.facts['memfree_mb'] = long(self.sysctl['hw.usermem']) / 1024 / 1024
+
+        rc, out, err = module.run_command("sysctl hw.usermem")
+        if rc == 0:
+            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
 class Network(Facts):
     """
