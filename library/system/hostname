@@ -259,7 +259,7 @@ class FedoraStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out
+        return out.strip()
 
     def set_permanent_hostname(self, name):
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
