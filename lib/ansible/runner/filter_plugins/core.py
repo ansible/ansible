@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import base64
 import json
 import os.path
@@ -25,11 +26,13 @@ import glob
 import re
 import collections
 import operator as py_operator
+import hashlib
 from ansible import errors
-from ansible.utils import md5s
+from ansible.utils import md5s, OMIT_PLACE_HOLDER
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
 from jinja2.filters import environmentfilter
+
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -234,6 +237,15 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+def default_omit(a):
+    try:
+        a
+    except NameError:
+        return OMIT_PLACE_HOLDER
+    else:
+        return a
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -305,5 +317,6 @@ class FilterModule(object):
 
             # random numbers
             'random': rand,
-        }
 
+            'default_omit': default_omit,
+        }
