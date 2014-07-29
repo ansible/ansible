@@ -270,7 +270,7 @@ import time
 try:
     import boto.rds
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 def get_current_resource(conn, resource, command):
