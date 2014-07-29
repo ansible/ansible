@@ -57,6 +57,7 @@ MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 # to check for lookup calls within data
 LOOKUP_REGEX=re.compile(r'lookup\s*\(')
 
+
 try:
     import json
 except ImportError:
@@ -105,6 +106,11 @@ try:
         KEYCZAR_AVAILABLE=True
 except ImportError:
     pass
+
+
+OMIT_PLACE_HOLDER = (
+    '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+)
 
 ###############################################################
 # Abstractions around keyczar

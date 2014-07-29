@@ -48,6 +48,7 @@ from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
 from ansible.module_utils.splitter import split_args
+from ansible.utils import OMIT_PLACE_HOLDER
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -725,14 +726,6 @@ class Runner(object):
         if self.su_user_var is not None:
             self.su_user = template.template(self.basedir, self.su_user_var, inject)
 
-        # allow module args to work as a dictionary
-        # though it is usually a string
-        new_args = ""
-        if type(module_args) == dict:
-            for (k,v) in module_args.iteritems():
-                new_args = new_args + "%s='%s' " % (k,v)
-            module_args = new_args
-
         # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
 
@@ -856,6 +849,18 @@ class Runner(object):
         # action plugins may DECLARE via TRANSFERS_FILES = True that they need a remote tmp path working dir
         if self._early_needs_tmp_path(module_name, handler):
             tmp = self._make_tmp_path(conn)
+
+        # allow module args to work as a dictionary
+        # though it is usually a string
+        if type(module_args) == dict:
+            new_args = []
+            for (k, v) in module_args.iteritems():
+                # see if the value is OMIT_PLACE_HOLDER, if it is, skip it
+                arg_value = template.template(self.basedir, v, inject, fail_on_undefined=self.error_on_undefined_vars)
+                if arg_value.strip() == OMIT_PLACE_HOLDER:
+                    continue
+                new_args.append("%s='%s'" % (k, v))
+            module_args = ' '.join(new_args)
 
         # render module_args and complex_args templates
         try:
