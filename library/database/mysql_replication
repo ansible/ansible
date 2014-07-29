@@ -167,13 +167,13 @@ def changemaster(cursor, chm):
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
 
-    >>> print strip_quotes('hello')
+    >>> print(strip_quotes('hello'))
     hello
-    >>> print strip_quotes('"hello"')
+    >>> print(strip_quotes('"hello"'))
     hello
-    >>> print strip_quotes("'hello'")
+    >>> print(strip_quotes("'hello'"))
     hello
-    >>> print strip_quotes("'hello")
+    >>> print(strip_quotes("'hello"))
     'hello
 
     """
@@ -316,7 +316,7 @@ def main():
             module.fail_json(msg="Server is not configured as mysql slave")
 
     elif mode in "changemaster":
-        print "Change master"
+        print("Change master")
         chm=[]
         if master_host:
             chm.append("MASTER_HOST='" + master_host + "'")

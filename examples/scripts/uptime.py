@@ -15,17 +15,17 @@ if results is None:
    print("No hosts found")
    sys.exit(1)
 
-print "UP ***********"
+print("UP ***********")
 for (hostname, result) in results['contacted'].items():
     if not 'failed' in result:
         print("%s >>> %s" % (hostname, result['stdout']))
 
-print "FAILED *******"
+print("FAILED *******")
 for (hostname, result) in results['contacted'].items():
     if 'failed' in result:
         print("%s >>> %s" % (hostname, result['msg']))
 
-print "DOWN *********"
+print("DOWN *********")
 for (hostname, result) in results['dark'].items():
     print("%s >>> %s" % (hostname, result))
 

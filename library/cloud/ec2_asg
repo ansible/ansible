@@ -116,7 +116,7 @@ try:
     from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup, Tag
     from boto.exception import BotoServerError
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 ASG_ATTRIBUTES = ('launch_config_name', 'max_size', 'min_size', 'desired_capacity',
