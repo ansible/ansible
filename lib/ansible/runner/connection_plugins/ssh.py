@@ -28,6 +28,7 @@ import hmac
 import pwd
 import gettext
 import pty
+import tempfile
 from hashlib import sha1
 import ansible.constants as C
 from ansible.callbacks import vvv
@@ -203,55 +204,30 @@ class Connection(object):
         stdin.close()
         return (p.returncode, stdout, stderr)
 
-    def not_in_host_file(self, host):
-        if 'USER' in os.environ:
-            user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
-        else:
-            user_host_file = "~/.ssh/known_hosts"
-        user_host_file = os.path.expanduser(user_host_file)
-        
-        host_file_list = []
-        host_file_list.append(user_host_file)
-        host_file_list.append("/etc/ssh/ssh_known_hosts")
-        host_file_list.append("/etc/ssh/ssh_known_hosts2")
-        
-        hfiles_not_found = 0
-        for hf in host_file_list:
-            if not os.path.exists(hf):
-                hfiles_not_found += 1
-                continue
-            try:
-                host_fh = open(hf)
-            except IOError, e:
-                hfiles_not_found += 1
-                continue
-            else:
-                data = host_fh.read()
-                host_fh.close()
-                
-            for line in data.split("\n"):
-                if line is None or " " not in line:
-                    continue
-                tokens = line.split()
-                if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
-                    # this is a hashed known host entry
-                    try:
-                        (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
-                        hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
-                        hash.update(host)
-                        if hash.digest() == kn_host.decode('base64'):
-                            return False
-                    except:
-                        # invalid hashed host key, skip it
-                        continue
-                else:
-                    # standard host file entry
-                    if host in tokens[0]:
-                        return False
+    def in_known_hosts_file(self, host, port):
+        # there is some potentially different hosts
+        # e.g. port 22 has different host key then port 2222
+        # format is documented in `man ssh`
+        # port 22 normally uses the unbracketed version
+        potential_hosts = host
+        if port != 22:
+            potential_host = "[%s]:%d" % (host, port)
 
-        if (hfiles_not_found == len(host_file_list)):
-            vvv("EXEC previous known host file not found for %s" % host)
-        return True
+        # check if there is a host using ssh-keygen
+        cmd = ['ssh-keygen', '-F', potential_host]
+
+        tfd = tempfile.TemporaryFile()
+        p = subprocess.Popen(cmd, stdout=tfd, stderr=subprocess.DEVNULL)
+        p.wait()
+        tfd.seek(0)
+        output = tfd.read()
+        tfd.close()
+
+        # can't use p.returncode since is always 0 for -F
+        # on bsd systems and older openssh versions
+        # use the fact that it spits outputs the keys
+        host_found = len(output) != 0
+        return host_found
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
         ''' run a command on the remote host '''
@@ -289,9 +265,9 @@ class Connection(object):
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
 
-        not_in_host_file = self.not_in_host_file(self.host)
+        in_known_hosts_file = not self.in_known_hosts_file(self.host, self.port)
 
-        if C.HOST_KEY_CHECKING and not_in_host_file:
+        if C.HOST_KEY_CHECKING and not in_known_hosts_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
@@ -355,7 +331,7 @@ class Connection(object):
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
-        if C.HOST_KEY_CHECKING and not_in_host_file:
+        if C.HOST_KEY_CHECKING and not in_known_hosts_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
