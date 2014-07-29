@@ -122,6 +122,14 @@
   register: result
 
 - name: test includes with quoted params
-  include: test_include.yml param="this is a param"
+  include: test_include.yml param="this is a param with double quotes"
   register: result
 
+- name: test includes with single quoted params
+  include: test_include.yml param='this is a param with single quotes'
+  register: result
+
+- name: test includes with quoted params in complex args
+  include: test_include.yml
+  vars:
+    param: "this is a param in a complex arg with double quotes"
