@@ -1,1 +1,1 @@
-- debug: var=param
+- set_fact: "{{fact_name}}='{{param}}'"
