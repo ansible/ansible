@@ -855,10 +855,6 @@ class Runner(object):
         if type(module_args) == dict:
             new_args = []
             for (k, v) in module_args.iteritems():
-                # see if the value is OMIT_PLACE_HOLDER, if it is, skip it
-                arg_value = template.template(self.basedir, v, inject, fail_on_undefined=self.error_on_undefined_vars)
-                if arg_value.strip() == OMIT_PLACE_HOLDER:
-                    continue
                 new_args.append("%s='%s'" % (k, v))
             module_args = ' '.join(new_args)
 
@@ -882,6 +878,13 @@ class Runner(object):
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
+        # filter omitted arguments out
+        new_complex_args = {}
+        for key, value in complex_args.iteritems():
+            if value == OMIT_PLACE_HOLDER:
+                continue
+            new_complex_args[key] = value
+        complex_args = new_complex_args
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature

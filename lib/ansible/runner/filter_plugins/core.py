@@ -31,6 +31,7 @@ from ansible.utils import md5s, OMIT_PLACE_HOLDER
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
 from jinja2.filters import environmentfilter
+from jinja2.runtime import Undefined
 
 
 def to_nice_yaml(*a, **kw):
@@ -205,13 +206,11 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+
 def default_omit(a):
-    try:
-        a
-    except NameError:
+    if isinstance(a, Undefined):
         return OMIT_PLACE_HOLDER
-    else:
-        return a
+    return a
 
 
 class FilterModule(object):
