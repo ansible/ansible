@@ -118,18 +118,38 @@
        - result.cmd == "echo foo --arg=a --arg=b"
 
 - name: test includes with params
-  include: test_include.yml param={{ test_input }}
-  register: result
+  include: test_include.yml fact_name=include_params param="{{ test_input }}"
+
+- name: assert the include set the correct fact for the param
+  assert:
+    that:
+      - include_params == test_input
 
 - name: test includes with quoted params
-  include: test_include.yml param="this is a param with double quotes"
-  register: result
+  include: test_include.yml fact_name=double_quoted_param param="this is a param with double quotes"
+
+- name: assert the include set the correct fact for the double quoted param
+  assert:
+    that:
+      - double_quoted_param == "this is a param with double quotes"
 
 - name: test includes with single quoted params
-  include: test_include.yml param='this is a param with single quotes'
-  register: result
+  include: test_include.yml fact_name=single_quoted_param param='this is a param with single quotes'
+
+- name: assert the include set the correct fact for the single quoted param
+  assert:
+    that:
+      - single_quoted_param == "this is a param with single quotes"
 
 - name: test includes with quoted params in complex args
   include: test_include.yml
   vars:
+    fact_name: complex_param
     param: "this is a param in a complex arg with double quotes"
+
+- name: assert the include set the correct fact for the params in complex args
+  assert:
+    that:
+      - complex_param == "this is a param in a complex arg with double quotes"
+
+
