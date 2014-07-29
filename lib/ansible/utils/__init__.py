@@ -61,6 +61,7 @@ LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 PRINT_CODE_REGEX = re.compile(r'(?:{[{%]|[%}]})')
 CODE_REGEX = re.compile(r'(?:{%|%})')
 
+
 try:
     import json
 except ImportError:
@@ -109,6 +110,11 @@ try:
         KEYCZAR_AVAILABLE=True
 except ImportError:
     pass
+
+
+OMIT_PLACE_HOLDER = (
+    '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+)
 
 ###############################################################
 # Abstractions around keyczar
