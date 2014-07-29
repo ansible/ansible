@@ -25,7 +25,7 @@ try:
     from keystoneclient.v2_0 import client as ksclient
     import time
 except ImportError:
-    print "failed=True msg='novaclient, keystone, and quantumclient (or neutronclient) client are required'"
+    print("failed=True msg='novaclient, keystone, and quantumclient (or neutronclient) client are required'")
 
 DOCUMENTATION = '''
 ---

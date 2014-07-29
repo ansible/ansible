@@ -1022,7 +1022,7 @@ class AnsibleModule(object):
         if not 'changed' in kwargs:
             kwargs['changed'] = False
         self.do_cleanup_files()
-        print self.jsonify(kwargs)
+        print(self.jsonify(kwargs))
         sys.exit(0)
 
     def fail_json(self, **kwargs):
@@ -1031,7 +1031,7 @@ class AnsibleModule(object):
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
         self.do_cleanup_files()
-        print self.jsonify(kwargs)
+        print(self.jsonify(kwargs))
         sys.exit(1)
 
     def is_executable(self, path):

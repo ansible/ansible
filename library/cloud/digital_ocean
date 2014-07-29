@@ -170,11 +170,11 @@ try:
     import dopy
     from dopy.manager import DoError, DoManager
 except ImportError, e:
-    print "failed=True msg='dopy >= 0.2.3 required for this module'"
+    print("failed=True msg='dopy >= 0.2.3 required for this module'")
     sys.exit(1)
 
 if dopy.__version__ < '0.2.3':
-    print "failed=True msg='dopy >= 0.2.3 required for this module'"
+    print("failed=True msg='dopy >= 0.2.3 required for this module'")
     sys.exit(1)
 
 class TimeoutError(DoError):

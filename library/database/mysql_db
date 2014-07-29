@@ -201,13 +201,13 @@ def db_create(cursor, db, encoding, collation):
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
 
-    >>> print strip_quotes('hello')
+    >>> print(strip_quotes('hello'))
     hello
-    >>> print strip_quotes('"hello"')
+    >>> print(strip_quotes('"hello"'))
     hello
-    >>> print strip_quotes("'hello'")
+    >>> print(strip_quotes("'hello'"))
     hello
-    >>> print strip_quotes("'hello")
+    >>> print(strip_quotes("'hello"))
     'hello
 
     """

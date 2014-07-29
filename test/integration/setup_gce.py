@@ -39,4 +39,4 @@ if __name__ == '__main__':
       gce.create_volume(
           size=10, name=prefix+'-extra', location='us-central1-a')
     except KeyboardInterrupt, e:
-        print "\nExiting on user command."
+        print("\nExiting on user command.")

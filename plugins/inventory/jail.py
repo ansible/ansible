@@ -30,8 +30,8 @@ result['all']['vars'] = {}
 result['all']['vars']['ansible_connection'] = 'jail'
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
-    print json.dumps(result)
+    print(json.dumps(result))
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print json.dumps({'ansible_connection': 'jail'})
+    print(json.dumps({'ansible_connection': 'jail'}))
 else:
-    print "Need a argument, either --list or --host <host>"
+    print("Need a argument, either --list or --host <host>")

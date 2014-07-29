@@ -200,7 +200,7 @@ class Facts(object):
                     fact="error loading fact - please check content"
                 else:
                     fact = {}
-                    #print cp.sections()
+                    #print(cp.sections())
                     for sect in cp.sections():
                         if sect not in fact:
                             fact[sect] = {}

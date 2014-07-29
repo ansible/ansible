@@ -464,7 +464,7 @@ def main():
 
 
     json_output['changed'] = changed
-    print json.dumps(json_output)
+    print(json.dumps(json_output))
     sys.exit(0)
 
 # import module snippets

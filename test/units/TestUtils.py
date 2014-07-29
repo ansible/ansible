@@ -665,9 +665,9 @@ class TestUtils(unittest.TestCase):
         # split_args is a smarter shlex.split for the needs of the way ansible uses it
 
         def _split_info(input, desired, actual):
-            print "SENT: ", input
-            print "WANT: ", desired 
-            print "GOT: ", actual
+            print("SENT: ", input)
+            print("WANT: ", desired)
+            print("GOT: ", actual)
 
         def _test_combo(input, desired):
             actual = split_args(input)

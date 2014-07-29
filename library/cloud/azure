@@ -179,8 +179,7 @@ try:
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
                                          ConfigurationSetInputEndpoint)
 except ImportError:
-    print
-    "failed=True msg='azure required for this module'"
+    print("failed=True msg='azure required for this module'")
     sys.exit(1)
 
 from distutils.version import LooseVersion

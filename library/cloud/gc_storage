@@ -115,7 +115,7 @@ import hashlib
 try:
     import boto
 except ImportError:
-    print "failed=True msg='boto 2.9+ required for this module'"
+    print("failed=True msg='boto 2.9+ required for this module'")
     sys.exit(1)
 
 def grant_check(module, gs, obj):

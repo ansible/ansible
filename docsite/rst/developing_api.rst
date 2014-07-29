@@ -70,22 +70,22 @@ The following script prints out the uptime information for all hosts::
     ).run()
 
     if results is None:
-       print "No hosts found"
+       print("No hosts found")
        sys.exit(1)
 
-    print "UP ***********"
+    print("UP ***********")
     for (hostname, result) in results['contacted'].items():
         if not 'failed' in result:
-            print "%s >>> %s" % (hostname, result['stdout'])
+            print("%s >>> %s" % (hostname, result['stdout']))
 
-    print "FAILED *******"
+    print("FAILED *******")
     for (hostname, result) in results['contacted'].items():
         if 'failed' in result:
-            print "%s >>> %s" % (hostname, result['msg'])
+            print("%s >>> %s" % (hostname, result['msg']))
 
-    print "DOWN *********"
+    print("DOWN *********")
     for (hostname, result) in results['dark'].items():
-        print "%s >>> %s" % (hostname, result)
+        print("%s >>> %s" % (hostname, result))
 
 Advanced programmers may also wish to read the source to ansible itself, for
 it uses the Runner() API (with all available options) to implement the

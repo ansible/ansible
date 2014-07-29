@@ -75,7 +75,7 @@ def select_playbook(path, args):
         playbook = "%s/%s" % (path, args[0])
         rc = try_playbook(playbook)
         if rc != 0:
-            print >>sys.stderr, "%s: %s" % (playbook, PLAYBOOK_ERRORS[rc])
+            sys.stderr.write("%s: %s\n" % (playbook, PLAYBOOK_ERRORS[rc]))
             return None
         return playbook
     else:
@@ -92,7 +92,7 @@ def select_playbook(path, args):
             else:
                 errors.append("%s: %s" % (pb, PLAYBOOK_ERRORS[rc]))
         if playbook is None:
-            print >>sys.stderr, "\n".join(errors)
+            sys.stderr.write("\n".join(errors))
         return playbook
 
 
@@ -148,7 +148,7 @@ def main(args):
         return 1
 
     now = datetime.datetime.now()
-    print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
+    sys.stderr.write(now.strftime("Starting ansible-pull at %F %T"))
 
     if not options.inventory:
         inv_opts = 'localhost,'
@@ -180,7 +180,7 @@ def main(args):
             parser.error("%s is not a number." % options.sleep)
             return 1
 
-        print >>sys.stderr, "Sleeping for %d seconds..." % secs
+        sys.stderr.write("Sleeping for %d seconds...\n" % secs)
         time.sleep(secs);
 
 
@@ -189,17 +189,17 @@ def main(args):
 
     if rc != 0:
         if options.force:
-            print "Unable to update repository. Continuing with (forced) run of playbook."
+            print("Unable to update repository. Continuing with (forced) run of playbook.")
         else:
             return rc
     elif options.ifchanged and '"changed": true' not in out:
-        print "Repository has not changed, quitting."
+        print("Repository has not changed, quitting.")
         return 0
 
     playbook = select_playbook(options.dest, args)
 
     if playbook is None:
-        print >>sys.stderr, "Could not find a playbook to run."
+        sys.stderr.write("Could not find a playbook to run.")
         return 1
 
     cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
@@ -221,7 +221,7 @@ def main(args):
         try:
             shutil.rmtree(options.dest)
         except Exception, e:
-            print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
+            sys.stderr.write("Failed to remove %s: %s" % (options.dest, str(e)))
 
     return rc
 
@@ -229,5 +229,5 @@ if __name__ == '__main__':
     try:
         sys.exit(main(sys.argv[1:]))
     except KeyboardInterrupt, e:
-        print >>sys.stderr, "Exit on user request.\n"
+        sys.stderr.write("Exit on user request.\n")
         sys.exit(1)

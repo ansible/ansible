@@ -1267,7 +1267,7 @@ class Runner(object):
             try:
                 results = self._parallel_exec(hosts)
             except IOError, ie:
-                print ie.errno
+                print(ie.errno)
                 if ie.errno == 32:
                     # broken pipe from Ctrl+C
                     raise errors.AnsibleError("interrupted")

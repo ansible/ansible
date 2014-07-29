@@ -93,6 +93,6 @@ def get_docstring(filename, verbose=False):
         traceback.print_exc() # temp
         if verbose == True:
             traceback.print_exc()
-            print "unable to parse %s" % filename
+            print("unable to parse %s" % filename)
     return doc, plainexamples
 

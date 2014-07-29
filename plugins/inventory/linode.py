@@ -139,7 +139,7 @@ class LinodeInventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        print(data_to_print)
 
     def is_cache_valid(self):
         """Determines if the cache file has expired, or if it is still valid."""
@@ -185,9 +185,8 @@ class LinodeInventory(object):
             for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
         except chube_api.linode_api.ApiError, e:
-            print "Looks like Linode's API is down:"
-            print
-            print e
+            print("Looks like Linode's API is down:\n")
+            print(e)
             sys.exit(1)
 
     def get_node(self, linode_id):
@@ -195,9 +194,8 @@ class LinodeInventory(object):
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError, e:
-            print "Looks like Linode's API is down:"
-            print
-            print e
+            print("Looks like Linode's API is down:\n")
+            print(e)
             sys.exit(1)
 
     def populate_datacenter_cache(self):

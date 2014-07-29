@@ -162,7 +162,7 @@ class CollinsInventory(object):
         else:  # default action with no options
             data_to_print = self.json_format_dict(self.inventory, self.args.pretty)
 
-        print data_to_print
+        print(data_to_print)
         return successful
 
     def find_assets(self, attributes = {}, operation = 'AND'):

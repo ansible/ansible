@@ -46,7 +46,7 @@ LESS_OPTS = 'FRSX' # -F (quit-if-one-screen) -R (allow raw ansi control chars)
 
 def pager_print(text):
     ''' just print text '''
-    print text
+    print(text)
 
 def pager_pipe(text, cmd):
     ''' pipe text through a pager '''

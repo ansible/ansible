@@ -145,7 +145,7 @@ try:
     from boto import route53
     from boto.route53.record import ResourceRecordSets
 except ImportError:
-    print "failed=True msg='boto required for this module'"
+    print("failed=True msg='boto required for this module'")
     sys.exit(1)
 
 def commit(changes, retry_interval):

@@ -48,9 +48,9 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
     import json
 
     date = str(datetime.datetime.now())
-    print json.dumps({
+    print(json.dumps({
         "time" : date
-    })
+    }))
 
 .. _module_testing:
 
@@ -151,10 +151,10 @@ a lot shorter than this::
                 # can be added.
 
                 if rc != 0:
-                    print json.dumps({
+                    print(json.dumps({
                         "failed" : True,
                         "msg"    : "failed setting the time"
-                    })
+                    }))
                     sys.exit(1)
 
                 # when things do not fail, we do not
@@ -165,10 +165,10 @@ a lot shorter than this::
                 # notifiers to be used in playbooks.
 
                 date = str(datetime.datetime.now())
-                print json.dumps({
+                print(json.dumps({
                     "time" : date,
                     "changed" : True
-                })
+                }))
                 sys.exit(0)
 
     # if no parameters are sent, the module may or
@@ -176,9 +176,9 @@ a lot shorter than this::
     # return the time
 
     date = str(datetime.datetime.now())
-    print json.dumps({
+    print(json.dumps({
         "time" : date
-    })
+    }))
 
 Let's test that module::
 
@@ -298,7 +298,7 @@ Common Pitfalls
 
 You should also never do this in a module::
 
-    print "some status message"
+    print("some status message")
 
 Because the output is supposed to be valid JSON.  Except that's not quite true,
 but we'll get to that later.
