@@ -209,7 +209,8 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
         for db_table in db_table_intersect:
             priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
             if (len(priv_diff) > 0):
-                privileges_revoke(cursor, user,host,db_table,grant_option)
+                if not append_privs:
+                    privileges_revoke(cursor, user,host,db_table,grant_option)
                 privileges_grant(cursor, user,host,db_table,new_priv[db_table])
                 changed = True
 
