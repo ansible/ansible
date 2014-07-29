@@ -209,7 +209,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
             instance_monitoring=dict(default=False, type='bool'),
-            associate_public_ip_address=dict(default=True, type='bool')
+            associate_public_ip_address=dict(default=False, type='bool')
         )
     )
 
