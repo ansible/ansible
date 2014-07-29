@@ -233,6 +233,8 @@ def main():
                 # try to replace atomically
                 tmppath = '/'.join([os.path.dirname(path), ".%s.%s.tmp" % (os.getpid(),time.time())])
                 try:
+                    if prev_state == 'directory' and (state == 'hard' or state == 'link'):
+                        os.rmdir(path)
                     if state == 'hard':
                         os.link(src,tmppath)
                     else:
