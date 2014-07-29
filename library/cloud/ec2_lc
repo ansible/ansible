@@ -79,6 +79,12 @@ options:
     required: false
     default: false
     aliases: []
+  associate_public_ip_address:
+    description:
+      - whether to assign a public IP address to each instance launched in a Amazon VPC
+    required: false
+    default: false
+    aliases: []
 extends_documentation_fragment: aws
 """
 
