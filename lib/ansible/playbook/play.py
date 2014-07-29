@@ -21,6 +21,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import pipes
 import shlex
@@ -524,7 +525,7 @@ class Play(object):
                 task_vars['_original_file'] = original_file
 
             if 'include' in x:
-                tokens = utils.splitter.split_args(str(x['include']))
+                tokens = split_args(str(x['include']))
                 included_additional_conditions = list(additional_conditions)
                 include_vars = {}
                 for k in x:
@@ -573,7 +574,7 @@ class Play(object):
                 mv = task_vars.copy()
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
-                    v = utils.splitter.unquote(v)
+                    v = unquote(v)
                     mv[k] = template(self.basedir, v, mv)
                 dirname = self.basedir
                 if original_file:
