@@ -186,6 +186,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.splitter import *
 
 # only the command module should ever need to do this
 # everything else should be simple key=value
@@ -211,18 +212,14 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        # use shlex to split up the args, while being careful to preserve
-        # single quotes so they're not removed accidentally
-        lexer = shlex.shlex(args)
-        lexer.whitespace = '\t '
-        lexer.whitespace_split = True
-        items = list(lexer)
+        items = split_args(args)
 
         for x in items:
             quoted = x.startswith('"') and x.endswith('"') or x.startswith("'") and x.endswith("'")
             if '=' in x and not quoted:
                 # check to see if this is a special parameter for the command
                 k, v = x.split('=', 1)
+                v = unquote(v)
                 # because we're not breaking out quotes in the shlex split
                 # above, the value of the k=v pair may still be quoted. If
                 # so, remove them.

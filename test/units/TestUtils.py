@@ -17,7 +17,7 @@ import ansible.utils
 import ansible.errors
 import ansible.constants as C
 import ansible.utils.template as template2
-from ansible.utils.splitter import split_args
+from ansible.module_utils.splitter import split_args
 
 from ansible import __version__
 

@@ -29,7 +29,7 @@ from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
-from ansible.utils.splitter import split_args, unquote
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
 import time
