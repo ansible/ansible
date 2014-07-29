@@ -79,6 +79,12 @@ options:
     required: false
     default: false
     aliases: []
+  associate_public_ip_address:
+    description:
+      - whether to assign a public IP address to each instance launched in a Amazon VPC
+    required: false
+    default: false
+    aliases: []
 extends_documentation_fragment: aws
 """
 
@@ -139,6 +145,7 @@ def create_launch_config(connection, module):
     instance_type = module.params.get('instance_type')
     spot_price = module.params.get('spot_price')
     instance_monitoring = module.params.get('instance_monitoring')
+    associate_public_ip_address=module.params.get('associate_public_ip_address')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -159,7 +166,8 @@ def create_launch_config(connection, module):
         block_device_mappings=[bdm],
         instance_type=instance_type,
         spot_price=spot_price,
-        instance_monitoring=instance_monitoring)
+        instance_monitoring=instance_monitoring,
+        associate_public_ip_address=associate_public_ip_address)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -201,6 +209,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
             instance_monitoring=dict(default=False, type='bool'),
+            associate_public_ip_address=dict(default=True, type='bool')
         )
     )
 
