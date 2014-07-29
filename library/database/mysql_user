@@ -80,6 +80,13 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     version_added: "1.4"
+  require_ssl:
+    description:
+        - "Corresponds to MySQL's REQUIRE SSL option for GRANT"
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "1.7"
   state:
     description:
       - Whether the user should exist.  When C(absent), removes
@@ -160,14 +167,14 @@ def user_exists(cursor, user, host):
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(cursor, user, host, password, new_priv):
+def user_add(cursor, user, host, password, new_priv, require_ssl):
     cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
-            privileges_grant(cursor, user,host,db_table,priv)
+            privileges_grant(cursor, user,host,db_table,priv,require_ssl)
     return True
 
-def user_mod(cursor, user, host, password, new_priv, append_privs):
+def user_mod(cursor, user, host, password, new_priv, append_privs, require_ssl):
     changed = False
     grant_option = False
 
@@ -200,7 +207,7 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
         # we can perform a straight grant operation.
         for db_table, priv in new_priv.iteritems():
             if db_table not in curr_priv:
-                privileges_grant(cursor, user,host,db_table,priv)
+                privileges_grant(cursor, user,host,db_table,priv,require_ssl)
                 changed = True
 
         # If the db.table specification exists in both the user's current privileges
@@ -210,7 +217,7 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
             priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
             if (len(priv_diff) > 0):
                 privileges_revoke(cursor, user,host,db_table,grant_option)
-                privileges_grant(cursor, user,host,db_table,new_priv[db_table])
+                privileges_grant(cursor, user,host,db_table,new_priv[db_table],require_ssl)
                 changed = True
 
     return changed
@@ -286,10 +293,12 @@ def privileges_revoke(cursor, user,host,db_table,grant_option):
     query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
 
-def privileges_grant(cursor, user,host,db_table,priv):
+def privileges_grant(cursor, user,host,db_table,priv,require_ssl):
 
     priv_string = ",".join(filter(lambda x: x != 'GRANT', priv))
     query = "GRANT %s ON %s TO '%s'@'%s'" % (priv_string,db_table,user,host)
+    if require_ssl:
+        query = query + " REQUIRE SSL"
     if 'GRANT' in priv:
         query = query + " WITH GRANT OPTION"
     cursor.execute(query)
@@ -340,7 +349,7 @@ def _safe_cnf_load(config, path):
             data['password'] = line.split('=', 1)[1].strip()
     f.close()
 
-    # write out a new cnf file with only user/pass   
+    # write out a new cnf file with only user/pass
     fh, newpath = tempfile.mkstemp(prefix=path + '.')
     f = open(newpath, 'wb')
     f.write('[client]\n')
@@ -407,6 +416,7 @@ def main():
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             append_privs=dict(type="bool", default="no"),
+            require_ssl=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
         )
     )
@@ -417,6 +427,7 @@ def main():
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
     append_privs = module.boolean(module.params["append_privs"])
+    require_ssl = module.boolean(module.params["require_ssl"])
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -458,11 +469,11 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, password, priv, append_privs)
+            changed = user_mod(cursor, user, host, password, priv, append_privs, require_ssl)
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
-            changed = user_add(cursor, user, host, password, priv)
+            changed = user_add(cursor, user, host, password, priv, require_ssl)
     elif state == "absent":
         if user_exists(cursor, user, host):
             changed = user_delete(cursor, user, host)
