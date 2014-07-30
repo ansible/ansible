@@ -2,7 +2,7 @@
 stat - retrieve file or file system status
 ==========================================
 
->>> **Author:**  Bruce Pennypacker
+    **Author:**  Bruce Pennypacker
 
 `Synopsis`_
 `Options`_
