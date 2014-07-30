@@ -187,7 +187,7 @@ def main():
             dest              = dict(required=True),
             copy              = dict(default=True, type='bool'),
             creates           = dict(required=False),
-            precheck          = dict(required=True, type='bool'),
+            precheck          = dict(default=False, type='bool'),
         ),
         add_file_common_args=True,
     )
@@ -198,7 +198,7 @@ def main():
     creates = module.params['creates']
     precheck = module.params['precheck']
 
-    if creates and precheck:
+    if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of command executions.
@@ -211,13 +211,14 @@ def main():
                 stderr=False,
                 rc=0
             )
-        module.exit_json(
-            stdout="transferring archive, pre-check indicates non-existent %s" % v,
-            skipped=False,
-            changed=False,
-            stderr=False,
-            rc=0
-        )
+        if precheck:
+            module.exit_json(
+                stdout="transferring archive, pre-check indicates non-existent %s" % v,
+                skipped=False,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
 
     # did tar file arrive?
     if not os.path.exists(src):
