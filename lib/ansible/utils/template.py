@@ -81,7 +81,7 @@ class Flags:
 FILTER_PLUGINS = None
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
 JINJA2_OVERRIDE = '#jinja2:'
-JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
+JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline', 'variable_start_string', 'variable_end_string']
 
 def lookup(name, *args, **kwargs):
     from ansible import utils
