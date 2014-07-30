@@ -203,54 +203,22 @@ class Connection(object):
         stdin.close()
         return (p.returncode, stdout, stderr)
 
-    def not_in_host_file(self, host):
-        if 'USER' in os.environ:
-            user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
-        else:
-            user_host_file = "~/.ssh/known_hosts"
-        user_host_file = os.path.expanduser(user_host_file)
-        
-        host_file_list = []
-        host_file_list.append(user_host_file)
-        host_file_list.append("/etc/ssh/ssh_known_hosts")
-        host_file_list.append("/etc/ssh/ssh_known_hosts2")
-        
-        hfiles_not_found = 0
-        for hf in host_file_list:
-            if not os.path.exists(hf):
-                hfiles_not_found += 1
-                continue
-            try:
-                host_fh = open(hf)
-            except IOError, e:
-                hfiles_not_found += 1
-                continue
-            else:
-                data = host_fh.read()
-                host_fh.close()
-                
-            for line in data.split("\n"):
-                if line is None or " " not in line:
-                    continue
-                tokens = line.split()
-                if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
-                    # this is a hashed known host entry
-                    try:
-                        (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
-                        hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
-                        hash.update(host)
-                        if hash.digest() == kn_host.decode('base64'):
-                            return False
-                    except:
-                        # invalid hashed host key, skip it
-                        continue
-                else:
-                    # standard host file entry
-                    if host in tokens[0]:
-                        return False
-
-        if (hfiles_not_found == len(host_file_list)):
-            vvv("EXEC previous known host file not found for %s" % host)
+    def not_in_host_file(self, host, port=22):
+        if port != 22:
+            # Keys for host (port 22) are also valid for [host]:port for any port. This means that we
+            # won't quite be accurate in this check... as if [host]:22 & [host]:12345 use the same key
+            # which we have stored only as host in our known_hosts, we will report True for [host]:port
+            # when ideally we should report False. Simple?
+            # In this situation though... you have to ask why the user isn't just using port 22 if it's
+            # the same destination? (Surely they're not using identical host keys on many boxes?) They
+            # should just 'ssh-keygen -f ~/.ssh/known_hosts -R $host' for optimal behaviour there.
+            host = "[%s]:%i" % (host, port)
+        try:
+            p = subprocess.check_output(['ssh-keygen', '-F', host])
+            if p: # output should include the matching keys
+                return False
+        except subprocess.CalledProcessError:
+            pass # Will have returned non-0 when key wasn't found.
         return True
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
@@ -289,7 +257,7 @@ class Connection(object):
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
 
-        not_in_host_file = self.not_in_host_file(self.host)
+        not_in_host_file = self.not_in_host_file(self.host, self.port)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
