@@ -12,6 +12,10 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
+You may also add access key and secret access key pairs to the ec2.ini file
+to support querying more than one AWS account.  Add a new section for each
+account with to options: "key" and "secret".
+
 This script also assumes there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
@@ -141,31 +145,44 @@ class Ec2Inventory(object):
         # and availability zones
         self.inventory = self._empty_inventory()
 
-        # Index of hostname (address) to instance ID
-        self.index = {}
-
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
 
-        # Cache
-        if self.args.refresh_cache:
-            self.do_api_calls_update_cache()
-        elif not self.is_cache_valid():
-            self.do_api_calls_update_cache()
+        # How many AWS accounts are we dealing with?
+        if len(self.aws_creds) == 0:
+            # Only 1, let boto find the creds
+            self.aws_creds['ec2'] = {}
 
-        # Data to print
-        if self.args.host:
-            data_to_print = self.get_host_info()
+        data_to_print = {}
+        for i in self.aws_creds.keys():
+            # Index of hostname (address) to instance ID
+            self.index = {}
 
-        elif self.args.list:
-            # Display list of instances for inventory
-            if self.inventory == self._empty_inventory():
-                data_to_print = self.get_inventory_from_cache()
-            else:
-                data_to_print = self.json_format_dict(self.inventory, True)
+            self.creds = self.aws_creds[i]
 
-        print data_to_print
+            # Cache Setup
+            self.cache_path_cache = self.cache_dir + "/ansible-%s.cache" % i
+            self.cache_path_index = self.cache_dir + "/ansible-%s.index" % i
+
+            # Cache
+            if self.args.refresh_cache:
+                self.do_api_calls_update_cache()
+            elif not self.is_cache_valid():
+                self.do_api_calls_update_cache()
+
+            # Data to print
+            if self.args.host:
+                data_to_print.update(self.get_host_info())
+
+            elif self.args.list:
+                # Display list of instances for inventory
+                if self.inventory == self._empty_inventory():
+                    data_to_print.update(self.get_inventory_from_cache())
+                else:
+                    data_to_print.update(self.inventory)
+
+        print self.json_format_dict(data_to_print, True)
 
 
     def is_cache_valid(self):
@@ -188,6 +205,15 @@ class Ec2Inventory(object):
         ec2_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
         ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
         config.read(ec2_ini_path)
+
+        # Handle multiple AWS accounts
+        self.aws_creds = {}
+        for i in config.sections():
+            if i != 'ec2':
+                auth = {'key': config.get(i, 'key'),
+                        'secret': config.get(i, 'secret')
+                       }
+                self.aws_creds[i] = auth
 
         # is eucalyptus?
         self.eucalyptus_host = None
@@ -233,12 +259,10 @@ class Ec2Inventory(object):
             self.all_rds_instances = False
 
         # Cache related
-        cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
+        self.cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
 
-        self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
-        self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
 
@@ -279,7 +303,12 @@ class Ec2Inventory(object):
                 conn = boto.connect_euca(host=self.eucalyptus_host)
                 conn.APIVersion = '2010-08-31'
             else:
-                conn = ec2.connect_to_region(region)
+                if self.creds == {}:
+                    conn = ec2.connect_to_region(region)
+                else:
+                    conn = ec2.connect_to_region(region,
+                            aws_access_key_id=self.creds['key'],
+                            aws_secret_access_key=self.creds['secret'])
 
             # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
             if conn is None:
@@ -302,7 +331,12 @@ class Ec2Inventory(object):
         region '''
 
         try:
-            conn = rds.connect_to_region(region)
+            if self.creds == {}:
+                conn = rds.connect_to_region(region)
+            else:
+                conn = rds.connect_to_region(region,
+                        aws_access_key_id=self.creds['key'],
+                        aws_secret_access_key=self.creds['secret'])
             if conn:
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
@@ -319,7 +353,12 @@ class Ec2Inventory(object):
             conn = boto.connect_euca(self.eucalyptus_host)
             conn.APIVersion = '2010-08-31'
         else:
-            conn = ec2.connect_to_region(region)
+            if self.creds == {}:
+                conn = ec2.connect_to_region(region)
+            else:
+                conn = ec2.connect_to_region(region,
+                        aws_access_key_id=self.creds['key'],
+                        aws_secret_access_key=self.creds['secret'])
 
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
@@ -454,7 +493,13 @@ class Ec2Inventory(object):
         ''' Get and store the map of resource records to domain names that
         point to them. '''
 
-        r53_conn = route53.Route53Connection()
+        if self.creds == {}:
+            r53_conn = route53.Route53Connection()
+        else:
+            r53_conn = route53.Route53Connection(
+                    aws_access_key_id=self.creds['key'],
+                    aws_secret_access_key=self.creds['secret'])
+
         all_zones = r53_conn.get_zones()
 
         route53_zones = [ zone for zone in all_zones if zone.name[:-1]
@@ -551,16 +596,17 @@ class Ec2Inventory(object):
             self.load_index_from_cache()
 
         if not self.args.host in self.index:
-            # try updating the cache
-            self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
-                # host migh not exist anymore
-                return self.json_format_dict({}, True)
+            # host migh not exist anymore
+            # We used to try updating the cache here, but with multiple AWS
+            # accounts, that means we will always update the cache for the
+            # AWS account that doesn't have this host.  Set the cache expiry
+            # in the configuration appropiately.
+            return {}
 
         (region, instance_id) = self.index[self.args.host]
 
         instance = self.get_instance(region, instance_id)
-        return self.json_format_dict(self.get_host_info_dict_from_instance(instance), True)
+        return self.get_host_info_dict_from_instance(instance)
 
     def push(self, my_dict, key, element):
         ''' Pushed an element onto an array that may not have been defined in
@@ -578,7 +624,7 @@ class Ec2Inventory(object):
 
         cache = open(self.cache_path_cache, 'r')
         json_inventory = cache.read()
-        return json_inventory
+        return json.loads(json_inventory)
 
 
     def load_index_from_cache(self):
