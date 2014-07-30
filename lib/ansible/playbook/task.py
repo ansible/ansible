@@ -17,6 +17,7 @@
 
 from ansible import errors
 from ansible import utils
+from ansible.module_utils.splitter import split_args
 import os
 import ansible.utils.template as template
 import sys
@@ -234,13 +235,13 @@ class Task(object):
             self.notify = [ self.notify ]
 
         # split the action line into a module name + arguments
-        tokens = self.action.split(None, 1)
+        tokens = split_args(self.action)
         if len(tokens) < 1:
             raise errors.AnsibleError("invalid/missing action in task. name: %s" % self.name)
         self.module_name = tokens[0]
         self.module_args = ''
         if len(tokens) > 1:
-            self.module_args = tokens[1]
+            self.module_args = " ".join(tokens[1:])
 
         import_tags = self.module_vars.get('tags',[])
         if type(import_tags) in [int,float]:
