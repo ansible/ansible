@@ -179,8 +179,7 @@ try:
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
                                          ConfigurationSetInputEndpoint)
 except ImportError:
-    print
-    "failed=True msg='azure required for this module'"
+    print "failed=True msg='azure required for this module'"
     sys.exit(1)
 
 from distutils.version import LooseVersion
@@ -338,6 +337,7 @@ def terminate_virtual_machine(module, azure):
     changed = False
 
     deployment = None
+    public_dns_name = None
     disk_names = []
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
@@ -368,18 +368,24 @@ def terminate_virtual_machine(module, azure):
             _wait_for_completion(azure, result, wait_timeout, "delete_hosted_service")
         except WindowsAzureError as e:
             module.fail_json(msg="failed to delete the service %s, error was: %s" % (name, str(e)))
+        public_dns_name = urlparse(deployment.url).hostname
 
-    return changed, urlparse(deployment.url).hostname, deployment
+    return changed, public_dns_name, deployment
 
 
 def get_azure_creds(module):
     # Check modul args for credentials, then check environment vars
     subscription_id = module.params.get('subscription_id')
-    management_cert_path = module.params.get('management_cert_path')
-
     if not subscription_id:
-        subscription_id = os.environ['AZURE_SUBSCRIPTION_ID']
-        management_cert_path = os.environ['AZURE_CERT_PATH']
+        subscription_id = os.environ.get('AZURE_SUBSCRIPTION_ID', None)
+    if not subscription_id:
+        module.fail_json(msg="No subscription_id provided. Please set 'AZURE_SUBSCRIPTION_ID' or use the 'subscription_id' parameter")
+
+    management_cert_path = module.params.get('management_cert_path')
+    if not management_cert_path:
+        management_cert_path = os.environ.get('AZURE_CERT_PATH', None)
+    if not management_cert_path:
+        module.fail_json(msg="No management_cert_path provided. Please set 'AZURE_CERT_PATH' or use the 'management_cert_path' parameter")
 
     return subscription_id, management_cert_path
 
@@ -414,7 +420,7 @@ def main():
         # wrapper for handling redirects which the sdk <= 0.8.0 is not following
         azure = Wrapper(ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects)
     else:
-        azure = ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects
+        azure = ServiceManagementService(subscription_id, management_cert_path)
 
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
