@@ -2,11 +2,12 @@
 stat - retrieve file or file system status
 ==========================================
 
->>>**Author:**	Bruce Pennypacker 
+>>> **Author:**  Bruce Pennypacker
 
 `Synopsis`_
 `Options`_
 `Examples`_
+
 
 Synopsis
 ------------
@@ -15,15 +16,34 @@ New in version 1.3.
 
 Retrieves facts for a file similar to the linux/unix 'stat' command.
 
+
 Options
 ----------
+
+.. Options table : csv version
+
 .. csv-table::
-   :header: "parameter", "required", "	default 	choices", "comments"
+   :header: "parameter", "required", "default choices", "comments"
    :widths: 15, 15, 15, 15, 60
    
-   "follow", "no", "", "", "	Whether to follow symlinks"
+   "follow", "no", "", "", "Whether to follow symlinks"
    "get_md5", "no", "True", "", "Whether to return the md5 sum of the file"
    "path", "yes", "", "", "The full path of the file/object to get the facts of"
+
+.. Options table : csv version
+
+   ============= ============ =================== =======================================================
+     parameter     required     default choices                         comments
+   ============= ============ =================== =======================================================
+     follow        no                               Whether to follow symlinks
+     get_md5       no           True                Whether to return the md5 sum of the file
+     path          yes                              The full path of the file/object to get the facts of
+
+
+Test parameters
+----------------
+
+.. Test parameters table : csv version
 
 .. csv-table:: Test parameters
    :header: "parameter", "meaning", "type"
@@ -58,35 +78,42 @@ Options
    "isuid", "", "boolean"
    "isgid", "", "boolean"
 
-        ======= ======================== =======
-          exists                                                                        boolean
-          isdir              is a directory                                         boolean
-          ischr             is a character device                             boolean
-          isblk             is block device                                       boolean
-          isreg             is a regular file                                       boolean
-          isfifo             is a named pipe                                     boolean
-          islnk             is a symbolic link                                    boolean
-          issock           is a socket                                              boolean
-          uid                user ID of owner                                     int
-          gid                group ID of owner                                   int
-          size               total size, in bytes                                  int
-          inode             inode number                                         int
-          dev                device ID                                                int
-          nlink              number of hard links                               int
-          atime             time of last access                                 int
-          mtime            time of last modification                        int
-          ctime             time of last status change                      int
-          wusr               write permission, owner                        boolean
-          rusr                read permission, owner                         boolean
-          xusr               execute/search permission, owner         boolean
-          wgrp              write permission, group                         boolean
-          rgrp               read permission, group                          boolean
-          xgrp               execute/search permission, group         boolean
-          woth               write permission, other                         boolean
-          roth                read permission, other                          boolean
-          xoth               execute/search permission, other          boolean
-          isuid                                                                            boolean
-          isgid                                                                            boolean
+
+.. Test parameters table : simple version
+
+    ============ =================================== ============
+    parameter                meaning                  type
+    ============ =================================== ============
+      exists                                           boolean
+      isdir        is a directory                      boolean
+      ischr        is a character device               boolean
+      isblk        is block device                     boolean
+      isreg        is a regular file                   boolean
+      isfifo       is a named pipe                     boolean
+      islnk        is a symbolic link                  boolean
+      issock       is a socket                         boolean
+      uid          user ID of owner                    int
+      gid          group ID of owner                   int
+      size         total size, in bytes                int
+      inode        inode number                        int
+      dev          device ID                           int
+      nlink        number of hard links                int
+      atime        time of last access                 int
+      mtime        time of last modification           int
+      ctime        time of last status change          int
+      wusr         write permission, owner             boolean
+      rusr         read permission, owner              boolean
+      xusr         execute/search permission, owner    boolean
+      wgrp         write permission, group             boolean
+      rgrp         read permission, group              boolean
+      xgrp         execute/search permission, group    boolean
+      woth         write permission, other             boolean
+      roth         read permission, other              boolean
+      xoth         execute/search permission, other    boolean
+      isuid                                            boolean
+      isgid                                            boolean
+
+
 
 Examples
 -------------
