@@ -2042,8 +2042,7 @@ class SunOSNetwork(GenericBsdIfconfigNetwork, Network):
         else:
             current_if = interfaces[device]
         flags = self.get_options(words[1])
-        if 'IPv4' in flags:
-            v = 'ipv4'
+        v = 'ipv4'
         if 'IPv6' in flags:
             v = 'ipv6'
         current_if[v].append({'flags': flags, 'mtu': words[3]})
