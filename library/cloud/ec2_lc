@@ -85,6 +85,7 @@ options:
     required: false
     default: false
     aliases: []
+    version_added: "1.7"
 extends_documentation_fragment: aws
 """
 
