@@ -1083,10 +1083,12 @@ def startstop_instances(module, ec2, instance_ids, state):
     ## Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time():
+        instance_dict_array = []
         matched_instances = []
         for res in ec2.get_all_instances(instance_ids):
             for i in res.instances:
                 if i.state == state:
+                    instance_dict_array.append(get_instance_info(i))
                     matched_instances.append(i)
         if len(matched_instances) < len(instance_ids):
             time.sleep(5)
