@@ -707,7 +707,7 @@ def parse_kv(args):
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)
-                options[k] = unquote(v)
+                options[k] = unquote(v.strip())
     return options
 
 def merge_hash(a, b):

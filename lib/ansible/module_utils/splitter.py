@@ -70,6 +70,7 @@ def split_args(args):
 
     # here we encode the args, so we have a uniform charset to
     # work with, and split on white space
+    args = args.strip()
     try:
         args = args.encode('utf-8')
         do_decode = True
