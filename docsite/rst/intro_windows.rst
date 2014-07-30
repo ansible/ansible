@@ -254,16 +254,18 @@ Debugging
 Start with the win_ping test. If that fails, pass -vvvv to get verbose output.
 
 
-If you get a 401 error code, log into your Windows client and run the following:
+If you get a 401 error code, log into your Windows client and run the following::
+
 
     winrm set winrm/config/service/auth @{Basic="true"}
+
 
 Then test the ping from your Linux Controller again.
 
 
-Note that currently, you must use a local administrator account on the Windows
+*Note that currently, you must use a local administrator account on the Windows
 client. Support for Kerberos and domain accounts has received a pull request
-but isn't integrated quite yet.
+but isn't integrated quite yet.*
 
 
 
