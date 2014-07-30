@@ -86,10 +86,10 @@ EXAMPLES = '''
 - mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present
 
 # Mount up device by label
-- mount: name=/srv/disk src='LABEL=SOME_LABEL' state=present
+- mount: name=/srv/disk src='LABEL=SOME_LABEL' fstype=ext4 state=present
 
 # Mount up device by UUID
-- mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' opts=noatime state=present
+- mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' fstype=xfs opts=noatime state=present
 '''
 
 
