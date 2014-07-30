@@ -49,6 +49,7 @@ class ActionModule(object):
         source  = options.get('src', None)
         dest    = options.get('dest', None)
         copy    = utils.boolean(options.get('copy', 'yes'))
+        creates = options.get('creates', None)
 
         if source is None or dest is None:
             result = dict(failed=True, msg="src (or content) and dest are required")
@@ -66,6 +67,18 @@ class ActionModule(object):
         if remote_md5 != '3':
             result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
+
+        # Perform a pre-check for creates parameter on the client,
+        # prevent transferring files if all ok and skipped is indicated
+        if creates is not None:
+            precheck_module_args = utils.merge_module_args(module_args, "precheck=True")
+            creates_result = self.runner._execute_module(conn, tmp, 'unarchive', precheck_module_args, inject=inject, complex_args=complex_args)
+            if not creates_result.is_successful():
+                return creates_result
+            if creates_result.result['skipped']:
+                return creates_result
+
+        module_args = utils.merge_module_args(module_args, "precheck=False")
 
         if copy:
             # transfer the file to a remote tmp location
