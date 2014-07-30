@@ -108,7 +108,15 @@ class Task(object):
                 ds['when'] = "%s %s" % (when_name, ds[x])
                 ds.pop(x)
             elif not x in Task.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
+                if 'name' in ds:
+                    task_name = ds['name']
+                else:
+                    task_name = '(No name)'
+                line = "%s: %s" % (x, ds[x])
+                raise errors.AnsibleError(
+                    '"%s" is not a legal parameter in an Ansible task or handler\n'
+                    '    task name: "%s"\n    line: "%s"\n    role_name: "%s"'
+                    % (x, task_name, line, role_name))
 
         self.module_vars  = module_vars
         self.default_vars = default_vars
