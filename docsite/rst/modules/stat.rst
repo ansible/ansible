@@ -26,9 +26,9 @@ Options
    :header: "parameter", "required", "default choices", "comments"
    :widths: 15, 15, 15, 60
    
-   "follow", "no", "", "", "Whether to follow symlinks"
-   "get_md5", "no", "True", "", "Whether to return the md5 sum of the file"
-   "path", "yes", "", "", "The full path of the file/object to get the facts of"
+   "follow", "no", "", "Whether to follow symlinks"
+   "get_md5", "no", "True", "Whether to return the md5 sum of the file"
+   "path", "yes", "", "The full path of the file/object to get the facts of"
 
 .. Options table : csv version
 
