@@ -873,7 +873,7 @@ class AnsibleModule(object):
         filter_re = [
             # filter out things like user:pass@foo/whatever
             # and http://username:pass@wherever/foo
-            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
+            re.compile('^(?P<before>.*user(name)?:)(?P<password>.*)(?P<after>\@.*)$'), 
         ]
 
         for param in self.params:
