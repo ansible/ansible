@@ -205,17 +205,20 @@ class Connection(object):
 
     def not_in_host_file(self, host, port=22):
         if port != 22:
-            # Although the key for host may be present and valid for [host]:port and cause this check
-            # to fail, you have to ask why we've been asked to connect to a random other port. There's
-            # no easy way around this and the user should 'ssh-keygen -f ~/.ssh/known_hosts -R $host'
-            # for optimal behavior with [host]:port
+            # Keys for host (port 22) are also valid for [host]:port for any port. This means that we
+            # won't quite be accurate in this check... as if [host]:22 & [host]:12345 use the same key
+            # which we have stored only as host in our known_hosts, we would be reporting True when
+            # ideally we'd report True. Simple?
+            # In this situation though... you have to ask why the user isn't just using port 22 if it's
+            # the same destination? (Surely they're not using identical host keys on many boxes?) They
+            # should just 'ssh-keygen -f ~/.ssh/known_hosts -R $host' for optimal behaviour there.
             host = "[%s]:%i" % (host, port)
         try:
             p = subprocess.check_output(['ssh-keygen', '-F', host])
-            if p:
+            if p: # output should include the matching keys
                 return False
         except subprocess.CalledProcessError:
-            pass # Key wasn't found so just continue...
+            pass # Will have returned non-0 when key wasn't found.
         return True
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
