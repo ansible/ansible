@@ -25,6 +25,14 @@ import sys
 import os
 import stat
 
+# Augment PYTHONPATH to find Python modules relative to this file path
+# This is so that we can find the modules when running from a local checkout
+# installed as editable with `pip install -e ...` or `python setup.py develop`
+local_module_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'lib')
+)
+sys.path.append(local_module_path)
+
 import ansible.playbook
 import ansible.constants as C
 import ansible.utils.template
