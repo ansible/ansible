@@ -207,8 +207,8 @@ class Connection(object):
         if port != 22:
             # Keys for host (port 22) are also valid for [host]:port for any port. This means that we
             # won't quite be accurate in this check... as if [host]:22 & [host]:12345 use the same key
-            # which we have stored only as host in our known_hosts, we would be reporting True when
-            # ideally we'd report True. Simple?
+            # which we have stored only as host in our known_hosts, we will report True for [host]:port
+            # when ideally we should report False. Simple?
             # In this situation though... you have to ask why the user isn't just using port 22 if it's
             # the same destination? (Surely they're not using identical host keys on many boxes?) They
             # should just 'ssh-keygen -f ~/.ssh/known_hosts -R $host' for optimal behaviour there.
