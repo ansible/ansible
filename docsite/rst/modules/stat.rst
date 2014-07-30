@@ -24,7 +24,7 @@ Options
 
 .. csv-table::
    :header: "parameter", "required", "default choices", "comments"
-   :widths: 15, 15, 15, 15, 60
+   :widths: 15, 15, 15, 60
    
    "follow", "no", "", "", "Whether to follow symlinks"
    "get_md5", "no", "True", "", "Whether to return the md5 sum of the file"
