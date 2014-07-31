@@ -69,65 +69,19 @@ You'll run this command again later though, to make sure everything is working.
 Windows System Prep
 ```````````````````
 
-In order for Ansible to manage your windows machines, you will have to enable Powershell remoting first, which also enables WinRM.
+In order for Ansible to manage your windows machines, you will have to enable Powershell remoting configured.
 
-From the Windows host, launch the Powershell Client. For information on Powershell, visit `Microsoft's Using Powershell article <http://technet.microsoft.com/en-us/library/dn425048.aspx>`_.
+To automate setup of WinRM, you can run `this powershell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine. 
 
-In the powershell session, run the following to enable PS Remoting and set the execution policy
-
-.. code-block:: bash
-
-    $  Enable-PSRemoting -Force
-    $  Set-ExecutionPolicy RemoteSigned
-
-If your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile:
-
-.. code-block:: bash
-
-    #  Windows 2012 / 2012R2
-    $  Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
-
-    #  Windows 2008 / 2008R2
-    $  NetSH ADVFirewall Set AllProfiles Settings remotemanagement Enable
-
-By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
-
-An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in.
-
-A best practice for SSL certificates is generating them from an internal or external certificate authority. An existing certificate could be located in the computer account certificate store `using the following article <http://technet.microsoft.com/en-us/library/cc754431.aspx#BKMK_computer>`_.
-
-Alternatively, a self-signed SSL certificate can be generated in powershell using `the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>`_. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using `How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>`_.
-
-.. code-block:: bash
-
-    #  Create the https listener
-    $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
-
-    #  Delete the http listener
-    $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
-
-Again, if your Windows firewall is enabled, the following command to allow firewall access to the HTTPS listener:
-
-.. code-block:: bash
-
-    #  Windows 2008 / 2008R2 / 2012 / 2012R2
-    $  netsh advfirewall firewall add rule Profile=public name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
-
-It's time to verify things are working::
-
-    ansible windows [-i inventory] -m win_ping --ask-vault-pass
-
-However, if you are still running Powershell 2.0 on remote systems, it's time to use Ansible to upgrade powershell
-before proceeding further, as some of the Ansible modules will require Powershell 3.0.  
-
-In the future, Ansible may provide a shortcut installer that automates these steps for prepping a Windows machine.
+Admins may wish to modify this setup slightly, for instance to increase the timeframe of
+the certificate.
 
 .. _getting_to_powershell_three_or_higher:
 
 Getting to Powershell 3.0 or higher
 ```````````````````````````````````
 
-Powershell 3.0 or higher is needed for most provided Ansible modules for Windows.
+Powershell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script.
 
 Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator.  You will now be running Powershell 3 and can try connectivity again using the win_ping technique referenced above.
 
