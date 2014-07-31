@@ -167,6 +167,14 @@ def build_command(module, mode, path, follow, default, entry=''):
     return cmd
 
 
+def acl_changed(module, cmd):
+    '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
+    cmd = cmd[:]  # lists are mutables so cmd would be overriden without this
+    cmd.insert(1, '--test')
+    lines = _run_acl(module, cmd)
+    return not all(line.endswith('*,*') for line in lines)
+
+
 def get_acls(module,path,follow,default):
 
     command = build_command(module, 'get', path, follow, default)
@@ -189,9 +197,13 @@ def _run_acl(module,cmd,check_rc=True):
     except Exception, e:
         module.fail_json(msg=e.strerror)
 
-    # trim last line as it is always empty
-    ret = out.splitlines()
-    return ret[0:len(ret)-1]
+    lines = out.splitlines()
+    if lines and not lines[-1].split():
+        # trim last line only when it is empty
+        return lines[:-1]
+    else:
+        return lines
+
 
 def main():
     module = AnsibleModule(
@@ -234,30 +246,11 @@ def main():
 
     changed=False
     msg = ""
-    currentacls = get_acls(module, path, follow, default)
 
     if (state == 'present'):
         entry = build_entry(etype, entity, permissions)
-        matched = False
-        for oldentry in currentacls:
-            if oldentry.count(":") == 0:
-                continue
-            old_default, old_type, old_entity, old_permissions = split_entry(oldentry)
-            if old_default == default:
-                if old_type == etype:
-                    if etype in ['user', 'group']:
-                        if old_entity == entity:
-                            matched = True
-                            if not old_permissions == permissions:
-                                changed = True
-                            break
-                    else:
-                        matched = True
-                        if not old_permissions == permissions:
-                            changed = True
-                        break
-        if not matched:
-            changed=True
+        command = build_command(module, 'set', path, follow, default, entry)
+        changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
             set_acl(module,path,entry,follow,default)
@@ -265,19 +258,9 @@ def main():
 
     elif state == 'absent':
         entry = build_entry(etype, entity)
-        for oldentry in currentacls:
-            if oldentry.count(":") == 0:
-                continue
-            old_default, old_type, old_entity, old_permissions = split_entry(oldentry)
-            if old_default == default:
-                if old_type == etype:
-                    if etype in ['user', 'group']:
-                        if old_entity == entity:
-                            changed=True
-                            break
-                    else:
-                        changed=True
-                        break
+        command = build_command(module, 'rm', path, follow, default, entry)
+        changed = acl_changed(module, command)
+
         if changed and not module.check_mode:
             rm_acl(module,path,entry,follow,default)
         msg="%s is absent" % entry
