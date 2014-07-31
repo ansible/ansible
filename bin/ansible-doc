@@ -85,6 +85,23 @@ def tty_ify(text):
 
     return t
 
+
+def format_param(param=list, col_widths=list):
+    # format parameter + definitions on 1 line
+    # parameters :
+    # param         -> parameter and definitions list
+    # col_widths    -> list of column width for each parameter value
+    #
+    # return string (formatted line)
+    pwidth = zip(param, col_widths)
+
+    line = []
+    for word,col_len in pwidth:
+        line.append(word + ' ' * (col_len-len(word)))
+
+    return ''.join(line)
+
+
 def get_man_text(doc):
 
     opt_indent="        "
@@ -124,6 +141,27 @@ def get_man_text(doc):
         text.append("Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
                             subsequent_indent=opt_indent))
 
+    if 'parameters' in doc and len(doc['parameters']) > 0:
+        text.append("Parameters:\n")
+
+        # number of columns
+        column_nb = len(doc['parameters'][0])
+
+        # parameters list in column to be able to max the width
+        cols_list = [[p[n] for p in doc['parameters']] for n in range(column_nb)]
+
+        # larger columns strings list
+        maxcol_str = [max(cols_list[n], key=len) for n in range(column_nb)]
+
+        # final columns widths list
+        col_widths = [len(s) + 3 for s in maxcol_str]
+
+        for p in doc['parameters']:
+            parameter = format_param(p, col_widths)
+            text.append(textwrap.fill(tty_ify(parameter), initial_indent="  ",
+                                subsequent_indent=opt_indent))
+
+        text.append('\n')
 
     if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
         req = ", ".join(doc['requirements'])
