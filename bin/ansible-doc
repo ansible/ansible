@@ -93,10 +93,10 @@ def format_param(param=list, col_widths=list):
     # col_widths    -> list of column width for each parameter value
     #
     # return string (formatted line)
-    pwidth = zip(param, col_widths)
+    param_col = zip(param, col_widths)
 
     line = []
-    for word,col_len in pwidth:
+    for word,col_len in param_col:
         line.append(word + ' ' * (col_len-len(word)))
 
     return ''.join(line)
