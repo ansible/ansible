@@ -5,37 +5,6 @@
 # import defaults
 import textwrap
 import re
-#import sys
-
-parameters = [ ['exists', '', 'boolean'],
-        ['isdir', 'is a directory', 'boolean'],
-        ['ischr', 'is a character device', 'boolean'],
-        ['isblk', 'is block device', 'boolean'],
-        ['isreg', 'is a regular file', 'boolean'],
-        ['isfifo', 'is a named pipe', 'boolean'],
-        ['islnk', 'is a symbolic link', 'boolean'],
-        ['issock', 'is a socket', 'boolean'],
-        ['uid', 'user ID of owner', 'int'],
-        ['gid', 'group ID of owner', 'int'],
-        ['size', 'total size, in bytes', 'int'],
-        ['inode', 'inode number', 'int'],
-        ['dev', 'device ID', 'int'],
-        ['nlink', 'number of hard links', 'int'],
-        ['atime', 'time of last access', 'int'],
-        ['mtime', 'time of last modification', 'int'],
-        ['ctime', 'time of last status change', 'int'],
-        ['wusr', 'write permission, owner', 'boolean'],
-        ['rusr', 'read permission, owner', 'boolean'],
-        ['xusr', 'execute/search permission, owner', 'boolean'],
-        ['wgrp', 'write permission, group', 'boolean'],
-        ['rgrp', 'read permission, group', 'boolean'],
-        ['xgrp', 'execute/search permission, group', 'boolean'],
-        ['woth', 'write permission, other', 'boolean'],
-        ['roth', 'read permission, other', 'boolean'],
-        ['xoth', 'execute/search permission, other', 'boolean'],
-        ['isuid', '', 'boolean'],
-        ['isgid', '', 'boolean'] ]
-
 
 opt_indent="        "
 
@@ -137,8 +106,3 @@ for p in parameters:
     parameter = format_param(p, cols_width)
     print(textwrap.fill(tty_ify(parameter), initial_indent="  ",
                         subsequent_indent=opt_indent))
-
-
-
-
-
