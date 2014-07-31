@@ -225,7 +225,8 @@ def create_volume(module, ec2, zone):
     if iops:
         volume_type = 'io1'
     else:
-        volume_type = 'standard'
+        volume_type = 'gp2'
+        # "gp2" is the new name for the new SSD based general purpose storage - version one (magnetic) was referenced as "standard"
 
     # If no instance supplied, try volume creation based on module parameters.
     if name or id:
