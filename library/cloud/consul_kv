@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # -*- mode: python -*-
 
@@ -126,9 +127,9 @@ def main():
             key=dict(required=True, type='str'),
             value=dict(default=None, type='str'),
             append=dict(default='no', type='bool'),
-            host=dict(default=consul_defaults['host'], type=str),
-            port=dict(default=consul_defaults['port'], type=str),
-            dc=dict(default=consul_defaults['dc'], type=str)
+            host=dict(default=consul_defaults['host'], type='str'),
+            port=dict(default=consul_defaults['port'], type='str'),
+            dc=dict(default=consul_defaults['dc'], type='str')
         ),
         supports_check_mode=False
     )
