@@ -77,6 +77,8 @@ class ActionModule(object):
                 return creates_result
             if creates_result.result['skipped']:
                 return creates_result
+            # tmp path might be removed after module execution, we better create a new one for the archive transfer
+            tmp = self.runner._make_tmp_path(conn)
 
         module_args = utils.merge_module_args(module_args, "precheck=False")
 
