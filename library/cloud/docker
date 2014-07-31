@@ -470,7 +470,7 @@ class DockerManager:
 
     def get_split_image_tag(self, image):
         if '/' in image:
-            image = image.split('/')[1]
+            image = image.split('/')[-1]
         tag = None
         if image.find(':') > 0:
             return image.split(':')
