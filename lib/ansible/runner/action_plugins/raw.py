@@ -49,6 +49,6 @@ class ActionModule(object):
         # may leak into the stdout due to the way the sudo/su
         # command is constructed, so we filter that out here
         if result.get('stdout','').strip().startswith('SUDO-SUCCESS-'):
-            result['stdout'] = re.sub(r'^(\r)?\nSUDO-SUCCESS.*(\r)?\n', '', result['stdout'])
+            result['stdout'] = re.sub(r'^((\r)?\n)?SUDO-SUCCESS.*(\r)?\n', '', result['stdout'])
 
         return ReturnData(conn=conn, result=result)
