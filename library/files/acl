@@ -111,9 +111,9 @@ def split_entry(entry):
     if len(a) == 3:
         a.append(False)
     try:
-        p,e,t,d = a
+        p, e, t, d = a
     except ValueError, e:
-        print "wtf?? %s => %s" % (entry,a)
+        print "wtf?? %s => %s" % (entry, a)
         raise e
 
     if d:
@@ -130,7 +130,7 @@ def split_entry(entry):
     else:
         t = None
 
-    return [d,t,e,p]
+    return [d, t, e, p]
 
 
 def build_entry(etype, entity, permissions=None):
@@ -192,15 +192,24 @@ def run_acl(module, cmd, check_rc=True):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True,aliases=['path'], type='str'),
-            entry = dict(required=False, etype='str'),
-            entity = dict(required=False, type='str', default=''),
-            etype = dict(required=False, choices=['other', 'user', 'group', 'mask'], type='str'),
-            permissions = dict(required=False, type='str'),
-            state = dict(required=False, default='query', choices=[ 'query', 'present', 'absent' ], type='str'),
-            follow = dict(required=False, type='bool', default=True),
-            default= dict(required=False, type='bool', default=False),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['path'], type='str'),
+            entry=dict(required=False, etype='str'),
+            entity=dict(required=False, type='str', default=''),
+            etype=dict(
+                required=False,
+                choices=['other', 'user', 'group', 'mask'],
+                type='str'
+            ),
+            permissions=dict(required=False, type='str'),
+            state=dict(
+                required=False,
+                default='query',
+                choices=['query', 'present', 'absent'],
+                type='str'
+            ),
+            follow=dict(required=False, type='bool', default=True),
+            default=dict(required=False, type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -217,29 +226,29 @@ def main():
     if not os.path.exists(path):
         module.fail_json(msg="path not found or not accessible!")
 
-    if state in ['present','absent']:
-        if  not entry and not etype:
+    if state in ['present', 'absent']:
+        if not entry and not etype:
             module.fail_json(msg="%s requires either etype and permissions or just entry be set" % state)
 
     if entry:
         if etype or entity or permissions:
             module.fail_json(msg="entry and another incompatible field (entity, etype or permissions) are also set")
-        if entry.count(":") not in [2,3]:
+        if entry.count(":") not in [2, 3]:
             module.fail_json(msg="Invalid entry: '%s', it requires 3 or 4 sections divided by ':'" % entry)
 
         default, etype, entity, permissions = split_entry(entry)
 
-    changed=False
+    changed = False
     msg = ""
 
-    if (state == 'present'):
+    if state == 'present':
         entry = build_entry(etype, entity, permissions)
         command = build_command(module, 'set', path, follow, default, entry)
         changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
             run_acl(module, command)
-        msg="%s is present" % entry
+        msg = "%s is present" % entry
 
     elif state == 'absent':
         entry = build_entry(etype, entity)
@@ -248,9 +257,10 @@ def main():
 
         if changed and not module.check_mode:
             run_acl(module, command, False)
-        msg="%s is absent" % entry
+        msg = "%s is absent" % entry
+
     else:
-        msg="current acl"
+        msg = "current acl"
 
     acl = run_acl(
         module,
