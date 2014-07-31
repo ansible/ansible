@@ -79,6 +79,14 @@ options:
     description:
       - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superceeded by entity, type and permissions fields.
 
+  recursive:
+    version_added: "@@@"
+    required: false
+    default: no
+    choices: [ 'yes', 'no' ]
+    description:
+      - Recursively sets the specified ACL (added in Ansible @@@).
+
 author: Brian Coca
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
@@ -141,7 +149,7 @@ def build_entry(etype, entity, permissions=None):
         return ':'.join([etype, entity, permissions])
 
 
-def build_command(module, mode, path, follow, default, entry=''):
+def build_command(module, mode, path, follow, default, recursive, entry=''):
     '''Builds and returns agetfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
@@ -153,6 +161,9 @@ def build_command(module, mode, path, follow, default, entry=''):
         cmd = [module.get_bin_path('getfacl', True)]
         cmd.append('--omit-header')
         cmd.append('--absolute-names')
+
+    if recursive:
+        cmd.append('--recursive')
 
     if not follow:
         cmd.append('-h')
@@ -210,6 +221,7 @@ def main():
             ),
             follow=dict(required=False, type='bool', default=True),
             default=dict(required=False, type='bool', default=False),
+            recursive=dict(required=False, type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -222,6 +234,7 @@ def main():
     state = module.params.get('state')
     follow = module.params.get('follow')
     default = module.params.get('default')
+    recursive = module.params.get('recursive')
 
     if not os.path.exists(path):
         module.fail_json(msg="path not found or not accessible!")
@@ -243,7 +256,10 @@ def main():
 
     if state == 'present':
         entry = build_entry(etype, entity, permissions)
-        command = build_command(module, 'set', path, follow, default, entry)
+        command = build_command(
+            module, 'set', path, follow,
+            default, recursive, entry
+        )
         changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
@@ -252,7 +268,10 @@ def main():
 
     elif state == 'absent':
         entry = build_entry(etype, entity)
-        command = build_command(module, 'rm', path, follow, default, entry)
+        command = build_command(
+            module, 'rm', path, follow,
+            default, recursive, entry
+        )
         changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
@@ -264,7 +283,7 @@ def main():
 
     acl = run_acl(
         module,
-        build_command(module, 'get', path, follow, default)
+        build_command(module, 'get', path, follow, default, recursive)
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
