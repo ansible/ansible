@@ -132,6 +132,15 @@ def split_entry(entry):
 
     return [d,t,e,p]
 
+
+def build_entry(etype, entity, permissions=None):
+    '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
+    if permissions is None:
+        return ':'.join([etype, entity])
+    else:
+        return ':'.join([etype, entity, permissions])
+
+
 def get_acls(module,path,follow):
 
     cmd = [ module.get_bin_path('getfacl', True) ]
@@ -224,6 +233,7 @@ def main():
     currentacls = get_acls(module,path,follow)
 
     if (state == 'present'):
+        entry = build_entry(etype, entity, permissions)
         matched = False
         for oldentry in currentacls:
             if oldentry.count(":") == 0:
@@ -246,10 +256,11 @@ def main():
             changed=True
 
         if changed and not module.check_mode:
-            set_acl(module,path,':'.join([etype, str(entity), permissions]),follow,default)
-        msg="%s is present" % ':'.join([etype, str(entity), permissions])
+            set_acl(module,path,entry,follow,default)
+        msg="%s is present" % entry
 
     elif state == 'absent':
+        entry = build_entry(etype, entity)
         for oldentry in currentacls:
             if oldentry.count(":") == 0:
                 continue
@@ -264,8 +275,8 @@ def main():
                         changed=True
                         break
         if changed and not module.check_mode:
-            rm_acl(module,path,':'.join([etype, entity, '---']),follow,default)
-        msg="%s is absent" % ':'.join([etype, entity, '---'])
+            rm_acl(module,path,entry,follow,default)
+        msg="%s is absent" % entry
     else:
         msg="current acl"
 
