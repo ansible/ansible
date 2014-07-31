@@ -88,6 +88,12 @@ options:
       - A key, value pair of any extra values you want set or changed in the vmx file of the VM. Useful to set advanced options on the VM.
     required: false
     default: null
+  vm_hw_version:
+    description:
+      - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware version of existing vm is not supported.
+    required: false
+    default: null
+    version_added: "1.7"
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
@@ -593,15 +599,16 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     module.exit_json(changed=False)
 
 
-def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state):
+def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
     # Datacenter managed object reference
-    dcmor = [k for k,
-             v in vsphere_client.get_datacenters().items() if v == datacenter][0]
-
-    if dcmor is None:
+    dclist = [k for k,
+             v in vsphere_client.get_datacenters().items() if v == datacenter]
+    if dclist:
+        dcmor=dclist[0]
+    else:
         vsphere_client.disconnect()
         module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
 
@@ -696,13 +703,15 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     # add parameters to the create vm task
     create_vm_request = VI.CreateVM_TaskRequestMsg()
     config = create_vm_request.new_config()
+    if vm_hw_version:
+        config.set_element_version(vm_hw_version)
     vmfiles = config.new_files()
     datastore_name, ds = find_datastore(
         module, vsphere_client, vm_disk['disk1']['datastore'], config_target)
     vmfiles.set_element_vmPathName(datastore_name)
     config.set_element_files(vmfiles)
     config.set_element_name(guest)
-    if vm_extra_config['notes'] is not None:
+    if 'notes' in vm_extra_config:
         config.set_element_annotation(vm_extra_config['notes'])
     config.set_element_memoryMB(int(vm_hardware['memory_mb']))
     config.set_element_numCPUs(int(vm_hardware['num_cpus']))
@@ -814,9 +823,8 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         module.fail_json(msg="Error creating vm: %s" %
                          task.get_error_message())
     else:
-        vm = None
-        if vm_extra_config or state in ['powered_on', 'powered_off']:
-            vm = vsphere_client.get_vm_by_name(guest)
+        # We always need to get the vm because we are going to gather facts
+        vm = vsphere_client.get_vm_by_name(guest)
 
         # VM was created. If there is any extra config options specified, set
         # them here , disconnect from vcenter, then exit.
@@ -1063,6 +1071,7 @@ def main():
             vm_nic=dict(required=False, type='dict', default={}),
             vm_hardware=dict(required=False, type='dict', default={}),
             vm_extra_config=dict(required=False, type='dict', default={}),
+            vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, choices=BOOLEANS, default=False),
@@ -1099,6 +1108,7 @@ def main():
     vm_nic = module.params['vm_nic']
     vm_hardware = module.params['vm_hardware']
     vm_extra_config = module.params['vm_extra_config']
+    vm_hw_version = module.params['vm_hw_version']
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
@@ -1200,6 +1210,7 @@ def main():
                 vm_hardware=vm_hardware,
                 vm_disk=vm_disk,
                 vm_nic=vm_nic,
+                vm_hw_version=vm_hw_version,
                 state=state
             )
 

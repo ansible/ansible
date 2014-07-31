@@ -34,7 +34,7 @@ options:
     default: query
     choices: [ 'query', 'present', 'absent' ]
     description:
-      - defines whether the ACL should be present or not.  The C(query) state gets the current acl C(present) without changing it, for use in 'register' operations.
+      - defines whether the ACL should be present or not.  The C(query) state gets the current acl without changing it, for use in 'register' operations.
 
   follow:
     required: false
@@ -102,6 +102,17 @@ EXAMPLES = '''
   register: acl_info
 '''
 
+def normalize_permissions(p):
+    perms = ['-','-','-']
+    for char in p:
+        if char == 'r':
+            perms[0] = 'r'
+        if char == 'w':
+            perms[1] = 'w'
+        if char == 'x':
+            perms[2] = 'x'
+    return ''.join(perms)
+
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
@@ -129,15 +140,7 @@ def split_entry(entry):
     else:
         t = None
 
-    perms = ['-','-','-']
-    for char in p:
-        if char == 'r':
-            perms[0] = 'r'
-        if char == 'w':
-            perms[1] = 'w'
-        if char == 'x':
-            perms[2] = 'x'
-    p = ''.join(perms)
+    p = normalize_permissions(p)
 
     return [d,t,e,p]
 
@@ -208,7 +211,7 @@ def main():
     entry = module.params.get('entry')
     entity = module.params.get('entity')
     etype = module.params.get('etype')
-    permissions = module.params.get('permissions')
+    permissions = normalize_permissions(module.params.get('permissions'))
     state = module.params.get('state')
     follow = module.params.get('follow')
     default = module.params.get('default')

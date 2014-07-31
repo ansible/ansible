@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import sys
 import re
 import os
@@ -25,10 +26,10 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils import template
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
 import time
@@ -44,13 +45,17 @@ import traceback
 import getpass
 import sys
 import json
+import subprocess
 
-#import vault
 from vault import VaultLib
 
 VERBOSITY=0
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
+
+# caching the compilation of the regex used
+# to check for lookup calls within data
+LOOKUP_REGEX=re.compile(r'lookup\s*\(')
 
 try:
     import json
@@ -68,6 +73,11 @@ try:
     PASSLIB_AVAILABLE = True
 except:
     pass
+
+try:
+    import builtin
+except ImportError:
+    import __builtin__ as builtin
 
 KEYCZAR_AVAILABLE=False
 try:
@@ -148,6 +158,32 @@ def decrypt(key, msg):
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
 
+def read_vault_file(vault_password_file):
+    """Read a vault password from a file or if executable, execute the script and
+    retrieve password from STDOUT
+    """
+    if vault_password_file:
+        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
+        if is_executable(this_path):
+            try:
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+            except OSError, e:
+                raise errors.AnsibleError("problem running %s (%s)" % (' '.join(this_path), e))
+            stdout, stderr = p.communicate()
+            vault_pass = stdout.strip('\r\n')
+        else:
+            try:
+                f = open(this_path, "rb")
+                vault_pass=f.read().strip()
+                f.close()
+            except (OSError, IOError), e:
+                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+
+        return vault_pass
+    else:
+        return None
+
 def err(msg):
     ''' print an error message to stderr '''
 
@@ -194,6 +230,7 @@ def is_changed(result):
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
+    from ansible.utils import template
 
     if conditional is None or conditional == '':
         return True
@@ -288,6 +325,9 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
     # (used by roles code)
 
+    from ansible.utils import template
+
+
     basedir = os.path.dirname(original)
     if os.path.islink(basedir):
         basedir = unfrackpath(basedir)
@@ -309,7 +349,97 @@ def json_loads(data):
 
     return json.loads(data)
 
-def parse_json(raw_data):
+def _clean_data(orig_data, from_remote=False, from_inventory=False):
+    ''' remove jinja2 template tags from a string '''
+
+    if not isinstance(orig_data, basestring):
+        return orig_data
+
+    data = StringIO.StringIO("")
+
+    # when the data is marked as having come from a remote, we always
+    # replace any print blocks (ie. {{var}}), however when marked as coming
+    # from inventory we only replace print blocks that contain a call to
+    # a lookup plugin (ie. {{lookup('foo','bar'))}})
+    replace_prints = from_remote or (from_inventory and '{{' in orig_data and LOOKUP_REGEX.search(orig_data) is not None)
+
+    # these variables keep track of opening block locations, as we only
+    # want to replace matched pairs of print/block tags
+    print_openings = []
+    block_openings = []
+
+    for idx,c in enumerate(orig_data):
+        # if the current character is an opening brace, check to
+        # see if this is a jinja2 token. Otherwise, if the current
+        # character is a closing brace, we backup one character to
+        # see if we have a closing.
+        if c == '{' and idx < len(orig_data) - 1:
+            token = orig_data[idx:idx+2]
+            # if so, and we want to replace this block, push
+            # this token's location onto the appropriate array
+            if token == '{{' and replace_prints:
+                print_openings.append(idx)
+            elif token == '{%':
+                block_openings.append(idx)
+            # finally we write the data to the buffer and write
+            data.seek(0, os.SEEK_END)
+            data.write(c)
+        elif c == '}' and idx > 0:
+            token = orig_data[idx-1:idx+1]
+            prev_idx = -1
+            if token == '%}' and len(block_openings) > 0:
+                prev_idx = block_openings.pop()
+            elif token == '}}' and len(print_openings) > 0:
+                prev_idx = print_openings.pop()
+            # if we have a closing token, and we have previously found
+            # the opening to the same kind of block represented by this
+            # token, replace both occurrences, otherwise we just write
+            # the current character to the buffer
+            if prev_idx != -1:
+                # replace the opening
+                data.seek(prev_idx, os.SEEK_SET)
+                data.write('{#')
+                # replace the closing
+                data.seek(-1, os.SEEK_END)
+                data.write('#}')
+            else:
+                data.seek(0, os.SEEK_END)
+                data.write(c)
+        else:
+            # not a jinja2 token, so we just write the current char
+            # to the output buffer
+            data.seek(0, os.SEEK_END)
+            data.write(c)
+    return_data = data.getvalue()
+    data.close()
+    return return_data
+
+def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
+    '''
+    walk a complex data structure, and use _clean_data() to
+    remove any template tags that may exist
+    '''
+    if not from_remote and not from_inventory:
+        raise errors.AnsibleErrors("when cleaning data, you must specify either from_remote or from_inventory")
+    if isinstance(orig_data, dict):
+        data = orig_data.copy()
+        for key in data:
+            new_key = _clean_data_struct(key, from_remote, from_inventory)
+            new_val = _clean_data_struct(data[key], from_remote, from_inventory)
+            if key != new_key:
+                del data[key]
+            data[new_key] = new_val
+    elif isinstance(orig_data, list):
+        data = orig_data[:]
+        for i in range(0, len(data)):
+            data[i] = _clean_data_struct(data[i], from_remote, from_inventory)
+    elif isinstance(orig_data, basestring):
+        data = _clean_data(orig_data, from_remote, from_inventory)
+    else:
+        data = orig_data
+    return data
+
+def parse_json(raw_data, from_remote=False, from_inventory=False):
     ''' this version for module return data only '''
 
     orig_data = raw_data
@@ -318,7 +448,7 @@ def parse_json(raw_data):
     data = filter_leading_non_json_lines(raw_data)
 
     try:
-        return json.loads(data)
+        results = json.loads(data)
     except:
         # not JSON, but try "Baby JSON" which allows many of our modules to not
         # require JSON and makes writing modules in bash much simpler
@@ -328,7 +458,6 @@ def parse_json(raw_data):
         except:
             print "failed to parse json: "+ data
             raise
-
         for t in tokens:
             if "=" not in t:
                 raise errors.AnsibleError("failed to parse: %s" % orig_data)
@@ -343,29 +472,32 @@ def parse_json(raw_data):
             results[key] = value
         if len(results.keys()) == 0:
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
-        return results
 
-def smush_braces(data):
-    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while '{{ ' in data:
-        data = data.replace('{{ ', '{{')
-    while ' }}' in data:
-        data = data.replace(' }}', '}}')
-    return data
+    if from_remote:
+        results = _clean_data_struct(results, from_remote, from_inventory)
 
-def smush_ds(data):
-    # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
-    # so we do not have to call smush elsewhere
-    if type(data) == list:
-        return [ smush_ds(x) for x in data ]
-    elif type(data) == dict:
-        for (k,v) in data.items():
-            data[k] = smush_ds(v)
-        return data
-    elif isinstance(data, basestring):
-        return smush_braces(data)
-    else:
-        return data
+    return results
+
+def merge_module_args(current_args, new_args):
+    '''
+    merges either a dictionary or string of k=v pairs with another string of k=v pairs,
+    and returns a new k=v string without duplicates.
+    '''
+    if not isinstance(current_args, basestring):
+        raise errors.AnsibleError("expected current_args to be a basestring")
+    # we use parse_kv to split up the current args into a dictionary
+    final_args = parse_kv(current_args)
+    if isinstance(new_args, dict):
+        final_args.update(new_args)
+    elif isinstance(new_args, basestring):
+        new_args_kv = parse_kv(new_args)
+        final_args.update(new_args_kv)
+    # then we re-assemble into a string
+    module_args = ""
+    for (k,v) in final_args.iteritems():
+        if isinstance(v, basestring):
+            module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+    return module_args.strip()
 
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
@@ -385,7 +517,7 @@ def parse_yaml(data, path_hint=None):
         # else this is pretty sure to be a YAML document
         loaded = yaml.safe_load(data)
 
-    return smush_ds(loaded)
+    return loaded
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
@@ -565,7 +697,7 @@ def parse_kv(args):
         # attempting to split a unicode here does bad things
         args = args.encode('utf-8')
         try:
-            vargs = shlex.split(args, posix=True)
+            vargs = split_args(args)
         except ValueError, ve:
             if 'no closing quotation' in str(ve).lower():
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
@@ -575,25 +707,26 @@ def parse_kv(args):
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)
-                options[k]=v
+                options[k] = unquote(v.strip())
     return options
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''
 
-    result = copy.deepcopy(a)
+    result = {}
 
-    # next, iterate over b keys and values
-    for k, v in b.iteritems():
-        # if there's already such key in a
-        # and that key contains dict
-        if k in result and isinstance(result[k], dict):
-            # merge those dicts recursively
-            result[k] = merge_hash(a[k], v)
-        else:
-            # otherwise, just copy a value from b to a
-            result[k] = v
+    for dicts in a, b:
+        # next, iterate over b keys and values
+        for k, v in dicts.iteritems():
+            # if there's already such key in a
+            # and that key contains dict
+            if k in result and isinstance(result[k], dict):
+                # merge those dicts recursively
+                result[k] = merge_hash(a[k], v)
+            else:
+                # otherwise, just copy a value from b to a
+                result[k] = v
 
     return result
 
@@ -757,8 +890,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for su password')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
         help='ask for vault password')
-    parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
-        help="vault password file")
+    parser.add_option('--vault-password-file', default=constants.DEFAULT_VAULT_PASSWORD_FILE,
+        dest='vault_password_file', help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -1022,11 +1155,14 @@ def list_intersection(a, b):
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
-    this is intended for allowing things like:
+    This is intended for allowing things like:
     with_items: a_list_variable
-    where Jinja2 would return a string
-    but we do not want to allow it to call functions (outside of Jinja2, where
-    the env is constrained)
+
+    Where Jinja2 would return a string but we do not want to allow it to
+    call functions (outside of Jinja2, where the env is constrained). If
+    the input data to this function came from an untrusted (remote) source,
+    it should first be run through _clean_data_struct() to ensure the data
+    is further sanitized prior to evaluation.
 
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
@@ -1039,7 +1175,6 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     SAFE_NODES = set(
         (
             ast.Add,
-            ast.Attribute,
             ast.BinOp,
             ast.Call,
             ast.Compare,
@@ -1066,34 +1201,24 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             )
         )
 
-    # builtin functions that are safe to call
-    BUILTIN_WHITELIST = [
-        'abs', 'all', 'any', 'basestring', 'bin', 'bool', 'buffer', 'bytearray',
-        'bytes', 'callable', 'chr', 'cmp', 'coerce', 'complex', 'copyright', 'credits',
-        'dict', 'dir', 'divmod', 'enumerate', 'exit', 'float', 'format', 'frozenset',
-        'getattr', 'globals', 'hasattr', 'hash', 'hex', 'id', 'int', 'intern',
-        'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 'locals', 'long',
-        'map', 'max', 'memoryview', 'min', 'next', 'oct', 'ord', 'pow', 'print',
-        'property', 'quit', 'range', 'reversed', 'round', 'set', 'slice', 'sorted',
-        'str', 'sum', 'tuple', 'unichr', 'unicode', 'vars', 'xrange', 'zip',
-    ]
-
     filter_list = []
     for filter in filter_loader.all():
         filter_list.extend(filter.filters().keys())
 
-    CALL_WHITELIST = BUILTIN_WHITELIST + filter_list + C.DEFAULT_CALLABLE_WHITELIST
+    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list
 
     class CleansingNodeVisitor(ast.NodeVisitor):
-        def generic_visit(self, node):
+        def generic_visit(self, node, inside_call=False):
             if type(node) not in SAFE_NODES:
                 raise Exception("invalid expression (%s)" % expr)
             elif isinstance(node, ast.Call):
-                if not isinstance(node.func, ast.Attribute) and node.func.id not in CALL_WHITELIST:
-                    raise Exception("invalid function: %s" % node.func.id)
+                inside_call = True
+            elif isinstance(node, ast.Name) and inside_call:
+                if hasattr(builtin, node.id) and node.id not in CALL_WHITELIST:
+                    raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
             for child_node in ast.iter_child_nodes(node):
-                super(CleansingNodeVisitor, self).visit(child_node)
+                self.generic_visit(child_node, inside_call)
 
     if not isinstance(expr, basestring):
         # already templated to a datastructure, perhaps?
@@ -1101,9 +1226,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (expr, None)
         return expr
 
+    cnv = CleansingNodeVisitor()
     try:
         parsed_tree = ast.parse(expr, mode='eval')
-        cnv = CleansingNodeVisitor()
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
         result = eval(compiled, {}, locals)
@@ -1125,6 +1250,8 @@ def safe_eval(expr, locals={}, include_exceptions=False):
 
 
 def listify_lookup_plugin_terms(terms, basedir, inject):
+
+    from ansible.utils import template
 
     if isinstance(terms, basestring):
         # someone did:
@@ -1181,5 +1308,114 @@ def before_comment(msg):
     msg = msg.replace("**NOT_A_COMMENT**","#")
     return msg
 
+def load_vars(basepath, results, vault_password=None):
+    """
+    Load variables from any potential yaml filename combinations of basepath,
+    returning result.
+    """
 
+    paths_to_check = [ "".join([basepath, ext])
+                       for ext in C.YAML_FILENAME_EXTENSIONS ]
+
+    found_paths = []
+
+    for path in paths_to_check:
+        found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+        if found:
+            found_paths.append(path)
+
+
+    # disallow the potentially confusing situation that there are multiple
+    # variable files for the same name. For example if both group_vars/all.yml
+    # and group_vars/all.yaml
+    if len(found_paths) > 1:
+        raise errors.AnsibleError("Multiple variable files found. "
+            "There should only be one. %s" % ( found_paths, ))
+
+    return results
+
+## load variables from yaml files/dirs
+#  e.g. host/group_vars
+#
+def _load_vars_from_path(path, results, vault_password=None):
+    """
+    Robustly access the file at path and load variables, carefully reporting
+    errors in a friendly/informative way.
+
+    Return the tuple (found, new_results, )
+    """
+
+    try:
+        # in the case of a symbolic link, we want the stat of the link itself,
+        # not its target
+        pathstat = os.lstat(path)
+    except os.error, err:
+        # most common case is that nothing exists at that path.
+        if err.errno == errno.ENOENT:
+            return False, results
+        # otherwise this is a condition we should report to the user
+        raise errors.AnsibleError(
+            "%s is not accessible: %s."
+            " Please check its permissions." % ( path, err.strerror))
+
+    # symbolic link
+    if stat.S_ISLNK(pathstat.st_mode):
+        try:
+            target = os.path.realpath(path)
+        except os.error, err2:
+            raise errors.AnsibleError("The symbolic link at %s "
+                "is not readable: %s.  Please check its permissions."
+                % (path, err2.strerror, ))
+        # follow symbolic link chains by recursing, so we repeat the same
+        # permissions checks above and provide useful errors.
+        return _load_vars_from_path(target, results)
+
+    # directory
+    if stat.S_ISDIR(pathstat.st_mode):
+
+        # support organizing variables across multiple files in a directory
+        return True, _load_vars_from_folder(path, results, vault_password=vault_password)
+
+    # regular file
+    elif stat.S_ISREG(pathstat.st_mode):
+        data = parse_yaml_from_file(path, vault_password=vault_password)
+        if data and type(data) != dict:
+            raise errors.AnsibleError(
+                "%s must be stored as a dictionary/hash" % path)
+        elif data is None:
+            data = {}
+
+        # combine vars overrides by default but can be configured to do a
+        # hash merge in settings
+        results = combine_vars(results, data)
+        return True, results
+
+    # something else? could be a fifo, socket, device, etc.
+    else:
+        raise errors.AnsibleError("Expected a variable file or directory "
+            "but found a non-file object at path %s" % (path, ))
+
+def _load_vars_from_folder(folder_path, results, vault_password=None):
+    """
+    Load all variables within a folder recursively.
+    """
+
+    # this function and _load_vars_from_path are mutually recursive
+
+    try:
+        names = os.listdir(folder_path)
+    except os.error, err:
+        raise errors.AnsibleError(
+            "This folder cannot be listed: %s: %s."
+             % ( folder_path, err.strerror))
+
+    # evaluate files in a stable order rather than whatever order the
+    # filesystem lists them.
+    names.sort()
+
+    # do not parse hidden files or dirs, e.g. .svn/
+    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
+    for path in paths:
+        _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+    return results
 

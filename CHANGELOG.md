@@ -6,6 +6,7 @@ Ansible Changes By Release
 Major new features:
 
 * Windows support (alpha) using native PowerShell remoting
+* Tasks can now specify `run_once: true`, meaning they will be executed exactly once. This can be combined with delegate_to to trigger actions you want done just the one time versus for every host in inventory.
 
 New inventory scripts:
 
@@ -27,6 +28,27 @@ New Modules:
 * windows: win_user
 * windows: win_service
 * windows: win_group
+
+Other notable changes:
+
+* Inventory speed improvements for very large inventories.
+* Vault password files can now be executable, to support scripts that fetch the vault password.
+
+## 1.6.8 "And the Cradle Will Rock" - Jul 22, 2014
+
+- Corrects a regression in the way shell and command parameters were being parsed
+
+## 1.6.7 "And the Cradle Will Rock" - Jul 21, 2014
+
+- Security fixes:
+  * Strip lookup calls out of inventory variables and clean unsafe data
+    returned from lookup plugins (CVE-2014-4966)
+  * Make sure vars don't insert extra parameters into module args and prevent
+    duplicate params from superseding previous params (CVE-2014-4967)
+
+## 1.6.6 "And the Cradle Will Rock" - Jul 01, 2014
+
+- Security updates to further protect against the incorrect execution of untrusted data
 
 ## 1.6.4, 1.6.5 "And the Cradle Will Rock" - Jun 25, 2014
 

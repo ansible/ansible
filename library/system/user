@@ -440,7 +440,7 @@ class User(object):
     def group_exists(self,group):
         try:
             if group.isdigit():
-                if grp.getgrgid(group):
+                if grp.getgrgid(int(group)):
                     return True
             else:
                 if grp.getgrnam(group):

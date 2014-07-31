@@ -222,6 +222,16 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
+        # Return all EC2/RDS instances
+        if config.has_option('ec2', 'all_instances'):
+            self.all_instances = config.getboolean('ec2', 'all_instances')
+        else:
+            self.all_instances = False
+        if config.has_option('ec2', 'all_rds_instances'):
+            self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
+        else:
+            self.all_rds_instances = False
+
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
         if not os.path.exists(cache_dir):
@@ -230,7 +240,7 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
+
 
 
     def parse_cli_args(self):
@@ -275,12 +285,12 @@ class Ec2Inventory(object):
             if conn is None:
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
- 
+
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
-        
+
         except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
@@ -288,7 +298,7 @@ class Ec2Inventory(object):
             sys.exit(1)
 
     def get_rds_instances_by_region(self, region):
-	''' Makes an AWS API call to the list of RDS instances in a particular
+        ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
 
         try:
@@ -326,8 +336,8 @@ class Ec2Inventory(object):
         ''' Adds an instance to the inventory and index, as long as it is
         addressable '''
 
-        # Only want running instances
-        if instance.state != 'running':
+        # Only want running instances unless all_instances is True
+        if not self.all_instances and instance.state != 'running':
             return
 
         # Select the best destination address
@@ -358,7 +368,7 @@ class Ec2Inventory(object):
         # Inventory: Group by key pair
         if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
-        
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -390,8 +400,8 @@ class Ec2Inventory(object):
         ''' Adds an RDS instance to the inventory and index, as long as it is
         addressable '''
 
-        # Only want available instances
-        if instance.status != 'available':
+        # Only want available instances unless all_rds_instances is True
+        if not self.all_rds_instances and instance.status != 'available':
             return
 
         # Select the best destination address
@@ -416,10 +426,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.availability_zone, dest)
-        
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:

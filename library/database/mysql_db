@@ -50,7 +50,7 @@ options:
     default: localhost
   login_port:
     description:
-      - Port of the MySQL server
+      - Port of the MySQL server. Requires login_host be defined as other then localhost if login_port is used
     required: false
     default: 3306
   login_unix_socket:
@@ -265,7 +265,7 @@ def main():
             login_host=dict(default="localhost"),
             login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
-            db=dict(required=True, aliases=['name']),
+            name=dict(required=True, aliases=['db']),
             encoding=dict(default=""),
             collation=dict(default=""),
             target=dict(default=None),
@@ -276,11 +276,15 @@ def main():
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
 
-    db = module.params["db"]
+    db = module.params["name"]
     encoding = module.params["encoding"]
     collation = module.params["collation"]
     state = module.params["state"]
     target = module.params["target"]
+
+    # make sure the target path is expanded for ~ and $HOME
+    if target is not None:
+        target = os.path.expandvars(os.path.expanduser(target))
 
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
@@ -308,16 +312,25 @@ def main():
     try:
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db=connect_to_db)
+        elif module.params["login_port"] != "3306" and module.params["login_host"] == "localhost":
+            module.fail_json(msg="login_host is required when login_port is defined, login_host cannot be localhost when login_port is defined")
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password, db=connect_to_db)
         cursor = db_connection.cursor()
     except Exception, e:
-        module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+        if "Unknown database" in str(e):
+                errno, errstr = e.args
+                module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
+        else:
+                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
 
     changed = False
     if db_exists(cursor, db):
         if state == "absent":
-            changed = db_delete(cursor, db)
+            try:
+                changed = db_delete(cursor, db)
+            except Exception, e:
+                module.fail_json(msg="error deleting database: " + str(e))
         elif state == "dump":
             rc, stdout, stderr = db_dump(module, login_host, login_user, 
                                         login_password, db, target, 
@@ -338,7 +351,10 @@ def main():
                 module.exit_json(changed=True, db=db, msg=stdout)
     else:
         if state == "present":
-            changed = db_create(cursor, db, encoding, collation)
+            try:
+                changed = db_create(cursor, db, encoding, collation)
+            except Exception, e:
+                module.fail_json(msg="error creating database: " + str(e))
 
     module.exit_json(changed=changed, db=db)
 

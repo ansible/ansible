@@ -21,6 +21,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import pipes
 import shlex
@@ -55,7 +56,7 @@ class Play(object):
 
         for x in ds.keys():
             if not x in Play.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
+                raise errors.AnsibleError("%s is not a legal parameter at this level in an Ansible Playbook" % x)
 
         # allow all playbook keys to be set by --extra-vars
         self.vars             = ds.get('vars', {})
@@ -332,7 +333,6 @@ class Play(object):
                 if new_default_vars:
                     if type(new_default_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
-
                     default_vars = utils.combine_vars(default_vars, new_default_vars)
 
         return default_vars
@@ -525,7 +525,7 @@ class Play(object):
                 task_vars['_original_file'] = original_file
 
             if 'include' in x:
-                tokens = shlex.split(str(x['include']))
+                tokens = split_args(str(x['include']))
                 included_additional_conditions = list(additional_conditions)
                 include_vars = {}
                 for k in x:
@@ -574,6 +574,7 @@ class Play(object):
                 mv = task_vars.copy()
                 for t in tokens[1:]:
                     (k,v) = t.split("=", 1)
+                    v = unquote(v)
                     mv[k] = template(self.basedir, v, mv)
                 dirname = self.basedir
                 if original_file:

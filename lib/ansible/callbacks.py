@@ -343,9 +343,6 @@ class DefaultRunnerCallbacks(object):
     def on_ok(self, host, res):
         call_callback_module('runner_on_ok', host, res)
 
-    def on_error(self, host, msg):
-        call_callback_module('runner_on_error', host, msg)
-
     def on_skipped(self, host, item=None):
         call_callback_module('runner_on_skipped', host, item=item)
 
@@ -404,10 +401,6 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         display("%s | skipped" % (host), runner=self.runner)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
 
-    def on_error(self, host, err):
-        display("err: [%s] => %s\n" % (host, err), stderr=True, runner=self.runner)
-        super(CliRunnerCallbacks, self).on_error(host, err)
-
     def on_no_hosts(self):
         display("no hosts matched\n", stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_no_hosts()
@@ -455,6 +448,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_unreachable(self, host, results):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
+
         item = None
         if type(results) == dict:
             item = results.get('item', None)
@@ -466,7 +463,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
-
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -499,6 +498,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
 
         item = host_result.get('item', None)
 
@@ -534,19 +536,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 display(msg, color='yellow', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
-    def on_error(self, host, err):
-
-        item = err.get('item', None)
-        msg = ''
-        if item:
-            msg = "err: [%s] => (item=%s) => %s" % (host, item, err)
-        else:
-            msg = "err: [%s] => %s" % (host, err)
-
-        display(msg, color='red', stderr=True, runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_error(host, err)
-
     def on_skipped(self, host, item=None):
+        delegate_to = self.runner.module_vars.get('delegate_to')
+        if delegate_to:
+            host = '%s -> %s' % (host, delegate_to)
+
         if constants.DISPLAY_SKIPPED_HOSTS:
             msg = ''
             if item:
@@ -695,9 +689,9 @@ class PlaybookCallbacks(object):
         display(msg, color='cyan')
         call_callback_module('playbook_on_not_import_for_host', host, missing_file)
 
-    def on_play_start(self, pattern):
-        display(banner("PLAY [%s]" % pattern))
-        call_callback_module('playbook_on_play_start', pattern)
+    def on_play_start(self, name):
+        display(banner("PLAY [%s]" % name))
+        call_callback_module('playbook_on_play_start', name)
 
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)

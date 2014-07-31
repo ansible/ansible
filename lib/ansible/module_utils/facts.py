@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import stat
 import array
 import errno
 import fcntl
@@ -30,6 +31,8 @@ import datetime
 import getpass
 import ConfigParser
 import StringIO
+
+from string import maketrans
 
 try:
     import selinux
@@ -175,7 +178,7 @@ class Facts(object):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact','')
-            if os.access(fn, os.X_OK):
+            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
                 # run it
                 # try to read it as json first
                 # if that fails read it with ConfigParser
@@ -324,12 +327,15 @@ class Facts(object):
         data = get_file_content('/proc/cmdline')
         if data:
             self.facts['cmdline'] = {}
-            for piece in shlex.split(data):
-                item = piece.split('=', 1)
-                if len(item) == 1:
-                    self.facts['cmdline'][item[0]] = True
-                else:
-                    self.facts['cmdline'][item[0]] = item[1]
+            try:
+                for piece in shlex.split(data):
+                    item = piece.split('=', 1)
+                    if len(item) == 1:
+                        self.facts['cmdline'][item[0]] = True
+                    else:
+                        self.facts['cmdline'][item[0]] = item[1]
+            except ValueError, e:
+                pass
 
     def get_public_ssh_host_keys(self):
         dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
@@ -910,9 +916,10 @@ class OpenBSDHardware(Hardware):
         # total: 69268k bytes allocated = 0k used, 69268k available
         rc, out, err = module.run_command("/sbin/swapctl -sk")
         if rc == 0:
+            swaptrans = maketrans(' ', ' ')
             data = out.split()
-            self.facts['swapfree_mb'] = long(data[-2].translate(None, "kmg")) / 1024
-            self.facts['swaptotal_mb'] = long(data[1].translate(None, "kmg")) / 1024
+            self.facts['swapfree_mb'] = long(data[-2].translate(swaptrans, "kmg")) / 1024
+            self.facts['swaptotal_mb'] = long(data[1].translate(swaptrans, "kmg")) / 1024
 
     def get_processor_facts(self):
         processor = []
@@ -1377,7 +1384,9 @@ class Darwin(Hardware):
         return system_profile
 
     def get_mac_facts(self):
-        self.facts['model'] = self.sysctl['hw.model']
+        rc, out, err = module.run_command("sysctl hw.model")
+        if rc == 0:
+            self.facts['model'] = out.splitlines()[-1].split()[1]
         self.facts['osversion'] = self.sysctl['kern.osversion']
         self.facts['osrevision'] = self.sysctl['kern.osrevision']
 
@@ -1392,7 +1401,10 @@ class Darwin(Hardware):
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024
-        self.facts['memfree_mb'] = long(self.sysctl['hw.usermem']) / 1024 / 1024
+
+        rc, out, err = module.run_command("sysctl hw.usermem")
+        if rc == 0:
+            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
 class Network(Facts):
     """

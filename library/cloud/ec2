@@ -921,7 +921,15 @@ def create_instances(module, ec2, override_count=None):
         num_running = 0
         wait_timeout = time.time() + wait_timeout
         while wait_timeout > time.time() and num_running < len(instids):
-            res_list = ec2.get_all_instances(instids)
+            try: 
+                res_list = ec2.get_all_instances(instids)
+            except boto.exception.BotoServerError, e:
+                if e.error_code == 'InvalidInstanceID.NotFound':
+                    time.sleep(1)
+                    continue
+                else:
+                    raise
+
             num_running = 0
             for res in res_list:
                 num_running += len([ i for i in res.instances if i.state=='running' ])
@@ -1075,10 +1083,12 @@ def startstop_instances(module, ec2, instance_ids, state):
     ## Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time():
+        instance_dict_array = []
         matched_instances = []
         for res in ec2.get_all_instances(instance_ids):
             for i in res.instances:
                 if i.state == state:
+                    instance_dict_array.append(get_instance_info(i))
                     matched_instances.append(i)
         if len(matched_instances) < len(instance_ids):
             time.sleep(5)

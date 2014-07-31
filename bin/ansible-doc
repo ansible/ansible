@@ -113,6 +113,9 @@ def get_man_text(doc):
         if 'choices' in opt:
             choices = ", ".join(str(i) for i in opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
+        if 'default' in opt:
+            default = str(opt['default'])
+            desc = desc + " [Default: " + default + "]"
         text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
                              subsequent_indent=opt_indent))
 
@@ -171,6 +174,8 @@ def get_module_list_text(module_list):
 
         if filename is None:
             continue
+        if filename.endswith(".ps1"):
+            continue
         if os.path.isdir(filename):
             continue
 
@@ -183,7 +188,6 @@ def get_module_list_text(module_list):
         except:
             traceback.print_exc()
             sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
-            pass
     return "\n".join(text)
 
 def main():

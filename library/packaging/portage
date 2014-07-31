@@ -194,7 +194,7 @@ def query_set(module, set, action):
 
 def sync_repositories(module, webrsync=False):
     if module.check_mode:
-        module.fail_json(msg='check mode not supported by sync')
+        module.exit_json(msg='check mode not supported by sync')
 
     if webrsync:
         webrsync_path = module.get_bin_path('emerge-webrsync', required=True)
@@ -362,7 +362,7 @@ def main():
     if p['sync']:
         sync_repositories(module, webrsync=(p['sync'] == 'web'))
         if not p['package']:
-            return
+            module.exit_json(msg='Sync successfully finished.')
 
     packages = p['package'].split(',') if p['package'] else []
 

@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: generate random string
-  shell: python -c "import string,random; print ''.join(random.choice(string.ascii_lowercase) for _ in xrange(8));"
+  command: python -c "import string,random; print ''.join(random.choice(string.ascii_lowercase) for _ in xrange(8));"
   register: random_string
   tags:
     - prepare
