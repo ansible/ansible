@@ -141,42 +141,46 @@ def build_entry(etype, entity, permissions=None):
         return ':'.join([etype, entity, permissions])
 
 
-def get_acls(module,path,follow):
+def build_command(module, mode, path, follow, default, entry=''):
+    '''Builds and returns agetfacl/setfacl command.'''
+    if mode == 'set':
+        cmd = [module.get_bin_path('setfacl', True)]
+        cmd.append('-m "%s"' % entry)
+    elif mode == 'rm':
+        cmd = [module.get_bin_path('setfacl', True)]
+        cmd.append('-x "%s"' % entry)
+    else:  # mode == 'get'
+        cmd = [module.get_bin_path('getfacl', True)]
+        cmd.append('--omit-header')
+        cmd.append('--absolute-names')
 
-    cmd = [ module.get_bin_path('getfacl', True) ]
     if not follow:
         cmd.append('-h')
-    # prevents absolute path warnings and removes headers
-    cmd.append('--omit-header')
-    cmd.append('--absolute-names')
-    cmd.append(path)
 
-    return _run_acl(module,cmd)
+    if default:
+        if(mode == 'rm'):
+            cmd.append('-k')
+        else:  # mode == 'set' or mode == 'get'
+            cmd.append('-d')
+
+    cmd.append(path)
+    return cmd
+
+
+def get_acls(module,path,follow,default):
+
+    command = build_command(module, 'get', path, follow, default)
+    return _run_acl(module,command)
 
 def set_acl(module,path,entry,follow,default):
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
-    if not follow:
-        cmd.append('-h')
-    if default:
-        cmd.append('-d')
-    cmd.append('-m "%s"' % entry)
-    cmd.append(path)
-
-    return _run_acl(module,cmd)
+    command = build_command(module, 'set', path, follow, default, entry)
+    return _run_acl(module,command)
 
 def rm_acl(module,path,entry,follow,default):
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
-    if not follow:
-        cmd.append('-h')
-    if default:
-        cmd.append('-k')
-    entry = entry[0:entry.rfind(':')]
-    cmd.append('-x "%s"' % entry)
-    cmd.append(path)
-
-    return _run_acl(module,cmd,False)
+    command = build_command(module, 'rm', path, follow, default, entry)
+    return _run_acl(module,command,False)
 
 def _run_acl(module,cmd,check_rc=True):
 
@@ -230,7 +234,7 @@ def main():
 
     changed=False
     msg = ""
-    currentacls = get_acls(module,path,follow)
+    currentacls = get_acls(module, path, follow, default)
 
     if (state == 'present'):
         entry = build_entry(etype, entity, permissions)
@@ -281,7 +285,7 @@ def main():
         msg="current acl"
 
     if changed:
-        currentacls = get_acls(module,path,follow)
+        currentacls = get_acls(module,path,follow,default)
 
     module.exit_json(changed=changed, msg=msg, acl=currentacls)
 
