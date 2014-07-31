@@ -253,7 +253,7 @@ def main():
                 if target_group_created:
                     changed = True
 
-                if rule['proto'] == 'all':
+                if rule['proto'] in ('all', '-1', -1):
                     rule['proto'] = -1
                     rule['from_port'] = None
                     rule['to_port'] = None
@@ -293,7 +293,7 @@ def main():
                 if target_group_created:
                     changed = True
 
-                if rule['proto'] == 'all':
+                if rule['proto'] in ('all', '-1', -1):
                     rule['proto'] = -1
                     rule['from_port'] = None
                     rule['to_port'] = None
