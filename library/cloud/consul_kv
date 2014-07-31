@@ -17,7 +17,6 @@ options:
         description:
             - Optionally when used with the -u option, this option allows to
               change the user ID to a non-unique value.
-        version_added: "1.1"
     key:
         required: true
         description:
