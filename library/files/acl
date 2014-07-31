@@ -171,26 +171,11 @@ def acl_changed(module, cmd):
     '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
     cmd = cmd[:]  # lists are mutables so cmd would be overriden without this
     cmd.insert(1, '--test')
-    lines = _run_acl(module, cmd)
+    lines = run_acl(module, cmd)
     return not all(line.endswith('*,*') for line in lines)
 
 
-def get_acls(module,path,follow,default):
-
-    command = build_command(module, 'get', path, follow, default)
-    return _run_acl(module,command)
-
-def set_acl(module,path,entry,follow,default):
-
-    command = build_command(module, 'set', path, follow, default, entry)
-    return _run_acl(module,command)
-
-def rm_acl(module,path,entry,follow,default):
-
-    command = build_command(module, 'rm', path, follow, default, entry)
-    return _run_acl(module,command,False)
-
-def _run_acl(module,cmd,check_rc=True):
+def run_acl(module, cmd, check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
@@ -253,7 +238,7 @@ def main():
         changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
-            set_acl(module,path,entry,follow,default)
+            run_acl(module, command)
         msg="%s is present" % entry
 
     elif state == 'absent':
@@ -262,15 +247,17 @@ def main():
         changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
-            rm_acl(module,path,entry,follow,default)
+            run_acl(module, command, False)
         msg="%s is absent" % entry
     else:
         msg="current acl"
 
-    if changed:
-        currentacls = get_acls(module,path,follow,default)
+    acl = run_acl(
+        module,
+        build_command(module, 'get', path, follow, default)
+    )
 
-    module.exit_json(changed=changed, msg=msg, acl=currentacls)
+    module.exit_json(changed=changed, msg=msg, acl=acl)
 
 # import module snippets
 from ansible.module_utils.basic import *
