@@ -163,7 +163,7 @@ options:
     description:
       - the private ip address to assign the instance (from the vpc subnet)
     required: false
-    defualt: null
+    default: null
     aliases: []
   instance_profile_name:
     version_added: "1.3"
@@ -192,6 +192,7 @@ options:
     required: false
     default: 'present'
     aliases: []
+    choices: ['present', 'absent', 'running', 'stopped']
   volumes:
     version_added: "1.5"
     description:
