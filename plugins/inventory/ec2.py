@@ -222,12 +222,17 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
-        # Return all EC2/RDS instances
+        # Include RDS instances?
+        self.rds_enabled = True
+        if config.has_option('ec2', 'rds'):
+            self.rds_enabled = config.getboolean('ec2', 'rds')
+
+        # Return all EC2 and RDS instances (if RDS is enabled)
         if config.has_option('ec2', 'all_instances'):
             self.all_instances = config.getboolean('ec2', 'all_instances')
         else:
             self.all_instances = False
-        if config.has_option('ec2', 'all_rds_instances'):
+        if config.has_option('ec2', 'all_rds_instances') and self.rds_enabled:
             self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
         else:
             self.all_rds_instances = False
@@ -268,7 +273,8 @@ class Ec2Inventory(object):
 
         for region in self.regions:
             self.get_instances_by_region(region)
-            self.get_rds_instances_by_region(region)
+            if self.rds_enabled:
+                self.get_rds_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
