@@ -531,7 +531,7 @@ def main():
             virtual_network_name=dict(default=None),
             state=dict(default='present'),
             wait=dict(type='bool', default=False),
-            wait_timeout=dict(default=300),
+            wait_timeout=dict(default=600),
             wait_timeout_redirects=dict(default=300)
         )
     )
