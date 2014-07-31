@@ -40,6 +40,8 @@ options:
     required: false
     default: yes
     aliases: []
+variable parameters:
+
 author: Bruce Pennypacker
 '''
 

@@ -11,5 +11,5 @@ ansible*.xml
 .buildinfo
 objects.inv
 .doctrees
-#rst/modules/*.rst
+rst/modules/*.rst
 *.min.css
