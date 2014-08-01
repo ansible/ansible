@@ -77,8 +77,9 @@ def main(args):
     #    help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
-    parser.add_option('', '--filter', dest='filter', default='',
-        help="only run tasks whose name or action includes a filter term")
+    parser.add_option('', '--only', dest='only_tasks', default='',
+        help="only run tasks whose name or action includes one of the "
+             "comma-separated terms")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
@@ -152,7 +153,7 @@ def main(args):
     skip_tags = options.skip_tags
     if options.skip_tags is not None:
         skip_tags = options.skip_tags.split(",")
-    task_filter = options.filter.split(",")
+    only_tasks = options.only_tasks.split(",")
 
     for playbook in args:
         if not os.path.exists(playbook):
@@ -202,7 +203,7 @@ def main(args):
             su_user=options.su_user,
             vault_password=vault_pass,
             force_handlers=options.force_handlers,
-            task_filter=task_filter,
+            only_tasks=only_tasks,
         )
 
         if options.flush_cache:

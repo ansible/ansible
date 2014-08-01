@@ -71,7 +71,7 @@ class PlayBook(object):
         extra_vars       = None,
         only_tags        = None,
         skip_tags        = None,
-        task_filter     =  "",
+        only_tasks     =  "",
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
@@ -147,7 +147,7 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
         self.skip_tags        = skip_tags
-        self.task_filter     = task_filter
+        self.only_tasks     = only_tasks
         self.any_errors_fatal = any_errors_fatal
         self.su               = su
         self.su_user          = su_user
@@ -734,7 +734,7 @@ class PlayBook(object):
 
                 # only run the task if name or action matches the filter
                 should_run_filter = False
-                for term in self.task_filter:
+                for term in self.only_tasks:
                     if term in task.name or term in task.action or term in task.tags:
                         should_run_filter = True
                         break
