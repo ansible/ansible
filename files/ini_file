@@ -94,7 +94,7 @@ import ConfigParser
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
     changed = False
-    cp = ConfigParser.ConfigParser()
+    cp = ConfigParser.ConfigParser(allow_no_value=True)
     cp.optionxform = identity
 
     try:
