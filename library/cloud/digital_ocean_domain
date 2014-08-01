@@ -18,9 +18,9 @@
 DOCUMENTATION = '''
 ---
 module: digital_ocean_domain
-short_description: Create/delete a DNS record in DigitalOcean
+short_description: Create/delete a DNS zone in DigitalOcean
 description:
-     - Create/delete a DNS record in DigitalOcean.
+     - Create/delete a DNS zone in DigitalOcean.
 version_added: "1.6"
 options:
   state:
