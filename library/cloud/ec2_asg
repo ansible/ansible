@@ -264,14 +264,15 @@ def delete_autoscaling_group(connection, module):
 
         instances = True
         while instances:
-            groups = connection.get_all_groups(names=[group_name])
+            groups = connection.get_all_groups()
             for group in groups:
                 if group.name == group_name:
                     if not group.instances:
+                        target_group = group
                         instances = False
             time.sleep(10)
 
-        group.delete()
+        target_group.delete()
         module.exit_json(changed=True)
     else:
         module.exit_json(changed=False)
