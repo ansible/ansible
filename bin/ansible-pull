@@ -49,6 +49,7 @@ import time
 from ansible import utils
 from ansible.utils import cmd_functions
 from ansible import errors
+from ansible import inventory
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -150,7 +151,9 @@ def main(args):
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
-    if not options.inventory:
+    # Attempt to use the inventory passed in as an argument
+    # It might not yet have been downloaded so use localhost if note
+    if not options.inventory or not os.path.exists(options.inventory):
         inv_opts = 'localhost,'
     else:
         inv_opts = options.inventory
