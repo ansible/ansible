@@ -71,6 +71,11 @@ class AzureInventory(object):
         self.read_environment()
         self.parse_cli_args()
 
+        # Cache setting defaults.
+        self.cache_path_cache = '/tmp/ansible-azure.cache'
+        self.cache_path_index = '/tmp/ansible-azure.index'
+        self.cache_max_age = 0
+        
         # Initialize Azure ServiceManagementService
         self.sms = ServiceManagementService(self.subscription_id, self.cert_path)
 
@@ -80,16 +85,48 @@ class AzureInventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
-        if self.args.list_images:
+        if self.args.host:
+            data_to_print = self.get_host(self.args.host)
+        elif self.args.list_images:
             data_to_print = self.json_format_dict(self.get_images(), True)
         elif self.args.list:
             # Display list of nodes for inventory
             if len(self.inventory) == 0:
-                data_to_print = self.get_inventory_from_cache()
+                data = json.loads(self.get_inventory_from_cache())
             else:
-                data_to_print = self.json_format_dict(self.inventory, True)
+                data = self.inventory
+
+            # Add the `_meta` information.
+            _meta = {}
+            for host in set(reduce(lambda x, y: x + y,
+                                   [i for i in data.values()])):
+                _meta[host] = self.get_host(host, jsonify=False)
+            data['_meta'] = _meta
+
+            # JSONify the data.
+            data_to_print = self.json_format_dict(data, pretty=True)
 
         print data_to_print
+
+    def get_host(self, hostname, jsonify=True):
+        """Return information about the given hostname, based on what
+        the Windows Azure API provides.
+        """
+        # Strip ".cloudapp.net" off of the end of the hostname if
+        # it is present.
+        if hostname.endswith('.cloudapp.net'):
+            hostname = hostname.replace('.cloudapp.net', '')
+
+        # Retrieve information about the host.
+        host = self.sms.get_hosted_service_properties(hostname)
+        hsp = host.hosted_service_properties  # Because reasons.
+        answer = {
+            'label': hsp.label,
+            'status': hsp.status.lower(),
+        }
+        if jsonify:
+            return json.dumps(answer)
+        return answer
 
     def get_images(self):
         images = []
@@ -130,19 +167,27 @@ class AzureInventory(object):
     def read_environment(self):
         ''' Reads the settings from environment variables '''
         # Credentials
-        if os.getenv("AZURE_SUBSCRIPTION_ID"): self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
-        if os.getenv("AZURE_CERT_PATH"):       self.cert_path = os.getenv("AZURE_CERT_PATH")
-
+        if os.getenv("AZURE_SUBSCRIPTION_ID"):
+            self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+        if os.getenv("AZURE_CERT_PATH"):
+            self.cert_path = os.getenv("AZURE_CERT_PATH")
 
     def parse_cli_args(self):
         """Command line argument processing"""
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Azure')
+        parser = argparse.ArgumentParser(
+            description='Produce an Ansible Inventory file based on Azure',
+        )
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List nodes (default: True)')
+                            help='List nodes (default: True)')
         parser.add_argument('--list-images', action='store',
-                           help='Get all available images.')
-        parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Azure (default: False - use cache files)')
+                            help='Get all available images.')
+        parser.add_argument('--refresh-cache',
+            action='store_true', default=False,
+            help='Force refresh of thecache by making API requests to Azure '
+                 '(default: False - use cache files)',
+        )
+        parser.add_argument('--host', action='store',
+                            help='Get all information about an instance.')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -163,7 +208,9 @@ class AzureInventory(object):
             sys.exit(1)
 
     def add_deployments(self, cloud_service):
-        """Makes an Azure API call to get the list of virtual machines associated with a cloud service"""
+        """Makes an Azure API call to get the list of virtual machines
+        associated with a cloud service.
+        """
         try:
             for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
                 if deployment.deployment_slot == "Production":
