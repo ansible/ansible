@@ -509,14 +509,43 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
+    vmTarget = None
+
+    try:
+        cluster = [k for k,
+                   v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+    except IndexError, e:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find Cluster named: %s" %
+                         cluster_name)
+
+    try:
+        rpmor = [k for k, v in vsphere_client.get_resource_pools(
+            from_mor=cluster).items()
+            if v == resource_pool][0]
+    except IndexError, e:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find Resource Pool named: %s" %
+                         resource_pool)
+
+    try:
+        vmTarget = vsphere_client.get_vm_by_name(guest)
+    except Exception:
+        pass
     if not vmTemplate.properties.config.template:
         module.fail_json(
             msg="Target %s is not a registered template" % template_src
         )
     try:
-        vmTemplate.clone(guest, resourcepool=resource_pool)
+        if vmTarget:
+            changed = False
+        else:
+            vmTemplate.clone(guest, resourcepool=rpmor)
+            changed = True
+        vsphere_client.disconnect()
+        module.exit_json(changed=changed)
     except Exception as e:
         module.fail_json(
             msg="Could not clone selected machine: %s" % e
@@ -980,6 +1009,11 @@ def gather_facts(vm):
         'hw_processor_count': vm.properties.config.hardware.numCPU,
         'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
     }
+    netInfo = vm.get_property('net')
+    netDict = {}
+    if netInfo:
+        for net in netInfo:
+            netDict[net['mac_address']] = net['ip_addresses']
 
     ifidx = 0
     for entry in vm.properties.config.hardware.device:
@@ -992,6 +1026,7 @@ def gather_facts(vm):
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,
             'macaddress': entry.macAddress,
+            'ipaddresses': netDict.get(entry.macAddress, None),
             'macaddress_dash': entry.macAddress.replace(':', '-'),
             'summary': entry.deviceInfo.summary,
         }
@@ -1184,15 +1219,6 @@ def main():
             except Exception, e:
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
-        elif from_template:
-            deploy_template(
-                vsphere_client=viserver,
-                esxi=esxi,
-                resource_pool=resource_pool,
-                guest=guest,
-                template_src=template_src,
-                module=module
-            )
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
             state_result = power_state(vm, state, force)
@@ -1240,6 +1266,17 @@ def main():
             module.fail_json(
                 msg="No such VM %s. Fact gathering requires an existing vm"
                     % guest)
+
+        elif from_template:
+            deploy_template(
+                vsphere_client=viserver,
+                esxi=esxi,
+                resource_pool=resource_pool,
+                guest=guest,
+                template_src=template_src,
+                module=module,
+                cluster_name=cluster
+            )
         if state in ['restarted', 'reconfigured']:
             module.fail_json(
                 msg="No such VM %s. States ["
