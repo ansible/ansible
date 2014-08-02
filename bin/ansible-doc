@@ -169,14 +169,12 @@ def get_man_text(doc):
                             subsequent_indent=opt_indent))
 
     if 'parameters' in doc and len(doc['parameters']) > 0:
-        text.append("Parameters:\n")
-
         # final columns widths list
         col_widths = get_columns_width(doc['parameters'])
 
         # if the code of the list is malformed, we just do nothing
         if col_widths != '':
-            print("\nParameters:\n")
+            text.append("Parameters:\n")
 
             for p in doc['parameters']:
                 parameter = format_param(p, col_widths)
