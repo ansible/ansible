@@ -93,6 +93,12 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
+  attributes:
+    description:
+      - An associative array of attribute settings. Only crosszone_load_balancing and connection_draining are implemented right now. See EXAMPLES.
+    required: false
+    default: None
+    version_added: "1.7"
 
 extends_documentation_fragment: aws
 """
@@ -206,6 +212,26 @@ EXAMPLES = """
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
+
+# Creates a ELB with crosszone_load_balancing and connectionDraining enabled.
+- local_action:
+    module: ec2_elb_lb
+    state: present
+    name: 'New ELB'
+    security_group_ids: 'sg-123456, sg-67890'
+    region: us-west-2
+    subnets: 'subnet-123456, subnet-67890'
+    purge_subnets: yes
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+    attributes:
+      - crosszone_load_balancing:
+        enabled: true
+      - connection_draining:
+        enabled: true
+        value: 120
 """
 
 import sys
@@ -227,7 +253,7 @@ class ElbManager(object):
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, security_group_ids=None, 
                  health_check=None, subnets=None, purge_subnets=None,
-                 scheme="internet-facing", region=None, **aws_connect_params):
+                 scheme="internet-facing", attributes=None, region=None, **aws_connect_params):
 
         self.module = module
         self.name = name
@@ -240,6 +266,7 @@ class ElbManager(object):
         self.subnets = subnets
         self.purge_subnets = purge_subnets
         self.scheme = scheme
+        self.attributes = attributes
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -260,6 +287,7 @@ class ElbManager(object):
             self._set_elb_listeners()
             self._set_subnets()
         self._set_health_check()
+        self._set_attributes()
 
     def ensure_gone(self):
         """Destroy the ELB"""
@@ -308,6 +336,17 @@ class ElbManager(object):
                                      for l in self.listeners]
             else:
                 info['listeners'] = []
+
+            # attributes need to be queried seperately for some reason
+            elb_attrs = self.elb_conn.get_all_lb_attributes(self.name)
+            info['connection_draining'] = {
+                'enabled': elb_attrs.connection_draining.enabled,
+                'timeout': elb_attrs.connection_draining.timeout
+            }
+            info['crosszone_load_balancing'] = {
+                'enabled': elb_attrs.cross_zone_load_balancing.enabled
+            }
+
         return info
 
     def _get_elb(self):
@@ -543,6 +582,26 @@ class ElbManager(object):
 
         return "%s:%s%s" % (protocol, self.health_check['ping_port'], path)
 
+    def _set_attributes(self):
+
+        if self.attributes != None:
+            for attribute in self.attributes:
+                if 'connection_draining' in attribute:
+                    #raise Exception(attribute['enabled'])
+                    attr = self.elb_conn.get_all_lb_attributes(self.elb.name)
+                    attr.connection_draining.enabled = attribute['enabled']
+                    attr.connection_draining.timeout = attribute['value']
+                    lb_attribute = 'connectionDraining' 
+                    value = attr.connection_draining
+                elif 'crosszone_load_balancing' in attribute:
+                    lb_attribute = 'crossZoneLoadBalancing' 
+                    value = attribute['enabled']
+                # todo: add accessLog
+                elif 'access_log' in attribute:
+                    pass
+
+                self.elb_conn.modify_lb_attribute(self.elb.name, lb_attribute, value)
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -557,7 +616,8 @@ def main():
             health_check={'default': None, 'required': False, 'type': 'dict'},
             subnets={'default': None, 'required': False, 'type': 'list'},
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
-            scheme={'default': 'internet-facing', 'required': False}
+            scheme={'default': 'internet-facing', 'required': False},
+            attributes={'default': None, 'required': False, 'type': 'list'}
         )
     )
 
@@ -580,6 +640,7 @@ def main():
     subnets = module.params['subnets']
     purge_subnets = module.params['purge_subnets']
     scheme = module.params['scheme']
+    attributes = module.params['attributes']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -590,7 +651,7 @@ def main():
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets,
-                         scheme, region=region, **aws_connect_params)
+                         scheme, attributes, region=region, **aws_connect_params)
 
     if state == 'present':
         elb_man.ensure_ok()
