@@ -143,10 +143,7 @@ def split_entry(entry):
 
 def build_entry(etype, entity, permissions=None):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
-    if permissions is None:
-        return ':'.join([etype, entity])
-    else:
-        return ':'.join([etype, entity, permissions])
+    return etype + ':' + entity + (':' + permissions if permissions else '')
 
 
 def build_command(module, mode, path, follow, default, recursive, entry=''):
