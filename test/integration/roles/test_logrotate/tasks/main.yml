@@ -17,13 +17,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ---
-- shell: dpkg -l logrotate
-  register: install_result
-- name: ensure logrotate package is installed
-  assert:
-    that:
-      - "{{ install_result.rc }} == 0"
-
 - shell: stat -c %a /etc/logrotate.d/test_log
   register: stat_result
 - name: ensure logrotate config modes
@@ -66,14 +59,7 @@
     that:
       - "grep_result.rc == 0"
 
-- shell: grep -F 'create 644 root adm' /etc/logrotate.d/test_conditional_log
-  register: grep_result
-- name: ensure logrotate config has proper create directive
-  assert:
-    that:
-      - "grep_result.rc == 0"
-
-- shell: awk '/postrotate/, /endscript/' /etc/logrotate.d/test_conditional_log | grep -F 'exec script'
+- shell: awk '/postrotate/, /endscript/' /etc/logrotate.d/test_log | grep -F 'exec script'
   register: grep_result
 - name: ensure logrotate config has proper postrotate directive
   assert:
