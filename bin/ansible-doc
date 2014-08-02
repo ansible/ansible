@@ -180,7 +180,7 @@ def get_man_text(doc):
 
             for p in doc['parameters']:
                 parameter = format_param(p, col_widths)
-                print(textwrap.fill(tty_ify(parameter), initial_indent="  ",
+                text.append(textwrap.fill(tty_ify(parameter), initial_indent="  ",
                                     subsequent_indent=opt_indent))
 
         text.append('\n')
