@@ -200,7 +200,7 @@ class TestUtils(unittest.TestCase):
                __file__)
         self.assertEqual(ansible.utils.path_dwim(None, '~'),
                os.path.expanduser('~'))
-        self.assertEqual(ansible.utils.path_dwim(None, 'TestUtils.py'),
+        self.assertEqual(ansible.utils.path_dwim(None, 'test/units/TestUtils.py'),
                __file__.rstrip('c'))
 
     def test_path_dwim_relative(self):
