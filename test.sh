@@ -11,6 +11,5 @@ if [ "$TEST_SUITE" == "units" ]; then
 else
 	source hacking/env-setup -q
     cd test/integration
-    make non_destructive
-    # TODO: run as many tests as possible
+    make all
 fi
