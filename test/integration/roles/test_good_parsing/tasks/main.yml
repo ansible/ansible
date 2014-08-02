@@ -183,6 +183,7 @@
     default_omitted="{{ not_exists|default(omit) }}"
     should_not_omit_1="prefix{{ omit }}"
     should_not_omit_2="{{ omit }}suffix"
+    should_not_omit_3="__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
 
 - assert:
     that:
@@ -191,3 +192,4 @@
       - default_omitted is undefined
       - should_not_omit_1 == "prefix{{ omit }}"
       - should_not_omit_2 == "{{ omit }}suffix"
+      - should_not_omit_3 == "__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
