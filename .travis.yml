@@ -1,15 +1,15 @@
 language: python
 python:
   - '2.7'
+env:
+  - TEST_SUITE=units
+  - TEST_SUITE=integration
 # command to install dependencies
 install: 
   - 'easy_install -U setuptools'
   - 'pip install -U pip'
   - 'pip install -e .'
-  - 'pip install paramiko PyYAML jinja2 httplib2 passlib'
 # command to run tests
 script: 
-  - 'nosetests test/units -sv --with-coverage'
-  - 'pip install flake8 --use-mirrors'
-  - 'flake8 lib/ansible --ignore=E501,E221,W293'
-  - 'flake8 test/units --ignore=E501,E221,W293'
+  - 'chmod +x test.sh'
+  - './test.sh'
