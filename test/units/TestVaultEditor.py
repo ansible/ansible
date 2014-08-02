@@ -35,7 +35,12 @@ try:
 except ImportError:
     HAS_AES = False
 
+
 class TestVaultEditor(TestCase):
+
+    def setUp(self):
+        self.pkg_dir = os.path.dirname(__file__)
+        self.vault_test_data_dir = os.path.join(self.pkg_dir, 'vault_test_data')
 
     def test_methods_exist(self):
         v = VaultEditor(None, None, None)
@@ -56,7 +61,7 @@ class TestVaultEditor(TestCase):
         dirpath = tempfile.mkdtemp()
         filename = os.path.join(dirpath, "foo-ansible-1.0.yml")
         shutil.rmtree(dirpath)
-        shutil.copytree("vault_test_data", dirpath)
+        shutil.copytree(self.vault_test_data_dir, dirpath)
         ve = VaultEditor(None, "ansible", filename)
 
         # make sure the password functions for the cipher
@@ -81,7 +86,7 @@ class TestVaultEditor(TestCase):
         dirpath = tempfile.mkdtemp()
         filename = os.path.join(dirpath, "foo-ansible-1.0-ansible-newline-ansible.yml")
         shutil.rmtree(dirpath)
-        shutil.copytree("vault_test_data", dirpath)
+        shutil.copytree(self.vault_test_data_dir, dirpath)
         ve = VaultEditor(None, "ansible\nansible\n", filename)
 
         # make sure the password functions for the cipher
@@ -107,7 +112,7 @@ class TestVaultEditor(TestCase):
         dirpath = tempfile.mkdtemp()
         filename = os.path.join(dirpath, "foo-ansible-1.1.yml")
         shutil.rmtree(dirpath)
-        shutil.copytree("vault_test_data", dirpath)
+        shutil.copytree(self.vault_test_data_dir, dirpath)
         ve = VaultEditor(None, "ansible", filename)
 
         # make sure the password functions for the cipher
@@ -133,7 +138,7 @@ class TestVaultEditor(TestCase):
         dirpath = tempfile.mkdtemp()
         filename = os.path.join(dirpath, "foo-ansible-1.0.yml")
         shutil.rmtree(dirpath)
-        shutil.copytree("vault_test_data", dirpath)
+        shutil.copytree(self.vault_test_data_dir, dirpath)
         ve = VaultEditor(None, "ansible", filename)
 
         # make sure the password functions for the cipher
