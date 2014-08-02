@@ -99,6 +99,11 @@ options:
         - list of key value pairs that determine how to assign, if specified, floating IPs. Either use an explicite list of valid floating IPs, list of floating IP pools to choose from, or auto-assign 
      required: false
      default: None
+   availability_zone:
+     description:
+        - Name of the availability zone
+     required: false
+     default: None
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to the new VM
@@ -141,7 +146,7 @@ EXAMPLES = '''
          hostname: test1
          group: uge_master
 
-# Creates a new VM in HP Cloud AE1 region and automatically assigns a floating IP
+# Creates a new VM in HP Cloud AE1 region availability zone az2 and automatically assigns a floating IP
 - name: launch a nova instance
   hosts: localhost
   tasks:
@@ -154,6 +159,7 @@ EXAMPLES = '''
       name: vm1
       auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
       region_name: region-b.geo-1
+      availability_zone: az2
       image_id: 9302692b-b787-4b52-a3a6-daebb79cb498
       key_name: test
       wait_for: 200
@@ -313,7 +319,7 @@ def _create_server(module, nova):
                 'userdata': module.params['user_data'],
     }
 
-    for optional_param in ('region_name', 'key_name'):
+    for optional_param in ('region_name', 'key_name', 'availability_zone'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
     try:
@@ -397,7 +403,8 @@ def main():
         wait_for                        = dict(default=180),
         state                           = dict(default='present', choices=['absent', 'present']),
         user_data                       = dict(default=None),
-        floating_ip                     = dict(default=None)
+        floating_ip                     = dict(default=None),
+        availability_zone               = dict(default=None),
         ),
     )
 
