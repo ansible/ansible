@@ -9,7 +9,7 @@ if [ "$TEST_SUITE" == "units" ]; then
     flake8 lib/ansible --ignore=E501,E221,W293
     flake8 test/units --ignore=E501,E221,W293
 else
-	./hacking/env-setup
+	source hacking/env-setup -q
     cd test/integration
     make non_destructive
     # TODO: run as many tests as possible
