@@ -117,8 +117,6 @@ def main():
     except Exception as e:
         module.fail_json(msg="Plivo API Error. Unable to send SMS to %s" % dest)
     message = json.loads(response.read())
-    if module.params['data']:
-        result['plivo'] = module.params['data']
     if not (200 <= response.code < 300):
         module.fail_json(plivo_response=message,
                          response_code=str(response.code))
