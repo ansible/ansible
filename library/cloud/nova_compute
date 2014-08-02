@@ -92,6 +92,11 @@ options:
         - A list of network id's to which the VM's interface should be attached
      required: false
      default: None
+   availability_zone:
+     description:
+        - Name of the availability zone
+     required: false
+     default: None
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to the new VM
@@ -166,7 +171,7 @@ def _create_server(module, nova):
                 'userdata': module.params['user_data'],
     }
 
-    for optional_param in ('region_name', 'key_name'):
+    for optional_param in ('region_name', 'key_name', 'availability_zone'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
     try:
@@ -242,7 +247,8 @@ def main():
         wait                            = dict(default='yes', choices=['yes', 'no']),
         wait_for                        = dict(default=180),
         state                           = dict(default='present', choices=['absent', 'present']),
-        user_data                       = dict(default=None)
+        user_data                       = dict(default=None),
+        availability_zone               = dict(default=None),
         ),
     )
 
