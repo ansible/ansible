@@ -101,6 +101,33 @@ def format_param(param=list, col_widths=list):
 
     return ''.join(line)
 
+def get_columns_width(lines_list=[[],], offset=3):
+    # function that calculate columns ideal width
+    # to display a list as a table
+    #
+    # parameters :
+    #   lines_list -> list of lines (a line is a list)
+    #   offset     -> the arbitrary offset that we add for
+    #                   aesthetic reasons
+    #   return a list of widths (int)
+    #
+    # if the list of lines is malformed or empty, we
+    # return a empty string
+    if not all(isinstance(line, list) for line in lines_list):
+        return ''
+
+    # number of columns
+    column_nb = len(lines_list[0])
+
+    # parameters list in column to be able to max the width
+    cols_list = [[p[n] for p in lines_list] for n in range(column_nb)]
+
+    # larger columns strings list
+    maxcol_str = [max(cols_list[n], key=len) for n in range(column_nb)]
+
+    # return final columns widths list
+    return [len(s) + offset for s in maxcol_str]
+
 
 def get_man_text(doc):
 
@@ -144,22 +171,16 @@ def get_man_text(doc):
     if 'parameters' in doc and len(doc['parameters']) > 0:
         text.append("Parameters:\n")
 
-        # number of columns
-        column_nb = len(doc['parameters'][0])
-
-        # parameters list in column to be able to max the width
-        cols_list = [[p[n] for p in doc['parameters']] for n in range(column_nb)]
-
-        # larger columns strings list
-        maxcol_str = [max(cols_list[n], key=len) for n in range(column_nb)]
-
         # final columns widths list
-        col_widths = [len(s) + 3 for s in maxcol_str]
+        col_widths = get_columns_width(doc['parameters'])
 
-        for p in doc['parameters']:
-            parameter = format_param(p, col_widths)
-            text.append(textwrap.fill(tty_ify(parameter), initial_indent="  ",
-                                subsequent_indent=opt_indent))
+        if col_widths != '':
+            print("\nParameters:\n")
+
+            for p in doc['parameters']:
+                parameter = format_param(p, col_widths)
+                print(textwrap.fill(tty_ify(parameter), initial_indent="  ",
+                                    subsequent_indent=opt_indent))
 
         text.append('\n')
 
