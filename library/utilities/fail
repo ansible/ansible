@@ -32,7 +32,12 @@ options:
       - The customized message used for failing execution. If omitted,
         fail will simple bail out with a generic message.
     required: false
-    default: "'Failed as requested from task'"
+    default: "'Failed as requested from task'"  
+  all:
+    description:
+      - If used a fatal error will be triggered for all the hosts in the playbook.
+    required: false
+    default: "no"
 
 author: Dag Wieers
 '''
@@ -40,5 +45,8 @@ author: Dag Wieers
 EXAMPLES = '''
 # Example playbook using fail and when together
 - fail: msg="The system may not be provisioned according to the CMDB status."
+  when: cmdb_status != "to-be-staged"
+# Example playbook using fail all and when together
+- fail: msg="The system may not be provisioned according to the CMDB status, playbook run aborted" all=yes
   when: cmdb_status != "to-be-staged"
 '''

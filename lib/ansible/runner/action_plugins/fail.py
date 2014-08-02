@@ -18,6 +18,7 @@
 import ansible
 
 from ansible import utils
+from ansible import errors
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -39,6 +40,7 @@ class ActionModule(object):
         args.update(utils.parse_kv(module_args))
         if not 'msg' in args:
             args['msg'] = 'Failed as requested from task'
-
         result = dict(failed=True, msg=args['msg'])
+        if 'all' in args:
+            result = dict(failed=True, msg=args['msg'], fatal=True)        
         return ReturnData(conn=conn, result=result)

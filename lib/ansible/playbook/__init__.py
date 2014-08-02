@@ -469,6 +469,10 @@ class PlayBook(object):
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
+            # check if fail module triggered a fatal error
+            if task.module_name == 'fail' and 'fatal' in result and 'msg' in result:               
+                hosts_remaining = False
+                return hosts_remaining
             if 'results' in result:
                 # task ran with_ lookup plugin, so facts are encapsulated in
                 # multiple list items in the results key
