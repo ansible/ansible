@@ -31,9 +31,10 @@ import sys
 import pipes
 import jinja2
 import subprocess
-import shlex
 import getpass
 
+import poller
+import connection
 import ansible.constants as C
 import ansible.inventory
 from ansible import utils
@@ -41,9 +42,6 @@ from ansible.utils import template
 from ansible.utils import check_conditional
 from ansible.utils import string_functions
 from ansible import errors
-from ansible import module_common
-import poller
-import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
@@ -51,11 +49,11 @@ from ansible.module_utils.splitter import split_args
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
-HAS_ATFORK=True
+HAS_ATFORK = True
 try:
     from Crypto.Random import atfork
 except ImportError:
-    HAS_ATFORK=False
+    HAS_ATFORK = False
 
 multiprocessing_runner = None
         
@@ -63,6 +61,7 @@ OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
 ################################################
+
 
 def _executor_hook(job_queue, result_queue, new_stdin):
 
@@ -81,6 +80,7 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             pass
         except:
             traceback.print_exc()
+
 
 class HostVars(dict):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
@@ -105,7 +105,8 @@ class Runner(object):
 
     # see bin/ansible for how this is used...
 
-    def __init__(self,
+    def __init__(
+        self,
         host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
         module_path=None,                   # ex: /usr/share/ansible
         module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
@@ -116,7 +117,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
+        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE,  # if not using keys/passwords
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
@@ -136,7 +137,7 @@ class Runner(object):
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
         complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
+        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR,  # ex. False
         accelerate=False,                   # use accelerated connection
         accelerate_ipv6=False,              # accelerated connection w/ IPv6
         accelerate_port=None,               # port to use with accelerated connection
@@ -147,7 +148,7 @@ class Runner(object):
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         run_once=False,                     # option to enable/disable host bypass loop for a given task
-        ):
+    ):
 
         # used to lock multiprocess inputs and outputs at various levels
         self.output_lockfile  = OUTPUT_LOCKFILE
