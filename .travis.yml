@@ -1,0 +1,15 @@
+language: python
+python:
+  - '2.7'
+env:
+  - TEST_SUITE=units
+  - TEST_SUITE=integration
+# command to install dependencies
+install: 
+  - 'easy_install -U setuptools'
+  - 'pip install -U pip'
+  - 'pip install -e .'
+# command to run tests
+script: 
+  - 'chmod +x test.sh'
+  - './test.sh'
