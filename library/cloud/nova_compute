@@ -255,7 +255,7 @@ def _add_floating_ip_no_pool(module, nova, server, floating_ip_obj):
 
     # if there is a list of IP addresses, make that the list 
     if module.params['floating_ip'].has_key('ips'):
-        usable_floating_ips = module.params['floating_ip']['ips']
+        usable_floating_ips = [dict(ip=f, created=False) for f in module.params['floating_ip']['ips']]
     else:
         # get the list of all floating IPs. Mileage may 
         # vary according to Nova Compute configuration 
@@ -263,20 +263,23 @@ def _add_floating_ip_no_pool(module, nova, server, floating_ip_obj):
         for f_ip in floating_ip_obj.list():
             # if not reserved and the correct pool, add
             if f_ip.instance_id is None:
-                usable_floating_ips.append(f_ip.ip)
+                usable_floating_ips.append(dict(ip=f_ip.ip, created=False))
 
         if not usable_floating_ips:
             try:
                 new_ip = nova.floating_ips.create()
             except Exception, e: 
                 module.fail_json(msg = "Unable to create floating ip")
-            usable_floating_ips.append(new_ip.ip)
+            usable_floating_ips.append(dict(ip=new_ip.ip, created=True))
 
     # finally, add ip(s) to instance
     for ip in usable_floating_ips:
         try:
-            server.add_floating_ip(ip)
+            server.add_floating_ip(ip['ip'])
         except Exception, e:
+            # Clean up - we auto-created this ip, and it's not attached
+            # to the server, so the cloud will not know what to do with it
+            server.floating_ips.delete(ip['ip'])
             module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
 
 
