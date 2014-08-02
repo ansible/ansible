@@ -716,6 +716,12 @@ def parse_kv(args):
                 options[k] = unquote(v.strip())
     return options
 
+
+def serialize_args(args):
+    ''' convert a dict to a string of key/value items '''
+    return ' '.join("%s='%s'" % item for item in args.iteritems())
+
+
 def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''

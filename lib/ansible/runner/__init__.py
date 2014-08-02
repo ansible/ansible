@@ -612,6 +612,7 @@ class Runner(object):
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
         inject['playbook_dir'] = self.basedir
+        inject['omit']        = OMIT_PLACE_HOLDER
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
@@ -852,11 +853,8 @@ class Runner(object):
 
         # allow module args to work as a dictionary
         # though it is usually a string
-        if type(module_args) == dict:
-            new_args = []
-            for (k, v) in module_args.iteritems():
-                new_args.append("%s='%s'" % (k, v))
-            module_args = ' '.join(new_args)
+        if isinstance(module_args, dict):
+            module_args = utils.serialize_args(module_args)
 
         # render module_args and complex_args templates
         try:
@@ -878,13 +876,16 @@ class Runner(object):
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
-        # filter omitted arguments out
-        new_complex_args = {}
-        for key, value in complex_args.iteritems():
-            if value == OMIT_PLACE_HOLDER:
-                continue
-            new_complex_args[key] = value
-        complex_args = new_complex_args
+        def not_omitted(item):
+            return item[1] != OMIT_PLACE_HOLDER
+
+        if module_name not in ['shell', 'command']:
+            # filter omitted arguments out from complex_args
+            complex_args = dict(filter(not_omitted, complex_args.iteritems()))
+            # filter omitted arguments out from module_args
+            module_kv = utils.parse_kv(module_args)
+            module_kv = dict(filter(not_omitted, module_kv.iteritems()))
+            module_args = utils.serialize_args(module_kv)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature

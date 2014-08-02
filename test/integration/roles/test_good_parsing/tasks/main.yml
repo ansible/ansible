@@ -164,3 +164,30 @@
       - result.invocation.module_name == "debug"
       - result.msg == "this should be debugged"
 
+- name: test omit in complex args
+  set_fact:
+    foo: bar
+    spam: "{{ omit }}"
+    should_not_omit: "prefix{{ omit }}"
+
+- assert:
+    that:
+      - foo == 'bar'
+      - spam is undefined
+      - should_not_omit == "prefix{{ omit }}"
+
+- name: test omit in module args
+  set_fact: >
+    yo=whatsup
+    eggs="{{ omit }}"
+    default_omitted="{{ not_exists|default(omit) }}"
+    should_not_omit_1="prefix{{ omit }}"
+    should_not_omit_2="{{ omit }}suffix"
+
+- assert:
+    that:
+      - yo == 'whatsup'
+      - eggs is undefined
+      - default_omitted is undefined
+      - should_not_omit_1 == "prefix{{ omit }}"
+      - should_not_omit_2 == "{{ omit }}suffix"
