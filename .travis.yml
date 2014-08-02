@@ -12,3 +12,4 @@ script:
   - 'nosetests test/units -sv --with-coverage'
   - 'pip install flake8 --use-mirrors'
   - 'flake8 lib/ansible --ignore=E501,W293'
+  - 'flake8 test/units --ignore=E501,W293'
