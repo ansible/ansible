@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import base64
 import json
 import os.path
@@ -25,9 +24,8 @@ import pipes
 import glob
 import re
 import operator as py_operator
-import hashlib
 from ansible import errors
-from ansible.utils import md5s, OMIT_PLACE_HOLDER
+from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
 from jinja2.filters import environmentfilter
