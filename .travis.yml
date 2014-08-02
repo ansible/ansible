@@ -1,0 +1,14 @@
+language: python
+python:
+  - '2.7'
+# command to install dependencies
+install: 
+  - 'easy_install -U setuptools'
+  - 'pip install -U pip'
+  - 'pip install -e .'
+  - 'pip install paramiko PyYAML jinja2 httplib2 passlib'
+# command to run tests
+script: 
+  - 'nosetests test/units -sv --with-coverage'
+  - 'pip install flake8 --use-mirrors'
+  - 'flake8 ansible --ignore=E501,W293'
