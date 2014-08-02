@@ -202,7 +202,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, aliases=['path'], type='str'),
-            entry=dict(required=False, etype='str'),
+            entry=dict(required=False, type='str'),
             entity=dict(required=False, type='str', default=''),
             etype=dict(
                 required=False,
