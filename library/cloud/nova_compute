@@ -293,6 +293,19 @@ def _add_floating_ip(module, nova, server):
     return server
 
 
+def _get_ips(addresses, ext_tag, key_name):
+
+    ret = []
+    for (k, v) in addresses.iteritems():
+        if k == key_name:
+            ret.extend([addrs['addr'] for addrs in v])
+        else:
+            for interface_spec in v:
+                if 'OS-EXT-IPS:type' in interface_spec and interface_spec['OS-EXT-IPS:type'] == ext_tag:
+                    ret.append(interface_spec['addr'])
+    return ret
+
+
 def _create_server(module, nova):
     # issue an error early on and not launch the instance
     if module.params['floating_ip'] is not None:
@@ -332,8 +345,9 @@ def _create_server(module, nova):
                 if module.params['floating_ip'] is not None:
                     server = _add_floating_ip(module, nova, server)
 
-                private = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'fixed']
-                public  = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'floating']
+                private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
+                public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
+
                 # now exit with info 
                 module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
@@ -344,8 +358,8 @@ def _create_server(module, nova):
         module.fail_json(msg = "Timeout waiting for the server to come up.. Please check manually")
     if server.status == 'ERROR':
             module.fail_json(msg = "Error in creating the server.. Please check manually")
-    private = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-    public  = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+    private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
+    public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
 
     module.exit_json(changed = True, id = info['id'], private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
@@ -366,8 +380,8 @@ def _get_server_state(module, nova):
     if server and module.params['state'] == 'present':
         if server.status != 'ACTIVE':
             module.fail_json( msg="The VM is available but not Active. state:" + server.status)
-        private = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'fixed']
-        public  = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'floating']
+        private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
+        public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
         module.exit_json(changed = False, id = server.id, public_ip = ''.join(public), private_ip = ''.join(private), info = server._info)
     if server and module.params['state'] == 'absent':
         return True
