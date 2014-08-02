@@ -1,7 +1,8 @@
 #!/bin/bash
-set -xe
+set -x
+set -e
 
-if [ "$TEST_SUITE" -eq "units" ]; then
+if [ "$TEST_SUITE"="units" ]; then
 	pip install paramiko PyYAML jinja2 httplib2 passlib
     nosetests test/units -sv --with-coverage
     pip install flake8 --use-mirrors
