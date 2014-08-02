@@ -9,3 +9,5 @@
     - { role: test_apt_repository, tags: test_apt_repository }
     - { role: test_mysql_db, tags: test_mysql_db}
     - { role: test_mysql_user, tags: test_mysql_user}
+    - { role: test_mysql_user, tags: test_mysql_user}    
+    - { role: test_mysql_variables, tags: test_mysql_variables}
