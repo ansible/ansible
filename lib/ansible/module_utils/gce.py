@@ -38,19 +38,37 @@ def gce_connect(module):
     pem_file = module.params.get('pem_file', None)
     project_id = module.params.get('project_id', None)
 
+    # If any of the values are not given as parameters, check the appropriate
+    # environment variables.
+    if not service_account_email:
+        service_account_email = os.environ.get('GCE_EMAIL', None)
+    if not project_id:
+        project_id = os.environ.get('GCE_PROJECT', None)
+    if not pem_file:
+        pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
+
+    # If we still don't have one or more of our credentials, attempt to
+    # get the remaining values from the libcloud secrets file.
     if service_account_email is None or pem_file is None:
-        # Load in the libcloud secrets file
         try:
             import secrets
         except ImportError:
             secrets = None
 
-        service_account_email, pem_file = getattr(secrets, 'GCE_PARAMS', (None, None))
+        if hasattr(secrets, 'GCE_PARAMS'):
+            if not service_account_email:
+                service_account_email = secrets.GCE_PARAMS[0]
+            if not pem_file:
+                pem_file = secrets.GCE_PARAMS[1]
         keyword_params = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
-        project_id = keyword_params.get('project', None)
+        if not project_id:
+            project_id = keyword_params.get('project', None)
 
+    # If we *still* don't have the credentials we need, then it's time to
+    # just fail out.
     if service_account_email is None or pem_file is None or project_id is None:
-        module.fail_json(msg='Missing GCE connection parameters in libcloud secrets file.')
+        module.fail_json(msg='Missing GCE connection parameters in libcloud '
+                             'secrets file.')
         return None
 
     try:
