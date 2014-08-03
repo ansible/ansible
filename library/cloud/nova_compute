@@ -256,9 +256,9 @@ def _add_floating_ip_from_pool(module, nova, server):
                 module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
 
 
-def _add_floating_ip_list(module, server):
+def _add_floating_ip_list(module, server, ips):
     # add ip(s) to instance
-    for ip in module.params['floating_ips']:
+    for ip in ips:
         try:
             server.add_floating_ip(ip)
         except Exception, e:
@@ -286,7 +286,7 @@ def _add_floating_ip(module, nova, server):
     if module.params['floating_ip_pools']:
         _add_floating_ip_from_pool(module, nova, server)
     elif module.params['floating_ips']:
-        _add_floating_ip_list(module, server)
+        _add_floating_ip_list(module, server, module.params['floating_ips'])
     elif module.params['auto_floating_ip']:
         _add_auto_floating_ip(module, nova, server)
     else:
@@ -302,11 +302,11 @@ def _add_floating_ip(module, nova, server):
     return server
 
 
-def _get_ips(addresses, ext_tag, key_name):
+def _get_ips(addresses, ext_tag, key_name=None):
 
     ret = []
     for (k, v) in addresses.iteritems():
-        if k == key_name:
+        if key_name and k == key_name:
             ret.extend([addrs['addr'] for addrs in v])
         else:
             for interface_spec in v:
@@ -361,6 +361,40 @@ def _create_server(module, nova):
     module.exit_json(changed = True, id = info['id'], private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
 
+def _delete_floating_ip_list(module, nova, server, extra_ips):
+    for ip in extra_ips:
+        nova.servers.remove_floating_ip(server=server.id, address=ip)
+
+
+def _check_floating_ips(module, nova, server):
+    changed = False
+    if module.params['floating_ip_pools'] or module.params['floating_ips'] or module.params['auto_floating_ip']:
+        ips = _get_ips(server.addresses, 'floating')
+        if not ips:
+            # If we're configured to have a floating but we don't have one,
+            # let's add one
+            server = _add_floating_ip(module, nova, server)
+            changed = True
+        elif module.params['floating_ips']:
+            # we were configured to have specific ips, let's make sure we have
+            # those
+            missing_ips = []
+            for ip in module.params['floating_ips']:
+                if ip not in ips:
+                    missing_ips.append(ip)
+            if missing_ips:
+                server = _add_floating_ip_list(module, server, missing_ips)
+                changed = True
+            extra_ips = []
+            for ip in ips:
+                if ip not in module.params['floating_ips']:
+                    extra_ips.append(ip)
+            if extra_ips:
+                _delete_floating_ip_list(module, server, extra_ips)
+                changed = True
+    return (changed, server)
+
+
 def _get_server_state(module, nova):
     server = None
     try:
@@ -377,9 +411,10 @@ def _get_server_state(module, nova):
     if server and module.params['state'] == 'present':
         if server.status != 'ACTIVE':
             module.fail_json( msg="The VM is available but not Active. state:" + server.status)
+        (ip_changed, server) = _check_floating_ips(module, nova, server)
         private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
         public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
-        module.exit_json(changed = False, id = server.id, public_ip = ''.join(public), private_ip = ''.join(private), info = server._info)
+        module.exit_json(changed = ip_changed, id = server.id, public_ip = ''.join(public), private_ip = ''.join(private), info = server._info)
     if server and module.params['state'] == 'absent':
         return True
     if module.params['state'] == 'absent':
