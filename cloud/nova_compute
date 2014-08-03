@@ -96,9 +96,19 @@ options:
         - A list of network id's to which the VM's interface should be attached
      required: false
      default: None
-   floating_ip:
+   auto_floating_ip:
      description:
-        - list of key value pairs that determine how to assign, if specified, floating IPs. Either use an explicite list of valid floating IPs, list of floating IP pools to choose from, or auto-assign 
+        - Should a floating ip be auto created and assigned
+     required: false
+     default: 'yes'
+   floating_ips:
+     decription:
+        - list of valid floating IPs that pre-exist to assign to this node
+     required: false
+     default: None
+   floating_ip_pools:
+     description:
+        - list of floating IP pools from which to choose a floating IP
      required: false
      default: None
    availability_zone:
@@ -201,14 +211,17 @@ def _delete_server(module, nova):
     module.fail_json(msg = "Timed out waiting for server to get deleted, please check manually")
 
 
-def _add_floating_ip_from_pool(module, nova, server, floating_ip_obj):
+def _add_floating_ip_from_pool(module, nova, server):
+
+    # instantiate FloatingIPManager object
+    floating_ip_obj = floating_ips.FloatingIPManager(nova)
 
     # empty dict and list 
     usable_floating_ips = {} 
     pools = []
 
     # user specified
-    pools = module.params['floating_ip']['pools']
+    pools = module.params['floating_ip_pools']
 
     # get the list of all floating IPs. Mileage may 
     # vary according to Nova Compute configuration 
@@ -251,48 +264,41 @@ def _add_floating_ip_from_pool(module, nova, server, floating_ip_obj):
                 module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
 
 
-def _add_floating_ip_no_pool(module, nova, server, floating_ip_obj):
-
-    usable_floating_ips = list()
-
-    # if there is a list of IP addresses, make that the list 
-    if module.params['floating_ip'].has_key('ips'):
-        usable_floating_ips = [dict(ip=f, created=False) for f in module.params['floating_ip']['ips']]
-    else:
-        # get the list of all floating IPs. Mileage may 
-        # vary according to Nova Compute configuration 
-        # per cloud provider
-        for f_ip in floating_ip_obj.list():
-            # if not reserved and the correct pool, add
-            if f_ip.instance_id is None:
-                usable_floating_ips.append(dict(ip=f_ip.ip, created=False))
-
-        if not usable_floating_ips:
-            try:
-                new_ip = nova.floating_ips.create()
-            except Exception, e: 
-                module.fail_json(msg = "Unable to create floating ip")
-            usable_floating_ips.append(dict(ip=new_ip.ip, created=True))
-
-    # finally, add ip(s) to instance
-    for ip in usable_floating_ips:
+def _add_floating_ip_list(module, server):
+    # add ip(s) to instance
+    for ip in module.params['floating_ips']:
         try:
-            server.add_floating_ip(ip['ip'])
+            server.add_floating_ip(ip)
         except Exception, e:
-            # Clean up - we auto-created this ip, and it's not attached
-            # to the server, so the cloud will not know what to do with it
-            server.floating_ips.delete(ip['ip'])
             module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
 
 
-def _add_floating_ip(module, nova, server):
-    # instantiate FloatingIPManager object
-    floating_ip_obj = floating_ips.FloatingIPManager(nova)
+def _add_auto_floating_ip(module, nova, server):
 
-    if module.params['floating_ip'].has_key('pools'):
-        _add_floating_ip_from_pool(module, nova, server, floating_ip_obj)
-    else: 
-        _add_floating_ip_no_pool(module, nova, server, floating_ip_obj)
+    try:
+        new_ip = nova.floating_ips.create()
+    except Exception as e:
+        module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
+
+    try:
+        server.add_floating_ip(new_ip)
+    except Exception as e:
+        # Clean up - we auto-created this ip, and it's not attached
+        # to the server, so the cloud will not know what to do with it
+        server.floating_ips.delete(new_ip)
+        module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
+
+
+def _add_floating_ip(module, nova, server):
+
+    if module.params['floating_ip_pools']:
+        _add_floating_ip_from_pool(module, nova, server)
+    elif module.params['floating_ips']:
+        _add_floating_ip_list(module, server)
+    elif module.params['auto_floating_ip']:
+        _add_auto_floating_ip(module, nova, server)
+    else:
+        return server
 
     # this may look redundant, but if there is now a 
     # floating IP, then it needs to be obtained from
@@ -318,16 +324,6 @@ def _get_ips(addresses, ext_tag, key_name):
 
 
 def _create_server(module, nova):
-    # issue an error early on and not launch the instance
-    if module.params['floating_ip'] is not None:
-        if module.params['floating_ip'].has_key('ips'):
-            # can't specify "ips" and "auto" both 
-            if module.params['floating_ip'].has_key('auto') and module.params['floating_ip']['auto']:
-                module.fail_json(msg = "For floating_ips - you cannot specify both 'auto' and 'ips'!")
-            # can't specify "ips" and "pools" both 
-            if module.params['floating_ip'].has_key('pools'):
-                module.fail_json(msg = "For floating_ips - you cannot specify both 'pools' and 'ips'!")
-
     bootargs = [module.params['name'], module.params['image_id'], module.params['flavor_id']]
     bootkwargs = {
                 'nics' : module.params['nics'],
@@ -353,9 +349,7 @@ def _create_server(module, nova):
             except Exception, e:
                     module.fail_json( msg = "Error in getting info from instance: %s" % e.message)
             if server.status == 'ACTIVE':
-                # if floating_ip is specified, then attach 
-                if module.params['floating_ip'] is not None:
-                    server = _add_floating_ip(module, nova, server)
+                server = _add_floating_ip(module, nova, server)
 
                 private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
                 public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
@@ -417,9 +411,18 @@ def main():
         wait_for                        = dict(default=180),
         state                           = dict(default='present', choices=['absent', 'present']),
         user_data                       = dict(default=None),
-        floating_ip                     = dict(default=None),
+        auto_floating_ip                = dict(default=False, type='bool'),
+        floating_ips                    = dict(default=None),
+        floating_ip_pools               = dict(default=None),
     ))
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['auto_floating_ip','floating_ips'],
+            ['auto_floating_ip','floating_ip_pools'],
+            ['floating_ips','floating_ip_pools'],
+        ],
+    )
 
     nova = nova_client.Client(module.params['login_username'],
                               module.params['login_password'],
