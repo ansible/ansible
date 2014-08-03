@@ -156,6 +156,11 @@ options:
         - The amount of time the module should wait for the VM to get into active state
      required: false
      default: 180
+   config_drive:
+     description:
+        - Whether to boot the server with config drive enabled
+     required: false
+     default: 'no'
    user_data:
      description:
         - Opaque blob of data which is made available to the instance
@@ -385,9 +390,9 @@ def _add_floating_ip(module, nova, server):
 def _get_image_id(module, nova):
     if module.params['image_name']:
         for image in nova.images.list():
-            if (module.params['image_name'] in img.name and (
+            if (module.params['image_name'] in image.name and (
                     not module.params['image_filter']
-                    or module.params['image_filter'] not in img.name)):
+                    or module.params['image_filter'] not in image.name)):
                 return image.id
         module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
     return module.params['image_id']
@@ -413,6 +418,7 @@ def _create_server(module, nova):
                 'security_groups': module.params['security_groups'].split(','),
                 #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
                 'userdata': module.params['user_data'],
+                'config_drive': module.params['config_drive'],
     }
 
     for optional_param in ('region_name', 'key_name', 'availability_zone'):
@@ -532,6 +538,7 @@ def main():
         wait_for                        = dict(default=180),
         state                           = dict(default='present', choices=['absent', 'present']),
         user_data                       = dict(default=None),
+        config_drive                    = dict(default=False, type='bool'),
         auto_floating_ip                = dict(default=False, type='bool'),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
