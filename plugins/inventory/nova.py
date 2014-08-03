@@ -28,6 +28,8 @@ try:
 except:
     import simplejson as json
 
+from ansible.module_utils.openstack import *
+
 ###################################################
 # executed with no parameters, return the list of
 # all groups and hosts
@@ -57,12 +59,12 @@ if not config:
     sys.exit('Unable to find configfile in %s' % ', '.join(NOVA_CONFIG_FILES))
 
 client = nova_client.Client(
-    version     = config.get('openstack', 'version'),
-    username    = config.get('openstack', 'username'),
-    api_key     = config.get('openstack', 'api_key'),
-    auth_url    = config.get('openstack', 'auth_url'),
+    config.get('openstack', 'version'),
+    config.get('openstack', 'username'),
+    config.get('openstack', 'api_key'),
+    config.get('openstack', 'project_id'),
+    config.get('openstack', 'auth_url'),
     region_name = config.get('openstack', 'region_name'),
-    project_id  = config.get('openstack', 'project_id'),
     auth_system = config.get('openstack', 'auth_system')
 )
 
@@ -70,20 +72,20 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
     groups = {}
 
     # Cycle on servers
-    for f in client.servers.list():
-	private = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-	public  = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+    for server in client.servers.list():
+        private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
+        public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 	    
 	# Define group (or set to empty string)
-        group = f.metadata['group'] if f.metadata.has_key('group') else 'undefined'
+        group = server.metadata['group'] if server.metadata.has_key('group') else 'undefined'
 
         # Create group if not exist
         if group not in groups:
             groups[group] = []
 
         # Append group to list
-	if f.accessIPv4:
-        	groups[group].append(f.accessIPv4)
+	if server.accessIPv4:
+                groups[group].append(server.accessIPv4)
 		continue
 	if public:
         	groups[group].append(''.join(public))
@@ -104,8 +106,8 @@ elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
     results = {}
     ips = []
     for instance in client.servers.list():
-	private = [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-	public =  [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+        private = openstack_find_nova_addresses(getattr(instance, 'addresses'), 'fixed', 'private')
+        public = openstack_find_nova_addresses(getattr(instance, 'addresses'), 'floating', 'public')
         ips.append( instance.accessIPv4)
 	ips.append(''.join(private))
 	ips.append(''.join(public))
