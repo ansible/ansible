@@ -112,6 +112,11 @@ options:
         - The amount of time the module should wait for the VM to get into active state
      required: false
      default: 180
+   config_drive:
+     description:
+        - Whether to boot the server with config drive enabled
+     required: false
+     default: 'no'
    user_data:
      description:
         - Opaque blob of data which is made available to the instance
@@ -169,6 +174,7 @@ def _create_server(module, nova):
                 'security_groups': module.params['security_groups'].split(','),
                 #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
                 'userdata': module.params['user_data'],
+                'config_drive': module.params['config_drive'],
     }
 
     for optional_param in ('region_name', 'key_name', 'availability_zone'):
@@ -249,6 +255,7 @@ def main():
         state                           = dict(default='present', choices=['absent', 'present']),
         user_data                       = dict(default=None),
         availability_zone               = dict(default=None),
+        config_drive                    = dict(default=False, type='bool'),
         ),
     )
 
