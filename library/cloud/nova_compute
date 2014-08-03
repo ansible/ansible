@@ -69,12 +69,22 @@ options:
      default: None
    image_id:
      description:
-        - The id of the image that has to be cloned
+        - The id of the base image to boot. Mutually exclusive with image_name
+     required: true
+     default: None
+   image_name:
+     description:
+        - The name of the base image to boot. Mutually exclusive with image_id
      required: true
      default: None
    flavor_id:
      description:
-        - The id of the flavor in which the new VM has to be created
+        - The id of the flavor in which the new VM has to be created. Mutually exclusive with flavor_ram
+     required: false
+     default: 1
+   flavor_ram:
+     description:
+        - The minimum amount of ram in MB that the flavor in which the new VM has to be created must have. Mutually exclusive with flavor_id
      required: false
      default: 1
    key_name:
@@ -156,8 +166,147 @@ def _delete_server(module, nova):
     module.fail_json(msg = "Timed out waiting for server to get deleted, please check manually")
 
 
+def _add_floating_ip_from_pool(module, nova, server):
+
+    # instantiate FloatingIPManager object
+    floating_ip_obj = floating_ips.FloatingIPManager(nova)
+
+    # empty dict and list 
+    usable_floating_ips = {} 
+    pools = []
+
+    # user specified
+    pools = module.params['floating_ip_pools']
+
+    # get the list of all floating IPs. Mileage may 
+    # vary according to Nova Compute configuration 
+    # per cloud provider
+    all_floating_ips = floating_ip_obj.list()
+
+    # iterate through all pools of IP address. Empty
+    # string means all and is the default value
+    for pool in pools:
+        # temporary list per pool
+        pool_ips = []
+        # loop through all floating IPs
+        for f_ip in all_floating_ips:
+            # if not reserved and the correct pool, add
+            if f_ip.instance_id is None and (f_ip.pool == pool):
+                pool_ips.append(f_ip.ip)
+                # only need one
+                break
+
+        # if the list is empty, add for this pool
+        if not pool_ips:
+            try:
+                new_ip = nova.floating_ips.create(pool)
+            except Exception, e: 
+                module.fail_json(msg = "Unable to create floating ip")
+            pool_ips.append(new_ip.ip)
+        # Add to the main list
+        usable_floating_ips[pool] = pool_ips
+
+    # finally, add ip(s) to instance for each pool
+    for pool in usable_floating_ips:
+        for ip in usable_floating_ips[pool]:
+            try:
+                server.add_floating_ip(ip)
+                # We only need to assign one ip - but there is an inherent
+                # race condition and some other cloud operation may have
+                # stolen an available floating ip
+                break
+            except Exception, e:
+                module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
+
+
+def _add_floating_ip_list(module, server):
+    # add ip(s) to instance
+    for ip in module.params['floating_ips']:
+        try:
+            server.add_floating_ip(ip)
+        except Exception, e:
+            module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
+
+
+def _add_auto_floating_ip(module, nova, server):
+
+    try:
+        new_ip = nova.floating_ips.create()
+    except Exception as e:
+        module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
+
+    try:
+        server.add_floating_ip(new_ip)
+    except Exception as e:
+        # Clean up - we auto-created this ip, and it's not attached
+        # to the server, so the cloud will not know what to do with it
+        server.floating_ips.delete(new_ip)
+        module.fail_json(msg = "Error attaching IP %s to instance %s: %s " % (ip, server.id, e.message))
+
+
+def _add_floating_ip(module, nova, server):
+
+    if module.params['floating_ip_pools']:
+        _add_floating_ip_from_pool(module, nova, server)
+    elif module.params['floating_ips']:
+        _add_floating_ip_list(module, server)
+    elif module.params['auto_floating_ip']:
+        _add_auto_floating_ip(module, nova, server)
+    else:
+        return server
+
+    # this may look redundant, but if there is now a 
+    # floating IP, then it needs to be obtained from
+    # a recent server object if the above code path exec'd 
+    try:
+        server = nova.servers.get(server.id)
+    except Exception, e:
+        module.fail_json(msg = "Error in getting info from instance: %s " % e.message)
+    return server
+
+
+def _get_ips(addresses, ext_tag, key_name):
+
+    ret = []
+    for (k, v) in addresses.iteritems():
+        if k == key_name:
+            ret.extend([addrs['addr'] for addrs in v])
+        else:
+            for interface_spec in v:
+                if 'OS-EXT-IPS:type' in interface_spec and interface_spec['OS-EXT-IPS:type'] == ext_tag:
+                    ret.append(interface_spec['addr'])
+    return ret
+
+
+def _get_image_id(module, nova):
+    if module.params['image_name']:
+        image = None
+        for img in nova.images.list():
+            if img.name == module.params['image_name']:
+                image = img
+                break
+            if img.name.startswith(module.params['image_name']) and '(deprecated)' not in img.name:
+                image = img
+        if not image:
+            module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
+        return image.id
+    return module.params['image_id']
+
+
+def _get_flavor_id(module, nova):
+    if module.params['flavor_ram']:
+        try:
+            flavor = nova.flavors.find(ram=module.params['flavor_ram'])
+        except exceptions.NotFound as e:
+            module.fail_json(msg = "Error finding flavor with %sMB of RAM" % module.params['flavor_ram'])
+        return flavor.id
+    return module.params['flavor_id']
+
+
 def _create_server(module, nova):
-    bootargs = [module.params['name'], module.params['image_id'], module.params['flavor_id']]
+    image_id = _get_image_id(module, nova)
+    flavor_id = _get_flavor_id(module, nova)
+    bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
                 'nics' : module.params['nics'],
                 'meta' : module.params['meta'],
@@ -233,7 +382,9 @@ def main():
         region_name                     = dict(default=None),
         name                            = dict(required=True),
         image_id                        = dict(default=None),
+        image_name                      = dict(default=None),
         flavor_id                       = dict(default=1),
+        flavor_ram                      = dict(default=None, type='int'),
         key_name                        = dict(default=None),
         security_groups                 = dict(default='default'),
         nics                            = dict(default=None),
@@ -243,6 +394,10 @@ def main():
         state                           = dict(default='present', choices=['absent', 'present']),
         user_data                       = dict(default=None)
         ),
+        mutually_exclusive=[
+            ['image_id','image_name'],
+            ['flavor_id','flavor_ram'],
+        ],
     )
 
     nova = nova_client.Client(module.params['login_username'],
@@ -259,8 +414,8 @@ def main():
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':
-        if not module.params['image_id']:
-            module.fail_json( msg = "Parameter 'image_id' is required if state == 'present'")
+        if not module.params['image_id'] and not module.params['image_name']:
+            module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
         else:
             _get_server_state(module, nova)
             _create_server(module, nova)
