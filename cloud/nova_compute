@@ -73,12 +73,22 @@ options:
      default: None
    image_id:
      description:
-        - The id of the image that has to be cloned
+        - The id of the base image to boot. Mutually exclusive with image_name
+     required: true
+     default: None
+   image_name:
+     description:
+        - The name of the base image to boot. Mutually exclusive with image_id
      required: true
      default: None
    flavor_id:
      description:
-        - The id of the flavor in which the new VM has to be created
+        - The id of the flavor in which the new VM has to be created. Mutually exclusive with flavor_ram
+     required: false
+     default: 1
+   flavor_ram:
+     description:
+        - The minimum amount of ram in MB that the flavor in which the new VM has to be created must have. Mutually exclusive with flavor_id
      required: false
      default: 1
    key_name:
@@ -323,8 +333,35 @@ def _get_ips(addresses, ext_tag, key_name):
     return ret
 
 
+def _get_image_id(module, nova):
+    if module.params['image_name']:
+        image = None
+        for img in nova.images.list():
+            if img.name == module.params['image_name']:
+                image = img
+                break
+            if img.name.startswith(module.params['image_name']) and '(deprecated)' not in img.name:
+                image = img
+        if not image:
+            module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
+        return image.id
+    return module.params['image_id']
+
+
+def _get_flavor_id(module, nova):
+    if module.params['flavor_ram']:
+        try:
+            flavor = nova.flavors.find(ram=module.params['flavor_ram'])
+        except exceptions.NotFound as e:
+            module.fail_json(msg = "Error finding flavor with %sMB of RAM" % module.params['flavor_ram'])
+        return flavor.id
+    return module.params['flavor_id']
+
+
 def _create_server(module, nova):
-    bootargs = [module.params['name'], module.params['image_id'], module.params['flavor_id']]
+    image_id = _get_image_id(module, nova)
+    flavor_id = _get_flavor_id(module, nova)
+    bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
                 'nics' : module.params['nics'],
                 'meta' : module.params['meta'],
@@ -402,7 +439,9 @@ def main():
     argument_spec.update(dict(
         name                            = dict(required=True),
         image_id                        = dict(default=None),
+        image_name                      = dict(default=None),
         flavor_id                       = dict(default=1),
+        flavor_ram                      = dict(default=None, type='int'),
         key_name                        = dict(default=None),
         security_groups                 = dict(default='default'),
         nics                            = dict(default=None),
@@ -421,6 +460,8 @@ def main():
             ['auto_floating_ip','floating_ips'],
             ['auto_floating_ip','floating_ip_pools'],
             ['floating_ips','floating_ip_pools'],
+            ['image_id','image_name'],
+            ['flavor_id','flavor_ram'],
         ],
     )
 
@@ -438,8 +479,8 @@ def main():
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':
-        if not module.params['image_id']:
-            module.fail_json( msg = "Parameter 'image_id' is required if state == 'present'")
+        if not module.params['image_id'] and not module.params['image_name']:
+            module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
         else:
             _get_server_state(module, nova)
             _create_server(module, nova)
