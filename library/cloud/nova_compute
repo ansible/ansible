@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+import operator
 import os
 
 try:
@@ -81,6 +82,9 @@ options:
         - The name of the base image to boot. Mutually exclusive with image_id
      required: true
      default: None
+   image_filter:
+     description:
+        - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying portions. image_filter is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
    flavor_id:
      description:
         - The id of the flavor in which the new VM has to be created. Mutually exclusive with flavor_ram
@@ -91,6 +95,9 @@ options:
         - The minimum amount of ram in MB that the flavor in which the new VM has to be created must have. Mutually exclusive with flavor_id
      required: false
      default: 1
+   flavor_filter:
+     description:
+        - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count. flavor_filter is a positive match filter - it must exist in the flavor name.
    key_name:
      description:
         - The key pair name to be used when creating a VM
@@ -335,26 +342,22 @@ def _get_ips(addresses, ext_tag, key_name):
 
 def _get_image_id(module, nova):
     if module.params['image_name']:
-        image = None
-        for img in nova.images.list():
-            if img.name == module.params['image_name']:
-                image = img
-                break
-            if img.name.startswith(module.params['image_name']) and '(deprecated)' not in img.name:
-                image = img
-        if not image:
-            module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
-        return image.id
+        for image in nova.images.list():
+            if (module.params['image_name'] in img.name and (
+                    not module.params['image_filter']
+                    or module.params['image_filter'] not in img.name)):
+                return image.id
+        module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
     return module.params['image_id']
 
 
 def _get_flavor_id(module, nova):
     if module.params['flavor_ram']:
-        try:
-            flavor = nova.flavors.find(ram=module.params['flavor_ram'])
-        except exceptions.NotFound as e:
+        for flavor in sorted(nova.flavors.list(), key=operator.attrgetter('ram')):
+            if (flavor.ram >= module.params['flavor_ram'] and
+                    (not module.params['flavor_filter'] or module.params['flavor_filter'] in flavor.name)):
+                return flavor.id
             module.fail_json(msg = "Error finding flavor with %sMB of RAM" % module.params['flavor_ram'])
-        return flavor.id
     return module.params['flavor_id']
 
 
@@ -440,8 +443,10 @@ def main():
         name                            = dict(required=True),
         image_id                        = dict(default=None),
         image_name                      = dict(default=None),
+        image_filter                    = dict(default='(deprecated)'),
         flavor_id                       = dict(default=1),
         flavor_ram                      = dict(default=None, type='int'),
+        flavor_filter                   = dict(default=None),
         key_name                        = dict(default=None),
         security_groups                 = dict(default='default'),
         nics                            = dict(default=None),
@@ -488,7 +493,7 @@ def main():
         _get_server_state(module, nova)
         _delete_server(module, nova)
 
-# this is magic, see lib/ansible/module.params['common.py
+# this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 main()
