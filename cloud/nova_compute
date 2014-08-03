@@ -382,19 +382,6 @@ def _add_floating_ip(module, nova, server):
     return server
 
 
-def _get_ips(addresses, ext_tag, key_name=None):
-
-    ret = []
-    for (k, v) in addresses.iteritems():
-        if key_name and k == key_name:
-            ret.extend([addrs['addr'] for addrs in v])
-        else:
-            for interface_spec in v:
-                if 'OS-EXT-IPS:type' in interface_spec and interface_spec['OS-EXT-IPS:type'] == ext_tag:
-                    ret.append(interface_spec['addr'])
-    return ret
-
-
 def _get_image_id(module, nova):
     if module.params['image_name']:
         for image in nova.images.list():
@@ -446,8 +433,8 @@ def _create_server(module, nova):
             if server.status == 'ACTIVE':
                 server = _add_floating_ip(module, nova, server)
 
-                private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
-                public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
+                private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
+                public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
                 # now exit with info 
                 module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
@@ -459,8 +446,8 @@ def _create_server(module, nova):
         module.fail_json(msg = "Timeout waiting for the server to come up.. Please check manually")
     if server.status == 'ERROR':
             module.fail_json(msg = "Error in creating the server.. Please check manually")
-    private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
-    public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
+    private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
+    public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
     module.exit_json(changed = True, id = info['id'], private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
@@ -473,7 +460,7 @@ def _delete_floating_ip_list(module, nova, server, extra_ips):
 def _check_floating_ips(module, nova, server):
     changed = False
     if module.params['floating_ip_pools'] or module.params['floating_ips'] or module.params['auto_floating_ip']:
-        ips = _get_ips(server.addresses, 'floating')
+        ips = openstack_find_nova_addresses(server.addresses, 'floating')
         if not ips:
             # If we're configured to have a floating but we don't have one,
             # let's add one
@@ -516,8 +503,8 @@ def _get_server_state(module, nova):
         if server.status != 'ACTIVE':
             module.fail_json( msg="The VM is available but not Active. state:" + server.status)
         (ip_changed, server) = _check_floating_ips(module, nova, server)
-        private = _get_ips(getattr(server, 'addresses'), 'fixed', 'private')
-        public = _get_ips(getattr(server, 'addresses'), 'floating', 'public')
+        private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
+        public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
         module.exit_json(changed = ip_changed, id = server.id, public_ip = ''.join(public), private_ip = ''.join(private), info = server._info)
     if server and module.params['state'] == 'absent':
         return True
