@@ -82,9 +82,11 @@ options:
         - The name of the base image to boot. Mutually exclusive with image_id
      required: true
      default: None
+     version_added: "1.7"
    image_filter:
      description:
         - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying portions. image_filter is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
+     version_added: "1.7"
    flavor_id:
      description:
         - The id of the flavor in which the new VM has to be created. Mutually exclusive with flavor_ram
@@ -95,9 +97,11 @@ options:
         - The minimum amount of ram in MB that the flavor in which the new VM has to be created must have. Mutually exclusive with flavor_id
      required: false
      default: 1
+     version_added: "1.7"
    flavor_filter:
      description:
         - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count. flavor_filter is a positive match filter - it must exist in the flavor name.
+     version_added: "1.7"
    key_name:
      description:
         - The key pair name to be used when creating a VM
@@ -118,21 +122,25 @@ options:
         - Should a floating ip be auto created and assigned
      required: false
      default: 'yes'
+     version_added: "1.7"
    floating_ips:
      decription:
         - list of valid floating IPs that pre-exist to assign to this node
      required: false
      default: None
+     version_added: "1.7"
    floating_ip_pools:
      description:
         - list of floating IP pools from which to choose a floating IP
      required: false
      default: None
+     version_added: "1.7"
    availability_zone:
      description:
         - Name of the availability zone
      required: false
      default: None
+     version_added: "1.7"
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to the new VM
@@ -182,8 +190,8 @@ EXAMPLES = '''
   - name: launch an instance
     nova_compute:
       state: present
-      login_username: username 
-      login_password: Equality7-2521 
+      login_username: username
+      login_password: Equality7-2521
       login_tenant_name: username-project1
       name: vm1
       auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
@@ -194,15 +202,62 @@ EXAMPLES = '''
       wait_for: 200
       flavor_id: 101
       security_groups: default
-      floating_ip:
-        auto: True
+      auto_floating_ip: yes
 
-# If one wants to specify a floating ip to use:
-      <snip>
-      floating_ip:
-        ips: 
-          - 15.126.238.160
+# Creates a new VM in HP Cloud AE1 region availability zone az2 and assigns a pre-known floating IP
+- name: launch a nova instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    nova_compute:
+      state: present
+      login_username: username
+      login_password: Equality7-2521
+      login_tenant_name: username-project1
+      name: vm1
+      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      region_name: region-b.geo-1
+      availability_zone: az2
+      image_id: 9302692b-b787-4b52-a3a6-daebb79cb498
+      key_name: test
+      wait_for: 200
+      flavor_id: 101
+      floating-ips:
+        - 12.34.56.79
 
+# Creates a new VM with 4G of RAM on Ubuntu Trusty, ignoring deprecated images
+- name: launch a nova instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    nova_compute:
+      name: vm1
+      state: present
+      login_username: username
+      login_password: Equality7-2521
+      login_tenant_name: username-project1
+      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      region_name: region-b.geo-1
+      image_name: Ubuntu Server 14.04
+      image_filter: deprecated
+      flavor_ram: 4096
+
+# Creates a new VM with 4G of RAM on Ubuntu Trusty on a Rackspace Performance node in DFW
+- name: launch a nova instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    nova_compute:
+      name: vm1
+      state: present
+      login_username: username
+      login_password: Equality7-2521
+      login_tenant_name: username-project1
+      auth_url: https://identity.api.rackspacecloud.com/v2.0/
+      region_name: DFW
+      image_name: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
+      flavor_ram: 4096
+      flavor_filter: Performance
 '''
 
 
