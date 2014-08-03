@@ -252,13 +252,8 @@ def _delete_subnet(module, neutron, subnet_id):
 
 def main():
 
-    module = AnsibleModule(
-        argument_spec = dict(
-            login_username          = dict(default='admin'),
-            login_password          = dict(required=True),
-            login_tenant_name       = dict(required='True'),
-            auth_url                = dict(default='http://127.0.0.1:35357/v2.0/'),
-            region_name             = dict(default=None),
+    argument_spec = openstack_argument_spec()
+    argument_spec.update(dict(
             name                    = dict(required=True),
             network_name            = dict(required=True),
             cidr                    = dict(required=True),
@@ -270,8 +265,8 @@ def main():
             dns_nameservers         = dict(default=None),
             allocation_pool_start   = dict(default=None),
             allocation_pool_end     = dict(default=None),
-        ),
-    )
+    ))
+    module = AnsibleModule(argument_spec=argument_spec)
     neutron = _get_neutron_client(module, module.params)
     _set_tenant_id(module)
     if module.params['state'] == 'present':
@@ -291,5 +286,6 @@ def main():
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
 main()
 
