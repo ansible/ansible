@@ -381,7 +381,13 @@ class Connection(object):
 
                 self.ssh.load_system_host_keys()
                 self.ssh._host_keys.update(self.ssh._system_host_keys)
-                self._save_ssh_host_keys(self.keyfile)
+
+                # save the new keys to a temporary file and move it into place
+                # rather than rewriting the file
+                tmp_keyfile = tempfile.NamedTemporaryFile()
+                self._save_ssh_host_keys(tmp_keyfile)
+                atomic_move(tmp_keyfile.name, self.keyfile)
+                tmp_keyfile.close()
 
             except:
 
