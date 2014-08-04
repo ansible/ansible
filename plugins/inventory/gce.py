@@ -107,27 +107,38 @@ class GceInventory(object):
             sys.exit(0)
 
         # Otherwise, assume user wants all instances grouped
-        print self.json_format_dict(self.group_instances())
+        print(self.json_format_dict(self.group_instances()))
         sys.exit(0)
 
-
     def get_gce_driver(self):
-        '''Determine GCE authorization settings and return libcloud driver.'''
-
+        """Determine the GCE authorization settings and return a
+        libcloud driver.
+        """
         gce_ini_default_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "gce.ini")
         gce_ini_path = os.environ.get('GCE_INI_PATH', gce_ini_default_path)
 
-        config = ConfigParser.SafeConfigParser()
+        # Create a ConfigParser.
+        # This provides empty defaults to each key, so that environment
+        # variable configuration (as opposed to INI configuration) is able
+        # to work.
+        config = ConfigParser.SafeConfigParser(defaults={
+            'gce_service_account_email_address': '',
+            'gce_service_account_pem_file_path': '',
+            'gce_project_id': '',
+            'libcloud_secrets': '',
+        })
+        if 'gce' not in config.sections():
+            config.add_section('gce')
         config.read(gce_ini_path)
 
-        # the GCE params in 'secrets.py' will override these
+        # Attempt to get GCE params from a configuration file, if one
+        # exists.
         secrets_path = config.get('gce', 'libcloud_secrets')
-
         secrets_found = False
         try:
             import secrets
-            args = getattr(secrets, 'GCE_PARAMS', ())
+            args = list(getattr(secrets, 'GCE_PARAMS', []))
             kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
             secrets_found = True
         except:
@@ -142,23 +153,30 @@ class GceInventory(object):
             sys.path.append(os.path.dirname(secrets_path))
             try:
                 import secrets
-                args = getattr(secrets, 'GCE_PARAMS', ())
+                args = list(getattr(secrets, 'GCE_PARAMS', []))
                 kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
                 secrets_found = True
             except:
                 pass
         if not secrets_found:
-            args = (
+            args = [
                 config.get('gce','gce_service_account_email_address'),
                 config.get('gce','gce_service_account_pem_file_path')
-            )
-            kwargs = {'project': config.get('gce','gce_project_id')}
+            ]
+            kwargs = {'project': config.get('gce', 'gce_project_id')}
 
+        # If the appropriate environment variables are set, they override
+        # other configuration; process those into our args and kwargs.
+        args[0] = os.environ.get('GCE_EMAIL', args[0])
+        args[1] = os.environ.get('GCE_PEM_FILE_PATH', args[1])
+        kwargs['project'] = os.environ.get('GCE_PROJECT', kwargs['project'])
+
+        # Retrieve and return the GCE driver.
         gce = get_driver(Provider.GCE)(*args, **kwargs)
-        gce.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+        gce.connection.user_agent_append(
+            '%s/%s' % (USER_AGENT_PRODUCT, USER_AGENT_VERSION),
+        )
         return gce
-
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
