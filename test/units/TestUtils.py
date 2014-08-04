@@ -165,6 +165,8 @@ class TestUtils(unittest.TestCase):
     def test_parse_kv_basic(self):
         self.assertEqual(ansible.utils.parse_kv('a=simple b="with space" c="this=that"'),
                 {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
+        self.assertEqual(ansible.utils.parse_kv('msg=АБВГД'),
+                {'msg': 'АБВГД'})
 
 
     def test_jsonify(self):
