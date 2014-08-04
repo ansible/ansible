@@ -1,0 +1,229 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+import time
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as nova_exc
+except ImportError:
+    print("failed=True msg='novaclient is required for this module'")
+
+try:
+    from cinderclient.v1 import client as cinder_client
+    from cinderclient import exceptions as cinder_exc
+except ImportError:
+    print("failed=True msg='cinderclient is required for this module'")
+
+DOCUMENTATION = '''
+---
+module: cinder_volume
+version_added: "1.0"
+short_description: Create/Delete Cinder Volumes
+description:
+   - Create or Remove cinder block storage volumes
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   size:
+     description:
+        - Size of volume in GB
+     requried: true
+     default: None
+   display_name:
+     description:
+        - Name of volume
+     required: true
+     default: None
+   display_description:
+     description:
+       - String describing the volume
+     required: false
+     default: None
+   volume_type:
+     description:
+       - Volume type for volume
+     required: false
+     default: None
+   image_id:
+     descritpion:
+       - Image id for boot from volume 
+     required: false
+     default: None
+   image_name:
+     descritpion:
+       - Image name for boot from volume 
+     required: false
+     default: None
+   snapshot_id:
+     description:
+       - Volume snapshot id to create from
+     required: false
+     default: None
+requirements: ["cinderclient", "novaclient"]
+'''
+
+EXAMPLES = '''
+# Creates a new cinder volume
+- cinder_volume:
+       state: present
+       os_username: admin
+       os_password: admin
+       os_tenant_name: admin
+       os_auth_url: http://1.1.1.1:5000/v2.0
+       size: 40
+       display_name: test_volume
+       volume_type: ceph
+'''
+
+def _find_image(nova, image_name):
+    for im in nova.images.list():
+        if im.name == image_name:
+            return im.id
+    return None
+
+def _present_volume(module, cinder, nova):
+    for v in cinder.volumes.list():
+        if v.display_name == module.params['display_name']:
+            module.exit_json(changed=False, id=v.id, info=v._info)
+    image_id = module.params['image_id']
+    if module.params['image_name']:
+        image_id = _find_image(nova, module.params['image_name'])
+    volume_args = {'size' : module.params['size'],
+                   'volume_type' : module.params['volume_type'],
+                   'display_name' : module.params['display_name'],
+                   'display_description' : module.params['display_description'],
+                   'imageRef' : image_id,
+                   'snapshot_id' : module.params['snapshot_id']
+                  }
+    try:
+        vol = cinder.volumes.create(**volume_args)
+    except cinder_exc, e:
+        module.fail_json(msg='Error creating volume:%s' % str(e))
+    if module.params['wait']:
+        expires = float(module.params['timeout']) + time.time()
+        while time.time() < expires:
+            volume = cinder.volumes.get(vol.id)
+            if volume.status == 'available':
+                break
+            if volume.status == 'error':
+                module.fail_json(msg='Error creating volume')
+            time.sleep(5)
+    module.exit_json(changed=True, id=vol.id, info=vol._info)
+
+def _wait_for_delete(cinder, vol_id, timeout):
+    expires = float(timeout) + time.time()
+    while time.time() < expires:
+        try:
+            cinder.volumes.get(vol_id)
+        except cinder_exc.NotFound:
+            break
+        time.sleep(5)
+
+def _absent_volume(module, cinder):
+    for v in cinder.volumes.list():
+        if v.display_name == module.params['display_name']:
+            try:
+                cinder.volumes.delete(v.id)
+            except cinder_exc, e:
+                module.fail_json(msg='Cannot delete volume:%s' % str(e))
+            _wait_for_delete(cinder, v.id, module.params['timeout'])
+            module.exit_json(changed=True, result='Volume Deleted')
+    module.exit_json(changed=False, result="Volume not Found")
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        region_name                  = dict(default=None),
+        state                        = dict(required=True, choices=['present', 'absent']),
+        size                         = dict(required=True),
+        volume_type                  = dict(default=None),
+        display_name                 = dict(required=True),
+        display_description          = dict(default=None),
+        image_id                     = dict(default=None),
+        image_name                   = dict(default=None),
+        snapshot_id                  = dict(default=None),
+        wait                         = dict(default=False, choices=[True, False]),
+        timeout                      = dict(default=180)
+        ),
+        mutually_exclusive = [['image_id', 'snapshot_id'],
+                              ['image_name', 'snapshot_id'],
+                              ['image_id', 'image_name']],
+    )
+
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'])
+
+    cinder = cinder_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'])
+    try:
+        nova.authenticate()
+    except nova_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except nova_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    try:
+        cinder.authenticate()
+    except cinder_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except cinder_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    if module.params['state'] == 'present':
+        _present_volume(module, cinder, nova)
+    if module.params['state'] == 'absent':
+        _absent_volume(module, cinder)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()

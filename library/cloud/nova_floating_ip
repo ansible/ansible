@@ -1,0 +1,169 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as nova_exc
+except ImportError:
+    print("failed=True msg='novaclient is required for this module'")
+
+DOCUMENTATION = '''
+---
+module: nova_floating_ip
+version_added: "1.0"
+short_description: Create/Delete snapshots of VMs from OpenStack
+description:
+   - Create or Remove virtual machine snapshots from Openstack.
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth Url
+     required: true
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   server_name:
+     description:
+        - Name of server to snapshot
+     required: false
+     default: None
+   server_id:
+     description:
+        - ID of server to snapshot
+     required: false
+     default: None
+   pool:
+     description:
+        - Pool to grab floating ip from
+     required: false
+     default: None
+requirements: ["novaclient"]
+'''
+
+EXAMPLES = '''
+# Creates a new VM and attaches to a network and passes metadata to the instance
+- nova_floating_ip:
+       state: present
+       os_username: admin
+       os_password: admin
+       os_tenant_name: admin
+       os_os_auth_url: http://1.1.1.1:5000/v2.0
+       server_name: test-server
+       pool: nova
+'''
+def _find_server(nova, server_name):
+    for serv in nova.servers.list():
+        if serv.name == server_name:
+            return serv.id
+    return None
+
+def _check_floating_ip(nova, server_id):
+    for ip in nova.floating_ips.list():
+        if ip.instance_id == server_id:
+            return ip.ip
+    return None
+
+def _get_floating_ip(module, nova):
+    for ip in nova.floating_ips.list():
+        if ip.instance_id == None:
+            return ip.ip
+    try:
+        ip = nova.floating_ips.create(pool=module.params['pool'])
+    except nova_exc, e:
+        module.fail_json(msg='Error creating floating ip:%s' % str(e))
+    return ip.ip
+
+def _absent(module, nova):
+    ip = _check_floating_ip(nova, module.params['server_id'])
+    if ip:
+        try:
+            nova.servers.remove_floating_ip(module.params['server_id'], ip)
+        except nova_exc, e:
+            module.fail_json(msg='Failed to remove ip from server:%s' % str(e))
+        module.exit_json(changed=True, result='IP removed from server')
+    module.exit_json(changed=False, result='Server did not have ip')
+
+def _present(module, nova):
+    ip = _check_floating_ip(nova, module.params['server_id'])
+    if ip != None:
+        module.exit_json(changed=False, info=ip, result='IP already present')
+    ip = _get_floating_ip(module, nova)
+    try:
+        nova.servers.add_floating_ip(module.params['server_id'], ip)
+    except nova_exc, e:
+        module.fail_json(msg='Cannot add ip to server:%s' % str(e))
+    module.exit_json(changed=True, info=ip, result='Added ip to server')
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        region_name                  = dict(default=None),
+        state                        = dict(required=True, choices=['absent', 'present']),
+        server_id                    = dict(default=None), 
+        server_name                  = dict(default=None),
+        pool                         = dict(default=None),
+        ),
+        mutually_exclusive = [['server_id','server_name']],
+    )
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'],
+                              service_type='compute')
+    try:
+        nova.authenticate()
+    except nova_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except nova_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+    if module.params['server_name']:
+        module.params['server_id'] = _find_server(nova, module.params['server_name'])
+    if module.params['state'] == 'present':
+        _present(module, nova)
+    if module.params['state'] == 'absent':
+        _absent(module, nova)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()

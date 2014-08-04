@@ -1,0 +1,119 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: swift_container
+version_added: "1.0"
+short_description: Create/Delete OpenStack Swift Containers
+description:
+   - Create and Delete OpenStack Swift Containers
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: 'None'
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   name:
+     description:
+       - Name of container
+     required: true
+     default: None
+requirements: ["swiftclient"]
+'''
+try:
+    from swiftclient import client as swift_client
+    from swiftclient import exceptions as swift_exc
+except ImportError:
+    print('Cannto import swiftclient, exiting')
+EXAMPLES = '''
+# Creates a new VM and attaches to a network and passes metadata to the instance
+- nova_compute:
+       state: present
+       os_username: admin
+       os_password: admin
+       os_tenant_name: admin
+       name: derp
+'''
+def _check_container(swift, name):
+    for container in swift.get_account()[1]:
+        if container['name'] == name:
+            return True
+    return False
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        state                        = dict(default='present', choices=['absent', 'present']),
+        name                         = dict(required=True),
+        ),
+    )
+
+    swift = swift_client.Connection(auth_version='2',
+                                    user=module.params['os_username'],
+                                    key=module.params['os_password'],
+                                    tenant_name=module.params['os_tenant_name'],
+                                    authurl=module.params['os_auth_url'])
+    try:
+        swift.head_account()
+    except swift_exc.ClientException:
+        module.fail_json(msg='Failed to authenticate swift client')
+
+    container_exists = _check_container(swift, module.params['name'])
+    if module.params['state'] == 'present':
+        if container_exists:
+            module.exit_json(changed=False, result='Container already exists')
+        try:
+            swift.put_container(module.params['name'])
+        except swift_exc, e:
+            module.fail_json(msg='Cannot create container:%s' % str(e))
+
+    if module.params['state'] == 'absent':
+        if not container_exists:
+            module.fail_json(msg='Cannot delete container, doesnt exist')
+        try:
+            swift.delete_container(module.params['name'])
+        except swift_exc, e:
+            module.fail_json(msg='Cannot delete container:%s' % str(e))
+    module.exit_json(changed=True, result='Fuck ass')
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()

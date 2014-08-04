@@ -18,10 +18,13 @@
 
 try:
     try:
-        from neutronclient.neutron import client
+        from neutronclient.v2_0 import client
+        from neutronclient.common.exceptions import NeutronClientException as neutron_exception
     except ImportError:
-        from quantumclient.quantum import client
+        from quantumclient.v2_0 import client
+        from quantumclient.common.exceptions import QuantumClientException as neutron_exception
     from keystoneclient.v2_0 import client as ksclient
+    from keystoneclient.openstack.common.apiclient import exceptions as key_exception
 except ImportError:
     print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
 
@@ -33,34 +36,29 @@ short_description: Creates/Removes networks from OpenStack
 description:
    - Add or Remove network from OpenStack.
 options:
-   login_username:
+   os_username:
      description:
-        - login username to authenticate to keystone
+        - OpenStack Auth username
      required: true
-     default: admin
-   login_password:
-     description:
-        - Password of login user
-     required: true
-     default: 'yes'
-   login_tenant_name:
-     description:
-        - The tenant name of the login user
-     required: true
-     default: 'yes'
-   tenant_name:
-     description:
-        - The name of the tenant for whom the network is created
-     required: false
      default: None
-   auth_url:
+   os_password:
      description:
-        - The keystone url for authentication
-     required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
    region_name:
      description:
-        - Name of the region
+        - OpenStack Auth Region Name
      required: false
      default: None
    state:
@@ -109,96 +107,85 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 
 EXAMPLES = '''
 # Create a GRE backed Quantum network with tunnel id 1 for tenant1
-- quantum_network: name=t1network tenant_name=tenant1 state=present
-                   provider_network_type=gre provider_segmentation_id=1
-                   login_username=admin login_password=admin login_tenant_name=admin
+- quantum_network:
+        name: t1network
+        tenant_name: tenant1
+        state: present
+        provider_network_type: gre
+        provider_segmentation_id: 1
+        os_username: admin
+        os_password: password
+        os_tenant_name: admin
+        os_auth_url: http://10.0.2.15:5000/v2.0
 
 # Create an external network
-- quantum_network: name=external_network state=present
-                   provider_network_type=local router_external=yes
-                   login_username=admin login_password=admin login_tenant_name=admin
+- quantum_network:
+    name: external_network
+    state: present
+    provider_network_type: local
+    router_external: yes
+    os_username: admin
+    os_password: password
+    os_tenant_name: admin
+    os_auth_url: http://10.0.2.15:5000/v2.0
 '''
 
-_os_keystone = None
-_os_tenant_id = None
-
-def _get_ksclient(module, kwargs):
+def _get_ksclient(module):
     try:
-        kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
-    except Exception, e:
-        module.fail_json(msg = "Error authenticating to the keystone: %s" %e.message)
-    global _os_keystone
-    _os_keystone = kclient
+        kclient = ksclient.Client(username=module.params['os_username'],
+                                 password=module.params['os_password'],
+                                 tenant_name=module.params['os_tenant_name'],
+                                 auth_url=module.params['os_auth_url'],
+                                 region_name=module.params['region_name'])
+    except key_exception, e:
+        module.fail_json(msg="Error authenticating to the keystone: %s" % e.message)
     return kclient
 
-
-def _get_endpoint(module, ksclient):
-    try:
-        endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
-    except Exception, e:
-        module.fail_json(msg = "Error getting network endpoint: %s " %e.message)
-    return endpoint
-
-def _get_neutron_client(module, kwargs):
-    _ksclient = _get_ksclient(module, kwargs)
-    token = _ksclient.auth_token
-    endpoint = _get_endpoint(module, _ksclient)
-    kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
-    }
-    try:
-        neutron = client.Client('2.0', **kwargs)
-    except Exception, e:
-        module.fail_json(msg = " Error in connecting to neutron: %s " %e.message)
+def _get_neutron_client(module):
+    neutron = client.Client(username=module.params['os_username'],
+                            password=module.params['os_password'],
+                            tenant_name=module.params['os_tenant_name'],
+                            auth_url=module.params['os_auth_url'],
+                            region_name=module.params['region_name'])
     return neutron
 
-def _set_tenant_id(module):
-    global _os_tenant_id
-    if not module.params['tenant_name']:
-        tenant_name = module.params['login_tenant_name']
-    else:
-        tenant_name = module.params['tenant_name']
-
-    for tenant in _os_keystone.tenants.list():
-        if tenant.name == tenant_name:
-            _os_tenant_id = tenant.id
-            break
-    if not _os_tenant_id:
-        module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
-
+def _set_tenant_id(module, keystone):
+    for ten in keystone.tenants.list():
+        if ten.name == module.params['tenant_name']:
+            module.params['tenant_id'] = ten.id
+            return
+    module.fail_json(msg='Cannot find tenant:%s' % module.params['tenant_name'])
 
 def _get_net_id(neutron, module):
     kwargs = {
-            'tenant_id': _os_tenant_id,
             'name': module.params['name'],
     }
+    if module.params['tenant_id']:
+        kwargs['tenant_id'] = module.params['tenant_id']
     try:
         networks = neutron.list_networks(**kwargs)
-    except Exception, e:
-        module.fail_json(msg = "Error in listing neutron networks: %s" % e.message)
+    except neutron_exception, e:
+        module.fail_json(msg='Cannot get network list:%s' % e.message)
     if not networks['networks']:
         return None
     return networks['networks'][0]['id']
 
 def _create_network(module, neutron):
-
     neutron.format = 'json'
-
-    network = {
-        'name':                      module.params.get('name'),
-        'tenant_id':                 _os_tenant_id,
-        'provider:network_type':     module.params.get('provider_network_type'),
-        'provider:physical_network': module.params.get('provider_physical_network'),
-        'provider:segmentation_id':  module.params.get('provider_segmentation_id'),
-        'router:external':           module.params.get('router_external'),
-        'shared':                    module.params.get('shared'),
-        'admin_state_up':            module.params.get('admin_state_up'),
+    args = {
+        'name' : 'name',
+        'provider:network_type' : 'provider_network_type',
+        'provider:physical_network' : 'provider_physical_network',
+        'provider:segmentation_id' : 'provider_segmentation_id',
+        'router:external' : 'router_external',
+        'shared' : 'shared',
+        'admin_state_up' : 'admin_state_up',
+        'tenant_id' : 'tenant_id',
     }
-
+    network = dict()
+    for k, v in args.iteritems():
+        if module.params[v]:
+            network[k] = module.params[v]
     if module.params['provider_network_type'] == 'local':
         network.pop('provider:physical_network', None)
         network.pop('provider:segmentation_id', None)
@@ -213,32 +200,32 @@ def _create_network(module, neutron):
         network.pop('provider:network_type', None)
         network.pop('provider:physical_network', None)
         network.pop('provider:segmentation_id', None)
-
     try:
-        net = neutron.create_network({'network':network})
-    except Exception, e:
-        module.fail_json(msg = "Error in creating network: %s" % e.message)
+        net = neutron.create_network({'network': network})
+    except neutron_exception, e:
+        module.fail_json(msg="Error in creating network: %s" % e.message)
     return net['network']['id']
 
 def _delete_network(module, net_id, neutron):
 
     try:
         id = neutron.delete_network(net_id)
-    except Exception, e:
-        module.fail_json(msg = "Error in deleting the network: %s" % e.message)
+    except neutron_exception, e:
+        module.fail_json(msg="Error in deleting the network: %s" % e.message)
     return True
 
 def main():
 
     module = AnsibleModule(
         argument_spec                   = dict(
-            login_username                  = dict(default='admin'),
-            login_password                  = dict(required=True),
-            login_tenant_name               = dict(required='True'),
-            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+            os_username                     = dict(required=True),
+            os_password                     = dict(required=True),
+            os_tenant_name                  = dict(required=True),
+            os_auth_url                     = dict(required=True),
             region_name                     = dict(default=None),
             name                            = dict(required=True),
             tenant_name                     = dict(default=None),
+            tenant_id                       = dict(default=None),
             provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
             provider_physical_network       = dict(default=None),
             provider_segmentation_id        = dict(default=None),
@@ -247,6 +234,7 @@ def main():
             admin_state_up                  = dict(default=True, type='bool'),
             state                           = dict(default='present', choices=['absent', 'present'])
         ),
+        mutually_exclusive=[['tenant_id', 'tenant_name']],
     )
 
     if module.params['provider_network_type'] in ['vlan' , 'flat']:
@@ -257,9 +245,10 @@ def main():
             if not module.params['provider_segmentation_id']:
                 module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
 
-    neutron = _get_neutron_client(module, module.params)
-
-    _set_tenant_id(module)
+    neutron = _get_neutron_client(module)
+    if module.params['tenant_name']:
+        keystone = _get_ksclient(module)
+        _set_tenant_id(module, keystone)
 
     if module.params['state'] == 'present':
         network_id = _get_net_id(neutron, module)

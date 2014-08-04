@@ -1,0 +1,219 @@
+#!/usr/bin/python
+#coding: utf-8 -*-
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as nova_exc
+except ImportError:
+    print("failed=True msg='novaclient is required for this module'")
+try:
+    from cinderclient.v1 import client as cinder_client
+    from cinderclient import exceptions as cinder_exc
+except ImportError:
+    print("failed=True msg='cinderclient is required for this module'")
+
+DOCUMENTATION = '''
+---
+module: nova_volume
+version_added: "1.0"
+short_description: Attach/Detach Volumes from OpenStack VM's
+description:
+   - Attach or Detach volumes from OpenStack VM's
+options:
+   os_username:
+     description:
+        - OpenStack Auth username
+     required: true
+     default: None
+   os_password:
+     description:
+        - OpenStack Auth password
+     required: true
+     default: None
+   os_tenant_name:
+     description:
+        - OpenStack Auth tenant name
+     required: true
+     default: None
+   os_auth_url:
+     description:
+        - OpenStack Keystone Auth URL
+     required: true
+     default: None
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+   server_name:
+     description:
+       - Name of server you want to attach a volume to
+     required: false
+     default: None
+   server_id:
+     description:
+       - ID of server you want to attach a volume to
+     required: false
+     default: None
+   volume_name:
+     description:
+      - Name of volume you want to attach to a server
+     required: false
+     default: None
+   volume_id:
+     descripiton:
+      - ID of volume you want to attach to a server
+     required: false
+     default: None
+   device:
+     description:
+      - Device you want to attach
+     required: true
+     default: None
+requirements: ["novaclient", "cinderclient"]
+'''
+
+EXAMPLES = '''
+# Creates a new VM and attaches to a network and passes metadata to the instance
+- nova_compute:
+       state: present
+       os_username: admin
+       os_password: admin
+       os_tenant_name: admin
+       server_name: Mysql-server
+       volume_name: mysql-data
+       device: /dev/vdb
+'''
+def _find_server(nova, server_name):
+    for server in nova.servers.list():
+        if server.name == server_name:
+            return server.id
+    return None
+
+def _find_volume(cinder, volume_name):
+    for vol in cinder.volumes.list():
+        if vol.display_name == volume_name:
+            return vol.id
+    return None
+
+def _check_server_attachments(cinder, server_id, volume_id, device):
+    vol = cinder.volumes.get(volume_id)
+    for attach in vol.attachments:
+        if all([server_id == attach['server_id'], attach['device'] == device]):
+            return True
+    return False
+
+def _present_volume(nova, cinder, module):
+    try:
+        if _check_server_attachments(cinder, module.params['server_id'],
+                                     module.params['volume_id'],
+                                     module.params['device']):
+            module.exit_json(changed=False, result='Volume already attached')
+    except cinder_exc, c:
+        module.fail_json(msg='Error getting volume:%s' % str(c))
+    try:
+        volume = cinder.volumes.get(module.params['volume_id'])
+    except cinder_exc, c:
+        module.fail_json(msg='Error getting volume:%s' % str(c))
+    if volume.status != 'available':
+        module.fail_json(msg='Cannot attach volume, not available')
+    try:
+        nova.volumes.create_server_volume(module.params['server_id'],
+                                          module.params['volume_id'],
+                                          module.params['device'])
+    except nova_exc, n:
+        module.fail_json(msg='Cannot add volume to server:%s' % str(n))
+    volume = cinder.volumes.get(module.params['volume_id'])
+    attachment = None
+    for attach in volume.attachments:
+        if attach['server_id'] == module.params['server_id']:
+            attachment = attach
+    module.exit_json(changed=True, id=volume.id, info=attachment)
+
+def _absent_volume(nova, cinder, module):
+    try:
+        if not _check_server_attachments(cinder, module.params['server_id'],
+                                         module.params['volume_id'],
+                                         module.params['device']):
+            module.fail_json(msg='Volume is not attached to that server on that deivce')
+    except cinder_exc, c:
+        module.fail_json(msg='Error getting volume:%s' % str(c))
+    try:
+        nova.volumes.delete_server_volume(module.params['server_id'],
+                                          module.params['volume_id'])
+    except nova_exc, n:
+        module.fail_json(msg='Error removing volume from server:%s' % str(n))
+    module.exit_json(changed=True, result='Detached volume from server')
+
+def main():
+    module = AnsibleModule(
+        argument_spec                   = dict(
+        os_username                  = dict(required=True),
+        os_password                  = dict(required=True),
+        os_tenant_name               = dict(required=True),
+        os_auth_url                  = dict(required=True),
+        region_name                  = dict(default=None),
+        server_id                    = dict(default=None),
+        server_name                  = dict(default=None),
+        volume_name                  = dict(default=None),
+        volume_id                    = dict(default=None),
+        device                       = dict(required=True),
+        state                        = dict(default='present', choices=['absent', 'present']),
+        ),
+        mutually_exclusive = [['volume_id','volume_name'],
+                              ['server_id', 'server_name']],
+    )
+    nova = nova_client.Client(module.params['os_username'],
+                              module.params['os_password'],
+                              module.params['os_tenant_name'],
+                              module.params['os_auth_url'],
+                              region_name=module.params['region_name'],
+                              service_type='compute')
+    cinder = cinder_client.Client(module.params['os_username'],
+                                  module.params['os_password'],
+                                  module.params['os_tenant_name'],
+                                  module.params['os_auth_url'],
+                                  region_name=module.params['region_name'])
+    try:
+        nova.authenticate()
+    except nova_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except nova_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+    try:
+        cinder.authenticate()
+    except cinder_exc.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Cinder credentials.: %s" % e.message)
+    except cinder_exc.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    if module.params['volume_name'] != None:
+        module.params['volume_id'] = _find_volume(cinder, module.params['volume_name'])
+    if module.params['server_name'] != None:
+        module.params['server_id'] = _find_server(nova, module.params['server_name'])
+
+    if module.params['state'] == 'present':
+        _present_volume(nova, cinder, module)
+    if module.params['state'] == 'absent':
+        _absent_volume(nova, cinder, module)
+
+# this is magic, see lib/ansible/module.params['common.py
+from ansible.module_utils.basic import *
+main()
