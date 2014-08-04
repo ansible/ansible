@@ -1,0 +1,14 @@
+---
+# defaults file for test_postgresql
+db_name: 'datadb'
+
+db_name1: 'datadb1'
+db_name2: 'datadb2'
+
+db_user1: 'datauser1'
+db_user2: 'datauser2'
+
+password: 'password1' 
+
+tmp_dir: '/tmp'
+

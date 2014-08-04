@@ -1,0 +1,9 @@
+pg_hba_path: "/etc/postgresql/"
+pg_hba_file: "/main/pg_hba.conf"
+
+postgresql_service: postgresql
+
+postgresql_packages: 
+    - postgresql
+    - libpq-dev    
+    - python-psycopg2

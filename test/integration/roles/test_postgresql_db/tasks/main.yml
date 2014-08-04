@@ -1,0 +1,138 @@
+# test code for postgresql module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Verify postgresql_db successfully creates a database
+#
+- name: create database (expect changed=true)  
+  postgresql_db: name={{ db_name }} state=present
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_db.yml changed=true output={{result}} database_name={{db_name}}
+
+# ============================================================
+# Verify postgresql_db works when creating a database that already exists
+#
+- name: create database that already exists (expect changed=false)
+  postgresql_db: name={{ db_name }} state=present
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_db.yml changed=false output={{result}} database_name={{db_name}}
+
+# ============================================================
+# Verify postgresql_db successfully removes a database
+#
+- name: remove database (expect changed=true)
+  postgresql_db: name={{ db_name }} state=absent
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_no_db.yml changed=true output={{result}} database_name={{db_name}}
+
+# ============================================================
+# Verify postgresql_db works when removing a database that doesn't exist
+#
+- name: remove database that already exists (expect changed=false)
+  postgresql_db: name={{ db_name }} state=absent
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_no_db.yml changed=false output={{result}} database_name={{db_name}}
+
+# ============================================================
+# Verify postgresql_db fails to create a database using invalid encoding
+#
+- name: create database with an invalid encoding (expect failed=true)
+  postgresql_db: name=db_not_valid state=present encoding=notvalid
+  sudo: yes
+  sudo_user: postgres 
+  register: result
+  ignore_errors: true 
+
+- name: assert changed equals true and failure msg
+  assert:
+    that:
+       - "result.failed == true"
+       - "'not a valid encoding name' in result.msg"
+
+# ============================================================
+# Verify postgresql_db successfully creates a database using a valid encoding
+#
+- name: create database with a valid encoding (expect changed=true)
+  postgresql_db: name=latin{{ db_name }} state=present encoding=LATIN1 lc_collate=C lc_ctype=C template=template0
+  sudo: yes
+  sudo_user: postgres 
+  register: result
+
+- name: assert changed equals true  
+  assert: { that: "result.changed == true" }
+
+- name: list database encoding (expect encoding=LATIN1)
+  command: psql latin{{ db_name }} -c 'SHOW SERVER_ENCODING'
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- name: assert database encoding is LATIN1
+  assert: { that: "'LATIN1' in result.stdout" }
+
+- name: remove database
+  sudo: yes
+  sudo_user: postgres
+  postgresql_db: name=latin{{ db_name }} state=absent
+
+# ============================================================
+# Verify postgresql_db successfully delete database with new owner
+#
+- name: create a database (expect changed=true)
+  postgresql_db: name={{ db_name }} state=present
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- name: create user1
+  postgresql_user: db={{ db_name }} name={{ db_user1 }} password={{ password }} state=present
+  sudo: yes
+  sudo_user: postgres
+
+- name: update database owner with user1 (expect changed=true)
+  postgresql_db: name={{ db_name }} state=present owner={{ db_user1 }}
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_db.yml changed=true output={{result}} database_name={{db_name}} database_user={{db_user1}}
+
+- name: remove database using user1 credentials
+  postgresql_db: name={{ db_name }} state=absent login_user={{ db_user1 }} login_password={{ password }} 
+
+- name: remove user role
+  postgresql_user: name={{ db_user1 }} state=absent
+  sudo: yes
+  sudo_user: postgres
+
+# ============================================================
+# Verify postgresql_db cannot delete database with wrong database owner
+#
+- include: wrong_db_owner.yml  

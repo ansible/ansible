@@ -1,0 +1,100 @@
+# test code to assert wrong database owner  
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Verify postgresql_db cannot delete database with wrong database owner or password
+#
+- name: create a database1 
+  postgresql_db: name={{ db_name1 }} state=present
+  sudo: yes
+  sudo_user: postgres
+
+- name: create a database2
+  postgresql_db: name={{ db_name2 }} state=present
+  sudo: yes
+  sudo_user: postgres
+
+- name: create user1 to access database1
+  postgresql_user: db={{ db_name1 }} name={{ db_user1 }} password={{ password }} state=present
+  sudo: yes
+  sudo_user: postgres
+
+- name: create user2 to access database2 
+  postgresql_user: db={{ db_name2 }} name={{ db_user2 }} password={{ password }} state=present
+  sudo: yes
+  sudo_user: postgres
+
+- name: update database1 owner with user1 (expect changed=true)
+  postgresql_db: name={{ db_name1 }} state=present owner={{ db_user1 }}
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_db.yml changed=true output={{result}} database_name={{db_name1}} database_user={{db_user1}}
+
+- name: update database2 owner with user2 (expect changed=true)
+  postgresql_db: name={{ db_name2 }} state=present owner={{ db_user2 }}
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- include: assert_db.yml changed=true output={{result}} database_name={{db_name2}} database_user={{db_user2}}
+
+- name: remove database1 using wrong owner user2
+  postgresql_db: name={{ db_name1 }} state=absent login_user={{ db_user2 }} login_password={{ password }} 
+  ignore_errors: true 
+  register: result
+
+- name: assert failure and output message
+  assert:
+    that:
+       - "result.failed == true"
+       - "'must be owner of database' in result.msg"
+
+- name: remove database using user1 and wrong password
+  postgresql_db: name={{ db_name1 }} state=absent login_user={{ db_user1 }} login_password=wrongpassword
+  ignore_errors: true 
+  register: result
+
+- name: assert failure and output message
+  assert:
+    that:
+       - "result.failed == true"
+       - "'password authentication failed' in result.msg"
+
+- name: remove database1 using correct owner user1
+  postgresql_db: name={{ db_name1 }} state=absent login_user={{ db_user1 }} login_password={{ password }}
+  register: result
+
+- include: assert_no_db.yml changed=true output={{result}} database_name={{db_name1}}
+
+- name: remove database2 using correct owner user2
+  postgresql_db: name={{ db_name2 }} state=absent login_user={{ db_user2 }} login_password={{ password }}
+  register: result
+
+- include: assert_no_db.yml changed=true output={{result}} database_name={{db_name2}}
+
+- name: remove user role for user1
+  postgresql_user: name={{ db_user1 }} state=absent
+  sudo: yes
+  sudo_user: postgres
+
+- name: remove user role for user2
+  postgresql_user: name={{ db_user2 }} state=absent
+  sudo: yes
+  sudo_user: postgres

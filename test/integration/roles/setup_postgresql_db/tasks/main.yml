@@ -1,0 +1,62 @@
+# setup code for the postgresql integration test
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- include_vars: '{{ ansible_os_family }}.yml' 
+
+- name: stop postgresql service if running 
+  service: name={{ postgresql_service }} state=stopped
+  ignore_errors: yes
+
+- name: delete directory pqsql data
+  file: path=/var/lib/pgsql/data state=absent recurse=no
+
+- name: install postgresql rpm dependencies
+  yum: name={{ item }} state=latest 
+  with_items: postgresql_packages
+  when: ansible_pkg_mgr  ==  'yum'
+
+- name: install postgresql debian dependencies 
+  apt: name={{ item }} state=latest 
+  with_items:  postgresql_packages
+  when: ansible_pkg_mgr  ==  'apt'
+
+- name: initiate postgreslql service
+  command: service postgresql initdb
+           creates=/var/lib/pgsql/data/postgresql.conf
+  when: ansible_distribution != "Ubuntu"
+
+# `psql --version` output format should be like `psql (PostgreSQL) 9.1.14`
+- name: display psql version
+  shell: psql --version | awk 'NR==1 {print $3}' | cut -c 1-3
+  register: psql_version
+  when: ansible_distribution == "Ubuntu"
+
+- name: Setup pg_bha_location for ubuntu
+  set_fact: pg_hba_location={{pg_hba_path}}{{psql_version.stdout_lines | first}}{{pg_hba_file}}
+  when: ansible_distribution == "Ubuntu"
+
+- name: update postgresql authentication settings
+  template: src=pg_hba.conf dest={{pg_hba_location}} owner=postgres
+  register: pg_hba_conf
+
+- name: start postgresql service 
+  service: name={{ postgresql_service }} state=restarted
+
+- name: wait postgresql service
+  wait_for: host=localhost port=5432 state=started timeout=30
