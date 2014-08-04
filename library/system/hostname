@@ -344,7 +344,7 @@ class ScientificHostname(Hostname):
 class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific linux'
-    strategy_class = FedoraStrategy
+    strategy_class = RedHatStrategy
 
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
