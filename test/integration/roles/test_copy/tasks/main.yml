@@ -159,3 +159,24 @@
   assert:
     that:
       - "not copy_result5|changed"
+
+# issue 8394
+- name: create a file with content and a literal multiline block
+  copy: |
+    content='this is the first line
+    this is the second line
+
+    this line is after an empty line
+    this line is the last line
+    '
+    dest={{output_dir}}/multiline.txt
+  register: copy_result6
+
+- debug: var=copy_result6
+
+- name: assert the multiline file was created correctly
+  assert:
+    that:
+      - "copy_result6.changed"
+      - "copy_result6.dest == '{{output_dir|expanduser}}/multiline.txt'"
+      - "copy_result6.md5sum == '1627d51e7e607c92cf1a502bf0c6cce3'"

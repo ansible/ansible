@@ -168,3 +168,23 @@
   assert:
     that:
       - "shell_result4.changed == False"
+
+- name: execute a shell command using a literal multiline block
+  shell: |
+    echo this is a
+    "multiline echo"
+    "with a new line
+    in quotes"
+    | md5sum
+    | tr -s ' '
+    | cut -f1 -d ' '
+  register: shell_result5
+
+- debug: var=shell_result5
+
+- name: assert the multiline shell command ran as expected
+  assert:
+    that:
+      - "shell_result5.changed"
+      - "shell_result5.stdout == '32f3cc201b69ed8afa3902b80f554ca8'"
+

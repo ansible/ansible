@@ -76,7 +76,7 @@ def split_args(args):
         do_decode = True
     except UnicodeDecodeError:
         do_decode = False
-    tokens = args.split(' ')
+    items = args.split(' ')
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -92,56 +92,70 @@ def split_args(args):
     block_depth   = 0 # used to count nested jinja2 {% %} blocks
     comment_depth = 0 # used to count nested jinja2 {# #} blocks
 
-    # now we loop over each split token, coalescing tokens if the white space
+    # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for token in tokens:
+    for item in items:
 
-        # store the previous quoting state for checking later
-        was_inside_quotes = inside_quotes
-        quote_char = _get_quote_state(token, quote_char)
-        inside_quotes = quote_char is not None
+        # we split on spaces and newlines separately, so that we
+        # can tell which character we split on for reassembly
+        # inside quotation characters
+        tokens = item.split('\n')
 
-        # multiple conditions may append a token to the list of params,
-        # so we keep track with this flag to make sure it only happens once
-        # append means add to the end of the list, don't append means concatenate
-        # it to the end of the last token
-        appended = False
+        for idx,token in enumerate(tokens):
 
-        # if we're inside quotes now, but weren't before, append the token 
-        # to the end of the list, since we'll tack on more to it later
-        # otherwise, if we're inside any jinja2 block, inside quotes, or we were
-        # inside quotes (but aren't now) concat this token to the last param
-        if inside_quotes and not was_inside_quotes:
-            params.append(token)
-            appended = True
-        elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
-            params[-1] = "%s %s" % (params[-1], token)
-            appended = True
+            # if we're at the end of the enumeration, the character separator
+            # used when reassembling quoted bits should be a space, otherwise
+            # it will be a newline character
+            spacer = ' '
+            if idx > 0:
+                spacer = '\n'
 
-        # if the number of paired block tags is not the same, the depth has changed, so we calculate that here
-        # and may append the current token to the params (if we haven't previously done so)
-        prev_print_depth = print_depth
-        print_depth = _count_jinja2_blocks(token, print_depth, "{{", "}}")
-        if print_depth != prev_print_depth and not appended:
-            params.append(token)
-            appended = True
+            # store the previous quoting state for checking later
+            was_inside_quotes = inside_quotes
+            quote_char = _get_quote_state(token, quote_char)
+            inside_quotes = quote_char is not None
 
-        prev_block_depth = block_depth
-        block_depth = _count_jinja2_blocks(token, block_depth, "{%", "%}")
-        if block_depth != prev_block_depth and not appended:
-            params.append(token)
-            appended = True
+            # multiple conditions may append a token to the list of params,
+            # so we keep track with this flag to make sure it only happens once
+            # append means add to the end of the list, don't append means concatenate
+            # it to the end of the last token
+            appended = False
 
-        prev_comment_depth = comment_depth
-        comment_depth = _count_jinja2_blocks(token, comment_depth, "{#", "#}")
-        if comment_depth != prev_comment_depth and not appended:
-            params.append(token)
-            appended = True
+            # if we're inside quotes now, but weren't before, append the token
+            # to the end of the list, since we'll tack on more to it later
+            # otherwise, if we're inside any jinja2 block, inside quotes, or we were
+            # inside quotes (but aren't now) concat this token to the last param
+            if inside_quotes and not was_inside_quotes:
+                params.append(token)
+                appended = True
+            elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
+                params[-1] = "%s%s%s" % (params[-1], spacer, token)
+                appended = True
 
-        # finally, if we're at zero depth for all blocks and not inside quotes, and have not
-        # yet appended anything to the list of params, we do so now
-        if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
-            params.append(token)
+            # if the number of paired block tags is not the same, the depth has changed, so we calculate that here
+            # and may append the current token to the params (if we haven't previously done so)
+            prev_print_depth = print_depth
+            print_depth = _count_jinja2_blocks(token, print_depth, "{{", "}}")
+            if print_depth != prev_print_depth and not appended:
+                params.append(token)
+                appended = True
+
+            prev_block_depth = block_depth
+            block_depth = _count_jinja2_blocks(token, block_depth, "{%", "%}")
+            if block_depth != prev_block_depth and not appended:
+                params.append(token)
+                appended = True
+
+            prev_comment_depth = comment_depth
+            comment_depth = _count_jinja2_blocks(token, comment_depth, "{#", "#}")
+            if comment_depth != prev_comment_depth and not appended:
+                params.append(token)
+                appended = True
+
+            # finally, if we're at zero depth for all blocks and not inside quotes, and have not
+            # yet appended anything to the list of params, we do so now
+            if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
+                params.append(token)
 
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
