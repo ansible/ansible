@@ -1233,13 +1233,16 @@ class AnsibleModule(object):
         if data:
             st_in = subprocess.PIPE
 
+        temp_out = tempfile.TemporaryFile()
+        temp_err = tempfile.TemporaryFile()
+
         kwargs = dict(
             executable=executable,
             shell=shell,
             close_fds=close_fds,
             stdin= st_in,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE 
+            stdout=temp_out,
+            stderr=temp_err 
         )
 
         if path_prefix:
@@ -1263,7 +1266,11 @@ class AnsibleModule(object):
             if data:
                 if not binary_data:
                     data += '\n'
-            out, err = cmd.communicate(input=data)
+            cmd.communicate(input=data)
+            temp_out.seek(0)
+            temp_err.seek(0)
+            out = temp_out.read()
+            err = temp_err.read()
             rc = cmd.returncode
         except (OSError, IOError), e:
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
