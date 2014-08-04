@@ -705,8 +705,9 @@ class TestUtils(unittest.TestCase):
         # jinja2 loop blocks with lots of complexity
         _test_combo(
             # in memory of neighbors cat
-            'a {% if x %} y {%else %} {{meow}} {% endif %} cookiechip\ndone',
-            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', 'cookiechip\ndone']
+            # we only preserve newlines inside of quotes
+            'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip"\ndone',
+            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done']
         )
 
         # test space preservation within quotes
