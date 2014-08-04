@@ -43,7 +43,7 @@ options:
     required: false
   include_dependencies:
     description:
-      - Wheter to include dependencies or not.
+      - Whether to include dependencies or not.
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
