@@ -1266,13 +1266,13 @@ class AnsibleModule(object):
             out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
-            self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
+            self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args, cwd=cwd)
         except:
-            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args, cwd=cwd)
 
         if rc != 0 and check_rc:
             msg = err.rstrip()
-            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg, cwd=cwd)
 
         # reset the pwd
         os.chdir(prev_dir)
