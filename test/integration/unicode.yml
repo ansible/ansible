@@ -40,3 +40,4 @@
   gather_facts: true
   tasks:
     - debug: msg='Unicode is a good thing ™'
+    - debug: msg=АБВГД

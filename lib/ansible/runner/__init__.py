@@ -31,7 +31,6 @@ import sys
 import pipes
 import jinja2
 import subprocess
-import shlex
 import getpass
 
 import ansible.constants as C

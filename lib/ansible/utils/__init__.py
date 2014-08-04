@@ -694,8 +694,6 @@ def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
     if args is not None:
-        # attempting to split a unicode here does bad things
-        args = args.encode('utf-8')
         try:
             vargs = split_args(args)
         except ValueError, ve:
@@ -703,7 +701,6 @@ def parse_kv(args):
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
                 raise
-        vargs = [x.decode('utf-8') for x in vargs]
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)
