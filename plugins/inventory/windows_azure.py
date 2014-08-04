@@ -72,8 +72,10 @@ class AzureInventory(object):
         self.parse_cli_args()
 
         # Cache setting defaults.
-        self.cache_path_cache = '/tmp/ansible-azure.cache'
-        self.cache_path_index = '/tmp/ansible-azure.index'
+        # These can be overridden in settings (see `read_settings`).
+        cache_dir = os.path.expanduser('~')
+        self.cache_path_cache = '%s/.ansible-azure.cache' % cache_dir
+        self.cache_path_index = '%s/.ansible-azure.index' % cache_dir
         self.cache_max_age = 0
         
         # Initialize Azure ServiceManagementService
@@ -158,9 +160,9 @@ class AzureInventory(object):
 
         # Cache related
         if config.has_option('azure', 'cache_path'):
-            cache_path = config.get('azure', 'cache_path')
-            self.cache_path_cache = cache_path + "/ansible-azure.cache"
-            self.cache_path_index = cache_path + "/ansible-azure.index"
+            cache_path = os.path.expanduser(config.get('azure', 'cache_path'))
+            self.cache_path_cache = cache_path + '/ansible-azure.cache'
+            self.cache_path_index = cache_path + '/ansible-azure.index'
         if config.has_option('azure', 'cache_max_age'):
             self.cache_max_age = config.getint('azure', 'cache_max_age')
 
