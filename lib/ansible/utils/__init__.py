@@ -694,8 +694,6 @@ def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
     if args is not None:
-        # attempting to split a unicode here does bad things
-        args = args.encode('utf-8')
         try:
             vargs = split_args(args)
         except ValueError, ve:
@@ -703,7 +701,6 @@ def parse_kv(args):
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
                 raise
-        vargs = [x.decode('utf-8') for x in vargs]
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)
@@ -1041,11 +1038,11 @@ def filter_leading_non_json_lines(buf):
     filter only leading lines since multiline JSON is valid.
     '''
 
-    kv_regex = re.compile(r'.*\w+=\w+.*')
+    kv_regex = re.compile(r'\w=\w')
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or kv_regex.match(line) or line.startswith('{') or line.startswith('['):
+        if stop_filtering or line.startswith('{') or line.startswith('[') or kv_regex.search(line):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
