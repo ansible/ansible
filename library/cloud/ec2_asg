@@ -85,6 +85,7 @@ options:
     required: false
     default: EC2
     version_added: "1.7"
+    choices: ['EC2', 'ELB']
 extends_documentation_fragment: aws
 """
 
