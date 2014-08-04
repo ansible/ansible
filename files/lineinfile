@@ -43,6 +43,7 @@ options:
       - The file to modify.
   regexp:
     required: false
+    version_added: 1.7
     description:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found; only the last line
