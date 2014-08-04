@@ -122,6 +122,13 @@ options:
     default: null
     choices: [ "yes", "web" ]
 
+  ignore_default_opts:
+    description:
+      - Ignore portage default options set in make.conf (--ignore-default-opts)
+    required: false
+    default: null
+    choices: [ "yes" ]
+    
 requirements: [ gentoolkit ]
 author: Yap Sok Ann
 notes:  []
@@ -200,7 +207,7 @@ def sync_repositories(module, webrsync=False):
         webrsync_path = module.get_bin_path('emerge-webrsync', required=True)
         cmd = '%s --quiet' % webrsync_path
     else:
-        cmd = '%s --sync --quiet' % module.emerge_path
+        cmd = '%s --sync --quiet --ignore-default-opts' % module.emerge_path
 
     rc, out, err = module.run_command(cmd)
     if rc != 0:
@@ -321,6 +328,9 @@ def run_emerge(module, packages, *args):
     if module.check_mode:
         args.append('--pretend')
 
+    if module.params['ignore_default_opts']:
+        args.append('--ignore-default-opts')
+        
     cmd = [module.emerge_path] + args + packages
     return cmd, module.run_command(cmd)
 
@@ -347,6 +357,7 @@ def main():
             depclean=dict(default=None, choices=['yes']),
             quiet=dict(default=None, choices=['yes']),
             verbose=dict(default=None, choices=['yes']),
+            ignore_default_opts=dict(default=None, choices=['yes']),
             sync=dict(default=None, choices=['yes', 'web']),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
