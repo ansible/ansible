@@ -111,49 +111,84 @@ class GceInventory(object):
         sys.exit(0)
 
 
-    def get_gce_driver(self):
-        '''Determine GCE authorization settings and return libcloud driver.'''
+    def _get_gce_driver_args(self):
+        '''Determine GCE authorization settings for the libcloud driver.'''
 
-        gce_ini_default_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "gce.ini")
-        gce_ini_path = os.environ.get('GCE_INI_PATH', gce_ini_default_path)
-
-        config = ConfigParser.SafeConfigParser()
-        config.read(gce_ini_path)
-
-        # the GCE params in 'secrets.py' will override these
-        secrets_path = config.get('gce', 'libcloud_secrets')
-
-        secrets_found = False
+        # First, try secrets.py in PYTHONPATH
         try:
             import secrets
             args = getattr(secrets, 'GCE_PARAMS', ())
             kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
-            secrets_found = True
+            return (args, kwargs)
         except:
             pass
 
-        if not secrets_found and secrets_path:
+        config = None
+        gce_ini_path = os.environ.get('GCE_INI_PATH')
+        if gce_ini_path:
+            config = ConfigParser.SafeConfigParser()
+            try:
+                config.readfp(open(gce_ini_path))
+            except Exception, e:
+                err = "Unable to parse "
+                err += gce_ini_path
+                err += " from $GCE_INI_PATH: "
+                err += str(e)
+                print(err)
+                sys.exit(1)
+
+        gce_ini_default_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "gce.ini")
+        if config is None and os.path.isfile(gce_ini_default_path):
+            config = ConfigParser.SafeConfigParser()
+            config.readfp(open(gce_ini_default_path))
+
+        if config is None:
+            err = "Couldn't find secrets.py or gce.ini!  "
+            err += "See http://docs.ansible.com/guide_gce.html "
+            err += "for instructions."
+            print(err)
+            sys.exit(1)
+
+        # Next try secrets.py configured in gce.ini (and not empty)
+        secrets_path = None
+        if config.has_option('gce', 'libcloud_secrets'):
+            secrets_path = config.get('gce', 'libcloud_secrets')
+        if secrets_path:
             if not secrets_path.endswith('secrets.py'):
                 err = "Must specify libcloud secrets file as "
                 err += "/absolute/path/to/secrets.py"
                 print(err)
                 sys.exit(1)
+
             sys.path.append(os.path.dirname(secrets_path))
             try:
                 import secrets
                 args = getattr(secrets, 'GCE_PARAMS', ())
                 kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
-                secrets_found = True
-            except:
-                pass
-        if not secrets_found:
-            args = (
-                config.get('gce','gce_service_account_email_address'),
-                config.get('gce','gce_service_account_pem_file_path')
-            )
-            kwargs = {'project': config.get('gce','gce_project_id')}
+                return (args, kwargs)
+            except Exception, e:
+                err = "Unable to import secrets after appending "
+                err += secrets_path
+                err += " to PYTHONPATH: "
+                err += str(e)
+                print(err)
+                sys.exit(1)
 
+        # Finally try values configured in gce.ini
+        args = (
+            config.get('gce','gce_service_account_email_address'),
+            config.get('gce','gce_service_account_pem_file_path')
+        )
+        kwargs = {'project': config.get('gce','gce_project_id')}
+
+        return (args, kwargs)
+
+
+    def get_gce_driver(self):
+        '''Determine GCE authorization settings and return libcloud driver.'''
+
+        args, kwargs = self._get_gce_driver_args()
         gce = get_driver(Provider.GCE)(*args, **kwargs)
         gce.connection.user_agent_append("%s/%s" % (
                 USER_AGENT_PRODUCT, USER_AGENT_VERSION))
