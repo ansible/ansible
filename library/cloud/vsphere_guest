@@ -88,6 +88,12 @@ options:
       - A key, value pair of any extra values you want set or changed in the vmx file of the VM. Useful to set advanced options on the VM.
     required: false
     default: null
+  vm_hw_version:
+    description:
+      - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware version of existing vm is not supported.
+    required: false
+    default: null
+    version_added: "1.7"
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
@@ -199,6 +205,23 @@ EXAMPLES = '''
   hw_name: "centos64Guest"
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
+
+# Transfer a local file to a machine running vmwaretools
+# If overwrite is not specified it defaults to False
+# guest_user/passwd is a local account on the guest machine
+
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    password: mypass
+    guest: newvm001
+    send: yes
+    src_file: /path/to/local/file
+    dst_file: /path/on/guest
+    overwrite: no
+    guest_user: guestadmin
+    guest_passwd: supersecret
+
 
 # Remove a vm from vSphere
 # The VM must be powered_off of you need to use force to force a shutdown
@@ -496,7 +519,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     # Change Memory
     if vm_hardware['memory_mb']:
 
-        if vm_hardware['memory_mb'] != vm.properties.config.hardware.memoryMB:
+        if int(vm_hardware['memory_mb']) != vm.properties.config.hardware.memoryMB:
             spec = spec_singleton(spec, request, vm)
 
             if vm.is_powered_on():
@@ -504,7 +527,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                     # No hot add but force
                     if not memoryHotAddEnabled:
                         shutdown = True
-                    elif vm_hardware['memory_mb'] < vm.properties.config.hardware.memoryMB:
+                    elif int(vm_hardware['memory_mb']) < vm.properties.config.hardware.memoryMB:
                         shutdown = True
                 else:
                     # Fail on no hot add and no force
@@ -514,7 +537,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                             "required for shutdown")
 
                     # Fail on no force and memory shrink
-                    elif vm_hardware['memory_mb'] < vm.properties.config.hardware.memoryMB:
+                    elif int(vm_hardware['memory_mb']) < vm.properties.config.hardware.memoryMB:
                         module.fail_json(
                             msg="Cannot lower memory on a live VM. force is "
                             "required for shutdown")
@@ -525,7 +548,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
     # ====( Config Memory )====#
     if vm_hardware['num_cpus']:
-        if vm_hardware['num_cpus'] != vm.properties.config.hardware.numCPU:
+        if int(vm_hardware['num_cpus']) != vm.properties.config.hardware.numCPU:
             spec = spec_singleton(spec, request, vm)
 
             if vm.is_powered_on():
@@ -533,7 +556,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                     # No hot add but force
                     if not cpuHotAddEnabled:
                         shutdown = True
-                    elif vm_hardware['num_cpus'] < vm.properties.config.hardware.numCPU:
+                    elif int(vm_hardware['num_cpus']) < vm.properties.config.hardware.numCPU:
                         if not cpuHotRemoveEnabled:
                             shutdown = True
                 else:
@@ -544,7 +567,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                             "required for shutdown")
 
                     # Fail on no force and cpu shrink without hot remove
-                    elif vm_hardware['num_cpus'] < vm.properties.config.hardware.numCPU:
+                    elif int(vm_hardware['num_cpus']) < vm.properties.config.hardware.numCPU:
                         if not cpuHotRemoveEnabled:
                             module.fail_json(
                                 msg="Cannot lower CPU on a live VM without "
@@ -593,15 +616,16 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     module.exit_json(changed=False)
 
 
-def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state):
+def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
     # Datacenter managed object reference
-    dcmor = [k for k,
-             v in vsphere_client.get_datacenters().items() if v == datacenter][0]
-
-    if dcmor is None:
+    dclist = [k for k,
+             v in vsphere_client.get_datacenters().items() if v == datacenter]
+    if dclist:
+        dcmor=dclist[0]
+    else:
         vsphere_client.disconnect()
         module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
 
@@ -696,13 +720,15 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     # add parameters to the create vm task
     create_vm_request = VI.CreateVM_TaskRequestMsg()
     config = create_vm_request.new_config()
+    if vm_hw_version:
+        config.set_element_version(vm_hw_version)
     vmfiles = config.new_files()
     datastore_name, ds = find_datastore(
         module, vsphere_client, vm_disk['disk1']['datastore'], config_target)
     vmfiles.set_element_vmPathName(datastore_name)
     config.set_element_files(vmfiles)
     config.set_element_name(guest)
-    if vm_extra_config['notes'] is not None:
+    if 'notes' in vm_extra_config:
         config.set_element_annotation(vm_extra_config['notes'])
     config.set_element_memoryMB(int(vm_hardware['memory_mb']))
     config.set_element_numCPUs(int(vm_hardware['num_cpus']))
@@ -725,14 +751,12 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                     msg="Error on %s definition. datastore needs to be"
                     " specified." % disk)
             try:
-                disksize = vm_disk[disk]['size_gb']
+                disksize = int(vm_disk[disk]['size_gb'])
                 # Convert the disk size to kiloboytes
                 disksize = disksize * 1024 * 1024
-            except KeyError:
+            except (KeyError, ValueError):
                 vsphere_client.disconnect()
-                module.fail_json(
-                    msg="Error on %s definition. size needs to be"
-                    " specified." % disk)
+                module.fail_json(msg="Error on %s definition. size needs to be specified as an integer." % disk)
             try:
                 disktype = vm_disk[disk]['type']
             except KeyError:
@@ -816,9 +840,8 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         module.fail_json(msg="Error creating vm: %s" %
                          task.get_error_message())
     else:
-        vm = None
-        if vm_extra_config or state in ['powered_on', 'powered_off']:
-            vm = vsphere_client.get_vm_by_name(guest)
+        # We always need to get the vm because we are going to gather facts
+        vm = vsphere_client.get_vm_by_name(guest)
 
         # VM was created. If there is any extra config options specified, set
         # them here , disconnect from vcenter, then exit.
@@ -914,6 +937,32 @@ def power_state(vm, state, force):
             return e
 
     return False
+
+
+def send_file(vm, guest_user, guest_passwd, src_file, dst_file, module, overwrite=False):
+    toolsStatus = vm.get_tools_status()
+    if toolsStatus == 'NOT RUNNING':
+        module.fail_json(msg='VMware Tools not running')
+    elif toolsStatus == 'RUNNING':
+        try:
+            vm.login_in_guest(guest_user, guest_passwd)
+        except Exception as e:
+            module.fail_json(changed=True, msg="Could not login to guest: %s" % e)
+        exists = False
+        if not overwrite:
+            try:
+                vm.list_files(dst_file)
+                exists = True
+            except:
+                pass
+        try:
+            if exists and not overwrite:
+                module.exit_json(changed=False, msg="File exists on remote machine")
+            if not exists or overwrite:
+                vm.send_file(src_file, dst_file, overwrite=overwrite)
+                module.exit_json(changed=True, msg="File transfered")
+        except Exception as e:
+            module.fail_json(msg="Could not transfer file: %s" % e)
 
 
 def gather_facts(vm):
@@ -1048,6 +1097,8 @@ def main():
             vcenter_hostname=dict(required=True, type='str'),
             username=dict(required=True, type='str'),
             password=dict(required=True, type='str'),
+            guest_user=dict(required=False, type='str'),
+            guest_passwd=dict(required=False, type='str'),
             state=dict(
                 required=False,
                 choices=[
@@ -1061,10 +1112,15 @@ def main():
                 default='present'),
             vmware_guest_facts=dict(required=False, choices=BOOLEANS),
             guest=dict(required=True, type='str'),
+            src_file=dict(required=False, type='str'),
+            dst_file=dict(required=False, type='str'),
+            overwrite=dict(required=False, choices=BOOLEANS, default=False),
+            send=dict(required=False, choices=BOOLEANS),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
             vm_hardware=dict(required=False, type='dict', default={}),
             vm_extra_config=dict(required=False, type='dict', default={}),
+            vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, choices=BOOLEANS, default=False),
@@ -1073,7 +1129,7 @@ def main():
 
         ),
         supports_check_mode=False,
-        mutually_exclusive=[['state', 'vmware_guest_facts']],
+        mutually_exclusive=[['state', 'vmware_guest_facts'],['send', 'state']],
         required_together=[
             ['state', 'force'],
             [
@@ -1083,7 +1139,8 @@ def main():
                 'vm_hardware',
                 'esxi'
             ],
-            ['resource_pool', 'cluster']
+            ['resource_pool', 'cluster'],
+            ['send', 'src_file', 'dst_file', 'guest_user', 'guest_passwd']
         ],
     )
 
@@ -1101,9 +1158,16 @@ def main():
     vm_nic = module.params['vm_nic']
     vm_hardware = module.params['vm_hardware']
     vm_extra_config = module.params['vm_extra_config']
+    vm_hw_version = module.params['vm_hw_version']
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
+    guest_user = module.params['guest_user']
+    guest_passwd = module.params['guest_passwd']
+    src_file = module.params['src_file']
+    dst_file = module.params['dst_file']
+    overwrite = module.params['overwrite']
+    send = module.params['send']
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1127,6 +1191,16 @@ def main():
             except Exception, e:
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
+        elif send:
+            send_file(
+                vm=vm,
+                guest_user=guest_user,
+                guest_passwd=guest_passwd,
+                src_file=src_file,
+                dst_file=dst_file,
+                module=module,
+                overwrite=overwrite
+            )
 
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
@@ -1202,6 +1276,7 @@ def main():
                 vm_hardware=vm_hardware,
                 vm_disk=vm_disk,
                 vm_nic=vm_nic,
+                vm_hw_version=vm_hw_version,
                 state=state
             )
 
