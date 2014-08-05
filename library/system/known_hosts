@@ -25,6 +25,7 @@ short_description: Add or remove a host from the C(known_hosts) file
 description:
    - The M(known_hosts) module lets you add or remove a host from the C(known_hosts) file. 
      This is useful if you're going to want to use the M(git) module over ssh, for example. 
+     If you have a very large number of host keys to manage, you will find the M(template) module more useful.
 version_added: "1.6"
 options:
   host:
@@ -85,6 +86,10 @@ def enforce_state(module, params):
     params["path"]=os.path.expanduser(params.get("path"))
     path = params.get("path")
     state = params.get("state","present")
+
+    #trailing newline in files gets lost, so re-add if necessary
+    if key[-1]!='\n':
+        key+='\n'
 
     sanity_check(module,host,key)
 
@@ -176,6 +181,8 @@ def search_for_host_key(module,host,key,path):
     if current=False, then replace is always False.
     '''
     replace=False
+    if os.path.exists(path)==False:
+        return False, False
     rc,stdout,stderr=module.run_command(['ssh-keygen','-F',host,'-f',path],
                                  check_rc=True)
     if stdout=='': #host not found
