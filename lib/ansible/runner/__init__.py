@@ -611,6 +611,11 @@ class Runner(object):
         inject['environment'] = self.environment
         inject['playbook_dir'] = self.basedir
 
+        # template this one is available, callbacks use this
+        delegate_to = self.module_vars.get('delegate_to')
+        if delegate_to:
+            self.module_vars['delegate_to'] = template.template(self.basedir, delegate_to, inject)
+
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
