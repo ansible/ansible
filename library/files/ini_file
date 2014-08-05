@@ -87,6 +87,7 @@ EXAMPLES = '''
 '''
 
 import ConfigParser
+import sys
 
 # ==============================================================
 # do_ini
@@ -94,7 +95,10 @@ import ConfigParser
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
     changed = False
-    cp = ConfigParser.ConfigParser()
+    if (sys.version_info[0] == 2 and sys.version_info[1] >= 7) or sys.version_info[0] >= 3: 
+    	cp = ConfigParser.ConfigParser(allow_no_value=True)
+    else:
+    	cp = ConfigParser.ConfigParser()
     cp.optionxform = identity
 
     try:
