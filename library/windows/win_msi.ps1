@@ -23,46 +23,32 @@ $params = Parse-Args $args;
 $result = New-Object psobject;
 Set-Attr $result "changed" $false;
 
-If (!($params.path))
+
+$msipath = get-attr -obj $params -name "path"
+if ($msipath -eq $null)
 {
     Fail-Json $result "missing required arguments: path"
 }
 
 if (!(test-path $params.path))
 {
-    Fail-Json $result "couldn't find a file at $($params.path)"
+    Fail-Json $result "couldn't find a file at $msipath"
 }
 
+$extra_args = get-attr -obj $params -name "extra_args"
+$MsiVersionString = get-attr -obj $params -name "msiversionString"
+$State = get-attr -obj $params -name "state"
 
-If ($params.extra_args)
+if ($state -eq $null)
 {
-    $extra_args = $params.extra_args;
+    $State = "present"
 }
-Else
-{
-    $extra_args = ""
-}
-
-if ($params.msiversionString)
-{
-    $MsiVersionString = $params.MsiVersionString
-}
-
-if (!($params.state) -or ($params.state -eq ""))
-{
-    $params | add-member -MemberType NoteProperty -Name "state" -Value "present"
-}
-
-#at this point, we should have a working "state" setting
-if(($params.state -ne "present") -and ($params.state -ne "absent"))
+Elseif (($state -ne "present") -and ($state -ne "absent"))
 {
     Fail-Json $result "need to set state to absent or present"
 }
 
-if ($params.msiName)
-{
-    $MsiName = $params.MsiName
-}
+$MsiName = get-attr -obj $params -name "MsiName"
 
 if (($MsiVersionString) -and (!($MsiName)))
 {
@@ -78,7 +64,7 @@ If (($params.creates) -and ($params.state -ne "absent"))
         $exitreason = New-Object psobject @{
         name = "File specified in creates parameter already exists"
         }
-        Set-Attr $result "exit_reasion" $exitreason
+        Set-Attr $result "exit_reason" $exitreason
         Exit-Json $result;
     }
 }
@@ -124,7 +110,7 @@ Elseif(($AlreadyInstalledMsi) -and ($params.state -eq "present"))
     $exitreason = New-Object psobject @{
         name = "state set to present, msi name and version specified already present"
         }
-        Set-Attr $result "exit_reasion" $exitreason
+        Set-Attr $result "exit_reason" $exitreason
     Exit-Json $result;
 }
 Elseif((!$AlreadyInstalledMsi) -and ($params.state -eq "absent"))
@@ -133,7 +119,7 @@ Elseif((!$AlreadyInstalledMsi) -and ($params.state -eq "absent"))
     $exitreason = New-Object psobject @{
         name = "state set to absent, msi name and version specified already non-present"
         }
-        Set-Attr $result "exit_reasion" $exitreason
+        Set-Attr $result "exit_reason" $exitreason
     Exit-Json $result;
 }
 Else
@@ -141,7 +127,7 @@ Else
     $exitreason = New-Object psobject @{
         name = "I have no idea what just happened."
         }
-        Set-Attr $result "exit_reasion" $exitreason
+        Set-Attr $result "exit_reason" $exitreason
     Exit-Json $result;
 }
 
