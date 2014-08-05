@@ -32,17 +32,28 @@
 # test credential parameters
 
 # ============================================================
+# create a keypair using the ssh key
 
+- name: create the keypair for ec2
+  ec2_key:
+    name: "{{ resource_prefix }}"
+    region: "{{ ec2_region }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    key_material: "{{ key_material }}"
+    wait: yes
+    state: present
+
+# ============================================================
 # create test instance
-
 
 - name: create test instance
   local_action:
     module: ec2
-    key_name: "{{ eip_ec2_keyname }}"
+    key_name: "{{ resource_prefix }}"
     region: "{{ ec2_region }}"
     instance_type: t1.micro
-    image: "{{ eip_ec2_image }}"
+    image: ami-fb8e9292
     wait: yes
     instance_tags:
       Name: "{{ tag_prefix }}"
@@ -243,32 +254,32 @@
 # ============================================================
 
 # re-use existing VPC EIP with instance
+# DISABLED BY JCAMMARATA
+#- name: re-use existing VPC EIP with instance
+#  ec2_eip:
+#    in_vpc=yes
+#    reuse_existing_ip_allowed=yes
+#    instance_id={{ instance_id }}
+#    ec2_access_key={{ ec2_access_key }}
+#    ec2_secret_key={{ ec2_secret_key }}
+#    region={{ ec2_region }}
+#  register: result
+#
+#- name: assert new VPC EIP was assigned
+#  assert:
+#    that:
+#      - '"failed" not in result'
+#      - '"public_ip" in result'
+#
+#
+#- name: disassociate VPC EIP associated with instance
+#  ec2_eip: state=absent public_ip={{ eip }} region={{ ec2_region }}
+#    ec2_access_key={{ ec2_access_key }}
+#    ec2_secret_key={{ ec2_secret_key }}
+#    instance_id={{ instance_id }}
 
-- name: re-use existing EIP with instance
-  ec2_eip:
-    in_vpc=yes
-    reuse_existing_ip_allowed=yes
-    instance_id={{ instance_id }}
-    ec2_access_key={{ ec2_access_key }}
-    ec2_secret_key={{ ec2_secret_key }}
-    region={{ ec2_region }}
-  register: result
 
-- name: assert new EIP was assigned
-  assert:
-    that:
-      - '"failed" not in result'
-      - '"public_ip" in result'
-
-
-- name: disassociate EIP associated with instance
-  ec2_eip: state=absent public_ip={{ eip }} region={{ ec2_region }}
-    ec2_access_key={{ ec2_access_key }}
-    ec2_secret_key={{ ec2_secret_key }}
-    instance_id={{ instance_id }}
-
-
-- name: deactivate EIP
+- name: deactivate VPC EIP
   ec2_eip: state=absent public_ip={{ eip }} region={{ ec2_region }}
     ec2_access_key={{ ec2_access_key }}
     ec2_secret_key={{ ec2_secret_key }}
