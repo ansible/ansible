@@ -8,7 +8,7 @@ Homepage: http://ansible.github.com/
 
 Package: ansible
 Architecture: all
-Depends: python, python-support (>= 0.90), python-jinja2, python-yaml, python-paramiko, python-httplib2, sshpass, ${misc:Depends}
+Depends: python, python-support (>= 0.90), python-jinja2, python-yaml, python-paramiko, python-httplib2, python-crypto (>= 2.6), sshpass, ${misc:Depends}
 Description: A radically simple IT automation platform
  A radically simple IT automation platform that makes your applications and
  systems easier to deploy. Avoid writing scripts or custom code to deploy and

@@ -107,7 +107,7 @@ def get_opt(options, k, defval=""):
 def _read_password(filename):
     f = open(filename, "rb")
     data = f.read()
-    f.close
+    f.close()
     data = data.strip()
     return data
 

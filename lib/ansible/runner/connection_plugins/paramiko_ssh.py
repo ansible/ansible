@@ -29,6 +29,7 @@ import pipes
 import socket
 import random
 import logging
+import tempfile
 import traceback
 import fcntl
 import re
@@ -149,12 +150,16 @@ class Connection(object):
 
         if C.HOST_KEY_CHECKING:
             ssh.load_system_host_keys()
+
         ssh.set_missing_host_key_policy(MyAddPolicy(self.runner))
 
         allow_agent = True
+
         if self.password is not None:
             allow_agent = False
+
         try:
+
             if self.private_key_file:
                 key_filename = os.path.expanduser(self.private_key_file)
             elif self.runner.private_key_file:
@@ -164,7 +169,9 @@ class Connection(object):
             ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
                 key_filename=key_filename, password=self.password,
                 timeout=self.runner.timeout, port=self.port)
+
         except Exception, e:
+
             msg = str(e)
             if "PID check failed" in msg:
                 raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
@@ -184,23 +191,30 @@ class Connection(object):
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         bufsize = 4096
+
         try:
+
             chan = self.ssh.get_transport().open_session()
             self.ssh.get_transport().set_keepalive(5)
+
         except Exception, e:
+
             msg = "Failed to open session"
             if len(str(e)) > 0:
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
         if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
+
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
                 quoted_command = cmd
             vvv("EXEC %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
+
         else:
+
             # sudo usually requires a PTY (cf. requiretty option), therefore
             # we give it one by default (pty=True in ansble.cfg), and we try
             # to initialise from the calling environment
@@ -213,17 +227,24 @@ class Connection(object):
             elif self.runner.su or su:
                 shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
                 prompt_re = re.compile(prompt)
+
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
+
             try:
+
                 chan.exec_command(shcmd)
+
                 if self.runner.sudo_pass or self.runner.su_pass:
+
                     while True:
+
                         if success_key in sudo_output or \
                             (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
                             (self.runner.su_pass and prompt_re.match(sudo_output)):
                             break
                         chunk = chan.recv(bufsize)
+
                         if not chunk:
                             if 'unknown user' in sudo_output:
                                 raise errors.AnsibleError(
@@ -232,33 +253,43 @@ class Connection(object):
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
                         sudo_output += chunk
+
                     if success_key not in sudo_output:
+
                         if sudoable:
                             chan.sendall(self.runner.sudo_pass + '\n')
                         elif su:
                             chan.sendall(self.runner.su_pass + '\n')
+
             except socket.timeout:
+
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
+
         return (chan.recv_exit_status(), '', stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
+
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+
         try:
             self.sftp = self.ssh.open_sftp()
         except Exception, e:
             raise errors.AnsibleError("failed to open a SFTP connection (%s)" % e)
+
         try:
             self.sftp.put(in_path, out_path)
         except IOError:
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def _connect_sftp(self):
+
         cache_key = "%s__%s__" % (self.host, self.user)
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
@@ -268,17 +299,21 @@ class Connection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
+
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+
         try:
             self.sftp = self._connect_sftp()
         except Exception, e:
             raise errors.AnsibleError("failed to open a SFTP connection (%s)", e)
+
         try:
             self.sftp.get(in_path, out_path)
         except IOError:
             raise errors.AnsibleError("failed to transfer file from %s" % in_path)
 
     def _any_keys_added(self):
+
         added_any = False        
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
@@ -301,24 +336,32 @@ class Connection(object):
             os.makedirs(path)
 
         f = open(filename, 'w')
+
         for hostname, keys in self.ssh._host_keys.iteritems():
+
             for keytype, key in keys.iteritems():
+
                 # was f.write
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if not added_this_time:
                     f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+
         for hostname, keys in self.ssh._host_keys.iteritems():
+
             for keytype, key in keys.iteritems():
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+
         f.close()
 
     def close(self):
         ''' terminate the connection '''
+
         cache_key = self._cache_key()
         SSH_CONNECTION_CACHE.pop(cache_key, None)
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
+
         if self.sftp is not None:
             self.sftp.close()
 
@@ -332,12 +375,34 @@ class Connection(object):
 
             KEY_LOCK = open(lockfile, 'w')
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+
             try:
                 # just in case any were added recently
+
                 self.ssh.load_system_host_keys()
                 self.ssh._host_keys.update(self.ssh._system_host_keys)
-                self._save_ssh_host_keys(self.keyfile)
+
+                # gather information about the current key file, so
+                # we can ensure the new file has the correct mode/owner
+
+                key_dir  = os.path.dirname(self.keyfile)
+                key_stat = os.stat(self.keyfile)
+
+                # Save the new keys to a temporary file and move it into place
+                # rather than rewriting the file. We set delete=False because
+                # the file will be moved into place rather than cleaned up.
+
+                tmp_keyfile = tempfile.NamedTemporaryFile(dir=key_dir, delete=False)
+                os.chmod(tmp_keyfile.name, key_stat.st_mode & 07777)
+                os.chown(tmp_keyfile.name, key_stat.st_uid, key_stat.st_gid)
+
+                self._save_ssh_host_keys(tmp_keyfile.name)
+                tmp_keyfile.close()
+
+                os.rename(tmp_keyfile.name, self.keyfile)
+
             except:
+
                 # unable to save keys, including scenario when key was invalid
                 # and caught earlier
                 traceback.print_exc()

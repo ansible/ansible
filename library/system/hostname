@@ -27,7 +27,7 @@ short_description: Manage hostname
 requirements: [ hostname ]
 description:
     - Set system's hostname
-    - Currently implemented on only Debian, Ubuntu, RedHat and CentOS.
+    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI.
 options:
     name:
         required: true
@@ -43,6 +43,18 @@ from distutils.version import LooseVersion
 
 # import module snippets
 from ansible.module_utils.basic import *
+
+
+# wrap get_distribution_version in case it returns a string
+def _get_distribution_version():
+    distribution_version = get_distribution_version()
+
+    if type(distribution_version) is str:
+        distribution_version = 0
+    elif type(distribution_version) is None:
+        distribution_version = 0
+
+    return distribution_version
 
 
 class UnimplementedStrategy(object):
@@ -259,7 +271,7 @@ class FedoraStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out
+        return out.strip()
 
     def set_permanent_hostname(self, name):
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
@@ -299,7 +311,8 @@ class RedHat5Hostname(Hostname):
 class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
-    if LooseVersion(get_distribution_version()) >= LooseVersion("7"):
+    distribution_version = _get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
         strategy_class = RedHatStrategy
@@ -307,7 +320,8 @@ class RedHatServerHostname(Hostname):
 class RedHatWorkstationHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux workstation'
-    if LooseVersion(get_distribution_version()) >= LooseVersion("7"):
+    distribution_version = _get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
         strategy_class = RedHatStrategy
@@ -330,7 +344,7 @@ class ScientificHostname(Hostname):
 class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific linux'
-    strategy_class = FedoraStrategy
+    strategy_class = RedHatStrategy
 
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'

@@ -46,6 +46,7 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
+from ansible.module_utils.splitter import split_args
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -388,6 +389,34 @@ class Runner(object):
 
         return actual_user
 
+    def _count_module_args(self, args, allow_dupes=False):
+        '''
+        Count the number of k=v pairs in the supplied module args. This is
+        basically a specialized version of parse_kv() from utils with a few
+        minor changes.
+        '''
+        options = {}
+        if args is not None:
+            try:
+                vargs = split_args(args)
+            except Exception, e:
+                if "unbalanced jinja2 block or quotes" in str(e):
+                    raise errors.AnsibleError("error parsing argument string '%s', try quoting the entire line." % args)
+                else:
+                    raise
+            for x in vargs:
+                quoted = x.startswith('"') and x.endswith('"') or x.startswith("'") and x.endswith("'")
+                if "=" in x and not quoted:
+                    k, v = x.split("=",1)
+                    is_shell_module = self.module_name in ('command', 'shell')
+                    is_shell_param = k in ('creates', 'removes', 'chdir', 'executable')
+                    if k in options and not allow_dupes:
+                        if not(is_shell_module and not is_shell_param):
+                            raise errors.AnsibleError("a duplicate parameter was found in the argument string (%s)" % k)
+                    if is_shell_module and is_shell_param or not is_shell_module:
+                        options[k] = v
+        return len(options)
+
 
     # *****************************************************
 
@@ -604,6 +633,9 @@ class Runner(object):
             items_terms = self.module_vars.get('items_lookup_terms', '')
             items_terms = template.template(basedir, items_terms, inject)
             items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+            # strip out any jinja2 template syntax within
+            # the data returned by the lookup plugin
+            items = utils._clean_data_struct(items, from_remote=True)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
@@ -826,7 +858,20 @@ class Runner(object):
 
         # render module_args and complex_args templates
         try:
+            # When templating module_args, we need to be careful to ensure
+            # that no variables inadvertantly (or maliciously) add params
+            # to the list of args. We do this by counting the number of k=v
+            # pairs before and after templating.
+            num_args_pre = self._count_module_args(module_args, allow_dupes=True)
             module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            num_args_post = self._count_module_args(module_args)
+            if num_args_pre != num_args_post:
+                raise errors.AnsibleError("A variable inserted a new parameter into the module args. " + \
+                                          "Be sure to quote variables if they contain equal signs (for example: \"{{var}}\").")
+            # And we also make sure nothing added in special flags for things
+            # like the command/shell module (ie. #USE_SHELL)
+            if '#USE_SHELL' in module_args:
+                raise errors.AnsibleError("A variable tried to add #USE_SHELL to the module arguments.")
             complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))

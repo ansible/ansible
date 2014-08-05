@@ -122,9 +122,9 @@ class netscaler(object):
             'Content-Type' : 'application/x-www-form-urlencoded',
         }
 
-        response, info = fetch_url(self.module, request_url, data=data_json)
+        response, info = fetch_url(self.module, request_url, data=data_json, headers=headers)
 
-        return json.load(response.read())
+        return json.load(response)
 
     def prepare_request(self, action):
         resp = self.http_request(

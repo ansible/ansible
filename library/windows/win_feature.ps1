@@ -47,15 +47,34 @@ Elseif (!$params.state) {
 If ($params.restart) {
     $restart = $params.restart | ConvertTo-Bool
 }
+Else
+{
+    $restart = $false
+}
+
+if ($params.include_sub_features)
+{
+    $includesubfeatures = $params.include_sub_features | ConvertTo-Bool
+}
+Else
+{
+    $includesubfeatures = $false
+}
+
+if ($params.include_management_tools)
+{
+    $includemanagementtools = $params.include_management_tools | ConvertTo-Bool
+}
+Else
+{
+    $includemanagementtools = $false
+}
+
+
 
 If ($state -eq "present") {
     try {
-        if ($restart) {
-            $featureresult = Add-WindowsFeature -Name $name -Restart
-        }
-        else {
-            $featureresult = Add-WindowsFeature -Name $name
-        }
+        $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools
     }
     catch {
         Fail-Json $result $_.Exception.Message
@@ -63,12 +82,7 @@ If ($state -eq "present") {
 }
 Elseif ($state -eq "absent") {
     try {
-        if ($restart) {
-            $featureresult = Remove-WindowsFeature -Name $name -Restart
-        }
-        else {
-            $featureresult = Remove-WindowsFeature -Name $name
-        }
+        $featureresult = Remove-WindowsFeature -Name $name -Restart:$restart
     }
     catch {
         Fail-Json $result $_.Exception.Message
@@ -78,23 +92,31 @@ Elseif ($state -eq "absent") {
 # Loop through results and create a hash containing details about
 # each role/feature that is installed/removed
 $installed_features = @()
-ForEach ($item in $featureresult.FeatureResult) {
-    $installed_features += New-Object psobject @{
-        id = $item.id.ToString()
-        display_name = $item.DisplayName
-        message = $item.Message.ToString()
-        restart_needed = $item.RestartNeeded.ToString()
-        skip_reason = $item.SkipReason.ToString()
-        success = $item.Success.ToString()
+#$featureresult.featureresult is filled if anything was changed
+if ($featureresult.FeatureResult)
+{
+    ForEach ($item in $featureresult.FeatureResult) {
+        $installed_features += New-Object psobject @{
+            id = $item.id.ToString()
+            display_name = $item.DisplayName
+            message = $item.Message.ToString()
+            restart_needed = $item.RestartNeeded.ToString()
+            skip_reason = $item.SkipReason.ToString()
+            success = $item.Success.ToString()
+        }
     }
+    Set-Attr $result "feature_result" $installed_features
+    
+
+    $result.changed = $true
 }
-Set-Attr $result "feature_result" $installed_features
+Else
+{
+    Set-Attr $result "feature_result" $null
+}
+
 Set-Attr $result "feature_success" $featureresult.Success.ToString()
 Set-Attr $result "feature_exitcode" $featureresult.ExitCode.ToString()
 Set-Attr $result "feature_restart_needed" $featureresult.RestartNeeded.ToString()
-
-If ($result.feature_result.Length -gt 0) {
-    $result.changed = $true
-}
 
 Exit-Json $result;

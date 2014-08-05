@@ -26,10 +26,10 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils import template
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.callbacks import display
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
 import time
@@ -52,6 +52,10 @@ from vault import VaultLib
 VERBOSITY=0
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
+
+# caching the compilation of the regex used
+# to check for lookup calls within data
+LOOKUP_REGEX=re.compile(r'lookup\s*\(')
 
 try:
     import json
@@ -226,6 +230,7 @@ def is_changed(result):
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
+    from ansible.utils import template
 
     if conditional is None or conditional == '':
         return True
@@ -320,6 +325,9 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
     # (used by roles code)
 
+    from ansible.utils import template
+
+
     basedir = os.path.dirname(original)
     if os.path.islink(basedir):
         basedir = unfrackpath(basedir)
@@ -341,38 +349,97 @@ def json_loads(data):
 
     return json.loads(data)
 
-def _clean_data(orig_data):
-    ''' remove template tags from a string '''
-    data = orig_data
-    if isinstance(orig_data, basestring):
-        for pattern,replacement in (('{{','{#'), ('}}','#}'), ('{%','{#'), ('%}','#}')):
-            data = data.replace(pattern, replacement)
-    return data
+def _clean_data(orig_data, from_remote=False, from_inventory=False):
+    ''' remove jinja2 template tags from a string '''
 
-def _clean_data_struct(orig_data):
+    if not isinstance(orig_data, basestring):
+        return orig_data
+
+    data = StringIO.StringIO("")
+
+    # when the data is marked as having come from a remote, we always
+    # replace any print blocks (ie. {{var}}), however when marked as coming
+    # from inventory we only replace print blocks that contain a call to
+    # a lookup plugin (ie. {{lookup('foo','bar'))}})
+    replace_prints = from_remote or (from_inventory and '{{' in orig_data and LOOKUP_REGEX.search(orig_data) is not None)
+
+    # these variables keep track of opening block locations, as we only
+    # want to replace matched pairs of print/block tags
+    print_openings = []
+    block_openings = []
+
+    for idx,c in enumerate(orig_data):
+        # if the current character is an opening brace, check to
+        # see if this is a jinja2 token. Otherwise, if the current
+        # character is a closing brace, we backup one character to
+        # see if we have a closing.
+        if c == '{' and idx < len(orig_data) - 1:
+            token = orig_data[idx:idx+2]
+            # if so, and we want to replace this block, push
+            # this token's location onto the appropriate array
+            if token == '{{' and replace_prints:
+                print_openings.append(idx)
+            elif token == '{%':
+                block_openings.append(idx)
+            # finally we write the data to the buffer and write
+            data.seek(0, os.SEEK_END)
+            data.write(c)
+        elif c == '}' and idx > 0:
+            token = orig_data[idx-1:idx+1]
+            prev_idx = -1
+            if token == '%}' and len(block_openings) > 0:
+                prev_idx = block_openings.pop()
+            elif token == '}}' and len(print_openings) > 0:
+                prev_idx = print_openings.pop()
+            # if we have a closing token, and we have previously found
+            # the opening to the same kind of block represented by this
+            # token, replace both occurrences, otherwise we just write
+            # the current character to the buffer
+            if prev_idx != -1:
+                # replace the opening
+                data.seek(prev_idx, os.SEEK_SET)
+                data.write('{#')
+                # replace the closing
+                data.seek(-1, os.SEEK_END)
+                data.write('#}')
+            else:
+                data.seek(0, os.SEEK_END)
+                data.write(c)
+        else:
+            # not a jinja2 token, so we just write the current char
+            # to the output buffer
+            data.seek(0, os.SEEK_END)
+            data.write(c)
+    return_data = data.getvalue()
+    data.close()
+    return return_data
+
+def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
     '''
     walk a complex data structure, and use _clean_data() to
     remove any template tags that may exist
     '''
+    if not from_remote and not from_inventory:
+        raise errors.AnsibleErrors("when cleaning data, you must specify either from_remote or from_inventory")
     if isinstance(orig_data, dict):
         data = orig_data.copy()
         for key in data:
-            new_key = _clean_data_struct(key)
-            new_val = _clean_data_struct(data[key])
+            new_key = _clean_data_struct(key, from_remote, from_inventory)
+            new_val = _clean_data_struct(data[key], from_remote, from_inventory)
             if key != new_key:
                 del data[key]
             data[new_key] = new_val
     elif isinstance(orig_data, list):
         data = orig_data[:]
         for i in range(0, len(data)):
-            data[i] = _clean_data_struct(data[i])
+            data[i] = _clean_data_struct(data[i], from_remote, from_inventory)
     elif isinstance(orig_data, basestring):
-        data = _clean_data(orig_data)
+        data = _clean_data(orig_data, from_remote, from_inventory)
     else:
         data = orig_data
     return data
 
-def parse_json(raw_data, from_remote=False):
+def parse_json(raw_data, from_remote=False, from_inventory=False):
     ''' this version for module return data only '''
 
     orig_data = raw_data
@@ -407,31 +474,30 @@ def parse_json(raw_data, from_remote=False):
             return { "failed" : True, "parsed" : False, "msg" : orig_data }
 
     if from_remote:
-        results = _clean_data_struct(results)
+        results = _clean_data_struct(results, from_remote, from_inventory)
 
     return results
 
-def smush_braces(data):
-    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while '{{ ' in data:
-        data = data.replace('{{ ', '{{')
-    while ' }}' in data:
-        data = data.replace(' }}', '}}')
-    return data
-
-def smush_ds(data):
-    # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
-    # so we do not have to call smush elsewhere
-    if type(data) == list:
-        return [ smush_ds(x) for x in data ]
-    elif type(data) == dict:
-        for (k,v) in data.items():
-            data[k] = smush_ds(v)
-        return data
-    elif isinstance(data, basestring):
-        return smush_braces(data)
-    else:
-        return data
+def merge_module_args(current_args, new_args):
+    '''
+    merges either a dictionary or string of k=v pairs with another string of k=v pairs,
+    and returns a new k=v string without duplicates.
+    '''
+    if not isinstance(current_args, basestring):
+        raise errors.AnsibleError("expected current_args to be a basestring")
+    # we use parse_kv to split up the current args into a dictionary
+    final_args = parse_kv(current_args)
+    if isinstance(new_args, dict):
+        final_args.update(new_args)
+    elif isinstance(new_args, basestring):
+        new_args_kv = parse_kv(new_args)
+        final_args.update(new_args_kv)
+    # then we re-assemble into a string
+    module_args = ""
+    for (k,v) in final_args.iteritems():
+        if isinstance(v, basestring):
+            module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+    return module_args.strip()
 
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
@@ -451,7 +517,7 @@ def parse_yaml(data, path_hint=None):
         # else this is pretty sure to be a YAML document
         loaded = yaml.safe_load(data)
 
-    return smush_ds(loaded)
+    return loaded
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
@@ -628,20 +694,17 @@ def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
     if args is not None:
-        # attempting to split a unicode here does bad things
-        args = args.encode('utf-8')
         try:
-            vargs = shlex.split(args, posix=True)
+            vargs = split_args(args)
         except ValueError, ve:
             if 'no closing quotation' in str(ve).lower():
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
                 raise
-        vargs = [x.decode('utf-8') for x in vargs]
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)
-                options[k]=v
+                options[k] = unquote(v.strip())
     return options
 
 def merge_hash(a, b):
@@ -975,11 +1038,11 @@ def filter_leading_non_json_lines(buf):
     filter only leading lines since multiline JSON is valid.
     '''
 
-    kv_regex = re.compile(r'.*\w+=\w+.*')
+    kv_regex = re.compile(r'\w=\w')
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or kv_regex.match(line) or line.startswith('{') or line.startswith('['):
+        if stop_filtering or line.startswith('{') or line.startswith('[') or kv_regex.search(line):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
@@ -1089,11 +1152,14 @@ def list_intersection(a, b):
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
-    this is intended for allowing things like:
+    This is intended for allowing things like:
     with_items: a_list_variable
-    where Jinja2 would return a string
-    but we do not want to allow it to call functions (outside of Jinja2, where
-    the env is constrained)
+
+    Where Jinja2 would return a string but we do not want to allow it to
+    call functions (outside of Jinja2, where the env is constrained). If
+    the input data to this function came from an untrusted (remote) source,
+    it should first be run through _clean_data_struct() to ensure the data
+    is further sanitized prior to evaluation.
 
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
@@ -1181,6 +1247,8 @@ def safe_eval(expr, locals={}, include_exceptions=False):
 
 
 def listify_lookup_plugin_terms(terms, basedir, inject):
+
+    from ansible.utils import template
 
     if isinstance(terms, basestring):
         # someone did:
