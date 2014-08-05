@@ -42,5 +42,5 @@ class ActionModule(object):
             args['msg'] = 'Failed as requested from task'
         result = dict(failed=True, msg=args['msg'])
         if 'all' in args:
-            result = dict(failed=True, msg=args['msg'], fatal=True)        
+            result['fatal'] = True
         return ReturnData(conn=conn, result=result)
