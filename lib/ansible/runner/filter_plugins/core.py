@@ -23,6 +23,7 @@ import types
 import pipes
 import glob
 import re
+import collections
 import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s
@@ -145,19 +146,42 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     return _re.sub(replacement, value)
 
 def unique(a):
-    return set(a)
+    if isinstance(a,collections.Hashable):
+        c = set(a)
+    else:
+        c = []
+        for x in a:
+            if x not in c:
+                c.append(x)
+    return c
 
 def intersect(a, b):
-    return set(a).intersection(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) & set(b)
+    else:
+        c = unique(filter(lambda x: x in b, a))
+    return c
 
 def difference(a, b):
-    return set(a).difference(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) - set(b)
+    else:
+        c = unique(filter(lambda x: x not in b, a))
+    return c
 
 def symmetric_difference(a, b):
-    return set(a).symmetric_difference(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) ^ set(b)
+    else:
+        c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
+    return c
 
 def union(a, b):
-    return set(a).union(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) | set(b)
+    else:
+        c = unique(a + b)
+    return c
 
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
