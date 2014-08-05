@@ -79,6 +79,24 @@ options:
     required: false
     default: false
     aliases: []
+  instance_profile_name:
+    version_added: "1.7"
+    description:
+      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
+    required: false
+    default: null
+  ebs_optimized:
+    version_added: "1.7"
+    description:
+      - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
+    required: false
+    default: false
+  assign_public_ip:
+    version_added: "1.7"
+    description:
+      - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
+    required: false
+    default: null
 extends_documentation_fragment: aws
 """
 
@@ -140,6 +158,9 @@ def create_launch_config(connection, module):
     spot_price = module.params.get('spot_price')
     instance_monitoring = module.params.get('instance_monitoring')
     bdm = BlockDeviceMapping()
+    instance_profile_name = module.params.get('instance_profile_name')
+    ebs_optimized = module.params.get('ebs_optimized')
+    assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
 
     if volumes:
         for volume in volumes:
@@ -159,7 +180,10 @@ def create_launch_config(connection, module):
         block_device_mappings=[bdm],
         instance_type=instance_type,
         spot_price=spot_price,
-        instance_monitoring=instance_monitoring)
+        instance_monitoring=instance_monitoring,
+        ebs_optimized = ebs_optimized,
+        associate_public_ip_address = assign_public_ip,
+        instance_profile_name = instance_profile_name)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -201,6 +225,9 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
             instance_monitoring=dict(default=False, type='bool'),
+            instance_profile_name = dict(),
+            ebs_optimized = dict(),
+            assign_public_ip = dict(type='bool', default=False),
         )
     )
 
