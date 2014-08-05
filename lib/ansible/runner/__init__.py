@@ -1090,6 +1090,8 @@ class Runner(object):
                     output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
                 else:
                     output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
+            elif 'No space left on device' in result['stderr']:
+                output = result['stderr']
             else:
                 output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
