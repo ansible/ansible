@@ -65,10 +65,6 @@ import os.path
 import re
 import tempfile
 
-# Attempt to download at most 8192 bytes.
-# Should be more than enough for all keys
-MAXBYTES = 8192
-
 def is_pubkey(string):
     """Verifies if string is a pubkey"""
     pgp_regex = ".*?(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----).*"
@@ -118,11 +114,11 @@ class RpmKey:
                 module.exit_json(changed=False)
 
 
-    def fetch_key(self, url, maxbytes=MAXBYTES):
+    def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
         try:
             rsp, info = fetch_url(self.module, url)
-            key = rsp.read(maxbytes)
+            key = rsp.read()
             if not is_pubkey(key):
                 self.module.fail_json(msg="Not a public key: %s" % url)
             tmpfd, tmpname = tempfile.mkstemp()
