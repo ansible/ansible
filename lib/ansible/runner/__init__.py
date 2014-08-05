@@ -53,6 +53,11 @@ from ansible.utils import OMIT_PLACE_HOLDER
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    from md5 import md5 as _md5
+
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
@@ -203,6 +208,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
@@ -623,8 +629,13 @@ class Runner(object):
         inject['vars']        = self.module_vars
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
+<<<<<<< HEAD
         inject['playbook_dir'] = os.path.abspath(self.basedir)
         inject['omit']        = OMIT_PLACE_HOLDER
+=======
+        inject['playbook_dir'] = self.basedir
+        inject['omit']        = self.omit_token
+>>>>>>> Additional fixes for the new omit parameter variable
 
         # template this one is available, callbacks use this
         delegate_to = self.module_vars.get('delegate_to')
@@ -892,9 +903,9 @@ class Runner(object):
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
         def not_omitted(item):
-            return item[1] != OMIT_PLACE_HOLDER
+            return item[1] != self.omit_token
 
-        if module_name not in ['shell', 'command']:
+        if module_name not in ['shell', 'command', 'include_vars']:
             # filter omitted arguments out from complex_args
             complex_args = dict(filter(not_omitted, complex_args.iteritems()))
             # filter omitted arguments out from module_args

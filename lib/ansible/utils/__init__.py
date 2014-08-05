@@ -112,10 +112,6 @@ except ImportError:
     pass
 
 
-OMIT_PLACE_HOLDER = (
-    '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
-)
-
 ###############################################################
 # Abstractions around keyczar
 ###############################################################
@@ -786,10 +782,6 @@ def _validate_both_dicts(a, b):
         raise errors.AnsibleError(
             "failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__)
         )
-
-def serialize_args(args):
-    ''' convert a dict to a string of key/value items '''
-    return ' '.join("%s='%s'" % item for item in args.iteritems())
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
