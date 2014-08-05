@@ -41,6 +41,11 @@ options:
     required: false
     default: false
     version_added: "1.6"
+  wait_timeout:
+    description:
+      - how long to wait in seconds for newly provisioned EIPs to become available
+    default: 300
+    version_added: "1.7"
 
 extends_documentation_fragment: aws
 author: Lorin Hochstein <lorin@nimbisservices.com>
@@ -91,6 +96,8 @@ else:
     boto_found = True
 
 
+wait_timeout = 0  
+
 def associate_ip_and_instance(ec2, address, instance_id, module):
     if ip_is_associated_with_instance(ec2, address.public_ip, instance_id, module):
         module.exit_json(changed=False, public_ip=address.public_ip)
@@ -136,24 +143,27 @@ def disassociate_ip_and_instance(ec2, address, instance_id, module):
 
 
 def find_address(ec2, public_ip, module):
-    """ Find an existing Elastic IP address """
-    
-    wait_timeout = 600 
-    wait_timeout = time.time() + wait_timeout
-
-    while wait_timeout > time.time():
+    """ Find an existing Elastic IP address """  
+    if wait_timeout != 0:
+        timeout = time.time() + wait_timeout
+        while timeout > time.time():
+            try:
+                addresses = ec2.get_all_addresses([public_ip])
+                break
+            except boto.exception.EC2ResponseError, e:
+                if "Address '%s' not found." % public_ip in e.message :
+                    pass
+                else:
+                    module.fail_json(msg=str(e.message))
+            time.sleep(5)
+        
+        if timeout <= time.time():
+            module.fail_json(msg = "wait for EIPs timeout on %s" % time.asctime())    
+    else:
         try:
             addresses = ec2.get_all_addresses([public_ip])
-            break
         except boto.exception.EC2ResponseError, e:
-            if "Address '%s' not found." % public_ip in e.message :
-                pass
-            else:
-                module.fail_json(msg=str(e.message))
-        time.sleep(5)
-    
-    if wait_timeout <= time.time():
-        module.fail_json(msg = "wait for EIPs timeout on %s" % time.asctime())    
+            module.fail_json(msg=str(e.message))
 
     return addresses[0]
 
@@ -232,6 +242,7 @@ def main():
                          choices=['present', 'absent']),
             in_vpc = dict(required=False, type='bool', default=False),
             reuse_existing_ip_allowed = dict(required=False, type='bool', default=False),
+            wait_timeout = dict(default=300),
         )
     )
 
@@ -250,29 +261,40 @@ def main():
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
     domain  = "vpc" if in_vpc else None
-    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed');
+    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
+    new_eip_timeout = int(module.params.get('wait_timeout'))
 
     if state == 'present':
-        if public_ip is None:
-            if instance_id is None:
-                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
-                module.exit_json(changed=True, public_ip=address.public_ip)
-            else:
-                # Determine if the instance is inside a VPC or not
-                instance = find_instance(ec2, instance_id, module)
-                if instance.vpc_id != None:
-                    domain = "vpc"
-                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
-        else:
+        # Allocate an EIP and exit
+        if not instance_id and not public_ip:     
+            address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
+            module.exit_json(changed=True, public_ip=address.public_ip)
+
+        # Return the EIP object since we've been given a public IP
+        if public_ip:
             address = find_address(ec2, public_ip, module)
+
+        # Allocate an IP for instance since no public_ip was provided
+        if  instance_id and not public_ip: 
+            instance = find_instance(ec2, instance_id, module)
+            if instance.vpc_id:
+                domain = "vpc"
+            address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
+            # overriding the timeout since this is a a newly provisioned ip
+            global wait_timeout
+            wait_timeout = new_eip_timeout       
+
+        # Associate address object (provided or allocated) with instance           
         associate_ip_and_instance(ec2, address, instance_id, module)
+
     else:
-        if instance_id is None:
-            release_address(ec2, public_ip, module)
-        else:
+        #disassociating address from instance
+        if instance_id:
             address = find_address(ec2, public_ip, module)
             disassociate_ip_and_instance(ec2, address, instance_id, module)
-
+        #releasing address
+        else:
+            release_address(ec2, public_ip, module)
 
 
 # import module snippets
