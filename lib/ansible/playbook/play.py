@@ -208,14 +208,17 @@ class Play(object):
         the role directories like tasks, templates, etc. Also
         returns any variables that were included with the role
         """
-        orig_path = template(self.basedir,role,self.vars)
+        orig_path = template(self.basedir, role, self.vars)
 
         role_vars = {}
         if type(orig_path) == dict:
+            role_name_key = 'role'
             # what, not a path?
-            role_name = orig_path.get('role', None)
+            role_name = orig_path.get(role_name_key, None)
             if role_name is None:
-                raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
+                raise errors.AnsibleError(
+                    "expected a role name in key '%s' of dictionary: %s"
+                    % (role_name_key, orig_path))
             role_vars = orig_path
         else:
             role_name = utils.role_spec_parse(orig_path)["name"]
