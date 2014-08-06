@@ -205,9 +205,9 @@ def jsonify(result, format=False):
         if type(value) is str:
             result2[key] = value.decode('utf-8', 'ignore')
     if format:
-        return json.dumps(result2, sort_keys=True, indent=4)
+        return json.dumps(result2, sort_keys=True, indent=4, ensure_ascii=False)
     else:
-        return json.dumps(result2, sort_keys=True)
+        return json.dumps(result2, sort_keys=True, ensure_ascii=False)
 
 def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
