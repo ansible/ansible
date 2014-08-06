@@ -96,6 +96,15 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
+  security_updates:
+    description:
+      - Whether to install only security updates
+    required: false
+    version_added: "1.6.10"
+    default: "no"
+    choices: ["yes", "no"]
+    aliases: []
+
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
@@ -711,7 +720,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     module.exit_json(**res)
 
 def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
-           disable_gpg_check):
+           disable_gpg_check, security_updates):
 
     # take multiple args comma separated
     items = pkgspec.split(',')
@@ -769,12 +778,16 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
+        elif security_updates:
+            yum_basecmd.append('--security')
         install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state in ['removed', 'absent']:
         remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
+        elif security_updates:
+            yum_basecmd.append('--security')
         latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
 
     # should be caught by AnsibleModule argument_spec
@@ -803,6 +816,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            security_updates=dict(required=False, default="no", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
@@ -828,8 +842,9 @@ def main():
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
+        security_updates = params['security_updates']
         res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check)
+                     disablerepo, disable_gpg_check, security_updates)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # import module snippets
