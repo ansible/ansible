@@ -219,6 +219,10 @@ def main():
                 rc=0
             )
 
+    # make sure destination is a directory
+    if not dest.endswith('/'):
+        dest = dest + '/'
+
     # is dest OK to receive tar file?
     if not os.path.exists(os.path.dirname(dest)):
         module.fail_json(msg="Destination directory '%s' does not exist" % (os.path.dirname(dest)))
