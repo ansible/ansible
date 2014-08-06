@@ -85,7 +85,9 @@ def get_docstring(filename, verbose=False):
                             if not doc.has_key(key):
                                 doc[key] = value
                             else:
-                                doc[key].update(value)
+                                # not sure this is the only example but don't do this for the copy module
+                                if key != 'force':
+                                    doc[key].update(value)
 
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
