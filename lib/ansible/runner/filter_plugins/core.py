@@ -210,7 +210,7 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
-def re_escape(string):
+def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
 
@@ -286,7 +286,7 @@ class FilterModule(object):
             'search': search,
             'regex': regex,
             'regex_replace': regex_replace,
-            're_escape': re_escape,
+            'regex_escape': regex_escape,
 
             # list
             'unique' : unique,
