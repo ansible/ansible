@@ -95,7 +95,7 @@ Bugs should be reported to [github.com/ansible/ansible](http://github.com/ansibl
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
 to see if the issue has already been reported.  
 
-When filing a bug, please use the [issue template](https://raw2.github.com/ansible/ansible/devel/examples/issues/ISSUE_TEMPLATE.md) to provide all relevant information.
+When filing a bug, please use the [issue template](https://github.com/ansible/ansible/blob/devel/examples/issues/ISSUE_TEMPLATE.md) to provide all relevant information.
 
 Do not use the issue tracker for "how do I do this" type questions.  These are great candidates
 for IRC or the mailing list instead where things are likely to be more of a discussion.
