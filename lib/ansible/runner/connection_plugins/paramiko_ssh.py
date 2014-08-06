@@ -39,7 +39,6 @@ from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
 from ansible import constants as C
-from ansible.module_utils.basic import atomic_move
             
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established. 
