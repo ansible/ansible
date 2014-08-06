@@ -20,7 +20,7 @@ from ansible import utils
 from ansible.module_utils.splitter import split_args
 import os
 import ansible.utils.template as template
-import sys
+
 
 class Task(object):
 
@@ -96,7 +96,7 @@ class Task(object):
                 else:
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
-            elif x in [ 'changed_when', 'failed_when', 'when']:
+            elif x in ['changed_when', 'failed_when', 'when']:
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
                     utils.warning("It is unnecessary to use '{{' in conditionals, leave variables in loop expressions bare.")
             elif x.startswith("when_"):
@@ -104,11 +104,13 @@ class Task(object):
 
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
-                when_name = x.replace("when_","")
+                when_name = x.replace("when_", "")
                 ds['when'] = "%s %s" % (when_name, ds[x])
                 ds.pop(x)
-            elif not x in Task.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
+            elif x not in Task.VALID_KEYS:
+                raise errors.AnsibleError(
+                    "'%s' is not a legal parameter in task or handler: %s"
+                    % (x, ds))
 
         self.module_vars  = module_vars
         self.default_vars = default_vars
@@ -116,7 +118,7 @@ class Task(object):
 
         # load various attributes
         self.name         = ds.get('name', None)
-        self.tags         = [ 'all' ]
+        self.tags         = ['all']
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.su           = utils.boolean(ds.get('su', play.su))
@@ -125,7 +127,7 @@ class Task(object):
         self.no_log       = utils.boolean(ds.get('no_log', "false"))
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 
-        #Code to allow do until feature in a Task 
+        # Code to allow do until feature in a Task
         if 'until' in ds:
             if not ds.get('register'):
                 raise errors.AnsibleError("register keyword is mandatory when using do until feature")
