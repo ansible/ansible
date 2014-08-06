@@ -152,7 +152,7 @@ class ElbManager:
 
             initial_state = self._get_instance_health(lb)
 
-            if initial_state.state == 'InService':
+            if initial_state is not None and initial_state.state == 'InService':
                 continue
 
             if enable_availability_zone:
