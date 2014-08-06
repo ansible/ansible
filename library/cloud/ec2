@@ -163,7 +163,7 @@ options:
     description:
       - the private ip address to assign the instance (from the vpc subnet)
     required: false
-    defualt: null
+    default: null
     aliases: []
   instance_profile_name:
     version_added: "1.3"
@@ -192,6 +192,7 @@ options:
     required: false
     default: 'present'
     aliases: []
+    choices: ['present', 'absent', 'running', 'stopped']
   volumes:
     version_added: "1.5"
     description:
@@ -923,7 +924,7 @@ def create_instances(module, ec2, override_count=None):
         while wait_timeout > time.time() and num_running < len(instids):
             try: 
                 res_list = ec2.get_all_instances(instids)
-            except boto.exception.BotoSeverError, e:
+            except boto.exception.BotoServerError, e:
                 if e.error_code == 'InvalidInstanceID.NotFound':
                     time.sleep(1)
                     continue
@@ -1083,10 +1084,12 @@ def startstop_instances(module, ec2, instance_ids, state):
     ## Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time():
+        instance_dict_array = []
         matched_instances = []
         for res in ec2.get_all_instances(instance_ids):
             for i in res.instances:
                 if i.state == state:
+                    instance_dict_array.append(get_instance_info(i))
                     matched_instances.append(i)
         if len(matched_instances) < len(instance_ids):
             time.sleep(5)

@@ -53,6 +53,7 @@ import sys
 import syslog
 import types
 import time
+import select
 import shutil
 import stat
 import tempfile
@@ -153,6 +154,7 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
+    regexp = dict(), # used by assemble
     delimiter = dict(), # used by assemble
     directory_mode = dict(), # used by copy
 )
@@ -185,6 +187,8 @@ def get_distribution_version():
     if platform.system() == 'Linux':
         try:
             distribution_version = platform.linux_distribution()[1]
+            if not distribution_version and os.path.isfile('/etc/system-release'):
+                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
         except:
             # FIXME: MethodMissing, I assume?
             distribution_version = platform.dist()[1]
@@ -215,7 +219,6 @@ def load_platform_subclass(cls, *args, **kwargs):
         subclass = cls
 
     return super(cls, subclass).__new__(subclass)
-
 
 class AnsibleModule(object):
 
@@ -854,6 +857,8 @@ class AnsibleModule(object):
                 (k, v) = x.split("=",1)
             except Exception, e:
                 self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
+            if k in params:
+                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)
@@ -1159,7 +1164,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1233,7 +1238,7 @@ class AnsibleModule(object):
             executable=executable,
             shell=shell,
             close_fds=close_fds,
-            stdin= st_in,
+            stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE 
         )
@@ -1256,10 +1261,48 @@ class AnsibleModule(object):
         try:
             cmd = subprocess.Popen(args, **kwargs)
 
+            # the communication logic here is essentially taken from that
+            # of the _communicate() function in ssh.py
+
+            stdout = ''
+            stderr = ''
+            rpipes = [cmd.stdout, cmd.stderr]
+
             if data:
                 if not binary_data:
                     data += '\n'
-            out, err = cmd.communicate(input=data)
+                cmd.stdin.write(data)
+                cmd.stdin.close()
+
+            while True:
+                rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+                if cmd.stdout in rfd:
+                    dat = os.read(cmd.stdout.fileno(), 9000)
+                    stdout += dat
+                    if dat == '':
+                        rpipes.remove(cmd.stdout)
+                if cmd.stderr in rfd:
+                    dat = os.read(cmd.stderr.fileno(), 9000)
+                    stderr += dat
+                    if dat == '':
+                        rpipes.remove(cmd.stderr)
+                # only break out if no pipes are left to read or
+                # the pipes are completely read and
+                # the process is terminated
+                if (not rpipes or not rfd) and cmd.poll() is not None:
+                    break
+                # No pipes are left to read but process is not yet terminated
+                # Only then it is safe to wait for the process to be finished
+                # NOTE: Actually cmd.poll() is always None here if rpipes is empty
+                elif not rpipes and cmd.poll() == None:
+                    cmd.wait()
+                    # The process is terminated. Since no pipes to read from are
+                    # left, there is no need to call select() again.
+                    break
+
+            cmd.stdout.close()
+            cmd.stderr.close()
+
             rc = cmd.returncode
         except (OSError, IOError), e:
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
@@ -1267,13 +1310,13 @@ class AnsibleModule(object):
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
 
         if rc != 0 and check_rc:
-            msg = err.rstrip()
-            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+            msg = stderr.rstrip()
+            self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
         os.chdir(prev_dir)
 
-        return (rc, out, err)
+        return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):
         filename = os.path.expandvars(os.path.expanduser(filename))

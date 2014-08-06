@@ -238,11 +238,16 @@ class ActionModule(object):
 
                 # src and dest here come after original and override them
                 # we pass dest only to make sure it includes trailing slash in case of recursive copy
-                module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
-                                  pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
+                new_module_args = dict(
+                    src=tmp_src,
+                    dest=dest,
+                    original_basename=source_rel
+                )
 
                 if self.runner.no_log:
-                    module_args_tmp = "%s NO_LOG=True" % module_args_tmp
+                    new_module_args['NO_LOG'] = True
+
+                module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
                 module_return = self.runner._execute_module(conn, tmp_path, 'copy', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
@@ -260,12 +265,17 @@ class ActionModule(object):
                 tmp_src = tmp_path + source_rel
 
                 # Build temporary module_args.
-                module_args_tmp = "%s src=%s original_basename=%s" % (module_args,
-                                  pipes.quote(tmp_src), pipes.quote(source_rel))
+                new_module_args = dict(
+                    src=tmp_src,
+                    dest=dest,
+                    original_basename=source_rel
+                )
                 if self.runner.noop_on_check(inject):
-                    module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
+                    new_module_args['CHECKMODE'] = True
                 if self.runner.no_log:
-                    module_args_tmp = "%s NO_LOG=True" % module_args_tmp
+                    new_module_args['NO_LOG'] = True
+
+                module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
                 # Execute the file module.
                 module_return = self.runner._execute_module(conn, tmp_path, 'file', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)

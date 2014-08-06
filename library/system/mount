@@ -62,14 +62,21 @@ options:
   state:
     description:
       - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
-        as well as just configured in I(fstab). C(absent) and C(present) only deal with
-        I(fstab). C(mounted) will also automatically create the mount point
-        directory if it doesn't exist. If C(absent) changes anything, it will
-        remove the mount point directory.
+        as needed and appropriately configured in I(fstab). 
+        C(absent) and C(present) only deal with
+        I(fstab) but will not affect current mounting. If specifying C(mounted) and the mount
+        point is not present, the mount point will be created. Similarly, specifying C(absent)        will remove the mount point directory.
     required: true
     choices: [ "present", "absent", "mounted", "unmounted" ]
     default: null
-     
+  fstab:
+    description:
+      - file to use instead of C(/etc/fstab). You shouldn't use that option
+        unless you really know what you are doing. This might be useful if
+        you need to configure mountpoints in a chroot environment.
+    required: false
+    default: /etc/fstab
+
 notes: []
 requirements: []
 author: Seth Vidal
@@ -79,10 +86,10 @@ EXAMPLES = '''
 - mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present
 
 # Mount up device by label
-- mount: name=/srv/disk src='LABEL=SOME_LABEL' state=present
+- mount: name=/srv/disk src='LABEL=SOME_LABEL' fstype=ext4 state=present
 
 # Mount up device by UUID
-- mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' opts=noatime state=present
+- mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' fstype=xfs opts=noatime state=present
 '''
 
 
@@ -237,7 +244,7 @@ def main():
             dump   = dict(default=None),
             src    = dict(required=True),
             fstype = dict(required=True),
-            fstab  = dict(default=None)
+            fstab  = dict(default='/etc/fstab')
         )
     )
 
@@ -259,6 +266,13 @@ def main():
         args['dump'] = module.params['dump']
     if module.params['fstab'] is not None:
         args['fstab'] = module.params['fstab']
+
+    # if fstab file does not exist, we first need to create it. This mainly
+    # happens when fstab optin is passed to the module.
+    if not os.path.exists(args['fstab']):
+        if not os.path.exists(os.path.dirname(args['fstab'])):
+            os.makedirs(os.path.dirname(args['fstab']))
+        open(args['fstab'],'a').close()
 
     # absent == remove from fstab and unmounted
     # unmounted == do not change fstab state, but unmount

@@ -207,12 +207,12 @@ Here is the next part of the update play::
 
   pre_tasks:
   - name: disable nagios alerts for this host webserver service
-    nagios: action=disable_alerts host={{ ansible_hostname }} services=webserver
+    nagios: action=disable_alerts host={{ inventory_hostname }} services=webserver
     delegate_to: "{{ item }}"
     with_items: groups.monitoring
 
   - name: disable the server in haproxy
-    shell: echo "disable server myapplb/{{ ansible_hostname }}" | socat stdio /var/lib/haproxy/stats
+    shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
     with_items: groups.lbservers
 
@@ -233,12 +233,12 @@ Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios con
 
   post_tasks:
   - name: Enable the server in haproxy
-    shell: echo "enable server myapplb/{{ ansible_hostname }}" | socat stdio /var/lib/haproxy/stats
+    shell: echo "enable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
     with_items: groups.lbservers
 
   - name: re-enable nagios alerts
-    nagios: action=enable_alerts host={{ ansible_hostname }} services=webserver
+    nagios: action=enable_alerts host={{ inventory_hostname }} services=webserver
     delegate_to: "{{ item }}"
     with_items: groups.monitoring
 
