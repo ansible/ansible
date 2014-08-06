@@ -1,0 +1,122 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# -*- mode: python -*-
+
+DOCUMENTATION = '''
+---
+module: consul_facts
+author: Matthew Finlayson
+short_description: Gather facts from consul
+version_added: 1.6.11
+requirements: [ consulate ]
+description:
+     - Gather facts from consul for kv, nodes, and services
+options:
+  host:
+        required: false
+        default: "localhost"
+        description:
+            - Optionally specify a consul host to address.
+    port:
+        required: false
+        default: "8500"
+        description:
+            - Optionally specify a consul port to address.
+    dc:
+        required: false
+        default: "None"
+        description:
+            - Optionally specify a datacenter to address.
+'''
+
+EXAMPLES = '''
+- name: Gather info from consul
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Get facts from consul
+      local_action:
+        module: consul_facts
+        host: consul.dev.amazon.com
+
+'''
+
+import consulate
+
+
+class Consul(object):
+    def __init__(self, module):
+        self.module = module
+        self.host = module.params['host']
+        self.port = module.params['port']
+        self.dc = module.params['dc']
+        self.session = consulate.Consulate(host=self.host, port=self.port, dc=self.dc)
+        self.params = {
+            'host': self.host,
+            'port': self.port,
+            'api_version': '/v1',
+            'dc': self.dc,
+            'query': '/?keys'
+        }
+
+    def consul_facts(self):
+        ansible_facts = self.get_facts()
+        self.module.exit_json(changed=False, ansible_facts=ansible_facts)
+
+    def get_facts(self):
+        facts = {'kv': self.get_keys(), 'consul': self.host, 'nodes': self.get_nodes(),
+                 'services': self.get_services()}
+        result = {'consul_facts': facts}
+        return result
+
+    def get_keys(self):
+        output = {}
+        for k, v in self.session.kv.items().iteritems():
+            if not v is None and type(v) is str and v.startswith("[") and v.endswith("]"):
+                output[k] = v.replace('[', '').replace(']', '').split(', ')
+            else:
+                output[k] = v
+        return output
+
+    def get_nodes(self):
+        output = {}
+        for node in self.session.catalog.nodes():
+            output[node['Node']] = self.session.catalog.node(node['Node'])
+        return output
+
+    def get_services(self):
+        output = {}
+        for service in self.session.catalog.services():
+            for service_name in service.iterkeys():
+                output[service_name] = self.session.catalog.service(service_name)
+        return output
+
+
+def main():
+    consul_defaults = {
+        'host': 'localhost',
+        'port': '8500',
+        'api_version': '/v1',
+        'dc': None,
+        'query': '/?keys'
+    }
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            host=dict(default=consul_defaults['host'], type='str'),
+            port=dict(default=consul_defaults['port'], type='str'),
+            dc=dict(default=consul_defaults['dc'], type='str')
+        ),
+        supports_check_mode=False
+    )
+
+    consul = Consul(module)
+
+    consul.consul_facts()
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+### invoke the module
+main()
