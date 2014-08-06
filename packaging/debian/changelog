@@ -1,8 +1,14 @@
+ansible (1.8) unstable; urgency=low
+
+  * 1.8 release (PENDING)
+
+ -- Michael DeHaan <michael@ansible.com>  TBD
+
 ansible (1.7) unstable; urgency=low
 
-  * 1.7 release (PENDING)
+  * 1.7.0 release
 
- -- Michael DeHaan <michael@ansible.com>  Wed, 07 May 2014 15:00:03 -0500
+ -- Michael DeHaan <michael@ansible.com>  Wed, 06 Aug 2014 15:00:00 -0500
 
 ansible (1.6.8) unstable; urgency=low
 
