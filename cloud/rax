@@ -219,7 +219,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
         except Exception, e:
             module.fail_json(msg='Failed to load %s' % user_data)
 
-     # Handle the file contents
+    # Handle the file contents
     for rpath in files.keys():
         lpath = os.path.expanduser(files[rpath])
         try:
@@ -707,5 +707,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()
