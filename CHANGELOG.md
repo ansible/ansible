@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 1.7 "Summer Nights" - Active Development
+## 1.7 "Summer Nights" - Aug 06, 2014
 
 Major new features:
 
@@ -31,6 +31,9 @@ New Modules:
 
 Other notable changes:
 
+* Security fixes
+  - Prevent the use of lookups when using legaxy "{{ }}" syntax around variables and with_* loops.
+  - Remove relative paths in TAR-archived file names used by ansible-galaxy.
 * Inventory speed improvements for very large inventories.
 * Vault password files can now be executable, to support scripts that fetch the vault password.
 

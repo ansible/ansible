@@ -4,8 +4,9 @@ Ansible Releases at a Glance
 Active Development
 ++++++++++++++++++
 
-1.7    "Summer Nights" -------- SUMMER 2014
+1.8    "You Really Got Me" ---- FALL 2014
 
+1.7    "Summer Nights" -------- 08-06-2014
 1.6.8  "The Cradle Will Rock" - 07-22-2014
 1.6.7  "The Cradle Will Rock" - 07-21-2014
 1.6.6  "The Cradle Will Rock" - 07-01-2014
