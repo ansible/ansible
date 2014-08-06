@@ -778,15 +778,13 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        elif security_updates:
-            yum_basecmd.append('--security')
         install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state in ['removed', 'absent']:
         remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        elif security_updates:
+        if security_updates:
             yum_basecmd.append('--security')
         latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
 
