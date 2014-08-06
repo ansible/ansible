@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+## 1.8 "Everybody Wants Some" - Active Development
+
+Details Pending!
+
 ## 1.7 "Summer Nights" - Aug 06, 2014
 
 Major new features:
