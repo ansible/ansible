@@ -6,6 +6,8 @@ Active Development
 
 1.7    "Summer Nights" -------- SUMMER 2014
 
+1.6.10 "The Cradle Will Rock" - 07-25-2014
+1.6.9  "The Cradle Will Rock" - 07-24-2014
 1.6.8  "The Cradle Will Rock" - 07-22-2014
 1.6.7  "The Cradle Will Rock" - 07-21-2014
 1.6.6  "The Cradle Will Rock" - 07-01-2014

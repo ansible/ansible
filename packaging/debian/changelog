@@ -4,6 +4,18 @@ ansible (1.7) unstable; urgency=low
 
  -- Michael DeHaan <michael@ansible.com>  Wed, 07 May 2014 15:00:03 -0500
 
+ansible (1.6.10) unstable; urgency=low
+
+  * 1.6.10 release
+
+ -- Michael DeHaan <michael@ansible.com>  Fri, 25 Jul 2014 13:00:00 -0500
+
+ansible (1.6.9) unstable; urgency=low
+
+  * 1.6.9 release
+
+ -- Michael DeHaan <michael@ansible.com>  Thu, 24 Jul 2014 23:30:00 -0500
+
 ansible (1.6.8) unstable; urgency=low
 
   * 1.6.8 release
