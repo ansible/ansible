@@ -100,7 +100,7 @@ options:
     description:
       - Whether to install only security updates
     required: false
-    version_added: "1.6.10"
+    version_added: "1.8"
     default: "no"
     choices: ["yes", "no"]
     aliases: []
@@ -132,6 +132,9 @@ EXAMPLES = '''
 
 - name: install the 'Development tools' package group
   yum: name="@Development tools" state=present
+
+- name: install latest security updates
+  yum: name=* state=latest security_updates=yes
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
