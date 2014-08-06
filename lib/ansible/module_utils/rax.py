@@ -170,6 +170,29 @@ def rax_find_server(module, rax_module, server):
     return server
 
 
+def rax_find_loadbalancer(module, rax_module, loadbalancer):
+    clb = rax_module.cloud_loadbalancers
+    try:
+        UUID(loadbalancer)
+        found = clb.get(loadbalancer)
+    except:
+        for lb in clb.list():
+            if loadbalancer == lb.name:
+                found.append(lb)
+
+        if not found:
+            module.fail_json(msg='No loadbalancer was matched')
+
+        if len(found) > 1:
+            module.fail_json(msg='Multiple loadbalancers matched')
+
+        # We made it this far, grab the first and hopefully only item
+        # in the list
+        found = found[0]
+
+    return found
+
+
 def rax_argument_spec():
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),
