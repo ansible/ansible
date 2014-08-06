@@ -148,7 +148,12 @@ class ElbManager:
         """Register the instance for all ELBs and wait for the ELB
         to report the instance in-service"""
         for lb in self.lbs:
+            time.sleep(1)
+
             initial_state = self._get_instance_health(lb)
+
+            if initial_state.state == 'InService':
+                continue
 
             if enable_availability_zone:
                 self._enable_availailability_zone(lb)
