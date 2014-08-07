@@ -291,10 +291,11 @@ def delete_autoscaling_group(connection, module):
             for group in groups:
                 if group.name == group_name:
                     if not group.instances:
+                        target_group = group
                         instances = False
             time.sleep(10)
 
-        group.delete()
+        target_group.delete()
         module.exit_json(changed=True)
     else:
         module.exit_json(changed=False)
