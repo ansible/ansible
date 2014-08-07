@@ -1,0 +1,2 @@
+test_dn: ou=users,dc=example,dc=com
+admin2_dn: cn=admin2,dc=example,dc=com

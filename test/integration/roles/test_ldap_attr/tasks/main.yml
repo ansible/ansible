@@ -1,0 +1,324 @@
+# test code for the ldap_attr module
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: initialize olcDbIndex
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='objectClass eq' state=exact
+
+
+# ============================================================
+- name: test state=present for a single value (expect add)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='uid eq'
+  register: result
+
+- name: assert olcDbIndex added
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[0, 'olcDbIndex', ['uid eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq', 'uid eq']
+
+- name: test state=present for a single value (expect no-op)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='uid eq'
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq', 'uid eq']
+
+
+# ============================================================
+- name: test state=absent for a single value (expect delete)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='uid eq' state=absent
+  register: result
+
+- name: assert olcDbIndex deleted
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[1, 'olcDbIndex', ['uid eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+- name: test state=absent for a single value (expect no-op)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='uid eq' state=absent
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+
+# ============================================================
+- name: test state=present for multiple values (expect add)
+  sudo: true
+  ldap_attr:
+  args:
+    dn: '{{ config_dn }}'
+    name: olcDbIndex
+    values: ['uid eq', 'cn eq']
+  register: result
+
+- name: assert olcDbIndex added
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[0, 'olcDbIndex', ['uid eq', 'cn eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq', 'uid eq', 'cn eq']
+
+- name: test state=present for multiple values (expect no-op)
+  sudo: true
+  ldap_attr:
+  args:
+    dn: '{{ config_dn }}'
+    name: olcDbIndex
+    values: ['uid eq', 'cn eq']
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq', 'uid eq', 'cn eq']
+
+
+# ============================================================
+- name: test state=absent for multiple values (expect delete)
+  sudo: true
+  ldap_attr:
+  args:
+    dn: '{{ config_dn }}'
+    name: olcDbIndex
+    values: ['uid eq', 'cn eq']
+    state: absent
+  register: result
+
+- name: assert olcDbIndex deleted
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[1, 'olcDbIndex', ['uid eq', 'cn eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+- name: test state=absent for multiple values (expect no-op)
+  sudo: true
+  ldap_attr:
+  args:
+    dn: '{{ config_dn }}'
+    name: olcDbIndex
+    values: ['uid eq', 'cn eq']
+    state: absent
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+
+# ============================================================
+- name: test state=exact with no value (expect delete)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values= state=exact
+  register: result
+
+- name: assert olcDbIndex deleted
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[1, 'olcDbIndex', None]]"
+
+- include: assert_olcDbIndex.yml
+  expected: []
+
+- name: test state=exact with no value (expect no-op)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values= state=exact
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: []
+
+
+# ============================================================
+- name: test state=exact with one value (expect add)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='objectClass eq' state=exact
+  register: result
+
+- name: assert olcDbIndex added
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[0, 'olcDbIndex', ['objectClass eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+- name: test state=exact with one value (expect no-op)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='objectClass eq' state=exact
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+
+# ============================================================
+- name: test state=exact for a single value (expect replace)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='uid eq' state=exact
+  register: result
+
+- name: assert olcDbIndex replaced
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[2, 'olcDbIndex', ['uid eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['uid eq']
+
+- name: test state=exact for a single value (expect no-op)
+  sudo: true
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='uid eq' state=exact
+  register: result
+
+- name: assert olcDbIndex not changed
+  assert:
+    that:
+      - "not result.changed"
+      - "result.modlist == []"
+
+- include: assert_olcDbIndex.yml
+  expected: ['uid eq']
+
+
+# ============================================================
+- name: test bad value type
+  sudo: true
+  ldap_attr:
+  args:
+    dn: '{{ config_dn }}'
+    name: olcDbIndex
+    values: {'uid': 'eq', 'cn': 'eq'}
+  register: result
+  ignore_errors: true
+
+- name: assert failed
+  assert:
+    that:
+      - "result.failed"
+
+- include: assert_olcDbIndex.yml
+  expected: ['uid eq']
+
+- name: test bad value type
+  sudo: true
+  ldap_attr:
+  args:
+    dn: '{{ config_dn }}'
+    name: olcDbIndex
+    values: [1, 2, 3]
+  register: result
+  ignore_errors: true
+
+- name: assert failed
+  assert:
+    that:
+      - "result.failed"
+
+- include: assert_olcDbIndex.yml
+  expected: ['uid eq']
+
+# ============================================================
+- name: grant access to cn=admin,dc=example,dc=com
+  sudo: true
+  ldap_attr:
+  args:
+    dn: 'olcDatabase={0}config,cn=config'
+    name: olcAccess
+    values: '{0}to *
+            by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage
+            by dn.exact=cn=admin,dc=example,dc=com write
+            by * break'
+    state: exact
+
+- name: test bind_dn (expect replace)
+  sudo: false
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='objectClass eq' state=exact server_uri='ldap://localhost/' bind_dn='cn=admin,dc=example,dc=com' bind_pw=password
+  register: result
+
+- name: assert olcDbIndex replaced
+  assert:
+    that:
+      - "result.changed"
+      - "result.modlist == [[2, 'olcDbIndex', ['objectClass eq']]]"
+
+- include: assert_olcDbIndex.yml
+  expected: ['objectClass eq']
+
+- name: test bind_dn with the wrong password (expect error)
+  sudo: false
+  ldap_attr: dn='{{ config_dn }}' name=olcDbIndex values='objectClass eq' state=exact server_uri='ldap://localhost/' bind_dn='cn=admin,dc=example,dc=com' bind_pw=bogus
+  ignore_errors: true
+  register: result
+
+- name: assert failed
+  assert:
+    that:
+      - "result.failed"

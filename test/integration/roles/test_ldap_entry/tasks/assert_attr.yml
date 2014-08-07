@@ -1,0 +1,9 @@
+- name: slapcat
+  sudo: true
+  shell: "/usr/sbin/slapcat -s {{ dn }} | grep {{ name }} | sed 's/^{{ name }}: //'"
+  register: result
+
+- name: assert values for {{ name }}
+  assert:
+    that:
+      - 'result.stdout == "{{ values|join("\n") }}"'

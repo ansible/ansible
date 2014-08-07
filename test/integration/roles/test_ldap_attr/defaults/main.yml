@@ -1,0 +1,1 @@
+config_dn: olcDatabase={1}hdb,cn=config

@@ -11,3 +11,5 @@
     - { role: test_mysql_user, tags: test_mysql_user}
     - { role: test_mysql_user, tags: test_mysql_user}    
     - { role: test_mysql_variables, tags: test_mysql_variables}
+    - { role: test_ldap_attr, tags: [test_ldap, test_ldap_attr] }
+    - { role: test_ldap_entry, tags: [test_ldap, test_ldap_entry] }
