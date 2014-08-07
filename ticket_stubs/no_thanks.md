@@ -12,7 +12,7 @@ Unfortunately, we're not sure if we want this feature in the program, and I don'
 However, we're absolutely always up for discussion.  Since this is a really busy project, we don't always see comments on closed tickets, but want to encourage
 open dialog.  You can stop by the development list, and we'd be glad to talk about it - and we might even be persuaded otherwise!
 
-   * https://groups.google.com/forum/#!forum/ansible-devel - for user questions, tips, and tricks
+   * https://groups.google.com/forum/#!forum/ansible-devel
 
 In the future, sometimes starting a discussion on the development list prior to implenting a feature can make getting things included a little easier, but it's not always neccessary.
 
