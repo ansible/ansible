@@ -67,6 +67,13 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+  toplevel:
+    description:
+      - if toplevel is true, the package will be installed even if already present as a dependency of another node
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    version_added: "1.6"
 '''
 
 EXAMPLES = '''
@@ -201,7 +208,8 @@ def main():
         production=dict(default='no', type='bool'),
         executable=dict(default=None),
         registry=dict(default=None),
-        state=dict(default='present', choices=['present', 'absent', 'latest'])
+        state=dict(default='present', choices=['present', 'absent', 'latest']),
+        toplevel=dict(default='no', type='bool'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
@@ -217,6 +225,7 @@ def main():
     executable = module.params['executable']
     registry = module.params['registry']
     state = module.params['state']
+    toplevel = module.params['toplevel']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
@@ -229,13 +238,13 @@ def main():
     changed = False
     if state == 'present':
         installed, missing = npm.list()
-        if len(missing):
+        if len(missing) or toplevel and name not in installed:
             changed = True
             npm.install()
     elif state == 'latest':
         installed, missing = npm.list()
         outdated = npm.list_outdated()
-        if len(missing) or len(outdated):
+        if len(missing) or len(outdated) or toplevel and name not in installed:
             changed = True
             npm.install()
     else: #absent
