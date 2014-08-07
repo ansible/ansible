@@ -1130,8 +1130,11 @@ class AnsibleModule(object):
 
             dest_dir = os.path.dirname(dest)
             dest_file = os.path.basename(dest)
-            tmp_dest = tempfile.NamedTemporaryFile(
-                prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+            try:
+                tmp_dest = tempfile.NamedTemporaryFile(
+                    prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+            except (OSError, IOError), e:
+                self.fail_json(msg='The destination directory (%s) is not writable by the current user.' % dest_dir)
 
             try: # leaves tmp file behind when sudo and  not root
                 if switched_user and os.getuid() != 0:
