@@ -64,7 +64,7 @@ options:
       - The desired state of program/group.
     required: true
     default: null
-    choices: [ "present", "started", "stopped", "restarted" ]
+    choices: [ "present", "started", "stopped", "restarted", "updated" ]
   supervisorctl_path:
     description:
       - path to supervisorctl executable
@@ -90,6 +90,9 @@ EXAMPLES = '''
 
 # Restart my_app, connecting to supervisord with credentials and server URL.
 - supervisorctl: name=my_app state=restarted username=test password=testpass server_url=http://localhost:9001
+
+# Updates configuration for program in supervisor if there are changes.
+- supervisorctl: name=my_app state=updated
 '''
 
 
@@ -101,7 +104,7 @@ def main():
         username=dict(required=False),
         password=dict(required=False),
         supervisorctl_path=dict(required=False),
-        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped'])
+        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'updated'])
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
@@ -214,6 +217,13 @@ def main():
 
     if state == 'stopped':
         take_action_on_processes(processes, lambda s: s in {'RUNNING', 'STARTING'}, 'stop', 'stopped', 'STARTING')
+
+    if state == 'updated':
+        rc, out, err = run_supervisorctl('update', name)
+        if len(out) == 0:
+            module.exit_json(changed=False, name=name)
+        else:
+            module.exit_json(changed=True, name=name)
 
 # import module snippets
 from ansible.module_utils.basic import *
