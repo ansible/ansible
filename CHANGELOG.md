@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 1.8 "Everybody Wants Some" - Active Development
+## 1.8 "You Really Got Me" - Active Development
 
 Details Pending!
 
