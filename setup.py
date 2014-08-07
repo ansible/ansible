@@ -52,6 +52,9 @@ setup(name='ansible',
          'ansible.callback_plugins',
          'ansible.module_utils'
       ],
+      package_data={
+         '': ['module_utils/*.ps1'],
+      },
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
