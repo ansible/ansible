@@ -44,6 +44,8 @@ from distutils.version import LooseVersion
 # import module snippets
 from ansible.module_utils.basic import *
 
+import tempfile
+import shutil
 
 # wrap get_distribution_version in case it returns a string
 def _get_distribution_version():
@@ -182,12 +184,28 @@ class DebianStrategy(GenericStrategy):
                 str(err))
 
     def set_permanent_hostname(self, name):
-        try:
-            f = open(self.HOSTNAME_FILE, 'w+')
-            try:
+        def set_hosts_alias():
+            temp = tempfile.NamedTemporaryFile()
+            hosts = open('/etc/hosts', 'r')
+            for line in hosts:
+                if line.startswith('127.0.0.1'):
+                    temp.write("127.0.0.1 %s localhost "
+                        "localhost.localdomain" % name)
+                else:
+                    temp.write(line)
+
+            hosts.close()
+            temp.flush()
+            shutil.copyfile(temp.name, "/etc/hosts")
+            temp.close()
+
+        def set_hostname():
+            with open(self.HOSTNAME_FILE, 'w+') as f:
                 f.write("%s\n" % name)
-            finally:
-                f.close()
+
+        try:
+            set_hostname()
+            set_hosts_alias()
         except Exception, err:
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
