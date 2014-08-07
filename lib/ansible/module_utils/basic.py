@@ -1175,7 +1175,7 @@ class AnsibleModule(object):
         - check_rc (boolean)  Whether to call fail_json in case of
                               non zero RC.  Default is False.
         - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is False.
+                              Default is True.
         - executable (string) See documentation for subprocess.Popen().
                               Default is None.
         '''
