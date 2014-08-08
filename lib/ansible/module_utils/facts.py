@@ -76,7 +76,7 @@ class Facts(object):
     """
     This class should only attempt to populate those facts that
     are mostly generic to all systems.  This includes platform facts,
-    service facts (eg. ssh keys or selinux), and distribution facts.
+    service facts (e.g. ssh keys or selinux), and distribution facts.
     Anything that requires extensive code or may have more than one
     possible implementation to establish facts for a given topic should
     subclass Facts.
@@ -1020,7 +1020,7 @@ class FreeBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -1147,7 +1147,7 @@ class NetBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
 class AIX(Hardware):
     """
@@ -1552,7 +1552,7 @@ class LinuxNetwork(Network):
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
 
-            # Check whether a interface is in promiscuous mode
+            # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
                 promisc_mode = False
                 # The second byte indicates whether the interface is in promiscuous mode.

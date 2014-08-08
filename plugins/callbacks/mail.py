@@ -70,10 +70,10 @@ class CallbackModule(object):
         sender = '"Ansible: %s" <root>' % host
         if isinstance(res, basestring):
             subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
-            body = 'An error occured for host ' + host + ' with the following message:\n\n' + res
+            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:
             subject = 'Unreachable: %s' % res['msg'].strip('\r\n').split('\n')[0]
-            body = 'An error occured for host ' + host + ' with the following message:\n\n' + \
+            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + \
                    res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
         mail(sender=sender, subject=subject, body=body)
 
@@ -81,9 +81,9 @@ class CallbackModule(object):
         sender = '"Ansible: %s" <root>' % host
         if isinstance(res, basestring):
             subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
-            body = 'An error occured for host ' + host + ' with the following message:\n\n' + res
+            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:
             subject = 'Async failure: %s' % res['msg'].strip('\r\n').split('\n')[0]
-            body = 'An error occured for host ' + host + ' with the following message:\n\n' + \
+            body = 'An error occurred for host ' + host + ' with the following message:\n\n' + \
                    res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
         mail(sender=sender, subject=subject, body=body)

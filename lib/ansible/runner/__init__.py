@@ -324,7 +324,7 @@ class Runner(object):
 
         this_host = delegate['host']
 
-        # get the vars for the delegate by it's name        
+        # get the vars for the delegate by its name
         try:
             this_info = delegate['inject']['hostvars'][this_host]
         except:
@@ -348,7 +348,7 @@ class Runner(object):
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
 
         # Last chance to get private_key_file from global variables.
-        # this is usefull if delegated host is not defined in the inventory
+        # this is useful if delegated host is not defined in the inventory
         if delegate['private_key_file'] is None:
             delegate['private_key_file'] = remote_inject.get(
                 'ansible_ssh_private_key_file', None)
@@ -364,7 +364,7 @@ class Runner(object):
 
     def _compute_delegate_user(self, host, inject):
 
-        """ Caculate the remote user based on an order of preference """
+        """ Calculate the remote user based on an order of preference """
 
         # inventory > playbook > original_host
 
@@ -829,7 +829,7 @@ class Runner(object):
             if actual_transport == 'accelerate':
                 # for accelerate, we stuff both ports into a single
                 # variable so that we don't have to mangle other function
-                # calls just to accomodate this one case
+                # calls just to accommodate this one case
                 actual_port = [actual_port, self.accelerate_port]
             elif actual_port is not None:
                 actual_port = int(template.template(self.basedir, actual_port, inject))

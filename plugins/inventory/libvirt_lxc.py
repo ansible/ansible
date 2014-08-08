@@ -34,4 +34,4 @@ if len(sys.argv) == 2 and sys.argv[1] == '--list':
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
     print json.dumps({'ansible_connection': 'lxc'})
 else:
-    print "Need a argument, either --list or --host <host>"
+    print "Need an argument, either --list or --host <host>"
