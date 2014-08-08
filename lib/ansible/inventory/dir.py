@@ -113,7 +113,7 @@ class InventoryDirectory(object):
             for group in allgroup.child_groups[:]:
                 # groups might once have beeen added to all, and later be added
                 # to another group: we need to remove the link wit all then
-                if len(group.parent_groups) > 1:
+                if len(group.parent_groups) > 1 and allgroup in group.parent_groups:
                     # real children of all have just 1 parent, all
                     # this one has more, so not a direct child of all anymore
                     group.parent_groups.remove(allgroup)
