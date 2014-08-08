@@ -22,7 +22,7 @@ description:
   - creates / deletes or resize a Rackspace Cloud Databases instance
     and optionally waits for it to be 'running'. The name option needs to be unique since
     it's used to identify the instance.
-version_added: "1.6"
+version_added: "1.8"
 options:
   api_key:
     description:
