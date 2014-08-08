@@ -83,6 +83,12 @@ options:
         defaults.
     required: false
     version_added: "1.5"
+  recurse:
+    description:
+      - Copy all contents in the source directory recursively.  This will be slightly inefficient compared to the 'synchronize'
+        module and should not be used for large directory trees.
+    required: false
+    default: false
 extends_documentation_fragment: files
 author: Michael DeHaan
 notes:

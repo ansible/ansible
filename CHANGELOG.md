@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-## 1.7 "Summer Nights" - Active Development
+## 1.8 "You Really Got Me" - Active Development
+
+Details Pending!
+
+## 1.7 "Summer Nights" - Aug 06, 2014
 
 Major new features:
 
@@ -31,8 +35,33 @@ New Modules:
 
 Other notable changes:
 
+* Security fixes
+  - Prevent the use of lookups when using legaxy "{{ }}" syntax around variables and with_* loops.
+  - Remove relative paths in TAR-archived file names used by ansible-galaxy.
 * Inventory speed improvements for very large inventories.
 * Vault password files can now be executable, to support scripts that fetch the vault password.
+
+
+## 1.6.10 "And the Cradle Will Rock" - Jul 25, 2014
+
+- Fixes an issue with the copy module when copying a directory that fails when changing file attributes and the target file already exists
+- Improved unicode handling when splitting args
+
+## 1.6.9 "And the Cradle Will Rock" - Jul 24, 2014
+
+- Further improvements to module parameter parsing to address additional regressions caused by security fixes
+
+## 1.6.8 "And the Cradle Will Rock" - Jul 22, 2014
+
+- Corrects a regression in the way shell and command parameters were being parsed
+
+## 1.6.7 "And the Cradle Will Rock" - Jul 21, 2014
+
+- Security fixes:
+  * Strip lookup calls out of inventory variables and clean unsafe data
+    returned from lookup plugins (CVE-2014-4966)
+  * Make sure vars don't insert extra parameters into module args and prevent
+    duplicate params from superseding previous params (CVE-2014-4967)
 
 ## 1.6.6 "And the Cradle Will Rock" - Jul 01, 2014
 

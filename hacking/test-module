@@ -23,9 +23,10 @@
 # modules
 #
 # example:
-#    test-module -m ../library/command -a "/bin/sleep 3"
-#    test-module -m ../library/service -a "name=httpd ensure=restarted"
-#    test-module -m ../library/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
+#    test-module -m ../library/commands/command -a "/bin/sleep 3"
+#    test-module -m ../library/system/service -a "name=httpd ensure=restarted"
+#    test-module -m ../library/system/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
+#    test-modulr -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
 
 import sys
 import base64
@@ -59,6 +60,8 @@ def parse():
     parser.add_option('-I', '--interpreter', dest='interpreter',
         help="path to interpeter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
         metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
+    parser.add_option('-c', '--check', dest='check', action='store_true',
+        help="run the module in check mode")
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -77,7 +80,7 @@ def write_argsfile(argstring, json=False):
     argsfile.close()
     return argspath
 
-def boilerplate_module(modfile, args, interpreter):
+def boilerplate_module(modfile, args, interpreter, check):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
@@ -109,6 +112,10 @@ def boilerplate_module(modfile, args, interpreter):
         if not interpreter_type.endswith('_interpreter'):
             interpreter_type = '%s_interpreter' % interpreter_type
         inject[interpreter_type] = interpreter_path
+
+    if check:
+         complex_args['CHECKMODE'] = True
+
     (module_data, module_style, shebang) = replacer.modify_module(
         modfile, 
         complex_args,
@@ -166,7 +173,7 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter)
+    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check)
 
     argspath=None
     if module_style != 'new':

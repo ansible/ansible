@@ -69,7 +69,7 @@ options:
     default: None
   tags:
     description:
-      - List of tag dictionaries to use. Required keys are 'key', 'value'. Optional key is 'propagate_at_launch', which defaults to true.
+      - A list of tags to add to the Auto Scale Group. Optional key is 'propagate_at_launch', which defaults to true.
     required: false
     default: None
     version_added: "1.7"
@@ -85,6 +85,7 @@ options:
     required: false
     default: EC2
     version_added: "1.7"
+    choices: ['EC2', 'ELB']
 extends_documentation_fragment: aws
 """
 
@@ -98,6 +99,11 @@ EXAMPLES = '''
     max_size: 10
     desired_capacity: 5
     vpc_zone_identifier: 'subnet-abcd1234,subnet-1a2b3c4d'
+    tags:
+      - environment: production
+        propagate_at_launch: no
+
+deprecated method of expressing tags:
     tags:
       - key: environment
         value: production
@@ -168,10 +174,18 @@ def create_autoscaling_group(connection, module):
 
     asg_tags = []
     for tag in set_tags:
-        asg_tags.append(Tag(key=tag.get('key'),
-             value=tag.get('value'),
-             propagate_at_launch=bool(tag.get('propagate_at_launch', True)),
-             resource_id=group_name))
+        if tag.has_key('key') and tag.has_key('value'):  # this block is to support depricated form
+            asg_tags.append(Tag(key=tag.get('key'),
+                value=tag.get('value'),
+                propagate_at_launch=bool(tag.get('propagate_at_launch', True)),
+                resource_id=group_name))
+        else:
+            for k,v in tag.iteritems():
+                if k !='propagate_at_launch':
+                    asg_tags.append(Tag(key=k,
+                         value=v,
+                         propagate_at_launch=bool(tag.get('propagate_at_launch', True)),
+                         resource_id=group_name))
 
     if not as_groups:
         if not vpc_zone_identifier and not availability_zones:
@@ -210,15 +224,24 @@ def create_autoscaling_group(connection, module):
             existing_tags = as_group.tags
             existing_tag_map = dict((tag.key, tag) for tag in existing_tags)
             for tag in set_tags:
-                if 'key' not in tag:
-                    continue
-                if ( not tag['key'] in existing_tag_map or
-                     existing_tag_map[tag['key']].value != tag['value'] or
-                     ('propagate_at_launch' in tag and
-                     existing_tag_map[tag['key']].propagate_at_launch != tag['propagate_at_launch']) ):
-
-                    changed = True
-                    continue
+                if tag.has_key('key') and tag.has_key('value'):  # this is to support deprecated method
+                    if 'key' not in tag:
+                        continue
+                    if ( not tag['key'] in existing_tag_map or
+                        existing_tag_map[tag['key']].value != tag['value'] or
+                        ('propagate_at_launch' in tag and
+                        existing_tag_map[tag['key']].propagate_at_launch != tag['propagate_at_launch']) ):
+                        changed = True
+                        continue
+                else:
+                    for k,v in tag.iteritems():
+                        if k !='propagate_at_launch':
+                            if ( not k in existing_tag_map or
+                                existing_tag_map[k].value != v or
+                                ('propagate_at_launch' in tag and
+                                existing_tag_map[k].propagate_at_launch != tag['propagate_at_launch']) ):
+                                changed = True
+                                continue
             if changed:
                 connection.create_or_update_tags(asg_tags)
 

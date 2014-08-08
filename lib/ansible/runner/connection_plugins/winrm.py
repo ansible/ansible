@@ -89,17 +89,19 @@ class Connection(object):
             except WinRMTransportError, exc:
                 err_msg = str(exc.args[0])
                 if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
-                    raise
+                    raise errors.AnsibleError("the connection attempt timed out")
                 m = re.search(r'Code\s+?(\d{3})', err_msg)
                 if m:
                     code = int(m.groups()[0])
-                    if code == 411:
+                    if code == 401:
+                        raise errors.AnsibleError("the username/password specified for this server was incorrect")
+                    elif code == 411:
                         _winrm_cache[cache_key] = protocol
                         return protocol
                 vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host)
                 continue
         if exc:
-            raise exc
+            raise errors.AnsibleError(str(exc))
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
