@@ -45,6 +45,17 @@ options:
     default: 'present'
     choices: [ "present", "absent" ]
     aliases: []
+  exact:
+    version_added: "1.7"
+    description:
+      - |
+        If 'yes' & state is 'present' only the specified rules will be added/kept & all others will be
+        removed, if state is 'absent' the whole group will be removed. If 'no' & state is 'present' the specified
+        rules will be added & the existing ones won't be touched, if state is 'absent' then only the specified
+        rules will be removed & not the whole group
+    required: false
+    default: 'yes'
+    aliases: []
 
 extends_documentation_fragment: aws
 
@@ -103,9 +114,96 @@ except ImportError:
 def addRulesToLookup(rules, prefix, dict):
     for rule in rules:
         for grant in rule.grants:
-            dict["%s-%s-%s-%s-%s-%s" % (prefix, rule.ip_protocol, rule.from_port, rule.to_port,
-                                        grant.group_id, grant.cidr_ip)] = rule
+            r = {}
+            r['proto'] = rule.ip_protocol
+            r['from_port'] = rule.from_port
+            r['to_port'] = rule.to_port
+            if grant.group_id: r['group_id'] = grant.group_id
+            if grant.cidr_ip: r['cidr_ip'] = grant.cidr_ip
+            dict["%s-%s-%s-%s-%s-%s" % (prefix, r['proto'], r['from_port'], r['to_port'],
+                                        grant.group_id, grant.cidr_ip)] = r
 
+def add_rules(ec2, module, group, groups, rules, direction='in'):
+    changed = False
+    name = module.params['name']
+    vpc_id = module.params['vpc_id']
+    groupRules = {}
+    addRulesToLookup(group.rules, direction, groupRules)
+
+    # Now, go through all provided rules and ensure they are there.
+    if rules:
+        for rule in rules:
+            group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
+            if target_group_created:
+                changed = True
+
+            if rule['proto'] in ('all', '-1', -1):
+                rule['proto'] = -1
+                rule['from_port'] = None
+                rule['to_port'] = None
+
+            ruleId = "%s-%s-%s-%s-%s-%s" % (direction, rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+            # if the rule exists already remove it from defunct rule list
+            if ruleId in groupRules:
+                del groupRules[ruleId]
+            # Otherwise, add new rule
+            else:
+                grantGroup = None
+                if group_id:
+                    grantGroup = groups[group_id]
+                if not module.check_mode:
+                    if direction == 'in':
+                        group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
+                    else:
+                        ec2.authorize_security_group_egress(
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=ip)
+                changed = True
+    return changed, groupRules # return defunct rules too
+
+def remove_rules(ec2, module, group, groups, rules, direction='in'):
+    changed = False
+    name = module.params['name']
+    vpc_id = module.params['vpc_id']
+    groupRules = {}
+    addRulesToLookup(group.rules, direction, groupRules)
+
+    # Now, go through all provided rules and ensure they are there.
+    if rules:
+        for rule in rules:
+            group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
+            # removing rules == rule exists == target would also exist hence
+            # not created by get_target_from_rule: safe assumption
+            if target_group_created:
+                changed = True
+
+            if rule['proto'] in ('all', '-1', -1):
+                rule['proto'] = -1
+                rule['from_port'] = None
+                rule['to_port'] = None
+
+            ruleId = "%s-%s-%s-%s-%s-%s" % (direction, rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+            if ruleId in groupRules:
+                grantGroup = None
+                if group_id:
+                    grantGroup = groups[group_id]
+                if not module.check_mode:
+                    if direction == 'in':
+                        group.revoke(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
+                    else:
+                        ec2.revoke_security_group_egress(
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=ip)
+                changed = True
+    return changed, None # just being consistent with add_rules with None here
 
 def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     """
@@ -164,6 +262,7 @@ def main():
             rules=dict(),
             rules_egress=dict(),
             state = dict(default='present', choices=['present', 'absent']),
+            exact = dict(default=True, choices=[True, False]),
         )
     )
     module = AnsibleModule(
@@ -177,6 +276,7 @@ def main():
     rules = module.params['rules']
     rules_egress = module.params['rules_egress']
     state = module.params.get('state')
+    exact = module.params.get('exact')
 
     changed = False
 
@@ -194,17 +294,18 @@ def main():
 
     # Ensure requested group is absent
     if state == 'absent':
-        if group:
-            '''found a match, delete it'''
-            try:
-                group.delete()
-            except Exception, e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+        if exact:
+            if group:
+                '''found a match, delete it'''
+                try:
+                    group.delete()
+                except Exception, e:
+                    module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+                else:
+                    group = None
+                    changed = True
             else:
-                group = None
-                changed = True
-        else:
-            '''no match found, no changes required'''
+                '''no match found, no changes required'''
 
     # Ensure requested group is present
     elif state == 'present':
@@ -234,94 +335,29 @@ def main():
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
                 while len(ec2.get_all_security_groups(filters={ 'group_id': group.id, })) == 0:
                     time.sleep(0.1)
-
                 group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
             changed = True
     else:
         module.fail_json(msg="Unsupported state requested: %s" % state)
 
     # create a lookup for all existing rules on the group
-    if group:
+    if group and state == 'present':
 
-        # Manage ingress rules
-        groupRules = {}
-        addRulesToLookup(group.rules, 'in', groupRules)
-
-        # Now, go through all provided rules and ensure they are there.
-        if rules:
-            for rule in rules:
-                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
-                if target_group_created:
-                    changed = True
-
-                if rule['proto'] in ('all', '-1', -1):
-                    rule['proto'] = -1
-                    rule['from_port'] = None
-                    rule['to_port'] = None
-
-                # If rule already exists, don't later delete it
-                ruleId = "%s-%s-%s-%s-%s-%s" % ('in', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
-                if ruleId in groupRules:
-                    del groupRules[ruleId]
-                # Otherwise, add new rule
-                else:
-                    grantGroup = None
-                    if group_id:
-                        grantGroup = groups[group_id]
-
-                    if not module.check_mode:
-                        group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
-                    changed = True
-
-        # Finally, remove anything left in the groupRules -- these will be defunct rules
-        for rule in groupRules.itervalues():
-            for grant in rule.grants:
-                grantGroup = None
-                if grant.group_id:
-                    grantGroup = groups[grant.group_id]
-                if not module.check_mode:
-                    group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
-                changed = True
-
-        # Manage egress rules
-        groupRules = {}
-        addRulesToLookup(group.rules_egress, 'out', groupRules)
-
-        # Now, go through all provided rules and ensure they are there.
+        in_defunct_rules = {}
+        out_defunct_rules = {}
+        # add ingress rules
+        c, in_defunct_rules = add_rules(ec2, module, group, groups, rules)
+        if c: changed = True
+        # add egress rules
         if rules_egress:
-            for rule in rules_egress:
-                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
-                if target_group_created:
-                    changed = True
-
-                if rule['proto'] in ('all', '-1', -1):
-                    rule['proto'] = -1
-                    rule['from_port'] = None
-                    rule['to_port'] = None
-
-                # If rule already exists, don't later delete it
-                ruleId = "%s-%s-%s-%s-%s-%s" % ('out', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
-                if ruleId in groupRules:
-                    del groupRules[ruleId]
-                # Otherwise, add new rule
-                else:
-                    grantGroup = None
-                    if group_id:
-                        grantGroup = groups[group_id].id
-
-                    if not module.check_mode:
-                        ec2.authorize_security_group_egress(
-                                group_id=group.id,
-                                ip_protocol=rule['proto'],
-                                from_port=rule['from_port'],
-                                to_port=rule['to_port'],
-                                src_group_id=grantGroup,
-                                cidr_ip=ip)
-                    changed = True
+            c, out_defunct_rules = add_rules(ec2, module, group, groups, rules_egress, 'out')
+            if c: changed = True
         elif vpc_id and not module.check_mode:
-            # when using a vpc, but no egress rules are specified, 
+            # when using a vpc, but no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
+            groupRules = {}
+            addRulesToLookup(group.rules_egress, 'out', groupRules)
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
             if default_egress_rule not in groupRules:
                 ec2.authorize_security_group_egress(
@@ -335,23 +371,22 @@ def main():
                 changed = True
             else:
                 # make sure the default egress rule is not removed
-                del groupRules[default_egress_rule]
+                del out_defunct_rules[default_egress_rule]
 
-        # Finally, remove anything left in the groupRules -- these will be defunct rules
-        for rule in groupRules.itervalues():
-            for grant in rule.grants:
-                grantGroup = None
-                if grant.group_id:
-                    grantGroup = groups[grant.group_id].id
-                if not module.check_mode:
-                    ec2.revoke_security_group_egress(
-                            group_id=group.id,
-                            ip_protocol=rule.ip_protocol,
-                            from_port=rule.from_port,
-                            to_port=rule.to_port,
-                            src_group_id=grantGroup,
-                            cidr_ip=grant.cidr_ip)
-                changed = True
+        # If exact requested, remove the defunct rules for both ingress &
+        # egress
+        if exact:
+            c, _ = remove_rules(ec2, module, group, groups, in_defunct_rules.values())
+            if c: changed = True
+            c, _ = remove_rules(ec2, module, group, groups, out_defunct_rules.values(), 'out')
+            if c: changed = True
+    # When absent & exact is no, remove only the specified rules not the
+    # whole group
+    if group and state == 'absent' and not exact:
+        c, _ = remove_rules(module, group, groups, rules)
+        if c: changed = True
+        c, _ = remove_rules(module, group, groups, rules_egress, 'out')
+        if c: changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)
