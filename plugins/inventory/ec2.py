@@ -252,6 +252,22 @@ class Ec2Inventory(object):
         else:
             self.nested_groups = False
 
+        # Do we need to just include hosts that match a pattern?
+        try:
+            pattern_include = config.get('ec2', 'pattern_include')
+            if pattern_include and len(pattern_include) > 0:
+                self.pattern_include = re.compile(pattern_include)
+        except ConfigParser.NoOptionError, e:
+            self.pattern_include = None
+
+        # Do we need to exclude hosts that match a pattern?
+        try:
+            pattern_exclude = config.get('ec2', 'pattern_exclude');
+            if pattern_exclude and len(pattern_exclude) > 0:
+                self.pattern_exclude = re.compile(pattern_exclude)
+        except ConfigParser.NoOptionError, e:
+            self.pattern_exclude = ''
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -357,6 +373,14 @@ class Ec2Inventory(object):
 
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
+            return
+
+        # if we only want to include hosts that match a pattern, skip those that don't
+        if self.pattern_include and not self.pattern_include.match(dest):
+            return
+
+        # if we need to exclude hosts that match a pattern, skip those
+        if self.pattern_exclude and self.pattern_exclude.match(dest):
             return
 
         # Add to index
