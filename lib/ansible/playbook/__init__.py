@@ -181,6 +181,8 @@ class PlayBook(object):
         ansible.callbacks.load_callback_plugins()
         ansible.callbacks.set_playbook(self.callbacks, self)
 
+        self._ansible_version = utils.version_info(gitinfo=True)
+
     # *****************************************************
 
     def _get_playbook_vars(self, play_ds, existing_vars):
@@ -409,6 +411,7 @@ class PlayBook(object):
         )
 
         runner.module_vars.update({'play_hosts': hosts})
+        runner.module_vars.update({'ansible_version': self._ansible_version})
 
         if task.async_seconds == 0:
             results = runner.run()

@@ -804,6 +804,30 @@ def version(prog):
         result = result + " {0}".format(gitinfo)
     return result
 
+def version_info(gitinfo=False):
+    if gitinfo:
+        # expensive call, user with care
+        ansible_version_string = version('')
+    else:
+        ansible_version_string = __version__
+    ansible_version = ansible_version_string.split()[0]
+    ansible_versions = ansible_version.split('.')
+    for counter in range(len(ansible_versions)):
+        if ansible_versions[counter] == "":
+            ansible_versions[counter] = 0
+        try:
+            ansible_versions[counter] = int(ansible_versions[counter])
+        except:
+            pass
+    if len(ansible_versions) < 3:
+        for counter in range(len(ansible_versions), 3):
+            ansible_versions.append(0)
+    return {'string':      ansible_version_string.strip(),
+            'full':        ansible_version,
+            'major':       ansible_versions[0],
+            'minor':       ansible_versions[1],
+            'revision':    ansible_versions[2]}
+
 def getch():
     ''' read in a single character '''
     fd = sys.stdin.fileno()
