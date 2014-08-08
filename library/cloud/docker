@@ -598,6 +598,11 @@ class DockerManager:
         try:
             containers = do_create(count, params)
         except:
+            if self.module.params.get('user'):
+                self.client.login(self.module.params.get('user'),
+                                  password=self.module.params.get('password'),
+                                  email=self.module.params.get('email'),
+                                  registry="https://" + self.module.params.get('registry') + "/v1/")
             self.client.pull(params['image'])
             self.increment_counter('pull')
             containers = do_create(count, params)
@@ -688,6 +693,7 @@ def main():
             user            = dict(default=None),
             password        = dict(),
             email           = dict(),
+            registry        = dict(),
             hostname        = dict(default=None),
             env             = dict(type='list'),
             dns             = dict(),
