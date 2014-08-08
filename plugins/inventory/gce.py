@@ -259,6 +259,9 @@ class GceInventory(object):
             stat = 'status_%s' % status.lower()
             if groups.has_key(stat): groups[stat].append(name)
             else: groups[stat] = [name]
+            
+            if groups.has_key('all'): groups['all'].append(name)
+            else: groups['all'] = [name]
         return groups
 
     def json_format_dict(self, data, pretty=False):
