@@ -95,10 +95,17 @@ def main():
     else:
         mkfs = module.get_bin_path('mkfs', required=True)
         cmd = None
-        if opts is None:
-            cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
+        if fstype in ['ext2', 'ext3', 'ext4', 'ext4dev']:
+          force_flag="-F"
+        elif fstype in ['btrfs']:
+          force_flag="-f"
         else:
-            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, opts, dev)
+          force_flag=""
+
+        if opts is None:
+            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, force_flag, dev)
+        else:
+            cmd = "%s -t %s %s %s '%s'" % (mkfs, fstype, force_flag, opts, dev)
         rc,_,err = module.run_command(cmd)
         if rc == 0:
             changed = True
