@@ -109,11 +109,11 @@ options:
     aliases: []
   docker_api_version:
     description:
-      - Remote API version to use
+      - Remote API version to use. This defaults to the current default as specified by docker-py.
     required: false
     default: docker-py default remote API version
     aliases: []
-    version_added: "1.7"
+    version_added: "1.8"
   username:
     description:
       - Set remote API username
