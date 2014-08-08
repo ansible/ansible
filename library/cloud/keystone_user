@@ -287,11 +287,8 @@ def ensure_role_absent(keystone, uesr, tenant, role, check_mode):
 
 def main():
 
-    module = AnsibleModule(
-        argument_spec=dict(
-            user=dict(required=False),
-            password=dict(required=False),
-            tenant=dict(required=False),
+    argument_spec = openstack_argument_spec()
+    argument_spec.update(dict(
             tenant_description=dict(required=False),
             email=dict(required=False),
             role=dict(required=False),
@@ -302,7 +299,11 @@ def main():
             login_user=dict(required=False),
             login_password=dict(required=False),
             login_tenant_name=dict(required=False)
-        ),
+    ))
+    # keystone operations themselves take an endpoint, not a keystone auth_url
+    del(argument_spec['auth_url'])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[['token', 'login_user'],
                             ['token', 'login_password'],
@@ -388,5 +389,6 @@ def dispatch(keystone, user=None, password=None, tenant=None,
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()
