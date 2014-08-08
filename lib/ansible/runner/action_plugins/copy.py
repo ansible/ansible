@@ -315,6 +315,8 @@ class ActionModule(object):
         f = os.fdopen(fd, 'w')
         try:
             f.write(content)
+            if not content.endswith('\n'):
+                f.write('\n')
         except Exception, err:
             os.remove(content_tempfile)
             raise Exception(err)
