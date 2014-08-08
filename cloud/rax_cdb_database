@@ -20,8 +20,7 @@ module: rax_cdb_database
 short_description: create / delete a database in the Cloud Databases
 description:
   - create / delete a database in the Cloud Databases.
-version_added: "1.6"
-options:
+version_added: "1.88888888ns:
   api_key:
     description:
       - Rackspace API key (overrides I(credentials))

@@ -17,10 +17,10 @@
 DOCUMENTATION = '''
 ---
 module: rax_cdb_user
-short_description: create / delete a database in the Cloud Databases
+short_description: create / delete a Rackspace Cloud Database
 description:
   - create / delete a database in the Cloud Databases.
-version_added: "1.6"
+version_added: "1.8"
 options:
   api_key:
     description:
