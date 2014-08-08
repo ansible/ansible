@@ -199,7 +199,7 @@ Other inventory scripts
 In addition to Cobbler and EC2, inventory scripts are also available for::
 
    BSD Jails
-   Digital Ocean
+   DigitalOcean
    Google Compute Engine
    Linode
    OpenShift
