@@ -137,7 +137,7 @@ EXAMPLES = '''
         resource_tags: { "Environment":"Development" }
         region: us-west-2
 # Full creation example with subnets and optional availability zones.
-# The absence or presense of subnets deletes or creates them respectively.
+# The absence or presence of subnets deletes or creates them respectively.
       local_action:
         module: ec2_vpc
         state: present
@@ -412,7 +412,7 @@ def create_vpc(module, vpc_conn):
     # indempotent is to basically build all the route tables as
     # defined, track the route table ids, and then run through the
     # remote list of route tables and delete any that we didn't
-    # create.  This shouldn't interupt traffic in theory, but is the
+    # create.  This shouldn't interrupt traffic in theory, but is the
     # only way to really work with route tables over time that I can
     # think of without using painful aws ids.  Hopefully boto will add
     # the replace-route-table API to make this smoother and

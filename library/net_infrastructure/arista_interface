@@ -145,7 +145,7 @@ class AristaInterface(object):
         """ This method will return a dictionary with the attributes of the
             physical ethernet interface resource specified in interface_id.  
             The physcial ethernet interface resource has the following 
-            stucture:
+            structure:
             
               {
                 "interface_id": <interface_id>,
