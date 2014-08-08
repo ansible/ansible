@@ -40,7 +40,7 @@ options:
   state:
     version_added: "1.4"
     description:
-      - create or delete security group
+      - Create ("present") or delete ("absent") a security group
     required: false
     default: 'present'
     aliases: []
