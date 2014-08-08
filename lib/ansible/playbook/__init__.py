@@ -605,7 +605,8 @@ class PlayBook(object):
         basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
-        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
+        retry_dir = utils.prepare_writeable_dir('$HOME/.ansible',mode=0700)
+        filename = os.path.join(retry_dir, filename)
 
         try:
             fd = open(filename, 'w')

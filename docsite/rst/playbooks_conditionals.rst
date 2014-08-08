@@ -127,7 +127,7 @@ Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlin
 Conditional Imports
 ```````````````````
 
-.. note:: This is an advanced topic that is infrequently used.  You can probably skip this section.
+.. note:: This behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
@@ -136,12 +136,15 @@ As an example, the name of the Apache package may be different between CentOS an
 but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
+
     - hosts: all
       remote_user: root
       vars_files:
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
+
       tasks:
+
       - name: make sure apache is running
         service: name={{ apache }} state=running
 
