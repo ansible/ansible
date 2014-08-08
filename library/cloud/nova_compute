@@ -82,11 +82,11 @@ options:
         - The name of the base image to boot. Mutually exclusive with image_id
      required: true
      default: None
-     version_added: "1.7"
+     version_added: "1.8"
    image_exclude:
      description:
         - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying portions. image_exclude is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
-     version_added: "1.7"
+     version_added: "1.8"
    flavor_id:
      description:
         - The id of the flavor in which the new VM has to be created. Mutually exclusive with flavor_ram
@@ -97,11 +97,11 @@ options:
         - The minimum amount of ram in MB that the flavor in which the new VM has to be created must have. Mutually exclusive with flavor_id
      required: false
      default: 1
-     version_added: "1.7"
+     version_added: "1.8"
    flavor_include:
      description:
         - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count. flavor_include is a positive match filter - it must exist in the flavor name.
-     version_added: "1.7"
+     version_added: "1.8"
    key_name:
      description:
         - The key pair name to be used when creating a VM
@@ -122,25 +122,25 @@ options:
         - Should a floating ip be auto created and assigned
      required: false
      default: 'yes'
-     version_added: "1.7"
+     version_added: "1.8"
    floating_ips:
      decription:
         - list of valid floating IPs that pre-exist to assign to this node
      required: false
      default: None
-     version_added: "1.7"
+     version_added: "1.8"
    floating_ip_pools:
      description:
         - list of floating IP pools from which to choose a floating IP
      required: false
      default: None
-     version_added: "1.7"
+     version_added: "1.8"
    availability_zone:
      description:
         - Name of the availability zone
      required: false
      default: None
-     version_added: "1.7"
+     version_added: "1.8"
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to the new VM
@@ -161,6 +161,7 @@ options:
         - Whether to boot the server with config drive enabled
      required: false
      default: 'no'
+     version_added: "1.8"
    user_data:
      description:
         - Opaque blob of data which is made available to the instance
