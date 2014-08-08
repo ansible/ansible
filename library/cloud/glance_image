@@ -217,26 +217,23 @@ def _glance_delete_image(module, params, client):
 
 def main():
 
+    argument_spec = openstack_argument_spec()
+    argument_spec.update(dict(
+        name              = dict(required=True),
+        disk_format       = dict(default='qcow2', choices=['aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso']),
+        container_format  = dict(default='bare', choices=['aki', 'ari', 'bare', 'ovf']),
+        owner             = dict(default=None),
+        min_disk          = dict(default=None),
+        min_ram           = dict(default=None),
+        is_public         = dict(default=True),
+        copy_from         = dict(default= None),
+        timeout           = dict(default=180),
+        file              = dict(default=None),
+        endpoint_type     = dict(default='publicURL', choices=['publicURL', 'internalURL']),
+        state             = dict(default='present', choices=['absent', 'present'])
+    ))
     module = AnsibleModule(
-        argument_spec = dict(
-            login_username    = dict(default='admin'),
-            login_password    = dict(required=True),
-            login_tenant_name = dict(required=True),
-            auth_url          = dict(default='http://127.0.0.1:35357/v2.0/'),
-            region_name       = dict(default=None),
-            name              = dict(required=True),
-            disk_format       = dict(default='qcow2', choices=['aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso']),
-            container_format  = dict(default='bare', choices=['aki', 'ari', 'bare', 'ovf']),
-            owner             = dict(default=None),
-            min_disk          = dict(default=None),
-            min_ram           = dict(default=None),
-            is_public         = dict(default=True),
-            copy_from         = dict(default= None),
-            timeout           = dict(default=180),
-            file              = dict(default=None),
-            endpoint_type     = dict(default='publicURL', choices=['publicURL', 'internalURL']),
-            state             = dict(default='present', choices=['absent', 'present'])
-        ),
+        argument_spec=argument_spec,
         mutually_exclusive = [['file','copy_from']],
     )
     if module.params['state'] == 'present':
@@ -258,4 +255,5 @@ def main():
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
 main()
