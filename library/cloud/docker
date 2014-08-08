@@ -107,6 +107,13 @@ options:
     required: false
     default: unix://var/run/docker.sock
     aliases: []
+  docker_api_version:
+    description:
+      - Remote API version to use. This defaults to the current default as specified by docker-py.
+    required: false
+    default: docker-py default remote API version
+    aliases: []
+    version_added: "1.8"
   username:
     description:
       - Set remote API username
@@ -410,7 +417,8 @@ class DockerManager:
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
-        self.client = docker.Client(base_url=docker_url.geturl())
+        docker_api_version = module.params.get('docker_api_version')
+        self.client = docker.Client(base_url=docker_url.geturl(), version=docker_api_version)
 
 
     def get_links(self, links):
@@ -693,6 +701,7 @@ def main():
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
+            docker_api_version = dict(default=docker.client.DEFAULT_DOCKER_API_VERSION),
             user            = dict(default=None),
             password        = dict(),
             email           = dict(),
