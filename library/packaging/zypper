@@ -60,7 +60,7 @@ options:
         choices: [ "yes", "no" ]
         aliases: []
     disable_recommends:
-        version_added: "1.7"
+        version_added: "1.8"
         description:
           - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages. 
         required: false
