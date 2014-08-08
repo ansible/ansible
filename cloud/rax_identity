@@ -47,16 +47,11 @@ EXAMPLES = '''
       register: rackspace_identity
 '''
 
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
 
 def cloud_identity(module, state, identity):
@@ -70,10 +65,8 @@ def cloud_identity(module, state, identity):
     )
     changed = False
 
-    for key, value in vars(identity).iteritems():
-        if (isinstance(value, NON_CALLABLES) and
-                not key.startswith('_')):
-            instance[key] = value
+    instance.update(rax_to_dict(identity))
+    instance['services'] = instance.get('services', {}).keys()
 
     if state == 'present':
         if not identity.authenticated:

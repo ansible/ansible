@@ -139,8 +139,6 @@ EXAMPLES = '''
           file_for: ""
 '''
 
-from ansible import __version__
-
 try:
     import pyrax
     HAS_PYRAX = True
@@ -149,7 +147,6 @@ except ImportError, e:
 
 EXIT_DICT = dict(success=True)
 META_PREFIX = 'x-container-meta-'
-USER_AGENT = "Ansible/%s via pyrax" % __version__
 
 
 def _get_container(module, cf, container):
@@ -320,8 +317,6 @@ def cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public,
         module.fail_json(msg='Failed to instantiate client. This '
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
-
-    cf.user_agent = USER_AGENT
 
     if typ == "container":
         container(cf, module, container_, state, meta_, clear_meta, ttl,
