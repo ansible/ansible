@@ -260,6 +260,33 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
+.. _hash_filters:
+
+Hash Merge Filters
+------------------
+
+.. versionadded:: 1.7
+
+These two filters allow fine-grained control over `hash_behaviour <intro_configuration.html#hash-behaviour>`_ at template level.
+``hash_merge`` is deep version that mimics ``hash_behaviour=merge`` and
+``hash_replace`` is shallow version that mimics ``hash_behaviour=replace``.
+Both filters do not modify existing dictionary and produce new one::
+
+    {{ dict_one | hash_merge(dict_two, dict_three) }}
+    {{ dict_one | hash_replace(dict_two, dict_so_on) }}
+
+These filters can be especially useful while constructing `complex-args <https://github.com/ansible/ansible-examples/blob/master/language_features/complex_args.yml>`_ to pass them to module. Attempt to ``hash_merge`` two hashes with different schema may lead to template rendering failure::
+
+    vars:
+      fatality: { foo: { bar: 42 } }
+      brutality: { foo: }
+    tasks:
+      - name: Replace wins!
+        debug:
+          msg: '{{ fatality | hash_replace(brutality) }}'
+      - name: NoneType fatality!
+        debug:
+          msg: '{{ fatality | hash_merge(brutality) }}'
 
 .. _other_useful_filters:
 

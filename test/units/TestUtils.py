@@ -367,6 +367,8 @@ class TestUtils(unittest.TestCase):
                dict(foo='baz', baz='qux'))
         self.assertEqual(ansible.utils.merge_hash(dict(foo=dict(bar='baz')), dict(foo=dict(bar='qux'))),
                dict(foo=dict(bar='qux')))
+        self.assertEqual(ansible.utils.merge_hash(dict(foo=dict(bar='baz'), bar=1), dict(foo=dict(bar='qux'), baz=2)),
+               dict(foo=dict(bar='qux'), bar=1, baz=2))
 
     def test_md5s(self):
         self.assertEqual(ansible.utils.md5s('ansible'), '640c8a5376aa12fa15cf02130ce239a6')

@@ -6,6 +6,7 @@ import os.path
 import unittest, tempfile, shutil
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
+import ansible.runner.filter_plugins.hash_merge
 
 INVENTORY = inventory.Inventory(['localhost'])
 
@@ -175,3 +176,18 @@ class TestFilters(unittest.TestCase):
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.0, 1.1, '<='))
 
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))
+
+    def test_hash_merge(self):
+        hash_merge = ansible.runner.filter_plugins.hash_merge.hash_merge
+        hash_replace = ansible.runner.filter_plugins.hash_merge.hash_replace
+
+        self.assertEqual(hash_merge(dict(a=1), dict(a=2, b=2), dict(c=3)), dict(a=2, b=2, c=3))
+        self.assertEqual(hash_replace(dict(a=1), dict(a=2, b=2), dict(c=3)), dict(a=2, b=2, c=3))
+
+        self.assertRaises(Exception, hash_merge, dict(a=1, x=dict(y=1, z=1)), dict(a=2, b=2, x=None), dict(c=3)) # No, it does not produce dict(a=2, b=2, c=3, x=None)
+        self.assertEqual(hash_merge(dict(a=1, x=dict(y=1, z=1)), dict(a=2, b=2, x=dict()), dict(c=3)), dict(a=2, b=2, c=3, x=dict(y=1, z=1)))
+        self.assertEqual(hash_replace(dict(a=1, x=dict(y=1, z=1)), dict(a=2, b=2, x=None), dict(c=3)), dict(a=2, b=2, c=3, x=None))
+
+        # hash_merge is deep, hash_replace is shallow
+        self.assertEqual(hash_merge(dict(a=1, x=dict(y=1, z=1)), dict(a=2, b=2, x=dict(w=2, y=2)), dict(c=3)), dict(a=2, b=2, c=3, x=dict(w=2, y=2, z=1)))
+        self.assertEqual(hash_replace(dict(a=1, x=dict(y=1, z=1)), dict(a=2, b=2, x=dict(w=2, y=2)), dict(c=3)), dict(a=2, b=2, c=3, x=dict(w=2, y=2)))
