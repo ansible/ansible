@@ -33,7 +33,7 @@ use case, you can define how many hosts Ansible should manage at a single time b
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
 
-The ''serial'' keyword can also be specified as a percentage, which will be applied to the total number of hosts in a
+The ''serial'' keyword can also be specified as a percentage in Ansible 1.8 and later, which will be applied to the total number of hosts in a
 play, in order to determine the number of hosts per pass::
 
     - name: test play
