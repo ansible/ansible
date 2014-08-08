@@ -5,6 +5,7 @@ DOCUMENTATION = '''
 module: bigpanda
 author: BigPanda
 short_description: Notify BigPanda about deployments
+version_added: "1.8"
 description: 
    - Notify BigPanda when deployments start and end (successfully or not). Returns a deployment object containing all the parameters for future module calls.
 options:
