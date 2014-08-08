@@ -56,6 +56,7 @@ options:
         default: "yes"
         choices: [ "yes", "no" ]
     validate_certs:
+        version_added: '1.8'
         description:
             - If C(no), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
