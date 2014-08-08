@@ -103,6 +103,19 @@ options:
         - Whether the state should be marked as up or down
      required: false
      default: true
+   insecure:
+     description:
+       - Allow Neutron client to continue when server SSL certificate can not be validated
+     required: false
+     default: False
+     version_added: "1.6"
+   exclude_vars:
+     description:
+       - A comma delimeted list of variable names not to send to neutron when creating network
+     required: false
+     default: none
+     version_added: "1.6"
+
 requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 
 '''
@@ -127,7 +140,8 @@ def _get_ksclient(module, kwargs):
         kclient = ksclient.Client(username=kwargs.get('login_username'),
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                 auth_url=kwargs.get('auth_url'),
+                                 insecure=module.params['insecure'])
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s" %e.message)
     global _os_keystone
@@ -148,7 +162,8 @@ def _get_neutron_client(module, kwargs):
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
             'token': token,
-            'endpoint_url': endpoint
+            'endpoint_url': endpoint,
+            'insecure': module.params['insecure']
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -159,14 +174,14 @@ def _get_neutron_client(module, kwargs):
 def _set_tenant_id(module):
     global _os_tenant_id
     if not module.params['tenant_name']:
-        tenant_name = module.params['login_tenant_name']
+        _os_tenant_id = _os_keystone.tenant_id
     else:
         tenant_name = module.params['tenant_name']
 
-    for tenant in _os_keystone.tenants.list():
-        if tenant.name == tenant_name:
-            _os_tenant_id = tenant.id
-            break
+        for tenant in _os_keystone.tenants.list():
+            if tenant.name == tenant_name:
+                _os_tenant_id = tenant.id
+                break
     if not _os_tenant_id:
         module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
@@ -214,6 +229,10 @@ def _create_network(module, neutron):
         network.pop('provider:physical_network', None)
         network.pop('provider:segmentation_id', None)
 
+    if module.params['exclude_vars'] is not None:
+        for item in module.params['exclude_vars']:
+            network.pop(item,None)
+
     try:
         net = neutron.create_network({'network':network})
     except Exception, e:
@@ -245,9 +264,17 @@ def main():
             router_external                 = dict(default=False, type='bool'),
             shared                          = dict(default=False, type='bool'),
             admin_state_up                  = dict(default=True, type='bool'),
-            state                           = dict(default='present', choices=['absent', 'present'])
+            state                           = dict(default='present', choices=['absent', 'present']),
+            insecure                        = dict(default=False, type='bool'),
+            exclude_vars                    = dict(default=None)
         ),
     )
+
+    if module.params['exclude_vars'] is not None:
+        try:
+            module.params['exclude_vars'] = module.params['exclude_vars'].split(",")
+        except TypeError:
+            module.fail_json(msg = " exclude vars is a comma delimited string of variables to exclude from network create")
 
     if module.params['provider_network_type'] in ['vlan' , 'flat']:
             if not module.params['provider_physical_network']:
