@@ -869,64 +869,6 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax
 Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
 or in a file as above.
 
-.. _conditional_imports:
-
-Conditional Imports
-```````````````````
-
-.. note:: This behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
-
-Sometimes you will want to do certain things differently in a playbook based on certain criteria.
-Having one playbook that works on multiple platforms and OS versions is a good example.
-
-As an example, the name of the Apache package may be different between CentOS and Debian,
-but it is easily handled with a minimum of syntax in an Ansible Playbook::
-
-    ---
-
-    - hosts: all
-      remote_user: root
-      vars_files:
-        - "vars/common.yml"
-        - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
-
-      tasks:
-
-      - name: make sure apache is running
-        service: name={{ apache }} state=running
-
-.. note::
-   The variable 'ansible_os_family' is being interpolated into
-   the list of filenames being defined for vars_files.
-
-As a reminder, the various YAML files contain just keys and values::
-
-    ---
-    # for vars/CentOS.yml
-    apache: httpd
-    somethingelse: 42
-
-How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
-would be 'vars/CentOS.yml', followed by '/vars/os_defaults.yml' if that file
-did not exist.   If no files in the list were found, an error would be raised.
-On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
-falling back on 'vars/os_defaults.yml'. Pretty simple.
-
-To use this conditional import feature, you'll need facter or ohai installed prior to running the playbook, but
-you can of course push this out with Ansible if you like::
-
-    # for facter
-    ansible -m yum -a "pkg=facter ensure=installed"
-    ansible -m yum -a "pkg=ruby-json ensure=installed"
-
-    # for ohai
-    ansible -m yum -a "pkg=ohai ensure=installed"
-
-Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
-from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
-in more streamlined & auditable configuration rules -- especially because there are a
-minimum of decision points to track.
-
 .. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
