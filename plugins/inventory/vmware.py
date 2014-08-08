@@ -8,11 +8,11 @@ shamelessly copied from existing inventory scripts.
 
 This script and it's ini can be used more than once,
 
-i.e vmware.py/vmware_colo.ini vmware_idf.py/vmware_idf.ini
+i.e. vmware.py/vmware_colo.ini vmware_idf.py/vmware_idf.ini
 (script can be link)
 
 so if you don't have clustered vcenter  but multiple esx machines or
-just diff clusters you can have a inventory  per each and automatically
+just diff clusters you can have an inventory  per each and automatically
 group hosts based on file name or specify a group in the ini.
 
 You can also use <SCRIPT_NAME>_HOST|USER|PASSWORD environment variables

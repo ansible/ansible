@@ -259,7 +259,7 @@ class Task(object):
         if len(incompatibles) > 1:
             raise errors.AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
 
-        # make first_available_file accessable to Runner code
+        # make first_available_file accessible to Runner code
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
             # make sure that the 'item' variable is set when using

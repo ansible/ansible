@@ -84,7 +84,7 @@ class PlayBook(object):
         playbook:         path to a playbook file
         host_list:        path to a file like /etc/ansible/hosts
         module_path:      path to ansible modules, like /usr/share/ansible/
-        forks:            desired level of paralellism
+        forks:            desired level of parallelism
         timeout:          connection timeout
         remote_user:      run as this user if not specified in a particular play
         remote_pass:      use this remote password (for all plays) vs using SSH keys
@@ -93,7 +93,7 @@ class PlayBook(object):
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
-        stats:            holds aggregrate data about events occuring to each host
+        stats:            holds aggregrate data about events occurring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
         check:            don't change anything, just try to detect some potential changes
@@ -240,7 +240,7 @@ class PlayBook(object):
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
-                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
+                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), received: %s" % play)
 
             if 'include' in play:
                 # a playbook (list of plays) decided to include some other list of plays
@@ -456,7 +456,7 @@ class PlayBook(object):
 
         # template ignore_errors
         cond = template(play.basedir, task.ignore_errors, task.module_vars, expand_lists=False)
-        task.ignore_errors =  utils.check_conditional(cond , play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
+        task.ignore_errors =  utils.check_conditional(cond, play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
@@ -594,7 +594,7 @@ class PlayBook(object):
 
     def generate_retry_inventory(self, replay_hosts):
         '''
-        called by /usr/bin/ansible when a playbook run fails. It generates a inventory
+        called by /usr/bin/ansible when a playbook run fails. It generates an inventory
         that allows re-running on ONLY the failed hosts.  This may duplicate some
         variable information in group_vars/host_vars but that is ok, and expected.
         '''
@@ -697,7 +697,7 @@ class PlayBook(object):
                 if task.any_errors_fatal and len(host_list) < hosts_count:
                     play.max_fail_pct = 0
 
-                # If threshold for max nodes failed is exceeded , bail out.
+                # If threshold for max nodes failed is exceeded, bail out.
                 if play.serial > 0:
                     # if serial is set, we need to shorten the size of host_count
                     play_count = len(play._play_hosts)

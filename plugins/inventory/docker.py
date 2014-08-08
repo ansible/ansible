@@ -25,7 +25,7 @@
 # inventory information.
 #
 # This plugin does not support targeting of specific hosts using the --host
-# flag. Instead, it it queries the Docker API for each container, running
+# flag. Instead, it queries the Docker API for each container, running
 # or not, and returns this data all once.
 #
 # The plugin returns the following custom attributes on Docker containers:
@@ -196,7 +196,7 @@ def setup():
                 write_stderr(e)
                 sys.exit(1)
 
-    # Enviroment Variables
+    # Environment Variables
     env_base_url = os.environ.get('DOCKER_HOST')
     env_version = os.environ.get('DOCKER_VERSION')
     env_timeout = os.environ.get('DOCKER_TIMEOUT')

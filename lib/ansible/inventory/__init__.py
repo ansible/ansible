@@ -86,7 +86,7 @@ class Inventory(object):
                 else:
                     if ":" in x:
                         tokens = x.rsplit(":", 1)
-                        # if there is ':' in the address, then this is a ipv6
+                        # if there is ':' in the address, then this is an ipv6
                         if ':' in tokens[0]:
                             all.add_host(Host(x))
                         else:
@@ -237,7 +237,7 @@ class Inventory(object):
 
     def __get_hosts(self, pattern):
         """ 
-        finds hosts that postively match a particular pattern.  Does not
+        finds hosts that positively match a particular pattern.  Does not
         take into account negative matches.
         """
 
