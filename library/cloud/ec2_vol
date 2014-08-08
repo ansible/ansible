@@ -325,9 +325,6 @@ def main():
     if id and name:
         module.fail_json(msg="Both id and name cannot be specified")
 
-    if not (id or name or volume_size):
-        module.fail_json(msg="Cannot specify volume_size and either one of name or id")
-
     # Here we need to get the zone info for the instance. This covers situation where 
     # instance is specified but zone isn't.
     # Useful for playbooks chaining instance launch with volume create + attach and where the
@@ -344,6 +341,15 @@ def main():
                                  volume_id=inst.block_device_mapping[device_name].volume_id,
                                  device=device_name,
                                  changed=False)
+
+    # Delaying the checks until after the instance check allows us to get volume ids for existing volumes
+    # without needing to pass an unused volume_size
+    if not volume_size and not (id or name):
+        module.fail_json(msg="You must specify an existing volume with id or name or a volume_size")
+
+    if volume_size and (id or name):
+        module.fail_json(msg="Cannot specify volume_size and either one of name or id")
+
 
     if state == 'absent':
         delete_volume(module, ec2)
