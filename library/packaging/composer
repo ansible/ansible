@@ -29,6 +29,7 @@ description:
     - Composer is a tool for dependency management in PHP. It allows you to declare the dependent libraries your project needs and it will install them in your project for you
 options:
     command:
+        version_added: "1.8"
         description:
             - Composer command like "install", "update" and so on
         required: false
