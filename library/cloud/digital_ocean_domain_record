@@ -127,10 +127,10 @@ class DomainRecord(JsonfyMixIn):
         records = map(DomainRecord, json)
 
         for record in records:
-            if (record.type == type and record.data == data
+            if (record.record_type == type and record.data == data
                 and record.name == name and record.priority == priority
                 and record.port == port and record.weight == weight):
-                    return domain
+                    return record
 
         return False
 
