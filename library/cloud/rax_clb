@@ -213,15 +213,26 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
     if ssl_termination:
         ssl_keys = set(ssl_termination.keys())
         missing = []
+        required_when_present = ('private_key', 'certificate')
+        optional_when_present = ('secure_port', 'intermediate_certificate', 'enabled',
+                                 'secure_traffic_only', 'state')
+        optional_when_required = required_when_present + optional_when_present
 
-        for required in ('private_key', 'certificate'):
-            if required not in ssl_keys:
-                missing.append(required)
-            ssl_keys.discard(required)
+        # Default 'state' to 'present'.
+        if 'state' not in ssl_termination:
+            ssl_termination['state'] = 'present'
 
-        for optional in ('secure_port', 'intermediate_certificate', 'enabled',
-                         'secure_traffic_only'):
-            ssl_keys.discard(optional)
+        if ssl_termination['state'] == 'present':
+            for required in required_when_present:
+                if required not in ssl_keys:
+                    missing.append(required)
+                ssl_keys.discard(required)
+
+            for optional in optional_when_present:
+                ssl_keys.discard(optional)
+        else:
+            for optional in optional_when_required:
+                ssl_keys.discard(optional)
 
         # Any remaining keys are unrecognized.
         if missing or ssl_keys:
@@ -265,7 +276,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                                       algorithm=algorithm, protocol=protocol,
                                       timeout=timeout, virtual_ips=virtual_ips)
 
-                if ssl_termination:
+                if ssl_termination and ssl_termination['state'] == 'present':
                     pyrax.utils.wait_for_build(balancer, interval=5,
                                                attempts=attempts)
 
@@ -315,7 +326,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                 balancer.set_metadata(meta)
                 changed = True
 
-            if ssl_termination:
+            if ssl_termination and ssl_termination['state'] == 'present':
                 ssl_atts = {
                     'securePort': ssl_termination.get('secure_port', 443),
                     'privatekey': ssl_termination['private_key'],
@@ -338,17 +349,9 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                                                    attempts=attempts)
                     balancer.add_ssl_termination(**ssl_atts)
                     changed = True
-            elif existing_ssl:
-                if changed:
-                    pyrax.utils.wait_for_build(balancer, interval=5,
-                                               attempts=attempts)
 
-                # Remove the existing SSL termination.
-                balancer.delete_ssl_termination()
-                changed = True
-
-            # Update HTTPS redirection after potentially re-configuring
-            # SSL termination.
+            # Update HTTPS redirection after potentially creating or re-configuring
+            # SSL termination, but before removing SSL termination.
             if https_redirect is not None:
                 if balancer.httpsRedirect != https_redirect:
                     if changed:
@@ -356,6 +359,15 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                                                    attempts=attempts)
                     balancer.update(httpsRedirect=https_redirect)
                     changed = True
+
+            if existing_ssl and ssl_termination and ssl_termination['state'] == 'absent':
+                if changed:
+                    pyrax.utils.wait_for_build(balancer, interval=5,
+                                               attempts=attempts)
+
+                # Remove the existing SSL termination.
+                balancer.delete_ssl_termination()
+                changed = True
 
             virtual_ips = [clb.VirtualIP(type=vip_type)]
             current_vip_types = set([v.type for v in balancer.virtual_ips])
