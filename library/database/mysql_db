@@ -114,7 +114,7 @@ else:
 #
 
 def db_exists(cursor, db):
-    res = cursor.execute("SHOW DATABASES LIKE %s", (db,))
+    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_","\_"),))
     return bool(res)
 
 def db_delete(cursor, db):
