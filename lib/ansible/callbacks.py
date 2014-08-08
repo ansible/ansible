@@ -517,6 +517,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if (not self.verbose or host_result2.get("verbose_override",None) is not
                 None) and not verbose_always:
             if item:
+                if type(item) == dict:
+                    while isinstance(item , dict):
+                        item = item['item']
                 msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result:
@@ -524,6 +527,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             # verbose ...
             if item:
+                del (host_result2['item'])
+                if type(item) == dict:
+                    while isinstance(item , dict):
+                        item = item['item']
                 msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2, format=verbose_always))
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
