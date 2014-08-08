@@ -98,7 +98,7 @@ options:
     description:
       - The character set of email being sent
     default: 'us-ascii'
-    requred: false
+    required: false
 """
 
 EXAMPLES = '''

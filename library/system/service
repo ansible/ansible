@@ -531,7 +531,7 @@ class LinuxService(Service):
 
         # if the job status is still not known check it by status output keywords
         if self.running is None:
-            # first tranform the status output that could irritate keyword matching
+            # first transform the status output that could irritate keyword matching
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
                 self.running = False

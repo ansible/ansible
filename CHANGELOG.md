@@ -235,7 +235,7 @@ New modules:
 * system: at
 * utilities: assert
 
-Other notable changes (many new module params & bugfixes may not not listed):
+Other notable changes (many new module params & bugfixes may not be listed):
 
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
 * sysctl module overhauled
@@ -295,7 +295,7 @@ Highlighted new features:
 * Added do-until feature, which can be used to retry a failed task a specified number of times with a delay in-between the retries.
 * Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
 * Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
-* Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
+* Added the capability to use either paramiko or ssh for the initial setup connection of an accelerated playbook.
 * Automatically provide advice on common parser errors users encounter.
 * Deprecation warnings are now shown for legacy features: when_integer/etc, only_if, include+with_items, etc.  Can be disabled in ansible.cfg
 * The system will now provide helpful tips around possible YAML syntax errors increasing ease of use for new users.
@@ -365,7 +365,7 @@ Misc changes (all module additions/fixes may not listed):
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
 * Includes now support the more standard syntax, similar to that of role includes and dependencies. 
 * Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
-* Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
+* Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is useful when fetching files that are actively being written to, such as live log files.
 * Inventory hosts are used in the order they appear in the inventory.
 * in hosts: foo[2-5] type syntax, the iterators now are zero indexed and the last index is non-inclusive, to match Python standards.
 * There is now a way for a callback plugin to disable itself.  See osx_say example code for an example.
@@ -624,7 +624,7 @@ Modules added:
 * packages: redhat_subscription: manage Red Hat subscription usage
 * packages: rhn_register: basic RHN registration
 * packages: zypper (SuSE)
-* database: postgresql_priv: manages postgresql priveledges
+* database: postgresql_priv: manages postgresql privileges
 * networking: bigip_pool: load balancing with F5s
 * networking: ec2_elb: add and remove machines from ec2 elastic load balancers
 * notification: hipchat: send notification events to hipchat
@@ -666,7 +666,7 @@ Bugfixes and Misc Changes:
 * private_ip parameter added to the ec2 module
 * $FILE and $PIPE now tolerate unicode
 * various plugin loading operations have been made more efficient
-* hostname now uses platform.node versus socket.gethostname to be more consistant with Unix 'hostname'
+* hostname now uses platform.node versus socket.gethostname to be more consistent with Unix 'hostname'
 * fix for SELinux operations on Unicode path names
 * inventory directory locations now ignore files with .ini extensions, making hybrid inventory easier
 * copy module in check-mode now reports back correct changed status when used with force=no
@@ -706,8 +706,8 @@ the variable is still registered for the host, with the attribute skipped: True.
 * localhost and 127.0.0.1 are now fuzzy matched in inventory (are now more or less interchangeable)
 * AIX improvements/fixes for users, groups, facts
 * lineinfile now does atomic file replacements
-* fix to not pass PasswordAuthentication=no in the config file unneccessarily for SSH connection type
-* for for authorized_key on Debian Squeeze
+* fix to not pass PasswordAuthentication=no in the config file unnecessarily for SSH connection type
+* for authorized_key on Debian Squeeze
 * fixes for apt_repository module reporting changed incorrectly on certain repository types
 * allow the virtualenv argument to the pip module to be a pathname
 * service pattern argument now correctly read for BSD services
@@ -1133,7 +1133,7 @@ Module changes:
 * setup module now detects interfaces with aliases
 * better handling of VM guest type detection in setup module
 * new module boilerplate code to check for mutually required arguments, arguments required together, exclusive args
-* add pattern= as a paramter to the service module (for init scripts that don't do status, or do poor status)
+* add pattern= as a parameter to the service module (for init scripts that don't do status, or do poor status)
 * various fixes to mysql & postresql modules
 * added a thirsty= option (boolean, default no) to the get_url module to decide to download the file every time or not
 * added a wait_for module to poll for ports being open

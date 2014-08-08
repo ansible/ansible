@@ -154,7 +154,7 @@ class AristaL2Interface(object):
     def get(self):
         """ This method will return a dictionary with the attributes of the
             layer 2 interface resource specified in interface_id.  The layer
-            2 interface resource has the following stucture:
+            2 interface resource has the following structure:
             
               {
                 "interface_id": <interface_id>,

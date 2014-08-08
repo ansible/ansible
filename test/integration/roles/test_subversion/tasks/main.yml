@@ -77,7 +77,7 @@
   stat: path={{ checkout_dir }}/branches
   register: branches
 
-- name: assert presense of tags/trunk/branches
+- name: assert presence of tags/trunk/branches
   assert:
     that:
       - "tags.stat.isdir"

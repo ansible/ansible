@@ -143,7 +143,7 @@ class AristaLag(object):
     def get(self):
         """ This method will return a dictionary with the attributes of the
             lag interface resource specified in interface_id.  The lag
-            interface resource has the following stucture:
+            interface resource has the following structure:
             
               {
                 "interface_id": <interface_id>,
