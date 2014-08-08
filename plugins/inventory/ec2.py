@@ -215,6 +215,11 @@ class Ec2Inventory(object):
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
 
+        # Key Filter
+        self.key_filter = False
+        if config.has_option('ec2', 'key_filter'):
+            self.key_filter = config.get('ec2', 'key_filter')
+
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
         self.route53_excluded_zones = []
@@ -358,6 +363,12 @@ class Ec2Inventory(object):
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
             return
+
+        if self.key_filter:
+            if not instance.key_name:
+                return
+            elif self.key_filter != instance.key_name:
+                return
 
         # Add to index
         self.index[dest] = [region, instance.id]
