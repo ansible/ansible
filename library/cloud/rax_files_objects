@@ -183,8 +183,6 @@ EXAMPLES = '''
       rax_files_objects:  container=testcont type=meta
 '''
 
-import os
-
 try:
     import pyrax
     HAS_PYRAX = True

@@ -113,65 +113,30 @@ EXAMPLES = '''
       register: ptr_record
 '''
 
-from uuid import UUID
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
 
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
-
 
 def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
                        name=None, server=None, state='present', ttl=7200):
-    """Function for manipulating DNS PTR records"""
-
     changed = False
     results = []
 
-    cs = pyrax.cloudservers
-    clb = pyrax.cloud_loadbalancers
     dns = pyrax.cloud_dns
 
-    if not cs or not clb or not dns:
+    if not dns:
         module.fail_json(msg='Failed to instantiate client. This '
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
     if loadbalancer:
-        try:
-            UUID(loadbalancer)
-            found = [clb.get(loadbalancer)]
-        except:
-            for lb in clb.list():
-                if loadbalancer == lb.name:
-                    found.append(lb)
-
-        if len(found) != 1:
-            module.fail_json(msg='Could not match a loadbalancer with %s' %
-                                 loadbalancer)
+        item = rax_find_loadbalancer(module, pyrax, loadbalancer)
     elif server:
-        try:
-            UUID(server)
-            found = [cs.servers.get(server)]
-        except:
-            found = cs.servers.list(search_opts=dict(name='^%s$' % server))
-        if len(found) != 1:
-            module.fail_json(msg='Could not match a server with %s' %
-                                 server)
+        item = rax_find_server(module, pyrax, server)
 
-    item = found[0]
     if state == 'present':
         current = dns.list_ptr_records(item)
         for record in current:
@@ -184,10 +149,10 @@ def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
                         module.fail_json(msg='%s' % e.message)
                     record.ttl = ttl
                     record.name = name
-                    results.append(to_dict(record))
+                    results.append(rax_to_dict(record))
                     break
                 else:
-                    results.append(to_dict(record))
+                    results.append(rax_to_dict(record))
                     break
 
         if not results:
@@ -205,7 +170,7 @@ def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
         current = dns.list_ptr_records(item)
         for record in current:
             if record.data == data:
-                results.append(to_dict(record))
+                results.append(rax_to_dict(record))
                 break
 
         if results:
@@ -301,7 +266,7 @@ def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
 
-    module.exit_json(changed=changed, record=to_dict(record))
+    module.exit_json(changed=changed, record=rax_to_dict(record))
 
 
 def main():

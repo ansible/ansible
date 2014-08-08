@@ -84,24 +84,11 @@ EXAMPLES = '''
       register: keypair
 '''
 
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
 
 
 def rax_keypair(module, name, public_key, state):
@@ -149,7 +136,7 @@ def rax_keypair(module, name, public_key, state):
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
 
-    module.exit_json(changed=changed, keypair=to_dict(keypair))
+    module.exit_json(changed=changed, keypair=rax_to_dict(keypair))
 
 
 def main():

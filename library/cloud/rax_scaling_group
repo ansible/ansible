@@ -118,33 +118,11 @@ EXAMPLES = '''
       register: asg
 '''
 
-import os
-
-from uuid import UUID
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
-PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
-SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
-
-
-def asg_to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if key == 'policies' and isinstance(value, list):
-            policies = []
-            for policy in value:
-                policies.append(asg_to_dict(policy))
-            instance[key] = policies
-        elif (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
 
 
 def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
@@ -172,48 +150,13 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
                 elif not isinstance(v, basestring):
                     meta[k] = '%s' % v
 
-        # Check if the provided image is a UUID and if not, search for an
-        # appropriate image using human_id and name
         if image:
-            try:
-                UUID(image)
-            except ValueError:
-                try:
-                    image = cs.images.find(human_id=image)
-                except(cs.exceptions.NotFound,
-                       cs.exceptions.NoUniqueMatch):
-                    try:
-                        image = cs.images.find(name=image)
-                    except (cs.exceptions.NotFound,
-                            cs.exceptions.NoUniqueMatch):
-                        module.fail_json(msg='No matching image found (%s)' %
-                                             image)
+            image = rax_find_image(module, pyrax, image)
 
-            image = pyrax.utils.get_id(image)
-
-        # Check if the provided network is a UUID and if not, search for an
-        # appropriate network using label
         nics = []
         if networks:
             for network in networks:
-                try:
-                    UUID(network)
-                except ValueError:
-                    if network.lower() == 'public':
-                        nics.extend(cnw.get_server_networks(PUBLIC_NET_ID))
-                    elif network.lower() == 'private':
-                        nics.extend(cnw.get_server_networks(SERVICE_NET_ID))
-                    else:
-                        try:
-                            network_obj = cnw.find_network_by_label(network)
-                        except (pyrax.exceptions.NetworkNotFound,
-                                pyrax.exceptions.NetworkLabelNotUnique):
-                            module.fail_json(msg='No matching network found '
-                                                 '(%s)' % network)
-                        else:
-                            nics.extend(cnw.get_server_networks(network_obj))
-                else:
-                    nics.extend(cnw.get_server_networks(network))
+                nics.extend(rax_find_network(module, pyrax, network))
 
             for nic in nics:
                 # pyrax is currently returning net-id, but we need uuid
@@ -322,7 +265,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
 
             sg.get()
 
-        module.exit_json(changed=changed, autoscale_group=asg_to_dict(sg))
+        module.exit_json(changed=changed, autoscale_group=rax_to_dict(sg))
 
     else:
         try:
@@ -334,7 +277,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
         except Exception, e:
             module.fail_json(msg='%s' % e.message)
 
-        module.exit_json(changed=changed, autoscale_group=asg_to_dict(sg))
+        module.exit_json(changed=changed, autoscale_group=rax_to_dict(sg))
 
 
 def main():

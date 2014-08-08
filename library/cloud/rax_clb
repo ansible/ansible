@@ -130,49 +130,12 @@ EXAMPLES = '''
       register: my_lb
 '''
 
-from types import NoneType
 
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-ALGORITHMS = ['RANDOM', 'LEAST_CONNECTIONS', 'ROUND_ROBIN',
-              'WEIGHTED_LEAST_CONNECTIONS', 'WEIGHTED_ROUND_ROBIN']
-PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS', 'IMAPv4',
-             'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP', 'TCP',
-             'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
-
-
-def node_to_dict(obj):
-    node = obj.to_dict()
-    node['id'] = obj.id
-    return node
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if key == 'virtual_ips':
-            instance[key] = []
-            for vip in value:
-                vip_dict = {}
-                for vip_key, vip_value in vars(vip).iteritems():
-                    if isinstance(vip_value, NON_CALLABLES):
-                        vip_dict[vip_key] = vip_value
-                instance[key].append(vip_dict)
-        elif key == 'nodes':
-            instance[key] = []
-            for node in value:
-                instance[key].append(node_to_dict(node))
-        elif (isinstance(value, NON_CALLABLES) and
-                not key.startswith('_')):
-            instance[key] = value
-
-    return instance
 
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
@@ -252,7 +215,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             pyrax.utils.wait_for_build(balancer, interval=5, attempts=attempts)
 
         balancer.get()
-        instance = to_dict(balancer)
+        instance = rax_to_dict(balancer, 'clb')
 
         result = dict(changed=changed, balancer=instance)
 
@@ -275,7 +238,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
 
-            instance = to_dict(balancer)
+            instance = rax_to_dict(balancer, 'clb')
 
             if wait:
                 attempts = wait_timeout / 5
@@ -291,11 +254,12 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            algorithm=dict(choices=ALGORITHMS, default='LEAST_CONNECTIONS'),
+            algorithm=dict(choices=CLB_ALGORITHMS,
+                           default='LEAST_CONNECTIONS'),
             meta=dict(type='dict', default={}),
             name=dict(),
             port=dict(type='int', default=80),
-            protocol=dict(choices=PROTOCOLS, default='HTTP'),
+            protocol=dict(choices=CLB_PROTOCOLS, default='HTTP'),
             state=dict(default='present', choices=['present', 'absent']),
             timeout=dict(type='int', default=30),
             type=dict(choices=['PUBLIC', 'SERVICENET'], default='PUBLIC'),
