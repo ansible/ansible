@@ -21,7 +21,7 @@ module: digital_ocean_domain
 short_description: Create/delete a DNS record in DigitalOcean
 description:
      - Create/delete a DNS record in DigitalOcean.
-version_added: "1.6"
+version_added: "1.8"
 options:
   state:
     description:
@@ -36,25 +36,27 @@ options:
      - Digital Ocean api key.
   domain:
     description:
-     - String, the domain name for which records will be manipulated.
+     - Required, String, Domain Name (e.g. domain.com), specifies the domain
+       for which to create a record.
   type:
     description:
-     - String,
+     - Required, String, the type of record you would like to create. A, CNAME,
+       NS, TXT, MX or SRV.
   data:
     description:
-     - String,
+     - Required, String, this is the value of the record.
   name:
     description:
-     - String,
+     - Optional, String, required for A, CNAME, TXT and SRV records.
   priority:
     description:
-     - Integer
+     - Optional, Integer, required for SRV and MX records.
   port:
     description:
-     - Integer
+     - Optional, Integer, required for SRV records.
   weight:
     description:
-     - Integer
+     - Optional, Integer, required for SRV records.
 
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
@@ -62,14 +64,26 @@ notes:
 
 
 EXAMPLES = '''
-# Create a domain record
+# Create a DNS record
 
 - digital_ocean_domain: >
       state=present
-      name=my.digitalocean.domain
+      domain=digitalocean.example
+      type="A"
+      name=www
       ip=127.0.0.1
 
-# Create a droplet and a corresponding domain record
+# Remove a DNS record
+
+- digital_ocean_domain: >
+      state=absent
+      domain=digitalocean.example
+      type="A"
+      name=www
+      ip=127.0.0.1
+
+
+# Create a droplet and a corresponding DNS record
 
 - digital_ocean: >
       state=present
@@ -81,8 +95,10 @@ EXAMPLES = '''
 
 - digital_ocean_domain: >
       state=present
-      name={{ test_droplet.droplet.name }}.my.domain
-      ip={{ test_droplet.droplet.ip_address }}
+      domain=digitalocean.example
+      type="A"
+      name={{ test_droplet.droplet.name }}
+      data={{ test_droplet.droplet.ip_address }}
 '''
 
 import sys
