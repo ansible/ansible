@@ -107,6 +107,12 @@ options:
         - The amount of time the module should wait for the VM to get into active state
      required: false
      default: 180
+   availability_zone:
+     description:
+        - The availability zone the instance should be in
+     required: false
+     version_added: "1.7"
+     default: None
    user_data:
      description:
         - Opaque blob of data which is made available to the instance
@@ -161,6 +167,7 @@ def _create_server(module, nova):
     bootkwargs = {
                 'nics' : module.params['nics'],
                 'meta' : module.params['meta'],
+                'availability_zone' : module.params['availability_zone'],
                 'key_name': module.params['key_name'],
                 'security_groups': module.params['security_groups'].split(','),
                 #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
@@ -237,6 +244,7 @@ def main():
         key_name                        = dict(default=None),
         security_groups                 = dict(default='default'),
         nics                            = dict(default=None),
+        availability_zone               = dict(default=None),
         meta                            = dict(default=None),
         wait                            = dict(default='yes', choices=['yes', 'no']),
         wait_for                        = dict(default=180),
