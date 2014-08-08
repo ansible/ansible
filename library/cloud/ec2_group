@@ -40,9 +40,10 @@ options:
   state:
     version_added: "1.4"
     description:
-      - Create ("present") or delete ("absent") a security group
+      - Create or delete a security group
     required: false
     default: 'present'
+    choices: [ "present", "absent" ]
     aliases: []
 
 extends_documentation_fragment: aws
