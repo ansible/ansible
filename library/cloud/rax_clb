@@ -113,7 +113,9 @@ options:
         certificate required to validate the provided SSL certificate;
         C(enabled): if set to "no", temporarily disable SSL termination without
         discarding existing SSL credentials; C(secure_traffic_only): if set to
-        "yes", the load balancer will only accept secure traffic. default: "no".
+        "yes", the load balancer will only accept secure traffic. default: "no";
+        C(state): if set fo "absent," SSL termination will be removed from this
+        balancer. default: "present".
     default: null
     version_added: 1.6.5
   wait:
