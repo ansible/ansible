@@ -47,7 +47,7 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: '1.6'
+        version_added: '1.8'
     requester_id:
         description:
             - ID of user making the request. Only needed when using a token and creating a maintenance_window.
@@ -55,7 +55,7 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: '1.6'
+        version_added: '1.8'
     service:
         description:
             - PagerDuty service ID.
@@ -77,7 +77,7 @@ options:
         default: 0
         choices: []
         aliases: []
-        version_added: '1.6'
+        version_added: '1.8'
     desc:
         description:
             - Short description of maintenance window.
