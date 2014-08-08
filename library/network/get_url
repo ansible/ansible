@@ -73,7 +73,17 @@ options:
       - If a SHA-256 checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
+        This option is deprecated. Use 'checksum'.
     version_added: "1.3"
+    required: false
+    default: null
+  checksum:
+    description:
+      - If a checksum is passed to this parameter, the digest of the
+        destination file will be calculated after it is downloaded to ensure
+        its integrity and verify that the transfer completed successfully.
+        Format: <algorithm>:<checksum>, e.g.: checksum="sha256:d98291acbedd510e3dbd36dbfdd83cbca8415220af43b327c0a0c574b6dc7b97"
+    version_added: "1.7"
     required: false
     default: null
   use_proxy:
@@ -117,8 +127,9 @@ EXAMPLES='''
 - name: download foo.conf
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
 
-- name: download file with sha256 check
-  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
+- name: download file with check
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf checksum=sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf checksum=md5:66dffb5228a211e61d6d7ef4a86f5758
 '''
 
 try:
@@ -192,6 +203,7 @@ def main():
         url = dict(required=True),
         dest = dict(required=True),
         sha256sum = dict(default=''),
+        checksum = dict(default=''),
     )
 
     module = AnsibleModule(
@@ -204,6 +216,7 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
     sha256sum = module.params['sha256sum']
+    checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
 
     dest_is_dir = os.path.isdir(dest)
@@ -286,6 +299,32 @@ def main():
         if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
+            
+    if checksum != '':
+        if not HAS_HASHLIB:
+            os.remove(dest)
+            module.fail_json(msg="The checksum parameter requires hashlib, which is available in Python 2.5 and higher")
+            
+        # Remove any non-alphanumeric characters, including the infamous
+        # Unicode zero-width space
+        stripped_checksum = re.sub(r'^(\W:)+', '', checksum)
+        
+        match = re.match("^(\w+):(\w+)$", stripped_checksum)
+        if not match:
+            module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>")
+        
+        method = match.group(1)
+        checksum = match.group(2)
+
+        if method not in hashlib.algorithms:
+            os.remove(dest)
+            module.fail_json(msg="Could not hash with algorithm '%s'. Available algorithms: %s " % (method, hashlib.algorithms))
+
+        destination_checksum = getattr(hashlib, method)(open(dest).read()).hexdigest()
+
+        if checksum.lower() != destination_checksum:
+            os.remove(dest)
+            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum))
 
     os.remove(tmpsrc)
 
@@ -297,7 +336,7 @@ def main():
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
-        sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
+        sha256sum=sha256sum, checksum=checksum, changed=changed, msg=info.get('msg', ''))
 
 # import module snippets
 from ansible.module_utils.basic import *
