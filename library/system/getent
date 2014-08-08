@@ -44,8 +44,7 @@ options:
         required: False
         default: None
         description:
-            - character used to override the split the database values into lists/arrays,
-              i.e ':' or '\t'. Otherwise split tries to be 'smart' depending on DB.
+            - "character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database"
     fail_key:
         required: False
         default: True
