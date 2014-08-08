@@ -170,14 +170,17 @@
       - "shell_result4.changed == False"
 
 - name: execute a shell command using a literal multiline block
+  args:
+    executable: /bin/bash
   shell: |
     echo this is a
     "multiline echo"
     "with a new line
-    in quotes"
-    | md5sum
-    | tr -s ' '
+    in quotes" \
+    | md5sum \
+    | tr -s ' ' \
     | cut -f1 -d ' '
+    echo "this is a second line"
   register: shell_result5
 
 - debug: var=shell_result5
@@ -186,5 +189,5 @@
   assert:
     that:
       - "shell_result5.changed"
-      - "shell_result5.stdout == '32f3cc201b69ed8afa3902b80f554ca8'"
+      - "shell_result5.stdout == '32f3cc201b69ed8afa3902b80f554ca8\nthis is a second line'"
 

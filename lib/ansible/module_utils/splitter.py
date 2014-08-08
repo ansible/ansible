@@ -101,14 +101,21 @@ def split_args(args):
         # inside quotation characters
         tokens = item.split('\n')
 
+        line_continuation = False
         for idx,token in enumerate(tokens):
 
-            # if we're at the end of the enumeration, the character separator
-            # used when reassembling quoted bits should be a space, otherwise
-            # it will be a newline character
+            # if there was a newline split, we will re-assemble using
+            # newlines, otherwise we re-assemble using spaces
             spacer = ' '
             if idx > 0:
                 spacer = '\n'
+
+            # if we hit a line continuation character, but
+            # we're not inside quotes, ignore it and continue
+            # on to the next token while setting a flag
+            if token == '\\' and not inside_quotes:
+                line_continuation = True
+                continue
 
             # store the previous quoting state for checking later
             was_inside_quotes = inside_quotes
@@ -155,7 +162,19 @@ def split_args(args):
             # finally, if we're at zero depth for all blocks and not inside quotes, and have not
             # yet appended anything to the list of params, we do so now
             if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
-                params.append(token)
+                # if the spacer was a newline, prepend this param
+                # with it so that newlines are preserved, unless
+                # we previously hit a line continuation character
+                if spacer == '\n':
+                    if line_continuation:
+                        params.append(token)
+                    else:
+                        params.append('\n%s' % token)
+                else:
+                    params.append(token)
+
+            # always clear the line continuation flag
+            line_continuation = False
 
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
@@ -165,6 +184,7 @@ def split_args(args):
     # finally, we decode each param back to the unicode it was in the arg string
     if do_decode:
         params = [x.decode('utf-8') for x in params]
+
     return params
 
 def unquote(data):
