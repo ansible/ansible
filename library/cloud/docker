@@ -358,6 +358,9 @@ class DockerManager:
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
+                elif len(parts) == 3:
+                    self.volumes[parts[1]] = {}
+                    self.binds[parts[0]] = parts[1] + ":" + parts[2]
                 # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
                 else:
                     self.volumes[parts[0]] = {}
