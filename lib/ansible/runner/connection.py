@@ -18,6 +18,9 @@
 
 ################################################
 
+import os
+import stat
+
 from ansible import utils
 from ansible.errors import AnsibleError
 
@@ -31,5 +34,12 @@ class Connector(object):
         conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file)
         if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
+        if private_key_file:
+            # If private key is readable by user other than owner, flag an error
+            st = os.stat(private_key_file)
+            if st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
+                raise AnsibleError("private_key_file (%s) is group-readable or world-readable and thus insecure - "
+                                   "you will probably get an SSH failure"
+                                   % (private_key_file,))
         self.active = conn.connect()
         return self.active
