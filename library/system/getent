@@ -27,7 +27,7 @@ short_description: a wrapper to the unix getent utility
 description:
      - Runs getent against one of it's various databases and returns information into
        the host's facts
-version_added: "1.7"
+version_added: "1.8"
 options:
     database:
         required: True
@@ -52,7 +52,8 @@ options:
         description:
             - If a supplied key is missing this will make the task fail if True
 
-notes: [ Not all databases support enumeration, check system documentation for details ]
+notes: 
+   - "Not all databases support enumeration, check system documentation for details"
 requirements: [ ]
 author: Brian Coca
 '''
