@@ -34,6 +34,7 @@ class AsyncPoller(object):
         self.active = False
         # True to work with & below
         skipped = True
+        jid = None
         for (host, res) in results['contacted'].iteritems():
             if res.get('started', False):
                 self.hosts_to_poll.append(host)
