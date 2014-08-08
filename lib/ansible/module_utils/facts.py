@@ -587,7 +587,7 @@ class LinuxHardware(Hardware):
             key = data[0].strip()
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key == 'model name' or key == 'Processor':
+            if key == 'model name' or key == 'Processor' or key == 'vendor_id':
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
                 self.facts['processor'].append(data[1].strip())
@@ -604,12 +604,15 @@ class LinuxHardware(Hardware):
                 sockets[physid] = int(data[1].strip())
             elif key == 'siblings':
                 cores[coreid] = int(data[1].strip())
-        self.facts['processor_count'] = sockets and len(sockets) or i
-        self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
-        self.facts['processor_threads_per_core'] = ((cores.values() and
-            cores.values()[0] or 1) / self.facts['processor_cores'])
-        self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
-            self.facts['processor_count'] * self.facts['processor_cores'])
+            elif key == '# processors':
+                self.facts['processor_cores'] = int(data[1].strip())
+        if self.facts['architecture'] != 's390x':
+            self.facts['processor_count'] = sockets and len(sockets) or i
+            self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+            self.facts['processor_threads_per_core'] = ((cores.values() and
+                cores.values()[0] or 1) / self.facts['processor_cores'])
+            self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+                self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
@@ -2214,10 +2217,24 @@ class LinuxVirtual(Virtual):
                 elif re.match('^vendor_id.*PowerVM Lx86', line):
                     self.facts['virtualization_type'] = 'powervm_lx86'
                 elif re.match('^vendor_id.*IBM/S390', line):
-                    self.facts['virtualization_type'] = 'ibm_systemz'
+                    self.facts['virtualization_type'] = 'PR/SM'
+                    lscpu = module.get_bin_path('lscpu')
+                    if lscpu:
+                        rc, out, err = module.run_command(["lscpu"])
+                        if rc == 0:
+                            for line in out.split("\n"):
+                                data = line.split(":", 1)
+                                key = data[0].strip()
+                                if key == 'Hypervisor':
+                                    self.facts['virtualization_type'] = data[1].strip()
+                    else:
+                        self.facts['virtualization_type'] = 'ibm_systemz'
                 else:
                     continue
-                self.facts['virtualization_role'] = 'guest'
+                if self.facts['virtualization_type'] == 'PR/SM':
+                    self.facts['virtualization_role'] = 'LPAR'
+                else:
+                    self.facts['virtualization_role'] = 'guest'
                 return
 
         # Beware that we can have both kvm and virtualbox running on a single system
