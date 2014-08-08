@@ -252,6 +252,12 @@ class Ec2Inventory(object):
         except ConfigParser.NoOptionError, e:
             self.downcase_facts = False
 
+        # normalize auto generated groups?
+        try:
+            self.normalize_groups = config.getboolean('ec2', 'normalize_groups');
+        except ConfigParser.NoOptionError, e:
+            self.normalize_groups = False
+
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
             self.nested_groups = config.getboolean('ec2', 'nested_groups')
@@ -273,12 +279,6 @@ class Ec2Inventory(object):
                 self.pattern_exclude = re.compile(pattern_exclude)
         except ConfigParser.NoOptionError, e:
             self.pattern_exclude = ''
-
-        # normalize auto generated groups?
-        try:
-            self.normalize_groups = config.getboolean('ec2', 'normalize_groups');
-        except ConfigParser.NoOptionError, e:
-            self.normalize_groups = False
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -672,6 +672,7 @@ class Ec2Inventory(object):
     def push(self, my_dict, key, element):
         ''' Push an element onto an array that may not have been defined in
         the dict '''
+
         if self.downcase_facts:
             key = key.lower()
             if type(element) in [str, unicode]:
