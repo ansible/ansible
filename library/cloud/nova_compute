@@ -19,7 +19,9 @@
 
 try:
     from novaclient.v1_1 import client as nova_client
+    from novaclient.v1_1 import floating_ips 
     from novaclient import exceptions
+    from novaclient import utils
     import time
 except ImportError:
     print("failed=True msg='novaclient is required for this module'")
@@ -92,6 +94,11 @@ options:
         - A list of network id's to which the VM's interface should be attached
      required: false
      default: None
+   floating_ip:
+     description:
+        - list of key value pairs that determine how to assign, if specified, floating IPs. Either use an explicite list of valid floating IPs, list of floating IP pools to choose from, or auto-assign 
+     required: false
+     default: None
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to the new VM
@@ -133,7 +140,37 @@ EXAMPLES = '''
        meta:
          hostname: test1
          group: uge_master
+
+# Creates a new VM in HP Cloud AE1 region and automatically assigns a floating IP
+- name: launch a nova instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    nova_compute:
+      state: present
+      login_username: username 
+      login_password: Equality7-2521 
+      login_tenant_name: username-project1
+      name: vm1
+      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      region_name: region-b.geo-1
+      image_id: 9302692b-b787-4b52-a3a6-daebb79cb498
+      key_name: test
+      wait_for: 200
+      flavor_id: 101
+      security_groups: default
+      floating_ip:
+        auto: True
+
+# If one wants to specify a floating ip to use:
+      <snip>
+      floating_ip:
+        ips: 
+          - 15.126.238.160
+
 '''
+
+
 
 def _delete_server(module, nova):
     name = None
@@ -157,6 +194,21 @@ def _delete_server(module, nova):
 
 
 def _create_server(module, nova):
+    # issue an error early on and not launch the instance
+    if module.params['floating_ip'] != None:
+        if module.params['floating_ip'].has_key('ips'):
+            # can't specify "ips" and "auto" both 
+            if module.params['floating_ip'].has_key('auto') and \
+            module.params['floating_ip']['auto'] is True:
+                err_msg = "For floating_ips - "
+                err_msg += "you cannot specify both 'auto' and 'ips'!"
+                module.fail_json(msg = err_msg)
+            # can't specify "ips" and "pools" both 
+            if module.params['floating_ip'].has_key('pools'):
+                err_msg = "For floating_ips - "
+                err_msg += "you cannot specify both 'ips' and 'pools'!"
+                module.fail_json(msg = err_msg)
+
     bootargs = [module.params['name'], module.params['image_id'], module.params['flavor_id']]
     bootkwargs = {
                 'nics' : module.params['nics'],
@@ -179,11 +231,92 @@ def _create_server(module, nova):
             try:
                 server = nova.servers.get(server.id)
             except Exception, e:
-                    module.fail_json( msg = "Error in getting info from instance: %s " % e.message)
+                    module.fail_json(msg = \
+                                     "Error in getting info from instance: %s"\
+                                     % e.message
+                                    )
             if server.status == 'ACTIVE':
+                # if floating_ip is specified, then attach 
+                if module.params['floating_ip'] != None:
+                    # instantiate FloatingIPManager object
+                    floating_ip_obj = floating_ips.FloatingIPManager(nova)
+                    # empty dict and list 
+                    usable_floating_ips = {} 
+                    pools = []
+
+                    # if floating_ip pools are defined, then make that
+                    # the list of pools
+                    if module.params['floating_ip'].has_key('pools'):
+                        # user specified
+                        pools = module.params['floating_ip']['pools']
+                    else:
+                        # otherwise all
+                        pools = ['']
+
+                    # if there is a list of IP addresses, make that the list 
+                    if module.params['floating_ip'].has_key('ips'):
+                        usable_floating_ips[''] = \
+                        module.params['floating_ip']['ips']
+
+                    # if 'auto', then assign automatically, no pool needed
+                    if module.params['floating_ip'].has_key('auto') and \
+                       module.params['floating_ip']['auto'] is True:        
+                        # get the list of all floating IPs. Mileage may 
+                        # vary according to Nova Compute configuration 
+                        # per cloud provider
+                        all_floating_ips = floating_ip_obj.list()
+
+                        # iterate through all pools of IP address. Empty
+                        # string means all and is the default value
+                        for pool in pools:
+                            # temporary list per pool
+                            pool_ips = []
+                            # loop through all floating IPs
+                            for f_ip in all_floating_ips:
+                                # if not reserved and the correct pool, add
+                                if f_ip.instance_id == None and \
+                                (f_ip.pool == pool or pool == ''):
+                                    pool_ips.append(f_ip.ip)
+                                    # one per pool
+                                    break
+                            # if the list is empty, add for this pool
+                            if len(pool_ips) == 0: 
+                                try:
+                                    new_ip = nova.floating_ips.create(pool)
+                                except Exception, e: 
+                                    module.fail_json(msg = \
+                                                     "Unable to create \
+                                                     floating ip")
+                                pool_ips.append(new_ip.ip)
+                            # Add to the main list
+                            usable_floating_ips[pool] = pool_ips
+
+                    # finally, add ip(s) to instance for each pool
+                    for pool in usable_floating_ips:
+                        for ip in usable_floating_ips[pool]:
+                            try:
+                                server.add_floating_ip(ip)
+                            except Exception, e:
+                                module.fail_json(msg = \
+                                                 "Error attaching IP %s to \
+                                                 instance %s: %s " % \
+                                                 (ip, server.id, e.message))
+
+                    # this may look redundant, but if there is now a 
+                    # floating IP, then it needs to be obtained from
+                    # a recent server object if the above code path exec'd 
+                    try:
+                        server = nova.servers.get(server.id)
+                    except Exception, e:
+                        module.fail_json(msg = \
+                                         "Error in getting info from \
+                                         instance: %s " % e.message)
+
                 private = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'fixed']
                 public  = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'floating']
+                # now exit with info 
                 module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
+
             if server.status == 'ERROR':
                 module.fail_json(msg = "Error in creating the server, please check logs")
             time.sleep(2)
@@ -193,6 +326,7 @@ def _create_server(module, nova):
             module.fail_json(msg = "Error in creating the server.. Please check manually")
     private = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
     public  = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+
     module.exit_json(changed = True, id = info['id'], private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
 
@@ -241,7 +375,8 @@ def main():
         wait                            = dict(default='yes', choices=['yes', 'no']),
         wait_for                        = dict(default=180),
         state                           = dict(default='present', choices=['absent', 'present']),
-        user_data                       = dict(default=None)
+        user_data                       = dict(default=None),
+        floating_ip                     = dict(default=None)
         ),
     )
 
