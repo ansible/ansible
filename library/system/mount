@@ -307,7 +307,6 @@ def main():
         module.exit_json(changed=changed, **args)
 
     if state in ['mounted', 'present']:
-        name, changed = set_mount(**args)
         if state == 'mounted':
             if not os.path.exists(name):
                 try:
@@ -315,6 +314,8 @@ def main():
                 except (OSError, IOError), e:
                     module.fail_json(msg="Error making dir %s: %s" % (name, str(e)))
 
+        name, changed = set_mount(**args)
+        if state == 'mounted':
             res = 0
             if os.path.ismount(name):
                 if changed:
