@@ -637,14 +637,27 @@ class PlayBook(object):
         play.update_vars_files(all_hosts, vault_password=self.vault_password)
         hosts_count = len(all_hosts)
 
+        if play.serial.endswith("%"):
+
+            # This is a percentage, so calculate it based on the
+            # number of hosts
+            serial_pct = int(play.serial.replace("%",""))
+            serial = int((serial_pct/100.0) * len(all_hosts))
+
+            # Ensure that no matter how small the percentage, serial
+            # can never fall below 1, so that things actually happen
+            serial = max(serial, 1)
+        else:
+            serial = int(play.serial)
+
         serialized_batch = []
-        if play.serial <= 0:
+        if serial <= 0:
             serialized_batch = [all_hosts]
         else:
             # do N forks all the way through before moving to next
             while len(all_hosts) > 0:
                 play_hosts = []
-                for x in range(play.serial):
+                for x in range(serial):
                     if len(all_hosts) > 0:
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
