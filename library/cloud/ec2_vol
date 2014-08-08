@@ -89,10 +89,10 @@ options:
     version_added: "1.5"
   state:
     description: 
-      - whether to ensure the volume is present or absent
+      - whether to ensure the volume is present or absent, or to list existing volumes
     required: false
     default: present
-    choices: ['absent', 'present']
+    choices: ['absent', 'present', 'list']
     version_added: "1.6"
 author: Lester Wade
 extends_documentation_fragment: aws
@@ -162,6 +162,12 @@ EXAMPLES = '''
     module: ec2_vol
     id: vol-XXXXXXXX
     state: absent
+
+# List volumes for an instance
+- local_action:
+    module: ec2_vol
+    instance: i-XXXXXX
+    state: list
 '''
 
 # Note: this module needs to be made idempotent. Possible solution is to use resource tags with the volumes.
@@ -201,6 +207,17 @@ def get_volume(module, ec2):
         module.fail_json(msg="Found more than one volume in zone (if specified) with name: %s" % name)
     return vols[0]
 
+def get_volumes(module, ec2):
+    instance = module.params.get('instance')
+
+    if not instance:
+        module.fail_json(msg = "Instance must be specified to get volumes")
+
+    try:
+        vols = ec2.get_all_volumes(filters={'attachment.instance-id': instance})
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+    return vols
 
 def delete_volume(module, ec2):
     vol = get_volume(module, ec2)
@@ -305,7 +322,7 @@ def main():
             device_name = dict(),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
             snapshot = dict(),
-            state = dict(choices=['absent', 'present'], default='present')
+            state = dict(choices=['absent', 'present', 'list'], default='present')
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -321,6 +338,31 @@ def main():
     state = module.params.get('state')
 
     ec2 = ec2_connect(module)
+
+    if state == 'list':
+        returned_volumes = []
+        vols = get_volumes(module, ec2)
+
+        for v in vols:
+            attachment = v.attach_data
+
+            returned_volumes.append({
+                'create_time': v.create_time,
+                'id': v.id,
+                'iops': v.iops,
+                'size': v.size,
+                'snapshot_id': v.snapshot_id,
+                'status': v.status,
+                'type': v.type,
+                'zone': v.zone,
+                'attachment_set': {
+                    'attach_time': attachment.attach_time,
+                    'device': attachment.device,
+                    'status': attachment.status
+                }
+            })
+
+        module.exit_json(changed=False, volumes=returned_volumes)
 
     if id and name:
         module.fail_json(msg="Both id and name cannot be specified")
@@ -353,7 +395,8 @@ def main():
 
     if state == 'absent':
         delete_volume(module, ec2)
-    else:
+
+    if state == 'present':
         volume = create_volume(module, ec2, zone)
         if instance:
             attach_volume(module, ec2, volume, inst)
