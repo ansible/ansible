@@ -349,7 +349,7 @@ def download(module, cf, container, src, dest, structure):
 
 def delete(module, cf, container, src, dest):
     """ Delete specific objects by proving a single file name or a
-    comma-separated list to src OR dest (but not both).  Ommitting file name(s)
+    comma-separated list to src OR dest (but not both).  Omitting file name(s)
     assumes the entire container is to be deleted.
     """
     objs = None
