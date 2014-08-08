@@ -222,7 +222,7 @@ def core(module):
 
     changed = True
     state = module.params['state']
-    domain_name = getkeyordie("name")
+    domain_name = getkeyordie("domain")
 
     Domain.setup(client_id, api_key)
     domain = Domain.find(name=domain_name)
