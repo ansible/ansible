@@ -69,6 +69,13 @@ import shlex
 import os
 import sys
 
+# md5.py is deprecated since python2.5
+try:
+    import hashlib as md5
+except ImportError:
+    # but we need to be compatible with >= python2.4
+    import md5 as md5
+
 APT_PATH="/usr/bin/apt-get"
 RPM_PATH="/usr/bin/rpm"
 
@@ -86,6 +93,14 @@ def query_package_provides(module, name):
     # 1 if it is not installed
     rc = os.system("%s -q --provides %s >/dev/null" % (RPM_PATH,name))
     return rc == 0
+
+def query_packages_digest(module):
+    # compute hashsum of all installed package names
+    # returns None on exception
+        rc, out, err = module.run_command("%s -qa" % RPM_PATH)
+        if rc:
+            return None
+        return md5.md5(out).hexdigest()
 
 def update_package_db(module):
     rc = os.system("%s update" % APT_PATH)
@@ -119,14 +134,15 @@ def install_packages(module, pkgspec):
 
     packages = ""
     for package in pkgspec:
-        if not query_package_provides(module, package):
-            packages += "'%s' " % package
+        packages += "'%s' " % package
 
     if len(packages) != 0:
 
-        cmd = ("%s -y install %s > /dev/null" % (APT_PATH, packages))
+        chksum = query_packages_digest(module)
 
-        rc, out, err = module.run_command(cmd)
+        cmd = "%s -y install %s > /dev/null" % (APT_PATH, packages)
+
+        rc, out, err = module.run_command(cmd,use_unsafe_shell=True)
 
         installed = True
         for packages in pkgspec:
@@ -135,9 +151,16 @@ def install_packages(module, pkgspec):
 
         # apt-rpm always have 0 for exit code if --force is used
         if rc or not installed:
-            module.fail_json(msg="'apt-get -y install %s' failed: %s" % (packages, err))
+            module.fail_json(msg="'%s' failed: %s" % (cmd, err))
         else:
-            module.exit_json(changed=True, msg="%s present(s)" % packages)
+            if chksum:
+                newchksum = query_packages_digest(module)
+                if chksum != newchksum:
+                    module.exit_json(changed=True, msg="Some packages installed/upgraded")
+                else:
+                    module.exit_json(changed=False, msg="No packages installed/upgraded")
+            else:
+                module.exit_json(changed=True, msg="%s present(s)" % packages)
     else:
         module.exit_json(changed=False)
 
