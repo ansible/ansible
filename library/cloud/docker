@@ -185,11 +185,11 @@ options:
     version_added: "1.6"
   net:
     description:
-      - Set Network mode for the container (bridge, none, container:<name|id>, host)
+      - Set Network mode for the container (bridge, none, container:<name|id>, host). Requires docker >= 0.11.
     required: false
     default: false
     aliases: []
-    version_added: "1.11"
+    version_added: "1.8"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
@@ -300,6 +300,14 @@ Create containers with options specified as strings and lists as comma-separated
   sudo: yes
   tasks:
   docker: image=namespace/image_name links=postgresql:db,redis:redis
+
+Create a container with no networking:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  docker: image=namespace/image_name net=none
+
 '''
 
 HAS_DOCKER_PY = True
