@@ -25,7 +25,7 @@ module: zabbix_maintenance
 short_description: Create Zabbix maintenance windows
 description:
     - This module will let you create Zabbix maintenance windows.
-version_added: "1.7"
+version_added: "1.8"
 author: Alexander Bulimov
 requirements:
     - zabbix-api python module
