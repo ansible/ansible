@@ -39,8 +39,7 @@ options:
     default: null
   copy:
     description:
-      - If set to yes/true (default), the file is copied from the 'master' to the target machine,
-      if set to no/false, the plugin will look for src archive at the target machine.
+      - "if true, the file is copied from the 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine."
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
