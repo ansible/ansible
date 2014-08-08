@@ -232,16 +232,16 @@ def core(module):
 
     type = getkeyordie("type")
     data = module.params['data']
-    name = modules.params['name']
-    priority = modules.params['priority']
-    port = modules.params['port']
-    weight = modules.params['weight']
+    name = module.params['name']
+    priority = module.params['priority']
+    port = module.params['port']
+    weight = module.params['weight']
 
     record = domain.find_record(type, data, name, priority, port, weight)
 
     if state in ('present') and not record:
         record = domain.add_record(type, data, name, priority, port, weight)
-        module.exit_json(changed=True, record=record)
+        module.exit_json(changed=True, record=record.to_json())
 
     elif state in ('absent') and record:
         json = record.destroy()
