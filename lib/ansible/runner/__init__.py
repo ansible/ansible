@@ -622,6 +622,9 @@ class Runner(object):
         if self.inventory.src() is not None:
             inject['inventory_file'] = self.inventory.src()
 
+        # could be already set by playbook code
+        inject.setdefault('ansible_version', utils.version_info(gitinfo=False))
+
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
