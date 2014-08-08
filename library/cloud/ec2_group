@@ -59,6 +59,20 @@ options:
     required: false
     default: 'true'
     aliases: []
+  purge_rules:
+    version_added: "1.7"
+    description:
+      - Purge existing rules on security group that are not found in rules
+    required: false
+    default: 'true'
+    aliases: []
+  purge_rules_egress:
+    version_added: "1.7"
+    description:
+      - Purge existing rules_egree on security group that are not found in rules_egress
+    required: false
+    default: 'true'
+    aliases: []
 
 extends_documentation_fragment: aws
 
