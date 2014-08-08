@@ -499,6 +499,13 @@ class DockerManager:
         else:
             return image, tag
 
+    def get_split_full_image_tag(self, image):
+        tag = "latest"
+        if image.find(':') > 0:
+            return image.split(':')
+        else:
+            return image, tag
+
     def get_summary_counters_msg(self):
         msg = ""
         for k, v in self.counters.iteritems():
@@ -598,7 +605,8 @@ class DockerManager:
         try:
             containers = do_create(count, params)
         except:
-            self.client.pull(params['image'])
+            image, tag = self.get_split_full_image_tag(params['image'])
+            self.client.pull(image, tag = tag)
             self.increment_counter('pull')
             containers = do_create(count, params)
 
