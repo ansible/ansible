@@ -183,8 +183,11 @@ being raised.
 .. _list_filters:
 
 List Filters
---------------------
-.. versionadded:: 1.7
+------------
+
+These filters all operate on list variables.
+
+.. versionadded:: 1.8
 
 To get the minimum value from list of numbers::
 
