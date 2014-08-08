@@ -7,16 +7,21 @@ short_description: Create PagerDuty maintenance windows
 description:
     - This module will let you create PagerDuty maintenance windows
 version_added: "1.2"
-author: Justin Johns
+author: Justin Johns, Jason Young
 requirements:
     - PagerDuty API access
 options:
     state:
         description:
-            - Create a maintenance window or get a list of ongoing windows.
+            - 'started' will create a new maintenance window using
+              the service and desc fields. 'stopped' will end all
+              maintenance windows that match 'desc' and 'service'.
+              Use 'ongoing' to retreive a JSON list of ongoing
+              maintenance windows. 'running' has been deprecated
+              and aliases to 'started.'
         required: true
         default: null
-        choices: [ "running", "started", "ongoing" ]
+        choices: [ "started", "stopped", "ongoing" ]
         aliases: []
     name:
         description:
@@ -27,21 +32,29 @@ options:
         aliases: []
     user:
         description:
-            - PagerDuty user ID.
+            - PagerDuty user's name, email, or ID.
         required: true
         default: null
         choices: []
         aliases: []
     passwd:
         description:
-            - PagerDuty user password.
-        required: true
+            - PagerDuty user's password.
+        required: false
+        default: null
+        choices: []
+        aliases: []
+    token:
+        description:
+            - Pagerduty API token, generated on the pagerduty site.
+              Can be used instead of password.
+        required: false
         default: null
         choices: []
         aliases: []
     service:
         description:
-            - PagerDuty service ID.
+            - PagerDuty service's name or ID.
         required: false
         default: null
         choices: []
@@ -51,6 +64,14 @@ options:
             - Length of maintenance window in hours.
         required: false
         default: 1
+        choices: []
+        aliases: []
+    minutes:
+        description:
+            - Length of maintenance window in minutes. This is added to
+              hours. Set hours to '0' if you'd like only minutes.
+        required: false
+        default: 0
         choices: []
         aliases: []
     desc:
@@ -68,110 +89,284 @@ options:
         default: 'yes'
         choices: ['yes', 'no']
         version_added: 1.5.1
-
 notes:
-    - This module does not yet have support to end maintenance windows.
+    - Token and password are interchangable; use one or the other for authentication.
+
 '''
 
 EXAMPLES='''
-# List ongoing maintenance windows.
-- pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
+# List ongoing maintenance windows
 
-# Create a 1 hour maintenance window for service FOO123.
+# Create a 1 hour maintenance window for service FOO123, using a user/passwd
 - pagerduty: name=companyabc
              user=example@example.com
              passwd=password123
-             state=running
+             state=started
              service=FOO123
 
-# Create a 4 hour maintenance window for service FOO123 with the description "deployment".
+# Create a 15 minute maintenance window for service FOO123, using a token
 - pagerduty: name=companyabc
              user=example@example.com
-             passwd=password123
-             state=running
+             token=xxxxxxxxxxxxxx
+             hours=0
+             minutes=15
+             state=started
              service=FOO123
-             hours=4
-             desc=deployment
+             desc=Example Window
+
+# End all open maintenance windows for service FOO123 with description 'Example Window'
+- pagerduty: name=companyabc
+             user=example@example.com
+             token=xxxxxxxxxxxxxx
+             state=stopped
+             service=FOO123
+             desc=Example Window
 '''
 
 import json
 import datetime
+import urllib
+import urllib2
 import base64
 
-
-def ongoing(module, name, user, passwd):
-
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    headers = {"Authorization": "Basic %s" % auth}
-
-    response, info = fetch_url(module, url, headers=headers)
-    if info['status'] != 200:
-        module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
-
-    return False, response.read()
+global pd_url
+pd_url = "pagerduty.com/api/v1"
 
 
-def create(module, name, user, passwd, service, hours, desc):
+def format_req(url, data, name, user, passwd=None, token=None):
+    req = urllib2.Request(url, data)
+    if token:
+        req.add_header("Authorization", "Token token=%s" % token)
+    elif passwd:
+        auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+        req.add_header("Authorization", "Basic %s" % auth)
+
+    req.add_header('Content-Type', 'application/json')
+    return req
+
+
+def service_lookup(name, user, passwd, token, service):
+    out = None
+    url = "https://%s.%s/services" % (name, pd_url)
+    req = format_req(url, None, name, user, passwd, token)
+    res = urllib2.urlopen(req)
+    out = json.load(res)
+
+    # PD doesn't allow filtering at the API level for services, so we have to
+    # search through the results to obtain the id:
+    for pd_service in out['services']:
+        if pd_service['name'] == service or pd_service['id'] == service:
+            return pd_service['id']
+
+    return None
+
+
+def user_lookup(name, user, passwd=None, token=None):
+    out = None
+    user_encoded = urllib.quote(user)
+    url = "https://%s.%s/users/?query=%s" \
+        % (name, pd_url, user_encoded)
+    req = format_req(url, None, name, user, passwd, token)
+
+    res = urllib2.urlopen(req)
+    data = json.load(res)
+
+    if data['total'] > 0:
+        if data['users'][0]['email'] == user:
+            out = data['users'][0]['id']
+    # lookup by ID if name/email fails
+    else:
+        url = "https://%s.%s/users/%s" \
+            % (name, pd_url, user_encoded)
+        req = format_req(url, None, name, user, passwd, token)
+        try:
+            res = urllib2.urlopen(req)
+            data = json.load(res)
+            out = data['user']['id']
+        except urllib2.HTTPError, e:
+            out = "Pagerduty API - %s %s" % (e.code, e.reason)
+
+    return out
+
+
+def maint_lookup(name, user, service, desc, passwd=None, token=None):
+    # if given a description, look for that specific window
+    if desc:
+        desc_encoded = urllib.quote(desc)
+
+        url = "https://%s.%s/maintenance_windows/?query=%s&filter=ongoing" \
+            % (name, pd_url, desc_encoded)
+    # otherwise look up maintenance windows for the service
+    else:
+        service_id_encoded = urllib.quote(service_id)
+        # url encode 'service_ids[]'
+        service_id_encoded = "service_ids%5B%5D=%s" % service_id_encoded
+        url = "https://%s.%s/maintenance_windows/?%s&filter=ongoing" \
+            % (name, pd_url, service_id_encoded)
+
+    req = format_req(url, None, name, user, passwd, token)
+
+    res = urllib2.urlopen(req)
+    out = json.load(res)
+
+    maint_ids = []
+    if out['total'] > 0:
+        for window in out['maintenance_windows']:
+            maint_ids.append(window['id'])
+
+    return maint_ids
+
+
+def ongoing(name, user, passwd=None, token=None):
+    url = "https://%s.%s/maintenance_windows/ongoing" \
+        % (name, pd_url)
+    req = format_req(url, None, name, user, passwd, token)
+    try:
+        res = urllib2.urlopen(req)
+        out = res.read()
+    except urllib2.HTTPError, e:
+        success = False
+        changed = False
+        out = "Pagerduty API - %s %s" % (e.code, e.reason)
+        return success, changed, out
+
+    return True, False, out
+
+
+def create(
+        name, user, requester_id, service,
+        hours, minutes, desc, passwd=None, token=None):
 
     now = datetime.datetime.utcnow()
-    later = now + datetime.timedelta(hours=int(hours))
+    later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
     start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    headers = {
-        'Authorization': 'Basic %s' % auth,
-        'Content-Type' : 'application/json',
+    url = "https://%s.%s/maintenance_windows" % (name, pd_url)
+    request_data = {
+        'maintenance_window': {
+            'start_time': start,
+            'end_time': end,
+            'description': desc,
+            'service_ids': [service]
+        }
     }
-    data = json.dumps({'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}})
+    if requester_id:
+        request_data['requester_id'] = requester_id
 
-    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
-    if info['status'] != 200:
-        module.fail_json(msg="failed to create the window: %s" % info['msg'])
+    data = json.dumps(request_data)
 
-    return False, response.read()
+    req = format_req(url, data, name, user, passwd, token)
+    try:
+        res = urllib2.urlopen(req)
+        out = res.read()
+    except urllib2.HTTPError, e:
+        success = False
+        changed = False
+        out = "Pagerduty API %s %s" % (e.code, e.reason)
+        return success, changed, out
+
+    return True, True, out
+
+
+def delete(name, user, service, desc, passwd=None, token=None):
+    changed = False
+    success = False
+    maint_ids = maint_lookup(name, user, service, desc, passwd, token)
+    if len(maint_ids) > 0:
+        for window in maint_ids:
+            url = "https://%s.%s/maintenance_windows/%s" \
+                % (name, pd_url, window)
+            req = format_req(url, None, name, user, passwd, token)
+            req.get_method = lambda: 'DELETE'
+            try:
+                urllib2.urlopen(req)
+            except urllib2.HTTPError, e:
+                success = False
+                changed = False
+                out = "Pagerduty API - %s %s" % (e.code, e.reason)
+                return success, changed, out
+        changed = True
+        success = True
+        out = maint_ids
+    else:
+        out = "no maintenance windows found"
+        changed = False
+        success = True
+
+    return success, changed, out
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'started', 'ongoing']),
-        name=dict(required=True),
-        user=dict(required=True),
-        passwd=dict(required=True),
-        service=dict(required=False),
-        hours=dict(default='1', required=False),
-        desc=dict(default='Created by Ansible', required=False),
-        validate_certs = dict(default='yes', type='bool'),
-        )
+            state=dict(required=True, type='str', choices=[
+                'started',
+                'running',
+                'ongoing',
+                'stopped']),
+            name=dict(required=True, type='str'),
+            user=dict(required=True, type='str'),
+            passwd=dict(required=False, type='str'),
+            token=dict(required=False, type='str'),
+            service=dict(required=False, type='str'),
+            hours=dict(default='1', type='int', required=False),
+            minutes=dict(default='0', type='int', required=False),
+            desc=dict(default='Created by Ansible', type='str', required=False),
+            validate_certs=dict(default='yes', type='bool')
+        ),
+        supports_check_mode=False,
+        mutually_exclusive=[['passwd'], ['token']]
     )
 
     state = module.params['state']
     name = module.params['name']
     user = module.params['user']
     passwd = module.params['passwd']
+    token = module.params['token']
     service = module.params['service']
     hours = module.params['hours']
+    minutes = module.params['minutes']
+    token = module.params['token']
     desc = module.params['desc']
 
-    if state == "running" or state == "started":
+    # support for deprecated 'running' status
+    if state == "running":
+        state = "started"
+
+    if not token and not passwd:
+        module.fail_json(msg="neither passwd nor token specified")
+
+    if state == "started" or state == "stopped":
         if not service:
             module.fail_json(msg="service not specified")
-        (rc, out) = create(module, name, user, passwd, service, hours, desc)
+        user_id = user_lookup(name, user, passwd, token)
+        if user_id is None or user_id.find("Pagerduty API") != -1:
+            msg = "user not found | %s" % user_id
+            module.fail_json(msg=msg)
+        service_id = service_lookup(name, user, passwd, token, service)
+        if service_id is None:
+            module.fail_json(msg="failed", result="service not found")
+
+    if state == "started":
+        (success, changed, out) = create(
+            name, user, user_id, service_id,
+            hours, minutes, desc, passwd, token
+        )
+
+    if state == "stopped":
+        (success, changed, out) = delete(
+            name, user, service_id, desc, passwd, token
+        )
 
     if state == "ongoing":
-        (rc, out) = ongoing(module, name, user, passwd)
+        (success, changed, out) = ongoing(name, user, passwd, token)
 
-    if rc != 0:
+    if success is False:
         module.fail_json(msg="failed", result=out)
 
-    module.exit_json(msg="success", result=out)
+    module.exit_json(msg="success", changed=changed, result=out)
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-
 main()
