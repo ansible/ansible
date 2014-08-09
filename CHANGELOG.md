@@ -3,7 +3,20 @@ Ansible Changes By Release
 
 ## 1.8 "You Really Got Me" - Active Development
 
-Details Pending!
+Major new features:
+
+
+New Modules:
+
+
+Other notable changes:
+
+* Updates to the docker module:
+  - Added support for specifying the net type of the container.
+  - Added support for specifying read-only volumes.
+  - Added support for specifying the API version to use for the remote docker connection.
+  - Various bug fixes and improvements.
+
 
 ## 1.7 "Summer Nights" - Aug 06, 2014
 
