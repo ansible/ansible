@@ -294,16 +294,11 @@ def privileges_grant(cursor, user,host,db_table,priv):
     cursor.execute(query)
 
 def connect(module, login_user, login_password, config_file):
-    default_file = None
+    default_file = '~/.my.cnf'
     if config_file is not None:
         default_file = config_file
-    else:
-        default_file = '~/.my.cnf'
     
-    if default_file is not None and os.path.exists(default_file):
-        if not os.path.exists(default_file):
-            raise IOError("config_file %s does not exist" % default_file)
-            
+    if os.path.exists(default_file):
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], db="mysql", read_default_file=default_file)
         else:
