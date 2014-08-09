@@ -240,7 +240,7 @@ class Ec2Inventory(object):
             self.hostname_variable = config.get('ec2', 'hostname_variable')
         else:
             self.hostname_variable = None
-            
+
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
         self.route53_excluded_zones = []
@@ -643,7 +643,7 @@ class Ec2Inventory(object):
         # If we can't get a nice hostname, use the destination address
         if not hostname:
             hostname = dest
-        
+
         hostname = self.to_safe(hostname).lower()
 
         # if we only want to include hosts that match a pattern, skip those that don't
@@ -783,7 +783,7 @@ class Ec2Inventory(object):
         # If we can't get a nice hostname, use the destination address
         if not hostname:
             hostname = dest
-        
+
         hostname = self.to_safe(hostname).lower()
 
         # Add to index
