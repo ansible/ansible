@@ -112,7 +112,7 @@ notes:
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
 
-requirements: [ "ConfigParser", "MySQLdb" ]
+requirements: [ "MySQLdb" ]
 author: Mark Theunissen
 '''
 
@@ -141,7 +141,6 @@ user=root
 password=n<_665{vS43y
 """
 
-import ConfigParser
 import getpass
 import tempfile
 try:
