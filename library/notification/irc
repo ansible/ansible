@@ -76,7 +76,7 @@ options:
     description:
       - Designates whether TLS/SSL should be used when connecting to the IRC server
     default: False
-    version_added: 1.7
+    version_added: 1.8
 
 # informational: requirements for nodes
 requirements: [ socket ]
