@@ -259,6 +259,7 @@ def create_instances(module, gce, instance_names):
     state = module.params.get('state')
     tags = module.params.get('tags')
     zone = module.params.get('zone')
+    external_ip = module.params.get('external_ip')
 
     new_instances = []
     changed = False
@@ -317,9 +318,12 @@ def create_instances(module, gce, instance_names):
                 pd = gce.ex_get_volume("%s" % name, lc_zone)
         inst = None
         try:
+            if (external_ip.lower() != 'none' and external_ip.lower() != 'ephemeral'):
+                external_ip = gce.ex_get_address(external_ip)
             inst = gce.create_node(name, lc_machine_type, lc_image,
                     location=lc_zone, ex_network=network, ex_tags=tags,
-                    ex_metadata=metadata, ex_boot_disk=pd)
+                    ex_metadata=metadata, ex_boot_disk=pd,
+                    external_ip=external_ip)
             changed = True
         except ResourceExistsError:
             inst = gce.ex_get_node(name, lc_zone)
@@ -400,6 +404,7 @@ def main():
             metadata = dict(),
             name = dict(),
             network = dict(default='default'),
+            external_ip = dict(default='ephemeral'),
             persistent_boot_disk = dict(type='bool', default=False),
             disks = dict(type='list'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
@@ -420,6 +425,7 @@ def main():
     metadata = module.params.get('metadata')
     name = module.params.get('name')
     network = module.params.get('network')
+    external_ip = module.params.get('external_ip')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
     state = module.params.get('state')
     tags = module.params.get('tags')
