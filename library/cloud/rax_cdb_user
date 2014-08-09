@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_cdb_user
@@ -22,25 +24,6 @@ description:
   - create / delete a database in the Cloud Databases.
 version_added: "1.8"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
   cdb_id:
     description:
       - The databases server UUID
@@ -68,15 +51,8 @@ options:
       - Indicate desired state of the resource
     choices: ['present', 'absent']
     default: present
-requirements: [ "pyrax" ]
 author: Simon JAILLET
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -95,25 +71,11 @@ EXAMPLES = '''
       register: rax_db_user
 '''
 
-import sys
-from types import NoneType
-
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
+    HAS_PYRAX = False
 
 
 def find_user(instance, name):
@@ -177,7 +139,7 @@ def save_user(module, cdb_id, name, password, databases, host):
             else:
                 changed = True
 
-    module.exit_json(changed=changed, action=action, user=to_dict(user))
+    module.exit_json(changed=changed, action=action, user=rax_to_dict(user))
 
 
 def delete_user(module, cdb_id, name):
@@ -236,6 +198,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     cdb_id = module.params.get('cdb_id')
     name = module.params.get('db_username')
     password = module.params.get('db_password')
@@ -251,5 +216,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()
