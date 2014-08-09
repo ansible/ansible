@@ -623,12 +623,12 @@ class PlayBook(object):
         
         # Get the hosts for this play
         play._play_hosts = self.inventory.list_hosts(play.hosts)
+        self.callbacks.on_play_start(play.name)
+
         # if no hosts matches this play, drop out
         if not play._play_hosts:
             self.callbacks.on_no_hosts_matched()
             return True
-
-        self.callbacks.on_play_start(play.name)
 
         # get facts from system
         self._do_setup_step(play)
