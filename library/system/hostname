@@ -185,23 +185,26 @@ class DebianStrategy(GenericStrategy):
 
     def set_permanent_hostname(self, name):
         def set_hosts_alias():
-            temp = tempfile.NamedTemporaryFile()
-            hosts = open('/etc/hosts', 'r')
-            for line in hosts:
-                if line.startswith('127.0.0.1'):
-                    temp.write("127.0.0.1 %s localhost "
-                        "localhost.localdomain" % name)
-                else:
-                    temp.write(line)
-
-            hosts.close()
-            temp.flush()
-            shutil.copyfile(temp.name, "/etc/hosts")
-            temp.close()
+            try:
+                temp = tempfile.NamedTemporaryFile(delete=False)
+                hosts = open('/etc/hosts', 'r')
+                for line in hosts:
+                    if line.startswith('127.0.0.1'):
+                        temp.write("127.0.0.1 %s localhost "
+                            "localhost.localdomain" % name)
+                    else:
+                        temp.write(line)
+            finally:
+                hosts.close()
+                temp.close()
+                shutil.move(temp.name, "/etc/hosts")
 
         def set_hostname():
-            with open(self.HOSTNAME_FILE, 'w+') as f:
+            try:
+                f = open(self.HOSTNAME_FILE, 'w+')
                 f.write("%s\n" % name)
+            finally:
+                f.close()
 
         try:
             set_hostname()
