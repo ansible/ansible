@@ -211,10 +211,13 @@ def main():
     entry = module.params.get('entry')
     entity = module.params.get('entity')
     etype = module.params.get('etype')
-    permissions = normalize_permissions(module.params.get('permissions'))
+    permissions = module.params.get('permissions')
     state = module.params.get('state')
     follow = module.params.get('follow')
     default = module.params.get('default')
+
+    if permissions:
+        permissions = normalize_permissions(permissions)
 
     if not os.path.exists(path):
         module.fail_json(msg="path not found or not accessible!")
