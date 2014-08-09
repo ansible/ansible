@@ -98,7 +98,7 @@ options:
       - Specify a config file from which user and password are to be read 
     required: false
     default: null
-    version_added: "1.6"
+    version_added: "1.7"
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
