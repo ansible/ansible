@@ -305,7 +305,7 @@ def connect(module, login_user, login_password, config_file):
 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
-    else
+    else:
         config['port'] = int(module.params['login_port'])
 
     if os.path.exists(default_file):
