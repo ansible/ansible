@@ -14,35 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_cdb
-short_description: create / delete or resize a Rackspace Cloud Databases instance
+short_description: create/delete or resize a Rackspace Cloud Databases instance
 description:
   - creates / deletes or resize a Rackspace Cloud Databases instance
-    and optionally waits for it to be 'running'. The name option needs to be unique since
-    it's used to identify the instance.
+    and optionally waits for it to be 'running'. The name option needs to be
+    unique since it's used to identify the instance.
 version_added: "1.8"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
   name:
     description:
       - Name of the databases server instance
@@ -69,15 +52,8 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements: [ "pyrax" ]
 author: Simon JAILLET
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -97,25 +73,11 @@ EXAMPLES = '''
       register: rax_db_server
 '''
 
-import sys
-from types import NoneType
-
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
+    HAS_PYRAX = False
 
 
 def find_instance(name):
@@ -168,45 +130,31 @@ def save_instance(module, name, flavor, volume, wait, wait_timeout):
         if instance.volume.size != volume:
             action = 'resize'
             if instance.volume.size > volume:
-                module.fail_json(
-                    changed=False,
-                    action=action,
-                    msg='The new volume size must be larger than the'
-                        ' current volume size',
-                    cdb=to_dict(instance)
-                )
+                module.fail_json(changed=False, action=action,
+                                 msg='The new volume size must be larger than '
+                                     'the current volume size',
+                                cdb=rax_to_dict(instance))
             instance.resize_volume(volume)
             changed = True
 
         if int(instance.flavor.id) != flavor:
             action = 'resize'
-            pyrax.utils.wait_until(
-                instance,
-                'status',
-                'ACTIVE',
-                attempts=wait_timeout
-            )
+            pyrax.utils.wait_until(instance, 'status', 'ACTIVE',
+                                   attempts=wait_timeout)
             instance.resize(flavor)
             changed = True
 
     if wait:
-        pyrax.utils.wait_until(
-            instance,
-            'status',
-            'ACTIVE',
-            attempts=wait_timeout
-        )
+        pyrax.utils.wait_until(instance, 'status', 'ACTIVE',
+                               attempts=wait_timeout)
 
     if wait and instance.status != 'ACTIVE':
-        module.fail_json(
-          changed=changed,
-          action=action,
-          cdb=to_dict(instance),
-          msg='Timeout waiting for "%s" databases instance to be '
-              'created' % name
-        )
+        module.fail_json(changed=changed, action=action,
+                         cdb=rax_to_dict(instance),
+                         msg='Timeout waiting for "%s" databases instance to '
+                             'be created' % name)
 
-    module.exit_json(changed=changed, action=action, cdb=to_dict(instance))
+    module.exit_json(changed=changed, action=action, cdb=rax_to_dict(instance))
 
 
 def delete_instance(module, name, wait, wait_timeout):
@@ -228,23 +176,17 @@ def delete_instance(module, name, wait, wait_timeout):
         changed = True
 
     if wait:
-        pyrax.utils.wait_until(
-            instance,
-            'status',
-            'SHUTDOWN',
-            attempts=wait_timeout
-        )
+        pyrax.utils.wait_until(instance, 'status', 'SHUTDOWN',
+                               attempts=wait_timeout)
 
     if wait and instance.status != 'SHUTDOWN':
-        module.fail_json(
-          changed=changed,
-          action='delete',
-          cdb=to_dict(instance),
-          msg='Timeout waiting for "%s" databases instance to be '
-              'deleted' % name
-        )
+        module.fail_json(changed=changed, action='delete',
+                         cdb=rax_to_dict(instance),
+                         msg='Timeout waiting for "%s" databases instance to '
+                             'be deleted' % name)
 
-    module.exit_json(changed=changed, action='delete', cdb=to_dict(instance))
+    module.exit_json(changed=changed, action='delete',
+                     cdb=rax_to_dict(instance))
 
 
 def rax_cdb(module, state, name, flavor, volume, wait, wait_timeout):
@@ -274,6 +216,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     name = module.params.get('name')
     flavor = module.params.get('flavor')
     volume = module.params.get('volume')
@@ -289,5 +234,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()
