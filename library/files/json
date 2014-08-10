@@ -74,7 +74,13 @@ EXAMPLES='''
 '''
 
 def get_key(my_dict, key):
-    return reduce(dict.get, key.split("."), my_dict)
+    return reduce(lambda d, k: d.get(k, {}), key.split('.'), my_dict)
+
+
+def add_key(my_dict, key, value):
+    key = key.split(".")
+    my_dict = reduce(lambda d, k: d.setdefault(k, {}), key[:-1], my_dict)
+    my_dict[key[-1]] = value
 
 
 def set_key(my_dict, key, value):
@@ -93,7 +99,6 @@ def read_json_file(json_file):
     f = open(json_file, 'r')
     json_obj = json.load(f)
     f.close
-
     return json_obj
 
 
@@ -113,10 +118,19 @@ def update_key(module, json_file, key, value):
         except Exception:
             pass
 
+        current_value = get_key(json_obj, key)
+        # Not changing it
+        if current_value == value:
+            module.exit_json(msg="json file up to date", changed=False, rc=0)
+
         # Do the magic
-        set_key(json_obj, key, value)
+        if not current_value:
+            add_key(json_obj, key, value)
+        else:
+            set_key(json_obj, key, value)
 
         write_json_file(json_file, json_obj)
+        module.exit_json(msg="json file updated", changed=True, rc=0)
     except Exception, e:
         raise e
 
@@ -125,11 +139,15 @@ def delete_key(module, json_file, key):
     try:
         json_obj = read_json_file(json_file)
 
+        if not get_key(json_obj, key):
+            module.exit_json(msg="json file up to date", changed=False, rc=0)
+
         # Do the magic
         del_key(json_obj, key)
 
         write_json_file(json_file, json_obj)
-    except Exception:
+        module.exit_json(msg="json file updated", changed=True, rc=0)
+    except Exception, e:
         raise e
 
 
@@ -161,7 +179,6 @@ def main():
             delete_key(module, json_file, key)
         else:
             update_key(module, json_file, key, value)
-        module.exit_json(msg="json file updated", changed=True, rc=0)
     except Exception, e:
         module.fail_json(msg="failed to update json file with exception: %s" % e, changed=False, rc=1)
 
