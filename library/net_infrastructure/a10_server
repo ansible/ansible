@@ -113,29 +113,40 @@ ansible host -m a10_server -a "host=a10adc.example.com username=axapiuser passwo
 
 import urllib2
 
+
 def axapi_call(url, post=None):
     result = urllib2.urlopen(url, post).read()
     return result
 
+
 def axapi_authenticate(base_url, user, pwd):
-    url = base_url + '&method=authenticate&username=' + user + '&password=' + pwd
-    sessid = json.loads(axapi_call(url))['session_id']
-    result = base_url + '&session_id=' + sessid
-    return result
+    url = base_url + '&method=authenticate&username=' + user + \
+        '&password=' + pwd
+    result = json.loads(axapi_call(url))
+    if 'response' in result:
+        return module.fail_json(msg=result['response']['err']['msg'])
+    sessid = result['session_id']
+    return base_url + '&session_id=' + sessid
+
 
 def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            host = dict(type='str', required=True),
-            username = dict(type='str', aliases=['user', 'admin'], required=True),
-            password = dict(type='str', aliases=['pass', 'pwd'], required=True),
-            server_name = dict(type='str', aliases=['server'], required=True),
-            server_ip = dict(type='str', aliases=['ip', 'address']),
-            server_port = dict(type='int', aliases=['port']),
-            server_protocol = dict(type='str', aliases=['proto', 'protocol'], choices=['tcp', 'udp']),
-            server_status = dict(type='str', default='enable', aliases=['status'], choices=['enable', 'disable']),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
+            host=dict(type='str', required=True),
+            username=dict(type='str', aliases=['user', 'admin'],
+                          required=True),
+            password=dict(type='str', aliases=['pass', 'pwd'], required=True),
+            server_name=dict(type='str', aliases=['server'], required=True),
+            server_ip=dict(type='str', aliases=['ip', 'address']),
+            server_port=dict(type='int', aliases=['port']),
+            server_protocol=dict(type='str', aliases=['proto', 'protocol'],
+                                 choices=['tcp', 'udp']),
+            server_status=dict(type='str', default='enable',
+                               aliases=['status'],
+                               choices=['enable', 'disable']),
+            state=dict(type='str', default='present',
+                       choices=['present', 'absent']),
         ),
         supports_check_mode=False
     )
@@ -152,7 +163,8 @@ def main():
 
     axapi_base_url = 'https://' + host + '/services/rest/V2.1/?format=json'
 
-    if slb_server_proto == 'tcp' or slb_server_proto == 'TCP' or slb_server_proto is None:
+    if slb_server_proto == 'tcp' or slb_server_proto == 'TCP' or \
+            slb_server_proto is None:
         protocol = '2'
     else:
         protocol = '3'
@@ -166,32 +178,46 @@ def main():
         module.fail_json(msg='server_name is required')
 
     if slb_server_port is None:
-        json_post = {'server': { 'name': slb_server, 'host': slb_server_ip, 'status': status }}
+        json_post = {'server': {'name': slb_server,
+                                'host': slb_server_ip, 'status': status}}
     else:
-        json_post = {'server': { 'name': slb_server, 'host': slb_server_ip, 'status': status, 'port_list': [{ 'port_num': slb_server_port, 'protocol': protocol }]}}
+        json_post = {'server': {'name': slb_server, 'host': slb_server_ip,
+                                'status': status, 'port_list':
+                                [{'port_num': slb_server_port,
+                                  'protocol': protocol}]}}
 
     try:
         session_url = axapi_authenticate(axapi_base_url, user, pwd)
 
         if state == 'present':
-            response = axapi_call(session_url + '&method=slb.server.search', json.dumps({ 'name': slb_server }))
+            response = axapi_call(session_url + '&method=slb.server.search',
+                                  json.dumps({'name': slb_server}))
             slb_server_exist = re.search(slb_server, response, re.I)
 
             if slb_server_exist is None:
                 if slb_server_ip is None:
                     module.fail_json(msg='IP address is required')
-                response = axapi_call(session_url + '&method=slb.server.create', json.dumps(json_post))
+                response = axapi_call(session_url +
+                                      '&method=slb.server.create',
+                                      json.dumps(json_post))
             else:
-                response = axapi_call(session_url + '&method=slb.server.update', json.dumps(json_post))
+                response = axapi_call(session_url +
+                                      '&method=slb.server.update',
+                                      json.dumps(json_post))
 
         if state == 'absent':
-            response = axapi_call(session_url + '&method=slb.server.delete', json.dumps({ 'name': slb_server }))
+            response = axapi_call(session_url +
+                                  '&method=slb.server.delete',
+                                  json.dumps({'name': slb_server}))
 
         result = json.loads(response)
         axapi_call(session_url + '&method=session.close')
 
     except Exception, e:
         return module.fail_json(msg='received exception: %s' % e)
+
+    if 'respone' in result and 'err' in result['response']:
+        return module.fail_json(msg=result['response']['err']['msg'])
 
     module.exit_json(changed=True, content=result)
 
