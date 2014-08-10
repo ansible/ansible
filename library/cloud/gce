@@ -377,6 +377,7 @@ def terminate_instances(module, gce, instance_names, zone_name):
     Returns a dictionary of instance names that were terminated.
 
     """
+    destroy_boot_disk = module.params.get('destroy_boot_disk')
     changed = False
     terminated_instance_names = []
     for name in instance_names:
@@ -388,7 +389,7 @@ def terminate_instances(module, gce, instance_names, zone_name):
         except Exception, e:
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
         if inst:
-            gce.destroy_node(inst)
+            gce.destroy_node(node=inst, destroy_boot_disk=destroy_boot_disk)
             terminated_instance_names.append(inst.name)
             changed = True
 
@@ -404,6 +405,7 @@ def main():
             metadata = dict(),
             name = dict(),
             network = dict(default='default'),
+            destroy_boot_disk = dict(default=False),
             external_ip = dict(default='ephemeral'),
             persistent_boot_disk = dict(type='bool', default=False),
             disks = dict(type='list'),
