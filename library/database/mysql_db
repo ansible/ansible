@@ -313,8 +313,8 @@ def main():
     try:
         if module.params["login_unix_socket"]:
             try:
-                mode = os.stat(module.params["login_unix_socket"]).st_mode
-                if not stat.S_ISSOCK(mode):
+                socketmode = os.stat(module.params["login_unix_socket"]).st_mode
+                if not stat.S_ISSOCK(socketmode):
                     module.fail_json(msg="%s, is not a socket, unable to connect" % module.params["login_unix_socket"])
             except OSError:
                 module.fail_json(msg="%s, does not exist, unable to connect" % module.params["login_unix_socket"])
