@@ -366,23 +366,21 @@ def _clean_data(orig_data, from_remote=False, from_inventory=False):
 
     regex = PRINT_CODE_REGEX if replace_prints else CODE_REGEX
 
-    with contextlib.closing(StringIO.StringIO()) as data:
+    with contextlib.closing(StringIO.StringIO(orig_data)) as data:
         # these variables keep track of opening block locations, as we only
         # want to replace matched pairs of print/block tags
-        last_pos = 0
         print_openings = []
         block_openings = []
         for mo in regex.finditer(orig_data):
             token = mo.group(0)
             token_start = mo.start(0)
-            token_end = mo.end(0)
 
             if token[0] == '{':
                 if token == '{%':
                     block_openings.append(token_start)
                 elif token == '{{':
                     print_openings.append(token_start)
-                data.write(orig_data[last_pos:token_end])
+
             elif token[1] == '}':
                 prev_idx = None
                 if token == '%}' and block_openings:
@@ -390,21 +388,16 @@ def _clean_data(orig_data, from_remote=False, from_inventory=False):
                 elif token == '}}' and print_openings:
                     prev_idx = print_openings.pop()
 
-                data.write(orig_data[last_pos:token_start])
                 if prev_idx is not None:
                     # replace the opening
                     data.seek(prev_idx, os.SEEK_SET)
                     data.write('{#')
                     # replace the closing
-                    data.seek(0, os.SEEK_END)
+                    data.seek(token_start, os.SEEK_SET)
                     data.write('#}')
-                else:
-                    data.write(token)
+
             else:
                 assert False, 'Unhandled regex match'
-            last_pos = token_end
-
-        data.write(orig_data[last_pos:])
 
         return data.getvalue()
 
