@@ -10,6 +10,7 @@ New core features:
 * added new Jinja2 filters, 'min' and 'max' that take lists
 * new 'ansible_version' variable available contains a dictionary of version info
 * For ec2 dynamic inventory, ec2.ini can has various new configuration options
+* 'ansible vault view filename.yml' opens filename.yml decrypted in a pager.
 
 New Modules:
 
