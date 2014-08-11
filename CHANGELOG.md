@@ -3,19 +3,45 @@ Ansible Changes By Release
 
 ## 1.8 "You Really Got Me" - Active Development
 
-Major new features:
+New core features:
 
+* fact caching support, pluggable, initially supports Redis (DOCS pending)
+* 'serial' size in a rolling update can be specified as a percentage
+* added new Jinja2 filters, 'min' and 'max' that take lists
+* new 'ansible_version' variable available contains a dictionary of version info
+* For ec2 dynamic inventory, ec2.ini can has various new configuration options
 
 New Modules:
 
+* cloud: rax_cdb - manages Rackspace Cloud Database instances
+* cloud: rax_cdb_database - manages Rackspace Cloud Databases
+* cloud: rax_cdb_user - manages Rackspace Cloud Database users
+* monitoring: zabbix_maintaince - handles outage windows with Zabbix
+* monitoring: bigpanda - support for bigpanda
+* system: getent - read getent databases
 
-Other notable changes:
+Some other notable changes:
 
-* Updates to the docker module:
-  - Added support for specifying the net type of the container.
-  - Added support for specifying read-only volumes.
-  - Added support for specifying the API version to use for the remote docker connection.
-  - Various bug fixes and improvements.
+* docker: Added support for specifying the net type of the container.
+* docker: support for specifying read-only volumes.
+* docker: support for specifying the API version to use for the remote connection.
+* openstack modules: various improvements
+* irc: ssl support for the notification module
+* npm: fix flags passed to package installation
+* windows: improved error handling
+* setup: additional facts on System Z
+* apt_repository: certificate validation can be disabled if requested
+* pagerduty module: misc improvements
+* ec2_lc: public_ip boolean configurable in launch configurations
+* ec2_asg: fixes related to proper termination of an autoscaling group
+* win_setup: total memory fact correction
+* ec2_vol: ability to list existing volumes
+* ec2_vol: can set optimized flag
+* various parser improvements
+* produce a friendly error message if the SSH key is too permissive
+* ec2_ami_searcH: support for SSD and IOPS provisioned EBS images
+
+And various other bug fixes and improvements ...
 
 
 ## 1.7 "Summer Nights" - Aug 06, 2014
