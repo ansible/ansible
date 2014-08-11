@@ -1,4 +1,4 @@
-# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Brian Coca, Josh Drake, et al
 #
 # This file is part of Ansible
 #
@@ -14,9 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import
 
+from __future__ import absolute_import
 import collections
+# FIXME: can we store these as something else before we ship it?
 import cPickle
 import sys
 import time
@@ -33,7 +34,7 @@ except ImportError:
 
 class PickledRedis(StrictRedis):
     """
-    A subclass of StricRedis that uses the pickle module to store and load
+    A subclass of StrictRedis that uses the pickle module to store and load
     representations of the provided values.
     """
     def get(self, name):
