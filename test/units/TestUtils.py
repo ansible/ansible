@@ -697,10 +697,14 @@ class TestUtils(unittest.TestCase):
         )
 
         # invalid quote detection
-        with self.assertRaises(Exception):
-            split_args('hey I started a quote"')
-        with self.assertRaises(Exception):
-            split_args('hey I started a\' quote')
+        try:
+            with self.assertRaises(Exception):
+                split_args('hey I started a quote"')
+            with self.assertRaises(Exception):
+                split_args('hey I started a\' quote')
+        except TypeError:
+            # you must be on Python 2.6 still, FIXME
+            pass
 
         # jinja2 loop blocks with lots of complexity
         _test_combo(

@@ -148,7 +148,7 @@ DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       '
 DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins')
 DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 
-CACHE_PLUGIN                   = get_config(p, DEFAULTS, 'cache_plugin', 'ANSIBLE_CACHE_PLUGIN', 'memory')
+CACHE_PLUGIN                   = get_config(p, DEFAULTS, 'fact_caching', 'ANSIBLE_CACHE_PLUGIN', 'memory')
 CACHE_PLUGIN_CONNECTION        = get_config(p, DEFAULTS, 'cache_plugin_connection', 'ANSIBLE_CACHE_PLUGIN_CONNECTION', None)
 CACHE_PLUGIN_PREFIX            = get_config(p, DEFAULTS, 'cache_plugin_prefix', 'ANSIBLE_CACHE_PLUGIN_PREFIX', 'ansible_facts')
 CACHE_PLUGIN_TIMEOUT           = get_config(p, DEFAULTS, 'cache_plugin_timeout', 'ANSIBLE_CACHE_PLUGIN_TIMEOUT', (60 * 60 * 24), integer=True)
