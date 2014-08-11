@@ -364,7 +364,7 @@ def _clean_data(orig_data, from_remote=False, from_inventory=False):
     # a lookup plugin (ie. {{lookup('foo','bar'))}})
     replace_prints = from_remote or (from_inventory and '{{' in orig_data and LOOKUP_REGEX.search(orig_data) is not None)
 
-    regex = PRINT_CODE_REGEX if replace_prints else ONLY_CODE_REGEX
+    regex = PRINT_CODE_REGEX if replace_prints else CODE_REGEX
 
     with contextlib.closing(cStringIO.StringIO()) as data:
         # these variables keep track of opening block locations, as we only
