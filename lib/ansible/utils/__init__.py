@@ -33,7 +33,7 @@ from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
 import time
-import cStringIO
+import StringIO
 import stat
 import termios
 import tty
@@ -366,7 +366,7 @@ def _clean_data(orig_data, from_remote=False, from_inventory=False):
 
     regex = PRINT_CODE_REGEX if replace_prints else CODE_REGEX
 
-    with contextlib.closing(cStringIO.StringIO()) as data:
+    with contextlib.closing(StringIO.StringIO()) as data:
         # these variables keep track of opening block locations, as we only
         # want to replace matched pairs of print/block tags
         last_pos = 0
