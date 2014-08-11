@@ -37,7 +37,7 @@ from optparse import OptionParser
 # Utility functions for parsing actions/options
 #-------------------------------------------------------------------------------------
 
-VALID_ACTIONS = ("create", "decrypt", "edit", "view", "encrypt", "rekey")
+VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
 
 def build_option_parser(action):
     """
