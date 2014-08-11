@@ -164,3 +164,11 @@
       - result.invocation.module_name == "debug"
       - result.msg == "this should be debugged"
 
+- name: test conditional includes
+  include: test_include_conditional.yml
+  when: false
+
+- name: assert the nested include from test_include_conditional was not set
+  assert:
+    that:
+      - nested_include_var is undefined

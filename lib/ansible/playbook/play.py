@@ -540,11 +540,10 @@ class Play(object):
                     elif k.startswith("when_"):
                         utils.deprecated("\"when_<criteria>:\" is a removed deprecated feature, use the simplified 'when:' conditional directly", None, removed=True)
                     elif k == 'when':
-                        if type(x[k]) is str:
-                            included_additional_conditions.insert(0, x[k])
+                        if isinstance(x[k], (basestring, bool)):
+                            included_additional_conditions.append(x[k])
                         elif type(x[k]) is list:
-                            for i in x[k]:
-                                included_additional_conditions.insert(0, i)
+                            included_additional_conditions.extend(x[k])
                     elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
                         continue
                     else:
