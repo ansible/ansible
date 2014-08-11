@@ -20,6 +20,7 @@
 #
 # TODO:
 #   - support setting downtime for single hosts as well
+#   - receive start and end time as options
 
 import urllib
 import urllib2
