@@ -84,7 +84,7 @@ def main(args):
     parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
         help="run handlers even if a task fails")
     parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
-        help="flush to fact cache")
+        help="clear the fact cache")
 
     options, args = parser.parse_args(args)
 
