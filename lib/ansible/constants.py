@@ -151,7 +151,7 @@ DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_
 CACHE_PLUGIN                   = get_config(p, DEFAULTS, 'fact_caching', 'ANSIBLE_CACHE_PLUGIN', 'memory')
 CACHE_PLUGIN_CONNECTION        = get_config(p, DEFAULTS, 'cache_plugin_connection', 'ANSIBLE_CACHE_PLUGIN_CONNECTION', None)
 CACHE_PLUGIN_PREFIX            = get_config(p, DEFAULTS, 'cache_plugin_prefix', 'ANSIBLE_CACHE_PLUGIN_PREFIX', 'ansible_facts')
-CACHE_PLUGIN_TIMEOUT           = get_config(p, DEFAULTS, 'cache_plugin_timeout', 'ANSIBLE_CACHE_PLUGIN_TIMEOUT', (60 * 60 * 24), integer=True)
+CACHE_PLUGIN_TIMEOUT           = get_config(p, DEFAULTS, 'cache_plugin_timeout', 'ANSIBLE_CACHE_PLUGIN_TIMEOUT', 24 * 60 * 60, integer=True)
 
 ANSIBLE_FORCE_COLOR            = get_config(p, DEFAULTS, 'force_color', 'ANSIBLE_FORCE_COLOR', None, boolean=True)
 ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOCOLOR', None, boolean=True)

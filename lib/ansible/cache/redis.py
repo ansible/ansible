@@ -18,9 +18,9 @@
 from __future__ import absolute_import
 import collections
 # FIXME: can we store these as something else before we ship it?
-import cPickle
 import sys
 import time
+import json
 
 from ansible import constants as C
 from ansible.cache.base import BaseCacheModule
@@ -28,27 +28,8 @@ from ansible.cache.base import BaseCacheModule
 try:
     from redis import StrictRedis
 except ImportError:
-    print "The 'redis' Python module is required for the redis fact cache"
+    print "The 'redis' python module is required, 'pip install redis'"
     sys.exit(1)
-
-
-class PickledRedis(StrictRedis):
-    """
-    A subclass of StrictRedis that uses the pickle module to store and load
-    representations of the provided values.
-    """
-    def get(self, name):
-        pickled_value = super(PickledRedis, self).get(name)
-        if pickled_value is None:
-            return None
-        return cPickle.loads(pickled_value)
-
-    def set(self, name, value, *args, **kwargs):
-        return super(PickledRedis, self).set(name, cPickle.dumps(value), *args, **kwargs)
-
-    def setex(self, name, time, value):
-        return super(PickledRedis, self).setex(name, time, cPickle.dumps(value))
-
 
 class CacheModule(BaseCacheModule):
     """
@@ -65,13 +46,13 @@ class CacheModule(BaseCacheModule):
         else:
             connection = []
 
-        self._timeout = C.CACHE_PLUGIN_TIMEOUT
+        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._prefix = C.CACHE_PLUGIN_PREFIX
-        self._cache = PickledRedis(*connection)
+        self._cache = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
 
     def _make_key(self, key):
-        return "{}{}".format(self._prefix, key)
+        return self._prefix + key
 
     def get(self, key):
         value = self._cache.get(self._make_key(key))
@@ -81,13 +62,14 @@ class CacheModule(BaseCacheModule):
         if value is None:
             self.delete(key)
             raise KeyError
-        return value
+        return json.loads(value)
 
     def set(self, key, value):
+        value2 = json.dumps(value)
         if self._timeout > 0: # a timeout of 0 is handled as meaning 'never expire'
-            self._cache.setex(self._make_key(key), self._timeout, value)
+            self._cache.setex(self._make_key(key), int(self._timeout), value2)
         else:
-            self._cache.set(self._make_key(key), value)
+            self._cache.set(self._make_key(key), value2)
 
         self._cache.zadd(self._keys_set, time.time(), key)
 
