@@ -62,7 +62,6 @@ options:
     required: true
     choices: [ 'set', 'remove' ]
 requirements: []
-notes: -
 '''
 
 EXAMPLES='''
