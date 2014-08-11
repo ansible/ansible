@@ -90,7 +90,7 @@ def get_hg_downtime(module, opsview, hostgroup):
     except urllib2.URLError as e:
         raise Exception('failed to get downtime info: %s: %s' % (e.code, e.read()))
 
-    return int(json.loads(connection.read())['summary']['num_hosts'])
+    return json.loads(connection.read())['summary']
 
 
 def post_hg_downtime(module, opsview, hostgroup):
