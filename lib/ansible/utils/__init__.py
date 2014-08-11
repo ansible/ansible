@@ -60,6 +60,7 @@ LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 PRINT_CODE_REGEX = re.compile(r'(?:{[{%]|[%}]})')
 CODE_REGEX = re.compile(r'(?:{%|%})')
 
+
 try:
     import json
 except ImportError:
@@ -108,6 +109,11 @@ try:
         KEYCZAR_AVAILABLE=True
 except ImportError:
     pass
+
+
+OMIT_PLACE_HOLDER = (
+    '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+)
 
 ###############################################################
 # Abstractions around keyczar
@@ -693,6 +699,12 @@ def parse_kv(args):
                 k, v = x.split("=",1)
                 options[k.strip()] = unquote(v.strip())
     return options
+
+
+def serialize_args(args):
+    ''' convert a dict to a string of key/value items '''
+    return ' '.join("%s='%s'" % item for item in args.iteritems())
+
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
