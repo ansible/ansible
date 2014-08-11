@@ -561,12 +561,6 @@ class Play(object):
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
 
-                if 'when' in x:
-                    if isinstance(x['when'], (basestring, bool)):
-                        included_additional_conditions.append(x['when'])
-                    elif isinstance(x['when'], list):
-                        included_additional_conditions.extend(x['when'])
-
                 new_role = None
                 if 'role_name' in x:
                     new_role = x['role_name']
