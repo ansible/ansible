@@ -694,6 +694,47 @@ Here is an example of what that might look like::
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
+.. _fact_caching:
+
+Fact Caching
+````````````
+
+.. versionadded:: 1.8
+
+As shown elsewhere in the docs, it is possible for one server to reference variables about another, like so::
+
+    {{ hostvars['asdf.example.com']['ansible_os_family'] }}
+
+With "Fact Caching" disabled, in order to do this, Ansible must have already talked to 'asdf.example.com' in the
+current play, or another play up higher in the playbook.  This is the default configuration of ansible.
+
+To avoid this, Ansible 1.8 allows the ability to save facts between playbook runs, but this feature must be manually
+enabled.  Why might this be useful?
+
+Imagine, for instance, a very large infrastructure with thousands of hosts.  Fact caching could be configured to run nightly, but
+configuration of a small set of servers could run ad-hoc or periodically throughout the day.  With fact-caching enabled, it would
+not be neccessary to "hit" all servers to reference variables and information about them.
+
+With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
+the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
+
+To configure fact caching, enable it in ansible.cfg as follows::
+
+    [defaults]
+    fact_caching = redis
+    fact_caching_timeout = 86400 # seconds
+
+At the time of writing, Redis is the only supported fact caching engine.  
+To get redis up and running, perform the equivalent OS commands::
+
+    yum install redis
+    service redis start
+    pip install redis
+
+Note that the Python redis library should be installed from pip, the version packaged in EPEL is too old for use by Ansible.
+
+In current embodiments, this feature is in beta-level state and the Redis plugin does not support port or password configuration, this is expected to change in the near future.
+
 .. _registered_variables:
 
 Registered Variables
