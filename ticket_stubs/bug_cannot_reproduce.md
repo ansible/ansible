@@ -15,8 +15,7 @@ And we suggest that:
 
    * INSERT THINGS TO DO HERE
 
-As such, we are most likely going to close this ticket.  Should you disagree with this conclusion, you may also wish to join one of our two mailing lists
-which is very active:
+As such, we are most likely going to close this ticket.  Should you disagree with this conclusion, you may also wish to join our mailing lists, which are very active:
 
    * https://groups.google.com/forum/#!forum/ansible-project - for user questions, tips, and tricks
    * https://groups.google.com/forum/#!forum/ansible-devel - for strategy, future planning, and questions about writing code
