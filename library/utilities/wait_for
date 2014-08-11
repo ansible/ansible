@@ -198,7 +198,7 @@ def main():
                         break
                 except OSError, e:
                     # File not present
-                    if os.errno == 2:
+                    if e.errno == 2:
                         time.sleep(1)
                     else:
                         elapsed = datetime.datetime.now() - start
