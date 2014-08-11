@@ -730,6 +730,10 @@ class TestUtils(unittest.TestCase):
             'this string has a {#variable#}'
         )
         self.assertEqual(
+            ansible.utils._clean_data('this string {{has}} two {{variables}} in it', from_remote=True),
+            'this string {#has#} two {#variables#} in it'
+        )
+        self.assertEqual(
             ansible.utils._clean_data('this string has a {{variable with a\nnewline}}', from_remote=True),
             'this string has a {#variable with a\nnewline#}'
         )
