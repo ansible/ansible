@@ -22,7 +22,13 @@
 import os
 import sys
 
-from ansible.runner import Runner
+# find own sources if PYTHONPATH is not set
+try:
+    from ansible.runner import Runner
+except:
+    sys.path.append(os.path.abspath(os.path.realpath(__file__)+'/../../lib'))
+    from ansible.runner import Runner
+
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
