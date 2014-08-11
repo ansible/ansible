@@ -300,6 +300,7 @@ class Task(object):
         self.tags.extend(import_tags)
 
         if additional_conditions:
-            new_conditions = additional_conditions
-            new_conditions.append(self.when)
+            new_conditions = additional_conditions[:]
+            if self.when:
+                new_conditions.append(self.when)
             self.when = new_conditions
