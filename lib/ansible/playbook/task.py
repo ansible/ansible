@@ -239,7 +239,14 @@ class Task(object):
             self.notify = [ self.notify ]
 
         # split the action line into a module name + arguments
-        tokens = split_args(self.action)
+        try:
+            tokens = split_args(self.action)
+        except Exception, e:
+            if "unbalanced" in str(e):
+                raise errors.AnsibleError("There was an error while parsing the task %s.\n" % repr(self.action) + \
+                                          "Make sure quotes are matched or escaped properly")
+            else:
+                raise
         if len(tokens) < 1:
             raise errors.AnsibleError("invalid/missing action in task. name: %s" % self.name)
         self.module_name = tokens[0]
