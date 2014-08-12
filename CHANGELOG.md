@@ -11,6 +11,7 @@ New core features:
 * new 'ansible_version' variable available contains a dictionary of version info
 * For ec2 dynamic inventory, ec2.ini can has various new configuration options
 * 'ansible vault view filename.yml' opens filename.yml decrypted in a pager.
+* no_log parameter now surpressess data from callbacks/output as well as syslog
 
 New Modules:
 

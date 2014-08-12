@@ -759,3 +759,22 @@ class TestUtils(unittest.TestCase):
         )
 
 
+    def test_censor_unlogged_data(self):
+        ''' used by the no_log attribute '''
+        input = dict(
+             password='sekrit',
+             rc=12,
+             failed=True,
+             changed=False,
+             skipped=True,
+             msg='moo',
+        )
+        data = ansible.utils.censor_unlogged_data(input)
+        assert 'password' not in data
+        assert 'rc' in data
+        assert 'failed' in data
+        assert 'changed' in data
+        assert 'skipped' in data
+        assert 'msg' not in data
+        assert data['censored'] == 'results hidden due to no_log parameter'
+
