@@ -246,6 +246,12 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
+        # boto configuration profiles
+        self.boto_profile = None
+        if config.has_option('ec2', 'boto_profile'):
+            self.boto_profile = config.get('ec2', 'boto_profile')
+        
+
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
             self.nested_groups = config.getboolean('ec2', 'nested_groups')
@@ -305,7 +311,7 @@ class Ec2Inventory(object):
                 conn = boto.connect_euca(host=self.eucalyptus_host)
                 conn.APIVersion = '2010-08-31'
             else:
-                conn = ec2.connect_to_region(region)
+                conn = ec2.connect_to_region(region, profile_name=self.boto_profile)
 
             # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
             if conn is None:
