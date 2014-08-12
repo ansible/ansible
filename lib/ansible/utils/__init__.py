@@ -1436,3 +1436,19 @@ def update_hash(hash, key, new_value):
     value = hash.get(key, {})
     value.update(new_value)
     hash[key] = value
+
+def censor_unlogged_data(data):
+    ''' 
+    used when the no_log: True attribute is passed to a task to keep data from a callback.
+    NOT intended to prevent variable registration, but only things from showing up on  
+    screen
+    '''
+    new_data = {}
+    for (x,y) in data.iteritems():
+       if x in [ 'skipped', 'changed', 'failed', 'rc' ]:
+           new_data[x] = y
+    new_data['censored'] = 'results hidden due to no_log parameter'
+    return new_data
+
+
+    

@@ -956,12 +956,17 @@ class Runner(object):
                     if failed_when is not None and 'skipped' not in data:
                         data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
+
             if is_chained:
                 # no callbacks
                 return result
             if 'skipped' in data:
                 self.callbacks.on_skipped(host, inject.get('item',None))
-            elif not result.is_successful():
+
+            if self.no_log:
+                data = utils.censor_unlogged_data(data)
+
+            if not result.is_successful():
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
             else:
