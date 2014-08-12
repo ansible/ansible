@@ -318,6 +318,11 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
+        # boto configuration profile
+        self.boto_profile = None
+        if config.has_option('ec2', 'boto_profile'):
+            self.boto_profile = config.get('ec2', 'boto_profile')
+
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
             self.nested_groups = config.getboolean('ec2', 'nested_groups')
@@ -452,7 +457,7 @@ class Ec2Inventory(object):
                 for filter_key, filter_values in self.ec2_instance_filters.items():
                     reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
             else:
-                conn = self.connect_to_aws(ec2, region)
+                conn = ec2.connect_to_region(region, profile_name=self.boto_profile)
 
             # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
             if conn is None:
