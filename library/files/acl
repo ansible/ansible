@@ -73,6 +73,14 @@ options:
     description:
       - Permissions to apply/remove can be any combination of r, w and  x (read, write and execute respectively)
 
+  recurse:
+    version_added: "1.8"
+    required: false
+    default: no
+    choices: [ 'yes', 'no' ]
+    description:
+      - Recursively set acls.
+
   entry:
     required: false
     default: null
@@ -156,25 +164,29 @@ def get_acls(module,path,follow):
 
     return _run_acl(module,cmd)
 
-def set_acl(module,path,entry,follow,default):
+def set_acl(module,path,entry,follow,default, recurse):
 
     cmd = [ module.get_bin_path('setfacl', True) ]
     if not follow:
         cmd.append('-h')
     if default:
         cmd.append('-d')
+    if recurse:
+       cmd.append('--recursive')
     cmd.append('-m "%s"' % entry)
     cmd.append(path)
 
     return _run_acl(module,cmd)
 
-def rm_acl(module,path,entry,follow,default):
+def rm_acl(module,path,entry,follow,default, recurse):
 
     cmd = [ module.get_bin_path('setfacl', True) ]
     if not follow:
         cmd.append('-h')
     if default:
         cmd.append('-k')
+    if recurse:
+       cmd.append('--recursive')
     entry = entry[0:entry.rfind(':')]
     cmd.append('-x "%s"' % entry)
     cmd.append(path)
@@ -202,7 +214,8 @@ def main():
             permissions = dict(required=False, type='str'),
             state = dict(required=False, default='query', choices=[ 'query', 'present', 'absent' ], type='str'),
             follow = dict(required=False, type='bool', default=True),
-            default= dict(required=False, type='bool', default=False),
+            default = dict(required=False, type='bool', default=False),
+            recurse = dict(required=False, type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -215,6 +228,7 @@ def main():
     state = module.params.get('state')
     follow = module.params.get('follow')
     default = module.params.get('default')
+    recurse = module.params.get('recurse')
 
     if permissions:
         permissions = normalize_permissions(permissions)
@@ -261,7 +275,7 @@ def main():
             changed=True
 
         if changed and not module.check_mode:
-            set_acl(module,path,':'.join([etype, str(entity), permissions]),follow,default)
+            set_acl(module,path,':'.join([etype, str(entity), permissions]),follow,default, recurse)
         msg="%s is present" % ':'.join([etype, str(entity), permissions])
 
     elif state == 'absent':
@@ -279,7 +293,7 @@ def main():
                         changed=True
                         break
         if changed and not module.check_mode:
-            rm_acl(module,path,':'.join([etype, entity, '---']),follow,default)
+            rm_acl(module,path,':'.join([etype, entity, '---']),follow,default, recurse)
         msg="%s is absent" % ':'.join([etype, entity, '---'])
     else:
         msg="current acl"
