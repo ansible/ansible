@@ -67,7 +67,7 @@ options:
     description:
      - Indicate desired state of the vm. Vmware tools is required for rebooted and shutdown, as they communicated directly with the guest OS.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured', 'rebooted', 'shutdown']
+    choices: ['present', 'powered_on', 'absent', 'powered_off', 'restarted', 'reconfigured', 'rebooted', 'shutdown']
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
