@@ -215,6 +215,10 @@ class Runner(object):
         # changed later via options like accelerate
         self.original_transport = self.transport
 
+        # enforce complex_args as a dict
+        if type(self.complex_args) != dict:
+            raise errors.AnsibleError("args must be a dictionary, received %s (%s)" % (self.complex_args, type(self.complex_args)))
+
         # misc housekeeping
         if subset and self.inventory._subset is None:
             # don't override subset when passed from playbook
@@ -659,11 +663,6 @@ class Runner(object):
 
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
-            if isinstance(complex_args, basestring):
-                complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
-                complex_args = utils.safe_eval(complex_args)
-                if type(complex_args) != dict:
-                    raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
