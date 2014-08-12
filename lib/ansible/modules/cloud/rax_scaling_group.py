@@ -24,6 +24,14 @@ description:
     - Manipulate Rackspace Cloud Autoscale Groups
 version_added: 1.7
 options:
+  config_drive:
+    description:
+      - Attach read-only configuration drive to server as label config-2
+    default: no
+    choices:
+      - "yes"
+      - "no"
+    version_added: 1.8
   cooldown:
     description:
       - The period of time, in seconds, that must pass before any scaling can
@@ -92,6 +100,11 @@ options:
       - present
       - absent
     default: present
+  user_data:
+    description:
+      - Data to be uploaded to the servers config drive. This option implies
+        I(config_drive). Can be a file path or a string
+    version_added: 1.8
 author: Matt Martz
 extends_documentation_fragment: rackspace
 '''
@@ -128,16 +141,26 @@ except ImportError:
 def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             image=None, key_name=None, loadbalancers=[], meta={},
             min_entities=0, max_entities=0, name=None, networks=[],
-            server_name=None, state='present'):
+            server_name=None, state='present', user_data=None,
+            config_drive=False):
     changed = False
 
     au = pyrax.autoscale
-    cnw = pyrax.cloud_networks
-    cs = pyrax.cloudservers
-    if not au or not cnw or not cs:
+    if not au:
         module.fail_json(msg='Failed to instantiate clients. This '
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
+
+    if user_data:
+        config_drive = True
+
+    if user_data and os.path.isfile(user_data):
+        try:
+            f = open(user_data)
+            user_data = f.read()
+            f.close()
+        except Exception, e:
+            module.fail_json(msg='Failed to load %s' % user_data)
 
     if state == 'present':
         # Normalize and ensure all metadata values are strings
@@ -204,7 +227,8 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
                                flavor=flavor, disk_config=disk_config,
                                metadata=meta, personality=files,
                                networks=nics, load_balancers=lbs,
-                               key_name=key_name)
+                               key_name=key_name, config_drive=config_drive,
+                               user_data=user_data)
                 changed = True
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
@@ -256,6 +280,12 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             if key_name != lc.get('key_name'):
                 lc_args['key_name'] = key_name
 
+            if config_drive != lc.get('config_drive'):
+                lc_args['config_drive'] = config_drive
+
+            if user_data != lc.get('user_data'):
+                lc_args['user_data'] = user_data
+
             if lc_args:
                 # Work around for https://github.com/rackspace/pyrax/pull/389
                 if 'flavor' not in lc_args:
@@ -284,6 +314,7 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
+            config_drive=dict(default=False, type='bool'),
             cooldown=dict(type='int', default=300),
             disk_config=dict(choices=['auto', 'manual']),
             files=dict(type='list', default=[]),
@@ -298,6 +329,7 @@ def main():
             networks=dict(type='list', default=['public', 'private']),
             server_name=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
+            user_data=dict(no_log=True),
         )
     )
 
@@ -309,6 +341,7 @@ def main():
     if not HAS_PYRAX:
         module.fail_json(msg='pyrax is required for this module')
 
+    config_drive = module.params.get('config_drive')
     cooldown = module.params.get('cooldown')
     disk_config = module.params.get('disk_config')
     if disk_config:
@@ -325,6 +358,7 @@ def main():
     networks = module.params.get('networks')
     server_name = module.params.get('server_name')
     state = module.params.get('state')
+    user_data = module.params.get('user_data')
 
     if not 0 <= min_entities <= 1000 or not 0 <= max_entities <= 1000:
         module.fail_json(msg='min_entities and max_entities must be an '
@@ -340,7 +374,7 @@ def main():
             key_name=key_name, loadbalancers=loadbalancers,
             min_entities=min_entities, max_entities=max_entities,
             name=name, networks=networks, server_name=server_name,
-            state=state)
+            state=state, config_drive=config_drive, user_data=user_data)
 
 
 # import module snippets
