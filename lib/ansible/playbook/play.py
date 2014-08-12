@@ -75,6 +75,12 @@ class Play(object):
         elif type(self.tags) != list:
             self.tags = []
 
+        # make sure we have some special internal variables set
+        if self.playbook.inventory.basedir() is not None:
+            self.vars['inventory_dir'] = self.playbook.inventory.basedir()
+        if self.playbook.inventory.src() is not None:
+            self.vars['inventory_file'] = self.playbook.inventory.src()
+
         # We first load the vars files from the datastructure
         # so we have the default variables to pass into the roles
         self.vars_files = ds.get('vars_files', [])
@@ -147,8 +153,6 @@ class Play(object):
         load_vars = {}
         load_vars['role_names'] = ds.get('role_names',[])
         load_vars['playbook_dir'] = self.basedir
-        if self.playbook.inventory.basedir() is not None:
-            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
 
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)

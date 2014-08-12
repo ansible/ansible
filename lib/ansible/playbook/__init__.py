@@ -222,12 +222,34 @@ class PlayBook(object):
 
     # *****************************************************
 
+    def _extend_play_vars(self, play, vars={}):
+        '''
+        Extends the given play's variables with the additional specified vars.
+        '''
+
+        if 'vars' not in play or not play['vars']:
+            # someone left out or put an empty "vars:" entry in their playbook
+            return vars.copy()
+
+        play_vars = None
+        if isinstance(play_vars, dict):
+            play_vars = play['vars'].copy()
+            play_vars.update(vars)
+        elif isinstance(play_vars, list):
+            # nobody should really do this, but handle vars: a=1 b=2
+            play_vars = play['vars'][:]
+            play_vars.extend([{k:v} for k,v in vars.iteritems()])
+
+        return play_vars
+
+    # *****************************************************
+
     def _load_playbook_from_file(self, path, vars={}, vars_files=[]):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path, vault_password=self.vault_password)
+        playbook_data = utils.parse_yaml_from_file(path, vault_password=self.vault_password)
         accumulated_plays = []
         play_basedirs = []
 
@@ -254,17 +276,7 @@ class PlayBook(object):
                 for p in plays:
                     # support for parameterized play includes works by passing
                     # those variables along to the subservient play
-                    if 'vars' not in p:
-                        p['vars'] = {}
-                    if isinstance(p['vars'], dict):
-                        p['vars'].update(play_vars)
-                    elif isinstance(p['vars'], list):
-                        # nobody should really do this, but handle vars: a=1 b=2
-                        p['vars'].extend([{k:v} for k,v in play_vars.iteritems()])
-                    elif p['vars'] == None:
-                        # someone specified an empty 'vars:', so reset
-                        # it to the vars we currently have
-                        p['vars'] = play_vars.copy()
+                    p['vars'] = self._extend_play_vars(p, play_vars)
                     # now add in the vars_files
                     p['vars_files'] = utils.list_union(p.get('vars_files', []), play_vars_files)
 
