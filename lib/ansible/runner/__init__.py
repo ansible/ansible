@@ -612,7 +612,7 @@ class Runner(object):
         inject['vars']        = self.module_vars
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
-        inject['playbook_dir'] = self.basedir
+        inject['playbook_dir'] = os.path.abspath(self.basedir)
 
         # template this one is available, callbacks use this
         delegate_to = self.module_vars.get('delegate_to')
