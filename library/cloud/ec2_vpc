@@ -414,7 +414,7 @@ def create_vpc(module, vpc_conn):
             try:
                 route_table = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",vpc.id)])
                 if len(route_table) > 0:
-                    vpc_route_table =  = route_table[0]
+                    vpc_route_table = route_table[0]
                 else:
                     module.fail_json(msg='Coudlnt find any route tables')
 
@@ -428,17 +428,18 @@ def create_vpc(module, vpc_conn):
                     peer_vpc_route_table = route_table[0]
                 else:
                     module.fail_json(msg='Coudlnt find any route tables')
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to retrieve tables {0}'.format(e))
 
-            
             # Lets route on the first side.
             try:
-                vpc_conn.create_route(route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+                vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
 
             # Lets route on the other side if we own both vpc.
             try:
-                vpc_conn.create_route(route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+                vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
 
