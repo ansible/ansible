@@ -307,4 +307,6 @@ class FilterModule(object):
 
             # random numbers
             'random': rand,
+
+            'type': type,
         }
