@@ -90,7 +90,7 @@ options:
     aliases: []
   peers:
     description:
-      - A array of dictionary in the form of: { id: vpc_id, route: true / false }
+      - A array of dictionary in the form of: { id: vpc_id, route: true / false, name: "your name" }
     default: null
     required: false
   peer_auto_accept:
