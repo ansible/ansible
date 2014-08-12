@@ -37,7 +37,7 @@ Some other notable changes:
 * ec2_asg: fixes related to proper termination of an autoscaling group
 * win_setup: total memory fact correction
 * ec2_vol: ability to list existing volumes
-* ec2_vol: can set optimized flag
+* ec2: can set optimized flag
 * various parser improvements
 * produce a friendly error message if the SSH key is too permissive
 * ec2_ami_searcH: support for SSD and IOPS provisioned EBS images
