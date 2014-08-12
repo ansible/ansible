@@ -407,10 +407,10 @@ Use Cases
 
 This section covers some additional usage examples built around a specific use case.
 
-.. _example_1:
+.. _network_and_server:
 
-Example 1
-+++++++++
+Network and Server
+++++++++++++++++++
 
 Create an isolated cloud network and build a server
 
@@ -450,10 +450,10 @@ Create an isolated cloud network and build a server
             wait_timeout: 360
           register: rax
 
-.. _example_2:
+.. _complete_environment:
 
-Example 2
-+++++++++
+Complete Environment
+++++++++++++++++++++
 
 Build a complete webserver environment with servers, custom networks and load balancers, install nginx and create a custom index.html
 
@@ -556,6 +556,221 @@ Build a complete webserver environment with servers, custom networks and load ba
           copy: content="{{ inventory_hostname }}" dest=/usr/share/nginx/www/index.html
                 owner=root group=root mode=0644
 
+.. _rackconnect_and_manged_cloud:
+
+RackConnect and Managed Cloud
++++++++++++++++++++++++++++++
+
+When using RackConnect version 2 or Rackspace Managed Cloud there are Rackspace automation tasks that are executed on the servers you create after they are successfully built. If your automation executes before the RackConnect or Managed Cloud automation, you can cause failures and un-usable servers.
+
+These examples show creating servers, and ensuring that the Rackspace automation has completed before Ansible continues onwards.
+
+For simplicity, these examples are joined, however both are only needed when using RackConnect.  When only using Managed Cloud, the RackConnect portion can be ignored.
+
+The RackConnect portions only apply to RackConnect version 2.
+
+.. _using_a_control_machine:
+
+Using a Control Machine
+***********************
+
+.. code-block:: yaml
+
+    - name: Create an exact count of servers
+      hosts: localhost
+      connection: local
+      gather_facts: False
+      tasks:
+        - name: Server build requests
+          local_action:
+            module: rax
+            credentials: ~/.raxpub
+            name: web%03d.example.org
+            flavor: performance1-1
+            image: ubuntu-1204-lts-precise-pangolin
+            disk_config: manual
+            region: DFW
+            state: present
+            count: 1
+            exact_count: yes
+            group: web
+            wait: yes
+          register: rax
+    
+        - name: Add servers to in memory groups
+          local_action:
+            module: add_host
+            hostname: "{{ item.name }}"
+            ansible_ssh_host: "{{ item.rax_accessipv4 }}"
+            ansible_ssh_pass: "{{ item.rax_adminpass }}"
+            ansible_ssh_user: root
+            rax_id: "{{ item.rax_id }}"
+            groups: web,new_web
+          with_items: rax.success
+          when: rax.action == 'create'
+    
+    - name: Wait for rackconnect and managed cloud automation to complete
+      hosts: new_web
+      gather_facts: false
+      tasks:
+        - name: Wait for rackconnnect automation to complete
+          local_action:
+            module: rax_facts
+            credentials: ~/.raxpub
+            id: "{{ rax_id }}"
+            region: DFW
+          register: rax_facts
+          until: rax_facts.ansible_facts['rax_metadata']['rackconnect_automation_status']|default('') == 'DEPLOYED'
+          retries: 30
+          delay: 10
+    
+        - name: Wait for managed cloud automation to complete
+          local_action:
+            module: rax_facts
+            credentials: ~/.raxpub
+            id: "{{ rax_id }}"
+            region: DFW
+          register: rax_facts
+          until: rax_facts.ansible_facts['rax_metadata']['rax_service_level_automation']|default('') == 'Complete'
+          retries: 30
+          delay: 10
+    
+    - name: Base Configure Servers
+      hosts: web
+      roles:
+        - role: users
+    
+        - role: openssh
+          opensshd_PermitRootLogin: "no"
+    
+        - role: ntp
+
+.. _using_ansible_pull:
+
+Using Ansible Pull
+******************
+
+.. code-block:: yaml
+
+    ---
+    - name: Ensure Rackconnect and Managed Cloud Automation is complete
+      hosts: all
+      connection: local
+      tasks:
+        - name: Check for completed bootstrap
+          stat:
+            path: /etc/bootstrap_complete
+          register: bootstrap
+    
+        - name: Get region
+          command: xenstore-read vm-data/provider_data/region
+          register: rax_region
+          when: bootstrap.stat.exists != True
+    
+        - name: Wait for rackconnect automation to complete
+          uri:
+            url: "https://{{ rax_region.stdout|trim }}.api.rackconnect.rackspace.com/v1/automation_status?format=json"
+            return_content: yes
+          register: automation_status
+          when: bootstrap.stat.exists != True
+          until: automation_status['automation_status']|default('') == 'DEPLOYED'
+          retries: 30
+          delay: 10
+    
+        - name: Wait for managed cloud automation to complete
+          wait_for:
+            path: /tmp/rs_managed_cloud_automation_complete
+            delay: 10
+          when: bootstrap.stat.exists != True
+    
+        - name: Set bootstrap completed
+          file:
+            path: /etc/bootstrap_complete
+            state: touch
+            owner: root
+            group: root
+            mode: 0400
+    
+    - name: Base Configure Servers
+      hosts: all
+      connection: local
+      roles:
+        - role: users
+    
+        - role: openssh
+          opensshd_PermitRootLogin: "no"
+    
+        - role: ntp
+
+.. _using_ansible_pull_with_xenstore:
+
+Using Ansible Pull with XenStore
+********************************
+
+.. code-block:: yaml
+
+    ---
+    - name: Ensure Rackconnect and Managed Cloud Automation is complete
+      hosts: all
+      connection: local
+      tasks:
+        - name: Check for completed bootstrap
+          stat:
+            path: /etc/bootstrap_complete
+          register: bootstrap
+
+        - name: Wait for rackconnect_automation_status xenstore key to exist
+          command: xenstore-exists vm-data/user-metadata/rackconnect_automation_status
+          register: rcas_exists
+          when: bootstrap.stat.exists != True
+          failed_when: rcas_exists.rc|int > 1
+          until: rcas_exists.rc|int == 0
+          retries: 30
+          delay: 10
+
+        - name: Wait for rackconnect automation to complete
+          command: xenstore-read vm-data/user-metadata/rackconnect_automation_status
+          register: rcas
+          when: bootstrap.stat.exists != True
+          until: rcas.stdout|replace('"', '') == 'DEPLOYED'
+          retries: 30
+          delay: 10
+
+        - name: Wait for rax_service_level_automation xenstore key to exist
+          command: xenstore-exists vm-data/user-metadata/rax_service_level_automation
+          register: rsla_exists
+          when: bootstrap.stat.exists != True
+          failed_when: rsla_exists.rc|int > 1
+          until: rsla_exists.rc|int == 0
+          retries: 30
+          delay: 10
+
+        - name: Wait for managed cloud automation to complete
+          command: xenstore-read vm-data/user-metadata/rackconnect_automation_status
+          register: rsla
+          when: bootstrap.stat.exists != True
+          until: rsla.stdout|replace('"', '') == 'DEPLOYED'
+          retries: 30
+          delay: 10
+
+        - name: Set bootstrap completed
+          file:
+            path: /etc/bootstrap_complete
+            state: touch
+            owner: root
+            group: root
+            mode: 0400
+    
+    - name: Base Configure Servers
+      hosts: all
+      connection: local
+      roles:
+        - role: users
+    
+        - role: openssh
+          opensshd_PermitRootLogin: "no"
+    
+        - role: ntp
 
 .. _advanced_usage:
 
@@ -580,12 +795,12 @@ and less information has to be shared with remote hosts.
 Orchestration in the Rackspace Cloud
 ++++++++++++++++++++++++++++++++++++
 
-Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other pice of software in an environment.  Complex deployments might have previously required manaul manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additioanl nodes contingent on the current number of running nodes, or the configuration of a clustered application dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:
+Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other pice of software in an environment.  Complex deployments might have previously required manual manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additional nodes contingent on the current number of running nodes, or the configuration of a clustered application dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:
 
 * Servers that are removed from a Cloud Load Balancer one-by-one, updated, verified, and returned to the load balancer pool
 * Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed
 * A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned
-* Servers and load balancers that have DNS receords created and destroyed on creation and decommissioning, respectively
+* Servers and load balancers that have DNS records created and destroyed on creation and decommissioning, respectively
 
 
 

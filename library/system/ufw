@@ -108,6 +108,11 @@ options:
       - Delete rule.
     required: false
     choices: ['yes', 'no']
+  interface:
+    description:
+      - Specify interface for rule.
+    required: false
+    aliases: ['if']
 '''
 
 EXAMPLES = '''
@@ -204,6 +209,9 @@ def main():
 
     if len(commands) < 1:
         module.fail_json(msg="Not any of the command arguments %s given" % commands)
+
+    if('interface' in params and 'direction' not in params):
+      module.fail_json(msg="Direction must be specified when creating a rule on an interface")
 
     # Ensure ufw is available
     ufw_bin = module.get_bin_path('ufw', True)

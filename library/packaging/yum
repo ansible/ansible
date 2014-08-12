@@ -60,9 +60,9 @@ options:
     default: "present"
   enablerepo:
     description:
-      - Repoid of repositories to enable for the install/update operation.
-        These repos will not persist beyond the transaction
-        multiple repos separated with a ','
+      - I(Repoid) of repositories to enable for the install/update operation.
+        These repos will not persist beyond the transaction.
+        When specifying multiple repos, separate them with a ",".
     required: false
     version_added: "0.9"
     default: null
@@ -70,9 +70,9 @@ options:
     
   disablerepo:
     description:
-      - I(repoid) of repositories to disable for the install/update operation
-        These repos will not persist beyond the transaction
-        Multiple repos separated with a ','
+      - I(Repoid) of repositories to disable for the install/update operation.
+        These repos will not persist beyond the transaction.
+        When specifying multiple repos, separate them with a ",".
     required: false
     version_added: "0.9"
     default: null
@@ -107,10 +107,10 @@ EXAMPLES = '''
   yum: name=httpd state=latest
 
 - name: remove the Apache package
-  yum: name=httpd state=removed
+  yum: name=httpd state=absent
 
 - name: install the latest version of Apache from the testing repo
-  yum: name=httpd enablerepo=testing state=installed
+  yum: name=httpd enablerepo=testing state=present
 
 - name: upgrade all packages
   yum: name=* state=latest

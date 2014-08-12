@@ -43,8 +43,7 @@ class ReturnData(object):
         self.diff = diff
 
         if type(self.result) in [ str, unicode ]:
-            self.result = utils.parse_json(self.result)
-
+            self.result = utils.parse_json(self.result, from_remote=True)
 
         if self.host is None:
             raise Exception("host not set")

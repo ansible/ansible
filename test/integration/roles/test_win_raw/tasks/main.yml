@@ -1,0 +1,72 @@
+# test code for the raw module when using winrm connection
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run getmac
+  raw: getmac
+  register: getmac_result
+
+- name: assert that getmac ran
+  assert:
+    that:
+      - "getmac_result.rc == 0"
+      - "getmac_result.stdout"
+      - "not getmac_result.stderr"
+      - "not getmac_result|failed"
+      - "not getmac_result|changed"
+
+- name: run ipconfig with /all argument
+  raw: ipconfig /all
+  register: ipconfig_result
+
+- name: assert that ipconfig ran with /all argument
+  assert:
+    that:
+      - "ipconfig_result.rc == 0"
+      - "ipconfig_result.stdout"
+      - "'Physical Address' in ipconfig_result.stdout"
+      - "not ipconfig_result.stderr"
+      - "not ipconfig_result|failed"
+      - "not ipconfig_result|changed"
+
+- name: run ipconfig with invalid argument
+  raw: ipconfig /badswitch
+  register: ipconfig_invalid_result
+  ignore_errors: true
+
+- name: assert that ipconfig with invalid argument failed
+  assert:
+    that:
+      - "ipconfig_invalid_result.rc != 0"
+      - "ipconfig_invalid_result.stdout" # ipconfig displays errors on stdout.
+      - "not ipconfig_invalid_result.stderr"
+      - "ipconfig_invalid_result|failed"
+      - "not ipconfig_invalid_result|changed"
+
+- name: run an unknown command
+  raw: uname -a
+  register: unknown_result
+  ignore_errors: true
+
+- name: assert that an unknown command failed
+  assert:
+    that:
+      - "unknown_result.rc != 0"
+      - "not unknown_result.stdout"
+      - "unknown_result.stderr" # An unknown command displays error on stderr.
+      - "unknown_result|failed"
+      - "not unknown_result|changed"

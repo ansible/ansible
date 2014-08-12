@@ -24,9 +24,7 @@ short_description: utilize GCE persistent disk resources
 description:
     - This module can create and destroy unformatted GCE persistent disks
       U(https://developers.google.com/compute/docs/disks#persistentdisks).
-      It also supports attaching and detaching disks from running instances
-      but does not support creating boot disks from images or snapshots.  The
-      'gce' module supports creating instances with boot disks.
+      It also supports attaching and detaching disks from running instances.
       Full install/configuration instructions for the gce* modules can
       be found in the comments of ansible/test/gce_tests.py.
 options:
@@ -62,6 +60,20 @@ options:
     required: false
     default: 10
     aliases: []
+  image:
+    description:
+      - the source image to use for the disk
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.7"
+  snapshot:
+    description:
+      - the source snapshot to use for the disk
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.7"
   state:
     description:
       - desired state of the persistent disk
@@ -132,6 +144,8 @@ def main():
             mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
+            image = dict(),
+            snapshot = dict(),
             state = dict(default='present'),
             zone = dict(default='us-central1-b'),
             service_account_email = dict(),
@@ -147,6 +161,8 @@ def main():
     mode = module.params.get('mode')
     name = module.params.get('name')
     size_gb = module.params.get('size_gb')
+    image = module.params.get('image')
+    snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
 
@@ -204,8 +220,20 @@ def main():
                     instance_name, zone), changed=False)
 
         if not disk:
+            if image is not None and snapshot is not None:
+                module.fail_json(
+                    msg='Cannot give both image (%s) and snapshot (%s)' % (
+                        image, snapshot), changed=False)
+            lc_image = None
+            lc_snapshot = None
+            if image is not None:
+                lc_image = gce.ex_get_image(image)
+            elif snapshot is not None:
+                lc_snapshot = gce.ex_get_snapshot(snapshot)
             try:
-                disk = gce.create_volume(size_gb, name, location=zone)
+                disk = gce.create_volume(
+                    size_gb, name, location=zone, image=lc_image,
+                    snapshot=lc_snapshot)
             except ResourceExistsError:
                 pass
             except QuotaExceededError:
@@ -214,6 +242,10 @@ def main():
             except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb
+            if image is not None:
+                json_output['image'] = image
+            if snapshot is not None:
+                json_output['snapshot'] = snapshot
             changed = True
         if inst and not is_attached:
             try:

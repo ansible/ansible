@@ -241,7 +241,7 @@ class RhsmPools(object):
 
     def _load_product_list(self):
         """
-            Loads list of all availaible pools for system in data structure
+            Loads list of all available pools for system in data structure
         """
         args = "subscription-manager list --available"
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)
@@ -250,7 +250,7 @@ class RhsmPools(object):
         for line in stdout.split('\n'):
             # Remove leading+trailing whitespace
             line = line.strip()
-            # An empty line implies the end of a output group
+            # An empty line implies the end of an output group
             if len(line) == 0:
                 continue
             # If a colon ':' is found, parse

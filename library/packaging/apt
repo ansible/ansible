@@ -90,7 +90,7 @@ options:
     default: 'force-confdef,force-confold'
   deb:
      description:
-       - Path to a local .deb package file to install.
+       - Path to a .deb package on the remote machine.
      required: false
      version_added: "1.6"
 requirements: [ python-apt, aptitude ]
@@ -125,7 +125,7 @@ EXAMPLES = '''
 # Run the equivalent of "apt-get update" as a separate step
 - apt: update_cache=yes
 
-# Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
+# Only run "update_cache=yes" if the last one is more than 3600 seconds ago
 - apt: update_cache=yes cache_valid_time=3600
 
 # Pass options to dpkg on run
@@ -291,50 +291,61 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     else:
         return (True, dict(changed=False))
 
-def install_deb(m, debfile, cache, force, install_recommends, dpkg_options):
+def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
     changed=False
-    pkg = apt.debfile.DebPackage(debfile)
+    deps_to_install = []
+    pkgs_to_install = []
+    for deb_file in debs.split(','):
+        pkg = apt.debfile.DebPackage(deb_file)
 
-    # Check if it's already installed
-    if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
-        m.exit_json(changed=False)
+        # Check if it's already installed
+        if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
+            continue
+        # Check if package is installable
+        if not pkg.check():
+            m.fail_json(msg=pkg._failure_string)
 
-    # Check if package is installable
-    if not pkg.check():
-        m.fail_json(msg=pkg._failure_string)
+        # add any missing deps to the list of deps we need
+        # to install so they're all done in one shot
+        deps_to_install.extend(pkg.missing_deps)
 
-    (success, retvals) = install(m=m, pkgspec=pkg.missing_deps,
-                                 cache=cache,
-                                 install_recommends=install_recommends,
-                                 dpkg_options=expand_dpkg_options(dpkg_options))
-    if not success:
-        m.fail_json(**retvals)
-    changed = retvals['changed']
+        # and add this deb to the list of packages to install
+        pkgs_to_install.append(deb_file)
 
+    # install the deps through apt
+    retvals = {}
+    if len(deps_to_install) > 0:
+        (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
+                                     install_recommends=install_recommends,
+                                     dpkg_options=expand_dpkg_options(dpkg_options))
+        if not success:
+            m.fail_json(**retvals)
+        changed = retvals.get('changed', False)
 
-    options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
+    if len(pkgs_to_install) > 0:
+        options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
+        if m.check_mode:
+            options += " --simulate"
+        if force:
+            options += " --force-yes"
 
-    if m.check_mode:
-        options += " --simulate"
-    if force:
-        options += " --force-yes"
+        cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
+        rc, out, err = m.run_command(cmd)
+        if "stdout" in retvals:
+            stdout = retvals["stdout"] + out
+        else:
+            stdout = out
+        if "stderr" in retvals:
+            stderr = retvals["stderr"] + err
+        else:
+            stderr = err
 
-
-    cmd = "dpkg %s -i %s" % (options, debfile)
-    rc, out, err = m.run_command(cmd)
-
-    if "stdout" in retvals:
-        stdout = retvals["stdout"] + out
+        if rc == 0:
+            m.exit_json(changed=True, stdout=stdout, stderr=stderr)
+        else:
+            m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     else:
-        stdout = out
-    if "stderr" in retvals:
-        stderr = retvals["stderr"] + err
-    else:
-        stderr = err
-    if rc == 0:
-        m.exit_json(changed=True, stdout=stdout, stderr=stderr)
-    else:
-        m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
+        m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''))
 
 def remove(m, pkgspec, cache, purge=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -367,7 +378,7 @@ def remove(m, pkgspec, cache, purge=False,
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
         m.exit_json(changed=True, stdout=out, stderr=err)
 
-def upgrade(m, mode="yes", force=False,
+def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     if m.check_mode:
         check_arg = '--simulate'
@@ -403,6 +414,10 @@ def upgrade(m, mode="yes", force=False,
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
                                     force_yes, check_arg, upgrade_command)
+
+    if default_release:
+        cmd += " -t '%s'" % (default_release,)
+
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
@@ -417,7 +432,7 @@ def main():
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name']),
+            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
@@ -497,7 +512,8 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, dpkg_options)
+            upgrade(module, p['upgrade'], force_yes,
+                    p['default_release'], dpkg_options)
 
         if p['deb']:
             if p['state'] != "installed":
@@ -506,7 +522,7 @@ def main():
                         install_recommends=install_recommends,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        packages = p['package'].split(',')
+        packages = p['package']
         latest = p['state'] == 'latest'
         for package in packages:
             if package.count('=') > 1:

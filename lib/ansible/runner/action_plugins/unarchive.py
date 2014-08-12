@@ -54,7 +54,7 @@ class ActionModule(object):
             result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
-        dest = os.path.expanduser(dest)
+        dest = os.path.expanduser(dest) # CCTODO: Fix path for Windows hosts.
         source = template.template(self.runner.basedir, os.path.expanduser(source), inject)
         if copy:
             if '_original_file' in inject:
@@ -77,8 +77,13 @@ class ActionModule(object):
         # fix file permissions when the copy is done as a different user
         if copy:
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
-            module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+                self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
+            # Build temporary module_args.
+            new_module_args = dict(
+                src=tmp_src,
+                original_basename=os.path.basename(source),
+            )
+            module_args = utils.merge_module_args(module_args, new_module_args)
         else:
             module_args = "%s original_basename=%s" % (module_args, pipes.quote(os.path.basename(source)))
         return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)

@@ -22,6 +22,7 @@ import pipes
 import shutil
 import tempfile
 import base64
+import re
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
@@ -85,6 +86,7 @@ class ActionModule(object):
         dest = options.get('dest', None)
         delimiter = options.get('delimiter', None)
         remote_src = utils.boolean(options.get('remote_src', 'yes'))
+        regexp = options.get('regexp', None)
 
 
         if src is None or dest is None:
@@ -99,8 +101,12 @@ class ActionModule(object):
             # the source is local, so expand it here
             src = os.path.expanduser(src)
 
+        _re = None
+        if regexp is not None:
+            _re = re.compile(regexp)
+
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter)
+        path = self._assemble_from_fragments(src, delimiter, _re)
 
         pathmd5 = utils.md5s(path)
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
@@ -119,17 +125,28 @@ class ActionModule(object):
 
             # fix file permissions when the copy is done as a different user
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+                self.runner._remote_chmod(conn, 'a+r', xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            new_module_args = dict(
+                src=xfered,
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             if self.runner.noop_on_check(inject):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
-                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject)
                 res.diff = dict(after=resultant)
                 return res
         else:
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
+            new_module_args = dict(
+                src=xfered,
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
+
+            return self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject)

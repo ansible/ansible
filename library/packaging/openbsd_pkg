@@ -53,6 +53,12 @@ EXAMPLES = '''
 
 # Make sure nmap is not installed
 - openbsd_pkg: name=nmap state=absent
+
+# Specify a pkg flavour with '--'
+- openbsd_pkg: name=vim--nox11 state=present
+
+# Specify the default flavour to avoid ambiguity errors
+- openbsd_pkg: name=vim-- state=present
 '''
 
 # Control if we write debug information to syslog.

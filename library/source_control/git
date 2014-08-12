@@ -61,7 +61,7 @@ options:
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
     key_file:
-        requird: false
+        required: false
         default: None
         version_added: "1.5"
         description:
@@ -101,9 +101,7 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.2"
         description:
-            - If C(yes), repository will be updated using the supplied
-              remote.  Otherwise the repo will be left untouched.
-              Prior to 1.2, this was always 'yes' and could not be disabled.
+            - If C(no), just returns information about the repository without updating.
     executable:
         required: false
         default: null
@@ -181,7 +179,15 @@ def get_submodule_update_params(module, git_path, cwd):
 
 def write_ssh_wrapper():
     module_dir = get_module_path()
-    fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+    try:
+        # make sure we have full permission to the module_dir, which
+        # may not be the case if we're sudo'ing to a non-root user
+        if os.access(module_dir, os.W_OK|os.R_OK|os.X_OK):
+            fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+        else:
+            raise OSError
+    except (IOError, OSError):
+        fd, wrapper_path = tempfile.mkstemp()
     fh = os.fdopen(fd, 'w+b')
     template = """#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
@@ -393,6 +399,9 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
+    (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to set a new url %s for %s: %s" % (repo, remote, out0 + err0))
     if bare:
         (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
     else:
@@ -505,6 +514,7 @@ def main():
     if key_file or ssh_opts:
         ssh_wrapper = write_ssh_wrapper()
         set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+        module.add_cleanup_file(path=ssh_wrapper)
 
     # add the git repo's hostkey 
     if module.params['ssh_opts'] is not None:

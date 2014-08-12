@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible
-.\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 11/27/2013
+.\"    Author: :doctype:manpage
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 05/26/2014
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.4.1
+.\"    Source: Ansible 1.7
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "11/27/2013" "Ansible 1\&.4\&.1" "System administration commands"
+.TH "ANSIBLE" "1" "05/26/2014" "Ansible 1\&.7" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -25,7 +34,7 @@ ansible \- run a command somewhere else
 ansible <host\-pattern> [\-f forks] [\-m module_name] [\-a args]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
 .SH "ARGUMENTS"
 .PP
 \fBhost\-pattern\fR
@@ -73,7 +82,7 @@ search path to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&. This can also be set with the ANSIBLE_LIBRARY environment variable\&.
 .RE
 .PP
-\fB\-a\fR \'\fIARGUMENTS\fR\', \fB\-\-args=\fR\'\fIARGUMENTS\fR\'
+\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
 .RS 4
 The
 \fIARGUMENTS\fR
@@ -165,7 +174,7 @@ Further limits hosts with a regex pattern\&.
 .sp
 Ansible stores the hosts it can potentially operate on in an inventory file\&. The syntax is one host per line\&. Groups headers are allowed and are included on their own line, enclosed in square brackets that start the line\&.
 .sp
-Ranges of hosts are also supported\&. For more information and additional options, see the documentation on http://ansible\&.github\&.com/\&.
+Ranges of hosts are also supported\&. For more information and additional options, see the documentation on http://docs\&.ansible\&.com/\&.
 .SH "FILES"
 .sp
 /etc/ansible/hosts \(em Default inventory file
@@ -196,4 +205,10 @@ Ansible is released under the terms of the GPLv3 License\&.
 .sp
 \fBansible\-playbook\fR(1), \fBansible\-pull\fR(1), \fBansible\-doc\fR(1)
 .sp
-Extensive documentation as well as IRC and mailing list info is available on the ansible home page: https://ansible\&.github\&.com/
+Extensive documentation is available in the documentation site: http://docs\&.ansible\&.com\&. IRC and mailing list info can be found in file CONTRIBUTING\&.md, available in: https://github\&.com/ansible/ansible
+.SH "AUTHOR"
+.PP
+\fB:doctype:manpage\fR
+.RS 4
+Author.
+.RE

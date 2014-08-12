@@ -35,7 +35,6 @@
         - "'end' in async_result"
         - "'finished' in async_result"
         - "'invocation' in async_result"
-        - "'item' in async_result"
         - "'rc' in async_result"
         - "'start' in async_result"
         - "'stderr' in async_result"

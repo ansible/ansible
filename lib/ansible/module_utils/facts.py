@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import stat
 import array
 import errno
 import fcntl
@@ -30,6 +31,8 @@ import datetime
 import getpass
 import ConfigParser
 import StringIO
+
+from string import maketrans
 
 try:
     import selinux
@@ -73,7 +76,7 @@ class Facts(object):
     """
     This class should only attempt to populate those facts that
     are mostly generic to all systems.  This includes platform facts,
-    service facts (eg. ssh keys or selinux), and distribution facts.
+    service facts (e.g. ssh keys or selinux), and distribution facts.
     Anything that requires extensive code or may have more than one
     possible implementation to establish facts for a given topic should
     subclass Facts.
@@ -109,6 +112,8 @@ class Facts(object):
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
+                 { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
     def __init__(self):
@@ -173,7 +178,7 @@ class Facts(object):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact','')
-            if os.access(fn, os.X_OK):
+            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
                 # run it
                 # try to read it as json first
                 # if that fails read it with ConfigParser
@@ -264,7 +269,7 @@ class Facts(object):
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
             for (path, name) in Facts.OSDIST_DICT.items():
-                if os.path.exists(path):
+                if os.path.exists(path) and os.path.getsize(path) > 0:
                     if self.facts['distribution'] == 'Fedora':
                         pass
                     elif name == 'RedHat':
@@ -322,12 +327,15 @@ class Facts(object):
         data = get_file_content('/proc/cmdline')
         if data:
             self.facts['cmdline'] = {}
-            for piece in shlex.split(data):
-                item = piece.split('=', 1)
-                if len(item) == 1:
-                    self.facts['cmdline'][item[0]] = True
-                else:
-                    self.facts['cmdline'][item[0]] = item[1]
+            try:
+                for piece in shlex.split(data):
+                    item = piece.split('=', 1)
+                    if len(item) == 1:
+                        self.facts['cmdline'][item[0]] = True
+                    else:
+                        self.facts['cmdline'][item[0]] = item[1]
+            except ValueError, e:
+                pass
 
     def get_public_ssh_host_keys(self):
         dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
@@ -559,7 +567,7 @@ class LinuxHardware(Hardware):
             key = data[0].strip()
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key == 'model name' or key == 'Processor':
+            if key == 'model name' or key == 'Processor' or key == 'vendor_id':
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
                 self.facts['processor'].append(data[1].strip())
@@ -576,12 +584,15 @@ class LinuxHardware(Hardware):
                 sockets[physid] = int(data[1].strip())
             elif key == 'siblings':
                 cores[coreid] = int(data[1].strip())
-        self.facts['processor_count'] = sockets and len(sockets) or i
-        self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
-        self.facts['processor_threads_per_core'] = ((cores.values() and
-            cores.values()[0] or 1) / self.facts['processor_cores'])
-        self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
-            self.facts['processor_count'] * self.facts['processor_cores'])
+            elif key == '# processors':
+                self.facts['processor_cores'] = int(data[1].strip())
+        if self.facts['architecture'] != 's390x':
+            self.facts['processor_count'] = sockets and len(sockets) or i
+            self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+            self.facts['processor_threads_per_core'] = ((cores.values() and
+                cores.values()[0] or 1) / self.facts['processor_cores'])
+            self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+                self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
@@ -737,7 +748,9 @@ class LinuxHardware(Hardware):
 
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
-                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
+                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/physical_block_size")
+                    if not part['sectorsize']:
+                        part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size",512)
                     part['size'] = module.pretty_bytes((float(part['sectors']) * float(part['sectorsize'])))
                     d['partitions'][partname] = part
 
@@ -752,9 +765,9 @@ class LinuxHardware(Hardware):
             d['sectors'] = get_file_content(sysdir + "/size")
             if not d['sectors']:
                 d['sectors'] = 0
-            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size")
+            d['sectorsize'] = get_file_content(sysdir + "/queue/physical_block_size")
             if not d['sectorsize']:
-                d['sectorsize'] = 512
+                d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size",512)
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
@@ -906,9 +919,10 @@ class OpenBSDHardware(Hardware):
         # total: 69268k bytes allocated = 0k used, 69268k available
         rc, out, err = module.run_command("/sbin/swapctl -sk")
         if rc == 0:
+            swaptrans = maketrans(' ', ' ')
             data = out.split()
-            self.facts['swapfree_mb'] = long(data[-2].translate(None, "kmg")) / 1024
-            self.facts['swaptotal_mb'] = long(data[1].translate(None, "kmg")) / 1024
+            self.facts['swapfree_mb'] = long(data[-2].translate(swaptrans, "kmg")) / 1024
+            self.facts['swaptotal_mb'] = long(data[1].translate(swaptrans, "kmg")) / 1024
 
     def get_processor_facts(self):
         processor = []
@@ -1009,7 +1023,7 @@ class FreeBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -1136,7 +1150,7 @@ class NetBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
 class AIX(Hardware):
     """
@@ -1292,9 +1306,18 @@ class HPUX(Hardware):
         data = int(re.sub(' +',' ',out).split(' ')[5].strip())
         self.facts['memfree_mb'] = pagesize * data / 1024 / 1024
         if self.facts['architecture'] == '9000/800':
-            rc, out, err = module.run_command("grep Physical /var/adm/syslog/syslog.log")
-            data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
-            self.facts['memtotal_mb'] = int(data) / 1024
+            try:
+                rc, out, err = module.run_command("grep Physical /var/adm/syslog/syslog.log")
+                data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
+                self.facts['memtotal_mb'] = int(data) / 1024
+            except AttributeError:
+                #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
+                #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
+                if os.access("/dev/kmem", os.R_OK):
+                    rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
+                    if not err:
+                      data = out
+                      self.facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
@@ -1311,8 +1334,11 @@ class HPUX(Hardware):
         rc, out, err = module.run_command("model")
         self.facts['model'] = out.strip()
         if self.facts['architecture'] == 'ia64':
+            separator = ':'
+            if self.facts['distribution_version'] == "B.11.23":
+                separator = '='
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' | grep -v BMC", use_unsafe_shell=True)
-            self.facts['firmware_version'] = out.split(':')[1].strip()
+            self.facts['firmware_version'] = out.split(separator)[1].strip()
 
 
 class Darwin(Hardware):
@@ -1361,7 +1387,9 @@ class Darwin(Hardware):
         return system_profile
 
     def get_mac_facts(self):
-        self.facts['model'] = self.sysctl['hw.model']
+        rc, out, err = module.run_command("sysctl hw.model")
+        if rc == 0:
+            self.facts['model'] = out.splitlines()[-1].split()[1]
         self.facts['osversion'] = self.sysctl['kern.osversion']
         self.facts['osrevision'] = self.sysctl['kern.osrevision']
 
@@ -1376,7 +1404,10 @@ class Darwin(Hardware):
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024
-        self.facts['memfree_mb'] = long(self.sysctl['hw.usermem']) / 1024 / 1024
+
+        rc, out, err = module.run_command("sysctl hw.usermem")
+        if rc == 0:
+            self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
 class Network(Facts):
     """
@@ -1524,7 +1555,7 @@ class LinuxNetwork(Network):
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
 
-            # Check whether a interface is in promiscuous mode
+            # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
                 promisc_mode = False
                 # The second byte indicates whether the interface is in promiscuous mode.
@@ -1553,7 +1584,7 @@ class LinuxNetwork(Network):
                         iface = words[-1]
                         if iface != device:
                             interfaces[iface] = {}
-                        if not secondary or "ipv4" not in interfaces[iface]:
+                        if not secondary and "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
                                                          'netmask': netmask,
                                                          'network': network}
@@ -2014,8 +2045,7 @@ class SunOSNetwork(GenericBsdIfconfigNetwork, Network):
         else:
             current_if = interfaces[device]
         flags = self.get_options(words[1])
-        if 'IPv4' in flags:
-            v = 'ipv4'
+        v = 'ipv4'
         if 'IPv6' in flags:
             v = 'ipv6'
         current_if[v].append({'flags': flags, 'mtu': words[3]})
@@ -2162,10 +2192,24 @@ class LinuxVirtual(Virtual):
                 elif re.match('^vendor_id.*PowerVM Lx86', line):
                     self.facts['virtualization_type'] = 'powervm_lx86'
                 elif re.match('^vendor_id.*IBM/S390', line):
-                    self.facts['virtualization_type'] = 'ibm_systemz'
+                    self.facts['virtualization_type'] = 'PR/SM'
+                    lscpu = module.get_bin_path('lscpu')
+                    if lscpu:
+                        rc, out, err = module.run_command(["lscpu"])
+                        if rc == 0:
+                            for line in out.split("\n"):
+                                data = line.split(":", 1)
+                                key = data[0].strip()
+                                if key == 'Hypervisor':
+                                    self.facts['virtualization_type'] = data[1].strip()
+                    else:
+                        self.facts['virtualization_type'] = 'ibm_systemz'
                 else:
                     continue
-                self.facts['virtualization_role'] = 'guest'
+                if self.facts['virtualization_type'] == 'PR/SM':
+                    self.facts['virtualization_role'] = 'LPAR'
+                else:
+                    self.facts['virtualization_role'] = 'guest'
                 return
 
         # Beware that we can have both kvm and virtualbox running on a single system

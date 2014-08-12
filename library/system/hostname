@@ -27,7 +27,7 @@ short_description: Manage hostname
 requirements: [ hostname ]
 description:
     - Set system's hostname
-    - Currently implemented on only Debian, Ubuntu, RedHat and CentOS.
+    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI.
 options:
     name:
         required: true
@@ -38,6 +38,24 @@ options:
 EXAMPLES = '''
 - hostname: name=web01
 '''
+
+from distutils.version import LooseVersion
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+
+# wrap get_distribution_version in case it returns a string
+def _get_distribution_version():
+    distribution_version = get_distribution_version()
+
+    if type(distribution_version) is str:
+        distribution_version = 0
+    elif type(distribution_version) is None:
+        distribution_version = 0
+
+    return distribution_version
+
 
 class UnimplementedStrategy(object):
     def __init__(self, module):
@@ -135,6 +153,7 @@ class GenericStrategy(object):
     def set_permanent_hostname(self, name):
         pass
 
+
 # ===========================================
 
 class DebianStrategy(GenericStrategy):
@@ -150,7 +169,7 @@ class DebianStrategy(GenericStrategy):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError, err:
-                self.module.fail_json(msg="failed to write file: %s" % 
+                self.module.fail_json(msg="failed to write file: %s" %
                     str(err))
         try:
             f = open(self.HOSTNAME_FILE)
@@ -173,15 +192,6 @@ class DebianStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 
-class DebianHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Debian'
-    strategy_class = DebianStrategy
-
-class UbuntuHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Ubuntu'
-    strategy_class = DebianStrategy
 
 # ===========================================
 
@@ -231,36 +241,7 @@ class RedHatStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 
-class RedHat5Hostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Redhat'
-    strategy_class = RedHatStrategy
 
-class RedHatServerHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux server'
-    strategy_class = RedHatStrategy
-
-class RedHatWorkstationHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux workstation'
-    strategy_class = RedHatStrategy
-
-class CentOSHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Centos'
-    strategy_class = RedHatStrategy
-
-class AmazonLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Amazon'
-    strategy_class = RedHatStrategy
-
-class ScientificLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Scientific'
-    strategy_class = RedHatStrategy
-    
 # ===========================================
 
 class FedoraStrategy(GenericStrategy):
@@ -290,7 +271,7 @@ class FedoraStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
-        return out
+        return out.strip()
 
     def set_permanent_hostname(self, name):
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
@@ -303,6 +284,9 @@ class FedoraStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
+
+
+# ===========================================
 
 class FedoraHostname(Hostname):
     platform = 'Linux'
@@ -318,6 +302,69 @@ class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
     strategy_class = FedoraStrategy
+
+class RedHat5Hostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Redhat'
+    strategy_class = RedHatStrategy
+
+class RedHatServerHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux server'
+    distribution_version = _get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
+
+class RedHatWorkstationHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux workstation'
+    distribution_version = _get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
+
+class CentOSHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Centos'
+    strategy_class = RedHatStrategy
+
+class CentOSLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Centos linux'
+    strategy_class = FedoraStrategy
+
+class ScientificHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Scientific'
+    strategy_class = RedHatStrategy
+
+class ScientificLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Scientific linux'
+    strategy_class = RedHatStrategy
+
+class AmazonLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Amazon'
+    strategy_class = RedHatStrategy
+
+class DebianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Debian'
+    strategy_class = DebianStrategy
+
+class UbuntuHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Ubuntu'
+    strategy_class = DebianStrategy
+
+class LinaroHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Linaro'
+    strategy_class = DebianStrategy
 
 # ===========================================
 
@@ -344,6 +391,4 @@ def main():
 
     module.exit_json(changed=changed, name=name)
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()

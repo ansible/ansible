@@ -17,6 +17,7 @@
 
 from ansible import errors
 from ansible import utils
+from ansible.module_utils.splitter import split_args
 import os
 import ansible.utils.template as template
 import sys
@@ -31,7 +32,7 @@ class Task(object):
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-        'su', 'su_user', 'su_pass', 'no_log',
+        'su', 'su_user', 'su_pass', 'no_log', 'run_once',
     ]
 
     # to prevent typos and such
@@ -41,7 +42,7 @@ class Task(object):
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-         'su', 'su_user', 'su_pass', 'no_log',
+         'su', 'su_user', 'su_pass', 'no_log', 'run_once',
     ]
 
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
@@ -122,6 +123,7 @@ class Task(object):
         self.environment  = ds.get('environment', {})
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false"))
+        self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 
         #Code to allow do until feature in a Task 
         if 'until' in ds:
@@ -206,11 +208,15 @@ class Task(object):
         self.changed_when = ds.get('changed_when', None)
         self.failed_when = ds.get('failed_when', None)
 
+        # combine the default and module vars here for use in templating
+        all_vars = self.default_vars.copy()
+        all_vars = utils.combine_vars(all_vars, self.module_vars)
+
         self.async_seconds = ds.get('async', 0)  # not async by default
-        self.async_seconds = template.template_from_string(play.basedir, self.async_seconds, self.module_vars)
+        self.async_seconds = template.template_from_string(play.basedir, self.async_seconds, all_vars)
         self.async_seconds = int(self.async_seconds)
         self.async_poll_interval = ds.get('poll', 10)  # default poll = 10 seconds
-        self.async_poll_interval = template.template_from_string(play.basedir, self.async_poll_interval, self.module_vars)
+        self.async_poll_interval = template.template_from_string(play.basedir, self.async_poll_interval, all_vars)
         self.async_poll_interval = int(self.async_poll_interval)
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
@@ -233,13 +239,20 @@ class Task(object):
             self.notify = [ self.notify ]
 
         # split the action line into a module name + arguments
-        tokens = self.action.split(None, 1)
+        try:
+            tokens = split_args(self.action)
+        except Exception, e:
+            if "unbalanced" in str(e):
+                raise errors.AnsibleError("There was an error while parsing the task %s.\n" % repr(self.action) + \
+                                          "Make sure quotes are matched or escaped properly")
+            else:
+                raise
         if len(tokens) < 1:
             raise errors.AnsibleError("invalid/missing action in task. name: %s" % self.name)
         self.module_name = tokens[0]
         self.module_args = ''
         if len(tokens) > 1:
-            self.module_args = tokens[1]
+            self.module_args = " ".join(tokens[1:])
 
         import_tags = self.module_vars.get('tags',[])
         if type(import_tags) in [int,float]:
@@ -253,9 +266,13 @@ class Task(object):
         if len(incompatibles) > 1:
             raise errors.AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
 
-        # make first_available_file accessable to Runner code
+        # make first_available_file accessible to Runner code
         if self.first_available_file:
             self.module_vars['first_available_file'] = self.first_available_file
+            # make sure that the 'item' variable is set when using
+            # first_available_file (issue #8220)
+            if 'item' not in self.module_vars:
+                self.module_vars['item'] = ''
 
         if self.items_lookup_plugin is not None:
             self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
@@ -283,6 +300,7 @@ class Task(object):
         self.tags.extend(import_tags)
 
         if additional_conditions:
-            new_conditions = additional_conditions
-            new_conditions.append(self.when)
+            new_conditions = additional_conditions[:]
+            if self.when:
+                new_conditions.append(self.when)
             self.when = new_conditions

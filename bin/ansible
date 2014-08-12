@@ -94,7 +94,7 @@ class Cli(object):
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
-            callbacks.display("No hosts matched")
+            callbacks.display("No hosts matched", stderr=True)
             sys.exit(0)
 
         if options.listhosts:
@@ -124,24 +124,15 @@ class Cli(object):
         (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
 
         # read vault_pass from a file
-        if options.vault_password_file:
-            this_path = os.path.expanduser(options.vault_password_file)
-            try:
-                f = open(this_path, "rb")
-                tmp_vault_pass=f.read().strip()
-                f.close()
-            except (OSError, IOError), e:
-                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+        if not options.ask_vault_pass and options.vault_password_file:
+            vault_pass = utils.read_vault_file(options.vault_password_file)
 
-            if not options.ask_vault_pass:
-                vault_pass = tmp_vault_pass
-
-        inventory_manager = inventory.Inventory(options.inventory)
+        inventory_manager = inventory.Inventory(options.inventory, vault_password=vault_pass)
         if options.subset:
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
-            callbacks.display("No hosts matched")
+            callbacks.display("No hosts matched", stderr=True)
             sys.exit(0)
 
         if options.listhosts:

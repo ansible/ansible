@@ -120,8 +120,6 @@ EXAMPLES = '''
     credentials: /path/to/credentials
 '''
 
-import os
-
 try:
     import pyrax
     HAS_PYRAX = True
@@ -165,20 +163,6 @@ def _get_primary_nodes(lb):
         if _is_primary(node):
             nodes.append(node)
     return nodes
-
-
-def _node_to_dict(node):
-    """Return a dictionary containing node details"""
-    if not node:
-        return {}
-    return {
-        'address': node.address,
-        'condition': node.condition,
-        'id': node.id,
-        'port': node.port,
-        'type': node.type,
-        'weight': node.weight,
-    }
 
 
 def main():
@@ -241,7 +225,7 @@ def main():
 
     node = _get_node(lb, node_id, address, port)
 
-    result = _node_to_dict(node)
+    result = rax_clb_node_to_dict(node)
 
     if state == 'absent':
         if not node:  # Removing a non-existent node

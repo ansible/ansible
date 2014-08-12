@@ -46,10 +46,14 @@ class InventoryScript(object):
         self.host_vars_from_top = None
         self.groups = self._parse(stderr)
 
+
     def _parse(self, err):
 
         all_hosts = {}
+
+        # not passing from_remote because data from CMDB is trusted
         self.raw  = utils.parse_json(self.data)
+
         all       = Group('all')
         groups    = dict(all=all)
         group     = None
@@ -60,7 +64,7 @@ class InventoryScript(object):
             raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
- 
+
             # in Ansible 1.3 and later, a "_meta" subelement may contain
             # a variable "hostvars" which contains a hash for each host
             # if this "hostvars" exists at all then do not call --host for each
@@ -97,8 +101,6 @@ class InventoryScript(object):
                         all.set_variable(k, v)
                     else:
                         group.set_variable(k, v)
-            if group.name != all.name:
-                all.add_child_group(group)
 
         # Separate loop to ensure all groups are defined
         for (group_name, data) in self.raw.items():
@@ -108,6 +110,11 @@ class InventoryScript(object):
                 for child_name in data['children']:
                     if child_name in groups:
                         groups[group_name].add_child_group(groups[child_name])
+
+        for group in groups.values():
+            if group.depth == 0 and group.name != 'all':
+                all.add_child_group(group)
+
         return groups
 
     def get_host_variables(self, host):

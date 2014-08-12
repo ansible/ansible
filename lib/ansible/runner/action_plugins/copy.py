@@ -136,8 +136,8 @@ class ActionModule(object):
 
             # If it's recursive copy, destination is always a dir,
             # explicitly mark it so (note - copy module relies on this).
-            if not dest.endswith("/"):
-                dest += "/"
+            if not conn.shell.path_has_trailing_slash(dest):
+                dest = conn.shell.join_path(dest, '')
         else:
             source_files.append((source, os.path.basename(source)))
 
@@ -169,10 +169,10 @@ class ActionModule(object):
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
             # for dest being a dir via remote call below.
-            if dest.endswith("/"):
-                dest_file = os.path.join(dest, source_rel)
+            if conn.shell.path_has_trailing_slash(dest):
+                dest_file = conn.shell.join_path(dest, source_rel)
             else:
-                dest_file = dest
+                dest_file = conn.shell.join_path(dest)
 
             # Attempt to get the remote MD5 Hash.
             remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
@@ -186,7 +186,7 @@ class ActionModule(object):
                     return ReturnData(conn=conn, result=result)
                 else:
                     # Append the relative source location to the destination and retry remote_md5.
-                    dest_file = os.path.join(dest, source_rel)
+                    dest_file = conn.shell.join_path(dest, source_rel)
                     remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
 
             if remote_md5 != '1' and not force:
@@ -228,7 +228,7 @@ class ActionModule(object):
 
                 # fix file permissions when the copy is done as a different user
                 if self.runner.sudo and self.runner.sudo_user != 'root' and not raw:
-                    self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp_path)
+                    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp_path)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
@@ -238,11 +238,16 @@ class ActionModule(object):
 
                 # src and dest here come after original and override them
                 # we pass dest only to make sure it includes trailing slash in case of recursive copy
-                module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
-                                  pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
+                new_module_args = dict(
+                    src=tmp_src,
+                    dest=dest,
+                    original_basename=source_rel
+                )
 
                 if self.runner.no_log:
-                    module_args_tmp = "%s NO_LOG=True" % module_args_tmp
+                    new_module_args['NO_LOG'] = True
+
+                module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
                 module_return = self.runner._execute_module(conn, tmp_path, 'copy', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
@@ -260,12 +265,17 @@ class ActionModule(object):
                 tmp_src = tmp_path + source_rel
 
                 # Build temporary module_args.
-                module_args_tmp = "%s src=%s original_basename=%s" % (module_args,
-                                  pipes.quote(tmp_src), pipes.quote(source_rel))
+                new_module_args = dict(
+                    src=tmp_src,
+                    dest=dest,
+                    original_basename=source_rel
+                )
                 if self.runner.noop_on_check(inject):
-                    module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
+                    new_module_args['CHECKMODE'] = True
                 if self.runner.no_log:
-                    module_args_tmp = "%s NO_LOG=True" % module_args_tmp
+                    new_module_args['NO_LOG'] = True
+
+                module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
                 # Execute the file module.
                 module_return = self.runner._execute_module(conn, tmp_path, 'file', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)

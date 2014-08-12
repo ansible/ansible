@@ -152,7 +152,7 @@ def package_install(module, name, src, proxy, response_file, zone, category):
     os.unlink(adminfile)
     return (rc, out, err)
 
-def package_uninstall(module, name, src):
+def package_uninstall(module, name, src, category):
     adminfile = create_admin_file()
     if category:
         cmd = [ 'pkgrm', '-na', adminfile, '-Y', name ]
@@ -209,10 +209,18 @@ def main():
             (rc, out, err) = package_uninstall(module, name, src, category)
             out = out[:75]
 
-    if rc is None:
-        result['changed'] = False
-    else:
+    # Success, Warning, Interruption, Reboot all, Reboot this return codes
+    if rc in (0, 2, 3, 10, 20):
         result['changed'] = True
+    # no install nor uninstall, or failed
+    else:
+        result['changed'] = False
+
+    # Fatal error, Administration, Administration Interaction return codes
+    if rc in (1, 4 , 5):
+        result['failed'] = True
+    else:
+        result['failed'] = False
 
     if out:
         result['stdout'] = out

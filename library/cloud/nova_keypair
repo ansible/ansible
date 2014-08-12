@@ -19,7 +19,7 @@
 
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions
+    from novaclient import exceptions as exc
     import time
 except ImportError:
     print("failed=True msg='novaclient is required for this module to work'")
@@ -87,23 +87,19 @@ EXAMPLES = '''
 '''
 
 def main():
-    module = AnsibleModule(
-        argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
+    argument_spec = openstack_argument_spec()
+    argument_spec.update(dict(
         name                            = dict(required=True),
         public_key                      = dict(default=None),
         state                           = dict(default='present', choices=['absent', 'present'])
-        ),
-    )
+    ))
+    module = AnsibleModule(argument_spec=argument_spec)
 
     nova = nova_client.Client(module.params['login_username'],
                               module.params['login_password'],
                               module.params['login_tenant_name'],
                               module.params['auth_url'],
+                              region_name=module.params['region_name'],
                               service_type='compute')
     try:
         nova.authenticate()
@@ -115,7 +111,10 @@ def main():
     if module.params['state'] == 'present':
         for key in nova.keypairs.list():
             if key.name == module.params['name']:
-                module.exit_json(changed = False, result = "Key present")
+                if module.params['public_key'] and (module.params['public_key'] != key.public_key ):
+                    module.fail_json(msg = "name {} present but key hash not the same as offered.  Delete key first.".format(key['name']))
+                else:
+                    module.exit_json(changed = False, result = "Key present")            
         try:
             key = nova.keypairs.create(module.params['name'], module.params['public_key'])
         except Exception, e:
@@ -135,5 +134,6 @@ def main():
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
 main()
 

@@ -142,7 +142,7 @@ def main():
         module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)
 
     if state == 'list':
-        module.exit_json(changed=False, **tagdict)
+        module.exit_json(changed=False, tags=tagdict)
     sys.exit(0)
 
 # import module snippets

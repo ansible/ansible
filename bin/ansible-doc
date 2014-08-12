@@ -91,7 +91,7 @@ def get_man_text(doc):
     text = []
     text.append("> %s\n" % doc['module'].upper())
 
-    desc = "".join(doc['description'])
+    desc = " ".join(doc['description'])
 
     text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
     
@@ -108,16 +108,19 @@ def get_man_text(doc):
 
         text.append("%s %s" % (opt_leadin, o))
 
-        desc = "".join(opt['description'])
+        desc = " ".join(opt['description'])
 
         if 'choices' in opt:
             choices = ", ".join(str(i) for i in opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
+        if 'default' in opt:
+            default = str(opt['default'])
+            desc = desc + " [Default: " + default + "]"
         text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
                              subsequent_indent=opt_indent))
 
     if 'notes' in doc and len(doc['notes']) > 0:
-        notes = "".join(doc['notes'])
+        notes = " ".join(doc['notes'])
         text.append("Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
                             subsequent_indent=opt_indent))
 
@@ -142,13 +145,13 @@ def get_man_text(doc):
 def get_snippet_text(doc):
 
     text = []
-    desc = tty_ify("".join(doc['short_description']))
+    desc = tty_ify(" ".join(doc['short_description']))
     text.append("- name: %s" % (desc))
     text.append("  action: %s" % (doc['module']))
 
     for o in sorted(doc['options'].keys()):
         opt = doc['options'][o]
-        desc = tty_ify("".join(opt['description']))
+        desc = tty_ify(" ".join(opt['description']))
 
         if opt.get('required', False):
             s = o + "="
@@ -171,6 +174,8 @@ def get_module_list_text(module_list):
 
         if filename is None:
             continue
+        if filename.endswith(".ps1"):
+            continue
         if os.path.isdir(filename):
             continue
 
@@ -183,7 +188,6 @@ def get_module_list_text(module_list):
         except:
             traceback.print_exc()
             sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
-            pass
     return "\n".join(text)
 
 def main():

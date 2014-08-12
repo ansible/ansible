@@ -93,7 +93,7 @@ And that will provide the most basic form of variable substitution.
 
 This is also valid directly in playbooks, and you'll occasionally want to do things like::
 
-    template: src=foo.cfg.j2 dest={{ remote_install_path}}/foo.cfg
+    template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
 
 In the above example, we used a variable to help decide where to place a file.
 
@@ -173,12 +173,29 @@ The variable value will be used as is, but the template evaluation will raise an
 Defaulting Undefined Variables
 ------------------------------
 
-Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined.
+Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
 
     {{ some_variable | default(5) }}
 
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
+
+.. _list_filters:
+
+List Filters
+------------
+
+These filters all operate on list variables.
+
+.. versionadded:: 1.8
+
+To get the minimum value from list of numbers::
+
+    {{ list1 | min }}
+
+To get the maximum value from a list of numbers::
+
+    {{ [3, 4, 2] | max }}
 
 .. _set_theory_filters:
 
@@ -216,14 +233,13 @@ Version Comparison Filters
 .. versionadded:: 1.6
 
 To compare a version number, such as checking if the ``ansible_distribution_version``
-version is greater than or equal to '12.04', you can use the ``version_compare`` filter::
+version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
 
 The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
 
     {{ ansible_distribution_version | version_compare('12.04', '>=') }}
 
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise
-it will return False.
+If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
 
 The ``version_compare`` filter accepts the following operators::
 
@@ -234,10 +250,10 @@ be used.  The default is ``False``, and if set as ``True`` will use more strict 
 
     {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
-.. _random_filter
+.. _random_filter:
 
 Random Number Filter
---------------------------
+--------------------
 
 .. versionadded:: 1.6
 
@@ -678,6 +694,47 @@ Here is an example of what that might look like::
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
+.. _fact_caching:
+
+Fact Caching
+````````````
+
+.. versionadded:: 1.8
+
+As shown elsewhere in the docs, it is possible for one server to reference variables about another, like so::
+
+    {{ hostvars['asdf.example.com']['ansible_os_family'] }}
+
+With "Fact Caching" disabled, in order to do this, Ansible must have already talked to 'asdf.example.com' in the
+current play, or another play up higher in the playbook.  This is the default configuration of ansible.
+
+To avoid this, Ansible 1.8 allows the ability to save facts between playbook runs, but this feature must be manually
+enabled.  Why might this be useful?
+
+Imagine, for instance, a very large infrastructure with thousands of hosts.  Fact caching could be configured to run nightly, but
+configuration of a small set of servers could run ad-hoc or periodically throughout the day.  With fact-caching enabled, it would
+not be neccessary to "hit" all servers to reference variables and information about them.
+
+With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
+the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
+
+To configure fact caching, enable it in ansible.cfg as follows::
+
+    [defaults]
+    fact_caching = redis
+    fact_caching_timeout = 86400 # seconds
+
+At the time of writing, Redis is the only supported fact caching engine.  
+To get redis up and running, perform the equivalent OS commands::
+
+    yum install redis
+    service redis start
+    pip install redis
+
+Note that the Python redis library should be installed from pip, the version packaged in EPEL is too old for use by Ansible.
+
+In current embodiments, this feature is in beta-level state and the Redis plugin does not support port or password configuration, this is expected to change in the near future.
+
 .. _registered_variables:
 
 Registered Variables
@@ -853,64 +910,6 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax
 Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
 or in a file as above.
 
-.. _conditional_imports:
-
-Conditional Imports
-```````````````````
-
-.. note:: This behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
-
-Sometimes you will want to do certain things differently in a playbook based on certain criteria.
-Having one playbook that works on multiple platforms and OS versions is a good example.
-
-As an example, the name of the Apache package may be different between CentOS and Debian,
-but it is easily handled with a minimum of syntax in an Ansible Playbook::
-
-    ---
-
-    - hosts: all
-      remote_user: root
-      vars_files:
-        - "vars/common.yml"
-        - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
-
-      tasks:
-
-      - name: make sure apache is running
-        service: name={{ apache }} state=running
-
-.. note::
-   The variable 'ansible_os_family' is being interpolated into
-   the list of filenames being defined for vars_files.
-
-As a reminder, the various YAML files contain just keys and values::
-
-    ---
-    # for vars/CentOS.yml
-    apache: httpd
-    somethingelse: 42
-
-How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
-would be 'vars/CentOS.yml', followed by '/vars/os_defaults.yml' if that file
-did not exist.   If no files in the list were found, an error would be raised.
-On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
-falling back on 'vars/os_defaults.yml'. Pretty simple.
-
-To use this conditional import feature, you'll need facter or ohai installed prior to running the playbook, but
-you can of course push this out with Ansible if you like::
-
-    # for facter
-    ansible -m yum -a "pkg=facter ensure=installed"
-    ansible -m yum -a "pkg=ruby-json ensure=installed"
-
-    # for ohai
-    ansible -m yum -a "pkg=ohai ensure=installed"
-
-Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
-from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
-in more streamlined & auditable configuration rules -- especially because there are a
-minimum of decision points to track.
-
 .. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
@@ -983,7 +982,7 @@ See :doc:`playbooks_roles` for more info about this::
     http_port: 80
 
 if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
-by inventory, you should but it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
+by inventory, you should put it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
 
     ---
     # file: roles/x/vars/main.yml
@@ -1030,7 +1029,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
         - { role: something_else }
 
 .. note:: There are some protections in place to avoid the need to namespace variables.  
-          In the above, variables defined in common_settings are most definitely available to 'app_user' and 'something_else' tasks, but if
+          In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
           "something's" guaranteed to have foo set at 12, even if somewhere deep in common settings it set foo to 20.
 
 So, that's precedence, explained in a more direct way.  Don't worry about precedence, just think about if your role is defining a

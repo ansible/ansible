@@ -68,6 +68,24 @@ options:
     required: false
     default: null
     aliases: []
+  spot_price:
+    description:
+      - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
+    required: false
+    default: null
+  instance_monitoring:
+    description:
+      - whether instances in group are launched with detailed monitoring.
+    required: false
+    default: false
+    aliases: []
+  assign_public_ip:
+    description:
+      - whether instances in group are launched with a public IP.
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.8"
 extends_documentation_fragment: aws
 """
 
@@ -126,6 +144,9 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    spot_price = module.params.get('spot_price')
+    instance_monitoring = module.params.get('instance_monitoring')
+    assign_public_ip = module.params.get('assign_public_ip')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -144,7 +165,10 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        spot_price=spot_price,
+        instance_monitoring=instance_monitoring,
+        associate_public_ip_address = assign_public_ip )
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -184,6 +208,9 @@ def main():
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
+            spot_price=dict(type='float'),
+            instance_monitoring=dict(default=False, type='bool'),
+            assign_public_ip=dict(default=False, type='bool')
         )
     )
 

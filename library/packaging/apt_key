@@ -153,8 +153,12 @@ def download_key(module, url):
     # and reuse here
     if url is None:
         module.fail_json(msg="needed a URL but was not specified")
+
     try:
         rsp, info = fetch_url(module, url)
+        if info['status'] != 200:
+            module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
+
         return rsp.read()
     except Exception:
         module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
@@ -250,7 +254,7 @@ def main():
                 keys2 = all_keys(module, keyring, short_format)
                 if len(keys) != len(keys2):
                     changed=True
-                if key_id and not key_id in keys2:
+                if key_id and not key_id[-16:] in keys2:
                     module.fail_json(msg="key does not seem to have been added", id=key_id)
                 module.exit_json(changed=changed)
     elif state == 'absent':

@@ -150,7 +150,10 @@ def main(args):
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
-    inv_opts = 'localhost,'
+    if not options.inventory:
+        inv_opts = 'localhost,'
+    else:
+        inv_opts = options.inventory
     limit_opts = 'localhost:%s:127.0.0.1' % hostname
     repo_opts = "name=%s dest=%s" % (options.url, options.dest)
 

@@ -422,7 +422,7 @@ remote_user
 ===========
 
 This is the default username ansible will connect as for /usr/bin/ansible-playbook.  Note that /usr/bin/ansible will
-always default to the current user::
+always default to the current user if this is not defined::
 
     remote_user = root
 

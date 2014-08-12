@@ -54,6 +54,9 @@ notes:
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
       remote systems. (See also M(facter) and M(ohai).)
     - The filter option filters only the first level subkey below ansible_facts.
+    - If the target host is Windows, you will not currently have the ability to use
+      C(fact_path) or C(filter) as this is provided by a simpler implementation of the module.
+      Different facts are returned for Windows hosts.
 author: Michael DeHaan
 '''
 
@@ -88,7 +91,7 @@ def run_setup(module):
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
     if facter_path is not None:
-        rc, out, err = module.run_command(facter_path + " --json")
+        rc, out, err = module.run_command(facter_path + " --puppet --json")
         facter = True
         try:
             facter_ds = json.loads(out)

@@ -56,6 +56,13 @@ options:
     default: 'no'
     required: false
     version_added: "1.6"
+  compress:
+    description:
+      - Compress file data during the transfer. In most cases, leave this enabled unless it causes problems.
+    choices: [ 'yes', 'no' ]
+    default: 'yes'
+    required: false
+    version_added: "1.7"
   existing_only:
     description:
       - Skip creating new files on receiver.
@@ -205,6 +212,7 @@ def main():
             rsync_path = dict(default=None),
             archive = dict(default='yes', type='bool'),
             checksum = dict(default='no', type='bool'),
+            compress = dict(default='yes', type='bool'),
             existing_only = dict(default='no', type='bool'),
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
@@ -221,8 +229,8 @@ def main():
         supports_check_mode = True
     )
 
-    source = module.params['src']
-    dest = module.params['dest']
+    source = '"' + module.params['src'] + '"'
+    dest = '"' + module.params['dest'] + '"'
     dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
@@ -231,6 +239,7 @@ def main():
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
     checksum = module.params['checksum']
+    compress = module.params['compress']
     existing_only = module.params['existing_only']
     dirs = module.params['dirs']
     # the default of these params depends on the value of archive
@@ -243,7 +252,9 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
 
-    cmd = '%s --delay-updates -FF --compress' % rsync
+    cmd = '%s --delay-updates -FF' % rsync
+    if compress:
+        cmd = cmd + ' --compress'
     if rsync_timeout:
         cmd = cmd + ' --timeout=%s' % rsync_timeout
     if module.check_mode:

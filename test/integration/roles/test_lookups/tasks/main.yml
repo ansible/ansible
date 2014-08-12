@@ -92,7 +92,7 @@
 
 # https://github.com/ansible/ansible/issues/6550
 - name: confirm pipe lookup works with multiple positional args
-  debug: msg="{{ lookup('pipe', 'ls /tmp /') }}"         
+  debug: msg="{{ lookup('pipe', 'ls -l /tmp') }}"         
 
 
 

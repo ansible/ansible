@@ -29,6 +29,8 @@
 
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
+ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
+
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
@@ -43,6 +45,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # of an ansible module. The source of this common code lives
 # in lib/ansible/module_common.py
 
+import locale
 import os
 import re
 import pipes
@@ -52,6 +55,7 @@ import sys
 import syslog
 import types
 import time
+import select
 import shutil
 import stat
 import tempfile
@@ -100,6 +104,44 @@ except ImportError:
     import syslog
     has_journal = False
 
+try:
+    from ast import literal_eval as _literal_eval
+except ImportError:
+    # a replacement for literal_eval that works with python 2.4. from: 
+    # https://mail.python.org/pipermail/python-list/2009-September/551880.html
+    # which is essentially a cut/past from an earlier (2.6) version of python's
+    # ast.py
+    from compiler import parse
+    from compiler.ast import *
+    def _literal_eval(node_or_string):
+        """
+        Safely evaluate an expression node or a string containing a Python
+        expression.  The string or node provided may only consist of the  following
+        Python literal structures: strings, numbers, tuples, lists, dicts,  booleans,
+        and None.
+        """
+        _safe_names = {'None': None, 'True': True, 'False': False}
+        if isinstance(node_or_string, basestring):
+            node_or_string = parse(node_or_string, mode='eval')
+        if isinstance(node_or_string, Expression):
+            node_or_string = node_or_string.node
+        def _convert(node):
+            if isinstance(node, Const) and isinstance(node.value, (basestring, int, float, long, complex)):
+                 return node.value
+            elif isinstance(node, Tuple):
+                return tuple(map(_convert, node.nodes))
+            elif isinstance(node, List):
+                return list(map(_convert, node.nodes))
+            elif isinstance(node, Dict):
+                return dict((_convert(k), _convert(v)) for k, v in node.items)
+            elif isinstance(node, Name):
+                if node.name in _safe_names:
+                    return _safe_names[node.name]
+            elif isinstance(node, UnarySub):
+                return -_convert(node.expr)
+            raise ValueError('malformed string')
+        return _convert(node_or_string)
+
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
     mode = dict(),
@@ -114,6 +156,7 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
+    regexp = dict(), # used by assemble
     delimiter = dict(), # used by assemble
     directory_mode = dict(), # used by copy
 )
@@ -141,6 +184,20 @@ def get_distribution():
         distribution = None
     return distribution
 
+def get_distribution_version():
+    ''' return the distribution version '''
+    if platform.system() == 'Linux':
+        try:
+            distribution_version = platform.linux_distribution()[1]
+            if not distribution_version and os.path.isfile('/etc/system-release'):
+                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
+        except:
+            # FIXME: MethodMissing, I assume?
+            distribution_version = platform.dist()[1]
+    else:
+        distribution_version = None
+    return distribution_version
+
 def load_platform_subclass(cls, *args, **kwargs):
     '''
     used by modules like User to have different implementations based on detected platform.  See User
@@ -165,7 +222,6 @@ def load_platform_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
-
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
@@ -182,6 +238,7 @@ class AnsibleModule(object):
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
         self.no_log = no_log
+        self.cleanup_files = []
         
         self.aliases = {}
         
@@ -189,6 +246,10 @@ class AnsibleModule(object):
             for k, v in FILE_COMMON_ARGUMENTS.iteritems():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
+
+        # check the locale as set by the current environment, and
+        # reset to LANG=C if it's an invalid/unavailable locale
+        self._check_locale()
 
         (self.params, self.args) = self._load_params()
 
@@ -560,6 +621,24 @@ class AnsibleModule(object):
             kwargs['state'] = 'absent'
         return kwargs
 
+    def _check_locale(self):
+        '''
+        Uses the locale module to test the currently set locale
+        (per the LANG and LC_CTYPE environment settings)
+        '''
+        try:
+            # setting the locale to '' uses the default locale
+            # as it would be returned by locale.getdefaultlocale()
+            locale.setlocale(locale.LC_ALL, '')
+        except locale.Error, e:
+            # fallback to the 'C' locale, which may cause unicode
+            # issues but is preferable to simply failing because
+            # of an unknown locale
+            locale.setlocale(locale.LC_ALL, 'C')
+            os.environ['LANG']     = 'C'
+            os.environ['LC_CTYPE'] = 'C'
+        except Exception, e:
+            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
     def _handle_aliases(self):
         aliases_results = {} #alias:canon
@@ -570,7 +649,7 @@ class AnsibleModule(object):
             required = v.get('required', False)
             if default is not None and required:
                 # not alias specific but this is a good place to check this
-                self.fail_json(msg="internal error: required and default are mutally exclusive for %s" % k)
+                self.fail_json(msg="internal error: required and default are mutually exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
@@ -662,6 +741,38 @@ class AnsibleModule(object):
             else:
                 self.fail_json(msg="internal error: do not know how to interpret argument_spec")
 
+    def safe_eval(self, str, locals=None, include_exceptions=False):
+
+        # do not allow method calls to modules
+        if not isinstance(str, basestring):
+            # already templated to a datastructure, perhaps?
+            if include_exceptions:
+                return (str, None)
+            return str
+        if re.search(r'\w\.\w+\(', str):
+            if include_exceptions:
+                return (str, None)
+            return str
+        # do not allow imports
+        if re.search(r'import \w+', str):
+            if include_exceptions:
+                return (str, None)
+            return str
+        try:
+            result = None
+            if not locals:
+                result = _literal_eval(str)
+            else:
+                result = _literal_eval(str, None, locals)
+            if include_exceptions:
+                return (result, None)
+            else:
+                return result
+        except Exception, e:
+            if include_exceptions:
+                return (str, e)
+            return str
+
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
@@ -748,6 +859,8 @@ class AnsibleModule(object):
                 (k, v) = x.split("=",1)
             except Exception, e:
                 self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
+            if k in params:
+                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)
@@ -898,11 +1011,20 @@ class AnsibleModule(object):
     def from_json(self, data):
         return json.loads(data)
 
+    def add_cleanup_file(self, path):
+        if path not in self.cleanup_files:
+            self.cleanup_files.append(path)
+
+    def do_cleanup_files(self):
+        for path in self.cleanup_files:
+            self.cleanup(path)
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(0)
 
@@ -911,6 +1033,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(1)
 
@@ -958,7 +1081,7 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def cleanup(self,tmpfile):
+    def cleanup(self, tmpfile):
         if os.path.exists(tmpfile):
             try:
                 os.unlink(tmpfile)
@@ -988,10 +1111,22 @@ class AnsibleModule(object):
         creating = not os.path.exists(dest)
 
         try:
+            login_name = os.getlogin()
+        except OSError:
+            # not having a tty can cause the above to fail, so
+            # just get the LOGNAME environment variable instead
+            login_name = os.environ.get('LOGNAME', None)
+
+        # if the original login_name doesn't match the currently
+        # logged-in user, or if the SUDO_USER environment variable
+        # is set, then this user has switched their credentials
+        switched_user = login_name and login_name != pwd.getpwuid(os.getuid())[0] or os.environ.get('SUDO_USER')
+
+        try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
-            # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
+            # only try workarounds for errno 18 (cross device), 1 (not permitted) and 13 (permission denied)
             if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
@@ -1001,7 +1136,7 @@ class AnsibleModule(object):
                 prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
 
             try: # leaves tmp file behind when sudo and  not root
-                if os.getenv("SUDO_USER") and os.getuid() != 0:
+                if switched_user and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
                     # copy2 will preserve some metadata
                     shutil.copy2(src, tmp_dest.name)
@@ -1024,14 +1159,14 @@ class AnsibleModule(object):
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(dest, 0666 ^ umask)
-            if os.getenv("SUDO_USER"):
+            if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1042,7 +1177,7 @@ class AnsibleModule(object):
         - check_rc (boolean)  Whether to call fail_json in case of
                               non zero RC.  Default is False.
         - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is False.
+                              Default is True.
         - executable (string) See documentation for subprocess.Popen().
                               Default is None.
         '''
@@ -1091,6 +1226,7 @@ class AnsibleModule(object):
             # that are not balanced
             # source: http://blog.stevenlevithan.com/archives/match-quoted-string
             r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
+            r'^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$', 
             # TODO: add more regex checks here
         ]
         for re_str in clean_re_strings:
@@ -1104,7 +1240,7 @@ class AnsibleModule(object):
             executable=executable,
             shell=shell,
             close_fds=close_fds,
-            stdin= st_in,
+            stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE 
         )
@@ -1122,15 +1258,53 @@ class AnsibleModule(object):
             try:
                 os.chdir(cwd)
             except (OSError, IOError), e:
-                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
+                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
 
         try:
             cmd = subprocess.Popen(args, **kwargs)
 
+            # the communication logic here is essentially taken from that
+            # of the _communicate() function in ssh.py
+
+            stdout = ''
+            stderr = ''
+            rpipes = [cmd.stdout, cmd.stderr]
+
             if data:
                 if not binary_data:
                     data += '\n'
-            out, err = cmd.communicate(input=data)
+                cmd.stdin.write(data)
+                cmd.stdin.close()
+
+            while True:
+                rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+                if cmd.stdout in rfd:
+                    dat = os.read(cmd.stdout.fileno(), 9000)
+                    stdout += dat
+                    if dat == '':
+                        rpipes.remove(cmd.stdout)
+                if cmd.stderr in rfd:
+                    dat = os.read(cmd.stderr.fileno(), 9000)
+                    stderr += dat
+                    if dat == '':
+                        rpipes.remove(cmd.stderr)
+                # only break out if no pipes are left to read or
+                # the pipes are completely read and
+                # the process is terminated
+                if (not rpipes or not rfd) and cmd.poll() is not None:
+                    break
+                # No pipes are left to read but process is not yet terminated
+                # Only then it is safe to wait for the process to be finished
+                # NOTE: Actually cmd.poll() is always None here if rpipes is empty
+                elif not rpipes and cmd.poll() == None:
+                    cmd.wait()
+                    # The process is terminated. Since no pipes to read from are
+                    # left, there is no need to call select() again.
+                    break
+
+            cmd.stdout.close()
+            cmd.stderr.close()
+
             rc = cmd.returncode
         except (OSError, IOError), e:
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
@@ -1138,13 +1312,13 @@ class AnsibleModule(object):
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
 
         if rc != 0 and check_rc:
-            msg = err.rstrip()
-            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+            msg = stderr.rstrip()
+            self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
         os.chdir(prev_dir)
 
-        return (rc, out, err)
+        return (rc, stdout, stderr)
 
     def append_to_file(self, filename, str):
         filename = os.path.expandvars(os.path.expanduser(filename))

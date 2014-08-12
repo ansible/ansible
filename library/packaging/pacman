@@ -204,6 +204,9 @@ def main():
         if not p['name']:
             module.exit_json(changed=True, msg='updated the package master lists')
 
+    if p['update_cache'] and module.check_mode and not p['name']:
+        module.exit_json(changed=True, msg='Would have updated the package cache')
+
     if p['name']:
         pkgs = p['name'].split(',')
 

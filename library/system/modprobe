@@ -1,6 +1,10 @@
 #!/usr/bin/python
 #coding: utf-8 -*-
 
+# (c) 2013, David Stygstra <david.stygstra@gmail.com>
+#
+# This file is part of Ansible
+#
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +25,7 @@ module: modprobe
 short_description: Add or remove kernel modules
 requirements: []
 version_added: 1.4
+author: David Stygstra, Julien Dauphant, Matt Jeffery
 description:
     - Add or remove kernel modules.
 options:

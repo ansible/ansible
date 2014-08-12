@@ -39,7 +39,7 @@ options:
     default: null
   copy:
     description:
-      - Should the file be copied from the local to the remote machine?
+      - "if true, the file is copied from the 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine."
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
@@ -69,6 +69,9 @@ notes:
 EXAMPLES = '''
 # Example from Ansible Playbooks
 - unarchive: src=foo.tgz dest=/var/lib/foo
+
+# Unarchive a file that is already on the remote machine
+- unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
 '''
 
 import os
@@ -120,8 +123,8 @@ class TgzFile(object):
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
-        cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
-        rc, out, err = self.module.run_command(cmd)
+        cmd = '%s -x%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
+        rc, out, err = self.module.run_command(cmd, cwd=self.dest)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
@@ -234,7 +237,9 @@ def main():
 
     # do the unpack
     try:
-        results = handler.unarchive()
+        res_args['extract_results'] = handler.unarchive()
+        if res_args['extract_results']['rc'] != 0:
+            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
     except IOError:
         module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
 

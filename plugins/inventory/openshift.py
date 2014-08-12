@@ -23,7 +23,7 @@ inventory: openshift
 short_description: Openshift gears external inventory script
 description:
   - Generates inventory of Openshift gears using the REST interface
-  - this permit to reuse playbook to setup a Openshift gear
+  - this permit to reuse playbook to setup an Openshift gear
 version_added: None
 author: Michael Scherer
 '''
@@ -113,4 +113,4 @@ if len(sys.argv) == 2 and sys.argv[1] == '--list':
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
     print json.dumps({})
 else:
-    print "Need a argument, either --list or --host <host>"
+    print "Need an argument, either --list or --host <host>"

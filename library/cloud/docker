@@ -107,6 +107,13 @@ options:
     required: false
     default: unix://var/run/docker.sock
     aliases: []
+  docker_api_version:
+    description:
+      - Remote API version to use. This defaults to the current default as specified by docker-py.
+    required: false
+    default: docker-py default remote API version
+    aliases: []
+    version_added: "1.8"
   username:
     description:
       - Set remote API username
@@ -183,6 +190,13 @@ options:
     default: false
     aliases: []
     version_added: "1.6"
+  net:
+    description:
+      - Set Network mode for the container (bridge, none, container:<name|id>, host). Requires docker >= 0.11.
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.8"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
@@ -293,6 +307,14 @@ Create containers with options specified as strings and lists as comma-separated
   sudo: yes
   tasks:
   docker: image=namespace/image_name links=postgresql:db,redis:redis
+
+Create a container with no networking:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  docker: image=namespace/image_name net=none
+
 '''
 
 HAS_DOCKER_PY = True
@@ -358,6 +380,13 @@ class DockerManager:
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
+                # with bind mode 
+                elif len(parts) == 3:
+                    if parts[2] not in ['ro', 'rw']:
+                        self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
+                    ro = parts[2] == 'ro'
+                    self.volumes[parts[1]] = {}
+                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro}
                 # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
                 else:
                     self.volumes[parts[0]] = {}
@@ -380,7 +409,7 @@ class DockerManager:
 
         self.links = None
         if self.module.params.get('links'):
-            self.links = dict(map(lambda x: x.split(':'), self.module.params.get('links')))
+            self.links = self.get_links(self.module.params.get('links'))
 
         self.env = None
         if self.module.params.get('env'):
@@ -388,7 +417,24 @@ class DockerManager:
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
-        self.client = docker.Client(base_url=docker_url.geturl())
+        docker_api_version = module.params.get('docker_api_version')
+        self.client = docker.Client(base_url=docker_url.geturl(), version=docker_api_version)
+
+
+    def get_links(self, links):
+        """
+        Parse the links passed, if a link is specified without an alias then just create the alias of the same name as the link
+        """
+        processed_links = {}
+
+        for link in links:
+            parsed_link = link.split(':', 1)
+            if(len(parsed_link) == 2):
+                processed_links[parsed_link[0]] = parsed_link[1]
+            else:
+                processed_links[parsed_link[0]] = parsed_link[0]
+
+        return processed_links
 
 
     def get_exposed_ports(self, expose_list):
@@ -452,11 +498,17 @@ class DockerManager:
         return binds
 
 
-
     def get_split_image_tag(self, image):
         if '/' in image:
-            image = image.split('/')[1]
+            image = image.split('/')[-1]
         tag = None
+        if image.find(':') > 0:
+            return image.split(':')
+        else:
+            return image, tag
+
+    def get_split_full_image_tag(self, image):
+        tag = "latest"
         if image.find(':') > 0:
             return image.split(':')
         else:
@@ -516,7 +568,7 @@ class DockerManager:
             # '{} {}'.format(entrypoint, command)
             command_matches = (not command or running_command.endswith(command))
 
-            if name_matches or (image_matches and tag_matches and command_matches):
+            if name_matches or (name is None and image_matches and tag_matches and command_matches):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
@@ -561,7 +613,8 @@ class DockerManager:
         try:
             containers = do_create(count, params)
         except:
-            self.client.pull(params['image'])
+            image, tag = self.get_split_full_image_tag(params['image'])
+            self.client.pull(image, tag = tag)
             self.increment_counter('pull')
             containers = do_create(count, params)
 
@@ -575,6 +628,7 @@ class DockerManager:
             'publish_all_ports': self.module.params.get('publish_all_ports'),
             'privileged':   self.module.params.get('privileged'),
             'links': self.links,
+            'network_mode': self.module.params.get('net'),
         }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ > '0.3.0':
             params['dns'] = self.module.params.get('dns')
@@ -647,6 +701,7 @@ def main():
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
+            docker_api_version = dict(default=docker.client.DEFAULT_DOCKER_API_VERSION),
             user            = dict(default=None),
             password        = dict(),
             email           = dict(),
@@ -660,7 +715,8 @@ def main():
             stdin_open      = dict(default=False, type='bool'),
             tty             = dict(default=False, type='bool'),
             lxc_conf        = dict(default=None, type='list'),
-            name            = dict(default=None)
+            name            = dict(default=None),
+            net             = dict(default=None)
         )
     )
 

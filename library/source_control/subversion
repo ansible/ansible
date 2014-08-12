@@ -72,10 +72,11 @@ options:
         the normal mechanism for resolving binary paths will be used.
   export:
     required: false
-    default: False
+    default: "no"
+    choices: [ "yes", "no" ]
     version_added: "1.6"
     description:
-      - If True, do export instead of checkout/update.
+      - If C(yes), do export instead of checkout/update.
 '''
 
 EXAMPLES = '''
@@ -176,7 +177,7 @@ def main():
             username=dict(required=False),
             password=dict(required=False),
             executable=dict(default=None),
-            export=dict(default=False, required=False),
+            export=dict(default=False, required=False, type='bool'),
         ),
         supports_check_mode=True
     )

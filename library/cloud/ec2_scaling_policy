@@ -23,7 +23,7 @@ options:
       - Name of the associated autoscaling group
     required: true
   adjustment_type:
-    desciption: 
+    desciption:
       - The type of change in capacity of the autoscaling group
     required: false
     choices: ['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']
@@ -60,7 +60,7 @@ import sys
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-try: 
+try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import ScalingPolicy
     from boto.exception import BotoServerError
@@ -77,9 +77,9 @@ def create_scaling_policy(connection, module):
     scaling_adjustment = module.params.get('scaling_adjustment')
     min_adjustment_step = module.params.get('min_adjustment_step')
     cooldown = module.params.get('cooldown')
- 
+
     scalingPolicies = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])
-    
+
     if not scalingPolicies:
         sp = ScalingPolicy(
             name=sp_name,
@@ -91,23 +91,25 @@ def create_scaling_policy(connection, module):
 
         try:
             connection.create_scaling_policy(sp)
-            module.exit_json(changed=True)
+            policy = connection.get_all_policies(policy_names=[sp_name])[0]
+            module.exit_json(changed=True, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
     else:
         policy = scalingPolicies[0]
         changed = False
 
-        #min_adjustment_step attribute is only relevant if the adjustment_type
-        #is set to percentage change in capacity, so it is a special case
+        # min_adjustment_step attribute is only relevant if the adjustment_type
+        # is set to percentage change in capacity, so it is a special case
         if getattr(policy, 'adjustment_type') == 'PercentChangeInCapacity':
             if getattr(policy, 'min_adjustment_step') != module.params.get('min_adjustment_step'):
                 changed = True
-        
-        #set the min adjustment step incase the user decided to change their adjustment type to percentage
+
+        # set the min adjustment step incase the user decided to change their
+        # adjustment type to percentage
         setattr(policy, 'min_adjustment_step', module.params.get('min_adjustment_step'))
 
-        #check the remaining attributes
+        # check the remaining attributes
         for attr in ('adjustment_type','scaling_adjustment','cooldown'):
             if getattr(policy, attr) != module.params.get(attr):
                 changed = True
@@ -117,8 +119,7 @@ def create_scaling_policy(connection, module):
             if changed:
                 connection.create_scaling_policy(policy)
                 policy = connection.get_all_policies(policy_names=[sp_name])[0]
-                module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
-            module.exit_json(changed=changed)
+            module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
 
@@ -151,17 +152,19 @@ def main():
             cooldown = dict(type='int'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
-        )    
+        )
     )
-    
+
     module = AnsibleModule(argument_spec=argument_spec)
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     state = module.params.get('state')
 
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
+        if not connection:
+            module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
 
@@ -172,9 +175,3 @@ def main():
 
 
 main()
-
-
-
-
-
-

@@ -24,6 +24,8 @@ class FakeInventory(object):
         self.hosts = {}
     def basedir(self):
         return "."        
+    def src(self):
+        return "fakeinventory"
     def get_variables(self, host, vault_password=None):
         if host in self.hosts:
             return self.hosts[host]        

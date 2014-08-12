@@ -44,8 +44,10 @@ class ActionModule(object):
 
         if os.path.exists(source):
             data = utils.parse_yaml_from_file(source, vault_password=self.runner.vault_pass)
-            if type(data) != dict:
+            if data and type(data) != dict:
                 raise errors.AnsibleError("%s must be stored as a dictionary/hash" % source)
+            elif data is None:
+                data = {}
             result = dict(ansible_facts=data)
             return ReturnData(conn=conn, comm_ok=True, result=result)
         else:

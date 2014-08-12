@@ -341,7 +341,7 @@ This is an advanced topic that should not be relevant for most users.
 If you write a custom module (see :doc:`developing_modules`) you may wish to distribute it as part of a role.  Generally speaking, Ansible as a project is very interested
 in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
 
-An good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
+A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
 people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
 
 Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it.

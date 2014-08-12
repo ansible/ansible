@@ -34,7 +34,7 @@ options:
     default: query
     choices: [ 'query', 'present', 'absent' ]
     description:
-      - defines whether the ACL should be present or not.  The C(query) state gets the current acl C(present) without changing it, for use in 'register' operations.
+      - defines whether the ACL should be present or not.  The C(query) state gets the current acl without changing it, for use in 'register' operations.
 
   follow:
     required: false
@@ -63,7 +63,7 @@ options:
     default: null
     choices: [ 'user', 'group', 'mask', 'other' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if name is a file.
+      - the entity type of the ACL to apply, see setfacl documentation for more info.
 
 
   permissions:
@@ -77,7 +77,7 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superceeded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
 author: Brian Coca
 notes:
@@ -101,6 +101,17 @@ EXAMPLES = '''
 - acl: name=/etc/foo.conf
   register: acl_info
 '''
+
+def normalize_permissions(p):
+    perms = ['-','-','-']
+    for char in p:
+        if char == 'r':
+            perms[0] = 'r'
+        if char == 'w':
+            perms[1] = 'w'
+        if char == 'x':
+            perms[2] = 'x'
+    return ''.join(perms)
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
@@ -129,15 +140,7 @@ def split_entry(entry):
     else:
         t = None
 
-    perms = ['-','-','-']
-    for char in p:
-        if char == 'r':
-            perms[0] = 'r'
-        if char == 'w':
-            perms[1] = 'w'
-        if char == 'x':
-            perms[2] = 'x'
-    p = ''.join(perms)
+    p = normalize_permissions(p)
 
     return [d,t,e,p]
 
@@ -212,6 +215,9 @@ def main():
     state = module.params.get('state')
     follow = module.params.get('follow')
     default = module.params.get('default')
+
+    if permissions:
+        permissions = normalize_permissions(permissions)
 
     if not os.path.exists(path):
         module.fail_json(msg="path not found or not accessible!")

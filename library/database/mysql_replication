@@ -240,7 +240,7 @@ def main():
             master_log_pos=dict(default=None),
             relay_log_file=dict(default=None),
             relay_log_pos=dict(default=None),
-            master_ssl=dict(default=None, choices=[0,1]),
+            master_ssl=dict(default=False, type='bool'),
             master_ssl_ca=dict(default=None),
             master_ssl_capath=dict(default=None),
             master_ssl_cert=dict(default=None),
@@ -337,7 +337,7 @@ def main():
         if relay_log_pos:
             chm.append("RELAY_LOG_POS=" + relay_log_pos)
         if master_ssl:
-            chm.append("MASTER_SSL=" + master_ssl)
+            chm.append("MASTER_SSL=1")
         if master_ssl_ca:
             chm.append("MASTER_SSL_CA='" + master_ssl_ca + "'")
         if master_ssl_capath:
@@ -347,7 +347,7 @@ def main():
         if master_ssl_key:
             chm.append("MASTER_SSL_KEY='" + master_ssl_key + "'")
         if master_ssl_cipher:
-            chm.append("MASTER_SSL_CIPTHER='" + master_ssl_cipher + "'")
+            chm.append("MASTER_SSL_CIPHER='" + master_ssl_cipher + "'")
         changemaster(cursor,chm)
         module.exit_json(changed=True)
     elif mode in "startslave":

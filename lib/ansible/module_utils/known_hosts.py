@@ -27,7 +27,13 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import hmac
-from hashlib import sha1
+import urlparse
+
+try:
+    from hashlib import sha1
+except ImportError:
+    import sha as sha1
+
 HASHED_KEY_MAGIC = "|1|"
 
 def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
@@ -44,14 +50,15 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
                 if rc != 0:
                     module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
             else:
-                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
+                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
 
 def get_fqdn(repo_url):
 
     """ chop the hostname out of a giturl """
 
     result = None
-    if "@" in repo_url and not repo_url.startswith("http"):
+    if "@" in repo_url and "://" not in repo_url:
+        # most likely a git@ or ssh+git@ type URL
         repo_url = repo_url.split("@", 1)[1]
         if ":" in repo_url:
             repo_url = repo_url.split(":")[0]
@@ -59,6 +66,18 @@ def get_fqdn(repo_url):
         elif "/" in repo_url:
             repo_url = repo_url.split("/")[0]
             result = repo_url
+    elif "://" in repo_url:
+        # this should be something we can parse with urlparse
+        parts = urlparse.urlparse(repo_url)
+        if 'ssh' not in parts[0] and 'git' not in parts[0]:
+            # don't try and scan a hostname that's not ssh
+            return None
+        if parts[1] != '':
+            result = parts[1]
+            if ":" in result:
+                result = result.split(":")[0]
+        if "@" in result:
+            result = result.split("@", 1)[1]
 
     return result
 

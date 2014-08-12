@@ -105,6 +105,7 @@ EXAMPLES = '''
 
 try:
     import bigsuds
+    from suds import MethodNotFound
 except ImportError:
     bigsuds_found = False
 else:
@@ -113,7 +114,6 @@ else:
 import fnmatch
 import traceback
 import re
-from suds import MethodNotFound
 
 # ===========================================
 # bigip_facts module specific support methods.
@@ -1580,7 +1580,7 @@ def main():
     )
 
     if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
+        module.fail_json(msg="the python suds and bigsuds modules is required")
 
     server = module.params['server']
     user = module.params['user']
