@@ -171,7 +171,7 @@ class PlayBook(object):
         self.inventory.set_playbook_basedir(self.basedir)
 
         vars = extra_vars.copy()
-        vars['playbook_dir'] = self.basedir
+        vars['playbook_dir'] = os.path.abspath(self.basedir)
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
 

@@ -77,6 +77,7 @@ class Play(object):
             self.tags = []
 
         # make sure we have some special internal variables set
+        self.vars['playbook_dir'] = os.path.abspath(self.basedir)
         if self.playbook.inventory.basedir() is not None:
             self.vars['inventory_dir'] = self.playbook.inventory.basedir()
         if self.playbook.inventory.src() is not None:
@@ -153,7 +154,6 @@ class Play(object):
 
         load_vars = {}
         load_vars['role_names'] = ds.get('role_names',[])
-        load_vars['playbook_dir'] = self.basedir
 
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
