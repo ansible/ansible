@@ -257,7 +257,7 @@ class Ec2Inventory(object):
             pattern_include = config.get('ec2', 'pattern_include')
             if pattern_include and len(pattern_include) > 0:
                 self.pattern_include = re.compile(pattern_include)
-            else
+            else:
                 self.pattern_include = None
         except ConfigParser.NoOptionError, e:
             self.pattern_include = None
@@ -267,7 +267,7 @@ class Ec2Inventory(object):
             pattern_exclude = config.get('ec2', 'pattern_exclude');
             if pattern_exclude and len(pattern_exclude) > 0:
                 self.pattern_exclude = re.compile(pattern_exclude)
-            else
+            else:
                 self.pattern_exclude = None
         except ConfigParser.NoOptionError, e:
             self.pattern_exclude = None
