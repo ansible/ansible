@@ -26,6 +26,7 @@ import json
 import os
 import os.path
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -325,6 +326,63 @@ def api_get_list(api_server, what):
     except:
         print " - failed to download the %s list" % what
         return None
+
+#-------------------------------------------------------------------------------------
+# scm repo utility functions
+#-------------------------------------------------------------------------------------
+
+def repo_fetch_role(role_name, role_version):
+    check_repo_cmd = { 'git': ['git', 'ls-remote', role_name],
+                       'hg': ['hg', 'identify', role_name]}
+    with open('/dev/null', 'w') as devnull:
+        for (scm, cmd) in check_repo_cmd.items():
+            popen = subprocess.Popen(cmd, stdout=devnull, stderr=devnull)
+            rc = popen.wait()
+            if rc == 0:
+                return scm_archive_role(scm, role_name, role_version)
+
+    print "Repo doesn't seem to be hg or git"
+    sys.exit(2)
+
+
+def scm_archive_role(scm, role_url, role_version):
+    tempdir = tempfile.mkdtemp()
+    role_name = role_url.split('/')[-1]
+    clone_cmd = [scm, 'clone', role_url]
+    with open('/dev/null', 'w') as devnull:
+        popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+        rc = popen.wait()
+    if rc != 0:
+        print "Command %s failed" % ' '.join(clone_cmd)
+        print "in directory %s" % temp_dir
+        sys.exit(1)
+
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar.gz')
+    if scm == 'hg':
+        archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
+        if role_version:
+            archive_cmd.extend(['-r', role_version])
+        archive_cmd.append(temp_file.name)
+    if scm == 'git':
+        archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name]
+        if role_version:
+            archive_cmd.append(role_version)
+        else:
+            archive_cmd.append('HEAD')
+
+    with open('/dev/null', 'w') as devnull:
+        popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, role_name),
+                                 stderr=devnull, stdout=devnull)
+        rc = popen.wait()
+    if rc != 0:
+        print "Command %s failed" % ' '.join(archive_cmd)
+        print "in directory %s" % tempdir
+        sys.exit(1)
+
+    shutil.rmtree(tempdir)
+
+    return temp_file.name
+
 
 #-------------------------------------------------------------------------------------
 # Role utility functions
@@ -680,40 +738,50 @@ def execute_install(args, options, parser):
                 print "%s (%s) was NOT installed successfully." % (role_name,tar_file)
                 exit_without_ignore(options)
         else:
-            # installing remotely
-            role_data = api_lookup_role_by_name(api_server, role_name)
-            if not role_data:
-                print "Sorry, %s was not found on %s." % (role_name, api_server)
-                continue
-
-            role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
-            if not role_version: 
-                # convert the version names to LooseVersion objects
-                # and sort them to get the latest version. If there
-                # are no versions in the list, we'll grab the head 
-                # of the master branch
-                if len(role_versions) > 0:
-                    loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
-                    loose_versions.sort()
-                    role_version = str(loose_versions[-1])
-                else:
-                    role_version = 'master'
-                print " no version specified, installing %s" % role_version
+            if '://' in role_name:
+                # installing from scm url
+                tmp_file = repo_fetch_role(role_name, role_version)
+                role_name = role_name.split('/')[-1]
+                role_data = None
             else:
-                if role_versions and role_version not in [a.get('name',None) for a in role_versions]:
-                    print "The specified version (%s) was not found in the list of available versions." % role_version
-                    exit_without_ignore(options)
+                # installing remotely
+                role_data = api_lookup_role_by_name(api_server, role_name)
+                if not role_data:
+                    print "Sorry, %s was not found on %s." % (role_name, api_server)
                     continue
 
-            # download the role. if --no-deps was specified, we stop here, 
-            # otherwise we recursively grab roles and all of their deps.
-            tmp_file = fetch_role(role_name, role_version, role_data, options)
+                role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
+                if not role_version: 
+                    # convert the version names to LooseVersion objects
+                    # and sort them to get the latest version. If there
+                    # are no versions in the list, we'll grab the head 
+                    # of the master branch
+                    if len(role_versions) > 0:
+                        loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
+                        loose_versions.sort()
+                        role_version = str(loose_versions[-1])
+                    else:
+                        role_version = 'master'
+                    print " no version specified, installing %s" % role_version
+                else:
+                    if role_versions and role_version not in [a.get('name',None) for a in role_versions]:
+                        print "The specified version (%s) was not found in the list of available versions." % role_version
+                        exit_without_ignore(options)
+                        continue
+
+                # download the role. if --no-deps was specified, we stop here, 
+                # otherwise we recursively grab roles and all of their deps.
+                tmp_file = fetch_role(role_name, role_version, role_data, options)
             if tmp_file and install_role(role_name, role_version, tmp_file, options):
                 # we're done with the temp file, clean it up
                 os.unlink(tmp_file)
                 # install dependencies, if we want them
                 if not no_deps:
-                    role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+                    if not role_data:
+                        role_data = get_role_metadata(role_name, options)
+                        role_dependencies = role_data['dependencies']
+                    else:
+                        role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
                     for dep_name in role_dependencies:
                         #dep_name = "%s.%s" % (dep['owner'], dep['name'])
                         if not get_role_metadata(dep_name, options):
