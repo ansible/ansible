@@ -7,7 +7,7 @@ DOCUMENTATION = '''
 module: consul_kv
 author: Matthew Finlayson
 short_description: Set and delete key/value pairs in consul through the local agent
-version_added: 1.6.11
+version_added: None
 requirements: [ consulate ]
 description:
     - This module wraps the Consul API making calls to the Agent end points to set or delete variables.
@@ -58,7 +58,7 @@ EXAMPLES = '''
 - consul_kv: key=raphael state=absent
 
 # Add value party_dude to the key michelangelo
-- consul_kv: key=michelangelo value=party_dude state=present append=yes
+- consul_kv: key=michelangelo values=party_dude,pizza,nunchucku state=present
 
 # Add the key donatello with value science to a custom host and datacenter for consul
 - consul_kv: key=donatello value=science state=present host=consul.sewers.com dc=subway
@@ -73,30 +73,30 @@ class ConsulKV(object):
         self.state    = module.params['state']
         self.key      = module.params['key']
         self.value    = module.params['value']
-        self.append   = module.params['append']
+        self.values   = module.params['values']
         self.host     = module.params['host']
         self.port     = module.params['port']
         self.dc       = module.params['dc']
         self.session  = consulate.Consulate(host=self.host, port=self.port, dc=self.dc)
 
     def set_kv(self):
-        if self.value is None:
-            self.module.fail_json(failed=True, msg="cannot set %s to None" % self.key)
-        if self.append:
-            if self.key in self.session.kv:
-                try:
-                    self.session.kv[self.key] += self.value
-                except AttributeError, e:
-                    self.module.fail_json(failed=True, msg=e)
-                except KeyError, e:
-                    self.module.fail_json(failed=True, msg=e)
-        else:
-            try:
-                self.session.kv[self.key] = self.value
-            except AttributeError, e:
-                self.module.fail_json(failed=True, msg=e)
-            except KeyError, e:
-                self.module.fail_json(failed=True, msg=e)
+        try:
+            self.session.kv.set(self.key, self.value)
+        except AttributeError, e:
+            self.module.fail_json(failed=True, msg=e)
+        except KeyError, e:
+            self.module.fail_json(failed=True, msg=e)
+        self.module.exit_json(changed=True, msg="consulKV[%s] = %s" % (self.key, self.value))
+
+    def set_kvs(self):
+        try:
+            for item in self.values.split(','):
+                new_key = "%s/%s" % (self.key, item)
+                self.session.kv.set(new_key, None)
+        except AttributeError, e:
+            self.module.fail_json(failed=True, msg=e)
+        except KeyError, e:
+            self.module.fail_json(failed=True, msg=e)
         self.module.exit_json(changed=True, msg="consulKV[%s] = %s" % (self.key, self.value))
 
     def delete_kv(self):
@@ -110,7 +110,10 @@ class ConsulKV(object):
 
     def evaluate(self):
         if self.state == 'present':
-            self.set_kv()
+            if self.values != '':
+                self.set_kvs()
+            else:
+                self.set_kv()
         elif self.state == 'absent':
             self.delete_kv()
 
@@ -125,8 +128,8 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             key=dict(required=True, type='str'),
-            value=dict(default=None, type='str'),
-            append=dict(default='no', type='bool'),
+            value=dict(default='', type='str'),
+            values=dict(default='', type='str'),
             host=dict(default=consul_defaults['host'], type='str'),
             port=dict(default=consul_defaults['port'], type='str'),
             dc=dict(default=consul_defaults['dc'], type='str')
