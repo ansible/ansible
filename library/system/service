@@ -406,12 +406,8 @@ class LinuxService(Service):
                 return False
 
             # default to .service if the unit type is not specified
-            if name.find('.') > 0:
-                unit_name, unit_type = name.rsplit('.', 1)
-                if unit_type not in ("service", "socket", "device", "mount", "automount",
-                                     "swap", "target", "path", "timer", "snapshot"):
-                    name = "%s.service" % name
-            else:
+            # use the same logic as unit_name_mangle from systemctl
+            if '.' not in name:
                 name = "%s.service" % name
 
             rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
