@@ -5,21 +5,20 @@
 #
 # Copyright 2014 jordonr <jordon@beamsyn.net>
 #
-# This program is free software; you can redistribute it and/or modify
+# This file is part of Ansible.
+#
+# Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
+# Ansible is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-# MA 02110-1301, USA.
-#
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Inspired by libvirt_lxc.py inventory script
 # https://github.com/ansible/ansible/blob/e5ef0eca03cbb6c8950c06dc50d0ca22aa8902f4/plugins/inventory/libvirt_lxc.py
@@ -33,42 +32,46 @@ import json
 
 
 #List openvz hosts
-vzhosts = ['192.168.1.3','192.168.1.2','192.168.1.1']
-#Add openvzhosts to the inventory
-inventory = {'vzhosts': {'hosts': vzhosts}}
+vzhosts = ['vzhost1','vzhost2','vzhost3']
+#Add openvz hosts to the inventory and Add "_meta" trick
+inventory = {'vzhosts': {'hosts': vzhosts}, '_meta': {'hostvars': {}}}
 #default group, when description not defined
 default_group = ['vzguest']
 
-def getGuests():
-        #Loop through vzhosts
-        for h in vzhosts:
-                #SSH to vzhost and get the list of guests in json
-                pipe = Popen(['ssh', h,'vzlist','-j'], stdout=PIPE, universal_newlines=True)
+def get_guests():
+    #Loop through vzhosts
+    for h in vzhosts:
+        #SSH to vzhost and get the list of guests in json
+        pipe = Popen(['ssh', h,'vzlist','-j'], stdout=PIPE, universal_newlines=True)
 
-                #Load Json info of guests
-                json_data = json.loads(pipe.stdout.read())
+        #Load Json info of guests
+        json_data = json.loads(pipe.stdout.read())
 
-                #loop through guests
-                for j in json_data:
-                        #determine group from guest description
-                        if j['description'] is not None:
-                                groups = j['description'].split(",")
-                        else:
-                                groups = default_group
+        #loop through guests
+        for j in json_data:
+            #Add information to host vars
+            inventory['_meta']['hostvars'][j['hostname']] = {'ctid': j['ctid'], 'veid': j['veid'], 'vpsid': j['vpsid'], 'private_path': j['private'], 'root_path': j['root'], 'ip': j['ip']}
 
-                        #add guest to inventory
-                        for g in groups:
-                                if g not in inventory:
-                                        inventory[g] = {'hosts': []}
+            #determine group from guest description
+            if j['description'] is not None:
+                groups = j['description'].split(",")
+            else:
+                groups = default_group
 
-                                for ip in j['ip']:
-                                        inventory[g]['hosts'].append(ip)
+            #add guest to inventory
+            for g in groups:
+                if g not in inventory:
+                    inventory[g] = {'hosts': []}
 
-        print json.dumps(inventory)
+                inventory[g]['hosts'].append(j['hostname'])
+
+        return inventory
+
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
-        getGuests()
+    inv_json = get_guests()
+    print json.dumps(inv_json, sort_keys=True)
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-        print json.dumps({});
+    print json.dumps({});
 else:
-        print "Need an argument, either --list or --host <host>"
+    print "Need an argument, either --list or --host <host>"
