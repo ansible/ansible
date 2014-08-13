@@ -410,21 +410,15 @@ class LinuxService(Service):
             if '.' not in name:
                 name = "%s.service" % name
 
-            rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
-
-            # adjust the service name to account for template service unit files
-            index = name.find('@')
-            if index != -1:
-                template_name = name[:index+1]
-            else:
-                template_name = name
-
-            self.__systemd_unit = None
-            for line in out.splitlines():
-                if line.startswith(template_name):
-                    self.__systemd_unit = name
-                    return True
-            return False
+            rc, out, err = self.execute_command("%s -p LoadState show %s" % \
+                                                 (location['systemctl'], name))
+            if rc != 0:
+                return False
+            load_state = out.split('=')[1].rstrip()
+            if load_state not in ('loaded', 'merged'):
+                return False
+            self.__systemd_unit = name
+            return True
 
         # Locate a tool for enable options
         if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
