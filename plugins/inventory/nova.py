@@ -43,6 +43,7 @@ NOVA_CONFIG_FILES = [
 ]
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
+flavor_cache = None
 
 
 def nova_load_config_file(NOVA_DEFAULTS):
@@ -186,6 +187,13 @@ def host(nova_client_params, hostname, private_flag):
     print(json.dumps(hostvars, sort_keys=True, indent=4))
 
 
+def get_flavor_name(client, flavor_id):
+    global flavor_cache
+    if not flavor_cache:
+        flavor_cache = dict([(flavor.id, flavor.name) for flavor in client.flavors.list()])
+    return flavor_cache.get(flavor_id, None)
+
+
 def list_instances(nova_client_params, private_flag):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
@@ -233,6 +241,9 @@ def list_instances(nova_client_params, private_flag):
 
             groups['instance-%s' % server.id].append(server.name)
             groups['flavor-%s' % server.flavor['id']].append(server.name)
+            flavor_name = get_flavor_name(client, server.flavor['id'])
+            if flavor_name:
+                groups['flavor-%s' % flavor_name].append(server.name)
 
             try:
                 imagegroup = 'image-%s' % images[server.image['id']]
