@@ -459,20 +459,18 @@ def create_vpc(module, vpc_conn):
                 module.fail_json(msg='Unable to retrieve tables {0}'.format(e))
 
         # Lets route on the first side.
-        if vpc_route_table != None:
-            if peer.get('route'):
-                try:
-                    vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
-                except EC2ResponseError, e:
-                    module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
+        if peer.get('route') and vpc_route_table != None:
+            try:
+                vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
 
-        # Lets route on the other side
-        if peer_vpc_route_table != None:
-            if peer.get('route'):
-                try:
-                    vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
-                except EC2ResponseError, e:
-                    module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
+        # Lets route on the other side if we own the that side too
+        if peer.get('route') and peer_vpc_route_table != None and peer_connection.accepter_vpc_info.owner_id == peer_connection.requester_vpc_info.owner_id:
+            try:
+                vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
 
 
     # Now delete all absent peer connections
