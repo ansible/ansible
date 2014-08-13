@@ -424,10 +424,10 @@ class LinuxService(Service):
         if check_systemd(self.name):
             # service is managed by systemd
             self.enable_cmd = location['systemctl']
-        elif location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
+        elif location.get('chkconfig') and os.path.exists("/etc/init.d/%s" % self.name):
             # we are using a standard SysV service
             self.enable_cmd = location['chkconfig']
-        elif location.get('update-rc.d', None):
+        elif location.get('update-rc.d'):
             if location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
                 # service is managed by upstart
                 self.enable_cmd = location['initctl']
@@ -436,7 +436,7 @@ class LinuxService(Service):
                 self.enable_cmd = location['update-rc.d']
             else:
                 self.module.fail_json(msg="service not found: %s" % self.name)
-        elif location.get('rc-service', None):
+        elif location.get('rc-service'):
             # service is managed by OpenRC
             self.svc_cmd = location['rc-service']
             self.enable_cmd = location['rc-update']
@@ -468,7 +468,7 @@ class LinuxService(Service):
         elif location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # SysV init script
             self.svc_cmd = location['service']
-        elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
+        elif location.get('start') and os.path.exists("/etc/init/%s.conf" % self.name):
             # upstart -- rather than being managed by one command, start/stop/restart are actual commands
             self.svc_cmd = ''
         else:
@@ -481,7 +481,7 @@ class LinuxService(Service):
         if self.svc_cmd is None and not self.svc_initscript:
             self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
 
-        if location.get('initctl', None):
+        if location.get('initctl'):
             self.svc_initctl = location['initctl']
 
     def get_systemd_status_dict(self):
