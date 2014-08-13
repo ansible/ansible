@@ -394,7 +394,7 @@ class LinuxService(Service):
             location[binary] = self.module.get_bin_path(binary)
 
         def check_systemd(name):
-            # verify service is managed by systemd
+            """Verify if unit (service) is managed by systemd"""
 
             # sd_booted(3) reimplemented in pure Python
             # systemd.daemon.booted() could also be used
