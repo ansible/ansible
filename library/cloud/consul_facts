@@ -54,29 +54,57 @@ class Consul(object):
         self.params = {
             'host': self.host,
             'port': self.port,
-            'api_version': '/v1',
-            'dc': self.dc,
-            'query': '/?keys'
+            'dc': self.dc
         }
 
     def consul_facts(self):
-        ansible_facts = self.get_facts()
-        self.module.exit_json(changed=False, ansible_facts=ansible_facts)
-
-    def get_facts(self):
         facts = {'kv': self.get_keys(), 'consul': self.host, 'nodes': self.get_nodes(),
                  'services': self.get_services()}
-        result = {'consul_facts': facts}
-        return result
+        self.module.exit_json(changed=False, ansible_facts={'consul_facts': facts})
 
     def get_keys(self):
-        output = {}
-        for k, v in self.session.kv.items().iteritems():
-            if not v is None and type(v) is str and v.startswith("[") and v.endswith("]"):
-                output[k] = v.replace('[', '').replace(']', '').split(', ')
+        root = {}
+        items = self.session.kv.items()
+        for key, value in items.iteritems():
+            self._items_to_dict(root, key, value)
+        return root
+
+    def _items_to_dict(self, root, key, value):
+        if not '/' in key:
+            if value is None:
+                if isinstance(root, dict):
+                    root = []
+                root.extend([key])
             else:
-                output[k] = v
+                root[key] = value
+            return root
+        else:
+            atoms = key.split('/')
+            if value is None and len(atoms) == 2:
+                if not atoms[0] in root:
+                    root[atoms[0]] = []
+            if isinstance(root, dict) and not root.has_key(atoms[0]):
+                root[atoms[0]] = {}
+            return self._items_to_dict(root[atoms[0]], "/".join(atoms[1:len(atoms)]), value)
+
+
+    def get_roles(self):
+        output = {}
+        for keys in self.session.kv.find('/roles/', '/'):
+            for it in self.session.kv.find(keys, '/'):
+                value = self.session.kv[it]
+                if value is None:
+                    output[it] = []
+                    for _list in self.session.kv.find(it, '/'):
+                        if it != _list:
+                            sanitized_value = _list.replace(it, '')
+                            if sanitized_value.endswith('/'):
+                                sanitized_value = sanitized_value[:-1]
+                            output[it].append(sanitized_value)
+                else:
+                    output[it] = self.session.kv[it]
         return output
+
 
     def get_nodes(self):
         output = {}
@@ -96,9 +124,7 @@ def main():
     consul_defaults = {
         'host': 'localhost',
         'port': '8500',
-        'api_version': '/v1',
-        'dc': None,
-        'query': '/?keys'
+        'dc': None
     }
 
     module = AnsibleModule(
@@ -107,6 +133,8 @@ def main():
             port=dict(default=consul_defaults['port'], type='str'),
             dc=dict(default=consul_defaults['dc'], type='str')
         ),
+        bypass_checks=True,
+        check_invalid_arguments=False,
         supports_check_mode=False
     )
 
@@ -114,9 +142,8 @@ def main():
 
     consul.consul_facts()
 
-
 # import module snippets
 from ansible.module_utils.basic import *
 
-### invoke the module
+# ## invoke the module
 main()
