@@ -56,11 +56,12 @@ def nova_load_config_file(NOVA_DEFAULTS):
 
 
 def setup():
+    OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
     NOVA_DEFAULTS = {
-        'username': os.environ.get('OS_USERNAME', ''),
+        'username': OS_USERNAME,
         'password': os.environ.get('OS_PASSWORD', ''),
+        'project_id': os.environ.get('OS_TENANT_NAME', os.environ.get('OS_PROJECT_ID', OS_USERNAME)),
         'auth_url': os.environ.get('OS_AUTH_URL', 'https://127.0.0.1:35357/v2.0/'),
-        'project_id': os.environ.get('OS_TENANT_NAME', os.environ.get('OS_PROJECT_ID', '')),
         'region_name': os.environ.get('OS_REGION_NAME', ''),
         'service_type': 'compute',
         'insecure': 'false',
@@ -68,7 +69,6 @@ def setup():
 
     # use a config file if it exists where expected
     config = nova_load_config_file(NOVA_DEFAULTS)
-
 
     nova_client_params = dict()
     nova_client_params['username'] = config.get('openstack', 'username')
