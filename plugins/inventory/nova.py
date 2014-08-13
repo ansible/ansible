@@ -38,11 +38,7 @@ from ansible.module_utils.openstack import *
 
 NOVA_CONFIG_FILES = [
     os.getcwd() + "/nova.ini",
-    os.path.expanduser(
-        os.environ.get(
-            'ANSIBLE_CONFIG',
-            "~/nova.ini")
-    ),
+    os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
     "/etc/ansible/nova.ini"
 ]
 
@@ -56,64 +52,38 @@ def nova_load_config_file(NOVA_DEFAULTS):
         if os.path.exists(path):
             p.read(path)
             return p
-
-    return None
+    return p
 
 
 def setup():
-    # use a config file if it exists where expected
     NOVA_DEFAULTS = {
-        'auth_system': 'keystone',
-        'region_name': 'region1',
-        'service_type': 'compute'
+        'username': os.environ.get('OS_USERNAME', ''),
+        'password': os.environ.get('OS_PASSWORD', ''),
+        'auth_url': os.environ.get('OS_AUTH_URL', 'https://127.0.0.1:35357/v2.0/'),
+        'project_id': os.environ.get('OS_TENANT_NAME', os.environ.get('OS_PROJECT_ID', '')),
+        'region_name': os.environ.get('OS_REGION_NAME', ''),
+        'service_type': 'compute',
+        'insecure': 'false',
     }
+
+    # use a config file if it exists where expected
     config = nova_load_config_file(NOVA_DEFAULTS)
 
-    project_id = ""
-    project_id = os.getenv('OS_TENANT_NAME')
-    if project_id == '' or project_id is not None:
-        project_id = os.getenv('OS_PROJECT_ID')
 
-    nova_client_params = {
-        'username': '',
-        'password': '',
-        'auth_url': 'https://127.0.0.1:35357/v2.0/',
-        'project_id': '',
-        'service_type': 'compute',
-        'auth_system': 'keystone',
-        'insecure': False,
-    }
-    if config is None:
-        nova_client_params['username'] = os.getenv('OS_USERNAME')
-        nova_client_params['password'] = os.getenv('OS_PASSWORD')
-        nova_client_params['auth_url'] = os.getenv('OS_AUTH_URL')
-        nova_client_params['region_name'] = os.getenv('OS_REGION_NAME')
-        nova_client_params['project_id'] = os.getenv('OS_TENANT_NAME')
-        nova_client_params['service_type'] = NOVA_DEFAULTS['service_type']
-        nova_client_params['auth_system'] = NOVA_DEFAULTS['auth_system']
-        nova_client_params['insecure'] = False
-        if (nova_client_params['username'] == "" and
-                nova_client_params['password'] == ""):
-            sys.exit(
-                'Unable to find config file in %s or environement variables'
-                % ','
-                .join(NOVA_CONFIG_FILES))
-    else:
-        nova_client_params['username'] = config.get('openstack', 'username')
-        nova_client_params['password'] = config.get('openstack', 'password')
-        nova_client_params['project_id'] = \
-            config.get('openstack', 'project_id')
-        nova_client_params['auth_url'] = config.get('openstack', 'auth_url')
-        nova_client_params['region_name'] = \
-            config.get('openstack', 'region_name')
-        nova_client_params['service_type'] = \
-            config.get('openstack', 'service_type')
-        nova_client_params['auth_system'] = \
-            config.get('openstack', 'auth_system')
-        nova_client_params['insecure'] = config.get('openstack', 'insecure')
+    nova_client_params = dict()
+    nova_client_params['username'] = config.get('openstack', 'username')
+    nova_client_params['password'] = config.get('openstack', 'password')
+    nova_client_params['project_id'] = config.get('openstack', 'project_id')
+    nova_client_params['auth_url'] = config.get('openstack', 'auth_url')
+    nova_client_params['region_name'] = config.get('openstack', 'region_name')
+    nova_client_params['service_type'] = config.get('openstack', 'service_type')
+    nova_client_params['insecure'] = config.getboolean('openstack', 'insecure')
 
-    nova_client_params['regions'] = \
-        nova_client_params['region_name'].split(',')
+    if (nova_client_params['username'] == "" and nova_client_params['password'] == ""):
+        sys.exit(
+            'Unable to find config file in %s or environment variables'
+            % ','.join(NOVA_CONFIG_FILES))
+    nova_client_params['regions'] = nova_client_params['region_name'].split(',')
 
     return(nova_client_params)
 
@@ -157,7 +127,6 @@ def connect_to_nova(username='',
                     auth_url='',
                     region_name='',
                     service_type='',
-                    auth_system='',
                     insecure=False):
     # Make the connection
     client = nova_client.Client(
@@ -167,7 +136,6 @@ def connect_to_nova(username='',
         auth_url,
         region_name=region_name,
         service_type=service_type,
-        auth_system=auth_system,
         insecure=insecure
     )
 
@@ -198,8 +166,7 @@ def host(nova_client_params, hostname, private_flag):
                                  nova_client_params['project_id'],
                                  nova_client_params['auth_url'],
                                  region,
-                                 nova_client_params['service_type'],
-                                 nova_client_params['auth_system'])
+                                 service_type=nova_client_params['service_type'])
         for server in client.servers.list():
             # loop through the networks for this instance, append fixed
             # and floating IPs in a list
@@ -230,8 +197,7 @@ def list_instances(nova_client_params, private_flag):
                                  nova_client_params['project_id'],
                                  nova_client_params['auth_url'],
                                  region,
-                                 nova_client_params['service_type'],
-                                 nova_client_params['auth_system'])
+                                 service_type=nova_client_params['service_type'])
         # Cycle on servers
         for server in client.servers.list():
             # loop through the networks for this instance, append fixed
