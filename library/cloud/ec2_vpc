@@ -406,42 +406,73 @@ def create_vpc(module, vpc_conn):
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to accept vpc connection for {0}, error {1}'.format(peer_connection.id, e))
 
-        if peer.get('route'):
-            # Find peer VPC
-            peer_vpc = find_vpc(module,vpc_conn, peer.get('id'))
+        # Find peer VPC
+        peer_vpc = find_vpc(module,vpc_conn, peer.get('id'))
+        # Try to find a routing table that handles the peer cidr block on our VPC
+        vpc_route_table = None
+        try:
+            rts = vpc_conn.get_all_route_tables(filters=[("route.destination-cidr-block",peer_vpc.cidr_block),("vpc-id",vpc.id)])
+            for route_table in rts:
+                for route in route_table.routes:
+                    if route.destination_cidr_block == peer_vpc.cidr_block and (route.state == "blackhole" or peer.get('route') == False):
+                        try:
+                            vpc_conn.delete_route(route_table.id, route.destination_cidr_block)
+                            vpc_route_table = route_table
+                        except EC2ResponseError, e:
+                            module.fail_json(msg="Couldnt remove a blackhole route: {0}, error {1}".format(route.destination_cidr_block, e))
 
-            # Get routing table for our vpc
+        except EC2ResponseError, e:
+            module.fail_json(msg='Failed to retrieve vpc({0}) route tables. error {1}'.format(vpc.id, e))
+
+        if vpc_route_table == None:
+            # Get the main routing table for our vpc 
             try:
-                route_table = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",vpc.id)])
-                if len(route_table) > 0:
-                    vpc_route_table = route_table[0]
-                else:
-                    module.fail_json(msg='Coudlnt find any route tables')
+                rts = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",vpc.id)])
+                if len(rts) > 0 and len(filter(lambda rt: len(filter(lambda r: r.destination_cidr_block == peer_vpc.cidr_block, rt.routes)) > 0, rts)) == 0:
+                    vpc_route_table = rts[0]
 
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to retrieve tables {0}'.format(e))
 
+        peer_vpc_route_table = None
+        try:
+            rts = vpc_conn.get_all_route_tables(filters=[("route.destination-cidr-block",vpc.cidr_block),("vpc-id",peer_vpc.id)])
+            for route_table in rts:
+                for route in route_table.routes:
+                    if route.destination_cidr_block == vpc.cidr_block and (route.state == "blackhole" or peer.get('route') == False):
+                        try:
+                            vpc_conn.delete_route(route_table.id, route.destination_cidr_block)
+                            peer_vpc_route_table = route_table
+                        except EC2ResponseError, e:
+                            module.fail_json(msg="Couldnt remove a blackhole route: {0}, error {1}".format(route.destination_cidr_block, e))
+
+        except EC2ResponseError, e:
+            module.fail_json(msg='Failed to retrieve peer vpc({0}) route tables. error {1}'.format(vpc.id, e))
+
+        if peer_vpc_route_table == None:
             # Get routing table for peer vpc
             try:
-                route_table = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",peer_vpc.id)])
-                if len(route_table) > 0:
-                    peer_vpc_route_table = route_table[0]
-                else:
-                    module.fail_json(msg='Coudlnt find any route tables')
+                rts = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",peer_vpc.id)])
+                if len(rts) > 0 and len(filter(lambda rt: len(filter(lambda r: r.destination_cidr_block == vpc.cidr_block, rt.routes)) > 0, rts)) == 0:
+                    peer_vpc_route_table = rts[0]
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to retrieve tables {0}'.format(e))
 
-            # Lets route on the first side.
-            try:
-                vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
+        # Lets route on the first side.
+        if vpc_route_table != None:
+            if peer.get('route'):
+                try:
+                    vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
 
-            # Lets route on the other side if we own both vpc.
-            try:
-                vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
+        # Lets route on the other side
+        if peer_vpc_route_table != None:
+            if peer.get('route'):
+                try:
+                    vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
 
 
     # Now delete all absent peer connections
