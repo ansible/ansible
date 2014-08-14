@@ -112,7 +112,11 @@ class ActionModule(object):
         else:
             source = template.template(self.runner.basedir, source, inject)
             if '_original_file' in inject:
-                source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+                try:
+                    source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+                except Exception, err:
+                    result = dict(failed=True, msg="count not find src: %s" % err)
+                    return ReturnData(conn=conn, result=result)
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
