@@ -253,7 +253,7 @@ def set_credentials(region):
     username = os.getenv('RAX_USERNAME', None)
     if username:
         api_key = os.getenv('RAX_API_KEY', None)
-        pyrax.set_credentials(username, api_key)
+        pyrax.set_credentials(username, api_key, region=region)
     else:
         # Attempt to grab credentials from environment first
         try:
