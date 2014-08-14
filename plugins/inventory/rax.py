@@ -230,6 +230,26 @@ def setup():
 
     region = pyrax.get_setting('region')
 
+    set_credentials(region)
+
+    regions = []
+    if region:
+        regions.append(region)
+    else:
+        for region in os.getenv('RAX_REGION', 'all').split(','):
+            region = region.strip().upper()
+            if region == 'ALL':
+                regions = pyrax.regions
+                break
+            elif region not in pyrax.regions:
+                sys.stderr.write('Unsupported region %s' % region)
+                sys.exit(1)
+            elif region not in regions:
+                regions.append(region)
+
+    return regions
+
+def set_credentials(region):
     username = os.getenv('RAX_USERNAME', None)
     if username:
         api_key = os.getenv('RAX_API_KEY', None)
@@ -260,23 +280,6 @@ def setup():
         except Exception, e:
             sys.stderr.write("%s: %s\n" % (e, e.message))
             sys.exit(1)
-
-    regions = []
-    if region:
-        regions.append(region)
-    else:
-        for region in os.getenv('RAX_REGION', 'all').split(','):
-            region = region.strip().upper()
-            if region == 'ALL':
-                regions = pyrax.regions
-                break
-            elif region not in pyrax.regions:
-                sys.stderr.write('Unsupported region %s' % region)
-                sys.exit(1)
-            elif region not in regions:
-                regions.append(region)
-
-    return regions
 
 
 def main():
