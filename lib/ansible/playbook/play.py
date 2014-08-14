@@ -182,6 +182,9 @@ class Play(object):
             # dependency name pointing to SCM URL
             # assume role name is last part of the URL
             orig_path = utils.repo_url_to_role_name(orig_path)
+        if ',' in orig_path:
+            # version information for role dependency used by galaxy
+            orig_path = orig_path.split(',')[0]
 
         role_vars = {}
         if type(orig_path) == dict:
