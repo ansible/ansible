@@ -347,6 +347,12 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
         raise errors.AnsibleError("input file not found at %s or %s" % (source2, obvious_local_path))
     return source2 # which does not exist
 
+def repo_url_to_role_name(repo_url):
+    trailing_path = repo_url.split('/')[-1]
+    if trailing_path.endswith('.git'):
+        trailing_path = trailing_path[:-4]
+    return trailing_path
+
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
 

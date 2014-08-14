@@ -179,7 +179,7 @@ class Play(object):
         if '+' in orig_path and '://' in orig_path:
             # dependency name pointing to SCM URL
             # assume role name is last part of the URL
-            orig_path = orig_path.split('/')[-1]
+            orig_path = utils.repo_url_to_role_name(orig_path)
 
         role_vars = {}
         if type(orig_path) == dict:
@@ -413,7 +413,7 @@ class Play(object):
             else:
                 role_name = role
             if '+' in role_name and '://' in role_name:
-                role_name = role_name.split('/')[-1]
+                role_name = utils.repo_url_to_role_name(role_name)
 
             role_names.append(role_name)
             if os.path.isfile(task):
