@@ -52,7 +52,7 @@ options:
         - The tenant name that has be added/removed
      required: false
      default: None
-   description:
+   tenant_description:
      description:
         - A description for the tenant
      required: false
