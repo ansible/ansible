@@ -142,11 +142,11 @@ class Inventory(object):
 
         # get group vars from group_vars/ files and vars plugins
         for group in self.groups:
-            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, self._vault_password))
+            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, vault_password=self._vault_password))
 
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
-            host.vars = utils.combine_vars(host.vars, self.get_variables(host.name, self._vault_password))
+            host.vars = utils.combine_vars(host.vars, self.get_variables(host.name, vault_password=self._vault_password))
 
 
     def _match(self, str, pattern_str):
