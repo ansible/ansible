@@ -128,7 +128,7 @@ Modules (ps1 files) should start as follows::
 
     # code goes here, reading in stdin as JSON and outputting JSON
 
-The above magic is neccessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few mpmore useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
+The above magic is neccessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
 
 What modules you see in windows/ are just a start.  Additional modules may be submitted as pull requests to github.
 
@@ -179,7 +179,7 @@ Running individual commands uses the 'raw' module, as opposed to the shell or co
           register: ipconfig
         - debug: var=ipconfig
 
-And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned byt he win_stat module is slightly different than what is provided by the Linux equivalent::
+And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows
