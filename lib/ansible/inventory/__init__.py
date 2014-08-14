@@ -150,17 +150,24 @@ class Inventory(object):
 
 
     def _match(self, str, pattern_str):
-        if pattern_str.startswith('~'):
-            return re.search(pattern_str[1:], str)
-        else:
-            return fnmatch.fnmatch(str, pattern_str)
+        try:
+            if pattern_str.startswith('~'):
+                return re.search(pattern_str[1:], str)
+            else:
+                return fnmatch.fnmatch(str, pattern_str)
+        except Exception, e:
+            raise errors.AnsibleError('invalid host pattern: %s' % pattern_str)
 
     def _match_list(self, items, item_attr, pattern_str):
         results = []
-        if not pattern_str.startswith('~'):
-            pattern = re.compile(fnmatch.translate(pattern_str))
-        else:
-            pattern = re.compile(pattern_str[1:])
+        try:
+            if not pattern_str.startswith('~'):
+                pattern = re.compile('^' + fnmatch.translate(pattern_str))
+            else:
+                pattern = re.compile(pattern_str[1:])
+        except Exception, e:
+            raise errors.AnsibleError('invalid host pattern: %s' % pattern_str)
+
         for item in items:
             if pattern.search(getattr(item, item_attr)):
                 results.append(item)
