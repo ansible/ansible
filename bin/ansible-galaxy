@@ -331,21 +331,10 @@ def api_get_list(api_server, what):
 # scm repo utility functions
 #-------------------------------------------------------------------------------------
 
-def repo_fetch_role(role_name, role_version):
-    check_repo_cmd = { 'git': ['git', 'ls-remote', role_name],
-                       'hg': ['hg', 'identify', role_name]}
-    with open('/dev/null', 'w') as devnull:
-        for (scm, cmd) in check_repo_cmd.items():
-            popen = subprocess.Popen(cmd, stdout=devnull, stderr=devnull)
-            rc = popen.wait()
-            if rc == 0:
-                return scm_archive_role(scm, role_name, role_version)
-
-    print "Repo doesn't seem to be hg or git"
-    sys.exit(2)
-
-
 def scm_archive_role(scm, role_url, role_version):
+    if scm not in ['hg', 'git']:
+        print "SCM %s is not currently supported" % scm
+        return False
     tempdir = tempfile.mkdtemp()
     role_name = role_url.split('/')[-1]
     clone_cmd = [scm, 'clone', role_url]
@@ -355,7 +344,7 @@ def scm_archive_role(scm, role_url, role_version):
     if rc != 0:
         print "Command %s failed" % ' '.join(clone_cmd)
         print "in directory %s" % temp_dir
-        sys.exit(1)
+        return False
 
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar.gz')
     if scm == 'hg':
@@ -377,7 +366,7 @@ def scm_archive_role(scm, role_url, role_version):
     if rc != 0:
         print "Command %s failed" % ' '.join(archive_cmd)
         print "in directory %s" % tempdir
-        sys.exit(1)
+        return False
 
     shutil.rmtree(tempdir)
 
@@ -738,10 +727,11 @@ def execute_install(args, options, parser):
                 print "%s (%s) was NOT installed successfully." % (role_name,tar_file)
                 exit_without_ignore(options)
         else:
-            if '://' in role_name:
-                # installing from scm url
-                tmp_file = repo_fetch_role(role_name, role_version)
+            if '+' in role_name:
+                (scm, role_url) = role_name.split('+')
                 role_name = role_name.split('/')[-1]
+                # create tar file from scm url
+                tmp_file = scm_archive_role(scm, role_url, role_version)
                 role_data = None
             else:
                 # installing remotely
@@ -784,7 +774,7 @@ def execute_install(args, options, parser):
                         role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
                     for dep_name in role_dependencies:
                         #dep_name = "%s.%s" % (dep['owner'], dep['name'])
-                        if not get_role_metadata(dep_name, options):
+                        if not get_role_metadata(dep_name.split('/')[-1], options):
                             print ' adding dependency: %s' % dep_name
                             roles_left.append(dep_name)
                         else:
