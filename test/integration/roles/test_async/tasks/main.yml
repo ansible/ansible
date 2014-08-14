@@ -56,3 +56,34 @@
         - "'ansible_job_id' in async_result"
         - "'started' in async_result"
         - "'finished' not in async_result"
+
+- name: test conditional "fire and forget" task (not skipped)
+  command: sleep 5
+  poll: 0
+  async: 10
+  when: True
+  register: async_result
+
+- debug: var=async_result
+
+- name: validate async without polling returns
+  assert:
+    that:
+        - "'ansible_job_id' in async_result"
+        - "'started' in async_result"
+        - "'finished' not in async_result"
+
+- name: test conditional "fire and forget" task (when skipped)
+  command: sleep 5
+  poll: 0
+  async: 10
+  when: False
+  register: async_result
+
+- debug: var=async_result
+
+- name: validate async without polling returns
+  assert:
+    that:
+        - "'skipped' in async_result"
+        - "async_result['skipped'] == True"
