@@ -778,3 +778,8 @@ class TestUtils(unittest.TestCase):
         assert 'msg' not in data
         assert data['censored'] == 'results hidden due to no_log parameter'
 
+    def test_repo_url_to_role_name(self):
+        tests = [("http://git.example.com/repos/repo.git", "repo"),
+                 ("ssh://git@git.example.com:repos/role-name", "role-name")]
+        for (url, result) in tests:
+            self.assertEqual(ansible.utils.repo_url_to_role_name(url), result)

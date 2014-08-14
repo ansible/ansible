@@ -40,6 +40,7 @@ from jinja2 import Environment
 from optparse import OptionParser
 
 import ansible.constants as C
+import ansible.utils
 
 default_meta_template = """---
 galaxy_info:
@@ -174,7 +175,7 @@ def build_option_parser(action):
             help='The path in which the skeleton role will be created. '
                  'The default is the current working directory.')
     elif action == "install":
-        parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | tar_file(s)]")
+        parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
         parser.add_option(
             '-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
             help='Ignore errors and continue with the next specified role.')
@@ -336,7 +337,7 @@ def scm_archive_role(scm, role_url, role_version):
         print "SCM %s is not currently supported" % scm
         return False
     tempdir = tempfile.mkdtemp()
-    role_name = role_url.split('/')[-1]
+    role_name = ansible.utils.repo_url_to_role_name(role_url)
     clone_cmd = [scm, 'clone', role_url]
     with open('/dev/null', 'w') as devnull:
         popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
@@ -728,8 +729,8 @@ def execute_install(args, options, parser):
                 exit_without_ignore(options)
         else:
             if '+' in role_name:
-                (scm, role_url) = role_name.split('+')
-                role_name = role_name.split('/')[-1]
+                (scm, role_url) = role_name.split('+',1)
+                role_name = ansible.utils.repo_url_to_role_name(role_name)
                 # create tar file from scm url
                 tmp_file = scm_archive_role(scm, role_url, role_version)
                 role_data = None
