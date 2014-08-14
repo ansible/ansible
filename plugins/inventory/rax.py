@@ -69,6 +69,11 @@ authors:
   - Paul Durivage <paul.durivage@rackspace.com>
   - Matt Martz <matt@sivel.net>
 notes:
+  - RAX_USERNAME is an optional environment variable that specifies the
+    username to use. The api key also needs to be set. If this is used
+    the credentials file will be ignored.
+  - RAX_API_KEY is an optional environment variable that specifies the
+    api key to use
   - RAX_CREDS_FILE is an optional environment variable that points to a
     pyrax-compatible credentials file.
   - If RAX_CREDS_FILE is not supplied, rax.py will look for a credentials file
@@ -216,41 +221,45 @@ def parse_args():
 
 
 def setup():
-    default_creds_file = os.path.expanduser('~/.rackspace_cloud_credentials')
+    identity_type = pyrax.get_setting('identity_type')
+    pyrax.set_setting('identity_type', identity_type or 'rackspace')
 
     env = os.getenv('RAX_ENV', None)
     if env:
         pyrax.set_environment(env)
 
-    keyring_username = pyrax.get_setting('keyring_username')
-
-    # Attempt to grab credentials from environment first
-    try:
-        creds_file = os.path.expanduser(os.environ['RAX_CREDS_FILE'])
-    except KeyError, e:
-        # But if that fails, use the default location of
-        # ~/.rackspace_cloud_credentials
-        if os.path.isfile(default_creds_file):
-            creds_file = default_creds_file
-        elif not keyring_username:
-            sys.stderr.write('No value in environment variable %s and/or no '
-                             'credentials file at %s\n'
-                             % (e.message, default_creds_file))
-            sys.exit(1)
-
-    identity_type = pyrax.get_setting('identity_type')
-    pyrax.set_setting('identity_type', identity_type or 'rackspace')
-
     region = pyrax.get_setting('region')
 
-    try:
-        if keyring_username:
-            pyrax.keyring_auth(keyring_username, region=region)
-        else:
-            pyrax.set_credential_file(creds_file, region=region)
-    except Exception, e:
-        sys.stderr.write("%s: %s\n" % (e, e.message))
-        sys.exit(1)
+    username = os.getenv('RAX_USERNAME', None)
+    if username:
+        api_key = os.getenv('RAX_API_KEY', None)
+        pyrax.set_credentials(username, api_key)
+    else:
+        # Attempt to grab credentials from environment first
+        try:
+            creds_file = os.path.expanduser(os.environ['RAX_CREDS_FILE'])
+        except KeyError, e:
+            # But if that fails, use the default location of
+            # ~/.rackspace_cloud_credentials
+            default_creds_file = os.path.expanduser('~/.rackspace_cloud_credentials')
+            keyring_username = pyrax.get_setting('keyring_username')
+
+            if os.path.isfile(default_creds_file):
+                creds_file = default_creds_file
+            elif not keyring_username:
+                sys.stderr.write('No value in environment variable %s and/or no '
+                                'credentials file at %s\n'
+                                % (e.message, default_creds_file))
+                sys.exit(1)
+
+        try:
+            if keyring_username:
+                pyrax.keyring_auth(keyring_username, region=region)
+            else:
+                pyrax.set_credential_file(creds_file, region=region)
+        except Exception, e:
+            sys.stderr.write("%s: %s\n" % (e, e.message))
+            sys.exit(1)
 
     regions = []
     if region:
