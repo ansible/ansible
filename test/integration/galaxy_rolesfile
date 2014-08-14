@@ -1,2 +1,2 @@
-git+http://bitbucket.org/willthames/git-ansible-galaxy,v1.2
+git+http://bitbucket.org/willthames/git-ansible-galaxy,v1.3
 hg+ssh://hg@bitbucket.org/willthames/hg-ansible-galaxy
