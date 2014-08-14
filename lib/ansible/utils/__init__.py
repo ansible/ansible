@@ -356,6 +356,8 @@ def repo_url_to_role_name(repo_url):
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
         trailing_path = trailing_path[:-4]
+    if ',' in trailing_path:
+        trailing_path = trailing_path.split(',')[0]
     return trailing_path
 
 def json_loads(data):
