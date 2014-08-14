@@ -236,10 +236,10 @@ class PlayBook(object):
             return vars.copy()
 
         play_vars = None
-        if isinstance(play_vars, dict):
+        if isinstance(play['vars'], dict):
             play_vars = play['vars'].copy()
             play_vars.update(vars)
-        elif isinstance(play_vars, list):
+        elif isinstance(play['vars'], list):
             # nobody should really do this, but handle vars: a=1 b=2
             play_vars = play['vars'][:]
             play_vars.extend([{k:v} for k,v in vars.iteritems()])
