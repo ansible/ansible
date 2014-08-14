@@ -780,6 +780,7 @@ class TestUtils(unittest.TestCase):
 
     def test_repo_url_to_role_name(self):
         tests = [("http://git.example.com/repos/repo.git", "repo"),
-                 ("ssh://git@git.example.com:repos/role-name", "role-name")]
+                 ("ssh://git@git.example.com:repos/role-name", "role-name"),
+                 ("ssh://git@git.example.com:repos/role-name,v0.1", "role-name")]
         for (url, result) in tests:
             self.assertEqual(ansible.utils.repo_url_to_role_name(url), result)
