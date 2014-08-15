@@ -48,6 +48,8 @@ flavor_cache = None
 
 def nova_load_config_file(NOVA_DEFAULTS):
     p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
+    # Add a default section so that our defaults always work
+    p.add_section('openstack')
 
     for path in NOVA_CONFIG_FILES:
         if os.path.exists(path):
@@ -227,6 +229,11 @@ def list_instances(nova_client_params, private_flag):
 
             for key, value in to_dict(server).items():
                 hostvars[server.name][key] = value
+
+            az = server.metadata.get('nova_os-ext-az_availability_zone')
+            if az:
+                hostvars[server.name]['nova_az'] = az
+                groups[az].append(server.name)
 
             hostvars[server.name]['nova_region'] = region
 
