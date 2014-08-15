@@ -125,12 +125,14 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
     if installed_state is False:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
-        if disable_gpg_check:
+        if disable_gpg_check and not old_zypper:
             cmd.append('--no-gpg-check')
+        else:
+            cmd.append('--no-gpg-checks')
 
         cmd.extend(['install', '--auto-agree-with-licenses'])
         # add install parameter
-        if disable_recommends:
+        if disable_recommends and not old_zypper:
             cmd.append('--no-recommends')
         cmd.append(name)
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
@@ -151,7 +153,10 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
 def package_latest(m, name, installed_state, disable_gpg_check, disable_recommends, old_zypper):
 
     if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
+        if old_zypper:
+            cmd = ['/usr/bin/zypper', '--non-interactive', 'install', '--auto-agree-with-licenses', name]
+        else:
+            cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
         pre_upgrade_name = ''
         post_upgrade_name = ''
 
@@ -237,7 +242,6 @@ def main():
         (rc, stdout, stderr, changed) = package_absent(module, name, installed_state, old_zypper)
     elif state == 'latest':
         (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check, disable_recommends, old_zypper)
-
     if rc != 0:
         if stderr:
             module.fail_json(msg=stderr)
