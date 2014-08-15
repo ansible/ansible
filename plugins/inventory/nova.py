@@ -182,29 +182,10 @@ def parse_args():
 
 
 def host(clouds, hostname, private_flag):
-    hostvars = {}
-    for cloud in clouds:
-        # Connect to the region
-        client = cloud.connect()
-        region = cloud.get_region()
-
-        for server in client.servers.list():
-            # loop through the networks for this instance, append fixed
-            # and floating IPs in a list
-            private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
-            public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
-
-            if server.name == hostname:
-                for key, value in to_dict(server).items():
-                    hostvars[key] = value
-
-                # And finally, add an IP address
-                if (private_flag is True):
-                    hostvars['ansible_ssh_host'] = private[0]
-                else:
-                    hostvars['ansible_ssh_host'] = public[0]
-
-    print(json.dumps(hostvars, sort_keys=True, indent=4))
+    groups = get_host_groups(clouds, private_flag)
+    hostvars = groups['_meta']['hostvars']
+    if hostname in hostvars:
+        print(json.dumps(hostvars[hostname], sort_keys=True, indent=4))
 
 
 def get_flavor_name(client, flavor_id):
@@ -214,7 +195,7 @@ def get_flavor_name(client, flavor_id):
     return flavor_cache.get(flavor_id, None)
 
 
-def list_instances(clouds, private_flag):
+def get_host_groups(clouds, private_flag):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
     images = {}
@@ -222,6 +203,7 @@ def list_instances(clouds, private_flag):
     for cloud in clouds:
         client = cloud.connect()
         region = cloud.get_region()
+        cloud_name = cloud.get_name()
 
         # Cycle on servers
         for server in client.servers.list():
@@ -231,13 +213,13 @@ def list_instances(clouds, private_flag):
             public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
             # Create a group for the cloud
-            groups[cloud.get_name()].append(server.name)
+            groups[cloud_name].append(server.name)
 
             # Create a group on region
             groups[region].append(server.name)
 
             # And one by cloud_region
-            groups["%s_%s" % (cloud.get_name(), region)].append(server.name)
+            groups["%s_%s" % (cloud_name, region)].append(server.name)
 
             # Check if group metadata key in servers' metadata
             group = server.metadata.get('group')
@@ -257,9 +239,10 @@ def list_instances(clouds, private_flag):
                 # Make groups for az, region_az and cloud_region_az
                 groups[az].append(server.name)
                 groups['%s_%s' % (region, az)].append(server.name)
-                groups['%s_%s_%s' % (cloud.get_name(), region, az)].append(server.name)
+                groups['%s_%s_%s' % (cloud_name, region, az)].append(server.name)
 
             hostvars[server.name]['nova_region'] = region
+            hostvars[server.name]['openstack_cloud'] = cloud_name
 
             for key, value in server.metadata.iteritems():
                 prefix = os.getenv('OS_META_PREFIX', 'meta')
@@ -298,7 +281,11 @@ def list_instances(clouds, private_flag):
 
         if hostvars:
             groups['_meta'] = {'hostvars': hostvars}
+    return groups
 
+
+def list_instances(clouds, private_flag):
+    groups = get_host_groups(clouds, private_flag)
     # Return server list
     print(json.dumps(groups, sort_keys=True, indent=2))
     sys.exit(0)
