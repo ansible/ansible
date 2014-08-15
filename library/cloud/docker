@@ -411,9 +411,7 @@ class DockerManager:
         if self.module.params.get('links'):
             self.links = self.get_links(self.module.params.get('links'))
 
-        self.env = None
-        if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("=", 1), self.module.params.get('env')))
+        self.env = self.module.params.get('env', None)
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
@@ -706,7 +704,7 @@ def main():
             password        = dict(),
             email           = dict(),
             hostname        = dict(default=None),
-            env             = dict(type='list'),
+            env             = dict(type='dict'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='running', choices=['absent', 'present', 'running', 'stopped', 'killed', 'restarted']),
