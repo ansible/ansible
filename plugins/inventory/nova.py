@@ -2,7 +2,7 @@
 
 # (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
 # (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
-# (c) 2014 Patrick "CaptTofu" Galbraith <patg@patg.net>
+# (c) 2014, Hewlett-Packard Development Company, L.P.
 #
 # This file is part of Ansible,
 #
