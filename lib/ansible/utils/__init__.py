@@ -1163,6 +1163,16 @@ def list_intersection(a, b):
             result.append(x)
     return result
 
+def list_difference(a, b):
+    result = []
+    for x in a:
+        if x not in b and x not in result:
+            result.append(x)
+    for x in b:
+        if x not in a and x not in result:
+            result.append(x)
+    return result
+
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
     This is intended for allowing things like:
