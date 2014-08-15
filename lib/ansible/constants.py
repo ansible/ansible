@@ -94,6 +94,14 @@ if getattr(sys, "real_prefix", None):
 else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
 
+# Look for modules relative to this file path
+# This is so that we can find the modules when running from a local checkout
+# installed as editable with `pip install -e ...` or `python setup.py develop`
+local_module_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', '..', 'library')
+)
+DIST_MODULE_PATH = os.pathsep.join([DIST_MODULE_PATH, local_module_path])
+
 # check all of these extensions when looking for yaml files for things like
 # group variables -- really anything we can load
 YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
