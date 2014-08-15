@@ -437,7 +437,7 @@ class PlayBook(object):
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
             else:
                 for (host, res) in results.get('contacted', {}).iteritems():
-                    if not ('skipped' in res and res['skipped']):
+                    if not res.get('skipped'):
                         self.runner_callbacks.on_async_ok(host, res, poller.runner.vars_cache[host]['ansible_job_id'])
 
         contacted = results.get('contacted',{})
