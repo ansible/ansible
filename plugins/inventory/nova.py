@@ -46,10 +46,58 @@ NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 flavor_cache = None
 
 
+class OpenStackCloud(object):
+
+    def __init__(self, name, username, password, project_id, auth_url,
+                 region_name, service_type, insecure):
+
+        self.name = name
+        self.username = username
+        self.password = password
+        self.project_id = project_id
+        self.auth_url = auth_url
+        self.region_name = region_name
+        self.service_type = service_type
+        self.insecure = insecure
+
+    def get_name(self):
+        return self.name
+
+    def get_region(self):
+        return self.region_name
+
+    def connect(self):
+        # Make the connection
+        client = nova_client.Client(
+            self.username,
+            self.password,
+            self.project_id,
+            self.auth_url,
+            region_name=self.region_name,
+            service_type=self.service_type,
+            insecure=self.insecure
+        )
+
+        try:
+            client.authenticate()
+        except exceptions.Unauthorized, e:
+            print("Invalid OpenStack Nova credentials.: %s" %
+                  e.message)
+            sys.exit(1)
+        except exceptions.AuthorizationFailure, e:
+            print("Unable to authorize user: %s" % e.message)
+            sys.exit(1)
+
+        if client is None:
+            print("Failed to instantiate nova client. This "
+                  "could mean that your credentials are wrong.")
+            sys.exit(1)
+
+        return client
+
+
 def nova_load_config_file(NOVA_DEFAULTS):
     p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
-    # Add a default section so that our defaults always work
-    p.add_section('openstack')
 
     for path in NOVA_CONFIG_FILES:
         if os.path.exists(path):
@@ -73,22 +121,31 @@ def setup():
     # use a config file if it exists where expected
     config = nova_load_config_file(NOVA_DEFAULTS)
 
-    nova_client_params = dict()
-    nova_client_params['username'] = config.get('openstack', 'username')
-    nova_client_params['password'] = config.get('openstack', 'password')
-    nova_client_params['project_id'] = config.get('openstack', 'project_id')
-    nova_client_params['auth_url'] = config.get('openstack', 'auth_url')
-    nova_client_params['region_name'] = config.get('openstack', 'region_name')
-    nova_client_params['service_type'] = config.get('openstack', 'service_type')
-    nova_client_params['insecure'] = config.getboolean('openstack', 'insecure')
+    if not config.sections():
+        # Add a default section so that our defaults always work
+        config.add_section('openstack')
 
-    if (nova_client_params['username'] == "" and nova_client_params['password'] == ""):
-        sys.exit(
-            'Unable to find config file in %s or environment variables'
-            % ','.join(NOVA_CONFIG_FILES))
-    nova_client_params['regions'] = nova_client_params['region_name'].split(',')
+    clouds = []
+    for cloud in config.sections():
+        nova_client_params = dict(name=cloud)
+        nova_client_params['username'] = config.get(cloud, 'username')
+        nova_client_params['password'] = config.get(cloud, 'password')
+        nova_client_params['project_id'] = config.get(cloud, 'project_id')
+        nova_client_params['auth_url'] = config.get(cloud, 'auth_url')
+        nova_client_params['region_name'] = config.get(cloud, 'region_name')
+        nova_client_params['service_type'] = config.get(cloud, 'service_type')
+        nova_client_params['insecure'] = config.getboolean(cloud, 'insecure')
 
-    return(nova_client_params)
+        if (nova_client_params['username'] == "" and nova_client_params['password'] == ""):
+            sys.exit(
+                'Unable to find auth information for cloud %s'
+                ' in config files %s or environment variables'
+                % ','.join(NOVA_CONFIG_FILES))
+        for region in nova_client_params['region_name'].split(','):
+            nova_client_params['region_name'] = region
+            clouds.append(OpenStackCloud(**nova_client_params))
+
+    return(clouds)
 
 
 def to_dict(obj):
@@ -124,52 +181,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def connect_to_nova(username='',
-                    password='',
-                    project_id='',
-                    auth_url='',
-                    region_name='',
-                    service_type='',
-                    insecure=False):
-    # Make the connection
-    client = nova_client.Client(
-        username,
-        password,
-        project_id,
-        auth_url,
-        region_name=region_name,
-        service_type=service_type,
-        insecure=insecure
-    )
-
-    try:
-        client.authenticate()
-    except exceptions.Unauthorized, e:
-        print("Invalid OpenStack Nova credentials.: %s" %
-              e.message)
-        sys.exit(1)
-    except exceptions.AuthorizationFailure, e:
-        print("Unable to authorize user: %s" % e.message)
-        sys.exit(1)
-
-    if client is None:
-        print("Failed to instantiate nova client. This "
-              "could mean that your credentials are wrong.")
-        sys.exit(1)
-
-    return client
-
-
-def host(nova_client_params, hostname, private_flag):
+def host(clouds, hostname, private_flag):
     hostvars = {}
-    for region in nova_client_params['regions']:
+    for cloud in clouds:
         # Connect to the region
-        client = connect_to_nova(nova_client_params['username'],
-                                 nova_client_params['password'],
-                                 nova_client_params['project_id'],
-                                 nova_client_params['auth_url'],
-                                 region,
-                                 service_type=nova_client_params['service_type'])
+        client = cloud.connect()
+        region = cloud.get_region()
+
         for server in client.servers.list():
             # loop through the networks for this instance, append fixed
             # and floating IPs in a list
@@ -182,9 +200,9 @@ def host(nova_client_params, hostname, private_flag):
 
                 # And finally, add an IP address
                 if (private_flag is True):
-                    hostvars[server.name]['ansible_ssh_host'] = private[0]
+                    hostvars['ansible_ssh_host'] = private[0]
                 else:
-                    hostvars[server.name]['ansible_ssh_host'] = public[0]
+                    hostvars['ansible_ssh_host'] = public[0]
 
     print(json.dumps(hostvars, sort_keys=True, indent=4))
 
@@ -196,18 +214,15 @@ def get_flavor_name(client, flavor_id):
     return flavor_cache.get(flavor_id, None)
 
 
-def list_instances(nova_client_params, private_flag):
+def list_instances(clouds, private_flag):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
     images = {}
 
-    for region in nova_client_params['regions']:
-        client = connect_to_nova(nova_client_params['username'],
-                                 nova_client_params['password'],
-                                 nova_client_params['project_id'],
-                                 nova_client_params['auth_url'],
-                                 region,
-                                 service_type=nova_client_params['service_type'])
+    for cloud in clouds:
+        client = cloud.connect()
+        region = cloud.get_region()
+
         # Cycle on servers
         for server in client.servers.list():
             # loop through the networks for this instance, append fixed
@@ -215,8 +230,14 @@ def list_instances(nova_client_params, private_flag):
             private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
             public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
+            # Create a group for the cloud
+            groups[cloud.get_name()].append(server.name)
+
             # Create a group on region
             groups[region].append(server.name)
+
+            # And one by cloud_region
+            groups["%s_%s" % (cloud.get_name(), region)].append(server.name)
 
             # Check if group metadata key in servers' metadata
             group = server.metadata.get('group')
@@ -230,10 +251,13 @@ def list_instances(nova_client_params, private_flag):
             for key, value in to_dict(server).items():
                 hostvars[server.name][key] = value
 
-            az = server.metadata.get('nova_os-ext-az_availability_zone')
+            az = hostvars[server.name].get('nova_os-ext-az_availability_zone')
             if az:
                 hostvars[server.name]['nova_az'] = az
+                # Make groups for az, region_az and cloud_region_az
                 groups[az].append(server.name)
+                groups['%s_%s' % (region, az)].append(server.name)
+                groups['%s_%s_%s' % (cloud.get_name(), region, az)].append(server.name)
 
             hostvars[server.name]['nova_region'] = region
 
