@@ -3,3 +3,4 @@
 
   roles:
   - "git-ansible-galaxy"
+  - "http-role"

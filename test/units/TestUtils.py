@@ -784,3 +784,12 @@ class TestUtils(unittest.TestCase):
                  ("ssh://git@git.example.com:repos/role-name,v0.1", "role-name")]
         for (url, result) in tests:
             self.assertEqual(ansible.utils.repo_url_to_role_name(url), result)
+
+    def test_role_spec_parse(self):
+        tests = [("git+http://git.example.com/repos/repo.git,v1.0", ('git', 'http://git.example.com/repos/repo.git', 'v1.0', 'repo')),
+                 ("http://repo.example.com/download/tarfile.tar.gz", (None, 'http://repo.example.com/download/tarfile.tar.gz', '', 'tarfile')),
+                 ("http://repo.example.com/download/tarfile.tar.gz,,nicename", (None, 'http://repo.example.com/download/tarfile.tar.gz', '', 'nicename')),
+                 ("git+http://git.example.com/repos/repo.git,v1.0,awesome", ('git', 'http://git.example.com/repos/repo.git', 'v1.0', 'awesome'))]
+        for (spec, result) in tests:
+            self.assertEqual(ansible.utils.role_spec_parse(spec), result)
+
