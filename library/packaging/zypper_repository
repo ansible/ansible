@@ -140,7 +140,6 @@ def repo_exists(module, old_zypper, **kwargs):
     else:
         repos = _parse_repos(module)
 
-    from pprint import pprint
     for repo in repos:
         if repo_subset(repo, kwargs):
             return True
