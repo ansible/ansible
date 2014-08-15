@@ -351,9 +351,32 @@ def repo_url_to_role_name(repo_url):
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
         trailing_path = trailing_path[:-4]
+    if trailing_path.endswith('.tar.gz'):
+        trailing_path = trailing_path[:-7]
     if ',' in trailing_path:
         trailing_path = trailing_path.split(',')[0]
     return trailing_path
+
+
+def role_spec_parse(role_spec):
+    role_spec = role_spec.strip()
+    role_version = ''
+    if role_spec == "" or role_spec.startswith("#"):
+        return (None, None, None, None)
+    tokens = map(lambda s: s.strip(), role_spec.split(','))
+    if '+' in tokens[0]:
+        (scm, role_url) = tokens[0].split('+')
+    else:
+        scm = None
+        role_url = tokens[0]
+    if len(tokens) >= 2:
+        role_version = tokens[1]
+    if len(tokens) == 3:
+        role_name = tokens[2]
+    else:
+        role_name = repo_url_to_role_name(tokens[0])
+    return (scm, role_url, role_version, role_name)
+
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
