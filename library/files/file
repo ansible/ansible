@@ -210,7 +210,7 @@ def main():
                 module.exit_json(changed=True)
             changed = True
             curpath = ''
-            for dirname in path.split('/'):
+            for dirname in os.path.realpath(path).split('/'):
                 curpath = '/'.join([curpath, dirname])
                 if not os.path.exists(curpath):
                     os.mkdir(curpath)
