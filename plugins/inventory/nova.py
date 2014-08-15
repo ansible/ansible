@@ -20,6 +20,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import time
 import re
 import os
 import ConfigParser
@@ -47,11 +48,9 @@ NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
 class OpenStackCloud(object):
 
-    flavor_cache = None
-    image_cache = dict()
-
     def __init__(self, name, username, password, project_id, auth_url,
-                 region_name, service_type, insecure):
+                 region_name, service_type, insecure, image_cache=dict(),
+                 flavor_cache=None):
 
         self.name = name
         self.username = username
@@ -61,6 +60,8 @@ class OpenStackCloud(object):
         self.region_name = region_name
         self.service_type = service_type
         self.insecure = insecure
+        self.image_cache = image_cache
+        self.flavor_cache = flavor_cache
 
     def get_name(self):
         return self.name
@@ -108,7 +109,7 @@ class OpenStackCloud(object):
     def get_image_name(self, image_id):
         if image_id not in self.image_cache:
             try:
-                self.image_cache[image_id] = self.client.images.get(image_id)
+                self.image_cache[image_id] = self.client.images.get(image_id).name
             except exceptions.NotFound:
                 self.image_cache[image_id] = None
         return self.image_cache[image_id]
@@ -124,11 +125,12 @@ def nova_load_config_file(NOVA_DEFAULTS):
     return p
 
 
-class OpenStackInventory(object):
+class NovaInventory(object):
 
-    def __init__(self, private=False):
+    def __init__(self, private=False, refresh=False):
         self.clouds = []
         self.private = private
+        self.refresh = refresh
 
         OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
         NOVA_DEFAULTS = {
@@ -139,16 +141,22 @@ class OpenStackInventory(object):
             'region_name': os.environ.get('OS_REGION_NAME', ''),
             'service_type': 'compute',
             'insecure': 'false',
+            'cache_max_age': '300',
+            'cache_path': '~/.ansible/tmp',
         }
 
         # use a config file if it exists where expected
         config = nova_load_config_file(NOVA_DEFAULTS)
 
-        if not config.sections():
-            # Add a default section so that our defaults always work
+        cloud_sections = [ section for section in config.sections() if section != 'cache' ]
+        if not cloud_sections:
+            # Add a default section so that our cloud defaults always work
             config.add_section('openstack')
+            cloud_sections = ['openstack']
 
-        for cloud in config.sections():
+        for cloud in cloud_sections:
+            if cloud == 'cache':
+                continue
             nova_client_params = dict(name=cloud)
             nova_client_params['username'] = config.get(cloud, 'username')
             nova_client_params['password'] = config.get(cloud, 'password')
@@ -170,7 +178,38 @@ class OpenStackInventory(object):
                 nova_client_params['region_name'] = region
                 self.clouds.append(OpenStackCloud(**nova_client_params))
 
+        if 'cache' not in config.sections():
+            config.add_section('cache')
+        self.cache_max_age = config.getint('cache', 'cache_max_age')
+        cache_dir = os.path.expanduser(config.get('cache', 'cache_path'))
+
+        # Cache related
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        self.cache_file = os.path.join(cache_dir, "ansible-nova.cache")
+
+    def is_cache_stale(self):
+        ''' Determines if cache file has expired, or if it is still valid '''
+        if os.path.isfile(self.cache_file):
+            mod_time = os.path.getmtime(self.cache_file)
+            current_time = time.time()
+            if (mod_time + self.cache_max_age) > current_time:
+                return False
+        return True
+
     def get_host_groups(self):
+        if self.refresh or self.is_cache_stale():
+            groups = self.get_host_groups_from_cloud()
+            self.write_cache(groups)
+        else:
+            return json.load(open(self.cache_file, 'r'))
+        return groups
+
+    def write_cache(self, groups):
+        with open(self.cache_file, 'w') as cache_file:
+            cache_file.write(self.json_format_dict(groups))
+
+    def get_host_groups_from_cloud(self):
         groups = collections.defaultdict(list)
         hostvars = collections.defaultdict(dict)
 
@@ -249,16 +288,19 @@ class OpenStackInventory(object):
                 groups['_meta'] = {'hostvars': hostvars}
         return groups
 
+    def json_format_dict(self, data):
+        return json.dumps(data, sort_keys=True, indent=2)
+
     def list_instances(self):
         groups = self.get_host_groups()
         # Return server list
-        print(json.dumps(groups, sort_keys=True, indent=2))
+        print(self.json_format_dict(groups))
 
-    def get_host(hostname):
+    def get_host(self, hostname):
         groups = self.get_host_groups()
         hostvars = groups['_meta']['hostvars']
         if hostname in hostvars:
-            print(json.dumps(hostvars[hostname], sort_keys=True, indent=4))
+            print(self.json_format_dict(hostvars[hostname]))
 
 
 def to_dict(obj):
@@ -287,6 +329,8 @@ def parse_args():
     parser.add_argument('--private',
                         action='store_true',
                         help='Use private address for ansible host')
+    parser.add_argument('--refresh', action='store_true',
+                        help='Refresh cached information')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--list', action='store_true',
                        help='List active servers')
@@ -296,7 +340,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    inventory = OpenStackInventory(args.private)
+    inventory = NovaInventory(args.private, args.refresh)
     if args.list:
         inventory.list_instances()
     elif args.host:
