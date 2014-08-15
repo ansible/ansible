@@ -130,6 +130,7 @@ class Runner(object):
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         default_vars=None,                  # ditto
+        extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
         subset=None,                        # subset pattern
@@ -170,6 +171,8 @@ class Runner(object):
 
         self.module_vars      = utils.default(module_vars, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
+        self.extra_vars       = utils.default(extra_vars, lambda: {})
+
         self.always_run       = None
         self.connector        = connection.Connector(self)
         self.conditional      = conditional
@@ -605,10 +608,13 @@ class Runner(object):
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         inject = {}
+
         inject = utils.combine_vars(inject, self.default_vars)
         inject = utils.combine_vars(inject, host_variables)
+        inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
         inject = utils.combine_vars(inject, module_vars)
-        inject = utils.combine_vars(inject, combined_cache.get(host, {}))
+        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        inject = utils.combine_vars(inject, self.extra_vars)
         inject.setdefault('ansible_ssh_user', self.remote_user)
         inject['hostvars']    = hostvars
         inject['group_names'] = host_variables.get('group_names', [])

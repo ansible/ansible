@@ -89,15 +89,15 @@ class Play(object):
         self.vars_files = ds.get('vars_files', [])
         if not isinstance(self.vars_files, list):
             raise errors.AnsibleError('vars_files must be a list')
-        self._update_vars_files_for_host(None)
+        processed_vars_files = self._update_vars_files_for_host(None)
 
         # now we load the roles into the datastructure
         self.included_roles = []
         ds = self._load_roles(self.roles, ds)
 
-        # and finally re-process the vars files as they may have
-        # been updated by the included roles
-        self.vars_files = ds.get('vars_files', [])
+        # and finally re-process the vars files as they may have been updated
+        # by the included roles, but exclude any which have been processed
+        self.vars_files = utils.list_difference(ds.get('vars_files', []), processed_vars_files)
         if not isinstance(self.vars_files, list):
             raise errors.AnsibleError('vars_files must be a list')
 
@@ -765,27 +765,37 @@ class Play(object):
 
             """ Render the raw filename into 3 forms """
 
+            # filename2 is the templated version of the filename, which will
+            # be fully rendered if any variables contained within it are 
+            # non-inventory related
             filename2 = template(self.basedir, filename, self.vars)
+
+            # filename3 is the same as filename2, but when the host object is
+            # available, inventory variables will be expanded as well since the
+            # name is templated with the injected variables
             filename3 = filename2
             if host is not None:
                 filename3 = template(self.basedir, filename2, inject)
+
+            # filename4 is the dwim'd path, but may also be mixed-scope, so we use
+            # both play scoped vars and host scoped vars to template the filepath
             if self._has_vars_in(filename3) and host is not None:
-                # allow play scoped vars and host scoped vars to template the filepath
                 inject.update(self.vars)
                 filename4 = template(self.basedir, filename3, inject)
                 filename4 = utils.path_dwim(self.basedir, filename4)
             else:
                 filename4 = utils.path_dwim(self.basedir, filename3)
+
             return filename2, filename3, filename4
 
 
-        def update_vars_cache(host, inject, data, filename):
+        def update_vars_cache(host, data, target_filename=None):
 
             """ update a host's varscache with new var data """
 
-            data = utils.combine_vars(inject, data)
             self.playbook.VARS_CACHE[host] = utils.combine_vars(self.playbook.VARS_CACHE.get(host, {}), data)
-            self.playbook.callbacks.on_import_for_host(host, filename4)
+            if target_filename:
+                self.playbook.callbacks.on_import_for_host(host, target_filename)
 
         def process_files(filename, filename2, filename3, filename4, host=None):
 
@@ -796,21 +806,19 @@ class Play(object):
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
                 if host is not None:
-                    if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
-                        # running a host specific pass and has host specific variables
-                        # load into setup cache
-                        update_vars_cache(host, inject, data, filename4)
-                    elif self._has_vars_in(filename3) and not self._has_vars_in(filename4):
-                        # handle mixed scope variables in filepath
-                        update_vars_cache(host, inject, data, filename4)
-
-                elif not self._has_vars_in(filename4):
-                    # found a non-host specific variable, load into vars and NOT
-                    # the setup cache
-                    if host is not None:
-                        self.vars.update(data)
-                    else:
-                        self.vars = utils.combine_vars(self.vars, data)
+                    target_filename = None
+                    if self._has_vars_in(filename2):
+                        if not self._has_vars_in(filename3):
+                            target_filename = filename3
+                        else:
+                            target_filename = filename4
+                    update_vars_cache(host, data, target_filename=target_filename)
+                else:
+                    self.vars = utils.combine_vars(self.vars, data)
+                # we did process this file
+                return True
+            # we did not process this file
+            return False
 
         # Enforce that vars_files is always a list
         if type(self.vars_files) != list:
@@ -825,6 +833,7 @@ class Play(object):
         else:
             inject = None
 
+        processed = []
         for filename in self.vars_files:
             if type(filename) == list:
                 # loop over all filenames, loading the first one, and failing if none found
@@ -835,7 +844,8 @@ class Play(object):
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
-                        process_files(filename, filename2, filename3, filename4, host=host)
+                        if process_files(filename, filename2, filename3, filename4, host=host):
+                            processed.append(filename)
                     elif host is not None:
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
                     if found:
@@ -844,14 +854,12 @@ class Play(object):
                     raise errors.AnsibleError(
                         "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
                     )
-
             else:
                 # just one filename supplied, load it!
                 filename2, filename3, filename4 = generate_filenames(host, inject, filename)
                 if self._has_vars_in(filename4):
                     continue
-                process_files(filename, filename2, filename3, filename4, host=host)
+                if process_files(filename, filename2, filename3, filename4, host=host):
+                    processed.append(filename)
 
-        # finally, update the VARS_CACHE for the host, if it is set
-        if host is not None:
-            self.playbook.VARS_CACHE.setdefault(host, {}).update(self.playbook.extra_vars)
+        return processed

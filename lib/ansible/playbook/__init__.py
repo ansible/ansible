@@ -396,6 +396,7 @@ class PlayBook(object):
             remote_port=task.play.remote_port,
             module_vars=task.module_vars,
             default_vars=task.default_vars,
+            extra_vars=self.extra_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
             vars_cache=self.VARS_CACHE,

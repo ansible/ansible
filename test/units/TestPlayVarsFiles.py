@@ -266,37 +266,6 @@ class TestMe(unittest.TestCase):
         assert 'foo' in play.playbook.VARS_CACHE['localhost'], "vars_file vars were not loaded into vars_cache"
         assert play.playbook.VARS_CACHE['localhost']['foo'] == 'bar', "foo does not equal bar"
 
-    def test_vars_files_for_host_with_extra_vars(self):
-
-        # host != None
-        # vars in filename2
-        # no vars in filename3
-
-        # make a vars file
-        fd, temp_path = mkstemp()
-        f = open(temp_path, "wb")
-        f.write("foo: bar\n")
-        f.close()
-
-        # build play attributes
-        playbook = FakePlayBook()
-        ds = { "hosts": "localhost",
-               "vars_files": ["{{ temp_path }}"]}
-        basedir = "."
-        playbook.VARS_CACHE['localhost']['temp_path'] = temp_path
-        playbook.extra_vars = {"foo": "extra"}
-
-        # create play and do first run        
-        play = Play(playbook, ds, basedir)
-
-        # the second run is started by calling update_vars_files        
-        play.update_vars_files(['localhost'])
-        os.remove(temp_path)
-
-        assert 'foo' in play.vars, "extra vars were not set in play.vars"
-        assert 'foo' in play.playbook.VARS_CACHE['localhost'], "vars_file vars were not loaded into vars_cache"
-        assert play.playbook.VARS_CACHE['localhost']['foo'] == 'extra', "extra vars did not overwrite vars_files vars"
-
 
     ########################################
     # COMPLEX FILENAME TEMPLATING TESTS
