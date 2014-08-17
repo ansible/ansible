@@ -157,6 +157,9 @@ class OpenStackInventory(object):
             nova_client_params['region_name'] = config.get(cloud, 'region_name')
             nova_client_params['service_type'] = config.get(cloud, 'service_type')
             nova_client_params['insecure'] = config.getboolean(cloud, 'insecure')
+            # Provide backwards compat for older nova.ini files
+            if nova_client_params['password'] == '':
+                nova_client_params['password'] = config.get(cloud, 'api_key')
 
             if (nova_client_params['username'] == "" and nova_client_params['password'] == ""):
                 sys.exit(
