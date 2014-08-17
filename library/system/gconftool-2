@@ -28,7 +28,7 @@ version_added: "post 1.7.1"
 author: Joseph Kahn
 short_description: alter gconftool-2 controlled settings.
 description:
-   - Set the value of a gconftool-2 controlled setting using a key and a string, an integer or a boolean.
+   - Set the value of a gconftool-2 controlled setting using a key and a string, an integer, a boolean, a pair or a list.
 options:
   key:
     description:
