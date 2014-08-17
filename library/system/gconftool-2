@@ -191,7 +191,7 @@ def main():
         additional_args = '--car-type={} --cdr-type={}'.format(car_type, cdr_type)
         value = '({},{})'.format(car_value, cdr_value)
 
-    changed = old_value != value
+    changed = old_value != str(value)
 
     if changed and not module.check_mode:
         _set_value(module, key, value, argument_type, additional_args)
