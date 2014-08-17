@@ -180,3 +180,28 @@
       - "copy_result6.changed"
       - "copy_result6.dest == '{{output_dir|expanduser}}/multiline.txt'"
       - "copy_result6.md5sum == '1627d51e7e607c92cf1a502bf0c6cce3'"
+
+# test overwriting a file as an unprivileged user (pull request #8624)
+# this can't be relative to {{output_dir}} as ~root usually has mode 700
+
+- name: create world writable directory
+  file: dest=/tmp/worldwritable state=directory mode=0777
+
+- name: create world writable file
+  copy: dest=/tmp/worldwritable/file.txt content="bar" mode=0666
+
+- name: overwrite the file as user nobody
+  copy: dest=/tmp/worldwritable/file.txt content="baz"
+  sudo: yes
+  sudo_user: nobody
+  register: copy_result7
+
+- name: assert the file was overwritten
+  assert:
+    that:
+      - "copy_result7.changed"
+      - "copy_result7.dest == '/tmp/worldwritable/file.txt'"
+      - "copy_result7.md5sum == '73feffa4b7f6bb68e44cf984c85f6e88'"
+
+- name: clean up
+  file: dest=/tmp/worldwritable state=absent

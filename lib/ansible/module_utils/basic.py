@@ -1145,9 +1145,13 @@ class AnsibleModule(object):
                 if self.selinux_enabled():
                     self.set_context_if_different(
                         tmp_dest.name, context, False)
-                tmp_stat = os.stat(tmp_dest.name)
-                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid) and os.getuid() == 0:
-                    os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+		try:
+		    tmp_stat = os.stat(tmp_dest.name)
+		    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+			os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+		except OSError, e:
+		    if e.errno != errno.EPERM:
+			raise
                 os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest.name)
