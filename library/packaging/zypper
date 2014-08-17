@@ -176,7 +176,7 @@ def package_latest(m, name, installed_state, disable_gpg_check, disable_recommen
 
     else:
         # If package was not installed at all just make it present.
-        return package_present(m, name, installed_state, disable_gpg_check, disable_recommends)
+        return package_present(m, name, installed_state, disable_gpg_check, disable_recommends, old_zypper)
 
 # Function used to make sure a package is not installed.
 def package_absent(m, name, installed_state, old_zypper):
