@@ -44,7 +44,7 @@ options:
     required: false
   string:
     description:
-      - The string value to set the key to.
+      - The string value to set the key to. Wrap it in single quotes for safety.
     required: false
   float:
     description:
