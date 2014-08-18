@@ -637,7 +637,8 @@ def create_block_device(module, ec2, volume):
                            size=volume.get('volume_size'),
                            volume_type=volume.get('device_type'),
                            delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'))
+                           iops=volume.get('iops'),
+                           no_device=int(volume.get('volume_size', 1)) <= 0)
 
 def boto_supports_param_in_spot_request(ec2, param):
     """
@@ -844,10 +845,7 @@ def create_instances(module, ec2, override_count=None):
                 for volume in volumes: 
                     if 'device_name' not in volume:
                         module.fail_json(msg = 'Device name must be set for volume')
-                    # Minimum volume size is 1GB. We'll use volume size explicitly set to 0
-                    # to be a signal not to create this volume 
-                    if 'volume_size' not in volume or int(volume['volume_size']) > 0:
-                        bdm[volume['device_name']] = create_block_device(module, ec2, volume)
+                    bdm[volume['device_name']] = create_block_device(module, ec2, volume)
 
                 params['block_device_map'] = bdm
 
