@@ -140,8 +140,8 @@ class Artifact(object):
     @staticmethod
     def parse(input):
         parts = input.split(':')
-        if len(parts) < 3:
-            ArtifactError(None, "invalid Maven coordinates: %s" % input)
+        if len(parts) < 2:
+            raise ArtifactError(None, "invalid Maven coordinates: %s" % input)
         g, a, v, c, t = parts[0], parts[1], None, None, None
         if len(parts) >= 3:
             v = parts[-1]
