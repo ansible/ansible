@@ -450,6 +450,10 @@ class Inventory(object):
 
         vars = {}
 
+        # special case for ungrouped hosts, make sure group_vars/all is loaded
+        if len(host.groups) == 1 and host.groups[0].name == 'ungrouped':
+            vars = self.get_group_variables('all', vault_password=self._vault_password)
+
         # plugin.run retrieves all vars (also from groups) for host
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
         for updated in vars_results:
