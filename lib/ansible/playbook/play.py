@@ -187,7 +187,7 @@ class Play(object):
                 raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
             role_vars = orig_path
         else:
-            (scm, role_src, role_version, role_name) = utils.role_spec_parse(orig_path)
+            role_name = utils.role_spec_parse(orig_path)["name"]
 
         role_path = None
 
@@ -412,8 +412,7 @@ class Play(object):
             if isinstance(role, dict):
                 role_name = role['role']
             else:
-                role_name = role
-            (scm, role_src, role_version, role_name) = utils.role_spec_parse(role_name)
+                role_name = utils.role_spec_parse(role)["name"]
 
             role_names.append(role_name)
             if os.path.isfile(task):

@@ -696,10 +696,12 @@ def execute_install(args, options, parser):
 
     roles_done = []
     if role_file:
-        # roles listed in a file, one per line
-        # so we'll go through and grab them all
         f = open(role_file, 'r')
-        roles_left = f.readlines()
+        if role_file.endswith('.yaml') or role_file.endswith('.yml'):
+            roles_left = map(ansible.utils.role_yaml_parse, yaml.safe_load(f))
+        else:
+            # roles listed in a file, one per line
+            roles_left = map(ansible.utils.role_spec_parse, f.readlines())
         f.close()
     else:
         # roles were specified directly, so we'll just go out grab them
@@ -708,16 +710,18 @@ def execute_install(args, options, parser):
 
     while len(roles_left) > 0:
         # query the galaxy API for the role data
-        (scm, role_src, role_version, role_name) = ansible.utils.role_spec_parse(roles_left.pop(0))
         role_data = None
+        role = roles_left.pop(0)
+        role_src = role.get("src")
+        role_scm = role.get("scm")
 
         if os.path.isfile(role_src):
             # installing a local tar.gz
             tmp_file = role_src
         else:
-            if scm:
+            if role_scm:
                 # create tar file from scm url
-                tmp_file = scm_archive_role(scm, role_src, role_version, role_name)
+                tmp_file = scm_archive_role(role_scm, role_src, role.get("version"), role.get("name"))
             elif '://' in role_src:
                 # just download a URL - version will probably be in the URL
                 tmp_file = fetch_role(role_src, None, None, options)
@@ -729,7 +733,7 @@ def execute_install(args, options, parser):
                     continue
 
                 role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
-                if not role_version: 
+                if "version" not in role:
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
                     # are no versions in the list, we'll grab the head 
@@ -737,40 +741,43 @@ def execute_install(args, options, parser):
                     if len(role_versions) > 0:
                         loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
                         loose_versions.sort()
-                        role_version = str(loose_versions[-1])
+                        role["version"] = str(loose_versions[-1])
                     else:
-                        role_version = 'master'
-                    print " no version specified, installing %s" % role_version
+                        role["version"] = 'master'
+                    print " no version specified, installing %s" % role.version
                 else:
-                    if role_versions and role_version not in [a.get('name',None) for a in role_versions]:
-                        print "The specified version (%s) was not found in the list of available versions." % role_version
+                    if role_versions and role["version"] not in [a.get('name',None) for a in role_versions]:
+                        print "The specified version (%s) was not found in the list of available versions." % role.version
                         exit_without_ignore(options)
                         continue
 
                 # download the role. if --no-deps was specified, we stop here, 
                 # otherwise we recursively grab roles and all of their deps.
-                tmp_file = fetch_role(role_src, role_version, role_data, options)
-        if tmp_file and install_role(role_name, role_version, tmp_file, options):
+                tmp_file = fetch_role(role_src, role["version"], role_data, options)
+        if tmp_file and install_role(role.get("name"), role.get("version"), tmp_file, options):
             # we're done with the temp file, clean it up
             os.unlink(tmp_file)
             # install dependencies, if we want them
             if not no_deps:
                 if not role_data:
-                    role_data = get_role_metadata(role_name, options)
+                    role_data = get_role_metadata(role.get("name"), options)
                     role_dependencies = role_data['dependencies']
                 else:
                     role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
-                for dep_name in role_dependencies:
-                    #dep_name = "%s.%s" % (dep['owner'], dep['name'])
-                    if not get_role_metadata(dep_name.split('/')[-1], options):
-                        print ' adding dependency: %s' % dep_name
-                        roles_left.append(dep_name)
+                for dep in role_dependencies:
+                    if isinstance(dep, str):
+                        dep = ansible.utils.role_spec_parse(dep)
                     else:
-                        print ' dependency %s is already installed, skipping.' % dep_name
+                        dep = ansible.utils.role_yaml_parse(dep)
+                    if not get_role_metadata(dep["name"], options):
+                        print ' adding dependency: %s' % dep["name"]
+                        roles_left.append(dep)
+                    else:
+                        print ' dependency %s is already installed, skipping.' % dep["name"]
         else:
             if tmp_file:
                 os.unlink(tmp_file)
-            print "%s was NOT installed successfully." % role_name
+            print "%s was NOT installed successfully." % role.get("name")
             exit_without_ignore(options)
     sys.exit(0)
 

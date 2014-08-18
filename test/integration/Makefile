@@ -105,11 +105,22 @@ rackspace: $(CREDENTIALS_FILE)
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make rackspace_cleanup ; \
     exit $$RC;
 
-test_galaxy:
+test_galaxy: test_galaxy_spec test_galaxy_yaml
+
+test_galaxy_spec:
 	mytmpdir=$(TMPDIR) ; \
 	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
-    exit $$RC 
+    exit $$RC
+
+test_galaxy_yaml:
+	mytmpdir=$(TMPDIR) ; \
+	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles ; \
+    cp galaxy_playbook.yml $$mytmpdir ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
