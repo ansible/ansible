@@ -243,7 +243,8 @@ class ActionModule(object):
                     dest=dest,
                     original_basename=source_rel
                 )
-
+                if self.runner.noop_on_check(inject):
+                    new_module_args['CHECKMODE'] = True
                 if self.runner.no_log:
                     new_module_args['NO_LOG'] = True
 
