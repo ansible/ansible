@@ -484,6 +484,8 @@ def merge_module_args(current_args, new_args):
     for (k,v) in final_args.iteritems():
         if isinstance(v, basestring):
             module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+        elif isinstance(v, bool):
+            module_args = "%s=%s %s" % (k, str(v), module_args)
     return module_args.strip()
 
 def parse_yaml(data, path_hint=None):

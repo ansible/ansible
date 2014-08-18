@@ -145,6 +145,7 @@ def main():
             directory_mode    = dict(required=False)
         ),
         add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     src    = os.path.expanduser(module.params['src'])
