@@ -375,7 +375,17 @@ def role_spec_parse(role_spec):
         role_name = tokens[2]
     else:
         role_name = repo_url_to_role_name(tokens[0])
-    return (scm, role_url, role_version, role_name)
+    return dict(scm=scm, src=role_url, version=role_version, name=role_name)
+
+
+def role_yaml_parse(role):
+    if '+' in role["src"]:
+        (scm, src) = role["src"].split('+')
+        role["scm"] = scm
+        role["src"] = src
+    if 'name' not in role:
+        role["name"] = repo_url_to_role_name(role["src"])
+    return role
 
 
 def json_loads(data):
