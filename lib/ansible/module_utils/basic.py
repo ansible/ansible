@@ -152,7 +152,7 @@ FILE_COMMON_ARGUMENTS=dict(
     selevel = dict(),
     setype = dict(),
     # not taken by the file module, but other modules call file so it must ignore them.
-    content = dict(),
+    content = dict(no_log=True),
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
@@ -884,7 +884,7 @@ class AnsibleModule(object):
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
                 
-            if no_log:
+            if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
