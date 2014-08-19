@@ -146,7 +146,7 @@ class Inventory(object):
 
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
-            host.vars = utils.combine_vars(host.vars, self.get_variables(host.name, vault_password=self._vault_password))
+            host.vars = utils.combine_vars(host.vars, self.get_host_variables(host.name, vault_password=self._vault_password))
 
 
     def _match(self, str, pattern_str):
@@ -429,20 +429,22 @@ class Inventory(object):
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
 
-        # get group variables set by Inventory Parsers
-        vars = utils.combine_vars(vars, group.get_variables())
-
         # Read group_vars/ files
         vars = utils.combine_vars(vars, self.get_group_vars(group))
 
         return vars
 
     def get_variables(self, hostname, update_cached=False, vault_password=None):
+
+        return self.get_host(hostname).get_variables()
+
+    def get_host_variables(self, hostname, update_cached=False, vault_password=None):
+
         if hostname not in self._vars_per_host or update_cached:
-            self._vars_per_host[hostname] = self._get_variables(hostname, vault_password=vault_password)
+            self._vars_per_host[hostname] = self._get_host_variables(hostname, vault_password=vault_password)
         return self._vars_per_host[hostname]
 
-    def _get_variables(self, hostname, vault_password=None):
+    def _get_host_variables(self, hostname, vault_password=None):
 
         host = self.get_host(hostname)
         if host is None:
@@ -465,9 +467,6 @@ class Inventory(object):
         for updated in vars_results:
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
-
-        # get host variables set by Inventory Parsers
-        vars = utils.combine_vars(vars, host.get_variables())
 
         # still need to check InventoryParser per host vars
         # which actually means InventoryScript per host,
