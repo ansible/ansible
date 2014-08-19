@@ -125,9 +125,10 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-ASG_ATTRIBUTES = ('launch_config_name', 'max_size', 'min_size', 'desired_capacity',
-                     'vpc_zone_identifier', 'availability_zones',
-                     'health_check_period', 'health_check_type')
+ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
+    'health_check_period', 'health_check_type', 'launch_config_name',
+    'load_balancers', 'max_size', 'min_size', 'name', 'placement_group',
+    'tags', 'termination_policies', 'vpc_zone_identifier')
 
 def enforce_required_arguments(module):
     ''' As many arguments are not required for autoscale group deletion
