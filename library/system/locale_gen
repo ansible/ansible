@@ -107,14 +107,12 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['present','absent'], required=True),
+            state = dict(choices=['present','absent'], required=False),
         ),
         supports_check_mode=True
     )
 
     name = module.params['name']
-    if not "." in name:
-        module.fail_json(msg="Locale does not match pattern. Did you specify the encoding?")
     state = module.params['state']
 
     if not os.path.exists("/etc/locale.gen"):
