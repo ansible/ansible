@@ -113,8 +113,6 @@ def main():
     )
 
     name = module.params['name']
-    if not "." in name:
-        module.fail_json(msg="Locale does not match pattern. Did you specify the encoding?")
     state = module.params['state']
 
     if not os.path.exists("/etc/locale.gen"):
