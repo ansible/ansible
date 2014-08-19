@@ -343,10 +343,10 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         rc = popen.wait()
     if rc != 0:
         print "Command %s failed" % ' '.join(clone_cmd)
-        print "in directory %s" % temp_dir
+        print "in directory %s" % tempdir
         return False
 
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar.gz')
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
     if scm == 'hg':
         archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
         if role_version:
@@ -491,7 +491,10 @@ def install_role(role_name, role_version, role_filename, options):
         print "Error: the file downloaded was not a tar.gz"
         return False
     else:
-        role_tar_file = tarfile.open(role_filename, "r:gz")
+        if role_filename.endswith('.gz'):
+            role_tar_file = tarfile.open(role_filename, "r:gz")
+        else:
+            role_tar_file = tarfile.open(role_filename, "r")
         # verify the role's meta file
         meta_file = None
         members = role_tar_file.getmembers()
