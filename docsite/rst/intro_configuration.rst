@@ -338,6 +338,17 @@ it to 'shell'::
 
    module_name = command
 
+.. _no_log:
+
+no_log
+=======
+
+.. versionadded: '1.8'
+
+By default ansible will log module output to the remote syslog, this turns off this behaviour.
+
+   no_log: True
+
 .. _nocolor:
 
 nocolor
