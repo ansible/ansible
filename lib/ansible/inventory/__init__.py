@@ -324,6 +324,7 @@ class Inventory(object):
         if ungrouped is None:
             self.add_group(Group('ungrouped'))
             ungrouped = self.get_group('ungrouped')
+            self.get_group('all').add_child_group(ungrouped)
         ungrouped.add_host(new_host)
         return new_host
 
@@ -451,10 +452,6 @@ class Inventory(object):
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
-
-        # special case for ungrouped hosts, make sure group_vars/all is loaded
-        if len(host.groups) == 1 and host.groups[0].name == 'ungrouped':
-            vars = self.get_group_variables('all', vault_password=self._vault_password)
 
         # plugin.run retrieves all vars (also from groups) for host
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
