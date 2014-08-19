@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 import ansible
 
 from ansible.callbacks import vv
@@ -52,10 +54,10 @@ class ActionModule(object):
         new_name = args.get('name', args.get('hostname', None))
         vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        if ":" in new_name:
-            new_name, new_port = new_name.split(":")
+        new_name, new_port = _parse_ip_host_and_port(new_name)
+        if new_port:
             args['ansible_ssh_port'] = new_port
-        
+
         # redefine inventory and get group "all"
         inventory = self.runner.inventory
         allgroup = inventory.get_group('all')
@@ -105,4 +107,26 @@ class ActionModule(object):
         return ReturnData(conn=conn, comm_ok=True, result=result)
 
 
+def _parse_ip_host_and_port(hostname):
+    """
+    Attempt to parse the hostname and port from a hostname, e.g.,
 
+    some-host-name
+    some-host-name:80
+    8.8.8.8
+    8.8.8.8:80
+    2001:db8:0:1
+    [2001:db8:0:1]:80
+    """
+    if hostname.count(':') > 1:
+        match = re.match(
+            '\[(?P<ip>[^\]]+)\](:(?P<port>[0-9]+))?',
+            hostname
+        )
+        if match:
+            return match.group('ip'), match.group('port')
+        else:
+            return hostname, None
+    elif ':' in hostname:
+        return hostname.split(':')
+    return hostname, None
