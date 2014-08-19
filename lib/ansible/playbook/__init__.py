@@ -677,7 +677,7 @@ class PlayBook(object):
                 play_hosts = []
                 for x in range(serial):
                     if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop())
+                        play_hosts.append(all_hosts.pop(0))
                 serialized_batch.append(play_hosts)
 
         task_errors = False
