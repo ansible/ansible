@@ -70,3 +70,16 @@
       - "unknown_result.stderr" # An unknown command displays error on stderr.
       - "unknown_result|failed"
       - "not unknown_result|changed"
+
+- name: run a command that takes longer than 60 seconds
+  raw: PowerShell -Command Start-Sleep -s 75
+  register: sleep_command
+
+- name: assert that the sleep command ran
+  assert:
+    that:
+      - "sleep_command.rc == 0"
+      - "not sleep_command.stdout"
+      - "not sleep_command.stderr"
+      - "not sleep_command|failed"
+      - "not sleep_command|changed"
