@@ -80,7 +80,10 @@ class LookupModule(object):
             if not os.path.exists(path):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
-                    os.makedirs(pathdir)
+                    try:
+                        os.makedirs(pathdir, mode=0700)
+                    except OSError, e:
+                        raise errors.AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
@@ -91,6 +94,7 @@ class LookupModule(object):
                 else:
                     content = password
                 with open(path, 'w') as f:
+                    os.chmod(path, 0600)
                     f.write(content + '\n')
             else:
                 content = open(path).read().rstrip()
@@ -108,10 +112,12 @@ class LookupModule(object):
                     salt = self.random_salt()
                     content = '%s salt=%s' % (password, salt)
                     with open(path, 'w') as f:
+                        os.chmod(path, 0600)
                         f.write(content + '\n')
                 # crypt not requested, remove salt if present
                 elif (encrypt is None and salt):
                     with open(path, 'w') as f:
+                        os.chmod(path, 0600)
                         f.write(password + '\n')
 
             if encrypt:
