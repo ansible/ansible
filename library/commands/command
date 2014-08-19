@@ -138,7 +138,6 @@ def main():
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
-                skipped=True,
                 changed=False,
                 stderr=False,
                 rc=0
@@ -153,7 +152,6 @@ def main():
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,
-                skipped=True,
                 changed=False,
                 stderr=False,
                 rc=0
