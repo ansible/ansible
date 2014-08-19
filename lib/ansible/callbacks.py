@@ -25,6 +25,7 @@ import fnmatch
 import tempfile
 import fcntl
 import constants
+import locale
 from ansible.color import stringc
 
 import logging
@@ -645,7 +646,13 @@ class PlaybookCallbacks(object):
             msg = 'input for %s: ' % varname
 
         def prompt(prompt, private):
-            msg = prompt.encode(sys.stdout.encoding)
+            if sys.stdout.encoding:
+                msg = prompt.encode(sys.stdout.encoding)
+            else:
+                # when piping the output, or at other times when stdout
+                # may not be the standard file descriptor, the stdout
+                # encoding may not be set, so default to something sane
+                msg = prompt.encode(locale.getpreferredencoding())
             if private:
                 return getpass.getpass(msg)
             return raw_input(msg)
