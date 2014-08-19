@@ -89,6 +89,7 @@
   assert: 
      that: 
        - "copy_result3|changed"
+       - "'content' not in copy_result3"
 
 # test recursive copy
 
@@ -180,3 +181,4 @@
       - "copy_result6.changed"
       - "copy_result6.dest == '{{output_dir|expanduser}}/multiline.txt'"
       - "copy_result6.md5sum == '1627d51e7e607c92cf1a502bf0c6cce3'"
+
