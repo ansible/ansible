@@ -131,6 +131,9 @@ except ImportError:
 
 
 class Ec2Inventory(object):
+
+    explode_csv_tags = False
+
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
 
@@ -245,6 +248,9 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
+
+        if config.has_option('ec2', 'treat_csv_in_tags_as_multiple'):
+            self.explode_csv_tags = config.getboolean('ec2', 'treat_csv_in_tags_as_multiple')
 
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
@@ -418,7 +424,7 @@ class Ec2Inventory(object):
             self.push(self.inventory, key_name, dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'keys', key_name)
-        
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -433,11 +439,23 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+            # If treating CSV tag values as multiples, create multiple groups
+            if self.explode_csv_tags and ',' in v:
+                v = v.split(',')
+                for value in v:
+                    key = self.to_safe("tag_" + k + "=" + value)
+                    self.push(self.inventory, key, dest)
+
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                        self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+            else:
+                key = self.to_safe("tag_" + k + "=" + v)
+                self.push(self.inventory, key, dest)
+
+                if self.nested_groups:
+                    self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                    self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled:
@@ -490,13 +508,13 @@ class Ec2Inventory(object):
         self.push(self.inventory, instance.availability_zone, dest)
         if self.nested_groups:
             self.push_group(self.inventory, region, instance.availability_zone)
-        
+
         # Inventory: Group by instance type
         type_name = self.to_safe('type_' + instance.instance_class)
         self.push(self.inventory, type_name, dest)
         if self.nested_groups:
             self.push_group(self.inventory, 'types', type_name)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
@@ -600,8 +618,12 @@ class Ec2Inventory(object):
                 instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
                 for k, v in value.iteritems():
+                    if self.explode_csv_tags and ',' in v:
+                        v = v.split(',')
+
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
+
             elif key == 'ec2_groups':
                 group_ids = []
                 group_names = []
