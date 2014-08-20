@@ -262,6 +262,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     vars['template_uid']    = template_uid
     vars['template_fullpath'] = os.path.abspath(realpath)
     vars['template_run_date'] = datetime.datetime.now()
+    vars['template_relpath'] = os.path.relpath(vars['template_fullpath'], os.path.abspath(basedir))
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
