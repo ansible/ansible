@@ -26,29 +26,29 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-If ($params.domainname) {
-    $domainname = $params.domainname
+If ($params.domain_name) {
+    $domainname = $params.domain_name
 }
 Else {
-    Fail-Json $result "missing required argument: domainname"
+    Fail-Json $result "missing required argument: domain_name"
 }
 
-If ($params.domainusername) {
-    $domainusername = $params.domainusername
+If ($params.domain_username) {
+    $domainusername = $params.domain_username
 }
 Else {
-    Fail-Json $result "missing required argument: domainusername"
+    Fail-Json $result "missing required argument: domain_username"
 }
 
-If ($params.domainpassword) {
-    $domainpassword = $params.domainpassword
+If ($params.domain_password) {
+    $domainpassword = $params.domain_password
 }
 Else {
-    Fail-Json $result "missing required argument: domainpassword"
+    Fail-Json $result "missing required argument: domain_password"
 }
 
-If ($params.oupath) {
-    $OUPath = $params.oupath
+If ($params.ou_path) {
+    $OUPath = $params.ou_path
 }
 Else {
     $oupath = $null
@@ -104,7 +104,7 @@ if ($JoinDomain)
         }
     }
 
-    Set-Attr $result "domainjoin_result" "success"
+    Set-Attr $result "domain_membership_result" "success"
     $result.changed = $true
 }
 

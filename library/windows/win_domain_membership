@@ -29,25 +29,25 @@ short_description: Adds a computer to an Active Directory domain
 description:
      - Adds a computer to an Active Directory domain
 options:
-  domainname:
+  domain_name:
     description:
       - Names of the domain to add the computer to
     required: true
     default: null
     aliases: []
-  domainusername:
+  domain_username:
     description:
       - username of an account with permissions to add a computer to the specified domain. Use the UPN syntax (username@domain) as NetBios-style usernames (DOMAIN\username) don't get passed correctly to the winrm host.
     required: true
     default: null
     aliases: []
-  domainpassword:
+  domain_password:
     description:
       - password for the domainusername account    
 	required: true
     default: null
     aliases: []
-  oupath:
+  ou_path:
     description:
       - The OU in which to place the computer
     default: null
@@ -65,8 +65,8 @@ author: Trond Hindenes
 
 EXAMPLES = '''
 # This adds the computer to the domain mytestdomain.com.
-$ ansible -i hosts -m win_domain_membership -a "domainname=mytestdomain.com domainusername=administrator@mytestdomain.com domainpassword=Hello123" all
-$ ansible -i hosts -m win_domain_membership -a "domainname=mytestdomain.com domainusername=administrator@mytestdomain.com domainpassword=Hello123 OUPath=OU=Servers,DC=mytestdomain,DC=com" all
+$ ansible -i hosts -m win_domain_membership -a "domain_name=mytestdomain.com domain_username=administrator@mytestdomain.com domain_password=Hello123" all
+$ ansible -i hosts -m win_domain_membership -a "domain_name=mytestdomain.com domain_username=administrator@mytestdomain.com domain_password=Hello123 ou_path='OU=Servers,DC=mytestdomain,DC=com'" all
 
 
 # Playbook example
@@ -77,10 +77,8 @@ $ ansible -i hosts -m win_domain_membership -a "domainname=mytestdomain.com doma
   tasks:
     - name: Join Domain
       win_domain_membership:
-        domainname: "mytestdomain.com"
-		domainusername: "administrator@mytestdomain.com"
-		domainpassword: "Hello123"
-		oupath: "OU=Servers,DC=mytestdomain,DC=com"
-
-
+        domain_name: "mytestdomain.com"
+        domain_username: "administrator@mytestdomain.com"
+        domain_password: "Hello123"
+        ou_path: "OU=Servers,DC=mytestdomain,DC=com"
 '''
