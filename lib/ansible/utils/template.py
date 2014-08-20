@@ -268,7 +268,8 @@ def template_from_file(basedir, path, vars, vault_password=None):
     managed_str = managed_default.format(
         host = vars['template_host'],
         uid  = vars['template_uid'],
-        file = vars['template_path']
+        file = vars['template_path'],
+        relfile = vars['template_relpath']
     )
     vars['ansible_managed'] = time.strftime(
         managed_str,
