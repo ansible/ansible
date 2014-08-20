@@ -129,7 +129,8 @@ import hashlib
 try:
     import boto
 except ImportError:
-    module.fail_json(msg="boto required for this module")
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
 
 def key_check(module, s3, bucket, obj):
     try:
