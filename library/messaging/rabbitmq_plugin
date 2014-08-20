@@ -64,7 +64,7 @@ class RabbitMqPlugins(object):
         self.module = module
 
         if module.params['prefix']:
-            self._rabbitmq_plugins = module.params['prefix'] + "/sbin/rabbitmq-plugins"
+            self._rabbitmq_plugins = module.params['prefix'] + '/rabbitmq-plugins'
         else:
             self._rabbitmq_plugins = module.get_bin_path('rabbitmq-plugins', True)
 
