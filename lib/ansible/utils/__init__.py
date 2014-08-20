@@ -353,6 +353,8 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     return source2 # which does not exist
 
 def repo_url_to_role_name(repo_url):
+    if '://' not in repo_url:
+        return repo_url
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
         trailing_path = trailing_path[:-4]
