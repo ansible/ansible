@@ -86,49 +86,6 @@ def tty_ify(text):
     return t
 
 
-def format_param(param=list, col_widths=list):
-    # format parameter + definitions on 1 line
-    # parameters :
-    # param         -> parameter and definitions list
-    # col_widths    -> list of column width for each parameter value
-    #
-    # return string (formatted line)
-    param_col = zip(param, col_widths)
-
-    line = []
-    for word,col_len in param_col:
-        line.append(word + ' ' * (col_len-len(word)))
-
-    return ''.join(line)
-
-def get_columns_width(lines_list=[[],], offset=3):
-    # function that calculate columns ideal width
-    # to display a list as a table
-    #
-    # parameters :
-    #   lines_list -> list of lines (a line is a list)
-    #   offset     -> the arbitrary offset that we add for
-    #                   aesthetic reasons
-    #   return a list of widths (int)
-    #
-    # if the list of lines is malformed or empty, we
-    # return a empty string
-    if not all(isinstance(line, list) for line in lines_list):
-        return ''
-
-    # number of columns
-    column_nb = len(lines_list[0])
-
-    # parameters list in column to be able to max the width
-    cols_list = [[p[n] for p in lines_list] for n in range(column_nb)]
-
-    # larger columns strings list
-    maxcol_str = [max(cols_list[n], key=len) for n in range(column_nb)]
-
-    # return final columns widths list
-    return [len(s) + offset for s in maxcol_str]
-
-
 def get_man_text(doc):
 
     opt_indent="        "
@@ -168,20 +125,18 @@ def get_man_text(doc):
         text.append("Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
                             subsequent_indent=opt_indent))
 
-    if 'parameters' in doc and len(doc['parameters']) > 0:
-        # final columns widths list
-        col_widths = get_columns_width(doc['parameters'])
+    if 'returns' in doc and len(doc['returns']) > 0:
+        text.append('\n\nReturns :\n')
 
-        # if the code of the list is malformed, we just do nothing
-        if col_widths != '':
-            text.append("Parameters:\n")
+        for key, value in doc['returns'].items():
+            text.append(key)
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    returns = '{0} : {1}'.format(str(k), str(v))
+                    text.append('{}'.format(textwrap.fill(tty_ify(returns), initial_indent="  ",
+                            subsequent_indent=opt_indent)))
 
-            for p in doc['parameters']:
-                parameter = format_param(p, col_widths)
-                text.append(textwrap.fill(tty_ify(parameter), initial_indent="  ",
-                                    subsequent_indent=opt_indent))
-
-        text.append('\n')
+        text.append('\n\n')
 
     if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
         req = ", ".join(doc['requirements'])
