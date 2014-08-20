@@ -1,0 +1,113 @@
+#!powershell
+# This file is part of Ansible
+#
+# Copyright 2014, Trond Hindenes <trond@hindenes.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# WANT_JSON
+# POWERSHELL_COMMON
+
+$params = Parse-Args $args;
+$result = New-Object PSObject;
+Set-Attr $result "changed" $false;
+
+If ($params.package) {
+    $package = $params.package
+}
+Else {
+    Fail-Json $result "mising required argument: package"
+}
+
+If ($params.force) {
+    $force = $params.force | ConvertTo-Bool
+}
+Else
+{
+    $force = $false
+}
+
+
+If ($params.version) {
+    $version = $params.version
+}
+Else
+{
+    $version = $null
+}
+
+If ($params.showlog) {
+    $showlog = $params.showlog  | ConvertTo-Bool
+}
+Else
+{
+    $showlog = $null
+}
+
+
+$ChocoAlreadyInstalled = get-command cinst -ErrorAction 0
+if ($ChocoAlreadyInstalled -eq $null)
+{
+    #We need to install chocolatey
+    iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
+    $result.changed -eq $true
+    $executable = "C:\ProgramData\chocolatey\bin\cinst.exe"
+}
+Else
+{
+    $executable = "cinst.exe"
+}
+
+####### Install
+if (($force) -and ($version))
+{
+    $installresult = & $executable $package -version $version -force
+}
+Elseif (($force) -and (!$version))
+{
+    $installresult = & $executable $package -force
+}
+Elseif (!($force) -and ($version))
+{
+    $installresult = & $executable $package -version $version
+}
+Else
+{
+    $installresult = & $executable $package
+}
+
+$lastline = ($installresult.count) - 1
+if ($installresult[1] -match "already installed")
+{
+    #no change
+}
+elseif ($installresult[$lastline] -like "finished installing*")
+{
+    $result.changed = $true
+}
+Else
+{
+    Fail-Json $result "something bad happened: $installresult"
+}
+
+Set-Attr $result "chocolatey_success" "true"
+if ($showlog)
+{
+    Set-Attr $result "chocolatey_log" $installresult
+}
+
+
+
+
+Exit-Json $result;
