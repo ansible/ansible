@@ -46,7 +46,7 @@ options:
     choices: [ "yes", "no" ]
   subnets:
     description:
-      - 'A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed.'
+      - 'A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed. As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
     required: false
     default: null
     aliases: []
@@ -72,7 +72,7 @@ options:
     aliases: []
   route_tables:
     description:
-      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},] }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids in addition igw. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly.'
+      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},] }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids in addition igw. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
     required: false
     default: null
     aliases: []
@@ -275,11 +275,6 @@ def create_vpc(module, vpc_conn):
     wait_timeout = int(module.params.get('wait_timeout'))
     changed = False
 
-    if subnets is None:
-        subnets = []
-    if route_tables is None:
-        route_tables = []
-
     # Check for existing VPC by cidr_block + tags or id
     previous_vpc = find_vpc(module, vpc_conn, id, cidr_block)
 
@@ -340,47 +335,48 @@ def create_vpc(module, vpc_conn):
 
 
     # Process all subnet properties
-    if subnets and not isinstance(subnets, list):
-        module.fail_json(msg='subnets needs to be a list of cidr blocks')
+    if subnets is not None:
+        if not isinstance(subnets, list):
+            module.fail_json(msg='subnets needs to be a list of cidr blocks')
 
-    current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
+        current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
 
-    # First add all new subnets
-    for subnet in subnets:
-        add_subnet = True
-        for csn in current_subnets:
-            if subnet['cidr'] == csn.cidr_block:
-                add_subnet = False
-        if add_subnet:
-            try:
-                new_subnet = vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
-                new_subnet_tags = subnet.get('resource_tags', None)
-                if new_subnet_tags:
-                    # Sometimes AWS takes its time to create a subnet and so using new subnets's id
-                    # to create tags results in exception.
-                    # boto doesn't seem to refresh 'state' of the newly created subnet, i.e.: it's always 'pending'
-                    # so i resorted to polling vpc_conn.get_all_subnets with the id of the newly added subnet
-                    while len(vpc_conn.get_all_subnets(filters={ 'subnet-id': new_subnet.id })) == 0:
-                        time.sleep(0.1)
-
-                    vpc_conn.create_tags(new_subnet.id, new_subnet_tags)
-
-                changed = True
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
-
-    # Now delete all absent subnets
-    for csubnet in current_subnets:
-        delete_subnet = True
+        # First add all new subnets
         for subnet in subnets:
-            if csubnet.cidr_block == subnet['cidr']:
-                delete_subnet = False
-        if delete_subnet:
-            try:
-                vpc_conn.delete_subnet(csubnet.id)
-                changed = True
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to delete subnet {0}, error: {1}'.format(csubnet.cidr_block, e))
+            add_subnet = True
+            for csn in current_subnets:
+                if subnet['cidr'] == csn.cidr_block:
+                    add_subnet = False
+            if add_subnet:
+                try:
+                    new_subnet = vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
+                    new_subnet_tags = subnet.get('resource_tags', None)
+                    if new_subnet_tags:
+                        # Sometimes AWS takes its time to create a subnet and so using new subnets's id
+                        # to create tags results in exception.
+                        # boto doesn't seem to refresh 'state' of the newly created subnet, i.e.: it's always 'pending'
+                        # so i resorted to polling vpc_conn.get_all_subnets with the id of the newly added subnet
+                        while len(vpc_conn.get_all_subnets(filters={ 'subnet-id': new_subnet.id })) == 0:
+                            time.sleep(0.1)
+
+                        vpc_conn.create_tags(new_subnet.id, new_subnet_tags)
+
+                    changed = True
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
+
+        # Now delete all absent subnets
+        for csubnet in current_subnets:
+            delete_subnet = True
+            for subnet in subnets:
+                if csubnet.cidr_block == subnet['cidr']:
+                    delete_subnet = False
+            if delete_subnet:
+                try:
+                    vpc_conn.delete_subnet(csubnet.id)
+                    changed = True
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to delete subnet {0}, error: {1}'.format(csubnet.cidr_block, e))
 
     # Handle Internet gateway (create/delete igw)
     igw = None
@@ -417,81 +413,85 @@ def create_vpc(module, vpc_conn):
     # think of without using painful aws ids.  Hopefully boto will add
     # the replace-route-table API to make this smoother and
     # allow control of the 'main' routing table.
-    if route_tables and not isinstance(route_tables, list):
-        module.fail_json(msg='route tables need to be a list of dictionaries')
+    if route_tables is not None:
+        if not isinstance(route_tables, list):
+            module.fail_json(msg='route tables need to be a list of dictionaries')
 
-    # Work through each route table and update/create to match dictionary array
-    all_route_tables = []
-    for rt in route_tables:
-        try:
-            new_rt = vpc_conn.create_route_table(vpc.id)
-            for route in rt['routes']:
-                route_kwargs = {}
-                if route['gw'] == 'igw':
-                    if not internet_gateway:
-                        module.fail_json(
-                            msg='You asked for an Internet Gateway ' \
-                            '(igw) route, but you have no Internet Gateway'
-                        )
-                    route_kwargs['gateway_id'] = igw.id
-                elif route['gw'].startswith('i-'):
-                    route_kwargs['instance_id'] = route['gw']
-                else:
-                    route_kwargs['gateway_id'] = route['gw']
-                vpc_conn.create_route(new_rt.id, route['dest'], **route_kwargs)
-
-            # Associate with subnets
-            for sn in rt['subnets']:
-                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id })
-                if len(rsn) != 1:
-                    module.fail_json(
-                        msg='The subnet {0} to associate with route_table {1} ' \
-                        'does not exist, aborting'.format(sn, rt)
-                    )
-                rsn = rsn[0]
-
-                # Disassociate then associate since we don't have replace
-                old_rt = vpc_conn.get_all_route_tables(
-                    filters={'association.subnet_id': rsn.id, 'vpc_id': vpc.id}
-                )
-                if len(old_rt) == 1:
-                    old_rt = old_rt[0]
-                    association_id = None
-                    for a in old_rt.associations:
-                        if a.subnet_id == rsn.id:
-                            association_id = a.id
-                    vpc_conn.disassociate_route_table(association_id)
-
-                vpc_conn.associate_route_table(new_rt.id, rsn.id)
-
-            all_route_tables.append(new_rt)
-        except EC2ResponseError, e:
-            module.fail_json(
-                msg='Unable to create and associate route table {0}, error: ' \
-                '{1}'.format(rt, e)
-            )
-
-
-    # Now that we are good to go on our new route tables, delete the
-    # old ones except the 'main' route table as boto can't set the main
-    # table yet.
-    all_rts = vpc_conn.get_all_route_tables(filters={'vpc-id': vpc.id})
-    for rt in all_rts:
-        delete_rt = True
-        for newrt in all_route_tables:
-            if newrt.id == rt.id:
-                delete_rt = False
-        if delete_rt:
-            rta = rt.associations
-            is_main = False
-            for a in rta:
-                if a.main:
-                    is_main = True
+        # Work through each route table and update/create to match dictionary array
+        all_route_tables = []
+        for rt in route_tables:
             try:
-                if not is_main:
-                    vpc_conn.delete_route_table(rt.id)
+                new_rt = vpc_conn.create_route_table(vpc.id)
+                for route in rt['routes']:
+                    route_kwargs = {}
+                    if route['gw'] == 'igw':
+                        if not internet_gateway:
+                            module.fail_json(
+                                msg='You asked for an Internet Gateway ' \
+                                '(igw) route, but you have no Internet Gateway'
+                            )
+                        route_kwargs['gateway_id'] = igw.id
+                    elif route['gw'].startswith('i-'):
+                        route_kwargs['instance_id'] = route['gw']
+                    else:
+                        route_kwargs['gateway_id'] = route['gw']
+                    vpc_conn.create_route(new_rt.id, route['dest'], **route_kwargs)
+
+                # Associate with subnets
+                for sn in rt['subnets']:
+                    rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id })
+                    if len(rsn) != 1:
+                        module.fail_json(
+                            msg='The subnet {0} to associate with route_table {1} ' \
+                            'does not exist, aborting'.format(sn, rt)
+                        )
+                    rsn = rsn[0]
+
+                    # Disassociate then associate since we don't have replace
+                    old_rt = vpc_conn.get_all_route_tables(
+                        filters={'association.subnet_id': rsn.id, 'vpc_id': vpc.id}
+                    )
+                    if len(old_rt) == 1:
+                        old_rt = old_rt[0]
+                        association_id = None
+                        for a in old_rt.associations:
+                            if a.subnet_id == rsn.id:
+                                association_id = a.id
+                        vpc_conn.disassociate_route_table(association_id)
+
+                    vpc_conn.associate_route_table(new_rt.id, rsn.id)
+
+                all_route_tables.append(new_rt)
+                changed = True
             except EC2ResponseError, e:
-                module.fail_json(msg='Unable to delete old route table {0}, error: {1}'.format(rt.id, e))
+                module.fail_json(
+                    msg='Unable to create and associate route table {0}, error: ' \
+                    '{1}'.format(rt, e)
+                )
+
+        # Now that we are good to go on our new route tables, delete the
+        # old ones except the 'main' route table as boto can't set the main
+        # table yet.
+        all_rts = vpc_conn.get_all_route_tables(filters={'vpc-id': vpc.id})
+        for rt in all_rts:
+            delete_rt = True
+            for newrt in all_route_tables:
+                if newrt.id == rt.id:
+                    delete_rt = False
+                    break
+            if delete_rt:
+                rta = rt.associations
+                is_main = False
+                for a in rta:
+                    if a.main:
+                        is_main = True
+                        break
+                try:
+                    if not is_main:
+                        vpc_conn.delete_route_table(rt.id)
+                        changed = True
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to delete old route table {0}, error: {1}'.format(rt.id, e))
 
     vpc_dict = get_vpc_info(vpc)
     created_vpc_id = vpc.id
