@@ -16,6 +16,8 @@ options:
     name:
         description:
              - Name and encoding of the locale, such as "en_GB.UTF-8".
+               After version 1.8, complex locales, such as "en_US ISO-8859-1",
+               "ca_ES.UTF-8@valencia UTF-8", can be used.
         required: true
         default: null
         aliases: []
@@ -30,6 +32,7 @@ options:
 EXAMPLES = '''
 # Ensure a locale exists.
 - locale_gen: name=de_CH.UTF-8 state=present
+- locale_gen: name="ca_ES.UTF-8@valencia UTF-8" # Supported after version 1.8.
 '''
 
 # ===========================================
@@ -113,8 +116,9 @@ def main():
     )
 
     name = module.params['name']
-    if not "." in name:
-        module.fail_json(msg="Locale does not match pattern. Did you specify the encoding?")
+    encoding = None
+    if " " in name:
+        name, encoding = name.split()
     state = module.params['state']
 
     if not os.path.exists("/etc/locale.gen"):
@@ -133,7 +137,10 @@ def main():
     if module.check_mode:
         module.exit_json(changed=changed)
     else:
-        encoding = name.split(".")[1]
+        if not encoding:
+            if not "." in name:
+                module.fail_json(msg="Locale does not match pattern. Did you specify the encoding?")
+            encoding = name.split(".")[1]
         if changed:
             try:
                 if ubuntuMode==False:
