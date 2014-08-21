@@ -699,15 +699,19 @@ def parse_kv(args):
 def _validate_both_dicts(a, b):
 
     if not (isinstance(a, dict) and isinstance(b, dict)):
-        raise errors.AnsibleError("Failed to combine two values which are not "
-            "both hashes, got these differing values now:\n\n%s\n and\n%s" % (a, b))
+        raise errors.AnsibleError(
+            "failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__)
+        )
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''
 
-    _validate_both_dicts(a, b)
     result = {}
+
+    # we check here as well as in combine_vars() since this
+    # function can work recursively with nested dicts
+    _validate_both_dicts(a, b)
 
     for dicts in a, b:
         # next, iterate over b keys and values
