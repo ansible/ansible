@@ -344,13 +344,14 @@ def scm_archive_role(scm, role_url, role_version, role_name):
     clone_cmd = [scm, 'clone', role_url, role_name]
     with open('/dev/null', 'w') as devnull:
         try:
+            print "- executing: %s" % " ".join(clone_cmd)
             popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
         except:
             raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
         rc = popen.wait()
     if rc != 0:
-        print "Command %s failed" % ' '.join(clone_cmd)
-        print "in directory %s" % tempdir
+        print "- command %s failed" % ' '.join(clone_cmd)
+        print "  in directory %s" % tempdir
         return False
 
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
@@ -367,12 +368,13 @@ def scm_archive_role(scm, role_url, role_version, role_name):
             archive_cmd.append('HEAD')
 
     with open('/dev/null', 'w') as devnull:
+        print "- executing: %s" % " ".join(archive_cmd)
         popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, role_name),
                                  stderr=devnull, stdout=devnull)
         rc = popen.wait()
     if rc != 0:
-        print "Command %s failed" % ' '.join(archive_cmd)
-        print "in directory %s" % tempdir
+        print "- command %s failed" % ' '.join(archive_cmd)
+        print "  in directory %s" % tempdir
         return False
 
     shutil.rmtree(tempdir)
@@ -494,8 +496,6 @@ def fetch_role(role_name, target, role_data, options):
 def install_role(role_name, role_version, role_filename, options):
     # the file is a tar, so open it that way and extract it
     # to the specified (or default) roles directory
-
-    print "DEBUG: FN=%s" % role_filename
 
     if not tarfile.is_tarfile(role_filename):
         print "Error: the file downloaded was not a tar.gz"
@@ -759,7 +759,6 @@ def execute_install(args, options, parser):
                         role["version"] = str(loose_versions[-1])
                     else:
                         role["version"] = 'master'
-                    print " no version specified, installing %s" % role.version
                 else:
                     if role_versions and role["version"] not in [a.get('name',None) for a in role_versions]:
                         print "The specified version (%s) was not found in the list of available versions." % role.version
