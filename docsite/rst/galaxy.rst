@@ -61,17 +61,27 @@ The extension is important. If the .yml extension is left off, the ansible-galax
 
 And here's an example showing some specific version downloads from multiple sources.  In one of the examples we also override the name of the role and download it as something different::
 
-    - src: bennojoy.mysql
-      name: mysql # save as mysql not bennojoy.mysql
- 
+    # from galaxy
+    - src: yatesr.timezone
+
+    # from github
+    - src: https://github.com/bennojoy/nginx
+
+    # from github, overriding the name and specifying a specific tag
+    - src: https://github.com/bennojoy/nginx
+      name: nginx_role
+    
+    # from a webserver, where the role is packaged in a tar.gz
+    - src: https://some.webserver.example.com/files/master.tar.gz
+      name: http-role
+
+    # from bitbucket, if bitbucket happens to be operational right now :)
     - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
+    # from bitbucket, alternative syntax and caveats
     - src: http://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
-
-    - src: https://bitbucket.org/willthames/http-ansible-galaxy/get/master.tar.gz
-      name: http-role
 
 As you can see in the above, there are a large amount of controls available
 to customize where roles can be pulled from, and what to save roles as.     
