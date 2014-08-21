@@ -353,6 +353,9 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     return source2 # which does not exist
 
 def repo_url_to_role_name(repo_url):
+    # gets the role name out of a repo like 
+    # http://git.example.com/repos/repo.git" => "repo"
+
     if '://' not in repo_url:
         return repo_url
     trailing_path = repo_url.split('/')[-1]
@@ -366,6 +369,16 @@ def repo_url_to_role_name(repo_url):
 
 
 def role_spec_parse(role_spec):
+    # takes a repo and a version like 
+    # git+http://git.example.com/repos/repo.git,v1.0 
+    # and returns a list of properties such as:
+    # {
+    #   'scm': 'git', 
+    #   'src': 'http://git.example.com/repos/repo.git', 
+    #   'version': 'v1.0', 
+    #   'name': 'repo'
+    # }
+   
     role_spec = role_spec.strip()
     role_version = ''
     if role_spec == "" or role_spec.startswith("#"):
