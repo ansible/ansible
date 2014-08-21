@@ -306,16 +306,18 @@ def main():
     if sys.version_info < (2, 5, 0):
         module.fail_json(msg='This module requires Python 2.5+')
 
-    try:
-        if module.params['name']:
-            artifact = Artifact.parse(module.params['name'])
-        else:
-            g, a, v, c, t = (module.params[k] for k in [
-                'group_id', 'artifact_id', 'version', 'classifier', 'extension'])
-            artifact = Artifact(g, a, v, c, t)
+    # Create type object as namespace for module params
+    p = type('Params', (), module.params)
 
-        dw = MavenDownloader(module.params['repo_url'])
-        dest = path.expanduser(module.params['dest'])
+    try:
+        if p.name:
+            artifact = Artifact.parse(p.name)
+        else:
+            artifact = Artifact(p.group_id, p.artifact_id, p.version,
+                                p.classifier, p.extension)
+
+        dw = MavenDownloader(p.repo_url)
+        dest = path.expanduser(p.dest)
 
         result = dw.download(artifact, dest, module.check_mode)
         module.exit_json(**result)
