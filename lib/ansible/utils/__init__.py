@@ -28,6 +28,7 @@ from ansible import errors
 from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
+from ansible.utils.su_prompts import *
 from ansible.callbacks import display
 from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
@@ -1175,13 +1176,12 @@ def make_su_cmd(su_user, executable, cmd):
     """
     # TODO: work on this function
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-    prompt = '[Pp]assword: ?$'
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s %s %s -c "%s -c %s"' % (
         C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
-    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
+    return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
 
 _TO_UNICODE_TYPES = (unicode, type(None))
 
