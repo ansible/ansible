@@ -170,6 +170,8 @@ class MavenDownloader:
             artifact.version = self._find_latest_version_available(artifact)
 
         url = self.find_uri_for_artifact(artifact)
+        info = dict(url=url, path=dest, **artifact.__dict__)
+
         if not self._is_same_md5(dest, url + '.md5'):
             response = self._request(url, "Failed to download artifact %s" % str(artifact), lambda r: r)
             if response:
@@ -181,8 +183,8 @@ class MavenDownloader:
                         f.write(response.read())
                 finally:
                     f.close()
-                return True
-        return False
+                return dict(changed=True, **info)
+        return dict(changed=False, **info)
 
     def find_uri_for_artifact(self, artifact):
         if artifact.is_snapshot():
@@ -315,8 +317,8 @@ def main():
         dw = MavenDownloader(module.params['repo_url'])
         dest = path.expanduser(module.params['dest'])
 
-        changed = dw.download(artifact, dest, module.check_mode)
-        module.exit_json(changed=changed, artifact=str(artifact))
+        result = dw.download(artifact, dest, module.check_mode)
+        module.exit_json(**result)
 
     except ArtifactError, e:
         module.fail_json(msg=str(e), artifact=str(e.artifact))
