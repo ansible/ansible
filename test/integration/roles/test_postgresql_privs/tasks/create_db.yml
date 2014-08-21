@@ -1,0 +1,35 @@
+# test code to create postgresql database
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Create postgresql database, user and table
+#
+- name: create postgresql database  
+  postgresql_db: name={{ database_name }} state=present
+  sudo: yes
+  sudo_user: postgres
+
+- name: create postgresql user
+  postgresql_user: db={{ database_name }} name={{user_name}} password={{ password }} state=present priv=ALL
+  sudo: yes
+  sudo_user: postgres
+
+- name: create database table  
+  command: psql -c "CREATE TABLE {{ table_name }} (First varchar(40))" -d {{ database_name }}
+  sudo: yes
+  sudo_user: postgres

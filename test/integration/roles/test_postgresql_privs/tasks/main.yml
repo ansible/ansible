@@ -1,0 +1,193 @@
+# test code for postgresql_privs module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Verify postgresql_privs successfully grants user privileges
+#
+- include: create_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+- name: grant user select and insert privileges (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=select,insert type=table objs={{db_table}} roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=ar'
+
+# ============================================================
+# Verify postgresql_privs behavior when granting user privileges that already exists
+#
+- name: grant user select and insert privileges that already exists (expect changed=false)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=select,insert type=table objs={{db_table}} roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=false privileges='{{db_user1}}=ar'
+
+# ============================================================
+# Verify postgresql_privs successfully revokes user privileges
+#
+- name: revoke user select privileges (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=absent priv=select type=table objs={{db_table}} roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=a'
+
+# ============================================================
+# Verify postgresql_privs behavior when revoking user privileges that do not exist
+#
+- name: revoke user select privileges that do not exist (expect changed=false)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=absent priv=select type=table objs={{db_table}} roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=false privileges='{{db_user1}}=a'
+
+- include: remove_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+# ============================================================
+# Verify postgresql_privs successfully grants user privileges on database using alias database
+#
+- include: create_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+- name: grant user select privileges using alias database (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: database={{ db_name }} state=present priv=update type=table objs={{db_table}} roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=w'
+
+# ============================================================
+# Verify postgresql_privs successfully grants user privileges on table object using alias obj
+#
+- name: grant user select privileges using alias obj (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=insert type=table obj={{db_table}} roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=aw'
+
+# ============================================================
+# Verify postgresql_privs successfully grants user privileges on database using alias role
+#
+- name: grant user select privileges using alias role (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=select type=table obj={{db_table}} role={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=arw'
+
+- include: remove_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+# ============================================================
+# Verify postgresql_privs successfully update user grant privileges on a table object 
+#
+- include: create_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+- name: grant user select privileges (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=select type=table obj={{db_table}} role={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=r'
+
+- name: grant user delete privileges (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=delete type=table obj={{db_table}} role={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=rd'
+
+- include: remove_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+# ============================================================
+# Verify postgresql_privs successfully update user revoke privileges on a table object 
+#
+- include: create_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+- name: grant user select, insert and delete privileges
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=delete,insert,select type=table obj={{db_table}} role={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=ard'
+
+- name: revoke user delete privileges (expect changed=true) 
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=absent priv=delete type=table obj={{db_table}} role={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=ar'
+
+- name: revoke user insert privileges (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=absent priv=insert type=table obj={{db_table}} role={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=r'
+
+- include: remove_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+# ============================================================
+# Verify postgresql_privs successfully grants user privileges on database using a schema
+#
+- include: create_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+- name: grant user delete and insert privileges with a schema (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present priv=delete,insert type=table objs={{db_table}} roles={{db_user1}} schema=public
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=ad'
+
+- include: remove_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+# ============================================================
+# Verify postgresql_privs successfully grants user privileges on ALL_IN_SCHEMA for table
+#
+- include: create_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+- name: grant user select privileges with a object ALL_IN_SCHEMA (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name }} state=present privs=SELECT objs=ALL_IN_SCHEMA roles={{db_user1}}
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name}} changed=true privileges='{{db_user1}}=r'
+
+- include: remove_db.yml database_name={{db_name}} table_name={{db_table}} user_name={{db_user1}}
+
+# ============================================================
+# Verify postgresql_privs successfully grants privileges to the correct user
+#
+- include: users_privs.yml 
+
+

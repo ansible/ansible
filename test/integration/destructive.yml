@@ -11,3 +11,4 @@
     - { role: test_mysql_user, tags: test_mysql_user}
     - { role: test_mysql_user, tags: test_mysql_user}    
     - { role: test_mysql_variables, tags: test_mysql_variables}
+    - { role: test_postgresql_privs, tags: test_postgresql_privs}
