@@ -787,10 +787,54 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(ansible.utils.repo_url_to_role_name(url), result)
 
     def test_role_spec_parse(self):
-        tests = [("git+http://git.example.com/repos/repo.git,v1.0", {'scm': 'git', 'src': 'http://git.example.com/repos/repo.git', 'version': 'v1.0', 'name': 'repo'}),
-                ("http://repo.example.com/download/tarfile.tar.gz", {'scm': None, 'src': 'http://repo.example.com/download/tarfile.tar.gz', 'version': '', 'name': 'tarfile'}),
-                ("http://repo.example.com/download/tarfile.tar.gz,,nicename", {'scm': None, 'src': 'http://repo.example.com/download/tarfile.tar.gz', 'version': '', 'name': 'nicename'}),
-                ("git+http://git.example.com/repos/repo.git,v1.0,awesome", {'scm': 'git', 'src': 'http://git.example.com/repos/repo.git', 'version': 'v1.0', 'name': 'awesome'})]
+        tests = [
+            (
+                "git+http://git.example.com/repos/repo.git,v1.0", 
+                {
+                    'scm': 'git', 
+                    'src': 'http://git.example.com/repos/repo.git', 
+                    'version': 'v1.0', 
+                    'name': 'repo'
+                }
+            ),
+            (
+                "http://repo.example.com/download/tarfile.tar.gz", 
+                {
+                    'scm': None, 
+                    'src': 'http://repo.example.com/download/tarfile.tar.gz', 
+                    'version': '', 
+                    'name': 'tarfile'
+                }
+            ),
+            (
+                "http://repo.example.com/download/tarfile.tar.gz,,nicename", 
+                {
+                    'scm': None, 
+                    'src': 'http://repo.example.com/download/tarfile.tar.gz', 
+                    'version': '', 
+                    'name': 'nicename'
+                }
+            ),
+            (
+                "git+http://git.example.com/repos/repo.git,v1.0,awesome", 
+                {
+                    'scm': 'git', 
+                    'src': 'http://git.example.com/repos/repo.git', 
+                    'version': 'v1.0', 
+                    'name': 'awesome'
+                }
+            ),
+            (
+                # test that http://github URLs are assumed git+http://
+                "http://github.com/ansible/fakerole/fake",
+                {
+                    'scm' : 'git',
+                    'src' : 'http://github.com/ansible/fakerole/fake',
+                    'version' : '', 
+                    'name' : 'fake'
+                }
+            )
+            ]
         for (spec, result) in tests:
             self.assertEqual(ansible.utils.role_spec_parse(spec), result)
 
