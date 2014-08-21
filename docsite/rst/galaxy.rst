@@ -69,7 +69,7 @@ And here's an example showing some specific version downloads from multiple sour
 
     - src: https://bitbucket.org/willthames/http-ansible-galaxy/get/master.tar.g      name: http-role
 
-    - galaxyusername.rolename
+    - src: galaxyusername.rolename
       version: v1.5
       name: save_as_this_role_name
 
