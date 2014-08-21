@@ -12,6 +12,7 @@ New core features:
 * For ec2 dynamic inventory, ec2.ini can has various new configuration options
 * 'ansible vault view filename.yml' opens filename.yml decrypted in a pager.
 * no_log parameter now surpressess data from callbacks/output as well as syslog
+* ansible-galaxy install -f requirements.yml allows advanced options and installs from non-galaxy SCM sources and tarballs.
 
 New Modules:
 
