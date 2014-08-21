@@ -3,6 +3,8 @@ Ansible Galaxy
 
 "Ansible Galaxy" can either refer to a website for sharing and downloading Ansible roles, or a command line tool that helps work with roles.
 
+.. contents:: Topics
+
 The Website
 ```````````
 
