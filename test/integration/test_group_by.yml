@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- hosts: lamini
+- hosts: all
   gather_facts: false
   tasks:
     - name: group by genus
@@ -44,6 +44,14 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_lama=true
 
+- hosts: camelus
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_camelus=true
+
 - hosts: vic
   gather_facts: false
   tasks:
@@ -59,6 +67,14 @@
       assert: { that: "inventory_hostname == 'llama'" }
     - name: set a fact to check that we ran this play
       set_fact: genus_lam=true
+
+- hosts: cam
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_cam=true
 
 - hosts: vi
   gather_facts: false
@@ -76,6 +92,14 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_la=true
 
+- hosts: ca
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_ca=true
+
 - hosts: VICUGNA
   gather_facts: false
   tasks:
@@ -91,6 +115,14 @@
       assert: { that: "inventory_hostname == 'llama'" }
     - name: set a fact to check that we ran this play
       set_fact: genus_LAMA=true
+
+- hosts: CAMELUS
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_CAMELUS=true
 
 - hosts: '{{genus'
   gather_facts: false
@@ -109,3 +141,27 @@
   tasks:
     - name: check that llama matched all four groups
       assert: { that: ["genus_lama", "genus_lam", "genus_la", "genus_LAMA"] }
+
+- hosts: camel
+  gather_facts: false
+  tasks:
+    - name: check that camel matched all four groups
+      assert: { that: ["genus_camelus", "genus_cam", "genus_ca", "genus_CAMELUS"] }
+
+- hosts: vicugna
+  gather_facts: false
+  tasks:
+    - name: check group_vars variable overrides for vicugna
+      assert: { that: ["uno == 1", "dos == 2", "tres == 'three'"] }
+
+- hosts: lama
+  gather_facts: false
+  tasks:
+    - name: check group_vars variable overrides for lama
+      assert: { that: ["uno == 1", "dos == 2", "tres == 3"] }
+
+- hosts: camelus
+  gather_facts: false
+  tasks:
+    - name: check group_vars variable overrides for camelus
+      assert: { that: ["uno == 1", "dos == 'two'", "tres == 3"] }
