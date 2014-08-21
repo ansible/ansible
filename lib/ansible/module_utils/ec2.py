@@ -32,14 +32,17 @@ try:
 except:
     HAS_LOOSE_VERSION = False
 
-AWS_REGIONS = ['ap-northeast-1',
-               'ap-southeast-1',
-               'ap-southeast-2',
-               'eu-west-1',
-               'sa-east-1',
-               'us-east-1',
-               'us-west-1',
-               'us-west-2']
+AWS_REGIONS = [
+    'ap-northeast-1',
+    'ap-southeast-1',
+    'ap-southeast-2',
+    'eu-west-1',
+    'sa-east-1',
+    'us-east-1',
+    'us-west-1',
+    'us-west-2',
+    'us-gov-west-1',
+]
 
 
 def aws_common_argument_spec():
