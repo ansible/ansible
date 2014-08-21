@@ -33,7 +33,11 @@ description:
 options:
   name:
     description:
-      - Maven coordinates of the artifact to download.
+      - Maven coordinates of the artifact to download (see
+        U(http://maven.apache.org/pom.html#Maven_Coordinates) for syntax).
+      - This option is mutually exclusive with C(group_id) and C(artifact_id).
+        C(version), C(classifier) or C(extension) are used only when they are not specified in
+        C(name).
     aliases: [artifact]
   group_id:
     description:
@@ -112,7 +116,7 @@ class Artifact(object):
         self.artifact_id = artifact_id
         self.version = version
         self.classifier = classifier
-        self.extension = extension or 'jar'
+        self.extension = extension
 
     def is_snapshot(self):
         return self.version.endswith('SNAPSHOT')
@@ -297,7 +301,7 @@ def main():
             'state':       {'choices': ['present'], 'default': 'present'}
         },
         required_one_of=[['name', 'group_id']],
-        mutually_exclusive=[['name', arg] for arg in ('group_id', 'artifact_id', 'version', 'classifier', 'extension')],
+        mutually_exclusive=[['name', arg] for arg in ('group_id', 'artifact_id')],
         required_together=[['group_id', 'artifact_id']],
         add_file_common_args=True,
         supports_check_mode=True
@@ -312,6 +316,9 @@ def main():
     try:
         if p.name:
             artifact = Artifact.parse(p.name)
+            artifact.version = artifact.version or p.version
+            artifact.classifier = artifact.classifier or p.classifier
+            artifact.extension = artifact.extension or p.extension
         else:
             artifact = Artifact(p.group_id, p.artifact_id, p.version,
                                 p.classifier, p.extension)
