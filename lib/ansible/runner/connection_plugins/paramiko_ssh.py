@@ -225,7 +225,6 @@ class Connection(object):
                 shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
             elif self.runner.su or su:
                 shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
-                prompt_re = re.compile(prompt)
 
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
@@ -240,7 +239,7 @@ class Connection(object):
 
                         if success_key in sudo_output or \
                             (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
-                            (self.runner.su_pass and prompt_re.match(sudo_output)):
+                            (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
                             break
                         chunk = chan.recv(bufsize)
 
