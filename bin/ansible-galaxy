@@ -41,6 +41,7 @@ from optparse import OptionParser
 
 import ansible.constants as C
 import ansible.utils
+from ansible.errors import AnsibleError
 
 default_meta_template = """---
 galaxy_info:
@@ -342,7 +343,10 @@ def scm_archive_role(scm, role_url, role_version, role_name):
     tempdir = tempfile.mkdtemp()
     clone_cmd = [scm, 'clone', role_url, role_name]
     with open('/dev/null', 'w') as devnull:
-        popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+        try:
+            popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+        except:
+            raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
         rc = popen.wait()
     if rc != 0:
         print "Command %s failed" % ' '.join(clone_cmd)
@@ -490,6 +494,9 @@ def fetch_role(role_name, target, role_data, options):
 def install_role(role_name, role_version, role_filename, options):
     # the file is a tar, so open it that way and extract it
     # to the specified (or default) roles directory
+
+    print "DEBUG: FN=%s" % role_filename
+
     if not tarfile.is_tarfile(role_filename):
         print "Error: the file downloaded was not a tar.gz"
         return False
