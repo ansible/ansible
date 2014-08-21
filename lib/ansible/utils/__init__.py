@@ -204,10 +204,15 @@ def jsonify(result, format=False):
     for key, value in result2.items():
         if type(value) is str:
             result2[key] = value.decode('utf-8', 'ignore')
+
+    indent = None
     if format:
-        return json.dumps(result2, sort_keys=True, indent=4, ensure_ascii=False)
-    else:
-        return json.dumps(result2, sort_keys=True, ensure_ascii=False)
+        indent = 4
+
+    try:
+        return json.dumps(result2, sort_keys=True, indent=indent, ensure_ascii=False)
+    except UnicodeDecodeError:
+        return json.dumps(result2, sort_keys=True, indent=indent)
 
 def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
