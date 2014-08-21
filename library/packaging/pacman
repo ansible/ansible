@@ -61,6 +61,13 @@ options:
         required: false
         default: "no"
         choices: ["yes", "no"]
+
+    upgrade
+        description:
+            - Whether or not to upgrade whole system
+        required: false
+        default: "no"
+        choices: ["yes", "no"]
 '''
 
 EXAMPLES = '''
@@ -75,6 +82,9 @@ EXAMPLES = '''
 
 # Run the equivalent of "pacman -Syy" as a separate step
 - pacman: update_cache=yes
+
+# Run the equivalent of "pacman -Su" as a separate step
+- pacman: upgrade=yes
 '''
 
 import json
