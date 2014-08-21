@@ -210,8 +210,15 @@ def main():
                 module.exit_json(changed=True)
             changed = True
             curpath = ''
-            for dirname in path.split('/'):
+            # Split the path so we can apply filesystem attributes recursively
+            # from the root (/) directory for absolute paths or the base path
+            # of a relative path.  We can then walk the appropriate directory
+            # path to apply attributes.
+            for dirname in path.strip('/').split('/'):
                 curpath = '/'.join([curpath, dirname])
+                # Remove leading slash if we're creating a relative path
+                if not os.path.isabs(path):
+                    curpath = curpath.lstrip('/')
                 if not os.path.exists(curpath):
                     os.mkdir(curpath)
                     tmp_file_args = file_args.copy()
