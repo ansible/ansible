@@ -90,7 +90,7 @@ options:
     aliases: []
   peers:
     description:
-      - A array of dictionary in the form of: { id: vpc_id, route: true / false, name: "your name" }
+      - A array of dictionary in the form of: { id: vpc_id, route: true / false, name: "your name", "cidr": [ "172.22.2.0/24", "172.22.3.0/24" ] } The cidr block provided will be used to determain which route table we should manipulate on either side of the vpc chain. If i cant find either subnet on a vpc it will add the route to the main table.
     default: null
     required: false
   peer_auto_accept:
@@ -347,140 +347,11 @@ def create_vpc(module, vpc_conn):
         if new_tags:
             vpc_conn.create_tags(vpc.id, new_tags)
 
-
     # boto doesn't appear to have a way to determine the existing
     # value of the dns attributes, so we just set them.
     # It also must be done one at a time.
     vpc_conn.modify_vpc_attribute(vpc.id, enable_dns_support=dns_support)
     vpc_conn.modify_vpc_attribute(vpc.id, enable_dns_hostnames=dns_hostnames)
-
-    # Handle VPC Peering
-    current_vpc_ids = [vpcc.id for vpcc in vpc_conn.get_all_vpcs()]
-    current_connections = []
-
-    current_peer_connection_vpc_ids = []
-    for vpcc in vpc_conn.get_all_vpc_peering_connections(filters=[('status-code','active')]):
-        if vpc.id == vpcc.requester_vpc_info.vpc_id or vpc.id == vpcc.accepter_vpc_info.vpc_id:
-            current_connections.append(vpcc)
-            current_peer_connection_vpc_ids.append(vpcc.accepter_vpc_info.vpc_id)
-            current_peer_connection_vpc_ids.append(vpcc.requester_vpc_info.vpc_id)
-
-    current_peer_connection_vpc_ids = list(set(current_peer_connection_vpc_ids))
-
-    # First add new VPC Connections
-    for peer in peers:
-        peer_connection = None
-        if peer.get('id') not in current_peer_connection_vpc_ids:
-            try:
-                peer_connection = vpc_conn.create_vpc_peering_connection(vpc.id,peer.get('id'))
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to create VPCConnection to {0}, error {1}'.format(peer.get('id'), e))
-        else:
-            filtered_connections = filter(lambda conn: (conn.accepter_vpc_info.vpc_id == peer.get('id') or conn.requester_vpc_info.vpc_id == peer.get('id')), current_connections)
-            if len(filtered_connections) == 0:
-                module.fail_json(msg='Could not find {0}'.format(peer.get('id')))
-            else:
-                peer_connection = filtered_connections[0]
-
-        # Setup name
-        if peer.get("name"):
-            tags = vpc_conn.get_all_tags(filters={'resource-id': peer_connection.id})
-            if len(tags) == 0:
-                tags = {}
-            else:
-                tags = dict((t.name, t.value) for t in tags)
-
-            if tags.get("Name") != peer.get("name"):
-                tags["Name"] = peer.get("name")
-                try:
-                    vpc_conn.create_tags(peer_connection.id, tags)
-                except EC2ResponseError,e:
-                    module.fail_json(msg='Couldnt update tags for peer {0} error:{1}'.format(tags, e))
-
-        # Accept peering
-
-        if peer.get('id') in current_vpc_ids and peer_auto_accept == True:
-            try:
-                vpc_conn.accept_vpc_peering_connection(peer_connection.id)
-                peer_connection.update()
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to accept vpc connection for {0}, error {1}'.format(peer_connection.id, e))
-
-        # Find peer VPC
-        peer_vpc = find_vpc(module,vpc_conn, peer.get('id'))
-        # Try to find a routing table that handles the peer cidr block on our VPC
-        vpc_route_table = None
-        try:
-            rts = vpc_conn.get_all_route_tables(filters=[("route.destination-cidr-block",peer_vpc.cidr_block),("vpc-id",vpc.id)])
-            for route_table in rts:
-                for route in route_table.routes:
-                    if route.destination_cidr_block == peer_vpc.cidr_block and (route.state == "blackhole" or peer.get('route') == False):
-                        try:
-                            vpc_conn.delete_route(route_table.id, route.destination_cidr_block)
-                            vpc_route_table = route_table
-                        except EC2ResponseError, e:
-                            module.fail_json(msg="Couldnt remove a blackhole route: {0}, error {1}".format(route.destination_cidr_block, e))
-
-        except EC2ResponseError, e:
-            module.fail_json(msg='Failed to retrieve vpc({0}) route tables. error {1}'.format(vpc.id, e))
-
-        if vpc_route_table == None:
-            # Get the main routing table for our vpc 
-            try:
-                rts = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",vpc.id)])
-                if len(rts) > 0 and len(filter(lambda rt: len(filter(lambda r: r.destination_cidr_block == peer_vpc.cidr_block, rt.routes)) > 0, rts)) == 0:
-                    vpc_route_table = rts[0]
-
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to retrieve tables {0}'.format(e))
-
-        peer_vpc_route_table = None
-        try:
-            rts = vpc_conn.get_all_route_tables(filters=[("route.destination-cidr-block",vpc.cidr_block),("vpc-id",peer_vpc.id)])
-            for route_table in rts:
-                for route in route_table.routes:
-                    if route.destination_cidr_block == vpc.cidr_block and (route.state == "blackhole" or peer.get('route') == False):
-                        try:
-                            vpc_conn.delete_route(route_table.id, route.destination_cidr_block)
-                            peer_vpc_route_table = route_table
-                        except EC2ResponseError, e:
-                            module.fail_json(msg="Couldnt remove a blackhole route: {0}, error {1}".format(route.destination_cidr_block, e))
-
-        except EC2ResponseError, e:
-            module.fail_json(msg='Failed to retrieve peer vpc({0}) route tables. error {1}'.format(vpc.id, e))
-
-        if peer_vpc_route_table == None:
-            # Get routing table for peer vpc
-            try:
-                rts = vpc_conn.get_all_route_tables(filters=[("association.main","true"),("vpc-id",peer_vpc.id)])
-                if len(rts) > 0 and len(filter(lambda rt: len(filter(lambda r: r.destination_cidr_block == vpc.cidr_block, rt.routes)) > 0, rts)) == 0:
-                    peer_vpc_route_table = rts[0]
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to retrieve tables {0}'.format(e))
-
-        # Lets route on the first side.
-        if peer.get('route') and vpc_route_table != None:
-            try:
-                vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
-
-        # Lets route on the other side if we own the that side too
-        if peer.get('route') and peer_vpc_route_table != None and peer_connection.accepter_vpc_info.owner_id == peer_connection.requester_vpc_info.owner_id:
-            try:
-                vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(route_table, e))
-
-
-    # Now delete all absent peer connections
-    peer_vpc_ids = [ppeer.get('id') for ppeer in peers]
-    for connection in current_connections:
-        if connection.accepter_vpc_info.vpc_id not in peer_vpc_ids and connection.requester_vpc_info.vpc_id not in peer_vpc_ids:
-            try:
-                vpc_conn.delete_vpc_peering_connection(connection.id)
-            except EC2ResponseError, e:
-                module.fail_json(msg='Unable to accept vpc connection for {0}, error {1}'.format(connection.id, e))
 
     # Process all subnet properties
     if subnets and not isinstance(subnets, list):
@@ -550,6 +421,94 @@ def create_vpc(module, vpc_conn):
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to delete Internet Gateway, error: {0}'.format(e))
 
+    # Handle VPC Peering
+    current_vpc_ids = [vpcc.id for vpcc in vpc_conn.get_all_vpcs()]
+    current_connections = []
+
+    current_peer_connection_vpc_ids = []
+    for vpcc in vpc_conn.get_all_vpc_peering_connections(filters=[('status-code','active')]):
+        if vpc.id == vpcc.requester_vpc_info.vpc_id or vpc.id == vpcc.accepter_vpc_info.vpc_id:
+            current_connections.append(vpcc)
+            current_peer_connection_vpc_ids.append(vpcc.accepter_vpc_info.vpc_id)
+            current_peer_connection_vpc_ids.append(vpcc.requester_vpc_info.vpc_id)
+
+    current_peer_connection_vpc_ids = list(set(current_peer_connection_vpc_ids))
+
+    # First add new VPC Connections
+    for peer in peers:
+        peer_connection = None
+        if peer.get('id') not in current_peer_connection_vpc_ids:
+            try:
+                peer_connection = vpc_conn.create_vpc_peering_connection(vpc.id,peer.get('id'))
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to create VPCConnection to {0}, error {1}'.format(peer.get('id'), e))
+        else:
+            filtered_connections = filter(lambda conn: (conn.accepter_vpc_info.vpc_id == peer.get('id') or conn.requester_vpc_info.vpc_id == peer.get('id')), current_connections)
+            if len(filtered_connections) == 0:
+                module.fail_json(msg='Could not find {0}'.format(peer.get('id')))
+            else:
+                peer_connection = filtered_connections[0]
+
+
+        # Setup name
+        if peer.get("name"):
+            tags = vpc_conn.get_all_tags(filters={'resource-id': peer_connection.id})
+            if len(tags) == 0:
+                tags = {}
+            else:
+                tags = dict((t.name, t.value) for t in tags)
+
+            if tags.get("Name") != peer.get("name"):
+                tags["Name"] = peer.get("name")
+                try:
+                    vpc_conn.create_tags(peer_connection.id, tags)
+                except EC2ResponseError,e:
+                    module.fail_json(msg='Couldnt update tags for peer {0} error:{1}'.format(tags, e))
+
+        # Accept peering
+
+        if peer.get('id') in current_vpc_ids and peer_auto_accept == True:
+            try:
+                vpc_conn.accept_vpc_peering_connection(peer_connection.id)
+                peer_connection.update()
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to accept vpc connection for {0}, error {1}'.format(peer_connection.id, e))
+
+            # Find peer VPC
+            peer_vpc = find_vpc(module,vpc_conn, peer.get('id'))
+            # Try to find a routing table that handles the peer cidr block on our VPC
+            # Clean the current vpc's routing table from inactive routes, if we get a route table back we need to add our routes to it, otherwise skip it
+            vpc_subnets = vpc_conn.get_all_subnets(filters={'cidr': peer.get('subnets'), 'vpc_id': vpc.id })
+            peer_vpc_subnets = vpc_conn.get_all_subnets(filters={'cidr': peer.get('subnets'), 'vpc_id': peer_vpc.id })
+
+            vpc_route_table = clean_vpc_route(module, vpc_conn, find_appropriate_route_table(module, vpc_conn, vpc.id, subnets=vpc_subnets), vpc, peer_vpc, peer)
+            peer_vpc_route_table = clean_vpc_route(module, vpc_conn, find_appropriate_route_table(module, vpc_conn, peer_vpc.id, subnets=peer_vpc_subnets), peer_vpc, vpc, peer)
+            
+            # Lets route on the first side.
+            if peer.get('route') and vpc_route_table != None:
+                try:
+                    vpc_conn.create_route(vpc_route_table.id,peer_vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to add route to table: {0} error {1}'.format(vpc_route_table, e))
+
+            # Lets route on the other side if we own the that side too
+            if peer.get('route') and peer_vpc_route_table != None and peer_connection.accepter_vpc_info.owner_id == peer_connection.requester_vpc_info.owner_id:
+                try:
+                    vpc_conn.create_route(peer_vpc_route_table.id,vpc.cidr_block,vpc_peering_connection_id=peer_connection.id)
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to add route to table: {0} + {1} via {2} error {3}'.format(peer_vpc_route_table, vpc.cidr_block, peer_connection.id, e))
+
+
+    # Now delete all absent peer connections
+    peer_vpc_ids = [ppeer.get('id') for ppeer in peers]
+    for connection in current_connections:
+        if connection.accepter_vpc_info.vpc_id not in peer_vpc_ids and connection.requester_vpc_info.vpc_id not in peer_vpc_ids:
+            try:
+                vpc_conn.delete_vpc_peering_connection(connection.id)
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to accept vpc connection for {0}, error {1}'.format(connection.id, e))
+
+
     # Handle route tables - this may be worth splitting into a
     # different module but should work fine here. The strategy to stay
     # indempotent is to basically build all the route tables as
@@ -570,7 +529,11 @@ def create_vpc(module, vpc_conn):
             new_rt = vpc_conn.create_route_table(vpc.id)
             for route in rt['routes']:
                 route_kwargs = {}
-                if route['gw'] == 'igw':
+                if route['dest'].startswith('vpc-'):
+                    (connection,peer_info) = find_vpc_peer(module,vpc_conn, route['dest'])
+                    route_kwargs['vpc_peering_connection_id'] = connection.id
+                    route['dest'] = peer_info.cidr_block
+                elif route['gw'] == 'igw':
                     if not internet_gateway:
                         module.fail_json(
                             msg='You asked for an Internet Gateway ' \
@@ -614,7 +577,6 @@ def create_vpc(module, vpc_conn):
                 '{1}'.format(rt, e)
             )
 
-
     # Now that we are good to go on our new route tables, delete the
     # old ones except the 'main' route table as boto can't set the main
     # table yet.
@@ -648,6 +610,8 @@ def create_vpc(module, vpc_conn):
             'az': sn.availability_zone,
             'id': sn.id,
         })
+
+    
 
     return (vpc_dict, created_vpc_id, returned_subnets, changed)
 
@@ -707,6 +671,80 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
             changed = True
 
     return (changed, vpc_dict, terminated_vpc_id)
+
+def clean_vpc_route(module,vpc_conn, route_table, vpc, peer_vpc, peer):
+    return_route_table = True
+    for route in route_table.routes:
+        if route.destination_cidr_block == peer_vpc.cidr_block:
+            if route.state == "blackhole" or peer.get('route') == False:
+                try:
+                    vpc_conn.delete_route(route_table.id, route.destination_cidr_block)
+                    return_route_table = True
+                    break
+                except EC2ResponseError, e:
+                    module.fail_json(msg="Couldnt remove a blackhole route: {0}, error {1}".format(route.destination_cidr_block, e))
+            else:
+                return_route_table = False
+
+    if return_route_table:
+        return route_table 
+    else:
+        return None
+
+def find_vpc_peer(module,vpc_conn, peer_id):
+    connections = vpc_conn.get_all_vpc_peering_connections(filters=[('status-code','active')])
+    filtered_connections = filter(lambda conn: (conn.accepter_vpc_info.vpc_id == peer_id or conn.requester_vpc_info.vpc_id == peer_id), connections)
+    if len(filtered_connections) > 0:
+        conn = filtered_connections[0]
+        vpc_info = None
+        if conn.accepter_vpc_info.vpc_id == peer_id:
+            vpc_info = conn.accepter_vpc_info
+        else:
+            vpc_info = conn.requester_vpc_info
+
+        return (conn, vpc_info)
+    else:
+        return (False,False)
+
+def find_appropriate_route_table(module, vpc_conn, vpc_id, subnets=[], destination_cidr_block=None):
+    """
+    Try to find the appropriate route table for given arguments.
+
+    subbnets is a list of subnet ids that we could find in a route table. If we find one we will return that route table.
+
+    destination_cidr_block is used to find existing routes within a route table.
+
+    If everything else fail we will retrieve the main table.
+    returns a route table object
+    """
+
+    if subnets is boto.resultset.ResultSet:
+        _subnets = []
+        for subnet in subnets:
+            _subnets.append(subnet)
+        subnets = _subnets
+
+    route_table = None
+    rts = vpc_conn.get_all_route_tables(filters=[("vpc-id",vpc_id)])
+    if len(rts) > 0:
+        # Try to locate the destination cidr block first, this will give us a pre existing route table for the given address.
+        destination_routes = filter(lambda rt: len(filter(lambda r: r.destination_cidr_block == destination_cidr_block, rt.routes)) > 0, rts)
+        subnet_routes = filter(lambda rt: len(filter(lambda ras: ras.subnet_id in map(lambda s: s.id,subnets), rt.associations)) > 0, rts)
+
+        destination_rtb = None
+        subnet_rtb = None
+        main_rtb = None
+
+        if len(destination_routes) > 0 :
+            route_table = destination_routes[0]
+        elif len(subnet_routes) > 0:
+            route_table = subnet_routes[0]
+        else:
+            route_table = filter(lambda rt: len(filter(lambda ras: ras.main == True, rt.associations)) > 0, rts)[0]
+
+
+        return route_table
+
 
 
 def main():
