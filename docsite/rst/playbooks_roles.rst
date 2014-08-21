@@ -386,6 +386,8 @@ Read the "About" page on the Galaxy site for more information.
 
 .. seealso::
 
+   :doc:`galaxy`
+       How to share roles on galaxy, role management
    :doc:`YAMLSyntax`
        Learn about YAML syntax
    :doc:`playbooks`
