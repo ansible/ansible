@@ -373,10 +373,12 @@ class Play(object):
 
         roles = self._build_role_dependencies(roles, [], self.vars)
 
-        # give each role an uuid
+        # give each role an uuid and
+        # make role_path available as variable to the task
         for idx, val in enumerate(roles):
             this_uuid = str(uuid.uuid4())
             roles[idx][-2]['role_uuid'] = this_uuid
+            roles[idx][-2]['role_path'] = roles[idx][1]
 
         role_names = []
 
