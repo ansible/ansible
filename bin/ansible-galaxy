@@ -26,6 +26,7 @@ import json
 import os
 import os.path
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -39,6 +40,7 @@ from jinja2 import Environment
 from optparse import OptionParser
 
 import ansible.constants as C
+import ansible.utils
 
 default_meta_template = """---
 galaxy_info:
@@ -172,8 +174,11 @@ def build_option_parser(action):
             '-p', '--init-path', dest='init_path', default="./",
             help='The path in which the skeleton role will be created. '
                  'The default is the current working directory.')
+        parser.add_option(
+            '--offline', dest='offline', default=False, action='store_true',
+            help="Don't query the galaxy API when creating roles")
     elif action == "install":
-        parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | tar_file(s)]")
+        parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
         parser.add_option(
             '-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
             help='Ignore errors and continue with the next specified role.')
@@ -327,6 +332,51 @@ def api_get_list(api_server, what):
         return None
 
 #-------------------------------------------------------------------------------------
+# scm repo utility functions
+#-------------------------------------------------------------------------------------
+
+def scm_archive_role(scm, role_url, role_version, role_name):
+    if scm not in ['hg', 'git']:
+        print "SCM %s is not currently supported" % scm
+        return False
+    tempdir = tempfile.mkdtemp()
+    clone_cmd = [scm, 'clone', role_url, role_name]
+    with open('/dev/null', 'w') as devnull:
+        popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+        rc = popen.wait()
+    if rc != 0:
+        print "Command %s failed" % ' '.join(clone_cmd)
+        print "in directory %s" % tempdir
+        return False
+
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
+    if scm == 'hg':
+        archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
+        if role_version:
+            archive_cmd.extend(['-r', role_version])
+        archive_cmd.append(temp_file.name)
+    if scm == 'git':
+        archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name]
+        if role_version:
+            archive_cmd.append(role_version)
+        else:
+            archive_cmd.append('HEAD')
+
+    with open('/dev/null', 'w') as devnull:
+        popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, role_name),
+                                 stderr=devnull, stdout=devnull)
+        rc = popen.wait()
+    if rc != 0:
+        print "Command %s failed" % ' '.join(archive_cmd)
+        print "in directory %s" % tempdir
+        return False
+
+    shutil.rmtree(tempdir)
+
+    return temp_file.name
+
+
+#-------------------------------------------------------------------------------------
 # Role utility functions
 #-------------------------------------------------------------------------------------
 
@@ -416,7 +466,10 @@ def fetch_role(role_name, target, role_data, options):
     """
 
     # first grab the file and save it to a temp location
-    archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], target)
+    if '://' in role_name:
+        archive_url = role_name
+    else: 
+        archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], target)
     print " - downloading role from %s" % archive_url
 
     try:
@@ -441,7 +494,10 @@ def install_role(role_name, role_version, role_filename, options):
         print "Error: the file downloaded was not a tar.gz"
         return False
     else:
-        role_tar_file = tarfile.open(role_filename, "r:gz")
+        if role_filename.endswith('.gz'):
+            role_tar_file = tarfile.open(role_filename, "r:gz")
+        else:
+            role_tar_file = tarfile.open(role_filename, "r")
         # verify the role's meta file
         meta_file = None
         members = role_tar_file.getmembers()
@@ -520,11 +576,13 @@ def execute_init(args, options, parser):
     init_path  = get_opt(options, 'init_path', './')
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
     force      = get_opt(options, 'force', False)
+    offline    = get_opt(options, 'offline', False)
 
-    api_config = api_get_config(api_server)
-    if not api_config:
-        print "The API server (%s) is not responding, please try again later." % api_server
-        sys.exit(1)
+    if not offline:
+        api_config = api_get_config(api_server)
+        if not api_config:
+            print "The API server (%s) is not responding, please try again later." % api_server
+            sys.exit(1)
 
     try:
         role_name = args.pop(0).strip()
@@ -570,12 +628,12 @@ def execute_init(args, options, parser):
             # datastructure in place, plus with all of the available 
             # tags/platforms included (but commented out) and the 
             # dependencies section
-            platforms = api_get_list(api_server, "platforms")
-            if not platforms:
-                platforms = []
-            categories = api_get_list(api_server, "categories")
-            if not categories:
-                categories = []
+            platforms = []
+            if not offline:
+                platforms = api_get_list(api_server, "platforms") or []
+            categories = []
+            if not offline:
+                categories = api_get_list(api_server, "categories") or []
             
             # group the list of platforms from the api based
             # on their names, with the release field being 
@@ -639,93 +697,96 @@ def execute_install(args, options, parser):
         print "Please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
-    api_config = api_get_config(api_server)
-    if not api_config:
-        print "The API server (%s) is not responding, please try again later." % api_server
-        sys.exit(1)
-
     roles_done = []
     if role_file:
-        # roles listed in a file, one per line
-        # so we'll go through and grab them all
         f = open(role_file, 'r')
-        roles_left = f.readlines()
+        if role_file.endswith('.yaml') or role_file.endswith('.yml'):
+            roles_left = map(ansible.utils.role_yaml_parse, yaml.safe_load(f))
+        else:
+            # roles listed in a file, one per line
+            roles_left = map(ansible.utils.role_spec_parse, f.readlines())
         f.close()
     else:
         # roles were specified directly, so we'll just go out grab them
         # (and their dependencies, unless the user doesn't want us to).
-        roles_left = args
+        roles_left = map(ansible.utils.role_spec_parse, args)
 
     while len(roles_left) > 0:
         # query the galaxy API for the role data
-        role_name = roles_left.pop(0).strip()
-        role_version = None
+        role_data = None
+        role = roles_left.pop(0)
+        role_src = role.get("src")
+        role_scm = role.get("scm")
 
-        if role_name == "" or role_name.startswith("#"):
-            continue
-        elif ',' in role_name:
-            role_name,role_version = role_name.split(',',1)
-            role_name = role_name.strip()
-            role_version = role_version.strip()
-
-        if os.path.isfile(role_name):
+        if os.path.isfile(role_src):
             # installing a local tar.gz
-            tar_file = role_name
-            role_name = os.path.basename(role_name).replace('.tar.gz','')
-            if tarfile.is_tarfile(tar_file):
-                print " - installing %s as %s" % (tar_file, role_name)
-                if not install_role(role_name, role_version, tar_file, options):
-                    exit_without_ignore(options)
-            else:
-                print "%s (%s) was NOT installed successfully." % (role_name,tar_file)
-                exit_without_ignore(options)
+            tmp_file = role_src
         else:
-            # installing remotely
-            role_data = api_lookup_role_by_name(api_server, role_name)
-            if not role_data:
-                print "Sorry, %s was not found on %s." % (role_name, api_server)
-                continue
-
-            role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
-            if not role_version: 
-                # convert the version names to LooseVersion objects
-                # and sort them to get the latest version. If there
-                # are no versions in the list, we'll grab the head 
-                # of the master branch
-                if len(role_versions) > 0:
-                    loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
-                    loose_versions.sort()
-                    role_version = str(loose_versions[-1])
-                else:
-                    role_version = 'master'
-                print " no version specified, installing %s" % role_version
+            if role_scm:
+                # create tar file from scm url
+                tmp_file = scm_archive_role(role_scm, role_src, role.get("version"), role.get("name"))
+            elif '://' in role_src:
+                # just download a URL - version will probably be in the URL
+                tmp_file = fetch_role(role_src, None, None, options)
             else:
-                if role_versions and role_version not in [a.get('name',None) for a in role_versions]:
-                    print "The specified version (%s) was not found in the list of available versions." % role_version
-                    exit_without_ignore(options)
+                # installing from galaxy
+                api_config = api_get_config(api_server)
+                if not api_config:
+                    print "The API server (%s) is not responding, please try again later." % api_server
+                    sys.exit(1)
+
+                role_data = api_lookup_role_by_name(api_server, role_src)
+                if not role_data:
+                    print "Sorry, %s was not found on %s." % (role_src, api_server)
                     continue
 
-            # download the role. if --no-deps was specified, we stop here, 
-            # otherwise we recursively grab roles and all of their deps.
-            tmp_file = fetch_role(role_name, role_version, role_data, options)
-            if tmp_file and install_role(role_name, role_version, tmp_file, options):
-                # we're done with the temp file, clean it up
-                os.unlink(tmp_file)
-                # install dependencies, if we want them
-                if not no_deps:
+                role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
+                if "version" not in role:
+                    # convert the version names to LooseVersion objects
+                    # and sort them to get the latest version. If there
+                    # are no versions in the list, we'll grab the head 
+                    # of the master branch
+                    if len(role_versions) > 0:
+                        loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
+                        loose_versions.sort()
+                        role["version"] = str(loose_versions[-1])
+                    else:
+                        role["version"] = 'master'
+                    print " no version specified, installing %s" % role.version
+                else:
+                    if role_versions and role["version"] not in [a.get('name',None) for a in role_versions]:
+                        print "The specified version (%s) was not found in the list of available versions." % role.version
+                        exit_without_ignore(options)
+                        continue
+
+                # download the role. if --no-deps was specified, we stop here, 
+                # otherwise we recursively grab roles and all of their deps.
+                tmp_file = fetch_role(role_src, role["version"], role_data, options)
+        if tmp_file and install_role(role.get("name"), role.get("version"), tmp_file, options):
+            # we're done with the temp file, clean it up
+            os.unlink(tmp_file)
+            # install dependencies, if we want them
+            if not no_deps:
+                if not role_data:
+                    role_data = get_role_metadata(role.get("name"), options)
+                    role_dependencies = role_data['dependencies']
+                else:
                     role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
-                    for dep_name in role_dependencies:
-                        #dep_name = "%s.%s" % (dep['owner'], dep['name'])
-                        if not get_role_metadata(dep_name, options):
-                            print ' adding dependency: %s' % dep_name
-                            roles_left.append(dep_name)
-                        else:
-                            print ' dependency %s is already installed, skipping.' % dep_name
-            else:
-                if tmp_file:
-                    os.unlink(tmp_file)
-                print "%s was NOT installed successfully." % role_name
-                exit_without_ignore(options)
+                for dep in role_dependencies:
+                    if isinstance(dep, str):
+                        dep = ansible.utils.role_spec_parse(dep)
+                    else:
+                        dep = ansible.utils.role_yaml_parse(dep)
+                    if not get_role_metadata(dep["name"], options):
+                        print ' adding dependency: %s' % dep["name"]
+                        roles_left.append(dep)
+                    else:
+                        print ' dependency %s is already installed, skipping.' % dep["name"]
+        else:
+            if tmp_file:
+                os.unlink(tmp_file)
+            print "%s was NOT installed successfully." % role.get("name")
+            exit_without_ignore(options)
     sys.exit(0)
 
 def execute_remove(args, options, parser):

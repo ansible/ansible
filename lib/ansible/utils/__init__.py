@@ -352,6 +352,49 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
         raise errors.AnsibleError("input file not found at %s or %s" % (source2, obvious_local_path))
     return source2 # which does not exist
 
+def repo_url_to_role_name(repo_url):
+    if '://' not in repo_url:
+        return repo_url
+    trailing_path = repo_url.split('/')[-1]
+    if trailing_path.endswith('.git'):
+        trailing_path = trailing_path[:-4]
+    if trailing_path.endswith('.tar.gz'):
+        trailing_path = trailing_path[:-7]
+    if ',' in trailing_path:
+        trailing_path = trailing_path.split(',')[0]
+    return trailing_path
+
+
+def role_spec_parse(role_spec):
+    role_spec = role_spec.strip()
+    role_version = ''
+    if role_spec == "" or role_spec.startswith("#"):
+        return (None, None, None, None)
+    tokens = map(lambda s: s.strip(), role_spec.split(','))
+    if '+' in tokens[0]:
+        (scm, role_url) = tokens[0].split('+')
+    else:
+        scm = None
+        role_url = tokens[0]
+    if len(tokens) >= 2:
+        role_version = tokens[1]
+    if len(tokens) == 3:
+        role_name = tokens[2]
+    else:
+        role_name = repo_url_to_role_name(tokens[0])
+    return dict(scm=scm, src=role_url, version=role_version, name=role_name)
+
+
+def role_yaml_parse(role):
+    if '+' in role["src"]:
+        (scm, src) = role["src"].split('+')
+        role["scm"] = scm
+        role["src"] = src
+    if 'name' not in role:
+        role["name"] = repo_url_to_role_name(role["src"])
+    return role
+
+
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
 

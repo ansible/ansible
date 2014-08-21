@@ -186,20 +186,21 @@ class Play(object):
             if role_name is None:
                 raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
             role_vars = orig_path
-            orig_path = role_name
+        else:
+            role_name = utils.role_spec_parse(orig_path)["name"]
 
         role_path = None
 
         possible_paths = [
-            utils.path_dwim(self.basedir, os.path.join('roles', orig_path)),
-            utils.path_dwim(self.basedir, orig_path)
+            utils.path_dwim(self.basedir, os.path.join('roles', role_name)),
+            utils.path_dwim(self.basedir, role_name)
         ]
 
         if C.DEFAULT_ROLES_PATH:
             search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
             for loc in search_locations:
                 loc = os.path.expanduser(loc)
-                possible_paths.append(utils.path_dwim(loc, orig_path))
+                possible_paths.append(utils.path_dwim(loc, role_name))
 
         for path_option in possible_paths:
             if os.path.isdir(path_option):
@@ -411,7 +412,7 @@ class Play(object):
             if isinstance(role, dict):
                 role_name = role['role']
             else:
-                role_name = role
+                role_name = utils.role_spec_parse(role)["name"]
 
             role_names.append(role_name)
             if os.path.isfile(task):

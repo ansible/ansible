@@ -14,9 +14,12 @@ else
 CREDENTIALS_ARG =
 endif
 
+# http://unix.stackexchange.com/questions/30091/fix-or-alternative-for-mktemp-in-os-x
+TMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
+
 VAULT_PASSWORD_FILE = vault-password
 
-all: non_destructive destructive includes unicode test_var_precedence check_mode test_hash test_handlers test_group_by test_vault parsing
+all: non_destructive destructive includes unicode test_var_precedence check_mode test_hash test_handlers test_group_by test_vault parsing test_galaxy
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags common,scenario1; [ $$? -eq 3 ]
@@ -101,3 +104,23 @@ rackspace: $(CREDENTIALS_FILE)
     RC=$$? ; \
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make rackspace_cleanup ; \
     exit $$RC;
+
+test_galaxy: test_galaxy_spec test_galaxy_yaml
+
+test_galaxy_spec:
+	mytmpdir=$(TMPDIR) ; \
+	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles ; \
+    cp galaxy_playbook.yml $$mytmpdir ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
+
+test_galaxy_yaml:
+	mytmpdir=$(TMPDIR) ; \
+	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles ; \
+    cp galaxy_playbook.yml $$mytmpdir ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC

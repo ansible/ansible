@@ -778,3 +778,19 @@ class TestUtils(unittest.TestCase):
         assert 'msg' not in data
         assert data['censored'] == 'results hidden due to no_log parameter'
 
+    def test_repo_url_to_role_name(self):
+        tests = [("http://git.example.com/repos/repo.git", "repo"),
+                 ("ssh://git@git.example.com:repos/role-name", "role-name"),
+                 ("ssh://git@git.example.com:repos/role-name,v0.1", "role-name"),
+                 ("directory/role/is/installed/in", "directory/role/is/installed/in")]
+        for (url, result) in tests:
+            self.assertEqual(ansible.utils.repo_url_to_role_name(url), result)
+
+    def test_role_spec_parse(self):
+        tests = [("git+http://git.example.com/repos/repo.git,v1.0", {'scm': 'git', 'src': 'http://git.example.com/repos/repo.git', 'version': 'v1.0', 'name': 'repo'}),
+                ("http://repo.example.com/download/tarfile.tar.gz", {'scm': None, 'src': 'http://repo.example.com/download/tarfile.tar.gz', 'version': '', 'name': 'tarfile'}),
+                ("http://repo.example.com/download/tarfile.tar.gz,,nicename", {'scm': None, 'src': 'http://repo.example.com/download/tarfile.tar.gz', 'version': '', 'name': 'nicename'}),
+                ("git+http://git.example.com/repos/repo.git,v1.0,awesome", {'scm': 'git', 'src': 'http://git.example.com/repos/repo.git', 'version': 'v1.0', 'name': 'awesome'})]
+        for (spec, result) in tests:
+            self.assertEqual(ansible.utils.role_spec_parse(spec), result)
+
