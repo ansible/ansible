@@ -378,12 +378,22 @@ def role_spec_parse(role_spec):
     #   'version': 'v1.0', 
     #   'name': 'repo'
     # }
-   
+  
     role_spec = role_spec.strip()
     role_version = ''
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
+
+    # FIXME: coding guidelines want this as a list comprehension
     tokens = map(lambda s: s.strip(), role_spec.split(','))
+
+    # assume https://github.com URLs are git+https:// URLs and not
+    # tarballs
+    print "0=%s" % tokens[0]
+    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+"):
+        print "DONE!"
+        tokens[0] = 'git+' + tokens[0]
+
     if '+' in tokens[0]:
         (scm, role_url) = tokens[0].split('+')
     else:
@@ -399,6 +409,8 @@ def role_spec_parse(role_spec):
 
 
 def role_yaml_parse(role):
+    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"]:
+        role["src"] = "git+" + role["src"]
     if '+' in role["src"]:
         (scm, src) = role["src"].split('+')
         role["scm"] = scm
