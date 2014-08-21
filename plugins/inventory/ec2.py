@@ -154,6 +154,8 @@ class Ec2Inventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
+
+    def data_to_print(self):
         # Data to print
         if self.args.host:
             data_to_print = self.get_host_info()
@@ -165,7 +167,7 @@ class Ec2Inventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        return data_to_print
 
 
     def is_cache_valid(self):
@@ -700,6 +702,6 @@ class Ec2Inventory(object):
             return json.dumps(data)
 
 
-# Run the script
-Ec2Inventory()
-
+if __name__ == "__main__":
+    # Run the Inventory script and print output
+    print Ec2Inventory().data_to_print()
