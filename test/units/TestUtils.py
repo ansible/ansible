@@ -825,13 +825,23 @@ class TestUtils(unittest.TestCase):
                 }
             ),
             (
-                # test that http://github URLs are assumed git+http://
+                # test that http://github URLs are assumed git+http:// unless they end in .tar.gz
                 "http://github.com/ansible/fakerole/fake",
                 {
                     'scm' : 'git',
                     'src' : 'http://github.com/ansible/fakerole/fake',
                     'version' : '', 
                     'name' : 'fake'
+                }
+            ),
+            (
+                # test that http://github URLs are assumed git+http:// unless they end in .tar.gz
+                "http://github.com/ansible/fakerole/fake/archive/master.tar.gz",
+                {
+                    'scm' : None,
+                    'src' : 'http://github.com/ansible/fakerole/fake/archive/master.tar.gz',
+                    'version' : '', 
+                    'name' : 'master'
                 }
             )
             ]

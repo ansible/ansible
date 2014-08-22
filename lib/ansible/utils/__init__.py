@@ -384,14 +384,11 @@ def role_spec_parse(role_spec):
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
-    # FIXME: coding guidelines want this as a list comprehension
-    tokens = map(lambda s: s.strip(), role_spec.split(','))
+    tokens = [s.strip() for s in role_spec.split(',')]
 
     # assume https://github.com URLs are git+https:// URLs and not
-    # tarballs
-    print "0=%s" % tokens[0]
-    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+"):
-        print "DONE!"
+    # tarballs unless they end in '.zip'
+    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
         tokens[0] = 'git+' + tokens[0]
 
     if '+' in tokens[0]:
@@ -409,7 +406,7 @@ def role_spec_parse(role_spec):
 
 
 def role_yaml_parse(role):
-    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"]:
+    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
         role["src"] = "git+" + role["src"]
     if '+' in role["src"]:
         (scm, src) = role["src"].split('+')
