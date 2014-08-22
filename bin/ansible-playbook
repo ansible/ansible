@@ -247,7 +247,8 @@ def main(args):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
-                print ''
+                if options.listhosts or options.listtasks:
+                    print ''
             continue
 
         if options.syntax:
