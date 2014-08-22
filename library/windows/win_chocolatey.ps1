@@ -56,35 +56,35 @@ Else
 }
 
 
-$ChocoAlreadyInstalled = get-command cinst -ErrorAction 0
+$ChocoAlreadyInstalled = get-command choco -ErrorAction 0
 if ($ChocoAlreadyInstalled -eq $null)
 {
     #We need to install chocolatey
     iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
     $result.changed -eq $true
-    $executable = "C:\ProgramData\chocolatey\bin\cinst.exe"
+    $executable = "C:\ProgramData\chocolatey\bin\choco.exe"
 }
 Else
 {
-    $executable = "cinst.exe"
+    $executable = "choco.exe"
 }
 
 ####### Install
 if (($force) -and ($version))
 {
-    $installresult = & $executable $package -version $version -force
+    $installresult = & $executable install $package -version $version -force
 }
 Elseif (($force) -and (!$version))
 {
-    $installresult = & $executable $package -force
+    $installresult = & $executable install $package -force
 }
 Elseif (!($force) -and ($version))
 {
-    $installresult = & $executable $package -version $version
+    $installresult = & $executable install $package -version $version
 }
 Else
 {
-    $installresult = & $executable $package
+    $installresult = & $executable install $package
 }
 
 $lastline = ($installresult.count) - 1
@@ -106,8 +106,5 @@ if ($showlog)
 {
     Set-Attr $result "chocolatey_log" $installresult
 }
-
-
-
 
 Exit-Json $result;
