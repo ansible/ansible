@@ -19,7 +19,7 @@ TMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 
 VAULT_PASSWORD_FILE = vault-password
 
-all: non_destructive destructive includes unicode test_var_precedence check_mode test_hash test_handlers test_group_by test_vault parsing test_galaxy
+all: non_destructive destructive includes unicode test_var_precedence check_mode test_hash test_handlers test_group_by test_vault parsing
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags common,scenario1; [ $$? -eq 3 ]
