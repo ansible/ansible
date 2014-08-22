@@ -71,10 +71,9 @@ options:
     version_added: "1.8"
     default: yes
     description:
-      - "turn off warnings about running a command that is provided by an Ansible module, suggesting you should use that module instead. 'Command warnings' can also be turned off globally in ansible.cfg"
+      - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
     required: false
     default: True
-    version_added: "1.5"
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
