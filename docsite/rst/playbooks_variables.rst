@@ -200,7 +200,7 @@ To get the maximum value from a list of numbers::
 .. _set_theory_filters:
 
 Set Theory Filters
---------------------
+------------------
 All these functions return a unique set from sets or lists.
 
 .. versionadded:: 1.4
@@ -713,7 +713,7 @@ enabled.  Why might this be useful?
 
 Imagine, for instance, a very large infrastructure with thousands of hosts.  Fact caching could be configured to run nightly, but
 configuration of a small set of servers could run ad-hoc or periodically throughout the day.  With fact-caching enabled, it would
-not be neccessary to "hit" all servers to reference variables and information about them.
+not be necessary to "hit" all servers to reference variables and information about them.
 
 With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
 the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
@@ -831,7 +831,7 @@ Don't worry about any of this unless you think you need it.  You'll know when yo
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
 
-.. _variable_file_seperation_details:
+.. _variable_file_separation_details:
 
 Variable File Separation
 ````````````````````````

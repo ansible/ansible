@@ -22,7 +22,7 @@ Note that it is expected you have a basic understanding of Ansible prior to jump
 .. _windows_installing:
 
 Installing on the Control Machine
-``````````````````````````````````
+`````````````````````````````````
 
 On a Linux control machine::
 
@@ -59,7 +59,7 @@ communication channel that leverages Windows remoting::
     ansible windows [-i inventory] -m win_ping --ask-vault-pass
 
 If you haven't done anything to prep your systems yet, this won't work yet.  This is covered in a later
-section about how to enable powershell remoting - and if neccessary - how to upgrade powershell to
+section about how to enable powershell remoting - and if necessary - how to upgrade powershell to
 a version that is 3 or higher.
 
 You'll run this command again later though, to make sure everything is working.
@@ -95,7 +95,7 @@ Windows modules as listed in the `"windows" subcategory of the Ansible module in
 
 Browse this index to see what is available.
 
-In many cases, it may not be neccessary to even write or use an Ansible module.
+In many cases, it may not be necessary to even write or use an Ansible module.
 
 In particular, the "script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very native way to do things, as in the following playbook::
 
@@ -128,7 +128,7 @@ Modules (ps1 files) should start as follows::
 
     # code goes here, reading in stdin as JSON and outputting JSON
 
-The above magic is neccessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
+The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
 
 What modules you see in windows/ are just a start.  Additional modules may be submitted as pull requests to github.
 
@@ -179,7 +179,7 @@ Running individual commands uses the 'raw' module, as opposed to the shell or co
           register: ipconfig
         - debug: var=ipconfig
 
-And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
+And for a final example, here's how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows
