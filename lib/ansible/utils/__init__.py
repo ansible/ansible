@@ -380,7 +380,7 @@ def role_spec_parse(role_spec):
     # }
   
     role_spec = role_spec.strip()
-    role_version = ''
+    role_version = 'master'
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
