@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: mvn_get
 author: Jakub Jirutka
-version_added: "none"
+version_added: "1.8"
 short_description: Downloads artifacts from Maven repository.
 description:
   - Downloads artifacts from Maven repository. Resolves version of the artifact, but does I(not)
@@ -174,7 +174,7 @@ class MavenDownloader:
             artifact.version = self._find_latest_version_available(artifact)
 
         url = self.find_uri_for_artifact(artifact)
-        info = dict(url=url, path=dest, **artifact.__dict__)
+        info = dict(url=url, path=dest, name=str(artifact), **artifact.__dict__)
 
         if not self._is_same_md5(dest, url + '.md5'):
             response = self._request(url, "Failed to download artifact %s" % str(artifact), lambda r: r)
@@ -330,7 +330,7 @@ def main():
         module.exit_json(**result)
 
     except ArtifactError, e:
-        module.fail_json(msg=str(e), artifact=str(e.artifact))
+        module.fail_json(msg=str(e), name=str(e.artifact))
     except DownloaderError, e:
         module.fail_json(msg=str(e), url=str(e.url))
     except Error, e:
