@@ -389,9 +389,7 @@ def role_spec_parse(role_spec):
 
     # assume https://github.com URLs are git+https:// URLs and not
     # tarballs
-    print "0=%s" % tokens[0]
     if 'github.com/' in tokens[0] and not tokens[0].startswith("git+"):
-        print "DONE!"
         tokens[0] = 'git+' + tokens[0]
 
     if '+' in tokens[0]:
