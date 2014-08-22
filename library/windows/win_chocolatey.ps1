@@ -27,7 +27,7 @@ If ($params.package) {
     $package = $params.package
 }
 Else {
-    Fail-Json $result "mising required argument: package"
+    Fail-Json $result "missing required argument: package"
 }
 
 If ($params.force) {
@@ -48,7 +48,7 @@ Else
 }
 
 If ($params.showlog) {
-    $showlog = $params.showlog  | ConvertTo-Bool
+    $showlog = $params.showlog | ConvertTo-Bool
 }
 Else
 {
