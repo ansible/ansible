@@ -381,11 +381,15 @@ def role_spec_parse(role_spec):
     # }
   
     role_spec = role_spec.strip()
-    role_version = 'master'
+    role_version = ''
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
     tokens = [s.strip() for s in role_spec.split(',')]
+    
+    if not tokens[0].endswith('.tar.gz'): 
+        # pick a reasonable default branch
+        role_version = 'master'
 
     # assume https://github.com URLs are git+https:// URLs and not
     # tarballs unless they end in '.zip'
