@@ -127,6 +127,30 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _command_warnings:
+
+command_warnings
+================
+
+.. versionadded:: 1.8
+
+By default since Ansible 1.8, Ansible will warn when usage of the shell and
+command module appear to be simplified by using a default Ansible module
+instead.  This can include reminders to use the 'git' module instead of
+shell commands to execute 'git'.  Using modules when possible over arbitrary
+shell commands can lead to more reliable and consistent playbook runs, and
+also easier to maintain playbooks.
+
+    command_warnings=False
+
+These warnings can be silenced by adjusting the following
+setting or adding warn=yes or warn=no to the end of the command line
+parameter string, like so::
+
+
+    - name: usage of git that could be replaced with the git module
+      shell: git update foo warn=yes
+
 .. _connection_plugins:
 
 connection_plugins

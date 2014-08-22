@@ -68,8 +68,10 @@ options:
     default: null
     version_added: "0.9"
   warn:
+    version_added: "1.8"
+    default: yes
     description:
-      - turn off warnings about running a command that is provided by an Ansible module.
+      - "turn off warnings about running a command that is provided by an Ansible module, suggesting you should use that module instead. 'Command warnings' can also be turned off globally in ansible.cfg"
     required: false
     default: True
     version_added: "1.5"
