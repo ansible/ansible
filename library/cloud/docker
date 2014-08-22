@@ -612,13 +612,22 @@ class DockerManager:
         try:
             containers = do_create(count, params)
         except:
-            image, tag = self.get_split_image_tag(params['image'])
+            resource = self.module.params.get('image')
+            image, tag = self.get_split_image_tag(resource)
             if self.module.params.get('username'):
-                self.client.login(self.module.params.get('username'),
-                                  password=self.module.params.get('password'),
-                                  email=self.module.params.get('email'),
-                                  registry=self.module.params.get('registry'))
-            self.client.pull(image, tag=tag)
+                try:
+                    self.client.login(
+                        self.module.params.get('username'),
+                        password=self.module.params.get('password'),
+                        email=self.module.params.get('email'),
+                        registry=self.module.params.get('registry')
+                    )
+                except:
+                    self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
+            try:
+                self.client.pull(resource, tag=tag)
+            except:
+                self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
             self.increment_counter('pull')
             containers = do_create(count, params)
 
