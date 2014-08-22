@@ -14,12 +14,12 @@ we'll go into some patterns for integrating tests of infrastructure and discuss 
 
 By incorporating a degree of testing into your deployment workflow, there will be fewer surprises when code hits production and, in many cases,
 tests can be leveraged in production to prevent failed updates from migrating across an entire installation.  Since it's push-based, it's
-also very easy to run the steps on thelocalhost or testing servers. Ansible lets you insert as many checks and balances into your upgrade workflow as you would like to have.
+also very easy to run the steps on the localhost or testing servers. Ansible lets you insert as many checks and balances into your upgrade workflow as you would like to have.
 
 The Right Level of Testing
 ``````````````````````````
 
-Ansible resources are models of desired-state.  As such, it should not be neccessary to test that services are running, packages are
+Ansible resources are models of desired-state.  As such, it should not be necessary to test that services are running, packages are
 installed, or other such things.  Ansible is the system that will ensure these things are declaratively true.   Instead, assert these
 things in your playbooks.
 
@@ -91,7 +91,7 @@ And the assert module makes it very easy to validate various kinds of truth::
             - "'not ready' not in cmd_result.stderr"
             - "'gizmo enabled' in cmd_result.stdout"
 
-Should you feel the need to test for existance of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice::
+Should you feel the need to test for existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice::
 
    tasks:
 
@@ -205,8 +205,8 @@ the pool.
 In the event of a problem, fix the few servers that fail using Ansible's automatically generated 
 retry file to repeat the deploy on just those servers.
 
-Achieving Continous Deployment
-``````````````````````````````
+Achieving Continuous Deployment
+```````````````````````````````
 
 If desired, the above techniques may be extended to enable continuous deployment practices.
 
@@ -221,7 +221,7 @@ Some Ansible users use the above approach to deploy a half-dozen or dozen times 
 offline.  A culture of automated QA is vital if you wish to get to this level.  
 
 If you are still doing a large amount of manual QA, you should still make the decision on whether to deploy manually as well, but
-it can still help to work in the rolling update patterns of the previous section and encorporate some basic health checks using
+it can still help to work in the rolling update patterns of the previous section and incorporate some basic health checks using
 modules like 'script', 'stat', 'uri', and 'assert'.
 
 Conclusion
@@ -235,9 +235,9 @@ However, as Ansible is designed as a multi-tier orchestration system, it makes i
 a playbook run, either using loose tasks or roles.  When used with rolling updates, testing steps can decide whether to put a machine
 back into a load balanced pool or not.
 
-Finally, because Ansible errors propogate all the way up to the return code of the Ansible program itself, and Ansible by default
+Finally, because Ansible errors propagate all the way up to the return code of the Ansible program itself, and Ansible by default
 runs in an easy push-based mode, Ansible is a great step to put into a build environment if you wish to use it to roll out systems
-as part of a Continous Integration/Continous Delivery pipeline, as is covered in sections above.
+as part of a Continuous Integration/Continuous Delivery pipeline, as is covered in sections above.
 
 The focus should not be on infrastructure testing, but on application testing, so we strongly encourage getting together with your
 QA team and ask what sort of tests would make sense to run every time you deploy development VMs, and which sort of tests they would like

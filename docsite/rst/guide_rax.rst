@@ -286,7 +286,7 @@ following information, which will be utilized for inventory and variables.
 Standard Inventory
 ++++++++++++++++++
 
-When utilizing a standard ini formatted inventory file (as opposed to the inventory plugin), it may still be adventageous to retrieve discoverable hostvar information  from the Rackspace API.
+When utilizing a standard ini formatted inventory file (as opposed to the inventory plugin), it may still be advantageous to retrieve discoverable hostvar information  from the Rackspace API.
 
 This can be achieved with the ``rax_facts`` module and an inventory file similar to the following:
 
@@ -795,7 +795,7 @@ and less information has to be shared with remote hosts.
 Orchestration in the Rackspace Cloud
 ++++++++++++++++++++++++++++++++++++
 
-Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other pice of software in an environment.  Complex deployments might have previously required manual manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additional nodes contingent on the current number of running nodes, or the configuration of a clustered application dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:
+Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other piece of software in an environment.  Complex deployments might have previously required manual manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additional nodes contingent on the current number of running nodes, or the configuration of a clustered application dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:
 
 * Servers that are removed from a Cloud Load Balancer one-by-one, updated, verified, and returned to the load balancer pool
 * Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed

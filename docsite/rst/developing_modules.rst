@@ -446,7 +446,7 @@ a github pull request to the main project.
        Learn about developing plugins
    :doc:`developing_api`
        Learn about the Python API for playbook and task execution
-   `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
+   `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules
    `Mailing List <http://groups.google.com/group/ansible-devel>`_
        Development mailing list
