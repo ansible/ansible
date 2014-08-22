@@ -20,9 +20,8 @@
 import sys
 import re
 import os
-import ConfigParser
-from novaclient import client as nova_client
-
+from novaclient.client import Client
+from credentials import get_nova_credentials_v2
 try:
     import json
 except:
@@ -34,39 +33,8 @@ from ansible.module_utils.openstack import *
 # executed with no parameters, return the list of
 # all groups and hosts
 
-NOVA_CONFIG_FILES = [os.getcwd() + "/nova.ini",
-                     os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
-                     "/etc/ansible/nova.ini"]
-
-NOVA_DEFAULTS = {
-    'auth_system': None,
-    'region_name': None,
-}
-
-
-def nova_load_config_file():
-    p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
-
-    for path in NOVA_CONFIG_FILES:
-        if os.path.exists(path):
-            p.read(path)
-            return p
-
-    return None
-
-config = nova_load_config_file()
-if not config:
-    sys.exit('Unable to find configfile in %s' % ', '.join(NOVA_CONFIG_FILES))
-
-client = nova_client.Client(
-    config.get('openstack', 'version'),
-    config.get('openstack', 'username'),
-    config.get('openstack', 'api_key'),
-    config.get('openstack', 'project_id'),
-    config.get('openstack', 'auth_url'),
-    region_name = config.get('openstack', 'region_name'),
-    auth_system = config.get('openstack', 'auth_system')
-)
+credentials = get_nova_credentials_v2()
+client = Client(**credentials)
 
 if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
     groups = {}
@@ -75,7 +43,7 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
     for server in client.servers.list():
         private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
         public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
-	    
+
 	# Define group (or set to empty string)
         group = server.metadata['group'] if server.metadata.has_key('group') else 'undefined'
 
