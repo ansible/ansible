@@ -125,7 +125,6 @@ def check_command(commandline):
                   'svn': 'subversion', 'service': 'service',
                   'mount': 'mount', 'rpm': 'yum', 'yum': 'yum', 'apt-get': 'apt-get',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
-                  'echo': 'template or lineinfile', 'cp': 'synchronize or copy',
                   'rsync': 'synchronize' }
     warnings = list()
     command = os.path.basename(commandline.split()[0])
