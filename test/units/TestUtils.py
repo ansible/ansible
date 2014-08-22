@@ -829,7 +829,7 @@ class TestUtils(unittest.TestCase):
                 {
                     'scm' : 'git',
                     'src' : 'http://github.com/ansible/fakerole/fake',
-                    'version' : '', 
+                    'version' : 'master', 
                     'name' : 'fake'
                 }
             ),
