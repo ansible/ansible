@@ -115,8 +115,6 @@ class TgzFile(object):
         self.zipflag = 'z'
 
     def is_unarchived(self):
-        dirof = os.path.dirname(self.dest)
-        destbase = os.path.basename(self.dest)
         cmd = '%s -v -C "%s" --diff -%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         unarchived = (rc == 0)
@@ -220,10 +218,10 @@ def main():
             )
 
     # is dest OK to receive tar file?
-    if not os.path.exists(os.path.dirname(dest)):
-        module.fail_json(msg="Destination directory '%s' does not exist" % (os.path.dirname(dest)))
-    if not os.access(os.path.dirname(dest), os.W_OK):
-        module.fail_json(msg="Destination '%s' not writable" % (os.path.dirname(dest)))
+    if not os.path.isdir(dest):
+        module.fail_json(msg="Destination '%s' is not a directory" % dest)
+    if not os.access(dest, os.W_OK):
+        module.fail_json(msg="Destination '%s' not writable" % dest)
 
     handler = pick_handler(src, dest, module)
 
