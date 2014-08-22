@@ -13,6 +13,7 @@ New core features:
 * 'ansible vault view filename.yml' opens filename.yml decrypted in a pager.
 * no_log parameter now surpressess data from callbacks/output as well as syslog
 * ansible-galaxy install -f requirements.yml allows advanced options and installs from non-galaxy SCM sources and tarballs.
+* command_warnings feature will warn about when usage of the shell/command module can be simplified to use core modules - this can be disabled in ansible.cfg
 
 New Modules:
 
