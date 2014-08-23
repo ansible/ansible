@@ -1,0 +1,255 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Hiroaki Nakamura <hnakamur@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: osx_defaults
+short_description: Access the Mac OS X user defaults system
+description:
+  - Read, write, or delete Mac OS X user defaults.
+version_added: 1.8
+author: Hiroaki Nakamura
+options:
+  domain:
+    description:
+      - The domain of the user defaults
+    required: true
+  key:
+    description:
+      - The key of the user defaults
+    required: true
+  type:
+    description:
+      - The type of value to write. Currently only bool[ean] and string are supported (Pull requests are welcome!).
+    required: false
+  value:
+    description:
+      - The value to write
+    required: false
+  state:
+    description:
+      - The state of the user defaults
+    required: false
+    default: present
+    choices: [ "present", "absent" ]
+'''
+
+EXAMPLES = '''
+description: Show hidden files (whose name starts with dot) in Finder
+- osx_defaults: domain=com.apple.finder key=AppleShowAllFiles type=boolean value=true state=present
+  notify: killall Finder
+
+define in handlers/main.yml
+- name: killall Finder
+  command: killall Finder
+
+description: Hide hidden files (whose name starts with dot) in Finder
+- osx_defaults: domain=com.apple.finder key=AppleShowAllFiles sttate=absent
+  notify: killall Finder
+
+description: configure a Mac OS X user account so that .DS_Store files are not created when interacting with a remote file server using the Finder
+- osx_defaults: domain=com.apple.desktopservices key=DSDontWriteNetworkStores type=string value=true state=present
+  notify: killall Finder
+
+description: configure a Mac OS X user account so that .DS_Store files are created when interacting with a remote file server using the Finder
+- osx_defaults: domain=com.apple.desktopservices key=DSDontWriteNetworkStores state=absent
+  notify: killall Finder
+
+description: Disable drop shadow in screencapture
+- osx_defaults: domain=com.apple.screencapture key=disable-shadow type=boolean value=true state=present
+  notify: killall SystemUIServer
+
+define in handlers/main.yml
+- name: killall SystemUIServer
+  command: killall SystemUIServer
+
+description: Enable drop shadow in screencapture
+- osx_defaults: domain=com.apple.screencapture key=disable-shadow state=absent
+  notify: killall SystemUIServer
+'''
+
+import os
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+#import logging
+#import logging.handlers
+#
+#logger = logging.getLogger("osx_defaults")
+#logger.setLevel(logging.WARNING)
+#logger.addHandler( logging.FileHandler("osx_defaults.debug.log") )
+def debug(msg):
+    #logger.warning(msg)
+    pass
+
+class OSXBool(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return self.to_arg() == other.to_arg()
+
+    def to_arg(self):
+        if self.value:
+            return 'TRUE'
+        else:
+            return 'FALSE'
+
+    @classmethod
+    def from_arg(cls, value):
+        if value == 'TRUE' or value == 'YES' or value == '1':
+            return OSXBool(True)
+        elif value == 'FALSE' or value == 'NO':
+            return OSXBool(False)
+        else:
+            return None
+
+class OSXString(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return self.to_arg() == other.to_arg()
+
+    def to_arg(self):
+        return self.value
+
+    @classmethod
+    def from_arg(cls, value):
+        return OSXString(value)
+
+class OSXDefaults(object):
+    def __init__(self, module, **kwargs):
+        self.module = module
+        self.domain = kwargs['domain']
+        self.key = kwargs['key']
+        self.type = kwargs['type']
+        self.value = kwargs['value']
+        if self.type is not None:
+            self._set_osx_value()
+        self.executable = [module.get_bin_path('defaults', True)]
+
+    def _set_osx_value(self):
+        if self.type == 'string':
+            self.osx_value = OSXString(self.value)
+        elif self.type == 'bool' or self.type == 'boolean':
+            self.osx_value = OSXBool(self.module.boolean(self.value))
+        else:
+            self.module.fail_json(msg='Currently only type=bool[ean] or string are supported. Pull requests are welcome!')
+
+    def _exec(self, args, run_in_check_mode=False, check_rc=True):
+        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+            cmd = self.executable + args
+            rc, out, err = self.module.run_command(cmd, check_rc=check_rc)
+            debug('cmd: ' + ' '.join(cmd))
+            debug('rc: ' + str(rc))
+            debug('out: ' + out)
+            debug('err: ' + err)
+            return rc, out
+        return 0, ''
+
+    def _convert_read_output(self, type, data):
+        debug('_convert_read_output: type=' + type + ', data=' + data)
+        if type == 'string':
+            return OSXString.from_arg(data)
+        elif type == 'bool' or type == 'boolean':
+            return OSXBool.from_arg(data)
+        else:
+            self.module.fail_json(msg='Currently only type=bool[ean] or string are supported. Pull requests are welcome!')
+
+    def read(self):
+        rc, type_out = self._exec(['read-type', self.domain, self.key], True, False)
+        if rc == 0:
+            type = type_out.strip().replace('Type is ', '')
+        else:
+            return None
+
+        rc, data_out = self._exec(['read', self.domain, self.key], True, False)
+        if rc == 0:
+            return self._convert_read_output(type, data_out.strip())
+        else:
+            return None
+
+    def is_same_value(self, current_value):
+        if self.osx_value is None:
+            return current_value is None
+        elif current_value is None:
+            return False
+        elif type(self.osx_value).__name__ != type(current_value).__name__:
+            return False
+        else:
+            return self.osx_value == current_value
+        
+    def write(self):
+        self._exec(['write', self.domain, self.key, '-' + self.type, self.osx_value.to_arg()])
+        
+    def delete(self):
+        self._exec(['delete', self.domain, self.key])
+
+
+def main():
+    arg_spec = dict(
+        domain=dict(default=None),
+        key=dict(default=None),
+        type=dict(default=None),
+        value=dict(default=None),
+        state=dict(default='present', choices=['present', 'absent'])
+    )
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        supports_check_mode=True
+    )
+
+    domain = module.params['domain']
+    key = module.params['key']
+    type = module.params['type']
+    value = module.params['value']
+    state = module.params['state']
+
+    if state == 'present' and (type is None or value is None):
+        module.fail_json(msg='type and value are mandatory for writing a user defaults')
+
+    defaults = OSXDefaults(module, domain=domain, key=key, type=type, value=value)
+
+    changed = False
+    if state == 'present':
+        data = defaults.read()
+        if defaults.is_same_value(data):
+            changed = False
+        else:
+            changed = True
+            defaults.write()
+
+    else: #absent
+        data = defaults.read()
+        if data is None:
+            changed = False
+        else:
+            changed = True
+            defaults.delete()
+
+    module.exit_json(changed=changed, domain=domain, key=key, type=type, value=value, state=state)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
