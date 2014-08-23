@@ -27,7 +27,7 @@ short_description: Manage hostname
 requirements: [ hostname ]
 description:
     - Set system's hostname
-    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI and Gentoo.
+    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI.
 options:
     name:
         required: true
@@ -288,44 +288,6 @@ class FedoraStrategy(GenericStrategy):
 
 # ===========================================
 
-class OpenRCStrategy(GenericStrategy):
-    """
-    This is a Gentoo (OpenRC) Hostname manipulation strategy class - it edits
-    the /etc/conf.d/hostname file.
-    """
-
-    HOSTNAME_FILE = '/etc/conf.d/hostname'
-
-    def get_permanent_hostname(self):
-        try:
-            with open(self.HOSTNAME_FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('hostname='):
-                        return line[10:].strip('"')
-            return None
-        except Exception, err:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
-
-    def set_permanent_hostname(self, name):
-        try:
-            with open(self.HOSTNAME_FILE, 'r') as f:
-                lines = [x.strip() for x in f]
-
-            for i, line in enumerate(lines):
-                if line.startswith('hostname='):
-                    lines[i] = 'hostname="%s"' % name
-                    break
-
-            with open(self.HOSTNAME_FILE, 'w') as f:
-                f.write('\n'.join(lines) + '\n')
-        except Exception, err:
-            self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
-
-# ===========================================
-
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
@@ -403,11 +365,6 @@ class LinaroHostname(Hostname):
     platform = 'Linux'
     distribution = 'Linaro'
     strategy_class = DebianStrategy
-
-class GentooHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Gentoo base system'
-    strategy_class = OpenRCStrategy
 
 # ===========================================
 
