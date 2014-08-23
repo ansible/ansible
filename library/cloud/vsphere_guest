@@ -114,6 +114,7 @@ options:
 notes:
   - This module should run from a system that can access vSphere directly.
     Either by using local_action, or using delegate_to.
+  - When state == clone the cluster and resource_pool directives become required.
 author: Richard Hoop <wrhoop@gmail.com>
 requirements: [ pysphere ]
 '''
