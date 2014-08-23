@@ -46,12 +46,31 @@ def fix_case(name):
     Passing through this function makes them uniform for comparisons."""
     return name.replace(".utf8", ".UTF-8")
 
-def replace_line(existing_line, new_line):
-    """Replaces lines in /etc/locale.gen"""
+def rewrite(name, encoding, enable):
+    """Enable or disables a locale and rewrites /etc/locale.gen. If a locale
+    wasn't listed in the file, a new line is added at the end."""
+
+    s = name + " " + encoding
+
+    changed = False
+    lines = []
+
     with open("/etc/locale.gen", "r") as f:
-        lines = [line.replace(existing_line, new_line) for line in f]
+        for line in f:
+            line = line.strip()
+            if line == s or (line.startswith('#') and line[1:].strip() == s):
+                lines.append("%s%s" % ('' if enable else '#', s))
+                changed = True
+            else:
+                lines.append(line)
+
+    if not changed:
+        lines.append("%s%s" % ('' if enable else '#', s))
+
     with open("/etc/locale.gen", "w") as f:
-        f.write("".join(lines))
+        f.write("\n".join(lines))
+
+    return changed
 
 def apply_change(targetState, name, encoding):
     """Create or remove locale.
@@ -61,13 +80,8 @@ def apply_change(targetState, name, encoding):
     name -- Name including encoding such as de_CH.UTF-8.
     encoding -- Encoding such as UTF-8.
     """
-    if targetState=="present":
-        # Create locale.
-        replace_line("# "+name+" "+encoding, name+" "+encoding)
-    else:
-        # Delete locale.
-        replace_line(name+" "+encoding, "# "+name+" "+encoding)
-    
+    rewrite(name, encoding, targetState == "present")
+
     localeGenExitValue = call("locale-gen")
     if localeGenExitValue!=0:
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
