@@ -433,11 +433,13 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+            v_list = [x.strip() for x in v.split(',')] if ',' in v else [v]
+            for v in v_list:
+                key = self.to_safe("tag_" + k + "=" + v)
+                self.push(self.inventory, key, dest)
+                if self.nested_groups:
+                    self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                    self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled:
