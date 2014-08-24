@@ -84,6 +84,7 @@ Function Fail-Json($obj, $message = $null)
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
 # Example: $attr = Get-Attr $response "code" -default "1"
+#Note that if you use the failifempty option, you do need to specify resultobject as well.
 Function Get-Attr($obj, $name, $default = $null,$resultobj, $failifempty=$false, $emptyattributefailmessage)
 {
     # Check if the provided Member $name exists in $obj and return it or the
