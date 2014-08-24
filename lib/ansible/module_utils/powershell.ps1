@@ -84,7 +84,7 @@ Function Fail-Json($obj, $message = $null)
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
 # Example: $attr = Get-Attr $response "code" -default "1"
-Function Get-Attr($obj, $name, $default = $null, $failifempty=$false)
+Function Get-Attr($obj, $name, $default = $null,$resultobj, $failifempty=$false, $emptyattributefailmessage)
 {
     # Check if the provided Member $name exists in $obj and return it or the
     # default
@@ -98,7 +98,8 @@ Function Get-Attr($obj, $name, $default = $null, $failifempty=$false)
     }
     else
     {
-        Fail-Json -obj $obj -message "Need to specify a value for the parameter $name"
+        if (!$emptyattributefailmessage) {$emptyattributefailmessage = "Need to specify a value for the parameter $name"}
+        Fail-Json -obj $resultobj -message $emptyattributefailmessage
     }
     return
 }
