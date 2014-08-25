@@ -103,6 +103,7 @@ class ShellModule(object):
         return _encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
+        cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]
