@@ -30,6 +30,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible import errors
 from ansible import utils
+from ansible.callbacks import vv
 
 class Inventory(object):
     """
@@ -649,3 +650,60 @@ class Inventory(object):
         # all done, results is a dictionary of variables for this particular host.
         return results
 
+    def add_host(self, args):
+        ''' Create inventory hosts and groups in the memory inventory'''
+        result = {}
+
+        # Parse out any hostname:port patterns
+        new_name = args.get('name', args.get('hostname', None))
+        vv("creating host via 'add_host': hostname=%s" % new_name)
+
+        if ":" in new_name:
+            new_name, new_port = new_name.split(":")
+            args['ansible_ssh_port'] = new_port
+
+        # redefine inventory and get group "all"
+        allgroup = self.get_group('all')
+
+        # check if host in cache, add if not
+        if new_name in self._hosts_cache:
+            new_host = self._hosts_cache[new_name]
+        else:
+            new_host = Host(new_name)
+            # only groups can be added directly to inventory
+            self._hosts_cache[new_name] = new_host
+            allgroup.add_host(new_host)
+
+        # Add any variables to the new_host
+        for k in args.keys():
+            if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
+                new_host.set_variable(k, args[k])
+
+        groupnames = args.get('groupname', args.get('groups', args.get('group', '')))
+        # add it to the group if that was specified
+        if groupnames:
+            for group_name in groupnames.split(","):
+                group_name = group_name.strip()
+                if not self.get_group(group_name):
+                    new_group = Group(group_name)
+                    self.add_group(new_group)
+                    new_group.vars = self.get_group_variables(group_name, vault_password=self._vault_password)
+                grp = self.get_group(group_name)
+                grp.add_host(new_host)
+
+                # add this host to the group cache
+                if self._groups_list is not None:
+                    if group_name in self._groups_list:
+                        if new_host.name not in self._groups_list[group_name]:
+                            self._groups_list[group_name].append(new_host.name)
+
+                vv("added host to group via add_host module: %s" % group_name)
+            result['new_groups'] = groupnames.split(",")
+
+        result['new_host'] = new_name
+
+        # clear pattern caching completely since it's unpredictable what
+        # patterns may have referenced the group
+        self.clear_pattern_cache()
+
+        return result

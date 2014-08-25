@@ -498,13 +498,17 @@ class PlayBook(object):
                 # task ran with_ lookup plugin, so facts are encapsulated in
                 # multiple list items in the results key
                 for res in result['results']:
-                    if type(res) == dict:
+                    if isinstance(res, dict):
                         facts = res.get('ansible_facts', {})
                         utils.update_hash(self.SETUP_CACHE, host, facts)
+                        for add_host in res.get('add_host', []):
+                            self.inventory.add_host(add_host)
             else:
                 # when facts are returned, persist them in the setup cache
                 facts = result.get('ansible_facts', {})
                 utils.update_hash(self.SETUP_CACHE, host, facts)
+                for add_host in result.get('add_host', []):
+                    self.inventory.add_host(add_host)
             if task.register:
                 _register_play_vars(host, result)
 
