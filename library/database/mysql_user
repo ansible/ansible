@@ -526,10 +526,6 @@ def main():
     require_subject = module.params["require_subject"]
     require_issuer = module.params["require_issuer"]
     require_cipher = module.params["require_cipher"]
-    requirements = requirements_unpack(module, require_ssl, require_x509,
-                                               require_subject, require_issuer,
-                                               require_cipher)
-
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -569,6 +565,9 @@ def main():
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 
+    requirements = requirements_unpack(module, require_ssl, require_x509,
+                                               require_subject, require_issuer,
+                                               require_cipher)
     if state == "present":
         if user_exists(cursor, user, host):
             changed = user_mod(cursor, user, host, password, priv, append_privs, requirements)
