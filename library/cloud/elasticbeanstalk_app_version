@@ -139,11 +139,14 @@ class ElasticBeanstalkAppVersionManager(object):
     def create(self):
         """Create an ElasticBeanstalk application's version"""
         try:
-            self.conn.create_application_version(application_name=self.application_name,
-                                                 version_label=self.version_label,
-                                                 description=self.description,
-                                                 s3_bucket=self.s3_bucket,
-                                                 s3_key=self.s3_key)
+            response = self.conn.create_application_version(application_name=self.application_name,
+                                                            version_label=self.version_label,
+                                                            description=self.description,
+                                                            s3_bucket=self.s3_bucket,
+                                                            s3_key=self.s3_key)
+            self.data = (response['CreateApplicationVersionResponse']
+                                    ['CreateApplicationVersionResult']
+                                    ['ApplicationVersion'])
         except boto.exception.BotoServerError, e:
             self.module.fail_json(msg=e.message)
         else:
@@ -152,8 +155,9 @@ class ElasticBeanstalkAppVersionManager(object):
     def delete(self):
         """Delete an ElasticBeanstalk application's version"""
         try:
-            self.conn.delete_application_version(application_name=self.application_name,
-                                                 version_label=self.version_label)
+            response = self.conn.delete_application_version(application_name=self.application_name,
+                                                            version_label=self.version_label)
+            self.data = response['DeleteApplicationVersionResponse']['ResponseMetadata']
         except boto.exception.BotoServerError, e:
             self.module.fail_json(msg=e.message)
 
