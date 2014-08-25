@@ -338,9 +338,9 @@ def requirements_get(cursor, user, host):
     req_string = grant_with_reqs[grant_with_reqs.index("REQUIRE"):]
 
     if 'SSL' in req_string:
-        requirements["ssl"] = True
+        requirements['ssl'] = True
     elif 'X509' in req_string:
-        requirements["x509"] = True
+        requirements['x509'] = True
     else:
         for param in ('subject', 'issuer', 'cipher'):
             regex = r".*{} ('[^\']+')".format(param.upper())
