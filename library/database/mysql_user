@@ -301,7 +301,7 @@ def privileges_grant(cursor, user,host,db_table,priv, requirements):
     priv_string = ",".join(filter(lambda x: x != 'GRANT', priv))
     query = "GRANT %s ON %s TO '%s'@'%s'" % (priv_string,db_table,user,host)
     query += " REQUIRE"
-    if requirements is None:
+    if not requirements:
         query += " NONE"
     elif requirements.get('ssl', False):
         query += " SSL"
