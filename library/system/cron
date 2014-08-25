@@ -38,9 +38,8 @@ description:
     crontab entries, update, or delete them.
   - 'The module includes one line with the description of the crontab entry C("#Ansible: <name>")
     corresponding to the "name" passed to the module, which is used by future ansible/module calls
-    to find/check the state.  The "name" parameter is therefore quite important: it should be 
-    unique, and changing the "name" value will result in a new cron task being created (or a 
-    different one being removed).  In other words, don't change it.'
+    to find/check the state.  The "name" parameter should be unique, and changing the "name" value
+    will result in a new cron task being created (or a different one being removed)'
 version_added: "0.9"
 options:
   name:
