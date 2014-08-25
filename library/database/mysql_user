@@ -390,7 +390,8 @@ def requirements_unpack(module, require_ssl, require_x509,
     elif conditions[3]:
         requirements = None
     else:
-        module.fail_json(msg="Provided requriements are incompatible. Choose one of SSL, X509, or any of (Subject, Issuer, Cipher).")
+        module.fail_json(msg=("Provided requriements are incompatible. "
+            "Choose one of SSL, X509, or any of (Subject, Issuer, Cipher)."))
 
     return requirements
 
