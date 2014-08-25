@@ -295,6 +295,50 @@ def privileges_grant(cursor, user,host,db_table,priv):
         query = query + " WITH GRANT OPTION"
     cursor.execute(query)
 
+def requirements_unpack(module, require_ssl, require_x509,
+                        require_subject, require_issuer,
+                        require_cipher):
+    """ Similar to privileges_unpack(). This function validates for mutual
+    exclusion of parameters and, if they are valid, returns a dictionary of
+    the same format used in requirements_get() or None, indicating that
+    'REQUIRE NONE' should be run.
+    """
+    # Valid options for REQUIRE
+    options = (
+        require_ssl,
+        require_x509,
+        (require_cipher or require_issuer or require_subject),
+    )
+    # Conditions for proceeding
+    conditions = (
+        # SSL only
+        options[0] and not options[1] and not options[2],
+        # X509 only
+        not options[0] and options[1] and not options[2],
+        # only those in (Cipher, Issuer, Subject)
+        not options[0] and not options[1] and options[2],
+        # no requirements
+        not any([bool(x) for x in options]),
+    )
+
+    if conditions[0]:
+        requirements = {'ssl': True }
+    elif conditions[1]:
+        requirements = {'x509' : True }
+    elif conditions[2]:
+        requirements = {}
+        if require_subject:
+            requirements['subject'] = require_subject
+        if require_issuer:
+            requirements['issuer'] = require_issuer
+        if require_cipher:
+            requirements['cipher'] = require_cipher
+    elif conditions[3]:
+        requirements = None
+    else:
+        module.fail_json(msg="Provided requriements are incompatible. Choose one of SSL, X509, or any of (Subject, Issuer, Cipher).")
+
+    return requirements
 
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
