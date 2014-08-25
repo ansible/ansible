@@ -207,7 +207,7 @@ def main():
         supports_check_mode=True,
     )
 
-    path = module.params.get('name')
+    path = os.path.expanduser(module.params.get('name'))
     entry = module.params.get('entry')
     entity = module.params.get('entity')
     etype = module.params.get('etype')
