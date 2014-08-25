@@ -191,16 +191,16 @@ class Play(object):
 
         role_path = None
 
-        possible_paths = [
-            utils.path_dwim(self.basedir, os.path.join('roles', role_name)),
-            utils.path_dwim(self.basedir, role_name)
-        ]
+        possible_paths = []
 
         if C.DEFAULT_ROLES_PATH:
             search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
             for loc in search_locations:
                 loc = os.path.expanduser(loc)
                 possible_paths.append(utils.path_dwim(loc, role_name))
+
+        possible_paths.append(utils.path_dwim(self.basedir, role_name))
+        possible_paths.append(utils.path_dwim(self.basedir, os.path.join('roles', role_name)))
 
         for path_option in possible_paths:
             if os.path.isdir(path_option):
