@@ -93,6 +93,38 @@ options:
     required: false
     default: false
     version_added: "1.3"
+  require_ssl:
+    description:
+        - Require SSL connections. Mutually exclusive with all other C(require_*) options.
+    required: false
+    choices: ["yes", "no"]
+    default: "no"
+    version_added: "1.8"
+  require_x509:
+    description:
+        - Require a valid X509 certificate. Mutually exclusive with all other C(require_*) options.
+    required: false
+    choices: ["yes", "no"]
+    default: "no"
+    version_added: "1.8"
+  require_subject:
+    description:
+        - Require a valid X509 certificate with the specified subject. Mutually exclusive with C(require_ssl) and C(require_x509) options.
+    required: false
+    default: null
+    version_added: "1.8"
+  require_issuer:
+    description:
+        - Require a valid X509 certificate issed by the specified CA (issuer). Mutually exclusive with C(require_ssl) and C(require_x509) options.
+    required: false
+    default: null
+    version_added: "1.8"
+  require_cipher:
+    description:
+        - Require usage of the specified cipher. Mutually exclusive with C(require_ssl) and C(require_x509) options.
+    required: false
+    default: null
+    version_added: "1.8"
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
