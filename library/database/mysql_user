@@ -408,6 +408,11 @@ def main():
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             append_privs=dict(type="bool", default="no"),
+            require_ssl=dict(type="bool", default="no"),
+            require_x509=dict(type="bool", default="no"),
+            require_subject=dict(default=None),
+            require_issuer=dict(default=None),
+            require_cipher=dict(default=None),
             check_implicit_admin=dict(default=False),
         )
     )
@@ -418,6 +423,11 @@ def main():
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
     append_privs = module.boolean(module.params["append_privs"])
+    require_ssl = module.boolean(module.params["require_ssl"])
+    require_x509 = module.boolean(module.params["require_x509"])
+    require_subject = module.params["require_subject"]
+    require_issuer = module.params["require_issuer"]
+    require_cipher = module.params["require_cipher"]
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
