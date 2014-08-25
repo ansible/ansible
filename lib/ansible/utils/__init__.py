@@ -321,6 +321,9 @@ def path_dwim(basedir, given):
     make relative paths work like folks expect.
     '''
 
+    if given.startswith("'"):
+        given = given[1:-1]
+
     if given.startswith("/"):
         return os.path.abspath(given)
     elif given.startswith("~"):
