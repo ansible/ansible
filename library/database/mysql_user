@@ -332,7 +332,7 @@ def requirements_get(cursor, user, host):
         grant_with_reqs = \
             list(filter(lambda x: "REQUIRE" in x, grant_strings))[0]
     except IndexError:
-        return None
+        return {}
 
     requirements = {}
     req_string = grant_with_reqs[grant_with_reqs.index("REQUIRE"):]
