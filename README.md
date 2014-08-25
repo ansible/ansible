@@ -43,7 +43,7 @@ Author
 ======
 
 Ansible was created by Michael DeHaan (michael@ansible.com) and has contributions from over
-700 users (and growing).  Thanks everyone!
+800 users (and growing).  Thanks everyone!
 
 [Ansible, Inc](http://ansible.com)
 
