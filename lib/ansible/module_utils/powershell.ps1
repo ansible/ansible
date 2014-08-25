@@ -99,7 +99,7 @@ Function Get-Attr($obj, $name, $default = $null,$resultobj, $failifempty=$false,
     }
     else
     {
-        if (!$emptyattributefailmessage) {$emptyattributefailmessage = "Need to specify a value for the parameter $name"}
+        if (!$emptyattributefailmessage) {$emptyattributefailmessage = "Missing required argument: $name"}
         Fail-Json -obj $resultobj -message $emptyattributefailmessage
     }
     return
