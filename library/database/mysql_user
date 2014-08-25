@@ -375,12 +375,13 @@ def requirements_unpack(module, require_ssl, require_x509,
         not any(options),
     )
 
+    requirements = {}
+
     if conditions[0]:
-        requirements = {'ssl': True }
+        requirements['ssl'] = True
     elif conditions[1]:
-        requirements = {'x509' : True }
+        requirements['x509'] = True
     elif conditions[2]:
-        requirements = {}
         if require_subject:
             requirements['subject'] = require_subject
         if require_issuer:
@@ -388,7 +389,7 @@ def requirements_unpack(module, require_ssl, require_x509,
         if require_cipher:
             requirements['cipher'] = require_cipher
     elif conditions[3]:
-        requirements = None
+        pass
     else:
         module.fail_json(msg=("Provided requriements are incompatible. "
             "Choose one of SSL, X509, or any of (Subject, Issuer, Cipher)."))
