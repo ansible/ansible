@@ -354,8 +354,7 @@ def requirements_unpack(module, require_ssl, require_x509,
                         require_cipher):
     """ Similar to privileges_unpack(). This function validates for mutual
     exclusion of parameters and, if they are valid, returns a dictionary of
-    the same format used in requirements_get() or None, indicating that
-    'REQUIRE NONE' should be run.
+    the same format used in requirements_get().
     """
     # Valid options for REQUIRE
     options = (
