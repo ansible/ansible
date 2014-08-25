@@ -372,7 +372,7 @@ def requirements_unpack(module, require_ssl, require_x509,
         # only those in (Cipher, Issuer, Subject)
         not options[0] and not options[1] and options[2],
         # no requirements
-        not any([bool(x) for x in options]),
+        not any(options),
     )
 
     if conditions[0]:
