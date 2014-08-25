@@ -5,14 +5,13 @@ Hi!
 
 Thanks very much for your submission to Ansible.  It sincerely means a lot to us that you've taken time to contribute.
 
-It looks like the work from this pull request was duplicated by a recent change in the module.
+It looks like the work from this pull request is a duplicate of the following PR(s):
 
-For some additional information:
+   * INSERT PR(S) HERE
 
-   * INSERT ITEM HERE
+Based on this, we are going to close this PR in favor of the above.
 
-However, we're absolutely always up for discussion.  Since this is a really busy project, we don't always see comments on closed tickets, but want to encourage
-open dialog.  You can stop by the development list, and we'd be glad to talk about it - and we might even be persuaded otherwise!
+However, we're absolutely always up for discussion.  Since this is a really busy project, we don't always see comments on closed tickets, but want to encourage open dialog.  You can stop by the development list, and we'd be glad to talk about it - and we might even be persuaded otherwise!
 
    * https://groups.google.com/forum/#!forum/ansible-devel
 
