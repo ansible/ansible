@@ -295,6 +295,37 @@ def privileges_grant(cursor, user,host,db_table,priv):
         query = query + " WITH GRANT OPTION"
     cursor.execute(query)
 
+def requirements_get(cursor, user, host):
+    """ This function is similar to privileges_get(), except it is meant for
+    requirements (REQUIRE ...). Note that this is a somewhat naive
+    implementation based on the assumption that 'REQUIRE' isn't present
+    anywhere else in the GRANT query (e.g. username, password, etc).
+    """
+    cursor.execute("SHOW GRANTS FOR %s@%s", (user,host))
+    grants = cursor.fetchall()
+
+    try:
+        grant_strings = [grant[0] for grant in grants]
+        grant_with_reqs = \
+            list(filter(lambda x: "REQUIRE" in x, grant_strings))[0]
+    except IndexError:
+        return None
+
+    requirements = {}
+    req_string = grant_with_reqs[grant_with_reqs.index("REQUIRE"):]
+
+    if 'SSL' in req_string:
+        requirements["ssl"] = True
+    elif 'X509' in req_string:
+        requirements["x509"] = True
+    else:
+        for param in ('subject', 'issuer', 'cipher'):
+            regex = r".*{} ('[^\']+')".format(param.upper())
+            match = re.match(regex, req_string, re.S)
+            if match:
+                requirements[param] = strip_quotes(match.group(1))
+    return requirements
+
 def requirements_unpack(module, require_ssl, require_x509,
                         require_subject, require_issuer,
                         require_cipher):
