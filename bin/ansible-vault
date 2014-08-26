@@ -127,7 +127,7 @@ def execute_decrypt(args, options, parser):
     if not options.password_file:
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
     else:
-        password = utils.read_vault_file(options.vault_password_file)
+        password = utils.read_vault_file(options.password_file)
 
     cipher = 'AES256'
     if hasattr(options, 'cipher'):
