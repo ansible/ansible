@@ -69,6 +69,30 @@ Else
     $executable = "choco.exe"
 }
 
+If ($params.source) {
+    $source = $params.source.ToString().ToLower()
+    If (($source -ne 'default') -and ($source -ne 'webpi') -and ($source -ne 'windowsfeatures')) {
+        Fail-Json $result "source is '$source'; must be one of 'default', 'webpi' or 'windowsfeatures'."
+    }
+    If ($source -eq 'default') {
+        $source = "https://chocolatey.org/api/v2/"
+    }
+}
+Elseif (!$params.source)
+{
+    $source = "https://chocolatey.org/api/v2/"
+}
+
+if ($params.source -eq "webpi")
+{
+    # check whether webpi source is available; if it isn't, install it
+    $local = & executable list webpicmd -localonly
+    $ll = ($local.count) - 1
+    if ($local[0] -like "No packages found") {
+      & $executable install webpicmd
+    }
+}
+
 ####### Install
 if (($force) -and ($version))
 {

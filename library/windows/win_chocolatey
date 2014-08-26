@@ -59,6 +59,16 @@ options:
       - no
     default: no
     aliases: []
+  source:
+    description:
+      - Which source to install from
+    require: false
+    choices:
+      - chocolatey
+      - webpi
+      - windowsfeatures
+    default: chocolatey
+    aliases: []
 author: Trond Hindenes
 '''
 
@@ -70,5 +80,5 @@ EXAMPLES = '''
   # Install notepadplusplus version 6.6
   win_chocolatey:
     package: notepadplusplus.install
-	version: 6.6
+    version: 6.6
 '''
