@@ -612,12 +612,14 @@ class Inventory(object):
         scan_pass = 0
         _basedir = self.basedir()
 
+        basedirs = [os.path.abspath(C.DEFAULT_VARS_PATH)]
+
         # look in both the inventory base directory and the playbook base directory
         # unless we do an update for a new playbook base dir
         if not new_pb_basedir:
-            basedirs = [_basedir, self._playbook_basedir]
+            basedirs.extend((_basedir, self._playbook_basedir))
         else:
-            basedirs = [self._playbook_basedir]
+            basedirs.append(self._playbook_basedir)
 
         for basedir in basedirs:
 
@@ -638,12 +640,12 @@ class Inventory(object):
 
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = os.path.join(basedir, "group_vars/%s" % group.name)
+                base_path = utils.path_dwim(basedir, os.path.join(C.DEFAULT_GROUP_VARS_NAME, group.name))
                 results = utils.load_vars(base_path, results, vault_password=self._vault_password)
 
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = os.path.join(basedir, "host_vars/%s" % host.name)
+                base_path = utils.path_dwim(basedir, os.path.join(C.DEFAULT_HOST_VARS_NAME, host.name))
                 results = utils.load_vars(base_path, results, vault_password=self._vault_password)
 
         # all done, results is a dictionary of variables for this particular host.
