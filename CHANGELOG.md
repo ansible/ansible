@@ -26,6 +26,8 @@ New Modules:
 
 Some other notable changes:
 
+* ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
+* ec2_elb_lb: added support for the connection_draining_timeout and cross_az_load_balancing options.
 * support for symbolic representations (ie. u+rw) for file permission modes (file/copy/template modules etc.).
 * docker: Added support for specifying the net type of the container.
 * docker: support for specifying read-only volumes.
