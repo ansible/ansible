@@ -98,7 +98,7 @@ options:
       - Wait a specified timeout allowing connections to drain before terminating an instance
     required: false
     aliases: []
-    version_added: "1.7"
+    version_added: "1.8"
   cross_az_load_balancing:
     description:
       - Distribute load across all configured Availablity Zones
@@ -106,7 +106,7 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
-    version_added: "1.7"
+    version_added: "1.8"
 
 extends_documentation_fragment: aws
 """
@@ -295,8 +295,13 @@ class ElbManager(object):
             self._set_elb_listeners()
             self._set_subnets()
         self._set_health_check()
-        self._set_connection_draining_timeout()
-        self._set_cross_az_load_balancing()
+        # boto has introduced support for some ELB attributes in
+        # different versions, so we check first before trying to
+        # set them to avoid errors
+        if self._check_attribute_support('connection_draining'):
+            self._set_connection_draining_timeout()
+        if self._check_attribute_support('cross_zone_load_balancing'):
+            self._set_cross_az_load_balancing()
 
     def ensure_gone(self):
         """Destroy the ELB"""
@@ -346,16 +351,15 @@ class ElbManager(object):
             else:
                 info['listeners'] = []
 
-            info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name,
-                                                                                 'ConnectionDraining').timeout
+            if self._check_attribute_support('connection_draining'):
+                info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout
 
-            is_cross_az_lb_enabled = self.elb_conn.get_lb_attribute(self.name,
-                                                                    'CrossZoneLoadBalancing')
-
-            if is_cross_az_lb_enabled:
-                info['cross_az_load_balancing'] = 'yes'
-            else:
-                info['cross_az_load_balancing'] = 'no'
+            if self._check_attribute_support('cross_zone_load_balancing'):
+                is_cross_az_lb_enabled = self.elb_conn.get_lb_attribute(self.name, 'CrossZoneLoadBalancing')
+                if is_cross_az_lb_enabled:
+                    info['cross_az_load_balancing'] = 'yes'
+                else:
+                    info['cross_az_load_balancing'] = 'no'
 
         return info
 
@@ -582,6 +586,9 @@ class ElbManager(object):
                 self.elb.configure_health_check(self.elb.health_check)
                 self.changed = True
 
+    def _check_attribute_support(self, attr):
+        return hasattr(boto.ec2.elb.attributes.LbAttributes(), attr)
+
     def _set_cross_az_load_balancing(self):
         attributes = self.elb.get_attributes()
         if self.cross_az_load_balancing == 'yes':
@@ -664,6 +671,13 @@ def main():
                          subnets, purge_subnets, scheme,
                          connection_draining_timeout, cross_az_load_balancing,
                          region=region, **aws_connect_params)
+
+    # check for unsupported attributes for this version of boto
+    if cross_az_load_balancing and not elb_man._check_attribute_support('cross_zone_load_balancing'):
+        module.fail_json(msg="You must install boto >= 2.18.0 to use the cross_az_load_balancing attribute")
+
+    if connection_draining_timeout and not elb_man._check_attribute_support('connection_draining'):
+        module.fail_json(msg="You must install boto >= 2.28.0 to use the connection_draining_timeout attribute")
 
     if state == 'present':
         elb_man.ensure_ok()
