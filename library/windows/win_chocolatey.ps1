@@ -71,10 +71,10 @@ Else
 
 If ($params.source) {
     $source = $params.source.ToString().ToLower()
-    If (($source -ne 'default') -and ($source -ne 'webpi') -and ($source -ne 'windowsfeatures')) {
+    If (($source -ne 'chocolatey') -and ($source -ne 'webpi') -and ($source -ne 'windowsfeatures')) {
         Fail-Json $result "source is '$source'; must be one of 'default', 'webpi' or 'windowsfeatures'."
     }
-    If ($source -eq 'default') {
+    If ($source -eq 'chocolatey') {
         $source = "https://chocolatey.org/api/v2/"
     }
 }
