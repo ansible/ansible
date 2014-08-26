@@ -1,0 +1,304 @@
+#!/usr/bin/python
+# coding=utf-8
+
+DOCUMENTATION = '''
+module: elasticbeanstalk_env
+short_description: Maintain an Elastic Beanstalk application's environments
+description:
+    - Create, update or delete an Elastic Beanstalk application's environment.
+    - Deploy an application's version on a given Elastic Beanstalk application's environment.
+version_added: "1.7"
+requirements: [ "boto" ]
+author: Anislav Atanasov
+options:
+  application_name:
+    description:
+      - The name of the application that contains the version to be deployed.
+    required: true
+  environment_name:
+    description:
+      - A unique name for the deployment environment. Used in the application URL. This field can not be updated.
+    required: true
+  version_label:
+    description:
+      - The name of the application version to deploy.
+    required: true
+  template_name:
+    description:
+      - The name of the configuration template to use in deployment. Either this parameter or the solution_stack_name must be specified, but not both.
+    required: false
+  solution_stack_name:
+    description:
+      - This is the alternative to specifying a configuration name. This field can not be updated.
+    required: false
+  cname_prefix:
+    description:
+      -  If specified, the environment attempts to use this value as the prefix for the CNAME. If not specified, the environment uses the environment name. This field can not be updated.
+    required: false
+  description:
+    description:
+      - Describes this environment.
+    required: false
+  option_settings:
+    description:
+      - If specified, AWS Elastic Beanstalk sets the specified configuration options to the requested value in the configuration set for the new environment.
+    required: false
+  options_to_remove:
+    description:
+      - A list of custom user-defined configuration options to remove from the configuration set for this environment.
+    required: false
+  tier_name:
+    description:
+      - The name of the tier. Valid values are “WebServer” and “Worker”. Defaults to “WebServer”.
+    required: false
+  tier_type:
+    description:
+      - The type of the tier. Valid values are “Standard” if tier_name is “WebServer” and “SQS/HTTP” if tier_name is “Worker”.
+    required: false
+  tier_version:
+    description:
+      - The version of the tier. Defaults to “1.0”.
+    required: false
+  state:
+    description:
+        - Create or terminate Elastic Beanstalk application's environment.
+    choices: ['present', 'absent']
+    default: 'present'
+    required: false
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
+'''
+
+EXAMPLES = '''
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
+# Basic example
+- name: create an application version
+  local_action:
+    module: elasticbeanstalk_app_version
+    application_name: HelloWorld
+    version_label: 1.0
+    s3_bucket: application_versions
+    s3_key: HelloWorld/1.0
+
+- name: create an environment and deploy an application's version
+  local_action:
+    module: elasticbeanstalk_env
+    application_name: HelloWorld
+    environment_name: HelloWorld-dev-env
+    version_label: 1.0
+    solution_stack_name: '64bit Amazon Linux 2014.03 v1.0.4 running Python 2.7'
+    option_settings:
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: Ec2KeyName
+          Value: MyKeyPair
+        - Namespace: 'aws:elasticbeanstalk:application:environment'
+          OptionName: message
+          Value: 'Hello world!'
+'''
+
+import sys
+
+try:
+    import boto.beanstalk
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+class ElasticBeanstalkEnvManager(object):
+    """Maintain an ElasticBeanstalk application's environments."""
+
+    def __init__(self, module):
+
+        self.module = module
+        self.application_name = module.params['application_name']
+        self.environment_name = module.params['environment_name']
+        self.version_label = module.params.get('version_label')
+
+        self.template_name = module.params.get('template_name')
+        self.solution_stack_name = module.params.get('solution_stack_name')
+        if self.template_name is None and self.solution_stack_name is None:
+            self.module.fail_json(msg=str("Either template_name or solution_stack_name variable must be set."))
+        elif self.template_name and self.solution_stack_name:
+            self.module.fail_json(msg=str("Both template_name and solution_stack_name variables are set."))
+
+        self.cname_prefix = module.params.get('cname_prefix')
+        self.description = module.params.get('description')
+
+        self.option_settings = self._parse_options('option_settings', ('Namespace', 'OptionName', 'Value'))
+        self.options_to_remove = self._parse_options('options_to_remove', ('Namespace', 'OptionName',))
+
+        self.tier_name = module.params.get('tier_name')
+        self.tier_type = module.params.get('tier_type')
+        self.tier_version = module.params.get('tier_version')
+
+        self.region, _, aws_connect_params = get_aws_connection_info(module)
+        if not self.region:
+            self.module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
+        try:
+            self.conn = connect_to_aws(boto.beanstalk, self.region, **aws_connect_params)
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg=str(e))
+
+        self.changed = False
+        self.data = self._describe()
+        self.exists = self.data is not None
+
+    def _parse_options(self, parameter_name, tuple_names):
+        if self.module.params.get(parameter_name):
+            option_settings = []
+
+            for option in self.module.params.get(parameter_name):
+                if isinstance(option, dict):
+                    try:
+                        values = [option[tuple_name] for tuple_name in tuple_names]
+                        option_settings.append(values)
+                    except KeyError, e:
+                        self.module.fail_json(msg='%s option: %s does not provide field: %s.' %
+                                              (parameter_name, str(option), e.args[0]))
+                else:
+                    self.module.fail_json(msg='%s option: %s does not provide the following fields: %s' %
+                                          (parameter_name, str(option), str(tuple_names)))
+
+            return option_settings
+
+    def ensure_present(self):
+        """Ensure ElasticBeanstalk application's environment exists or create it if not"""
+        if self.exists:
+            self.update()
+        else:
+            self.create()
+
+    def ensure_absent(self):
+        """Ensure ElasticBeanstalk application's environment is not presented or delete it if not"""
+        if self.exists:
+            self.delete()
+
+    def _describe(self):
+        response = self.conn.describe_environments(application_name=self.application_name,
+                                                   environment_names=self.environment_name,
+                                                   include_deleted=False)
+
+        environments = (response['DescribeEnvironmentsResponse']
+                                ['DescribeEnvironmentsResult']
+                                ['Environments'])
+        if environments:
+            environment = environments[0]
+            if environment['Status'] != 'Terminated':
+                return environment
+
+    def create(self):
+        """Create an ElasticBeanstalk application's environment"""
+        try:
+            response = self.conn.create_environment(application_name=self.application_name,
+                                                    environment_name=self.environment_name,
+                                                    version_label=self.version_label,
+                                                    template_name=self.template_name,
+                                                    solution_stack_name=self.solution_stack_name,
+                                                    cname_prefix=self.cname_prefix,
+                                                    description=self.description,
+                                                    option_settings=self.option_settings,
+                                                    options_to_remove=self.options_to_remove,
+                                                    tier_name=self.tier_name,
+                                                    tier_type=self.tier_type,
+                                                    tier_version=self.tier_version)
+
+            self.data = response['CreateEnvironmentResponse']['CreateEnvironmentResult']
+
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+        else:
+            self.changed = True
+
+    def delete(self):
+        """Delete an ElasticBeanstalk application's environment"""
+        try:
+            response = self.conn.terminate_environment(environment_id=self.data['EnvironmentId'])
+            self.data = response['TerminateEnvironmentResponse']['TerminateEnvironmentResult']
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+
+        self.changed = True
+
+    def update(self):
+        """Update an ElasticBeanstalk application's environment"""
+        try:
+            response = self.conn.update_environment(environment_id=self.data['EnvironmentId'],
+                                                    version_label=self.version_label,
+                                                    template_name=self.template_name,
+                                                    description=self.description,
+                                                    option_settings=self.option_settings,
+                                                    options_to_remove=self.options_to_remove,
+                                                    tier_name=self.tier_name,
+                                                    tier_type=self.tier_type,
+                                                    tier_version=self.tier_version)
+
+            self.data = response['UpdateEnvironmentResponse']['UpdateEnvironmentResult']
+
+        except boto.exception.BotoServerError, e:
+            self.module.fail_json(msg=e.message)
+        else:
+            self.changed = True
+
+
+def main():
+
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            application_name=dict(required=True),
+            environment_name=dict(required=True),
+            version_label=dict(required=False),
+            template_name=dict(required=False),
+            solution_stack_name=dict(required=False),
+            cname_prefix=dict(required=False),
+            description=dict(required=False),
+            option_settings=dict(required=False, type='list'),
+            options_to_remove=dict(required=False, type='list'),
+            tier_name=dict(required=False, choices=['WebServer', 'Worker']),
+            tier_type=dict(required=False, choices=['Standard', 'SQS/HTTP']),
+            tier_version=dict(required=False),
+            state=dict(default='present', choices=['present', 'absent']),
+        )
+    )
+
+    # validate_certs is not supported
+    # http://boto.readthedocs.org/en/latest/ref/beanstalk.html#module-boto.beanstalk.layer1
+    del argument_spec['validate_certs']
+
+    module = AnsibleModule(argument_spec=argument_spec)
+    state = module.params.get('state')
+    env_manager = ElasticBeanstalkEnvManager(module)
+
+    if state == 'present':
+        env_manager.ensure_present()
+    elif state == 'absent':
+        env_manager.ensure_absent()
+
+    facts_result = dict(changed=env_manager.changed,
+                        data=env_manager.data)
+    module.exit_json(**facts_result)
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
