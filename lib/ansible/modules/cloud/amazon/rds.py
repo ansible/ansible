@@ -20,7 +20,7 @@ module: rds
 version_added: "1.3"
 short_description: create, delete, or modify an Amazon rds instance
 description:
-     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0.
+     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely on boto.rds2 (boto >= 2.26.0)
 options:
   command:
     description:
@@ -31,8 +31,8 @@ options:
     choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'restore' ]
   instance_name:
     description:
-      - Database instance identifier.
-    required: true
+      - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
+    required: false
     default: null
     aliases: []
   source_instance:
@@ -179,7 +179,7 @@ options:
     aliases: []
   snapshot:
     description:
-      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. Used only when command=delete or command=snapshot.
+      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
     required: false
     default: null
     aliases: []
@@ -220,8 +220,29 @@ options:
     default: null
     aliases: []
     version_added: 1.5
+  character_set_name:
+    description:
+      - Associate the DB instance with a specified character set. Used with command=create.
+    required: false
+    default: null
+    aliases: []
+    version_added: 1.8
+  publicly_accessible:
+    description:
+      - explicitly set whether the resource should be publicly accessible or not. Used with command=create, command=replicate. Requires boto >= 2.26.0
+    required: false
+    default: null
+    aliases: []
+    version_added: 1.8
+  tags:
+    description:
+      - tags to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
+    required: false
+    default: null
+    aliases: []
+    version_added: 1.8
 requirements: [ "boto" ]
-author: Bruce Pennypacker
+author: Bruce Pennypacker, Will Thames
 '''
 
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
@@ -274,22 +295,607 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-def get_current_resource(conn, resource, command):
-    # There will be exceptions but we want the calling code to handle them
-    if command == 'snapshot':
-        return conn.get_all_dbsnapshots(snapshot_id=resource)[0]
+try:
+    import boto.rds2
+    has_rds2 = True
+except ImportError:
+    has_rds2 = False
+
+
+class RDSConnection:
+    def __init__(self, module, region, **aws_connect_params):
+        try:
+            self.connection  = connect_to_aws(boto.rds, region, **aws_connect_params)
+        except boto.exception.BotoServerError, e:
+             module.fail_json(msg=e.error_message)
+
+    def get_db_instance(self, instancename):
+        try:
+            return RDSDBInstance(self.connection.get_all_dbinstances(instancename)[0])
+        except boto.exception.BotoServerError,e:
+            return None
+
+    def get_db_snapshot(self, snapshotid):
+        try: 
+            return RDSSnapshot(self.connection.get_all_dbsnapshots(snapshot_id=snapshotid)[0])
+        except boto.exception.BotoServerError,e:
+            return None
+
+    def create_db_instance(self, instance_name, size, instance_class, db_engine,
+            username, password, **params):
+        params['engine'] = db_engine
+        result = self.connection.create_dbinstance(instance_name, size, instance_class,
+                username, password, **params)
+        return RDSDBInstance(result)
+
+    def create_db_instance_read_replica(self, instance_name, source_instance, **params):
+        result = self.connection.createdb_instance_read_replica(instance_name, source_instance, **params)
+        return RDSDBInstance(result)
+
+    def delete_db_instance(self, instance_name, **params):
+        result = self.connection.delete_dbinstance(instance_name, **params)
+        return RDSDBInstance(result)
+
+    def delete_db_snapshot(self, snapshot):
+        result = self.connection.delete_dbsnapshot(snapshot)
+        return RDSSnapshot(result)
+
+    def modify_db_instance(self, instance_name, **params):
+        result = self.connection.modify_dbinstance(instance_name, **params)
+        return RDSDBInstance(result)
+
+    def restore_db_instance_from_db_snapshot(self, instance_name, snapshot, instance_type, **params):
+        result = self.connection.restore_dbinstance_from_dbsnapshot(snapshot, instance_name, instance_type, **params)
+        return RDSDBInstance(result)
+
+    def create_db_snapshot(self, snapshot, instance_name, **params):
+        result = self.connection.create_dbsnapshot(snapshot, instance_name)
+        return RDSSnapshot(result)
+
+    def promote_read_replica(self, instance_name, **params):
+        result = self.connection.promote_read_replica(instance_name, **params)
+        return RDSInstance(result)
+
+
+class RDS2Connection:
+    def __init__(self, module, region, **aws_connect_params):
+        try:
+            self.connection  = connect_to_aws(boto.rds2, region, **aws_connect_params)
+        except boto.exception.BotoServerError, e:
+             module.fail_json(msg=e.error_message)
+
+    def get_db_instance(self, instancename):
+        try:
+            dbinstances = self.connection.describe_db_instances(db_instance_identifier=instancename)['DescribeDBInstancesResponse']['DescribeDBInstancesResult']['DBInstances']
+            result =  RDS2DBInstance(dbinstances[0])
+            return result
+        except boto.rds2.exceptions.DBInstanceNotFound, e:
+            return None
+        except Exception, e:
+            raise e
+
+    def get_db_snapshot(self, snapshotid):
+        try:
+            snapshots = self.connection.describe_db_snapshots(db_snapshot_identifier=snapshotid, snapshot_type='manual')['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
+            result = RDS2Snapshot(snapshots[0])
+            return result
+        except boto.rds2.exceptions.DBSnapshotNotFound, e:
+            return None
+
+    def create_db_instance(self, instance_name, size, instance_class, db_engine,
+            username, password, **params):
+        result = self.connection.create_db_instance(instance_name, size, instance_class,
+                db_engine, username, password, **params)['CreateDBInstanceResponse']['CreateDBInstanceResult']['DBInstance']
+        return RDS2DBInstance(result)
+
+    def create_db_instance_read_replica(self, instance_name, source_instance, **params):
+        result = self.connection.create_db_instance_read_replica(instance_name, source_instance, **params)['CreateDBInstanceReadReplicaResponse']['CreateDBInstanceReadReplicaResult']['DBInstance']
+        return RDS2DBInstance(result)
+
+    def delete_db_instance(self, instance_name, **params):
+        result = self.connection.delete_db_instance(instance_name, **params)['DeleteDBInstanceResponse']['DeleteDBInstanceResult']['DBInstance']
+        return RDS2DBInstance(result)
+
+    def delete_db_snapshot(self, snapshot):
+        result = self.connection.delete_db_snapshot(snapshot)['DeleteDBSnapshotResponse']['DeleteDBSnapshotResult']['DBSnapshot']
+        return RDS2Snapshot(result)
+
+    def modify_db_instance(self, instance_name, **params):
+        result = self.connection.modify_db_instance(instance_name, **params)['ModifyDBInstanceResponse']['ModifyDBInstanceResult']['DBInstance']
+        return RDS2DBInstance(result)
+
+    def restore_db_instance_from_db_snapshot(self, instance_name, snapshot, instance_type, **params):
+        result = self.connection.restore_db_instance_from_db_snapshot(instance_name, snapshot, **params)['RestoreDBInstanceFromDBSnapshotResponse']['RestoreDBInstanceFromDBSnapshotResult']['DBInstance']
+        return RDS2DBInstance(result)
+
+    def create_db_snapshot(self, snapshot, instance_name, **params):
+        result = self.connection.create_db_snapshot(snapshot, instance_name, **params)['CreateDBSnapshotResponse']['CreateDBSnapshotResult']['DBSnapshot']
+        return RDS2Snapshot(result)
+
+    def promote_read_replica(self, instance_name, **params):
+        result = self.connection.promote_read_replica(instance_name, **params)['PromoteReadReplicaResponse']['PromoteReadReplicaResult']['DBInstance']
+        return RDS2DBInstance(result)
+
+
+class RDSDBInstance:
+    def __init__(self, dbinstance):
+        self.instance = dbinstance
+        self.name = dbinstance.id
+        self.status = dbinstance.status
+
+    def get_data(self):
+        d = {
+            'id'                 : self.name,
+            'create_time'        : self.instance.create_time,
+            'status'             : self.status,
+            'availability_zone'  : self.instance.availability_zone,
+            'backup_retention'   : self.instance.backup_retention_period,
+            'backup_window'      : self.instance.preferred_backup_window,
+            'maintenance_window' : self.instance.preferred_maintenance_window,
+            'multi_zone'         : self.instance.multi_az,
+            'instance_type'      : self.instance.instance_class,
+            'username'           : self.instance.master_username,
+            'iops'               : self.instance.iops
+            }
+
+        # Endpoint exists only if the instance is available
+        if self.status == 'available':
+            d["endpoint"] = self.instance.endpoint[0]
+            d["port"] = self.instance.endpoint[1]
+            if self.instance.vpc_security_groups is not None:
+                d["vpc_security_groups"] = ','.join(x.vpc_group for x in self.instance.vpc_security_groups)
+            else:
+                d["vpc_security_groups"] = None
+        else:
+            d["endpoint"] = None
+            d["port"] = None
+            d["vpc_security_groups"] = None
+
+        # ReadReplicaSourceDBInstanceIdentifier may or may not exist
+        try:
+            d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
+        except Exception, e:
+            d["replication_source"] = None
+        return d
+
+
+
+
+class RDS2DBInstance:
+    def __init__(self, dbinstance):
+        self.instance = dbinstance
+        if 'DBInstanceIdentifier' not in dbinstance:
+            self.name = None
+        else:
+            self.name = self.instance.get('DBInstanceIdentifier')
+        self.status = self.instance.get('DBInstanceStatus')
+
+    def get_data(self):
+        d = {
+            'id': self.name,
+            'create_time': self.instance['InstanceCreateTime'],
+            'status': self.status,
+            'availability_zone': self.instance['AvailabilityZone'],
+            'backup_retention': self.instance['BackupRetentionPeriod'],
+            'maintenance_window': self.instance['PreferredMaintenanceWindow'],
+            'multi_zone': self.instance['MultiAZ'],
+            'instance_type': self.instance['DBInstanceClass'],
+            'username': self.instance['MasterUsername'],
+            'iops': self.instance['Iops'],
+            'replication_source': self.instance['ReadReplicaSourceDBInstanceIdentifier']
+        }
+        if self.instance["VpcSecurityGroups"] is not None:
+            d['vpc_security_groups'] = ','.join(x['VpcSecurityGroupId'] for x in self.instance['VpcSecurityGroups'])
+        if self.status == 'available':
+            d['endpoint'] = self.instance["Endpoint"]["Address"]
+            d['port'] = self.instance["Endpoint"]["Port"]
+        else:
+            d['endpoint'] = None
+            d['port'] = None
+
+        return d
+
+
+class RDSSnapshot:
+    def __init__(self, snapshot):
+        self.snapshot = snapshot
+        self.name = snapshot.id
+        self.status = snapshot.status
+
+    def get_data(self):
+        d = {
+            'id'                 : self.name,
+            'create_time'        : self.snapshot.snapshot_create_time,
+            'status'             : self.status,
+            'availability_zone'  : self.snapshot.availability_zone,
+            'instance_id'        : self.snapshot.instance_id,
+            'instance_created'   : self.snapshot.instance_create_time,
+        }
+        # needs boto >= 2.21.0
+        if hasattr(self.snapshot, 'snapshot_type'):
+            d["snapshot_type"] = self.snapshot.snapshot_type
+        if hasattr(self.snapshot, 'iops'):
+            d["iops"] = self.snapshot.iops
+        return d
+
+
+class RDS2Snapshot:
+    def __init__(self, snapshot):
+        if 'DeleteDBSnapshotResponse' in snapshot:
+            self.snapshot = snapshot['DeleteDBSnapshotResponse']['DeleteDBSnapshotResult']['DBSnapshot']
+        else:
+            self.snapshot = snapshot
+        self.name = self.snapshot.get('DBSnapshotIdentifier')
+        self.status = self.snapshot.get('Status')
+
+    def get_data(self):
+        d = {
+            'id'                 : self.name,
+            'create_time'        : self.snapshot['SnapshotCreateTime'],
+            'status'             : self.status,
+            'availability_zone'  : self.snapshot['AvailabilityZone'],
+            'instance_id'        : self.snapshot['DBInstanceIdentifier'],
+            'instance_created'   : self.snapshot['InstanceCreateTime'],
+            'snapshot_type'      : self.snapshot['SnapshotType'],
+            'iops'               : self.snapshot['Iops'],
+        }
+        return d
+
+
+def await_resource(conn, resource, status, module):
+    wait_timeout = module.params.get('wait_timeout') + time.time()
+    while wait_timeout > time.time() and resource.status != status:
+        time.sleep(5)
+        if wait_timeout <= time.time():
+            module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
+        if module.params.get('command') == 'snapshot':
+            # Temporary until all the rds2 commands have their responses parsed
+            if resource.name is None:
+                module.fail_json(msg="Problem with snapshot %s" % resource.snapshot)
+            resource = conn.get_db_snapshot(resource.name)
+        else:
+            # Temporary until all the rds2 commands have their responses parsed
+            if resource.name is None:
+                module.fail_json(msg="Problem with instance %s" % resource.instance)
+            resource = conn.get_db_instance(resource.name)
+    return resource
+
+
+def create_db_instance(module, conn):
+    subnet = module.params.get('subnet')
+    required_vars = ['instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password']
+    valid_vars = ['backup_retention', 'backup_window',
+                  'character_set_name', 'db_name', 'engine_version',
+                  'instance_type', 'iops', 'license_model', 'maint_window',
+                  'multi_zone', 'option_group', 'parameter_group','port',
+                  'subnet', 'upgrade', 'zone']
+    if module.params.get('subnet'):
+        valid_vars.append('vpc_security_groups')
     else:
-        return conn.get_all_dbinstances(resource)[0]
+        valid_vars.append('security_groups')
+    if has_rds2:
+        valid_vars.extend(['publicly_accessible', 'tags'])
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+
+    result = conn.get_db_instance(instance_name)
+    if result:
+        changed = False
+    else:
+        try:
+            result = conn.create_db_instance(instance_name, module.params.get('size'),
+                    module.params.get('instance_type'), module.params.get('db_engine'),
+                    module.params.get('username'), module.params.get('password'), **params)
+            changed = True
+        except boto.exception.StandardError, e:
+            module.fail_json(msg=e.error_message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    module.exit_json(changed=changed, instance=resource.get_data())
+
+
+def replicate_db_instance(module, conn):
+    required_vars = ['instance_name', 'source_instance']
+    valid_vars = ['instance_type', 'port', 'upgrade', 'zone']
+    if has_rds2:
+        valid_vars.extend(['iops', 'option_group', 'publicly_accessible', 'tags'])
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    source_instance = module.params.get('source_instance')
+
+    result = conn.get_db_instance(instance_name)
+    if result:
+        changed = False
+    else:
+        try:
+            result = conn.create_db_instance_read_replica(instance_name, source_instance, **params)
+            changed = True
+        except boto.exception.StandardError, e:
+            module.fail_json(msg=e.error_message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    module.exit_json(changed=changed, instance=resource.get_data())
+
+
+def delete_db_instance_or_snapshot(module, conn):
+    required_vars = []
+    valid_vars = ['instance_name', 'snapshot', 'skip_final_snapshot']
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    snapshot = module.params.get('snapshot')
+
+    if not instance_name:
+        result = conn.get_db_snapshot(snapshot)
+    else:
+        result = conn.get_db_instance(instance_name)
+    if not result:
+        module.exit_json(changed=False)
+    if result.status == 'deleting':
+        module.exit_json(changed=False)
+    try:
+        if instance_name:
+            if snapshot:
+                params["skip_final_snapshot"] = False
+                params["final_snapshot_id"] = snapshot
+            else:
+                params["skip_final_snapshot"] = True
+            result = conn.delete_db_instance(instance_name, **params)
+        else:
+            result = conn.delete_db_snapshot(snapshot)
+    except boto.exception.StandardError, e:
+        module.fail_json(msg=e.error_message)
+
+    # If we're not waiting for a delete to complete then we're all done
+    # so just return
+    if not module.params.get('wait'):
+        module.exit_json(changed=True)
+    try:
+        resource = await_resource(conn, result, 'deleted', module)
+        module.exit_json(changed=True)
+    except boto.exception.StandardError, e:
+        if e.error_code == 'DBInstanceNotFound':
+            module.exit_json(changed=True)
+        else:
+            module.fail_json(msg=e.error_message)
+    except Exception, e:
+        module.fail_json(msg=str(e))
+
+
+def facts_db_instance_or_snapshot(module, conn):
+    required_vars = []
+    valid_vars = ['instance_name', 'snapshot']
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    snapshot = module.params.get('snapshot')
+
+    if instance_name and snapshot:
+        module.fail_json(msg="facts must be called with either instance_name or snapshot, not both")
+    if instance_name:
+        resource = conn.get_db_instance(instance_name)
+        if not resource:
+            module.fail_json(msg="DB Instance %s does not exist" % instance_name)
+    if snapshot:
+        resource = conn.get_db_snapshot(snapshot)
+        if not resource:
+            module.fail_json(msg="DB snapshot %s does not exist" % snapshot)
+
+    module.exit_json(changed=False, instance=resource.get_data())
+
+
+def modify_db_instance(module, conn):
+    required_vars = ['instance_name']
+    valid_vars = ['backup_retention', 'backup_window', 'db_name', 'engine_version',
+                  'instance_type', 'iops', 'license_model', 'maint_window',
+                  'password', 'multi_zone', 'new_instance_name',
+                  'option_group', 'parameter_group',
+                  'size', 'upgrade']
+
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    new_instance_name = module.params.get('new_instance_name')
+
+    try:
+        result = conn.modify_db_instance(instance_name, **params)
+    except boto.exception.StandardError, e:
+        module.fail_json(msg=e.error_message)
+    if params.get('apply_immediately'):
+        if new_instance_name:
+            # Wait until the new instance name is valid
+            found = 0
+            while found == 0:
+                if has_rds2:
+                    instances = conn.describe_all_db_instances()
+                else:
+                    instances = conn.get_all_dbinstances()
+                for i in instances:
+                    if i.id == new_instance_name:
+                        instance_name = new_instance_name
+                        found = 1
+                if found == 0:
+                    time.sleep(5)
+
+            # The name of the database has now changed, so we have
+            # to force result to contain the new instance, otherwise
+            # the call below to get_current_resource will fail since it
+            # will be looking for the old instance name.
+            result.id = new_instance_name
+        else:
+            # Wait for a few seconds since it takes a while for AWS
+            # to change the instance from 'available' to 'modifying'
+            time.sleep(5)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    # guess that this changed the DB, need a way to check
+    module.exit_json(changed=True, instance=resource.get_data())
+
+
+def promote_db_instance(module, conn):
+    required_vars = ['instance_name']
+    valid_vars = ['backup_retention', 'backup_window']
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    
+    result = conn.get_db_instance(instance_name)
+    if result.get_data().get('replication_source'):
+        changed = False
+    else:
+        try:
+            result = conn.promote_read_replica(instance_name, **params)
+        except boto.exception.StandardError, e:
+            module.fail_json(msg=e.error_message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    module.exit_json(changed=changed, instance=resource.get_data())
+
+
+def snapshot_db_instance(module, conn):
+    required_vars = ['instance_name', 'snapshot']
+    valid_vars = ['tags']
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    snapshot = module.params.get('snapshot')
+    changed = False
+    result = conn.get_db_snapshot(snapshot)
+    if not result:
+        try:
+            result = conn.create_db_snapshot(snapshot, instance_name, **params)
+            changed = True
+        except boto.exception.StandardError, e:
+            module.fail_json(msg=e.error_message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_snapshot(snapshot)
+
+    module.exit_json(changed=changed, snapshot=resource.get_data())
+
+
+def restore_db_instance(module, conn):
+    required_vars = ['instance_name', 'snapshot']
+    valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
+                  'option_group', 'port', 'publicly_accessible',
+                  'subnet', 'tags', 'upgrade', 'zone']
+    if has_rds2:
+        valid_vars.append('instance_type')
+    else:
+        required_vars.append('instance_type')
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    instance_type = module.params.get('instance_type')
+    snapshot = module.params.get('snapshot')
+
+    changed = False
+    result = conn.get_db_instance(instance_name)
+    if not result:
+        try:
+            result = conn.restore_db_instance_from_db_snapshot(instance_name, snapshot, instance_type, **params)
+            changed = True
+        except boto.exception.StandardError, e:
+            module.fail_json(msg=e.error_message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    module.exit_json(changed=changed, instance=resource.get_data())
+
+
+def validate_parameters(required_vars, valid_vars, module):
+    command = module.params.get('command')
+    for v in required_vars:
+        if not module.params.get(v):
+            module.fail_json(msg="Parameter %s required for %s command" % (v, command))
+
+    # map to convert rds module options to boto rds and rds2 options
+    optional_params = {
+            'port': 'port',
+            'db_name': 'db_name',
+            'zone': 'availability_zone',
+            'maint_window': 'preferred_maintenance_window',
+            'backup_window': 'preferred_backup_window',
+            'backup_retention': 'backup_retention_period',
+            'multi_zone': 'multi_az',
+            'engine_version': 'engine_version',
+            'upgrade': 'auto_minor_version_upgrade',
+            'subnet': 'db_subnet_group_name',
+            'license_model': 'license_model',
+            'option_group': 'option_group_name',
+            'iops': 'iops',
+            'new_instance_name': 'new_instance_id',
+            'apply_immediately': 'apply_immediately',
+    }
+    # map to convert rds module options to boto rds options
+    optional_params_rds = {
+            'db_engine': 'engine',
+            'password': 'master_password',
+            'parameter_group': 'param_group',
+            'instance_type': 'instance_class',
+    }
+    # map to convert rds module options to boto rds2 options
+    optional_params_rds2 = {
+            'tags': 'tags',
+            'publicly_accessible': 'publicly_accessible',
+            'parameter_group': 'db_parameter_group_name',
+            'character_set_name': 'character_set_name',
+            'instance_type': 'db_instance_class',
+            'password': 'master_user_password',
+    }
+    if has_rds2:
+        optional_params.update(optional_params_rds2)
+        sec_group = 'db_security_groups'
+    else:
+        optional_params.update(optional_params_rds)
+        sec_group = 'security_groups'
+        # Check for options only supported with rds2
+        for k in set(optional_params_rds2.keys()) - set(optional_params_rds.keys()):
+            if module.params.get(k):
+                module.fail_json(msg="Parameter %s requires boto.rds (boto >= 2.26.0)" % k)
+
+    params = {}
+    for (k, v) in optional_params.items():
+        if module.params.get(k) and k not in required_vars:
+            if k in valid_vars:
+                params[v] = module.params[k]
+            else:
+                module.fail_json(msg="Parameter %s is not valid for %s command" % (k, command))
+
+    if module.params.get('security_groups'):
+        params[sec_group] = module.params.get('security_groups').split(',')
+
+    if module.params.get('vpc_security_groups'):
+        groups_list = []
+        for x in module.params.get('vpc_security_groups'):
+            groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
+        params["vpc_security_groups"] = groups_list
+    return params
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
             command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
-            instance_name     = dict(required=True),
+            instance_name     = dict(required=False),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
-            size              = dict(required=False), 
+            size              = dict(required=False),
             instance_type     = dict(aliases=['type'], required=False),
             username          = dict(required=False),
             password          = dict(no_log=True, required=False),
@@ -314,336 +920,38 @@ def main():
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
             new_instance_name = dict(required=False),
+            tags              = dict(type='list', required=False),
+            publicly_accessible = dict(required=False),
+            character_set_name = dict(required=False),
         )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
-
-    command            = module.params.get('command')
-    instance_name      = module.params.get('instance_name')
-    source_instance    = module.params.get('source_instance')
-    db_engine          = module.params.get('db_engine')
-    size               = module.params.get('size')
-    instance_type      = module.params.get('instance_type')
-    username           = module.params.get('username')
-    password           = module.params.get('password')
-    db_name            = module.params.get('db_name')
-    engine_version     = module.params.get('engine_version')
-    parameter_group    = module.params.get('parameter_group')
-    license_model      = module.params.get('license_model')
-    multi_zone         = module.params.get('multi_zone')
-    iops               = module.params.get('iops')
-    security_groups    = module.params.get('security_groups')
-    vpc_security_groups = module.params.get('vpc_security_groups')
-    port               = module.params.get('port')
-    upgrade            = module.params.get('upgrade')
-    option_group       = module.params.get('option_group')
-    maint_window       = module.params.get('maint_window')
-    subnet             = module.params.get('subnet')
-    backup_window      = module.params.get('backup_window')
-    backup_retention   = module.params.get('backup_retention')
-    region             = module.params.get('region')
-    zone               = module.params.get('zone')
-    aws_secret_key     = module.params.get('aws_secret_key')
-    aws_access_key     = module.params.get('aws_access_key')
-    wait               = module.params.get('wait')
-    wait_timeout       = int(module.params.get('wait_timeout'))
-    snapshot           = module.params.get('snapshot')
-    apply_immediately  = module.params.get('apply_immediately')
-    new_instance_name  = module.params.get('new_instance_name')
+    invocations = {
+            'create': create_db_instance,
+            'replicate': replicate_db_instance,
+            'delete': delete_db_instance_or_snapshot,
+            'facts': facts_db_instance_or_snapshot,
+            'modify': modify_db_instance,
+            'promote': promote_db_instance,
+            'snapshot': snapshot_db_instance,
+            'restore': restore_db_instance,
+    }
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
+        module.fail_json(msg="region not specified and unable to determine region from EC2_REGION.")
 
     # connect to the rds endpoint
-    try:
-        conn = connect_to_aws(boto.rds, region, **aws_connect_params)
-    except boto.exception.BotoServerError, e:
-        module.fail_json(msg = e.error_message)
-
-    def invalid_security_group_type(subnet):
-        if subnet:
-            return 'security_groups'
-        else:
-            return 'vpc_security_groups'
-
-    # Package up the optional parameters
-    params = {}
-
-    # Validate parameters for each command
-    if command == 'create':
-        required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
-        invalid_vars  = [ 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ] + [invalid_security_group_type(subnet)]
-
-    elif command == 'replicate':
-        required_vars = [ 'instance_name', 'source_instance' ]
-        invalid_vars  = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately', 'new_instance_name' ]
-
-    elif command == 'delete':
-        required_vars = [ 'instance_name' ]
-        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups' ,'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately', 'new_instance_name' ]
-
-    elif command == 'facts':
-        required_vars = [ 'instance_name' ]
-        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately', 'new_instance_name' ]
-
-    elif command == 'modify':
-        required_vars = [ 'instance_name' ]
-        if password:
-            params["master_password"] = password
-        invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance']
-
-    elif command == 'promote':
-        required_vars = [ 'instance_name' ]
-        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
-    
-    elif command == 'snapshot':
-        required_vars = [ 'instance_name', 'snapshot']
-        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'apply_immediately', 'new_instance_name' ]
-
-    elif command == 'restore':
-        required_vars = [ 'instance_name', 'snapshot', 'instance_type' ]
-        invalid_vars = [ 'db_engine', 'db_name', 'username', 'password', 'engine_version',  'option_group', 'source_instance', 'apply_immediately', 'new_instance_name', 'vpc_security_groups', 'security_groups' ]
- 
-    for v in required_vars:
-        if not module.params.get(v):
-            module.fail_json(msg = str("Parameter %s required for %s command" % (v, command)))
-            
-    for v in invalid_vars:
-        if module.params.get(v):
-            module.fail_json(msg = str("Parameter %s invalid for %s command" % (v, command)))
-
-    if db_engine:
-        params["engine"] = db_engine
-
-    if port:
-        params["port"] = port
-
-    if db_name:
-        params["db_name"] = db_name
-
-    if parameter_group:
-        params["param_group"] = parameter_group
-
-    if zone:
-        params["availability_zone"] = zone
-  
-    if maint_window:
-        params["preferred_maintenance_window"] = maint_window
-
-    if backup_window:
-        params["preferred_backup_window"] = backup_window
-
-    if backup_retention:
-        params["backup_retention_period"] = backup_retention
-
-    if multi_zone:
-        params["multi_az"] = multi_zone
-
-    if engine_version:
-        params["engine_version"] = engine_version
-
-    if upgrade:
-        params["auto_minor_version_upgrade"] = upgrade
-
-    if subnet:
-        params["db_subnet_group_name"] = subnet
-
-    if license_model:
-        params["license_model"] = license_model
-
-    if option_group:
-        params["option_group_name"] = option_group
-
-    if iops:
-        params["iops"] = iops
-
-    if security_groups:
-        params["security_groups"] = security_groups.split(',')
-
-    if vpc_security_groups:
-        groups_list = []
-        for x in vpc_security_groups:
-            groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
-        params["vpc_security_groups"] = groups_list
-
-    if new_instance_name:
-        params["new_instance_id"] = new_instance_name
-
-    changed = True
-
-    if command in ['create', 'restore', 'facts']:
-        try:
-            result = conn.get_all_dbinstances(instance_name)[0]
-            changed = False
-        except boto.exception.BotoServerError, e:
-            try:
-                if command == 'create': 
-                    result = conn.create_dbinstance(instance_name, size, instance_type, username, password, **params)
-                if command == 'restore':
-                    result = conn.restore_dbinstance_from_dbsnapshot(snapshot, instance_name, instance_type, **params)
-                if command == 'facts':
-                    module.fail_json(msg = "DB Instance %s does not exist" % instance_name)
-            except boto.exception.BotoServerError, e:
-                module.fail_json(msg = e.error_message)
-
-    if command == 'snapshot':
-        try:
-            result = conn.get_all_dbsnapshots(snapshot)[0]
-            changed = False
-        except boto.exception.BotoServerError, e:
-            try:
-                result = conn.create_dbsnapshot(snapshot, instance_name)
-            except boto.exception.BotoServerError, e:
-                module.fail_json(msg = e.error_message)
-        
-    if command == 'delete':
-        try:
-            result = conn.get_all_dbinstances(instance_name)[0]
-            if result.status == 'deleting':
-                module.exit_json(changed=False)
-        except boto.exception.BotoServerError, e:
-            module.exit_json(changed=False)
-        try:
-            if snapshot:
-                params["skip_final_snapshot"] = False
-                params["final_snapshot_id"] = snapshot
-            else:
-                params["skip_final_snapshot"] = True
-            result = conn.delete_dbinstance(instance_name, **params)
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = e.error_message)
-
-    if command == 'replicate':
-        try: 
-            if instance_type:
-                params["instance_class"] = instance_type
-            result = conn.create_dbinstance_read_replica(instance_name, source_instance, **params)
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = e.error_message)
-
-    if command == 'modify':
-        try:
-            params["apply_immediately"] = apply_immediately
-            result = conn.modify_dbinstance(instance_name, **params)
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = e.error_message)
-        if apply_immediately:
-            if new_instance_name:
-                # Wait until the new instance name is valid
-                found = 0
-                while found == 0:
-                    instances = conn.get_all_dbinstances()
-                    for i in instances:
-                        if i.id == new_instance_name:
-                            instance_name = new_instance_name
-                            found = 1
-                    if found == 0:
-                        time.sleep(5)
-
-                # The name of the database has now changed, so we have
-                # to force result to contain the new instance, otherwise
-                # the call below to get_current_resource will fail since it
-                # will be looking for the old instance name.
-                result.id = new_instance_name
-            else:
-                # Wait for a few seconds since it takes a while for AWS
-                # to change the instance from 'available' to 'modifying'
-                time.sleep(5)
-
-    if command == 'promote':
-        try:
-            result = conn.promote_read_replica(instance_name, **params)
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = e.error_message)
-
-    # If we're not waiting for a delete to complete then we're all done
-    # so just return
-    if command == 'delete' and not wait:
-        module.exit_json(changed=True)
-
-    try:
-       resource = get_current_resource(conn, result.id, command)
-    except boto.exception.BotoServerError, e:
-        module.fail_json(msg = e.error_message)
-
-    # Wait for the resource to be available if requested
-    if wait:
-        try: 
-            wait_timeout = time.time() + wait_timeout
-            time.sleep(5)
-
-            while wait_timeout > time.time() and resource.status != 'available':
-                time.sleep(5)
-                if wait_timeout <= time.time():
-                    module.fail_json(msg = "Timeout waiting for resource %s" % resource.id)
-                resource = get_current_resource(conn, result.id, command)
-        except boto.exception.BotoServerError, e:
-            # If we're waiting for an instance to be deleted then
-            # get_all_dbinstances will eventually throw a 
-            # DBInstanceNotFound error.
-            if command == 'delete' and e.error_code == 'DBInstanceNotFound':
-                module.exit_json(changed=True)                
-            else:
-                module.fail_json(msg = e.error_message)
-
-    # If we got here then pack up all the instance details to send
-    # back to ansible
-    if command == 'snapshot':
-        d = { 
-            'id'                 : resource.id,
-            'create_time'        : resource.snapshot_create_time,
-            'status'             : resource.status,
-            'availability_zone'  : resource.availability_zone,
-            'instance_id'        : resource.instance_id,
-            'instance_created'   : resource.instance_create_time,
-        }
-        try:
-            d["snapshot_type"] = resource.snapshot_type
-            d["iops"] = resource.iops
-        except AttributeError, e:
-            pass # needs boto >= 2.21.0
-
-        return module.exit_json(changed=changed, snapshot=d)
-
-    d = {
-        'id'                 : resource.id,
-        'create_time'        : resource.create_time,
-        'status'             : resource.status,
-        'availability_zone'  : resource.availability_zone,
-        'backup_retention'   : resource.backup_retention_period,
-        'backup_window'      : resource.preferred_backup_window,
-        'maintenance_window' : resource.preferred_maintenance_window,
-        'multi_zone'         : resource.multi_az,
-        'instance_type'      : resource.instance_class,
-        'username'           : resource.master_username,
-        'iops'               : resource.iops
-        }
-
-    # Endpoint exists only if the instance is available
-    if resource.status == 'available' and command != 'snapshot':
-        d["endpoint"] = resource.endpoint[0]
-        d["port"] = resource.endpoint[1]
-        if resource.vpc_security_groups is not None:
-            d["vpc_security_groups"] = ','.join(x.vpc_group for x in resource.vpc_security_groups)
-        else:
-            d["vpc_security_groups"] = None
+    if has_rds2:
+        conn = RDS2Connection(module, region, **aws_connect_params)
     else:
-        d["endpoint"] = None
-        d["port"] = None
-        d["vpc_security_groups"] = None
+        conn = RDSConnection(module, region, **aws_connect_params)
 
-    # ReadReplicaSourceDBInstanceIdentifier may or may not exist
-    try:
-        d["replication_source"] = resource.ReadReplicaSourceDBInstanceIdentifier
-    except Exception, e:
-        d["replication_source"] = None
-
-    module.exit_json(changed=changed, instance=d)
-
+    invocations[module.params.get('command')](module, conn)
+        
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
