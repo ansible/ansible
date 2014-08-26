@@ -79,11 +79,8 @@ options:
         U(http://docs.python.org/2/library/re.html).
     required: false
     default: null
-  others:
-    description:
-      - all arguments accepted by the M(file) module also work here
-    required: false
 author: Stephen Fromm
+extends_documentation_fragment: files
 '''
 
 EXAMPLES = '''
