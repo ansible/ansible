@@ -29,6 +29,7 @@ import pipes
 import socket
 import random
 import logging
+import tempfile
 import traceback
 import fcntl
 import re
@@ -363,7 +364,7 @@ class Connection(object):
         if self.sftp is not None:
             self.sftp.close()
 
-        if C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
+        if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
             lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
@@ -379,7 +380,25 @@ class Connection(object):
 
                 self.ssh.load_system_host_keys()
                 self.ssh._host_keys.update(self.ssh._system_host_keys)
-                self._save_ssh_host_keys(self.keyfile)
+
+                # gather information about the current key file, so
+                # we can ensure the new file has the correct mode/owner
+
+                key_dir  = os.path.dirname(self.keyfile)
+                key_stat = os.stat(self.keyfile)
+
+                # Save the new keys to a temporary file and move it into place
+                # rather than rewriting the file. We set delete=False because
+                # the file will be moved into place rather than cleaned up.
+
+                tmp_keyfile = tempfile.NamedTemporaryFile(dir=key_dir, delete=False)
+                os.chmod(tmp_keyfile.name, key_stat.st_mode & 07777)
+                os.chown(tmp_keyfile.name, key_stat.st_uid, key_stat.st_gid)
+
+                self._save_ssh_host_keys(tmp_keyfile.name)
+                tmp_keyfile.close()
+
+                os.rename(tmp_keyfile.name, self.keyfile)
 
             except:
 
