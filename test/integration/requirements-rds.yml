@@ -1,0 +1,5 @@
+Jinja2==2.7.1
+PyYAML==3.10
+boto==2.25.0
+pycrypto==2.6.1
+python-keyczar==0.71c

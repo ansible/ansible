@@ -1,0 +1,94 @@
+- name: setup DB name
+  set_fact: instancename="{{random_string.stdout}}db"
+  
+- name: test RDS DB creation
+  rds:
+    instance_name: "{{instancename}}"
+    command: create
+    instance_type: db.t2.micro
+    db_engine: MySQL
+    username: dummyuser
+    password: Mysql123
+    size: 5
+    wait: True
+    wait_timeout: 1200
+    tags:
+      Name: my database
+      Application: dummy
+  tags: test_rds
+
+- name: test RDS modify DB
+  rds:
+    command: modify
+    instance_name: "{{instancename}}"
+    password: Mysql1234
+    size: 6
+  tags: test_rds
+
+- name: test RDS DB facts
+  rds:
+    instance_name: "{{instancename}}"
+    command: facts
+  tags: test_rds
+
+- name: test create read replica DB
+  rds:
+    command: replicate
+    instance_name: "{{instancename}}-replica"
+    source_instance: "{{instancename}}"
+    wait: True
+    wait_timeout: 1200
+  tags: test_rds
+
+- name: test snapshot DB
+  rds:
+    instance_name: "{{instancename}}"
+    command: snapshot
+    snapshot: "snap-{{instancename}}"
+    wait: True
+  tags: test_rds
+
+- name: test restore from snapshot
+  rds:
+    command: restore
+    snapshot: "snap-{{instancename}}"
+    instance_name: "{{instancename}}-from-snap"
+    wait: True
+  tags: test_rds
+
+- name: test snapshot facts
+  rds:
+    snapshot: "snap-{{instancename}}"
+    command: facts
+  tags: test_rds
+
+- name: test promote read replica DB
+  rds:
+    command: promote
+    instance_name: "{{instancename}}-replica"
+  tags: test_rds
+
+- name: test delete snapshot
+  rds:
+    command: delete
+    snapshot: "snap-{{instancename}}"
+    wait: True
+  tags: test_rds
+
+- name: test delete DB
+  rds:
+    instance_name: "{{instancename}}"
+    command: delete
+  tags: test_rds
+
+- name: test delete restore
+  rds:
+    instance_name: "{{instancename}}-from-snap"
+    command: delete
+  tags: test_rds
+
+- name: test delete replica
+  rds:
+    instance_name: "{{instancename}}-replica"
+    command: delete
+  tags: test_rds
