@@ -26,7 +26,7 @@ options:
     default: null
     choices: []
     description:
-      - mode the file or directory should be, such as 0644 as would be fed to I(chmod)
+      - mode the file or directory should be, such as 0644 as would be fed to I(chmod). As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   owner:
     required: false
     default: null

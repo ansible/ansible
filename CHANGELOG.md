@@ -26,6 +26,7 @@ New Modules:
 
 Some other notable changes:
 
+* support for symbolic representations (ie. u+rw) for file permission modes (file/copy/template modules etc.).
 * docker: Added support for specifying the net type of the container.
 * docker: support for specifying read-only volumes.
 * docker: support for specifying the API version to use for the remote connection.
@@ -43,7 +44,7 @@ Some other notable changes:
 * ec2: can set optimized flag
 * various parser improvements
 * produce a friendly error message if the SSH key is too permissive
-* ec2_ami_searcH: support for SSD and IOPS provisioned EBS images
+* ec2_ami_search: support for SSD and IOPS provisioned EBS images
 
 And various other bug fixes and improvements ...
 
