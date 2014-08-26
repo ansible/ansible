@@ -541,9 +541,9 @@ class PlayBook(object):
                         handler_name = template(play.basedir, handler_name, task.module_vars)
                         if not isinstance(handler_name, basestring):
                             for item in handler_name:
-                                self._flag_handler(play, template(play.basedir, item, task.module_vars), host)
+                                self._flag_handler(play, item, host)
                         else:
-                            self._flag_handler(play, template(play.basedir, handler_name, task.module_vars), host)
+                            self._flag_handler(play, handler_name, host)
 
         ansible.callbacks.set_task(self.callbacks, None)
         ansible.callbacks.set_task(self.runner_callbacks, None)
