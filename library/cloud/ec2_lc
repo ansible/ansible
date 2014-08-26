@@ -68,6 +68,12 @@ options:
     required: false
     default: null
     aliases: []
+  kernel_id:
+    description:
+      - Kernel id for the EC2 instance
+    required: false
+    default: null
+    aliases: []    
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
@@ -81,7 +87,28 @@ options:
     aliases: []
   assign_public_ip:
     description:
-      - whether instances in group are launched with a public IP.
+      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.8"
+  ramdisk_id:
+    description:
+      - A RAM disk id for the instances.
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.8"
+  instance_profile_name:
+    description:
+      - The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instances.
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.8"
+  ebs_optimized:
+    description:
+      - Specifies whether the instance is optimized for EBS I/O (true) or not (false).
     required: false
     default: false
     aliases: []
@@ -147,6 +174,10 @@ def create_launch_config(connection, module):
     spot_price = module.params.get('spot_price')
     instance_monitoring = module.params.get('instance_monitoring')
     assign_public_ip = module.params.get('assign_public_ip')
+    kernel_id = module.params.get('kernel_id')
+    ramdisk_id = module.params.get('ramdisk_id')
+    instance_profile_name = module.params.get('instance_profile_name')
+    ebs_optimized = module.params.get('ebs_optimized')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -166,9 +197,14 @@ def create_launch_config(connection, module):
         user_data=user_data,
         block_device_mappings=[bdm],
         instance_type=instance_type,
+        kernel_id=kernel_id,
         spot_price=spot_price,
         instance_monitoring=instance_monitoring,
-        associate_public_ip_address = assign_public_ip )
+        associate_public_ip_address = assign_public_ip,
+        ramdisk_id=ramdisk_id,
+        instance_profile_name=instance_profile_name,
+        ebs_optimized=ebs_optimized,
+    )
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -205,10 +241,15 @@ def main():
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
             user_data=dict(type='str'),
+            kernel_id=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
+            ramdisk_id=dict(type='str'),
+            instance_profile_name=dict(type='str'),
+            ebs_optimized=dict(default=False, type='bool'),
+            associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
             assign_public_ip=dict(default=False, type='bool')
         )
