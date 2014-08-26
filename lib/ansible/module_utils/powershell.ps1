@@ -85,7 +85,7 @@ Function Exit-Json($obj)
         $obj = New-Object psobject
     }
 
-    echo $obj | ConvertTo-Json
+    echo $obj | ConvertTo-Json -Depth 99
     Exit
 }
 
