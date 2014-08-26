@@ -1,0 +1,117 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Evan Kaufman <evan@digitalflophouse.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import glob
+import os
+
+DOCUMENTATION = """
+---
+module: restore
+author: Evan Kaufman
+short_description: Restores backup copy of a file
+description:
+  - This module will restore an ansible-made backup of a given file
+version_added: "1.7"
+options:
+  path:
+    required: true
+    description:
+      - The file to restore from backup.
+  fail_on_missing:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    description:
+      - Causes failure if target file does not exist
+  backup:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - Create a backup file including the timestamp information so you can
+        get the original file back if you somehow clobbered it incorrectly.
+  which:
+    required: false
+    default: "oldest"
+    choices: [ "oldest", "newest" ]
+    description:
+      - Which backup should be restored, if there are multiple available.
+"""
+
+EXAMPLES = """
+# Restore oldest available backup of apache mod config
+- restore: path=/etc/apache2/mods-available/mpm_prefork.conf backup=no which=oldest
+
+# Same as above, but skips instead of fails if target file doesn't exist
+- restore: path=/etc/apache2/mods-available/mpm_prefork.conf backup=no which=oldest fail_on_missing=no
+
+# Restore newest available backup of service config, whilst backing up current file
+- restore: path=/etc/default/varnish backup=yes which=newest
+"""
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            path=dict(required=True),
+            fail_on_missing=dict(default=True, type='bool'),
+            backup=dict(default=False, type='bool'),
+            which=dict(required=False, default='oldest', choices=[ 'oldest', 'newest'], type='str'),
+        ),
+        add_file_common_args=True,
+        supports_check_mode=True
+    )
+
+    path   = os.path.expanduser(module.params['path'])
+    fom    = module.params['fail_on_missing']
+    backup = module.params['backup']
+    which  = module.params['which']
+
+    if not os.path.exists(path):
+        msg = "Path %s does not exist" % (path)
+        if fom:
+            module.fail_json(msg=msg)
+        else:
+            module.exit_json(changed=False, msg=msg)
+    if not os.access(path, os.R_OK):
+        module.fail_json(msg="Path %s not readable" % (path))
+
+    matched_backups = glob.glob(path + '.[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]@[0-9][0-9]:[0-9][0-9]~')
+
+    if not matched_backups:
+        module.exit_json(changed=False, msg="No backups found for %s" % (path))
+
+    if backup:
+        backup_file = module.backup_local(path)
+
+    matched_backups.sort()
+    index = -1 if which == 'newest' else 0
+
+    if not module.check_mode:
+        try:
+            module.atomic_move(matched_backups[index], path)
+        except IOError:
+            module.fail_json(msg="Failed to restore %s to %s" % (matched_backups[index], path))
+
+    module.exit_json(changed=True, msg="Restored file backup %s" % (matched_backups[index]))
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
