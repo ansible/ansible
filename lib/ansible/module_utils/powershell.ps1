@@ -55,40 +55,6 @@ Function Set-Attr($obj, $name, $value)
     $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
 }
 
-# Helper function to get an "attribute" from a psobject instance in powershell.
-# This is a convenience to make getting Members from an object easier and
-# slightly more pythonic
-# Example: $attr = Get-Attr $response "code" -default "1"
-Function Get-Attr($obj, $name, $default = $null)
-{
-    # Check if the provided Member $name exists in $obj and return it or the
-    # default
-    If ($obj.$name.GetType)
-    {
-        $obj.$name
-    }
-    Else
-    {
-        $default
-    }
-    return
-}
-
-# Helper function to convert a powershell object to JSON to echo it, exiting
-# the script
-# Example: Exit-Json $result
-Function Exit-Json($obj)
-{
-    # If the provided $obj is undefined, define one to be nice
-    If (-not $obj.GetType)
-    {
-        $obj = New-Object psobject
-    }
-
-    echo $obj | ConvertTo-Json
-    Exit
-}
-
 # Helper function to add the "msg" property and "failed" property, convert the
 # powershell object to JSON and echo it, exiting the script
 # Example: Fail-Json $result "This is the failure message"
@@ -112,6 +78,48 @@ Function Fail-Json($obj, $message = $null)
     echo $obj | ConvertTo-Json
     Exit 1
 }
+
+
+# Helper function to get an "attribute" from a psobject instance in powershell.
+# This is a convenience to make getting Members from an object easier and
+# slightly more pythonic
+# Example: $attr = Get-Attr $response "code" -default "1"
+#Note that if you use the failifempty option, you do need to specify resultobject as well.
+Function Get-Attr($obj, $name, $default = $null,$resultobj, $failifempty=$false, $emptyattributefailmessage)
+{
+    # Check if the provided Member $name exists in $obj and return it or the
+    # default
+    If ($obj.$name.GetType)
+    {
+        $obj.$name
+    }
+    Elseif($failifempty -eq $false)
+    {
+        $default
+    }
+    else
+    {
+        if (!$emptyattributefailmessage) {$emptyattributefailmessage = "Missing required argument: $name"}
+        Fail-Json -obj $resultobj -message $emptyattributefailmessage
+    }
+    return
+}
+
+# Helper function to convert a powershell object to JSON to echo it, exiting
+# the script
+# Example: Exit-Json $result
+Function Exit-Json($obj)
+{
+    # If the provided $obj is undefined, define one to be nice
+    If (-not $obj.GetType)
+    {
+        $obj = New-Object psobject
+    }
+
+    echo $obj | ConvertTo-Json
+    Exit
+}
+
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
