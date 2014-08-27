@@ -47,7 +47,7 @@ description:
      - In 1.6 and later, this module can 
        also be used to wait for a file to be available or absent on the 
        filesystem.
-     - In X and later, this module can also be used to wait for active
+     - In 1.8 and later, this module can also be used to wait for active
        connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
 version_added: "0.7"
@@ -90,7 +90,7 @@ options:
     description:
       - Can be used to match a string in either a file or a socket connection. Defaults to a multiline regex.
   exclude_hosts:
-    version_added: "1.x"
+    version_added: "1.8"
     required: false
     description:
       - list of hosts or IPs to ignore when looking for active TCP connections for C(drained) state
@@ -161,7 +161,6 @@ class TCPConnectionInfo(object):
 
     def __init__(self, module):
         self.module = module
-        self.name = module.params['name']
         (self.family, self.ip) = _convert_host_to_ip(self.module.params['host'])
         self.port = int(self.module.params['port'])
         self.exclude_ips = self._get_exclude_ips()
@@ -215,7 +214,6 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
 
     def __init__(self, module):
         self.module = module
-        self.name = module.params['name']
         (self.family, self.ip) = _convert_host_to_hex(module.params['host'])
         self.port = "%0.4X" % int(module.params['port'])
         self.exclude_ips = self._get_exclude_ips()
