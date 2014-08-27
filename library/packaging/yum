@@ -134,7 +134,7 @@ EXAMPLES = '''
   yum: name="@Development tools" state=present
 
 - name: install latest security updates
-  yum: name=* state=latest security_updates=no
+  yum: name=* state=latest security_updates=yes
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
