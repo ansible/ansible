@@ -180,6 +180,27 @@ Jinja2 provides a useful 'default' filter, that is often a better approach to fa
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+
+.. _omitting_undefined_variables:
+
+Omitting Undefined Variables and Parameters
+-------------------------------------------
+
+As of Ansible 1.8, it is possible to use the default filter to omit variables and module parameters using the special
+`omit` variable::
+
+    - name: touch files with an optional mode
+      file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
+      with_items:
+        - path: /tmp/foo
+        - path: /tmp/bar
+        - path: /tmp/baz
+          mode: "0444"
+
+For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
+parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
+
+
 .. _list_filters:
 
 List Filters
