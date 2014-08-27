@@ -988,9 +988,7 @@ class FreeBsdService(Service):
 class OpenBsdService(Service):
     """
     This is the OpenBSD Service manipulation class - it uses /etc/rc.d for
-    service control. Enabling a service is currently not supported because the
-    <service>_flags variable is not boolean, you should supply a rc.conf.local
-    file in some other way.
+    service control. Enabling a service is currently supported if rcctl is present
     """
 
     platform = 'OpenBSD'
@@ -1006,6 +1004,8 @@ class OpenBsdService(Service):
         if not self.svc_cmd:
             self.module.fail_json(msg='unable to find rc.d script')
 
+        self.enable_cmd = self.module.get_bin_path('rcctl')
+
     def get_service_status(self):
         rc, stdout, stderr = self.execute_command("%s %s" % (self.svc_cmd, 'check'))
         if rc == 1:
@@ -1014,7 +1014,27 @@ class OpenBsdService(Service):
             self.running = True
 
     def service_control(self):
-        return self.execute_command("%s %s" % (self.svc_cmd, self.action))
+        return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
+
+    def service_enable(self):
+        if not self.enable_cmd:
+            return super(OpenBsdService, self).service_enable()
+
+        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'status', self.name))
+
+        if self.enable:
+            action = "enable %s flags %s" % (self.name, self.arguments)
+            args = self.arguments
+            if rc == 0:
+                return
+        else:
+            action = "disable %s" % self.name
+            if rc == 1:
+                return
+
+        # XXX check rc ?
+        rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, action))
+        self.changed = True
 
 # ===========================================
 # Subclass: NetBSD
