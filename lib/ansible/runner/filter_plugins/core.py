@@ -218,6 +218,10 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
+def percent(percent, total):
+    '''Returns the given percentage of a given number'''
+    return (total * (float(str(percent).strip('%')) / 100.00))
+
 @environmentfilter
 def rand(environment, end, start=None, step=None):
     r = SystemRandom()
@@ -305,5 +309,8 @@ class FilterModule(object):
 
             # random numbers
             'random': rand,
+
+            # percent
+            'percent': percent,
         }
 

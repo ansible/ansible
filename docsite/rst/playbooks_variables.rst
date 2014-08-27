@@ -277,6 +277,26 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
+.. _percent_filter:
+
+Perecent Filter
+--------------------
+
+.. versionadded:: 1.8
+
+This filter can be used to get the percent value of a given number to 2 decimal points.
+
+To get 13% of 42::
+
+{{ 42 | percent(13) }}
+
+This can be very useful for configuration items that should be a certain percentage of system memory.
+In this case, you probably want to round that number to the highest integer.  To do that, add the int
+and round filters.
+
+{{ ansible_memtotal_mb | percent(25) | round | int }}
+
+
 
 .. _other_useful_filters:
 
