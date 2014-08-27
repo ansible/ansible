@@ -235,9 +235,11 @@ def rand(environment, end, start=None, step=None):
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 class FilterModule(object):
-    ''' Ansible core jinja2 filters '''
+    ''' Ansible core jinja2 filters. Users can implement a class with the same name in order to
+    create filter plugins, providing either the filters or tests method, or both. '''
 
     def filters(self):
+        # Ansible style prefers filters to Jinja2 tests, so we also register core tests as filters.
         return {
             # base 64
             'b64decode': base64.b64decode,
@@ -305,5 +307,30 @@ class FilterModule(object):
 
             # random numbers
             'random': rand,
+        }
+
+    def tests(self):
+        return {
+
+            # failure testing
+            'failed'  : failed,
+            'success' : success,
+
+            # changed testing
+            'changed' : changed,
+
+            # skip testing
+            'skipped' : skipped,
+
+            # value as boolean
+            'bool': bool,
+
+            # regex
+            'match': match,
+            'search': search,
+            'regex': regex,
+
+            # version comparison
+            'version_compare': version_compare,
         }
 
