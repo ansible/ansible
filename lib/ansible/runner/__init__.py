@@ -46,11 +46,16 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
-from ansible.module_utils.splitter import split_args
+from ansible.module_utils.splitter import split_args, unquote
 from ansible.cache import FactCache
 from ansible.utils import update_hash
 
 module_replacer = ModuleReplacer(strip_comments=False)
+
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    from md5 import md5 as _md5
 
 HAS_ATFORK=True
 try:
@@ -202,6 +207,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
@@ -623,6 +629,7 @@ class Runner(object):
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
         inject['playbook_dir'] = os.path.abspath(self.basedir)
+        inject['omit']        = self.omit_token
 
         # template this one is available, callbacks use this
         delegate_to = self.module_vars.get('delegate_to')
@@ -739,14 +746,6 @@ class Runner(object):
             self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
         if self.su_user_var is not None:
             self.su_user = template.template(self.basedir, self.su_user_var, inject)
-
-        # allow module args to work as a dictionary
-        # though it is usually a string
-        new_args = ""
-        if type(module_args) == dict:
-            for (k,v) in module_args.iteritems():
-                new_args = new_args + "%s='%s' " % (k,v)
-            module_args = new_args
 
         # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
@@ -872,6 +871,11 @@ class Runner(object):
         if self._early_needs_tmp_path(module_name, handler):
             tmp = self._make_tmp_path(conn)
 
+        # allow module args to work as a dictionary
+        # though it is usually a string
+        if isinstance(module_args, dict):
+            module_args = utils.serialize_args(module_args)
+
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
@@ -892,6 +896,24 @@ class Runner(object):
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
+        # filter omitted arguments out from complex_args
+        if complex_args:
+            complex_args = dict(filter(lambda x: x[1] != self.omit_token, complex_args.iteritems()))
+
+        # Filter omitted arguments out from module_args.
+        # We do this with split_args instead of parse_kv to ensure
+        # that things are not unquoted/requoted incorrectly
+        args = split_args(module_args)
+        final_args = []
+        for arg in args:
+            if '=' in arg:
+                k,v = arg.split('=', 1)
+                if unquote(v) != self.omit_token:
+                    final_args.append(arg)
+            else:
+                # not a k=v param, append it
+                final_args.append(arg)
+        module_args = ' '.join(final_args)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
