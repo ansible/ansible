@@ -66,24 +66,11 @@ EXAMPLES = '''
       register: rax_dns
 '''
 
-from types import NoneType
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
 
 
 def rax_dns(module, comment, email, name, state, ttl):
@@ -144,7 +131,7 @@ def rax_dns(module, comment, email, name, state, ttl):
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
 
-    module.exit_json(changed=changed, domain=to_dict(domain))
+    module.exit_json(changed=changed, domain=rax_to_dict(domain))
 
 
 def main():

@@ -317,7 +317,7 @@ def handle_create(module, gs, bucket, obj):
         if bucket_check(module, gs, bucket):
             module.exit_json(msg="Bucket already exists.", changed=False)
         else:
-            module.exit_json(msg="Bucket created succesfully", changed=create_bucket(module, gs, bucket))
+            module.exit_json(msg="Bucket created successfully", changed=create_bucket(module, gs, bucket))
     if bucket and obj:
         if bucket_check(module, gs, bucket):
             if obj.endswith('/'):
@@ -362,10 +362,10 @@ def main():
 
     if mode == 'put':
         if not src or not object:
-            module.fail_json(msg="When using PUT, src, bucket, object are mandatory paramters") 
+            module.fail_json(msg="When using PUT, src, bucket, object are mandatory parameters")
     if mode == 'get':
         if not dest or not object:
-            module.fail_json(msg="When using GET, dest, bucket, object are mandatory paramters") 
+            module.fail_json(msg="When using GET, dest, bucket, object are mandatory parameters")
     if obj:
         obj = os.path.expanduser(module.params['object'])
 

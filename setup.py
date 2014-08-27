@@ -38,6 +38,7 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
+         'ansible.cache',
          'ansible.utils',
          'ansible.utils.module_docs_fragments',
          'ansible.inventory',
@@ -52,6 +53,9 @@ setup(name='ansible',
          'ansible.callback_plugins',
          'ansible.module_utils'
       ],
+      package_data={
+         '': ['module_utils/*.ps1'],
+      },
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',

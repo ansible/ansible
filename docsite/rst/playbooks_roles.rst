@@ -70,7 +70,7 @@ If you are running Ansible 1.4 and later, include syntax is streamlined to match
     tasks:
      - { include: wordpress.yml, user: timmy, ssh_keys: [ 'keys/one.txt', 'keys/two.txt' ] }
 
-Using either syntax, variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`playbooks_variables`.
+Using either syntax, variables passed in can then be used in the included files.  We'll cover them in :doc:`playbooks_variables`.
 You can reference them like this::
 
    {{ user }}
@@ -299,6 +299,13 @@ Role dependencies can also be specified as a full path, just like top level role
     dependencies:
        - { role: '/path/to/common/roles/foo', x: 1 }
 
+Role dependencies can also be installed from source control repos or tar files, using a comma separated format of path, an optional version (tag, commit, branch etc) and optional friendly role name (an attempt is made to derive a role name from the repo name or archive filename)::
+
+    ---
+    dependencies:
+      - { role: 'git+http://git.example.com/repos/role-foo,v1.1,foo' }
+      - { role: '/path/to/tar/file.tgz,,friendly-name' }
+
 Roles dependencies are always executed before the role that includes them, and are recursive. By default, 
 roles can also only be added as a dependency once - if another role also lists it as a dependency it will
 not be run again. This behavior can be overridden by adding `allow_duplicates: yes` to the `meta/main.yml` file.
@@ -379,6 +386,8 @@ Read the "About" page on the Galaxy site for more information.
 
 .. seealso::
 
+   :doc:`galaxy`
+       How to share roles on galaxy, role management
    :doc:`YAMLSyntax`
        Learn about YAML syntax
    :doc:`playbooks`

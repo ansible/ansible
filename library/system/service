@@ -105,6 +105,8 @@ import select
 import time
 import string
 
+from distutils.version import LooseVersion
+
 class Service(object):
     """
     This is the generic Service manipulation class that is subclassed
@@ -449,6 +451,26 @@ class LinuxService(Service):
         elif check_systemd(self.name):
             # service is managed by systemd
             self.enable_cmd = location['systemctl']
+        elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
+            # service is managed by upstart
+            self.enable_cmd = location['initctl']
+
+        # if this service is managed via upstart, get the current upstart version
+        if self.enable_cmd == location['initctl']:
+            # default the upstart version to something we can compare against
+            self.upstart_version = LooseVersion('0.0.0')
+            try:
+                # set the upstart version based on the output of 'initctl version'
+                version_re = re.compile(r'\(upstart (.*)\)')
+                rc,stdout,stderr = self.module.run_command('initctl version')
+                if rc == 0:
+                    res = version_re.search(stdout)
+                    if res:
+                        self.upstart_version = LooseVersion(res.groups()[0])
+            except:
+                # we'll use the default of 0.0.0 since we couldn't
+                # detect the current upstart version above
+                pass
 
         # Locate a tool for runtime service management (start, stop etc.)
         if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
@@ -531,7 +553,7 @@ class LinuxService(Service):
 
         # if the job status is still not known check it by status output keywords
         if self.running is None:
-            # first tranform the status output that could irritate keyword matching
+            # first transform the status output that could irritate keyword matching
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
                 self.running = False
@@ -576,7 +598,12 @@ class LinuxService(Service):
                 override_file.close()
 
             initpath = '/etc/init'
-            manreg = re.compile('^manual\s*$', re.M | re.I)
+            if self.upstart_version >= LooseVersion('0.6.7'):
+                manreg = re.compile('^manual\s*$', re.M | re.I)
+                config_line = 'manual\n'
+            else:
+                manreg = re.compile('^start on manual\s*$', re.M | re.I)
+                config_line = 'start on manual\n'
             conf_file_name = "%s/%s.conf" % (initpath, self.name)
             override_file_name = "%s/%s.override" % (initpath, self.name)
 
@@ -591,12 +618,12 @@ class LinuxService(Service):
                     write_to_override_file(override_file_name, manreg.sub('', override_file_contents))
                 # Add manual stanza if not present and service disabled
                 elif not (self.enable) and not (manreg.search(override_file_contents)):
-                    write_to_override_file(override_file_name, override_file_contents + '\nmanual\n')
+                    write_to_override_file(override_file_name, override_file_contents + '\n' + config_line)
                 else:
                     return
             # Add file with manual stanza if service disabled
             elif not (self.enable):
-                write_to_override_file(override_file_name, 'manual\n')
+                write_to_override_file(override_file_name, config_line)
             else:
                 return
 

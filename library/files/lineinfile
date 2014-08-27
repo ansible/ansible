@@ -363,14 +363,22 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
+        line = params['line']
+
+        # The safe_eval call will remove some quoting, but not others,
+        # so we need to know if we should specifically unquote it.
+        should_unquote = not is_quoted(line)
+
         # Replace escape sequences like '\n' while being sure 
         # not to replace octal escape sequences (\ooo) since they
-        # match the backref syntax
+        # match the backref syntax.
         if backrefs:
-            line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', params['line'])
-        else:
-            line = params['line']
+            line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', line)
         line = module.safe_eval(pipes.quote(line))
+
+        # Now remove quotes around the string, if needed
+        if should_unquote:
+            line = unquote(line)
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
@@ -382,5 +390,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.splitter import *
 
 main()

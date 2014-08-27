@@ -484,21 +484,20 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.boolean(0), False)
         self.assertEqual(ansible.utils.boolean("foo"), False)
 
-    #def test_make_sudo_cmd(self):
-    #    cmd = ansible.utils.make_sudo_cmd('root', '/bin/sh', '/bin/ls')
-    #    self.assertTrue(isinstance(cmd, tuple))
-    #    self.assertEqual(len(cmd), 3)
-    #    self.assertTrue('-u root' in cmd[0])
-    #    self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
-    #    self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
-    #    self.assertTrue('sudo -k' in cmd[0])
+    def test_make_sudo_cmd(self):
+        cmd = ansible.utils.make_sudo_cmd('root', '/bin/sh', '/bin/ls')
+        self.assertTrue(isinstance(cmd, tuple))
+        self.assertEqual(len(cmd), 3)
+        self.assertTrue('-u root' in cmd[0])
+        self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
+        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('sudo -k' in cmd[0])
 
     def test_make_su_cmd(self):
         cmd = ansible.utils.make_su_cmd('root', '/bin/sh', '/bin/ls')
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('root -c "/bin/sh' in cmd[0] or ' root -c /bin/sh' in cmd[0])
-        self.assertTrue(re.compile(cmd[1]))
         self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
 
     def test_to_unicode(self):
@@ -697,17 +696,21 @@ class TestUtils(unittest.TestCase):
         )
 
         # invalid quote detection
-        with self.assertRaises(Exception):
-            split_args('hey I started a quote"')
-        with self.assertRaises(Exception):
-            split_args('hey I started a\' quote')
+        try:
+            with self.assertRaises(Exception):
+                split_args('hey I started a quote"')
+            with self.assertRaises(Exception):
+                split_args('hey I started a\' quote')
+        except TypeError:
+            # you must be on Python 2.6 still, FIXME
+            pass
 
         # jinja2 loop blocks with lots of complexity
         _test_combo(
             # in memory of neighbors cat
-            # we only preserve newlines inside of quotes
-            'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip"\ndone',
-            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done']
+            # we preserve line breaks unless a line continuation character preceeds them
+            'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip" \\\ndone\nand done',
+            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done', '\nand', 'done']
         )
 
         # test space preservation within quotes
@@ -730,6 +733,10 @@ class TestUtils(unittest.TestCase):
             'this string has a {#variable#}'
         )
         self.assertEqual(
+            ansible.utils._clean_data('this string {{has}} two {{variables}} in it', from_remote=True),
+            'this string {#has#} two {#variables#} in it'
+        )
+        self.assertEqual(
             ansible.utils._clean_data('this string has a {{variable with a\nnewline}}', from_remote=True),
             'this string has a {#variable with a\nnewline#}'
         )
@@ -750,4 +757,93 @@ class TestUtils(unittest.TestCase):
             'this string contains unicode: ¢ £ ¤ ¥'
         )
 
+
+    def test_censor_unlogged_data(self):
+        ''' used by the no_log attribute '''
+        input = dict(
+             password='sekrit',
+             rc=12,
+             failed=True,
+             changed=False,
+             skipped=True,
+             msg='moo',
+        )
+        data = ansible.utils.censor_unlogged_data(input)
+        assert 'password' not in data
+        assert 'rc' in data
+        assert 'failed' in data
+        assert 'changed' in data
+        assert 'skipped' in data
+        assert 'msg' not in data
+        assert data['censored'] == 'results hidden due to no_log parameter'
+
+    def test_repo_url_to_role_name(self):
+        tests = [("http://git.example.com/repos/repo.git", "repo"),
+                 ("ssh://git@git.example.com:repos/role-name", "role-name"),
+                 ("ssh://git@git.example.com:repos/role-name,v0.1", "role-name"),
+                 ("directory/role/is/installed/in", "directory/role/is/installed/in")]
+        for (url, result) in tests:
+            self.assertEqual(ansible.utils.repo_url_to_role_name(url), result)
+
+    def test_role_spec_parse(self):
+        tests = [
+            (
+                "git+http://git.example.com/repos/repo.git,v1.0", 
+                {
+                    'scm': 'git', 
+                    'src': 'http://git.example.com/repos/repo.git', 
+                    'version': 'v1.0', 
+                    'name': 'repo'
+                }
+            ),
+            (
+                "http://repo.example.com/download/tarfile.tar.gz", 
+                {
+                    'scm': None, 
+                    'src': 'http://repo.example.com/download/tarfile.tar.gz', 
+                    'version': '', 
+                    'name': 'tarfile'
+                }
+            ),
+            (
+                "http://repo.example.com/download/tarfile.tar.gz,,nicename", 
+                {
+                    'scm': None, 
+                    'src': 'http://repo.example.com/download/tarfile.tar.gz', 
+                    'version': '', 
+                    'name': 'nicename'
+                }
+            ),
+            (
+                "git+http://git.example.com/repos/repo.git,v1.0,awesome", 
+                {
+                    'scm': 'git', 
+                    'src': 'http://git.example.com/repos/repo.git', 
+                    'version': 'v1.0', 
+                    'name': 'awesome'
+                }
+            ),
+            (
+                # test that http://github URLs are assumed git+http:// unless they end in .tar.gz
+                "http://github.com/ansible/fakerole/fake",
+                {
+                    'scm' : 'git',
+                    'src' : 'http://github.com/ansible/fakerole/fake',
+                    'version' : 'master', 
+                    'name' : 'fake'
+                }
+            ),
+            (
+                # test that http://github URLs are assumed git+http:// unless they end in .tar.gz
+                "http://github.com/ansible/fakerole/fake/archive/master.tar.gz",
+                {
+                    'scm' : None,
+                    'src' : 'http://github.com/ansible/fakerole/fake/archive/master.tar.gz',
+                    'version' : '', 
+                    'name' : 'master'
+                }
+            )
+            ]
+        for (spec, result) in tests:
+            self.assertEqual(ansible.utils.role_spec_parse(spec), result)
 

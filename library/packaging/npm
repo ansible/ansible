@@ -163,6 +163,8 @@ class Npm(object):
                     missing.append(dep)
                 else:
                     installed.append(dep)
+            if self.name and self.name not in installed:
+                missing.append(self.name)
         #Named dependency not installed
         else:
             missing.append(self.name)

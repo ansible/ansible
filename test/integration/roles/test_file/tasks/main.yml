@@ -164,7 +164,7 @@
     that:
       - "file11_result.uid == 1235"
 
-- name: fail to create soft link to non existant file
+- name: fail to create soft link to non existent file
   file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=no
   register: file12_result
   ignore_errors: true
@@ -174,7 +174,7 @@
     that:
       - "file12_result.failed == true"
 
-- name: force creation soft link to non existant
+- name: force creation soft link to non existent
   file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=yes
   register: file13_result
 
@@ -228,3 +228,157 @@
     that:
       - 'file17_result.failed == true'
       - 'file17_result.state == "directory"'
+
+- name: test file creation with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0777'
+
+- name: modify symbolic mode for all
+  file: dest={{output_dir}}/test_symbolic state=touch mode=a=r
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: modify symbolic mode for owner
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u+w
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0644'
+
+- name: modify symbolic mode for group
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g+w
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0664'
+
+- name: modify symbolic mode for world
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o+w
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0666'
+
+- name: modify symbolic mode for owner
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u+x
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0766'
+
+- name: modify symbolic mode for group
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g+x
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0776'
+
+- name: modify symbolic mode for world
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o+x
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0777'
+
+- name: remove symbolic mode for world
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o-wx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0774'
+
+- name: remove symbolic mode for group
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g-wx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0744'
+
+- name: remove symbolic mode for owner
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u-wx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: set sticky bit with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o+t
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '01444'
+
+- name: remove sticky bit with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o-t
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: add setgid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g+s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '02444'
+
+- name: remove setgid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g-s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: add setuid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u+s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '04444'
+
+- name: remove setuid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u-s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+

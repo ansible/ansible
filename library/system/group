@@ -145,7 +145,7 @@ class Group(object):
 
 class SunOS(Group):
     """
-    This is a SunOS Group manipulation class. Solaris doesnt have
+    This is a SunOS Group manipulation class. Solaris doesn't have
     the 'system' group concept.
 
     This overrides the following methods from the generic class:-

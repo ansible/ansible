@@ -190,7 +190,7 @@ def allocate_address(ec2, domain, module, reuse_existing_ip_allowed):
         domain_filter = { 'domain' : 'standard' }
       all_addresses = ec2.get_all_addresses(filters=domain_filter)
 
-      unassociated_addresses = filter(lambda a: a.instance_id is None, all_addresses)
+      unassociated_addresses = filter(lambda a: a.instance_id == "", all_addresses)
       if unassociated_addresses:
         address = unassociated_addresses[0];
       else:

@@ -22,6 +22,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
+import ansible.cache
 import os
 import shlex
 import collections
@@ -32,8 +33,9 @@ import pipes
 # the setup cache stores all variables about a host
 # gathered during the setup step, while the vars cache
 # holds all other variables about a host
-SETUP_CACHE = collections.defaultdict(dict)
+SETUP_CACHE = ansible.cache.FactCache()
 VARS_CACHE  = collections.defaultdict(dict)
+
 
 class PlayBook(object):
     '''
@@ -84,7 +86,7 @@ class PlayBook(object):
         playbook:         path to a playbook file
         host_list:        path to a file like /etc/ansible/hosts
         module_path:      path to ansible modules, like /usr/share/ansible/
-        forks:            desired level of paralellism
+        forks:            desired level of parallelism
         timeout:          connection timeout
         remote_user:      run as this user if not specified in a particular play
         remote_pass:      use this remote password (for all plays) vs using SSH keys
@@ -93,12 +95,12 @@ class PlayBook(object):
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
-        stats:            holds aggregrate data about events occuring to each host
+        stats:            holds aggregrate data about events occurring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
         check:            don't change anything, just try to detect some potential changes
         any_errors_fatal: terminate the entire execution immediately when one of the hosts has failed
-        force_handlers:   continue to notify and run handlers even if a task fails 
+        force_handlers:   continue to notify and run handlers even if a task fails
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -169,7 +171,7 @@ class PlayBook(object):
         self.inventory.set_playbook_basedir(self.basedir)
 
         vars = extra_vars.copy()
-        vars['playbook_dir'] = self.basedir
+        vars['playbook_dir'] = os.path.abspath(self.basedir)
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
 
@@ -181,11 +183,13 @@ class PlayBook(object):
         ansible.callbacks.load_callback_plugins()
         ansible.callbacks.set_playbook(self.callbacks, self)
 
+        self._ansible_version = utils.version_info(gitinfo=True)
+
     # *****************************************************
 
     def _get_playbook_vars(self, play_ds, existing_vars):
         '''
-        Gets the vars specified with the play and blends them 
+        Gets the vars specified with the play and blends them
         with any existing vars that have already been read in
         '''
         new_vars = existing_vars.copy()
@@ -222,12 +226,34 @@ class PlayBook(object):
 
     # *****************************************************
 
+    def _extend_play_vars(self, play, vars={}):
+        '''
+        Extends the given play's variables with the additional specified vars.
+        '''
+
+        if 'vars' not in play or not play['vars']:
+            # someone left out or put an empty "vars:" entry in their playbook
+            return vars.copy()
+
+        play_vars = None
+        if isinstance(play['vars'], dict):
+            play_vars = play['vars'].copy()
+            play_vars.update(vars)
+        elif isinstance(play['vars'], list):
+            # nobody should really do this, but handle vars: a=1 b=2
+            play_vars = play['vars'][:]
+            play_vars.extend([{k:v} for k,v in vars.iteritems()])
+
+        return play_vars
+
+    # *****************************************************
+
     def _load_playbook_from_file(self, path, vars={}, vars_files=[]):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path, vault_password=self.vault_password)
+        playbook_data = utils.parse_yaml_from_file(path, vault_password=self.vault_password)
         accumulated_plays = []
         play_basedirs = []
 
@@ -238,7 +264,7 @@ class PlayBook(object):
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
-                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
+                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), received: %s" % play)
 
             if 'include' in play:
                 # a playbook (list of plays) decided to include some other list of plays
@@ -254,17 +280,7 @@ class PlayBook(object):
                 for p in plays:
                     # support for parameterized play includes works by passing
                     # those variables along to the subservient play
-                    if 'vars' not in p:
-                        p['vars'] = {}
-                    if isinstance(p['vars'], dict):
-                        p['vars'].update(play_vars)
-                    elif isinstance(p['vars'], list):
-                        # nobody should really do this, but handle vars: a=1 b=2
-                        p['vars'].extend([{k:v} for k,v in play_vars.iteritems()])
-                    elif p['vars'] == None:
-                        # someone specified an empty 'vars:', so reset
-                        # it to the vars we currently have
-                        p['vars'] = play_vars.copy()
+                    p['vars'] = self._extend_play_vars(p, play_vars)
                     # now add in the vars_files
                     p['vars_files'] = utils.list_union(p.get('vars_files', []), play_vars_files)
 
@@ -380,6 +396,7 @@ class PlayBook(object):
             remote_port=task.play.remote_port,
             module_vars=task.module_vars,
             default_vars=task.default_vars,
+            extra_vars=self.extra_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
             vars_cache=self.VARS_CACHE,
@@ -409,6 +426,7 @@ class PlayBook(object):
         )
 
         runner.module_vars.update({'play_hosts': hosts})
+        runner.module_vars.update({'ansible_version': self._ansible_version})
 
         if task.async_seconds == 0:
             results = runner.run()
@@ -453,7 +471,7 @@ class PlayBook(object):
 
         # template ignore_errors
         cond = template(play.basedir, task.ignore_errors, task.module_vars, expand_lists=False)
-        task.ignore_errors =  utils.check_conditional(cond , play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
+        task.ignore_errors =  utils.check_conditional(cond, play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
 
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
@@ -467,6 +485,13 @@ class PlayBook(object):
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
+        def _register_play_vars(host, result):
+            # when 'register' is used, persist the result in the vars cache
+            # rather than the setup cache - vars should be transient between playbook executions
+            if 'stdout' in result and 'stdout_lines' not in result:
+                result['stdout_lines'] = result['stdout'].splitlines()
+            utils.update_hash(self.VARS_CACHE, host, {task.register: result})
+
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
             if 'results' in result:
@@ -475,22 +500,19 @@ class PlayBook(object):
                 for res in result['results']:
                     if type(res) == dict:
                         facts = res.get('ansible_facts', {})
-                        self.SETUP_CACHE[host].update(facts)
+                        utils.update_hash(self.SETUP_CACHE, host, facts)
             else:
+                # when facts are returned, persist them in the setup cache
                 facts = result.get('ansible_facts', {})
-                self.SETUP_CACHE[host].update(facts)
+                utils.update_hash(self.SETUP_CACHE, host, facts)
             if task.register:
-                if 'stdout' in result and 'stdout_lines' not in result:
-                    result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                _register_play_vars(host, result)
 
         # also have to register some failed, but ignored, tasks
         if task.ignore_errors and task.register:
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
-                if 'stdout' in result and 'stdout_lines' not in result:
-                    result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                _register_play_vars(host, result)
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
@@ -582,8 +604,8 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            self.SETUP_CACHE[host].update({'module_setup': True})
-            self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
+            utils.update_hash(self.SETUP_CACHE, host, {'module_setup': True})
+            utils.update_hash(self.SETUP_CACHE, host, result.get('ansible_facts', {}))
         return setup_results
 
     # *****************************************************
@@ -591,7 +613,7 @@ class PlayBook(object):
 
     def generate_retry_inventory(self, replay_hosts):
         '''
-        called by /usr/bin/ansible when a playbook run fails. It generates a inventory
+        called by /usr/bin/ansible when a playbook run fails. It generates an inventory
         that allows re-running on ONLY the failed hosts.  This may duplicate some
         variable information in group_vars/host_vars but that is ok, and expected.
         '''
@@ -617,7 +639,7 @@ class PlayBook(object):
 
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
-        
+
         self.callbacks.on_play_start(play.name)
         # Get the hosts for this play
         play._play_hosts = self.inventory.list_hosts(play.hosts)
@@ -634,16 +656,29 @@ class PlayBook(object):
         play.update_vars_files(all_hosts, vault_password=self.vault_password)
         hosts_count = len(all_hosts)
 
+        if play.serial.endswith("%"):
+
+            # This is a percentage, so calculate it based on the
+            # number of hosts
+            serial_pct = int(play.serial.replace("%",""))
+            serial = int((serial_pct/100.0) * len(all_hosts))
+
+            # Ensure that no matter how small the percentage, serial
+            # can never fall below 1, so that things actually happen
+            serial = max(serial, 1)
+        else:
+            serial = int(play.serial)
+
         serialized_batch = []
-        if play.serial <= 0:
+        if serial <= 0:
             serialized_batch = [all_hosts]
         else:
             # do N forks all the way through before moving to next
             while len(all_hosts) > 0:
                 play_hosts = []
-                for x in range(play.serial):
+                for x in range(serial):
                     if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop())
+                        play_hosts.append(all_hosts.pop(0))
                 serialized_batch.append(play_hosts)
 
         task_errors = False
@@ -694,7 +729,7 @@ class PlayBook(object):
                 if task.any_errors_fatal and len(host_list) < hosts_count:
                     play.max_fail_pct = 0
 
-                # If threshold for max nodes failed is exceeded , bail out.
+                # If threshold for max nodes failed is exceeded, bail out.
                 if play.serial > 0:
                     # if serial is set, we need to shorten the size of host_count
                     play_count = len(play._play_hosts)

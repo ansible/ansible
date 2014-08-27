@@ -14,8 +14,8 @@ We'll work things in priority order, so just wanted you to be aware of the queue
 We will definitely see your comments on this issue when reading this ticket, but may not be able to reply promptly.  You may also wish to join one of our two mailing lists
 which is very active:
 
-   * https://groups.google.com/forum/#!forum/ansible-devel - for user questions, tips, and tricks
-   * https://groups.google.com/forum/#!forum/ansible-project - for strategy, future planning, and questions about writing code
+   * https://groups.google.com/forum/#!forum/ansible-project - for user questions, tips, and tricks
+   * https://groups.google.com/forum/#!forum/ansible-devel - for strategy, future planning, and questions about writing code
 
 Thank you once again for this and your interest in Ansible!
 

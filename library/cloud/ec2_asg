@@ -125,9 +125,10 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-ASG_ATTRIBUTES = ('launch_config_name', 'max_size', 'min_size', 'desired_capacity',
-                     'vpc_zone_identifier', 'availability_zones',
-                     'health_check_period', 'health_check_type')
+ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
+    'health_check_period', 'health_check_type', 'launch_config_name',
+    'load_balancers', 'max_size', 'min_size', 'name', 'placement_group',
+    'tags', 'termination_policies', 'vpc_zone_identifier')
 
 def enforce_required_arguments(module):
     ''' As many arguments are not required for autoscale group deletion
@@ -283,15 +284,17 @@ def delete_autoscaling_group(connection, module):
     groups = connection.get_all_groups(names=[group_name])
     if groups:
         group = groups[0]
-        group.shutdown_instances()
-
+        group.max_size = 0
+        group.min_size = 0
+        group.desired_capacity = 0
+        group.update()
         instances = True
         while instances:
-            groups = connection.get_all_groups()
-            for group in groups:
-                if group.name == group_name:
-                    if not group.instances:
-                        instances = False
+            tmp_groups = connection.get_all_groups(names=[group_name])
+            if tmp_groups:
+                tmp_group = tmp_groups[0]
+                if not tmp_group.instances:
+                   instances = False
             time.sleep(10)
 
         group.delete()

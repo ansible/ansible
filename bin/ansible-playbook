@@ -25,6 +25,14 @@ import sys
 import os
 import stat
 
+# Augment PYTHONPATH to find Python modules relative to this file path
+# This is so that we can find the modules when running from a local checkout
+# installed as editable with `pip install -e ...` or `python setup.py develop`
+local_module_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'lib')
+)
+sys.path.append(local_module_path)
+
 import ansible.playbook
 import ansible.constants as C
 import ansible.utils.template
@@ -83,6 +91,8 @@ def main(args):
         help="start the playbook at the task matching this name")
     parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
         help="run handlers even if a task fails")
+    parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
+        help="clear the fact cache")
 
     options, args = parser.parse_args(args)
 
@@ -191,6 +201,10 @@ def main(args):
             force_handlers=options.force_handlers
         )
 
+        if options.flush_cache:
+            display(callbacks.banner("FLUSHING FACT CACHE"))
+            pb.SETUP_CACHE.flush()
+
         if options.listhosts or options.listtasks or options.syntax:
             print ''
             print 'playbook: %s' % playbook
@@ -233,7 +247,8 @@ def main(args):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
-                print ''
+                if options.listhosts or options.listtasks:
+                    print ''
             continue
 
         if options.syntax:
@@ -313,4 +328,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt, ke:
         display("ERROR: interrupted", color='red', stderr=True)
         sys.exit(1)
-

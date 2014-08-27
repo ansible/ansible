@@ -86,7 +86,7 @@ class Inventory(object):
                 else:
                     if ":" in x:
                         tokens = x.rsplit(":", 1)
-                        # if there is ':' in the address, then this is a ipv6
+                        # if there is ':' in the address, then this is an ipv6
                         if ':' in tokens[0]:
                             all.add_host(Host(x))
                         else:
@@ -142,27 +142,34 @@ class Inventory(object):
 
         # get group vars from group_vars/ files and vars plugins
         for group in self.groups:
-            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, self._vault_password))
+            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, vault_password=self._vault_password))
 
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
-            host.vars = utils.combine_vars(host.vars, self.get_variables(host.name, self._vault_password))
+            host.vars = utils.combine_vars(host.vars, self.get_host_variables(host.name, vault_password=self._vault_password))
 
 
     def _match(self, str, pattern_str):
-        if pattern_str.startswith('~'):
-            return re.search(pattern_str[1:], str)
-        else:
-            return fnmatch.fnmatch(str, pattern_str)
+        try:
+            if pattern_str.startswith('~'):
+                return re.search(pattern_str[1:], str)
+            else:
+                return fnmatch.fnmatch(str, pattern_str)
+        except Exception, e:
+            raise errors.AnsibleError('invalid host pattern: %s' % pattern_str)
 
     def _match_list(self, items, item_attr, pattern_str):
         results = []
-        if not pattern_str.startswith('~'):
-            pattern = re.compile(fnmatch.translate(pattern_str))
-        else:
-            pattern = re.compile(pattern_str[1:])
+        try:
+            if not pattern_str.startswith('~'):
+                pattern = re.compile(fnmatch.translate(pattern_str))
+            else:
+                pattern = re.compile(pattern_str[1:])
+        except Exception, e:
+            raise errors.AnsibleError('invalid host pattern: %s' % pattern_str)
+
         for item in items:
-            if pattern.search(getattr(item, item_attr)):
+            if pattern.match(getattr(item, item_attr)):
                 results.append(item)
         return results
 
@@ -237,7 +244,7 @@ class Inventory(object):
 
     def __get_hosts(self, pattern):
         """ 
-        finds hosts that postively match a particular pattern.  Does not
+        finds hosts that positively match a particular pattern.  Does not
         take into account negative matches.
         """
 
@@ -317,6 +324,7 @@ class Inventory(object):
         if ungrouped is None:
             self.add_group(Group('ungrouped'))
             ungrouped = self.get_group('ungrouped')
+            self.get_group('all').add_child_group(ungrouped)
         ungrouped.add_host(new_host)
         return new_host
 
@@ -422,20 +430,22 @@ class Inventory(object):
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
 
-        # get group variables set by Inventory Parsers
-        vars = utils.combine_vars(vars, group.get_variables())
-
         # Read group_vars/ files
         vars = utils.combine_vars(vars, self.get_group_vars(group))
 
         return vars
 
     def get_variables(self, hostname, update_cached=False, vault_password=None):
+
+        return self.get_host(hostname).get_variables()
+
+    def get_host_variables(self, hostname, update_cached=False, vault_password=None):
+
         if hostname not in self._vars_per_host or update_cached:
-            self._vars_per_host[hostname] = self._get_variables(hostname, vault_password=vault_password)
+            self._vars_per_host[hostname] = self._get_host_variables(hostname, vault_password=vault_password)
         return self._vars_per_host[hostname]
 
-    def _get_variables(self, hostname, vault_password=None):
+    def _get_host_variables(self, hostname, vault_password=None):
 
         host = self.get_host(hostname)
         if host is None:
@@ -454,9 +464,6 @@ class Inventory(object):
         for updated in vars_results:
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
-
-        # get host variables set by Inventory Parsers
-        vars = utils.combine_vars(vars, host.get_variables())
 
         # still need to check InventoryParser per host vars
         # which actually means InventoryScript per host,

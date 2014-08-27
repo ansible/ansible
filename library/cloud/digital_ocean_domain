@@ -30,10 +30,10 @@ options:
     choices: ['present', 'active', 'absent', 'deleted']
   client_id:
      description:
-     - Digital Ocean manager id.
+     - DigitalOcean manager id.
   api_key:
     description:
-     - Digital Ocean api key.
+     - DigitalOcean api key.
   id:
     description:
      - Numeric, the droplet id you want to operate on.

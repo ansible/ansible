@@ -3,7 +3,7 @@ include examples/hosts
 include examples/ansible.cfg
 graft examples/playbooks
 include packaging/distutils/setup.py
-include lib/ansible/module_common/*.ps1
+include lib/ansible/module_utils/powershell.ps1
 recursive-include docs *
 recursive-include library *
 include Makefile

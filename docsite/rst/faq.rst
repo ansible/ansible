@@ -250,6 +250,22 @@ If you would like to keep secret data in your Ansible content and still share it
 
 .. _i_dont_see_my_question:
 
+In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+
+    - name: secret task
+      shell: /usr/bin/do_something --value={{ secret_value }}
+      no_log: True
+
+This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
+
+The no_log attribute can also apply to an entire play::
+
+    - hosts: all
+      no_log: True
+
+Though this will make the play somewhat difficult to debug.  It's recommended that this
+be applied to single tasks only, once a playbook is completed.   
+
 I don't see my question here
 ++++++++++++++++++++++++++++
 
@@ -263,7 +279,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

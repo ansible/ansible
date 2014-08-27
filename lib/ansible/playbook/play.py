@@ -29,6 +29,7 @@ import os
 import sys
 import uuid
 
+
 class Play(object):
 
     __slots__ = [
@@ -36,7 +37,8 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user',
+       'vault_password', 'no_log',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -46,7 +48,7 @@ class Play(object):
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user', 'vault_password'
+       'su', 'su_user', 'vault_password', 'no_log',
     ]
 
     # *************************************************
@@ -75,20 +77,27 @@ class Play(object):
         elif type(self.tags) != list:
             self.tags = []
 
+        # make sure we have some special internal variables set
+        self.vars['playbook_dir'] = os.path.abspath(self.basedir)
+        if self.playbook.inventory.basedir() is not None:
+            self.vars['inventory_dir'] = self.playbook.inventory.basedir()
+        if self.playbook.inventory.src() is not None:
+            self.vars['inventory_file'] = self.playbook.inventory.src()
+
         # We first load the vars files from the datastructure
         # so we have the default variables to pass into the roles
         self.vars_files = ds.get('vars_files', [])
         if not isinstance(self.vars_files, list):
             raise errors.AnsibleError('vars_files must be a list')
-        self._update_vars_files_for_host(None)
+        processed_vars_files = self._update_vars_files_for_host(None)
 
         # now we load the roles into the datastructure
         self.included_roles = []
         ds = self._load_roles(self.roles, ds)
-        
-        # and finally re-process the vars files as they may have
-        # been updated by the included roles
-        self.vars_files = ds.get('vars_files', [])
+
+        # and finally re-process the vars files as they may have been updated
+        # by the included roles, but exclude any which have been processed
+        self.vars_files = utils.list_difference(ds.get('vars_files', []), processed_vars_files)
         if not isinstance(self.vars_files, list):
             raise errors.AnsibleError('vars_files must be a list')
 
@@ -113,7 +122,7 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        self.serial           = int(ds.get('serial', 0))
+        self.serial           = str(ds.get('serial', 0))
         self.hosts            = hosts
         self.name             = ds.get('name', self.hosts)
         self._tasks           = ds.get('tasks', [])
@@ -131,6 +140,7 @@ class Play(object):
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
+        self.no_log           = utils.boolean(ds.get('no_log', 'false'))
 
         # gather_facts is not a simple boolean, as None means  that a 'smart'
         # fact gathering mode will be used, so we need to be careful here as
@@ -146,9 +156,6 @@ class Play(object):
 
         load_vars = {}
         load_vars['role_names'] = ds.get('role_names',[])
-        load_vars['playbook_dir'] = self.basedir
-        if self.playbook.inventory.basedir() is not None:
-            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
 
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
@@ -167,7 +174,7 @@ class Play(object):
     def _get_role_path(self, role):
         """
         Returns the path on disk to the directory containing
-        the role directories like tasks, templates, etc. Also 
+        the role directories like tasks, templates, etc. Also
         returns any variables that were included with the role
         """
         orig_path = template(self.basedir,role,self.vars)
@@ -179,20 +186,21 @@ class Play(object):
             if role_name is None:
                 raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
             role_vars = orig_path
-            orig_path = role_name
+        else:
+            role_name = utils.role_spec_parse(orig_path)["name"]
 
         role_path = None
 
         possible_paths = [
-            utils.path_dwim(self.basedir, os.path.join('roles', orig_path)),
-            utils.path_dwim(self.basedir, orig_path)
+            utils.path_dwim(self.basedir, os.path.join('roles', role_name)),
+            utils.path_dwim(self.basedir, role_name)
         ]
 
         if C.DEFAULT_ROLES_PATH:
             search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
             for loc in search_locations:
                 loc = os.path.expanduser(loc)
-                possible_paths.append(utils.path_dwim(loc, orig_path))
+                possible_paths.append(utils.path_dwim(loc, role_name))
 
         for path_option in possible_paths:
             if os.path.isdir(path_option):
@@ -242,7 +250,7 @@ class Play(object):
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
                         # if any tags were specified as role/dep variables, merge
-                        # them into the current dep_vars so they're passed on to any 
+                        # them into the current dep_vars so they're passed on to any
                         # further dependencies too, and so we only have one place
                         # (dep_vars) to look for tags going forward
                         def __merge_tags(var_obj):
@@ -318,7 +326,7 @@ class Play(object):
                         dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
 
             # only add the current role when we're at the top level,
-            # otherwise we'll end up in a recursive loop 
+            # otherwise we'll end up in a recursive loop
             if level == 0:
                 self.included_roles.append(role)
                 dep_stack.append([role,role_path,role_vars,defaults_data])
@@ -366,10 +374,12 @@ class Play(object):
 
         roles = self._build_role_dependencies(roles, [], self.vars)
 
-        # give each role a uuid
+        # give each role an uuid and
+        # make role_path available as variable to the task
         for idx, val in enumerate(roles):
             this_uuid = str(uuid.uuid4())
             roles[idx][-2]['role_uuid'] = this_uuid
+            roles[idx][-2]['role_path'] = roles[idx][1]
 
         role_names = []
 
@@ -396,13 +406,13 @@ class Play(object):
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             missing = lambda f: not os.path.isfile(f)
-            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(library):
+            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and not os.path.isdir(library):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, library))
 
             if isinstance(role, dict):
                 role_name = role['role']
             else:
-                role_name = role
+                role_name = utils.role_spec_parse(role)["name"]
 
             role_names.append(role_name)
             if os.path.isfile(task):
@@ -505,7 +515,7 @@ class Play(object):
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s, error in %s" % (x, original_file))
 
-            # evaluate sudo vars for current and child tasks 
+            # evaluate sudo vars for current and child tasks
             included_sudo_vars = {}
             for k in ["sudo", "sudo_user"]:
                 if k in x:
@@ -538,11 +548,10 @@ class Play(object):
                     elif k.startswith("when_"):
                         utils.deprecated("\"when_<criteria>:\" is a removed deprecated feature, use the simplified 'when:' conditional directly", None, removed=True)
                     elif k == 'when':
-                        if type(x[k]) is str:
-                            included_additional_conditions.insert(0, x[k])
+                        if isinstance(x[k], (basestring, bool)):
+                            included_additional_conditions.append(x[k])
                         elif type(x[k]) is list:
-                            for i in x[k]:
-                                included_additional_conditions.insert(0, i)
+                            included_additional_conditions.extend(x[k])
                     elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
                         continue
                     else:
@@ -554,18 +563,12 @@ class Play(object):
                 else:
                     default_vars = utils.combine_vars(self.default_vars, default_vars)
 
-                # append the vars defined with the include (from above) 
+                # append the vars defined with the include (from above)
                 # as well as the old-style 'vars' element. The old-style
                 # vars are given higher precedence here (just in case)
                 task_vars = utils.combine_vars(task_vars, include_vars)
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
-
-                if 'when' in x:
-                    if isinstance(x['when'], (basestring, bool)):
-                        included_additional_conditions.append(x['when'])
-                    elif isinstance(x['when'], list):
-                        included_additional_conditions.extend(x['when'])
 
                 new_role = None
                 if 'role_name' in x:
@@ -610,8 +613,8 @@ class Play(object):
 
     def _is_valid_tag(self, tag_list):
         """
-        Check to see if the list of tags passed in is in the list of tags 
-        we only want (playbook.only_tags), or if it is not in the list of 
+        Check to see if the list of tags passed in is in the list of tags
+        we only want (playbook.only_tags), or if it is not in the list of
         tags we don't want (playbook.skip_tags).
         """
         matched_skip_tags = set(tag_list) & set(self.playbook.skip_tags)
@@ -745,7 +748,7 @@ class Play(object):
                     else:
                         role_tags[this_role] += task['vars']['tags']
 
-        # apply each role's tags to it's tasks
+        # apply each role's tags to its tasks
         for idx, val in enumerate(self._tasks):
             if getattr(val, 'role_name', None) is not None:
                 this_role = val.role_name + "-" + val.module_vars['role_uuid']
@@ -765,27 +768,37 @@ class Play(object):
 
             """ Render the raw filename into 3 forms """
 
+            # filename2 is the templated version of the filename, which will
+            # be fully rendered if any variables contained within it are 
+            # non-inventory related
             filename2 = template(self.basedir, filename, self.vars)
+
+            # filename3 is the same as filename2, but when the host object is
+            # available, inventory variables will be expanded as well since the
+            # name is templated with the injected variables
             filename3 = filename2
             if host is not None:
                 filename3 = template(self.basedir, filename2, inject)
+
+            # filename4 is the dwim'd path, but may also be mixed-scope, so we use
+            # both play scoped vars and host scoped vars to template the filepath
             if self._has_vars_in(filename3) and host is not None:
-                # allow play scoped vars and host scoped vars to template the filepath
                 inject.update(self.vars)
                 filename4 = template(self.basedir, filename3, inject)
                 filename4 = utils.path_dwim(self.basedir, filename4)
-            else:    
+            else:
                 filename4 = utils.path_dwim(self.basedir, filename3)
+
             return filename2, filename3, filename4
 
 
-        def update_vars_cache(host, inject, data, filename):
+        def update_vars_cache(host, data, target_filename=None):
 
             """ update a host's varscache with new var data """
 
-            data = utils.combine_vars(inject, data)
             self.playbook.VARS_CACHE[host] = utils.combine_vars(self.playbook.VARS_CACHE.get(host, {}), data)
-            self.playbook.callbacks.on_import_for_host(host, filename4)
+            if target_filename:
+                self.playbook.callbacks.on_import_for_host(host, target_filename)
 
         def process_files(filename, filename2, filename3, filename4, host=None):
 
@@ -796,21 +809,19 @@ class Play(object):
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
                 if host is not None:
-                    if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
-                        # running a host specific pass and has host specific variables
-                        # load into setup cache
-                        update_vars_cache(host, inject, data, filename4)
-                    elif self._has_vars_in(filename3) and not self._has_vars_in(filename4):
-                        # handle mixed scope variables in filepath
-                        update_vars_cache(host, inject, data, filename4)
-
-                elif not self._has_vars_in(filename4):
-                    # found a non-host specific variable, load into vars and NOT
-                    # the setup cache
-                    if host is not None:
-                        self.vars.update(data)
-                    else:
-                        self.vars = utils.combine_vars(self.vars, data)
+                    target_filename = None
+                    if self._has_vars_in(filename2):
+                        if not self._has_vars_in(filename3):
+                            target_filename = filename3
+                        else:
+                            target_filename = filename4
+                    update_vars_cache(host, data, target_filename=target_filename)
+                else:
+                    self.vars = utils.combine_vars(self.vars, data)
+                # we did process this file
+                return True
+            # we did not process this file
+            return False
 
         # Enforce that vars_files is always a list
         if type(self.vars_files) != list:
@@ -823,8 +834,9 @@ class Play(object):
             inject.update(self.playbook.SETUP_CACHE.get(host, {}))
             inject.update(self.playbook.VARS_CACHE.get(host, {}))
         else:
-            inject = None            
+            inject = None
 
+        processed = []
         for filename in self.vars_files:
             if type(filename) == list:
                 # loop over all filenames, loading the first one, and failing if none found
@@ -835,7 +847,8 @@ class Play(object):
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
-                        process_files(filename, filename2, filename3, filename4, host=host)
+                        if process_files(filename, filename2, filename3, filename4, host=host):
+                            processed.append(filename)
                     elif host is not None:
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
                     if found:
@@ -844,14 +857,12 @@ class Play(object):
                     raise errors.AnsibleError(
                         "%s: FATAL, no files matched for vars_files import sequence: %s" % (host, sequence)
                     )
-
             else:
                 # just one filename supplied, load it!
                 filename2, filename3, filename4 = generate_filenames(host, inject, filename)
                 if self._has_vars_in(filename4):
                     continue
-                process_files(filename, filename2, filename3, filename4, host=host)
+                if process_files(filename, filename2, filename3, filename4, host=host):
+                    processed.append(filename)
 
-        # finally, update the VARS_CACHE for the host, if it is set
-        if host is not None:
-            self.playbook.VARS_CACHE[host].update(self.playbook.extra_vars)
+        return processed

@@ -87,23 +87,19 @@ EXAMPLES = '''
 '''
 
 def main():
-    module = AnsibleModule(
-        argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
+    argument_spec = openstack_argument_spec()
+    argument_spec.update(dict(
         name                            = dict(required=True),
         public_key                      = dict(default=None),
         state                           = dict(default='present', choices=['absent', 'present'])
-        ),
-    )
+    ))
+    module = AnsibleModule(argument_spec=argument_spec)
 
     nova = nova_client.Client(module.params['login_username'],
                               module.params['login_password'],
                               module.params['login_tenant_name'],
                               module.params['auth_url'],
+                              region_name=module.params['region_name'],
                               service_type='compute')
     try:
         nova.authenticate()
@@ -138,5 +134,6 @@ def main():
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
 main()
 

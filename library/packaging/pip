@@ -153,6 +153,19 @@ def _get_full_name(name, version=None):
         resp = name + '==' + version
     return resp
 
+def _is_present(name, version, installed_pkgs):
+    for pkg in installed_pkgs:
+        if '==' not in pkg:
+            continue
+
+        [pkg_name, pkg_version] = pkg.split('==')
+
+        if pkg_name == name and (version is None or version == pkg_version):
+            return True
+
+    return False
+
+
 
 def _get_pip(module, env=None, executable=None):
     # On Debian and Ubuntu, pip is pip.
@@ -295,12 +308,31 @@ def main():
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
-
-    if module.check_mode:
-        module.exit_json(changed=True)
+    
     this_dir = tempfile.gettempdir()
     if chdir:
         this_dir = os.path.join(this_dir, chdir)
+
+    if module.check_mode:
+        if env or extra_args or requirements or state == 'latest' or not name:
+            module.exit_json(changed=True)
+        elif name.startswith('svn+') or name.startswith('git+') or \
+                name.startswith('hg+') or name.startswith('bzr+'):
+            module.exit_json(changed=True)
+        
+        freeze_cmd = '%s freeze' % pip
+        rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=this_dir)
+
+        if rc != 0:
+            module.exit_json(changed=True)
+
+        out += out_pip
+        err += err_pip
+
+        is_present = _is_present(name, version, out.split())
+
+        changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
+        module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
     rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=this_dir)
     out += out_pip

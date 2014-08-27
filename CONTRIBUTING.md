@@ -138,7 +138,7 @@ affecting a smaller number of users.
 Since we place a strong emphasis on testing and code review, it may take a few months for a minor feature to get merged.
 
 Don't worry though -- we'll also take periodic sweeps through the lower priority queues and give
-them some attention as well, particularly in the area of new module changes.  So it doesn't neccessarily
+them some attention as well, particularly in the area of new module changes.  So it doesn't necessarily
 mean that we'll be exhausting all of the higher-priority queues before getting to your ticket.
 
 Release Numbering

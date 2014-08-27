@@ -67,6 +67,13 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  warn:
+    version_added: "1.8"
+    default: yes
+    description:
+      - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
+    required: false
+    default: True
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
@@ -108,7 +115,26 @@ EXAMPLES = '''
 #   that was matched in the first 'quote' is found, or the end of
 #   the line is reached
 
-PARAM_REGEX = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+PARAM_REGEX = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG|warn)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+
+
+def check_command(commandline):
+    arguments = { 'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
+                  'ln': 'state=link', 'mkdir': 'state=directory',
+                  'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch' }
+    commands  = { 'git': 'git', 'hg': 'hg', 'curl': 'get_url', 'wget': 'get_url',
+                  'svn': 'subversion', 'service': 'service',
+                  'mount': 'mount', 'rpm': 'yum', 'yum': 'yum', 'apt-get': 'apt-get',
+                  'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
+                  'rsync': 'synchronize' }
+    warnings = list()
+    command = os.path.basename(commandline.split()[0])
+    if command in arguments:
+        warnings.append("Consider using file module with %s rather than running %s" % (arguments[command], command))
+    if command in commands:
+        warnings.append("Consider using %s module rather than running %s" % (commands[command], command))
+    return warnings
+
 
 def main():
 
@@ -122,6 +148,7 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    warn = module.params.get('warn', True)
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -138,7 +165,6 @@ def main():
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
-                skipped=True,
                 changed=False,
                 stderr=False,
                 rc=0
@@ -153,11 +179,14 @@ def main():
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,
-                skipped=True,
                 changed=False,
                 stderr=False,
                 rc=0
             )
+
+    warnings = list()
+    if warn:
+        warnings = check_command(args)
 
     if not shell:
         args = shlex.split(args)
@@ -174,14 +203,15 @@ def main():
         err = ''
 
     module.exit_json(
-        cmd     = args,
-        stdout  = out.rstrip("\r\n"),
-        stderr  = err.rstrip("\r\n"),
-        rc      = rc,
-        start   = str(startd),
-        end     = str(endd),
-        delta   = str(delta),
-        changed = True
+        cmd      = args,
+        stdout   = out.rstrip("\r\n"),
+        stderr   = err.rstrip("\r\n"),
+        rc       = rc,
+        start    = str(startd),
+        end      = str(endd),
+        delta    = str(delta),
+        changed  = True,
+        warnings = warnings
     )
 
 # import module snippets
@@ -208,6 +238,7 @@ class CommandModule(AnsibleModule):
         params['removes']    = None
         params['shell']      = False
         params['executable'] = None
+        params['warn'] = True
         if "#USE_SHELL" in args:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
@@ -238,6 +269,7 @@ class CommandModule(AnsibleModule):
         # Remove any of the above k=v params from the args string
         args = PARAM_REGEX.sub('', args)
         params['args'] = args.strip()
+
         return (params, params['args'])
 
 main()

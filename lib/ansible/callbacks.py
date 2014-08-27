@@ -25,6 +25,7 @@ import fnmatch
 import tempfile
 import fcntl
 import constants
+import locale
 from ansible.color import stringc
 
 import logging
@@ -534,6 +535,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 display(msg, color='green', runner=self.runner)
             else:
                 display(msg, color='yellow', runner=self.runner)
+        if constants.COMMAND_WARNINGS and 'warnings' in host_result2 and host_result2['warnings']:
+            for warning in host_result2['warnings']:
+                display("warning: %s" % warning, color='purple', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_skipped(self, host, item=None):
@@ -645,7 +649,13 @@ class PlaybookCallbacks(object):
             msg = 'input for %s: ' % varname
 
         def prompt(prompt, private):
-            msg = prompt.encode(sys.stdout.encoding)
+            if sys.stdout.encoding:
+                msg = prompt.encode(sys.stdout.encoding)
+            else:
+                # when piping the output, or at other times when stdout
+                # may not be the standard file descriptor, the stdout
+                # encoding may not be set, so default to something sane
+                msg = prompt.encode(locale.getpreferredencoding())
             if private:
                 return getpass.getpass(msg)
             return raw_input(msg)

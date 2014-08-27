@@ -76,7 +76,7 @@ class Facts(object):
     """
     This class should only attempt to populate those facts that
     are mostly generic to all systems.  This includes platform facts,
-    service facts (eg. ssh keys or selinux), and distribution facts.
+    service facts (e.g. ssh keys or selinux), and distribution facts.
     Anything that requires extensive code or may have more than one
     possible implementation to establish facts for a given topic should
     subclass Facts.
@@ -567,7 +567,7 @@ class LinuxHardware(Hardware):
             key = data[0].strip()
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key == 'model name' or key == 'Processor':
+            if key == 'model name' or key == 'Processor' or key == 'vendor_id':
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
                 self.facts['processor'].append(data[1].strip())
@@ -584,12 +584,15 @@ class LinuxHardware(Hardware):
                 sockets[physid] = int(data[1].strip())
             elif key == 'siblings':
                 cores[coreid] = int(data[1].strip())
-        self.facts['processor_count'] = sockets and len(sockets) or i
-        self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
-        self.facts['processor_threads_per_core'] = ((cores.values() and
-            cores.values()[0] or 1) / self.facts['processor_cores'])
-        self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
-            self.facts['processor_count'] * self.facts['processor_cores'])
+            elif key == '# processors':
+                self.facts['processor_cores'] = int(data[1].strip())
+        if self.facts['architecture'] != 's390x':
+            self.facts['processor_count'] = sockets and len(sockets) or i
+            self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+            self.facts['processor_threads_per_core'] = ((cores.values() and
+                cores.values()[0] or 1) / self.facts['processor_cores'])
+            self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+                self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
@@ -1020,7 +1023,7 @@ class FreeBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -1147,7 +1150,7 @@ class NetBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
 class AIX(Hardware):
     """
@@ -1552,7 +1555,7 @@ class LinuxNetwork(Network):
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
 
-            # Check whether a interface is in promiscuous mode
+            # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
                 promisc_mode = False
                 # The second byte indicates whether the interface is in promiscuous mode.
@@ -1581,7 +1584,7 @@ class LinuxNetwork(Network):
                         iface = words[-1]
                         if iface != device:
                             interfaces[iface] = {}
-                        if not secondary or "ipv4" not in interfaces[iface]:
+                        if not secondary and "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
                                                          'netmask': netmask,
                                                          'network': network}
@@ -2189,10 +2192,24 @@ class LinuxVirtual(Virtual):
                 elif re.match('^vendor_id.*PowerVM Lx86', line):
                     self.facts['virtualization_type'] = 'powervm_lx86'
                 elif re.match('^vendor_id.*IBM/S390', line):
-                    self.facts['virtualization_type'] = 'ibm_systemz'
+                    self.facts['virtualization_type'] = 'PR/SM'
+                    lscpu = module.get_bin_path('lscpu')
+                    if lscpu:
+                        rc, out, err = module.run_command(["lscpu"])
+                        if rc == 0:
+                            for line in out.split("\n"):
+                                data = line.split(":", 1)
+                                key = data[0].strip()
+                                if key == 'Hypervisor':
+                                    self.facts['virtualization_type'] = data[1].strip()
+                    else:
+                        self.facts['virtualization_type'] = 'ibm_systemz'
                 else:
                     continue
-                self.facts['virtualization_role'] = 'guest'
+                if self.facts['virtualization_type'] == 'PR/SM':
+                    self.facts['virtualization_role'] = 'LPAR'
+                else:
+                    self.facts['virtualization_role'] = 'guest'
                 return
 
         # Beware that we can have both kvm and virtualbox running on a single system

@@ -118,26 +118,11 @@ EXAMPLES = '''
       register: asp_webhook
 '''
 
-from uuid import UUID
-
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
-
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
-PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
-SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
-
-
-def to_dict(obj):
-    instance = {}
-    for key in dir(obj):
-        value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            instance[key] = value
-    return instance
 
 
 def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
@@ -220,7 +205,7 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
 
         policy.get()
 
-        module.exit_json(changed=changed, autoscale_policy=to_dict(policy))
+        module.exit_json(changed=changed, autoscale_policy=rax_to_dict(policy))
 
     else:
         try:
@@ -235,7 +220,7 @@ def rax_asp(module, at=None, change=0, cron=None, cooldown=300,
         except Exception, e:
             module.fail_json(msg='%s' % e.message)
 
-        module.exit_json(changed=changed, autoscale_policy=to_dict(policy))
+        module.exit_json(changed=changed, autoscale_policy=rax_to_dict(policy))
 
 
 def main():

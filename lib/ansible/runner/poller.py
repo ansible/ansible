@@ -32,8 +32,9 @@ class AsyncPoller(object):
 
         # flag to determine if at least one host was contacted
         self.active = False
-        # True to work with & below
+        # True to work with the `and` below
         skipped = True
+        jid = None
         for (host, res) in results['contacted'].iteritems():
             if res.get('started', False):
                 self.hosts_to_poll.append(host)
@@ -41,7 +42,7 @@ class AsyncPoller(object):
                 self.runner.vars_cache[host]['ansible_job_id'] = jid
                 self.active = True
             else:
-                skipped = skipped & res.get('skipped', False)
+                skipped = skipped and res.get('skipped', False)
                 self.results['contacted'][host] = res
         for (host, res) in results['dark'].iteritems():
             self.runner.vars_cache[host]['ansible_job_id'] = ''

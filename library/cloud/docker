@@ -107,6 +107,13 @@ options:
     required: false
     default: unix://var/run/docker.sock
     aliases: []
+  docker_api_version:
+    description:
+      - Remote API version to use. This defaults to the current default as specified by docker-py.
+    required: false
+    default: docker-py default remote API version
+    aliases: []
+    version_added: "1.8"
   username:
     description:
       - Set remote API username
@@ -183,6 +190,21 @@ options:
     default: false
     aliases: []
     version_added: "1.6"
+  net:
+    description:
+      - Set Network mode for the container (bridge, none, container:<name|id>, host). Requires docker >= 0.11.
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.8"
+  registry:
+    description:
+      - The remote registry URL to use for pulling images.
+    required: false
+    default: ''
+    aliases: []
+    version_added: "1.8"
+
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
@@ -293,6 +315,14 @@ Create containers with options specified as strings and lists as comma-separated
   sudo: yes
   tasks:
   docker: image=namespace/image_name links=postgresql:db,redis:redis
+
+Create a container with no networking:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  docker: image=namespace/image_name net=none
+
 '''
 
 HAS_DOCKER_PY = True
@@ -358,6 +388,13 @@ class DockerManager:
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
+                # with bind mode 
+                elif len(parts) == 3:
+                    if parts[2] not in ['ro', 'rw']:
+                        self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
+                    ro = parts[2] == 'ro'
+                    self.volumes[parts[1]] = {}
+                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro}
                 # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
                 else:
                     self.volumes[parts[0]] = {}
@@ -382,13 +419,12 @@ class DockerManager:
         if self.module.params.get('links'):
             self.links = self.get_links(self.module.params.get('links'))
 
-        self.env = None
-        if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("=", 1), self.module.params.get('env')))
+        self.env = self.module.params.get('env', None)
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
-        self.client = docker.Client(base_url=docker_url.geturl())
+        docker_api_version = module.params.get('docker_api_version')
+        self.client = docker.Client(base_url=docker_url.geturl(), version=docker_api_version)
 
 
     def get_links(self, links):
@@ -414,6 +450,7 @@ class DockerManager:
         if expose_list:
             exposed = []
             for port in expose_list:
+                port = port.strip()
                 if port.endswith('/tcp') or port.endswith('/udp'):
                     port_with_proto = tuple(port.split('/'))
                 else:
@@ -471,7 +508,7 @@ class DockerManager:
     def get_split_image_tag(self, image):
         if '/' in image:
             image = image.split('/')[-1]
-        tag = None
+        tag = "latest"
         if image.find(':') > 0:
             return image.split(':')
         else:
@@ -576,7 +613,22 @@ class DockerManager:
         try:
             containers = do_create(count, params)
         except:
-            self.client.pull(params['image'])
+            resource = self.module.params.get('image')
+            image, tag = self.get_split_image_tag(resource)
+            if self.module.params.get('username'):
+                try:
+                    self.client.login(
+                        self.module.params.get('username'),
+                        password=self.module.params.get('password'),
+                        email=self.module.params.get('email'),
+                        registry=self.module.params.get('registry')
+                    )
+                except:
+                    self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
+            try:
+                self.client.pull(resource, tag=tag)
+            except:
+                self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
             self.increment_counter('pull')
             containers = do_create(count, params)
 
@@ -590,6 +642,7 @@ class DockerManager:
             'publish_all_ports': self.module.params.get('publish_all_ports'),
             'privileged':   self.module.params.get('privileged'),
             'links': self.links,
+            'network_mode': self.module.params.get('net'),
         }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ > '0.3.0':
             params['dns'] = self.module.params.get('dns')
@@ -662,11 +715,13 @@ def main():
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
-            user            = dict(default=None),
+            docker_api_version = dict(default=docker.client.DEFAULT_DOCKER_API_VERSION),
+            username        = dict(default=None),
             password        = dict(),
             email           = dict(),
+            registry        = dict(),
             hostname        = dict(default=None),
-            env             = dict(type='list'),
+            env             = dict(type='dict'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='running', choices=['absent', 'present', 'running', 'stopped', 'killed', 'restarted']),
@@ -675,7 +730,8 @@ def main():
             stdin_open      = dict(default=False, type='bool'),
             tty             = dict(default=False, type='bool'),
             lxc_conf        = dict(default=None, type='list'),
-            name            = dict(default=None)
+            name            = dict(default=None),
+            net             = dict(default=None)
         )
     )
 
@@ -686,6 +742,7 @@ def main():
         state = module.params.get('state')
         count = int(module.params.get('count'))
         name = module.params.get('name')
+        image = module.params.get('image')
 
         if count < 0:
             module.fail_json(msg="Count must be greater than zero")
@@ -704,12 +761,31 @@ def main():
         if state in [ "running", "present" ]:
 
             # make sure a container with `name` exists, if not create and start it
-            if name and "/" + name not in map(lambda x: x.get('Name'), deployed_containers):
-                containers = manager.create_containers(1)
-                if state == "present": #otherwise it get (re)started later anyways..
-                  manager.start_containers(containers)
-                  running_containers = manager.get_running_containers()
-                deployed_containers = manager.get_deployed_containers()
+            if name:
+                # first determine if a container with this name exists
+                existing_container = None
+                for deployed_container in deployed_containers:
+                    if deployed_container.get('Name') == '/%s' % name:
+                        existing_container = deployed_container
+                        break
+
+                # the named container is running, but with a
+                # different image or tag, so we stop it first
+                if existing_container and existing_container.get('Config', dict()).get('Image') != image:
+                    manager.stop_containers([existing_container])
+                    manager.remove_containers([existing_container])
+                    running_containers = manager.get_running_containers()
+                    deployed_containers = manager.get_deployed_containers()
+                    existing_container = None
+
+                # if the container isn't running (or if we stopped the
+                # old version above), create and (maybe) start it up now
+                if not existing_container:
+                    containers = manager.create_containers(1)
+                    if state == "present": # otherwise it get (re)started later anyways..
+                        manager.start_containers(containers)
+                        running_containers = manager.get_running_containers()
+                    deployed_containers = manager.get_deployed_containers()
 
             if state == "running":
                 # make sure a container with `name` is running

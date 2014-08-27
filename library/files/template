@@ -51,11 +51,15 @@ notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 requirements: []
 author: Michael DeHaan
+extends_documentation_fragment: files
 '''
 
 EXAMPLES = '''
 # Example from Ansible Playbooks
 - template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
+
+# The same example, but using symbolic modes equivalent to 0644
+- template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode="u=rw,g=r,o=r"
 
 # Copy a new "sudoers" file into place, after passing validation with visudo
 - template: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'

@@ -46,9 +46,16 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
-from ansible.module_utils.splitter import split_args
+from ansible.module_utils.splitter import split_args, unquote
+from ansible.cache import FactCache
+from ansible.utils import update_hash
 
 module_replacer = ModuleReplacer(strip_comments=False)
+
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    from md5 import md5 as _md5
 
 HAS_ATFORK=True
 try:
@@ -57,7 +64,7 @@ except ImportError:
     HAS_ATFORK=False
 
 multiprocessing_runner = None
-        
+
 OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
@@ -87,7 +94,7 @@ class HostVars(dict):
     def __init__(self, vars_cache, inventory, vault_password=None):
         self.vars_cache = vars_cache
         self.inventory = inventory
-        self.lookup = dict()
+        self.lookup = {}
         self.update(vars_cache)
         self.vault_password = vault_password
 
@@ -128,6 +135,7 @@ class Runner(object):
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         default_vars=None,                  # ditto
+        extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
         subset=None,                        # subset pattern
@@ -158,7 +166,7 @@ class Runner(object):
         # storage & defaults
         self.check            = check
         self.diff             = diff
-        self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+        self.setup_cache      = utils.default(setup_cache, lambda: ansible.cache.FactCache())
         self.vars_cache       = utils.default(vars_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
@@ -168,6 +176,8 @@ class Runner(object):
 
         self.module_vars      = utils.default(module_vars, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
+        self.extra_vars       = utils.default(extra_vars, lambda: {})
+
         self.always_run       = None
         self.connector        = connection.Connector(self)
         self.conditional      = conditional
@@ -197,6 +207,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
@@ -205,15 +216,19 @@ class Runner(object):
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
             # 'smart' is the default since 1.2.1/1.3
             cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = cmd.communicate() 
+            (out, err) = cmd.communicate()
             if "Bad configuration option" in err:
                 self.transport = "paramiko"
             else:
-                self.transport = "ssh" 
+                self.transport = "ssh"
 
         # save the original transport, in case it gets
         # changed later via options like accelerate
         self.original_transport = self.transport
+
+        # enforce complex_args as a dict
+        if type(self.complex_args) != dict:
+            raise errors.AnsibleError("args must be a dictionary, received %s (%s)" % (self.complex_args, type(self.complex_args)))
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -308,7 +323,7 @@ class Runner(object):
         delegate = {}
 
         # allow delegated host to be templated
-        delegate['host'] = template.template(self.basedir, host, 
+        delegate['host'] = template.template(self.basedir, host,
                                 remote_inject, fail_on_undefined=True)
 
         delegate['inject'] = remote_inject.copy()
@@ -324,14 +339,14 @@ class Runner(object):
 
         this_host = delegate['host']
 
-        # get the vars for the delegate by it's name        
+        # get the vars for the delegate by its name
         try:
             this_info = delegate['inject']['hostvars'][this_host]
         except:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
 
-        # get the real ssh_address for the delegate        
+        # get the real ssh_address for the delegate
         # and allow ansible_ssh_host to be templated
         delegate['ssh_host'] = template.template(self.basedir,
                             this_info.get('ansible_ssh_host', this_host),
@@ -342,13 +357,13 @@ class Runner(object):
         delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
 
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
-        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', 
+        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file',
                                         self.private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
 
         # Last chance to get private_key_file from global variables.
-        # this is usefull if delegated host is not defined in the inventory
+        # this is useful if delegated host is not defined in the inventory
         if delegate['private_key_file'] is None:
             delegate['private_key_file'] = remote_inject.get(
                 'ansible_ssh_private_key_file', None)
@@ -364,7 +379,7 @@ class Runner(object):
 
     def _compute_delegate_user(self, host, inject):
 
-        """ Caculate the remote user based on an order of preference """
+        """ Calculate the remote user based on an order of preference """
 
         # inventory > playbook > original_host
 
@@ -588,6 +603,7 @@ class Runner(object):
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
         combined_cache.setdefault(host, {}).update(self.vars_cache.get(host, {}))
+
         hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
 
         # use combined_cache and host_variables to template the module_vars
@@ -598,10 +614,13 @@ class Runner(object):
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         inject = {}
+
         inject = utils.combine_vars(inject, self.default_vars)
         inject = utils.combine_vars(inject, host_variables)
+        inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
         inject = utils.combine_vars(inject, module_vars)
-        inject = utils.combine_vars(inject, combined_cache.get(host, {}))
+        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        inject = utils.combine_vars(inject, self.extra_vars)
         inject.setdefault('ansible_ssh_user', self.remote_user)
         inject['hostvars']    = hostvars
         inject['group_names'] = host_variables.get('group_names', [])
@@ -609,7 +628,8 @@ class Runner(object):
         inject['vars']        = self.module_vars
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
-        inject['playbook_dir'] = self.basedir
+        inject['playbook_dir'] = os.path.abspath(self.basedir)
+        inject['omit']        = self.omit_token
 
         # template this one is available, callbacks use this
         delegate_to = self.module_vars.get('delegate_to')
@@ -621,6 +641,9 @@ class Runner(object):
 
         if self.inventory.src() is not None:
             inject['inventory_file'] = self.inventory.src()
+
+        # could be already set by playbook code
+        inject.setdefault('ansible_version', utils.version_info(gitinfo=False))
 
         # allow with_foo to work in playbooks...
         items = None
@@ -659,11 +682,6 @@ class Runner(object):
 
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
-            if isinstance(complex_args, basestring):
-                complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
-                complex_args = utils.safe_eval(complex_args)
-                if type(complex_args) != dict:
-                    raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
@@ -728,14 +746,6 @@ class Runner(object):
             self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
         if self.su_user_var is not None:
             self.su_user = template.template(self.basedir, self.su_user_var, inject)
-
-        # allow module args to work as a dictionary
-        # though it is usually a string
-        new_args = ""
-        if type(module_args) == dict:
-            for (k,v) in module_args.iteritems():
-                new_args = new_args + "%s='%s' " % (k,v)
-            module_args = new_args
 
         # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
@@ -826,7 +836,7 @@ class Runner(object):
             if actual_transport == 'accelerate':
                 # for accelerate, we stuff both ports into a single
                 # variable so that we don't have to mangle other function
-                # calls just to accomodate this one case
+                # calls just to accommodate this one case
                 actual_port = [actual_port, self.accelerate_port]
             elif actual_port is not None:
                 actual_port = int(template.template(self.basedir, actual_port, inject))
@@ -861,6 +871,11 @@ class Runner(object):
         if self._early_needs_tmp_path(module_name, handler):
             tmp = self._make_tmp_path(conn)
 
+        # allow module args to work as a dictionary
+        # though it is usually a string
+        if isinstance(module_args, dict):
+            module_args = utils.serialize_args(module_args)
+
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
@@ -881,12 +896,31 @@ class Runner(object):
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
+        # filter omitted arguments out from complex_args
+        if complex_args:
+            complex_args = dict(filter(lambda x: x[1] != self.omit_token, complex_args.iteritems()))
+
+        # Filter omitted arguments out from module_args.
+        # We do this with split_args instead of parse_kv to ensure
+        # that things are not unquoted/requoted incorrectly
+        args = split_args(module_args)
+        final_args = []
+        for arg in args:
+            if '=' in arg:
+                k,v = arg.split('=', 1)
+                if unquote(v) != self.omit_token:
+                    final_args.append(arg)
+            else:
+                # not a k=v param, append it
+                final_args.append(arg)
+        module_args = ' '.join(final_args)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
         until = self.module_vars.get('until', None)
         if until is not None and result.comm_ok:
             inject[self.module_vars.get('register')] = result.result
+
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 retries = self.module_vars.get('retries')
@@ -907,7 +941,7 @@ class Runner(object):
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
                 if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                    result.result['failed'] = True 
+                    result.result['failed'] = True
                     result.result['msg'] = "Task failed as maximum retries was encountered"
             else:
                 result.result['attempts'] = 0
@@ -949,18 +983,24 @@ class Runner(object):
                     if failed_when is not None and 'skipped' not in data:
                         data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
+
             if is_chained:
                 # no callbacks
                 return result
             if 'skipped' in data:
                 self.callbacks.on_skipped(host, inject.get('item',None))
-            elif not result.is_successful():
+
+            if self.no_log:
+                data = utils.censor_unlogged_data(data)
+
+            if not result.is_successful():
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
             else:
                 if self.diff:
                     self.callbacks.on_file_diff(conn.host, result.diff)
                 self.callbacks.on_ok(host, data)
+
         return result
 
     def _early_needs_tmp_path(self, module_name, handler):
@@ -985,7 +1025,7 @@ class Runner(object):
             # even when conn has pipelining, old style modules need tmp to store arguments
             return True
         return False
-    
+
 
     # *****************************************************
 
@@ -1095,6 +1135,8 @@ class Runner(object):
                     output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
                 else:
                     output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
+            elif 'No space left on device' in result['stderr']:
+                output = result['stderr']
             else:
                 output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
@@ -1104,7 +1146,7 @@ class Runner(object):
         rc = conn.shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')
         # Catch failure conditions, files should never be
         # written to locations in /.
-        if rc == '/': 
+        if rc == '/':
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 
@@ -1128,9 +1170,9 @@ class Runner(object):
         module_data
         ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
         module_remote_path = conn.shell.join_path(tmp, module_name)
-        
+
         self._transfer_str(conn, tmp, module_name, module_data)
-         
+
         return (module_remote_path, module_style, module_shebang)
 
     # *****************************************************
@@ -1193,7 +1235,7 @@ class Runner(object):
             for worker in workers:
                 worker.terminate()
                 worker.join()
-        
+
         results = []
         try:
             while not result_queue.empty():

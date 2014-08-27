@@ -79,16 +79,11 @@ options:
     version_added: "1.2"
   directory_mode:
     description:
-      - When doing a recursive copy set the mode for the directories. If this is not set we will default the system
-        defaults.
+      - When doing a recursive copy set the mode for the directories. If this is not set we will use the system
+        defaults. The mode is only set on directories which are newly created, and will not affect those that
+        already existed.
     required: false
     version_added: "1.5"
-  recurse:
-    description:
-      - Copy all contents in the source directory recursively.  This will be slightly inefficient compared to the 'synchronize'
-        module and should not be used for large directory trees.
-    required: false
-    default: false
 extends_documentation_fragment: files
 author: Michael DeHaan
 notes:
@@ -99,6 +94,12 @@ notes:
 EXAMPLES = '''
 # Example from Ansible Playbooks
 - copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
+
+# The same example as above, but using a symbolic mode equivalent to 0644
+- copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode="u=rw,g=r,o=r"
+
+# Another symbolic mode example, adding some permissions and removing others
+- copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode="u+rw,g-wx,o-rwx"
 
 # Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
 - copy: src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes
@@ -150,6 +151,7 @@ def main():
             directory_mode    = dict(required=False)
         ),
         add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     src    = os.path.expanduser(module.params['src'])
