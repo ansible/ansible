@@ -31,6 +31,7 @@ from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
 from jinja2.filters import environmentfilter
 
+
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
     return yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
@@ -234,6 +235,7 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -306,4 +308,3 @@ class FilterModule(object):
             # random numbers
             'random': rand,
         }
-
