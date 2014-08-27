@@ -317,7 +317,7 @@ class Service(object):
         if self.rcconf_file is None or self.rcconf_key is None or self.rcconf_value is None:
             self.module.fail_json(msg="service_enable_rcconf() requires rcconf_file, rcconf_key and rcconf_value")
 
-        changed = None
+        self.changed = None
         entry = '%s="%s"\n' % (self.rcconf_key, self.rcconf_value)
         RCFILE = open(self.rcconf_file, "r")
         new_rc_conf = []
@@ -331,12 +331,12 @@ class Service(object):
                 if key == self.rcconf_key:
                     if value.upper() == self.rcconf_value:
                         # Since the proper entry already exists we can stop iterating.
-                        changed = False
+                        self.changed = False
                         break
                     else:
                         # We found the key but the value is wrong, replace with new entry.
                         rcline = entry
-                        changed = True
+                        self.changed = True
 
             # Add line to the list.
             new_rc_conf.append(rcline)
@@ -345,11 +345,11 @@ class Service(object):
         RCFILE.close()
 
         # If we did not see any trace of our entry we need to add it.
-        if changed is None:
+        if self.changed is None:
             new_rc_conf.append(entry)
-            changed = True
+            self.changed = True
 
-        if changed is True:
+        if self.changed is True:
 
             if self.module.check_mode:
                 self.module.exit_json(changed=True, msg="changing service enablement")
