@@ -49,7 +49,6 @@ from ansible.module_common import ModuleReplacer
 from ansible.module_utils.splitter import split_args
 from ansible.cache import FactCache
 from ansible.utils import update_hash
-from ansible.utils import OMIT_PLACE_HOLDER
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -629,13 +628,8 @@ class Runner(object):
         inject['vars']        = self.module_vars
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
-<<<<<<< HEAD
         inject['playbook_dir'] = os.path.abspath(self.basedir)
-        inject['omit']        = OMIT_PLACE_HOLDER
-=======
-        inject['playbook_dir'] = self.basedir
         inject['omit']        = self.omit_token
->>>>>>> Additional fixes for the new omit parameter variable
 
         # template this one is available, callbacks use this
         delegate_to = self.module_vars.get('delegate_to')
