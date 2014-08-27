@@ -46,7 +46,7 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
-from ansible.module_utils.splitter import split_args
+from ansible.module_utils.splitter import split_args, unquote
 from ansible.cache import FactCache
 from ansible.utils import update_hash
 
@@ -896,16 +896,24 @@ class Runner(object):
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
-        def not_omitted(item):
-            return item[1] != self.omit_token
+        # filter omitted arguments out from complex_args
+        if complex_args:
+            complex_args = dict(filter(lambda x: x[1] != self.omit_token, complex_args.iteritems()))
 
-        if module_name not in ['shell', 'command', 'include_vars']:
-            # filter omitted arguments out from complex_args
-            complex_args = dict(filter(not_omitted, complex_args.iteritems()))
-            # filter omitted arguments out from module_args
-            module_kv = utils.parse_kv(module_args)
-            module_kv = dict(filter(not_omitted, module_kv.iteritems()))
-            module_args = utils.serialize_args(module_kv)
+        # Filter omitted arguments out from module_args.
+        # We do this with split_args instead of parse_kv to ensure
+        # that things are not unquoted/requoted incorrectly
+        args = split_args(module_args)
+        final_args = []
+        for arg in args:
+            if '=' in arg:
+                k,v = arg.split('=', 1)
+                if unquote(v) != self.omit_token:
+                    final_args.append(arg)
+            else:
+                # not a k=v param, append it
+                final_args.append(arg)
+        module_args = ' '.join(final_args)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
