@@ -67,11 +67,13 @@ options:
         default: "yes"
         choices: [ "yes", "no" ]
     force:
+        version_added: "1.8"
         description:
           - Forces an installation
         required: false
         default: "no"
     force_resolution:
+        version_added: "1.8"
         description: 
           - Use the force-resolution parameter for upgrade and remove options of zypper
         required: false
@@ -188,7 +190,6 @@ def package_latest(m, name, installed_state, disable_gpg_check, disable_recommen
 # Function used to make sure a package is not installed.
 def package_absent(m, name, installed_state, force_resolution):
     if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'remove', name]
         cmd = ['/usr/bin/zypper', '--non-interactive', 'remove']
         if force_resolution:
             cmd.append('--force-resolution')
