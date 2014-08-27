@@ -36,12 +36,16 @@ $ActiveNetcfg = @(); $ActiveNetcfg+= $netcfg | where {$_.ipaddress -ne $null}
 $formattednetcfg = @()
 foreach ($adapter in $ActiveNetcfg)
 {
-
     $thisadapter = New-Object psobject @{
     interface_name = $adapter.description
     dns_domain = $adapter.dnsdomain
-    default_gateway = $adapter.DefaultIPGateway[0].ToString()
+    default_gateway = $null
     interface_index = $adapter.InterfaceIndex
+    }
+    
+    if ($adapter.defaultIPGateway)
+    {
+        $thisadapter.default_gateway = $adapter.DefaultIPGateway[0].ToString()
     }
     
     $formattednetcfg += $thisadapter;$thisadapter = $null
