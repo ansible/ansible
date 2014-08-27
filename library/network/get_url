@@ -102,6 +102,14 @@ options:
         parameter is not specified, the C(url_password) parameter will not be used.
     required: false
     version_added: '1.6'
+  force_basic_auth:
+    description:
+      - Send Basic authentication header on the first request. Per RFC 2617,
+        urllib2 only sends authentication information when a server responds to
+        the initial request with a 401 status. Since some services do not
+        properly send a 401, logins will fail without this option enabled.
+    required: false
+    default: 'no'
   others:
     description:
       - all arguments accepted by the M(file) module also work here
