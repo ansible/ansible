@@ -545,6 +545,18 @@ def parse_json(raw_data, from_remote=False, from_inventory=False):
 
     return results
 
+def serialize_args(args):
+    '''
+    Flattens a dictionary args to a k=v string
+    '''
+    module_args = ""
+    for (k,v) in args.iteritems():
+        if isinstance(v, basestring):
+            module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+        elif isinstance(v, bool):
+            module_args = "%s=%s %s" % (k, str(v), module_args)
+    return module_args.strip()
+
 def merge_module_args(current_args, new_args):
     '''
     merges either a dictionary or string of k=v pairs with another string of k=v pairs,
@@ -559,14 +571,7 @@ def merge_module_args(current_args, new_args):
     elif isinstance(new_args, basestring):
         new_args_kv = parse_kv(new_args)
         final_args.update(new_args_kv)
-    # then we re-assemble into a string
-    module_args = ""
-    for (k,v) in final_args.iteritems():
-        if isinstance(v, basestring):
-            module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
-        elif isinstance(v, bool):
-            module_args = "%s=%s %s" % (k, str(v), module_args)
-    return module_args.strip()
+    return serialize_args(final_args)
 
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
