@@ -81,6 +81,8 @@ options:
               the user example in the github examples directory for what this looks
               like in a playbook. The `FAQ <http://docs.ansible.com/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module>`_
               contains details on various ways to generate these password values.
+              Note on Darwin system, this value has to be cleartext.
+              Beware of security issues.
     state:
         required: false
         default: "present"
@@ -1343,6 +1345,321 @@ class SunOS(User):
                     self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
             return (rc, out, err)
+
+# ===========================================
+class DarwinUser(User):
+    """
+    This is a Darwin Mac OS X User manipulation class.
+    Main differences are that Darwin:-
+      - Handles accounts in a database managed by dscl(1)
+      - Has no useradd/groupadd
+      - Does not create home directories
+      - User password must be cleartext
+      - UID must be given
+      - System users must ben under 500
+
+    This overrides the following methods from the generic class:-
+      - user_exists()
+      - create_user()
+      - remove_user()
+      - modify_user()
+    """
+    platform = 'Darwin'
+    distribution = None
+    SHADOWFILE = None
+
+    dscl_directory = '.'
+
+    fields = [
+        ('comment', 'RealName'),
+        ('home', 'NFSHomeDirectory'),
+        ('shell', 'UserShell'),
+        ('uid', 'UniqueID'),
+        ('group', 'PrimaryGroupID'),
+    ]
+
+    def _get_dscl(self):
+        return [ self.module.get_bin_path('dscl', True), self.dscl_directory ]
+
+    def _list_user_groups(self):
+        cmd = self._get_dscl()
+        cmd += [ '-search', '/Groups', 'GroupMembership', self.name ]
+        (rc, out, err) = self.execute_command(cmd)
+        groups = []
+        for line in out.splitlines():
+            if line.startswith(' ') or line.startswith(')'):
+                continue
+            groups.append(line.split()[0])
+        return groups
+
+    def _get_user_property(self, property):
+        '''Return user PROPERTY as given my dscl(1) read or None if not found.'''
+        cmd = self._get_dscl()
+        cmd += [ '-read', '/Users/%s' % self.name, property ]
+        (rc, out, err) = self.execute_command(cmd)
+        if rc != 0:
+            return None
+        # from dscl(1)
+        # if property contains embedded spaces, the list will instead be
+        # displayed one entry per line, starting on the line after the key.
+        lines = out.splitlines()
+        #sys.stderr.write('*** |%s| %s -> %s\n' %  (property, out, lines))
+        if len(lines) == 1:
+            return lines[0].split(': ')[1]
+        else:
+            if len(lines) > 2:
+                return '\n'.join([ lines[1].strip() ] + lines[2:])
+            else:
+                if len(lines) == 2:
+                    return lines[1].strip()
+                else:
+                    return None
+
+    def _change_user_password(self):
+        '''Change password for SELF.NAME against SELF.PASSWORD.
+
+        Please note that password must be cleatext.
+        '''
+        # some documentation on how is stored passwords on OSX:
+        # http://blog.lostpassword.com/2012/07/cracking-mac-os-x-lion-accounts-passwords/
+        # http://null-byte.wonderhowto.com/how-to/hack-mac-os-x-lion-passwords-0130036/
+        # http://pastebin.com/RYqxi7Ca
+        # on OSX 10.8+ hash is SALTED-SHA512-PBKDF2
+        # https://pythonhosted.org/passlib/lib/passlib.hash.pbkdf2_digest.html
+        # https://gist.github.com/nueh/8252572
+        cmd = self._get_dscl()
+        if self.password:
+            cmd += [ '-passwd', '/Users/%s' % self.name, self.password]
+        else:
+            cmd += [ '-create', '/Users/%s' % self.name, 'Password', '*']
+        (rc, out, err) = self.execute_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg='Error when changing password',
+                                  err=err, out=out, rc=rc)
+        return (rc, out, err)
+
+    def _make_group_numerical(self):
+        '''Convert SELF.GROUP to is stringed numerical value suitable for dscl.'''
+        if self.group is not None:
+            try:
+                self.group = grp.getgrnam(self.group).gr_gid
+            except KeyError:
+                self.module.fail_json(msg='Group "%s" not found. Try to create it first using "group" module.' % self.group)
+            # We need to pass a string to dscl
+            self.group = str(self.group)
+
+    def __modify_group(self, group, action):
+        '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
+        ACTION can be 'add' or 'remove' otherwhise 'remove' is assumed. '''
+        if action == 'add':
+            option = '-a'
+        else:
+            option = '-d'
+        cmd = [ 'dseditgroup', '-o', 'edit', option, self.name,
+                '-t', 'user', group ]
+        (rc, out, err) = self.execute_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg='Cannot %s user "%s" to group "%s".'
+                                  % (action, self.name, group),
+                                  err=err, out=out, rc=rc)
+        return (rc, out, err)
+
+    def _modify_group(self):
+        '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
+        ACTION can be 'add' or 'remove' otherwhise 'remove' is assumed. '''
+
+        rc = 0
+        out = ''
+        err = ''
+        changed = False
+
+        current = set(self._list_user_groups())
+        if self.groups is not None:
+            target = set(self.groups.split(','))
+        else:
+            target = set([])
+
+        for remove in current - target:
+            (_rc, _err, _out) = self.__modify_group(remove, 'delete')
+            rc += rc
+            out += _out
+            err += _err
+            changed = True
+
+        for add in target - current:
+            (_rc, _err, _out) = self.__modify_group(add, 'add')
+            rc += _rc
+            out += _out
+            err += _err
+            changed = True
+
+        return (rc, err, out, changed)
+
+    def _update_system_user(self):
+        '''Hide or show user on login window according SELF.SYSTEM.
+
+        Returns 0 if a change has been made, None otherwhise.'''
+
+        plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
+
+        # http://support.apple.com/kb/HT5017?viewlocale=en_US
+        uid = int(self.uid)
+        cmd = [ 'defaults', 'read', plist_file, 'HiddenUsersList' ]
+        (rc, out, err) = self.execute_command(cmd)
+        # returned value is
+        # (
+        #   "_userA",
+        #   "_UserB",
+        #   userc
+        # )
+        hidden_users = []
+        for x in out.splitlines()[1:-1]:
+            try:
+                x = x.split('"')[1]
+            except IndexError:
+                x = x.strip()
+            hidden_users.append(x)
+
+        if self.system:
+            if not self.name in hidden_users:
+                cmd = [ 'defaults', 'write', plist_file,
+                        'HiddenUsersList', '-array-add', self.name ]
+                (rc, out, err) = self.execute_command(cmd)
+                if rc != 0:
+                    self.module.fail_json(
+                        msg='Cannot user "%s" to hidden user list.'
+                        % self.name, err=err, out=out, rc=rc)
+                return 0
+        else:
+            if self.name in hidden_users:
+                del(hidden_users[hidden_users.index(self.name)])
+
+                cmd = [ 'defaults', 'write', plist_file,
+                        'HiddenUsersList', '-array' ] +  hidden_users
+                (rc, out, err) = self.execute_command(cmd)
+                if rc != 0:
+                    self.module.fail_json(
+                        msg='Cannot remove user "%s" from hidden user list.'
+                        % self.name, err=err, out=out, rc=rc)
+                return 0
+
+    def user_exists(self):
+        '''Check is SELF.NAME is a known user on the system.'''
+        cmd = self._get_dscl()
+        cmd += [ '-list', '/Users/%s' % self.name]
+        (rc, out, err) = self.execute_command(cmd)
+        return rc == 0
+
+    def remove_user(self):
+        '''Delete SELF.NAME. If SELF.FORCE is true, remove its home directory.'''
+        info = self.user_info()
+
+        cmd = self._get_dscl()
+        cmd += [ '-delete', '/Users/%s' % self.name]
+        (rc, out, err) = self.execute_command(cmd)
+
+        if rc != 0:
+            self.module.fail_json(
+                msg='Cannot delete user "%s".'
+                % self.name, err=err, out=out, rc=rc)
+
+        if self.force:
+            if os.path.exists(info[5]):
+                shutil.rmtree(info[5])
+                out += "Removed %s" % info[5]
+
+        return (rc, out, err)
+
+    def create_user(self, command_name='dscl'):
+        cmd = self._get_dscl()
+        cmd += [ '-create', '/Users/%s' % self.name]
+        (rc, err, out) = self.execute_command(cmd)
+        if rc != 0:
+            self.module.fail_json(
+                msg='Cannot create user "%s".'
+                % self.name, err=err, out=out, rc=rc)
+
+
+        self._make_group_numerical()
+
+        # Homedir is not created by default
+        if self.createhome:
+            if self.home is None:
+                self.home = '/Users/%s' % self.name
+            if not os.path.exists(self.home):
+                os.makedirs(self.home)
+            self.chown_homedir(int(self.uid), int(self.group), self.home)
+
+        for field in self.fields:
+            if self.__dict__.has_key(field[0]) and self.__dict__[field[0]]:
+
+                cmd = self._get_dscl()
+                cmd += [ '-create', '/Users/%s' % self.name,
+                         field[1], self.__dict__[field[0]]]
+                (rc, _err, _out) = self.execute_command(cmd)
+                if rc != 0:
+                    self.module.fail_json(
+                        msg='Cannot add property "%s" to user "%s".'
+                        % (field[0], self.name), err=err, out=out, rc=rc)
+
+                out += _out
+                err += _err
+                if rc != 0:
+                    return (rc, _err, _out)
+
+
+        (rc, _err, _out) = self._change_user_password()
+        out += _out
+        err += _err
+
+        self._update_system_user()
+        # here we don't care about change status since it is a creation,
+        # thus changed is always true.
+        (rc, _out, _err, changed) = self._modify_group()
+        out += _out
+        err += _err
+        return (rc, err, out)
+
+    def modify_user(self):
+        changed = None
+        out = ''
+        err = ''
+
+        self._make_group_numerical()
+
+        for field in self.fields:
+            if self.__dict__.has_key(field[0]) and self.__dict__[field[0]]:
+                current = self._get_user_property(field[1])
+                if current is None or current != self.__dict__[field[0]]:
+                    cmd = self._get_dscl()
+                    cmd += [ '-create', '/Users/%s' % self.name,
+                             field[1], self.__dict__[field[0]]]
+                    (rc, _err, _out) = self.execute_command(cmd)
+                    if rc != 0:
+                        self.module.fail_json(
+                            msg='Cannot update property "%s" for user "%s".'
+                            % (field[0], self.name), err=err, out=out, rc=rc)
+                    changed = rc
+                    out += _out
+                    err += _err
+        if self.update_password == 'always':
+            (rc, _err, _out) = self._change_user_password()
+            out += _out
+            err += _err
+            changed = rc
+
+        (rc, _out, _err, _changed) = self._modify_group()
+        out += _out
+        err += _err
+
+        if _changed is True:
+            changed = rc
+
+        rc = self._update_system_user()
+        if rc == 0:
+            changed = rc
+
+        return (changed, out, err)
 
 # ===========================================
 
