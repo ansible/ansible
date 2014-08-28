@@ -608,12 +608,24 @@ class AnsibleModule(object):
 
         # Permission bits constants documented at:
         # http://docs.python.org/2/library/stat.html#stat.S_ISUID
+        if apply_X_permission:
+            X_perms = {
+                'u': {'X': stat.S_IXUSR},
+                'g': {'X': stat.S_IXGRP},
+                'o': {'X': stat.S_IXOTH}
+            }
+        else:
+            X_perms = {
+                'u': {'X': 0},
+                'g': {'X': 0},
+                'o': {'X': 0}
+            }
+
         user_perms_to_modes = {
             'u': {
                 'r': stat.S_IRUSR,
                 'w': stat.S_IWUSR,
                 'x': stat.S_IXUSR,
-                'X': stat.S_IXUSR if apply_X_permission else 0,
                 's': stat.S_ISUID,
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
@@ -623,7 +635,6 @@ class AnsibleModule(object):
                 'r': stat.S_IRGRP,
                 'w': stat.S_IWGRP,
                 'x': stat.S_IXGRP,
-                'X': stat.S_IXGRP if apply_X_permission else 0,
                 's': stat.S_ISGID,
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
@@ -633,13 +644,16 @@ class AnsibleModule(object):
                 'r': stat.S_IROTH,
                 'w': stat.S_IWOTH,
                 'x': stat.S_IXOTH,
-                'X': stat.S_IXOTH if apply_X_permission else 0,
                 's': 0,
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
                 'g': (prev_mode & stat.S_IRWXG) >> 3,
                 'o': prev_mode & stat.S_IRWXO }
         }
+
+        # Insert X_perms into user_perms_to_modes
+        for key, value in X_perms.items():
+            user_perms_to_modes[key].update(value)
 
         or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
         return reduce(or_reduce, perms, 0)
