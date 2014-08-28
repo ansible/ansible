@@ -12,6 +12,7 @@ local
 [local:vars]
 parent_var=6000
 groups_tree_var=5000
+default1="inventory1"
 
 [arbitrary_parent:vars]
 groups_tree_var=4000

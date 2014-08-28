@@ -3,3 +3,7 @@
 vars_files_var: "BAD!"
 # should be seen in role1 (no override)
 defaults_file_var_role1: "defaults_file_var_role1"
+
+# used by test_var_blending to test include_defaults
+default1: "default1"
+default2: "default2"

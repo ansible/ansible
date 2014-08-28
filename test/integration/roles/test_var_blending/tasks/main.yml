@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - include_vars: more_vars.yml
+- include_defaults: ../../test_var_precedence_role1/defaults/main.yml
 
 - name: deploy a template that will use variables at various levels
   template: src=foo.j2 dest={{output_dir}}/foo.templated 

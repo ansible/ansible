@@ -1,0 +1,33 @@
+# -*- mode: python -*-
+
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Daniele Varrazzo
+module: include_defaults
+short_description: Load variables defaults from files, dynamically within a task.
+description:
+     - Loads variables from a YAML file dynamically during task runtime.  Unlike include_vars these values can be overridden by the inventory.
+options:
+  free-form:
+    description:
+       - The file name from which variables should be loaded, if called from a role it will look for 
+         the file in vars/ subdirectory of the role, otherwise the path would be relative to playbook. An absolute path can also be provided.
+    required: true
+version_added: "1.8"
+'''
+
+EXAMPLES = """
+# Include the default vars from a web server configuration.
+# They may be overridden by the inventory.
+- include_defaults: webserver_config.yml
+  when: has_webserver
+
+"""
