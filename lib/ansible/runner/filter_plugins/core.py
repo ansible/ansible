@@ -146,6 +146,13 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
 
+def ternary(value, true_val, false_val):
+    '''  value ? true_val : false_val '''
+    if value:
+        return true_val
+    else:
+        return false_val
+
 def unique(a):
     if isinstance(a,collections.Hashable):
         c = set(a)
@@ -292,6 +299,9 @@ class FilterModule(object):
             'search': search,
             'regex': regex,
             'regex_replace': regex_replace,
+
+            # ? : ;
+            'ternary': ternary,
 
             # list
             'unique' : unique,
