@@ -80,6 +80,9 @@ class Connection(object):
                 private_key_file=private_key_file
             )
 
+        if not getattr(self.ssh, 'shell', None):
+            self.ssh.shell = utils.plugins.shell_loader.get('sh')
+
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
             utils.AES_KEYS = self.runner.aes_keys
