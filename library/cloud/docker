@@ -210,6 +210,12 @@ options:
     required: false
     default: false
     aliases: []
+  restart_policy:
+    description:
+      - Set container restart policy
+    required: false
+    default: ''
+    aliases: []
 
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
@@ -665,6 +671,7 @@ class DockerManager:
             'privileged':   self.module.params.get('privileged'),
             'links': self.links,
             'network_mode': self.module.params.get('net'),
+            'restart_policy': { "name": self.module.params.get('restart_policy') },
         }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ > '0.3.0':
             params['dns'] = self.module.params.get('dns')
@@ -754,7 +761,8 @@ def main():
             lxc_conf        = dict(default=None, type='list'),
             name            = dict(default=None),
             net             = dict(default=None),
-            pull_latest     = dict(default=False, type='bool')
+            pull_latest     = dict(default=False, type='bool'),
+            restart_policy  = dict(default=None)
         )
     )
 
