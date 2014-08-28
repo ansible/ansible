@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 ---
 module: quantum_subnet
 version_added: "1.2"
-short_description: Add/Remove floating IP from an instance
+short_description: Add/remove subnet from a network
 description:
-   - Add or Remove a floating IP to an instance
+   - Add/remove subnet from a network
 options:
    login_username:
      description:
