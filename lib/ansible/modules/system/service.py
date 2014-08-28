@@ -1032,6 +1032,9 @@ class OpenBsdService(Service):
             if rc == 1:
                 return
 
+        if self.module.check_mode:
+            self.module.exit_json(changed=True, msg="changing service enablement")
+
         # XXX check rc ?
         rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, action))
         self.changed = True
