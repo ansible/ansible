@@ -36,7 +36,7 @@ Branch Info
 
    * Releases are named after Van Halen songs.
    * The devel branch corresponds to the release actively under development.
-   * Various release-X.Y branches exist for previous releases
+   * Various release-X.Y branches exist for previous releases.
    * We'd love to have your contributions, read "CONTRIBUTING.md" for process notes.
 
 Author
