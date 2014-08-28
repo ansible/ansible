@@ -304,13 +304,17 @@ Get a random number from 1 to 100 but in steps of 10::
 Other Useful Filters
 --------------------
 
+To use one value on true and another on false::
+
+   {{ name == "John" | ternary('Mr','Ms') }}
+
 To concatenate a list into a string::
-   
+
    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
-    {{ path | basename }} 
+    {{ path | basename }}
 
 To get the directory from a path::
 
