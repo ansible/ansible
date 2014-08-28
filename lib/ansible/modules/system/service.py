@@ -1030,6 +1030,8 @@ class OpenBsdService(Service):
         else:
             action = "disable %s" % self.name
             if rc == 1:
+                if stderr:
+                    self.module.fail_json(msg=stderr)
                 return
 
         if self.module.check_mode:
