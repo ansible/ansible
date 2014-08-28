@@ -251,6 +251,49 @@ class FreeBsdGroup(Group):
 
 # ===========================================
 
+
+
+class DarwinGroup(Group):
+    """
+    This is a Mac OS X Darwin Group manipulation class.
+
+    This overrides the following methods from the generic class:-
+      - group_del()
+      - group_add()
+      - group_mod()
+
+    group manupulation are done using dseditgroup(1).
+    """
+
+    platform = 'Darwin'
+    distribution = None
+
+    def group_add(self, **kwargs):
+        cmd = [self.module.get_bin_path('dseditgroup', True)]
+        cmd += [ '-o', 'create' ]
+        cmd += [ '-i', self.gid ]
+        cmd += [ '-L', self.name ]
+        (rc, out, err) = self.execute_command(cmd)
+        return (rc, out, err)
+
+    def group_del(self):
+        cmd = [self.module.get_bin_path('dseditgroup', True)]
+        cmd += [ '-o', 'delete' ]
+        cmd += [ '-L', self.name ]
+        (rc, out, err) = self.execute_command(cmd)
+        return (rc, out, err)
+
+    def group_mod(self):
+        info = self.group_info()
+        if self.gid is not None and int(self.gid) != info[2]:
+            cmd = [self.module.get_bin_path('dseditgroup', True)]
+            cmd += [ '-o', 'edit' ]
+            cmd += [ '-i', self.gid ]
+            cmd += [ '-L', self.name ]
+            (rc, out, err) = self.execute_command(cmd)
+            return (rc, out, err)
+        return (None, '', '')
+
 class OpenBsdGroup(Group):
     """
     This is a OpenBSD Group manipulation class.
