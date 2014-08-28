@@ -1035,8 +1035,16 @@ class OpenBsdService(Service):
         if self.module.check_mode:
             self.module.exit_json(changed=True, msg="changing service enablement")
 
-        # XXX check rc ?
         rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, action))
+
+        if rc != 0:
+            if stderr:
+                self.module.fail_json(msg=stderr)
+            elif stdout:
+                self.module.fail_json(msg=stdout)
+            else:
+                self.module.fail_json(msg="rcctl failed to modify service enablement")
+
         self.changed = True
 
 # ===========================================
