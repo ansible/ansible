@@ -34,27 +34,30 @@ $result = New-Object psobject @{
 
 If (Test-Path $path)
 {
-   Set-Attr $result.stat "exists" $TRUE;
-   $info = Get-Item $path;
-   If ($info.Directory) # Only files have the .Directory attribute.
-   {
-      Set-Attr $result.stat "isdir" $FALSE;
-      Set-Attr $result.stat "size" $info.Length;
-   }
-   Else
-   {
-      Set-Attr $result.stat "isdir" $TRUE;
-   }
+    Set-Attr $result.stat "exists" $TRUE;
+    $info = Get-Item $path;
+    If ($info.Directory) # Only files have the .Directory attribute.
+    {
+        Set-Attr $result.stat "isdir" $FALSE;
+        Set-Attr $result.stat "size" $info.Length;
+    }
+    Else
+    {
+        Set-Attr $result.stat "isdir" $TRUE;
+    }
 }
 Else
 {
-   Set-Attr $result.stat "exists" $FALSE;
+    Set-Attr $result.stat "exists" $FALSE;
 }
 
 If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
 {
-   $path_md5 = (Get-FileHash -Path $path -Algorithm MD5).Hash.ToLower();
-   Set-Attr $result.stat "md5" $path_md5;
+    $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
+    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+    $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+    $fp.Dispose();
+    Set-Attr $result.stat "md5" $hash;
 }
 
 Exit-Json $result;
