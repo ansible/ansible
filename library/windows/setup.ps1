@@ -32,6 +32,27 @@ $capacity = 0
 $memory | foreach {$capacity += $_.Capacity}
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
+$ActiveNetcfg = @(); $ActiveNetcfg+= $netcfg | where {$_.ipaddress -ne $null}
+$formattednetcfg = @()
+foreach ($adapter in $ActiveNetcfg)
+{
+    $thisadapter = New-Object psobject @{
+    interface_name = $adapter.description
+    dns_domain = $adapter.dnsdomain
+    default_gateway = $null
+    interface_index = $adapter.InterfaceIndex
+    }
+    
+    if ($adapter.defaultIPGateway)
+    {
+        $thisadapter.default_gateway = $adapter.DefaultIPGateway[0].ToString()
+    }
+    
+    $formattednetcfg += $thisadapter;$thisadapter = $null
+}
+
+Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
+
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME;
 Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
 Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
