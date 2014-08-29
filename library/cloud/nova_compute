@@ -22,7 +22,7 @@ import os
 
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient.v1_1 import floating_ips 
+    from novaclient.v1_1 import floating_ips
     from novaclient import exceptions
     from novaclient import utils
     import time
@@ -65,7 +65,7 @@ options:
    state:
      description:
         - Indicate desired state of the resource
-     choices: ['present', 'absent']
+     choices: ['present', 'absent', 'running', 'stopped']
      default: present
    name:
      description:
@@ -266,16 +266,30 @@ EXAMPLES = '''
       flavor_include: Performance
 '''
 
+def _power_server(module, nova, server):
+    state = module.params.get('state')
+    if server.status not in ('ACTIVE', 'SHUTOFF', 'SUSPENDED'):
+        module.fail_json(msg = "Server status is %s" % server.status)
 
+    if state == 'running':
+        if server.status == 'ACTIVE':
+            module.exit_json(changed = False, result = server.status)
+        else:
+            server.start()
+            module.exit_json(changed = True, result = 'started')
 
-def _delete_server(module, nova):
-    name = None
-    server_list = None
+    elif state == 'stopped':
+        if server.status in ('SHUTOFF', 'SUSPENDED'):
+            module.exit_json(changed = False, result = server.status)
+        else:
+            server.stop()
+            module.exit_json(changed = True, resulted = 'stopped')
+
+def _delete_server(module, nova, server):
+    if server == None:
+        module.exit_json(changed = False, result = 'not present')
     try:
-        server_list = nova.servers.list(True, {'name': module.params['name']})
-        if server_list:
-            server = [x for x in server_list if x.name == module.params['name']]
-            nova.servers.delete(server.pop())
+        nova.servers.delete(server)
     except Exception, e:
         module.fail_json( msg = "Error in deleting vm: %s" % e.message)
     if module.params['wait'] == 'no':
@@ -294,15 +308,15 @@ def _add_floating_ip_from_pool(module, nova, server):
     # instantiate FloatingIPManager object
     floating_ip_obj = floating_ips.FloatingIPManager(nova)
 
-    # empty dict and list 
-    usable_floating_ips = {} 
+    # empty dict and list
+    usable_floating_ips = {}
     pools = []
 
     # user specified
     pools = module.params['floating_ip_pools']
 
-    # get the list of all floating IPs. Mileage may 
-    # vary according to Nova Compute configuration 
+    # get the list of all floating IPs. Mileage may
+    # vary according to Nova Compute configuration
     # per cloud provider
     all_floating_ips = floating_ip_obj.list()
 
@@ -323,7 +337,7 @@ def _add_floating_ip_from_pool(module, nova, server):
         if not pool_ips:
             try:
                 new_ip = nova.floating_ips.create(pool)
-            except Exception, e: 
+            except Exception, e:
                 module.fail_json(msg = "Unable to create floating ip")
             pool_ips.append(new_ip.ip)
         # Add to the main list
@@ -378,9 +392,9 @@ def _add_floating_ip(module, nova, server):
     else:
         return server
 
-    # this may look redundant, but if there is now a 
+    # this may look redundant, but if there is now a
     # floating IP, then it needs to be obtained from
-    # a recent server object if the above code path exec'd 
+    # a recent server object if the above code path exec'd
     try:
         server = nova.servers.get(server.id)
     except Exception, e:
@@ -409,7 +423,16 @@ def _get_flavor_id(module, nova):
     return module.params['flavor_id']
 
 
-def _create_server(module, nova):
+def _create_server(module, nova, server):
+    if server:
+        if server.status != 'ACTIVE':
+            module.fail_json(msg = 'The VM is available but not Active. state:' + server.status)
+
+        (ip_changed, server) = _check_floating_ips(module, nova, server)
+        private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
+        public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
+        module.exit_json(changed = ip_changed, id = server.id, public_ip = ''.join(public), private_ip = ''.join(private), info = server._info)
+
     image_id = _get_image_id(module, nova)
     flavor_id = _get_flavor_id(module, nova)
     bootargs = [module.params['name'], image_id, flavor_id]
@@ -443,7 +466,7 @@ def _create_server(module, nova):
                 private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
                 public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
-                # now exit with info 
+                # now exit with info
                 module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
             if server.status == 'ERROR':
@@ -493,6 +516,7 @@ def _check_floating_ips(module, nova, server):
     return (changed, server)
 
 
+'''
 def _get_server_state(module, nova):
     server = None
     try:
@@ -518,8 +542,7 @@ def _get_server_state(module, nova):
     if module.params['state'] == 'absent':
         module.exit_json(changed = False, result = "not present")
     return True
-
-
+'''
 
 def main():
     argument_spec = openstack_argument_spec()
@@ -537,7 +560,10 @@ def main():
         meta                            = dict(default=None),
         wait                            = dict(default='yes', choices=['yes', 'no']),
         wait_for                        = dict(default=180),
-        state                           = dict(default='present', choices=['absent', 'present']),
+        state                           = dict(default='present', choices=['absent',
+                                                                           'present',
+                                                                           'running',
+                                                                           'stopped']),
         user_data                       = dict(default=None),
         config_drive                    = dict(default=False, type='bool'),
         auto_floating_ip                = dict(default=False, type='bool'),
@@ -568,15 +594,35 @@ def main():
     except exceptions.AuthorizationFailure, e:
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
-    if module.params['state'] == 'present':
+    # Try to get server object
+    try:
+        server = None
+        servers = nova.servers.list(True, {'name': module.params['name']})
+        if servers:
+            # the {'name': module.params['name']} will also return servers
+            # with names that partially match the server name, so we have to
+            # strictly filter here
+            servers = [x for x in servers if x.name == module.params['name']]
+            if servers:
+                server = servers[0]
+    except Exception, e:
+        module.fail_json(msg = "Error in getting the server list: %s" % e.message)
+
+    state = module.params.get('state')
+    if state in ( 'running', 'stopped' ):
+        if not server:
+            module.fail_json(msg = "Server must exist to power the server %s."
+                    %('up' if state == 'running' else 'down'))
+        else:
+            _power_server(module, nova, server)
+
+    if state == 'present':
         if not module.params['image_id'] and not module.params['image_name']:
             module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
         else:
-            _get_server_state(module, nova)
-            _create_server(module, nova)
+            _create_server(module, nova, server)
     if module.params['state'] == 'absent':
-        _get_server_state(module, nova)
-        _delete_server(module, nova)
+        _delete_server(module, nova, server)
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
