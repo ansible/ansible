@@ -1,4 +1,3 @@
-
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
 # still belong to the author of the module, and may assign their own license
@@ -55,25 +54,6 @@ Function Set-Attr($obj, $name, $value)
     $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
 }
 
-# Helper function to get an "attribute" from a psobject instance in powershell.
-# This is a convenience to make getting Members from an object easier and
-# slightly more pythonic
-# Example: $attr = Get-Attr $response "code" -default "1"
-Function Get-Attr($obj, $name, $default = $null)
-{
-    # Check if the provided Member $name exists in $obj and return it or the
-    # default
-    If ($obj.$name.GetType)
-    {
-        $obj.$name
-    }
-    Else
-    {
-        $default
-    }
-    return
-}
-
 # Helper function to convert a powershell object to JSON to echo it, exiting
 # the script
 # Example: Exit-Json $result
@@ -85,7 +65,7 @@ Function Exit-Json($obj)
         $obj = New-Object psobject
     }
 
-    echo $obj | ConvertTo-Json
+    echo $obj | ConvertTo-Json -Depth 99
     Exit
 }
 
@@ -109,8 +89,33 @@ Function Fail-Json($obj, $message = $null)
 
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
-    echo $obj | ConvertTo-Json
+    echo $obj | ConvertTo-Json -Depth 99
     Exit 1
+}
+
+# Helper function to get an "attribute" from a psobject instance in powershell.
+# This is a convenience to make getting Members from an object easier and
+# slightly more pythonic
+# Example: $attr = Get-Attr $response "code" -default "1"
+#Note that if you use the failifempty option, you do need to specify resultobject as well.
+Function Get-Attr($obj, $name, $default = $null,$resultobj, $failifempty=$false, $emptyattributefailmessage)
+{
+    # Check if the provided Member $name exists in $obj and return it or the
+    # default
+    If ($obj.$name.GetType)
+    {
+        $obj.$name
+    }
+    Elseif($failifempty -eq $false)
+    {
+        $default
+    }
+    else
+    {
+        if (!$emptyattributefailmessage) {$emptyattributefailmessage = "Missing required argument: $name"}
+        Fail-Json -obj $resultobj -message $emptyattributefailmessage
+    }
+    return
 }
 
 # Helper filter/pipeline function to convert a value to boolean following current
@@ -136,3 +141,4 @@ Function ConvertTo-Bool
     }
     return
 }
+
