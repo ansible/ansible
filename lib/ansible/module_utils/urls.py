@@ -204,6 +204,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
             paths_checked.append('/etc/ssl')
         elif platform == 'NetBSD':
             ca_certs.append('/etc/openssl/certs')
+        elif platform == 'SunOS':
+            paths_checked.append('/opt/local/etc/openssl/certs')
 
         # fall back to a user-deployed cert in a standard
         # location if the OS platform one is not available
