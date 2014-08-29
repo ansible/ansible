@@ -313,6 +313,7 @@ def _power_server(module, nova):
                 module.fail_json(msg = e.message)
 
 def _delete_server(module, nova):
+    server = _get_server(module, nova)
     if server == None:
         module.exit_json(changed = False, result = 'not present')
     try:
