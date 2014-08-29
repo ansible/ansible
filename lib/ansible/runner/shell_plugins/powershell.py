@@ -89,7 +89,10 @@ class ShellModule(object):
         script = '''
             If (Test-Path -PathType Leaf "%(path)s")
             {
-                (Get-FileHash -Path "%(path)s" -Algorithm MD5).Hash.ToLower();
+                $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
+                $fp = [System.IO.File]::Open("%(path)s", [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+                [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+                $fp.Dispose();
             }
             ElseIf (Test-Path -PathType Container "%(path)s")
             {
