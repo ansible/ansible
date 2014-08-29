@@ -23,6 +23,9 @@ New Modules:
 * cloud: rax_cdb_user - manages Rackspace Cloud Database users
 * monitoring: zabbix_maintaince - handles outage windows with Zabbix
 * monitoring: bigpanda - support for bigpanda
+* net_infrastructure: a10_server - manages server objects on A10 devices
+* net_infrastructure: a10_service_group - manages service group objects on A10 devices
+* net_infrastructure: a10_virtual_server - manages virtual server objects on A10 devices
 * system: getent - read getent databases
 
 Some other notable changes:
