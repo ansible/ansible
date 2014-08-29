@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Ansible module to manage A10 Networks slb server objects
+Ansible module to manage A10 Networks slb virtual server objects
 (c) 2014, Mischa Peters <mpeters@a10networks.com>
 
 This file is part of Ansible
@@ -23,14 +23,17 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
-module: a10_server
+module: a10_virtual_server
 version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
 description:
-    - Manage slb server objects on A10 Networks devices via aXAPI
+    - Manage slb virtual server objects on A10 Networks devices via aXAPI
 author: Mischa Peters
 notes:
     - Requires A10 Networks aXAPI 2.1
+requirements:
+    - urllib2
+    - re
 options:
   host:
     description:
@@ -53,63 +56,75 @@ options:
     default: null
     aliases: ['pass', 'pwd']
     choices: []
-  server_name:
+  virtual_server:
     description:
-      - slb server name
+      - slb virtual server name
     required: true
     default: null
-    aliases: ['server']
+    aliases: ['vip', 'virtual']
     choices: []
-  server_ip:
+  virtual_server_ip:
     description:
-      - slb server IP address
+      - slb virtual server ip address
     required: false
     default: null
     aliases: ['ip', 'address']
     choices: []
-  server_status:
+  virtual_server_status:
     description:
       - slb virtual server status
     required: false
     default: enable
     aliases: ['status']
     choices: ['enabled', 'disabled']
-  server_ports:
+  virtual_server_ports:
     description:
-      - A list of ports to create for the server. Each list item should be a
-        dictionary which specifies the C(port:) and C(protocol:), but can also optionally
-        specify the C(status:). See the examples below for details. This parameter is
-        required when C(state) is C(present).
+      - A list of ports to create for the virtual server. Each list item should be a
+        dictionary which specifies the C(port:) and C(type:), but can also optionally
+        specify the C(service_group:) as well as the C(status:). See the examples
+        below for details. This parameter is required when C(state) is C(present).
     required: false
-    default: null
-    aliases: []
-    choices: []
-  state:
+  write_config:
     description:
-      - create, update or remove slb server
+      - If C(yes), any changes will cause a write of the running configuration
+        to non-volatile memory. This will save I(all) configuration changes,
+        including those that may have been made manually or through other modules,
+        so care should be taken when specifying C(yes).
     required: false
-    default: present
-    aliases: []
-    choices: ['present', 'absent']
+    default: "no"
+    choices: ["yes", "no"]
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled devices using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+
 '''
 
 EXAMPLES = '''
-# Create a new server
-- a10_server: 
+# Create a new virtual server
+- a10_virtual_server: 
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
-    server: test
-    server_ip: 1.1.1.100
-    server_ports:
-      - port_num: 8080
-        protocol: tcp
-      - port_num: 8443
+    virtual_server: vserver1
+    virtual_server_ip: 1.1.1.1
+    virtual_server_ports:
+      - port: 80
         protocol: TCP
+        service_group: sg-80-tcp
+      - port: 443
+        protocol: HTTPS
+        service_group: sg-443-https
+      - port: 8080
+        protocol: http
+        status: disabled
 
 '''
 
-VALID_PORT_FIELDS = ['port_num', 'protocol', 'status']
+VALID_PORT_FIELDS = ['port', 'protocol', 'service_group', 'status']
 
 def validate_ports(module, ports):
     for item in ports:
@@ -118,24 +133,24 @@ def validate_ports(module, ports):
                 module.fail_json(msg="invalid port field (%s), must be one of: %s" % (key, ','.join(VALID_PORT_FIELDS)))
 
         # validate the port number is present and an integer
-        if 'port_num' in item:
+        if 'port' in item:
             try:
-                item['port_num'] = int(item['port_num'])
+                item['port'] = int(item['port'])
             except:
-                module.fail_json(msg="port_num entries in the port definitions must be integers")
+                module.fail_json(msg="port definitions must be integers")
         else:
-            module.fail_json(msg="port definitions must define the port_num field")
+            module.fail_json(msg="port definitions must define the port field")
 
         # validate the port protocol is present, and convert it to
         # the internal API integer value (and validate it)
         if 'protocol' in item:
-            protocol = axapi_get_port_protocol(item['protocol'])
+            protocol = axapi_get_vport_protocol(item['protocol'])
             if not protocol:
-                module.fail_json(msg="invalid port protocol, must be one of: %s" % ','.join(AXAPI_PORT_PROTOCOLS))
+                module.fail_json(msg="invalid port protocol, must be one of: %s" % ','.join(AXAPI_VPORT_PROTOCOLS))
             else:
                 item['protocol'] = protocol
         else:
-            module.fail_json(msg="port definitions must define the port protocol (%s)" % ','.join(AXAPI_PORT_PROTOCOLS))
+            module.fail_json(msg="port definitions must define the port protocol (%s)" % ','.join(AXAPI_VPORT_PROTOCOLS))
 
         # convert the status to the internal API integer value
         if 'status' in item:
@@ -143,6 +158,9 @@ def validate_ports(module, ports):
         else:
             item['status'] = 1
 
+        # ensure the service_group field is at least present
+        if 'service_group' not in item:
+            item['service_group'] = ''
 
 def main():
     argument_spec = a10_argument_spec()
@@ -150,10 +168,10 @@ def main():
     argument_spec.update(
         dict(
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            server_name=dict(type='str', aliases=['server'], required=True),
-            server_ip=dict(type='str', aliases=['ip', 'address']),
-            server_status=dict(type='str', default='enabled', aliases=['status'], choices=['enabled', 'disabled']),
-            server_ports=dict(type='list', aliases=['port'], default=[]),
+            virtual_server=dict(type='str', aliases=['vip', 'virtual'], required=True),
+            virtual_server_ip=dict(type='str', aliases=['ip', 'address'], required=True),
+            virtual_server_status=dict(type='str', default='enabled', aliases=['status'], choices=['enabled', 'disabled']),
+            virtual_server_ports=dict(type='list', required=True),
         )
     )
 
@@ -167,41 +185,52 @@ def main():
     password = module.params['password']
     state = module.params['state']
     write_config = module.params['write_config']
-    slb_server = module.params['server_name']
-    slb_server_ip = module.params['server_ip']
-    slb_server_status = module.params['server_status']
-    slb_server_ports = module.params['server_ports']
+    slb_virtual = module.params['virtual_server']
+    slb_virtual_ip = module.params['virtual_server_ip']
+    slb_virtual_status = module.params['virtual_server_status']
+    slb_virtual_ports = module.params['virtual_server_ports']
 
-    if slb_server is None:
-        module.fail_json(msg='server_name is required')
+    if slb_virtual is None:
+        module.fail_json(msg='virtual_server is required')
+
+    validate_ports(module, slb_virtual_ports)
 
     axapi_base_url = 'https://%s/services/rest/V2.1/?format=json' % host
     session_url = axapi_authenticate(module, axapi_base_url, username, password)
 
-    # validate the ports data structure
-    validate_ports(module, slb_server_ports)
-
-    json_post = {
-        'server': {
-            'name': slb_server, 
-            'host': slb_server_ip, 
-            'status': axapi_enabled_disabled(slb_server_status),
-            'port_list': slb_server_ports,
-        }
-    }
-
-    slb_server_data = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': slb_server}))
-    slb_server_exists = not axapi_failure(slb_server_data)
+    slb_virtual_data = axapi_call(module, session_url + '&method=slb.virtual_server.search', json.dumps({'name': slb_virtual}))
+    slb_virtual_exists = not axapi_failure(slb_virtual_data)
 
     changed = False
     if state == 'present':
-        if not slb_server_ip:
-            module.fail_json(msg='you must specify an IP address when creating a server')
+        json_post = {
+            'virtual_server': {
+                'name': slb_virtual,
+                'address': slb_virtual_ip,
+                'status': axapi_enabled_disabled(slb_virtual_status),
+                'vport_list': slb_virtual_ports,
+            }
+        }
 
-        if not slb_server_exists:
-            result = axapi_call(module, session_url + '&method=slb.server.create', json.dumps(json_post))
+        # before creating/updating we need to validate that any
+        # service groups defined in the ports list exist since
+        # since the API will still create port definitions for
+        # them while indicating a failure occurred
+        checked_service_groups = []
+        for port in slb_virtual_ports:
+            if 'service_group' in port and port['service_group'] not in checked_service_groups:
+                # skip blank service group entries
+                if port['service_group'] == '':
+                    continue
+                result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': port['service_group']}))
+                if axapi_failure(result):
+                    module.fail_json(msg="the service group %s specified in the ports list does not exist" % port['service_group'])
+                checked_service_groups.append(port['service_group'])
+
+        if not slb_virtual_exists:
+            result = axapi_call(module, session_url + '&method=slb.virtual_server.create', json.dumps(json_post))
             if axapi_failure(result):
-                module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])
+                module.fail_json(msg="failed to create the virtual server: %s" % result['response']['err']['msg'])
             changed = True
         else:
             def needs_update(src_ports, dst_ports):
@@ -214,7 +243,7 @@ def main():
                     found = False
                     different = False
                     for dst_port in dst_ports:
-                        if src_port['port_num'] == dst_port['port_num']:
+                        if src_port['port'] == dst_port['port']:
                             found = True
                             for valid_field in VALID_PORT_FIELDS:
                                 if src_port[valid_field] != dst_port[valid_field]:
@@ -227,29 +256,29 @@ def main():
                 # every port from the src exists in the dst, and none of them were different
                 return False
 
-            defined_ports = slb_server_data.get('server', {}).get('port_list', [])
+            defined_ports = slb_virtual_data.get('virtual_server', {}).get('vport_list', [])
 
             # we check for a needed update both ways, in case ports
             # are missing from either the ones specified by the user
             # or from those on the device
-            if needs_update(defined_ports, slb_server_ports) or needs_update(slb_server_ports, defined_ports):
-                result = axapi_call(module, session_url + '&method=slb.server.update', json.dumps(json_post))
+            if needs_update(defined_ports, slb_virtual_ports) or needs_update(slb_virtual_ports, defined_ports):
+                result = axapi_call(module, session_url + '&method=slb.virtual_server.update', json.dumps(json_post))
                 if axapi_failure(result):
-                    module.fail_json(msg="failed to update the server: %s" % result['response']['err']['msg'])
+                    module.fail_json(msg="failed to create the virtual server: %s" % result['response']['err']['msg'])
                 changed = True
 
         # if we changed things, get the full info regarding
         # the service group for the return data below
         if changed:
-            result = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': slb_server}))
+            result = axapi_call(module, session_url + '&method=slb.virtual_server.search', json.dumps({'name': slb_virtual}))
         else:
-            result = slb_server_data
+            result = slb_virtual_data
     elif state == 'absent':
-        if slb_server_exists:
-            result = axapi_call(module, session_url + '&method=slb.server.delete', json.dumps({'name': slb_server}))
+        if slb_virtual_exists:
+            result = axapi_call(module, session_url + '&method=slb.virtual_server.delete', json.dumps({'name': slb_virtual}))
             changed = True
         else:
-            result = dict(msg="the  server was not present")
+            result = dict(msg="the virtual server was not present")
 
     # if the config has changed, save the config unless otherwise requested
     if changed and write_config:
@@ -267,3 +296,4 @@ from ansible.module_utils.urls import *
 from ansible.module_utils.a10 import *
 
 main()
+
