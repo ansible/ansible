@@ -30,4 +30,7 @@ EXAMPLES = """
 - include_defaults: webserver_config.yml
   when: has_webserver
 
+# Include the defaults defined by another role
+- include_defaults: roles/webserver/defaults/main.yml
+
 """

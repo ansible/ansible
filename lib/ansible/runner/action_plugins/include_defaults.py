@@ -18,8 +18,6 @@
 # Why is this not working?
 # import ansible.runner.action_plugins.include_vars as iv
 
-# class ActionModule(iv.ActionModule):
-#     _target = 'defaults'
 
 import os
 from ansible.utils import template
