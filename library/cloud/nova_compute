@@ -357,13 +357,13 @@ def _add_floating_ip(module, nova, server):
     return server
 
 
-def _get_image_id(module, nova):
+def _get_image_id(module, cloud):
     if module.params['image_name']:
-        for image in nova.images.list():
-            if (module.params['image_name'] in image.name and (
+        for (image_id, image_name) in cloud.list_images().items():
+            if (module.params['image_name'] in image_name and (
                     not module.params['image_exclude']
-                    or module.params['image_exclude'] not in image.name)):
-                return image.id
+                    or module.params['image_exclude'] not in image_name)):
+                return image_id
         module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
     return module.params['image_id']
 
@@ -378,8 +378,8 @@ def _get_flavor_id(module, nova):
     return module.params['flavor_id']
 
 
-def _create_server(module, nova):
-    image_id = _get_image_id(module, nova)
+def _create_server(module, cloud, nova):
+    image_id = _get_image_id(module, cloud)
     flavor_id = _get_flavor_id(module, nova)
     bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
@@ -525,14 +525,15 @@ def main():
     )
 
     try:
-        nova = openstack_cloud_from_module(module).nova_client
+        cloud = openstack_cloud_from_module(module)
+        nova = cloud.nova_client
 
         if module.params['state'] == 'present':
             if not module.params['image_id'] and not module.params['image_name']:
                 module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
             else:
                 _get_server_state(module, nova)
-                _create_server(module, nova)
+                _create_server(module, cloud, nova)
         if module.params['state'] == 'absent':
             _get_server_state(module, nova)
             _delete_server(module, nova)
