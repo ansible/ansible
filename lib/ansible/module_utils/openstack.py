@@ -29,11 +29,24 @@
 import os
 
 HAVE_NOVACLIENT = True
+HAVE_GLANCECLIENT = True
+HAVE_KEYSTONECLIENT = True
+
 try:
     from novaclient.v1_1 import client as nova_client
     from novaclient import exceptions as nova_exceptions
 except:
     HAVE_NOVACLIENT = False
+
+try:
+    from keystoneclient.v2_0 import client as keystone_client
+except:
+    HAVE_KEYSTONECLIENT = False
+
+try:
+    import glanceclient
+except ImportError:
+    HAVE_GLANCECLIENT = False
 
 OPENSTACK_OPTIONS = '''
    login_username:
@@ -67,6 +80,12 @@ OPENSTACK_OPTIONS = '''
      required: false
      default: None
      version_added: "1.8"
+   endpoint_type:
+     description:
+        - endpoint URL type
+     choices: [publicURL, internalURL]
+     required: false
+     default: publicURL
 '''
 
 
@@ -85,6 +104,7 @@ def openstack_argument_spec():
         auth_url                        = dict(default=OS_AUTH_URL),
         region_name                     = dict(default=OS_REGION_NAME),
         availability_zone               = dict(default=None),
+        endpoint_type                   = dict(default='publicURL', choices=['publicURL', 'internalURL']),
     )
     if OS_PASSWORD:
         spec['login_password'] = dict(default=OS_PASSWORD)
@@ -118,6 +138,7 @@ def openstack_cloud_from_module(module, name='openstack'):
         project_id=module.params['login_tenant_name'],
         auth_url=module.params['auth_url'],
         region_name=module.params['region_name'],
+        endpoint_type=module.params['endpoint_type'],
         service_type='compute')
 
 
@@ -129,11 +150,9 @@ class OpenStackCloud(object):
 
     def __init__(self, name, username, password, project_id, auth_url,
                  region_name, service_type, insecure, private=False,
-                 image_cache=dict(), flavor_cache=None):
+                 endpoint_type='publicURL', image_cache=None,
+                 flavor_cache=None):
 
-        if not HAVE_NOVACLIENT:
-            raise OpenStackCloudException(
-                "novaclient is required. Install python-novaclient and try again")
         self.name = name
         self.username = username
         self.password = password
@@ -142,11 +161,18 @@ class OpenStackCloud(object):
         self.region_name = region_name
         self.service_type = service_type
         self.insecure = insecure
+<<<<<<< HEAD
         self.private = private
         self.image_cache = image_cache
+=======
+        self.endpoint_type = endpoint_type
+        self._image_cache = image_cache
+>>>>>>> fe05bea... Add glance support to OpenStackCloud
         self.flavor_cache = flavor_cache
 
         self._nova_client = None
+        self._glance_client = None
+        self._keystone_client = None
 
     def get_name(self):
         return self.name
@@ -161,6 +187,9 @@ class OpenStackCloud(object):
 
     @property
     def nova_client(self):
+        if not HAVE_NOVACLIENT:
+            raise OpenStackCloudException(
+                "novaclient is required. Install python-novaclient and try again")
         if self._nova_client is None:
             # Make the connection
             self._nova_client = nova_client.Client(
@@ -189,6 +218,49 @@ class OpenStackCloud(object):
 
         return self._nova_client
 
+    @property
+    def keystone_client(self):
+        if not HAVE_KEYSTONECLIENT:
+            raise OpenStackCloudException(
+                "keystoneclient is required. Install python-keystoneclient and try again")
+
+        if self._keystone_client is None:
+            try:
+                self._keystone_client = keystone_client.Client(
+                        username=self.username,
+                        password=self.password,
+                        tenant_name=self.project_id,
+                        region_name=self.region_name,
+                        auth_url=self.auth_url)
+            except Exception as e:
+                raise OpenStackCloudException("Error authenticating to the keystone: %s " % e.message)
+        return self._keystone_client
+
+    @property
+    def glance_client(self):
+        if not HAVE_GLANCECLIENT:
+            raise OpenStackCloudException(
+                "glanceclient is required. Install python-glanceclient and try again")
+        if self._glance_client is None:
+            token = self.keystone_client.auth_token
+            endpoint = self.get_endpoint(service_type='image')
+            try:
+                self._glance_client = glanceclient.Client('1', endpoint, token=token)
+            except Exception as e:
+                raise OpenStackCloudException("Error in connecting to glance: %s" % e.message)
+            if self._glance_client is None:
+                raise OpenStackCloudException("Error connecting to glance")
+        return self._glance_client
+
+    def get_endpoint(self, service_type):
+        try:
+            endpoint = self.keystone_client.service_catalog.url_for(
+                service_type=service_type, endpoint_type=self.endpoint_type)
+        except Exception as e:
+            raise OpenStackCloudException(
+                "Error getting %s endpoint: %s" % (service_type, e.message))
+        return endpoint
+
     def list_servers(self):
         return self.nova_client.servers.list()
 
@@ -201,10 +273,33 @@ class OpenStackCloud(object):
     def delete_keypair(self, name):
         return self.nova_client.keypairs.delete(name)
 
+    def _get_images_from_cloud(self):
+        # First, try to actually get images from glance, it's more efficient
+        images = dict()
+        try:
+            # This can fail both because we don't have glanceclient installed
+            # and because the cloud may not expose the glance API publically
+            for image in self.glance_client.images.list():
+                images[image.id] = image.name
+        except Exception:
+            # We didn't have glance, let's try nova
+            # If this doesn't work - we just let the exception propagate
+            for image in self.nova_client.images.list():
+                images[image.id] = image.name
+        return images
+
+    def list_images(self):
+        if self._image_cache is None:
+            self._image_cache = self._get_images_from_cloud()
+        return self._image_cache()
+
     def get_image_name(self, image_id):
-        if image_id not in self.image_cache:
-            try:
-                self.image_cache[image_id] = self.nova_client.images.get(image_id).name
-            except Exception:
-                self.image_cache[image_id] = None
+        if image_id not in self.list_images():
+            self._image_cache[image_id] = None
         return self.image_cache[image_id]
+
+    def get_image_id(self, image_name):
+        for (image_id, name) in self.list_images().items():
+            if name == image_name:
+                return image_id
+        return None
