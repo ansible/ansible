@@ -556,7 +556,7 @@ def main():
     )
 
     try:
-        nova = openstack_cloud_from_module(module)
+        nova = openstack_cloud_from_module(module).nova_client
 
         if module.params['state'] == 'present':
             if not module.params['image_id'] and not module.params['image_name']:
