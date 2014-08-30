@@ -31,7 +31,7 @@ import os
 HAVE_NOVACLIENT = True
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions
+    from novaclient import exceptions as nova_exceptions
 except:
     HAVE_NOVACLIENT = False
 
@@ -100,6 +100,8 @@ class OpenStackCloud(object):
         self.image_cache = image_cache
         self.flavor_cache = flavor_cache
 
+        self._nova_client = None
+
     @classmethod
     def from_module(klass, module):
         return klass(
@@ -119,44 +121,55 @@ class OpenStackCloud(object):
 
     def get_flavor_name(self, flavor_id):
         if not self.flavor_cache:
-            self.flavor_cache = dict([(flavor.id, flavor.name) for flavor in self.client.flavors.list()])
+            self.flavor_cache = dict([(flavor.id, flavor.name) for flavor in self.nova_client.flavors.list()])
         return self.flavor_cache.get(flavor_id, None)
 
-    def connect(self):
-        # Make the connection
-        self.client = nova_client.Client(
-            self.username,
-            self.password,
-            self.project_id,
-            self.auth_url,
-            region_name=self.region_name,
-            service_type=self.service_type,
-            insecure=self.insecure
-        )
+    @property
+    def nova_client(self):
+        if self._nova_client is None:
+            # Make the connection
+            self._nova_client = nova_client.Client(
+                self.username,
+                self.password,
+                self.project_id,
+                self.auth_url,
+                region_name=self.region_name,
+                service_type=self.service_type,
+                insecure=self.insecure
+            )
 
-        try:
-            self.client.authenticate()
-        except exceptions.Unauthorized, e:
-            raise OpenStackAnsibleException(
-                "Invalid OpenStack Nova credentials.: %s" % e.message)
-        except exceptions.AuthorizationFailure, e:
-            raise OpenStackAnsibleException(
-                "Unable to authorize user: %s" % e.message)
+            try:
+                self._nova_client.authenticate()
+            except nova_exceptions.Unauthorized, e:
+                raise OpenStackAnsibleException(
+                    "Invalid OpenStack Nova credentials.: %s" % e.message)
+            except nova_exceptions.AuthorizationFailure, e:
+                raise OpenStackAnsibleException(
+                    "Unable to authorize user: %s" % e.message)
 
-        if self.client is None:
-            raise OpenStackAnsibleException(
-                "Failed to instantiate nova client. This could mean that your"
-                " credentials are wrong.")
+            if self._nova_client is None:
+                raise OpenStackAnsibleException(
+                    "Failed to instantiate nova client. This could mean that your"
+                    " credentials are wrong.")
 
-        return self.client
+        return self._nova_client
 
     def list_servers(self):
-        return self.client.servers.list()
+        return self.nova_client.servers.list()
+
+    def list_keypairs(self):
+        return self.nova_client.keypairs.list()
+
+    def create_keypair(self, name, public_key):
+        return self.nova_client.keypairs.create(name, public_key)
+
+    def delete_keypair(self, name):
+        return self.nova_client.keypairs.delete(name)
 
     def get_image_name(self, image_id):
         if image_id not in self.image_cache:
             try:
-                self.image_cache[image_id] = self.client.images.get(image_id).name
+                self.image_cache[image_id] = self.nova_client.images.get(image_id).name
             except Exception:
                 self.image_cache[image_id] = None
         return self.image_cache[image_id]

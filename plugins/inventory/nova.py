@@ -149,11 +149,6 @@ class NovaInventory(object):
         hostvars = collections.defaultdict(dict)
 
         for cloud in self.clouds:
-            try:
-                cloud.connect()
-            except OpenStackAnsibleException as e:
-                print(e.message)
-                sys.exit(1)
             region = cloud.get_region()
             cloud_name = cloud.get_name()
 
@@ -276,11 +271,15 @@ def parse_args():
 
 def main():
     args = parse_args()
-    inventory = NovaInventory(args.private, args.refresh)
-    if args.list:
-        inventory.list_instances()
-    elif args.host:
-        inventory.get_host(args.host)
+    try:
+        inventory = NovaInventory(args.private, args.refresh)
+        if args.list:
+            inventory.list_instances()
+        elif args.host:
+            inventory.get_host(args.host)
+    except OpenStackAnsibleException as e:
+        print(e.message)
+        sys.exit(1)
     sys.exit(0)
 
 

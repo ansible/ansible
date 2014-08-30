@@ -557,19 +557,18 @@ def main():
 
     try:
         nova = OpenStackCloud.from_module(module)
-        nova.connect()
+
+        if module.params['state'] == 'present':
+            if not module.params['image_id'] and not module.params['image_name']:
+                module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
+            else:
+                _get_server_state(module, nova)
+                _create_server(module, nova)
+        if module.params['state'] == 'absent':
+            _get_server_state(module, nova)
+            _delete_server(module, nova)
     except OpenStackAnsibleException as e:
         module.fail_json(msg=e.message)
-
-    if module.params['state'] == 'present':
-        if not module.params['image_id'] and not module.params['image_name']:
-            module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
-        else:
-            _get_server_state(module, nova)
-            _create_server(module, nova)
-    if module.params['state'] == 'absent':
-        _get_server_state(module, nova)
-        _delete_server(module, nova)
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
