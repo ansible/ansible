@@ -535,6 +535,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 display(msg, color='green', runner=self.runner)
             else:
                 display(msg, color='yellow', runner=self.runner)
+        if constants.COMMAND_WARNINGS and 'warnings' in host_result2 and host_result2['warnings']:
+            for warning in host_result2['warnings']:
+                display("warning: %s" % warning, color='purple', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_skipped(self, host, item=None):

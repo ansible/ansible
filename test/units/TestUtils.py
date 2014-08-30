@@ -484,21 +484,20 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.boolean(0), False)
         self.assertEqual(ansible.utils.boolean("foo"), False)
 
-    #def test_make_sudo_cmd(self):
-    #    cmd = ansible.utils.make_sudo_cmd('root', '/bin/sh', '/bin/ls')
-    #    self.assertTrue(isinstance(cmd, tuple))
-    #    self.assertEqual(len(cmd), 3)
-    #    self.assertTrue('-u root' in cmd[0])
-    #    self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
-    #    self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
-    #    self.assertTrue('sudo -k' in cmd[0])
+    def test_make_sudo_cmd(self):
+        cmd = ansible.utils.make_sudo_cmd('root', '/bin/sh', '/bin/ls')
+        self.assertTrue(isinstance(cmd, tuple))
+        self.assertEqual(len(cmd), 3)
+        self.assertTrue('-u root' in cmd[0])
+        self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
+        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('sudo -k' in cmd[0])
 
     def test_make_su_cmd(self):
         cmd = ansible.utils.make_su_cmd('root', '/bin/sh', '/bin/ls')
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('root -c "/bin/sh' in cmd[0] or ' root -c /bin/sh' in cmd[0])
-        self.assertTrue(re.compile(cmd[1]))
         self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
 
     def test_to_unicode(self):
@@ -825,13 +824,23 @@ class TestUtils(unittest.TestCase):
                 }
             ),
             (
-                # test that http://github URLs are assumed git+http://
+                # test that http://github URLs are assumed git+http:// unless they end in .tar.gz
                 "http://github.com/ansible/fakerole/fake",
                 {
                     'scm' : 'git',
                     'src' : 'http://github.com/ansible/fakerole/fake',
-                    'version' : '', 
+                    'version' : 'master', 
                     'name' : 'fake'
+                }
+            ),
+            (
+                # test that http://github URLs are assumed git+http:// unless they end in .tar.gz
+                "http://github.com/ansible/fakerole/fake/archive/master.tar.gz",
+                {
+                    'scm' : None,
+                    'src' : 'http://github.com/ansible/fakerole/fake/archive/master.tar.gz',
+                    'version' : '', 
+                    'name' : 'master'
                 }
             )
             ]

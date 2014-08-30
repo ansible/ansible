@@ -36,14 +36,14 @@ Branch Info
 
    * Releases are named after Van Halen songs.
    * The devel branch corresponds to the release actively under development.
-   * Various release-X.Y branches exist for previous releases
+   * Various release-X.Y branches exist for previous releases.
    * We'd love to have your contributions, read "CONTRIBUTING.md" for process notes.
 
 Author
 ======
 
 Ansible was created by Michael DeHaan (michael@ansible.com) and has contributions from over
-700 users (and growing).  Thanks everyone!
+800 users (and growing).  Thanks everyone!
 
 [Ansible, Inc](http://ansible.com)
 

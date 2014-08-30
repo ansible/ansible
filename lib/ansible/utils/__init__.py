@@ -28,6 +28,7 @@ from ansible import errors
 from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
+from ansible.utils.su_prompts import *
 from ansible.callbacks import display
 from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
@@ -59,6 +60,7 @@ MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 PRINT_CODE_REGEX = re.compile(r'(?:{[{%]|[%}]})')
 CODE_REGEX = re.compile(r'(?:{%|%})')
+
 
 try:
     import json
@@ -108,6 +110,7 @@ try:
         KEYCZAR_AVAILABLE=True
 except ImportError:
     pass
+
 
 ###############################################################
 # Abstractions around keyczar
@@ -320,6 +323,9 @@ def path_dwim(basedir, given):
     make relative paths work like folks expect.
     '''
 
+    if given.startswith("'"):
+        given = given[1:-1]
+
     if given.startswith("/"):
         return os.path.abspath(given)
     elif given.startswith("~"):
@@ -384,14 +390,15 @@ def role_spec_parse(role_spec):
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
-    # FIXME: coding guidelines want this as a list comprehension
-    tokens = map(lambda s: s.strip(), role_spec.split(','))
+    tokens = [s.strip() for s in role_spec.split(',')]
+    
+    if not tokens[0].endswith('.tar.gz'): 
+        # pick a reasonable default branch
+        role_version = 'master'
 
     # assume https://github.com URLs are git+https:// URLs and not
-    # tarballs
-    print "0=%s" % tokens[0]
-    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+"):
-        print "DONE!"
+    # tarballs unless they end in '.zip'
+    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
         tokens[0] = 'git+' + tokens[0]
 
     if '+' in tokens[0]:
@@ -409,7 +416,7 @@ def role_spec_parse(role_spec):
 
 
 def role_yaml_parse(role):
-    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"]:
+    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
         role["src"] = "git+" + role["src"]
     if '+' in role["src"]:
         (scm, src) = role["src"].split('+')
@@ -538,6 +545,18 @@ def parse_json(raw_data, from_remote=False, from_inventory=False):
 
     return results
 
+def serialize_args(args):
+    '''
+    Flattens a dictionary args to a k=v string
+    '''
+    module_args = ""
+    for (k,v) in args.iteritems():
+        if isinstance(v, basestring):
+            module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+        elif isinstance(v, bool):
+            module_args = "%s=%s %s" % (k, str(v), module_args)
+    return module_args.strip()
+
 def merge_module_args(current_args, new_args):
     '''
     merges either a dictionary or string of k=v pairs with another string of k=v pairs,
@@ -552,14 +571,7 @@ def merge_module_args(current_args, new_args):
     elif isinstance(new_args, basestring):
         new_args_kv = parse_kv(new_args)
         final_args.update(new_args_kv)
-    # then we re-assemble into a string
-    module_args = ""
-    for (k,v) in final_args.iteritems():
-        if isinstance(v, basestring):
-            module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
-        elif isinstance(v, bool):
-            module_args = "%s=%s %s" % (k, str(v), module_args)
-    return module_args.strip()
+    return serialize_args(final_args)
 
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
@@ -1177,13 +1189,12 @@ def make_su_cmd(su_user, executable, cmd):
     """
     # TODO: work on this function
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-    prompt = '[Pp]assword: ?$'
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s %s %s -c "%s -c %s"' % (
         C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
-    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
+    return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
 
 _TO_UNICODE_TYPES = (unicode, type(None))
 
