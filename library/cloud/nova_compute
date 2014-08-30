@@ -536,7 +536,7 @@ def main():
         if module.params['state'] == 'absent':
             _get_server_state(module, nova)
             _delete_server(module, nova)
-    except OpenStackAnsibleException as e:
+    except OpenStackCloudException as e:
         module.fail_json(msg=e.message)
 
 # this is magic, see lib/ansible/module_common.py

@@ -277,7 +277,7 @@ def main():
             inventory.list_instances()
         elif args.host:
             inventory.get_host(args.host)
-    except OpenStackAnsibleException as e:
+    except OpenStackCloudException as e:
         print(e.message)
         sys.exit(1)
     sys.exit(0)

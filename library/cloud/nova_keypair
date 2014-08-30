@@ -91,7 +91,7 @@ def main():
                         module.fail_json(msg = "The keypair deletion has failed: %s" % e.message)
                     module.exit_json( changed = True, result = "deleted")
             module.exit_json(changed = False, result = "not present")
-    except OpenStackAnsibleException as e:
+    except OpenStackCloudException as e:
         module.fail_json(msg=e.message)
 
 # this is magic, see lib/ansible/module.params['common.py

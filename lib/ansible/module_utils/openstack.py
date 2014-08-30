@@ -121,7 +121,7 @@ def openstack_cloud_from_module(module, name='openstack'):
         service_type='compute')
 
 
-class OpenStackAnsibleException(Exception):
+class OpenStackCloudException(Exception):
     pass
 
 
@@ -132,7 +132,7 @@ class OpenStackCloud(object):
                  image_cache=dict(), flavor_cache=None):
 
         if not HAVE_NOVACLIENT:
-            raise OpenStackAnsibleException(
+            raise OpenStackCloudException(
                 "novaclient is required. Install python-novaclient and try again")
         self.name = name
         self.username = username
@@ -176,14 +176,14 @@ class OpenStackCloud(object):
             try:
                 self._nova_client.authenticate()
             except nova_exceptions.Unauthorized, e:
-                raise OpenStackAnsibleException(
+                raise OpenStackCloudException(
                     "Invalid OpenStack Nova credentials.: %s" % e.message)
             except nova_exceptions.AuthorizationFailure, e:
-                raise OpenStackAnsibleException(
+                raise OpenStackCloudException(
                     "Unable to authorize user: %s" % e.message)
 
             if self._nova_client is None:
-                raise OpenStackAnsibleException(
+                raise OpenStackCloudException(
                     "Failed to instantiate nova client. This could mean that your"
                     " credentials are wrong.")
 
