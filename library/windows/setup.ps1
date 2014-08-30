@@ -66,4 +66,11 @@ $ips = @()
 Foreach ($ip in $netcfg.IPAddress) { If ($ip) { $ips += $ip } }
 Set-Attr $result.ansible_facts "ansible_ip_addresses" $ips
 
+$psversion = $PSVersionTable.PSVersion.Major
+$winrm_cert_expiry = Get-ChildItem -Path Cert:\LocalMachine\My | where Subject -EQ "CN=$env:COMPUTERNAME" | select NotAfter
+
+Set-Attr $result.ansible_facts "ansible_powershell_version" $psversion
+Set-Attr $result.ansible_facts "ansible_winrm_certificate_expires" $winrm_cert_expiry.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
+
+
 Exit-Json $result;
