@@ -555,18 +555,11 @@ def main():
         ],
     )
 
-    nova = nova_client.Client(module.params['login_username'],
-                              module.params['login_password'],
-                              module.params['login_tenant_name'],
-                              module.params['auth_url'],
-                              region_name=module.params['region_name'],
-                              service_type='compute')
     try:
-        nova.authenticate()
-    except exceptions.Unauthorized, e:
-        module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exceptions.AuthorizationFailure, e:
-        module.fail_json(msg = "Unable to authorize user: %s" % e.message)
+        nova = OpenStackCloud.from_module(module)
+        nova.connect()
+    except OpenStackAnsibleException as e:
+        module.fail_json(msg=e.message)
 
     if module.params['state'] == 'present':
         if not module.params['image_id'] and not module.params['image_name']:

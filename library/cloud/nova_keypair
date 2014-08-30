@@ -17,12 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions as exc
-    import time
-except ImportError:
-    print("failed=True msg='novaclient is required for this module to work'")
+import time
 
 DOCUMENTATION = '''
 ---
@@ -95,18 +90,11 @@ def main():
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
-    nova = nova_client.Client(module.params['login_username'],
-                              module.params['login_password'],
-                              module.params['login_tenant_name'],
-                              module.params['auth_url'],
-                              region_name=module.params['region_name'],
-                              service_type='compute')
     try:
-        nova.authenticate()
-    except exc.Unauthorized, e:
-        module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exc.AuthorizationFailure, e:
-        module.fail_json(msg = "Unable to authorize user: %s" % e.message)
+        nova = OpenStackCloud.from_module(module)
+        nova.connect()
+    except OpenStackAnsibleException as e:
+        module.fail_json(msg=e.message)
 
     if module.params['state'] == 'present':
         for key in nova.keypairs.list():

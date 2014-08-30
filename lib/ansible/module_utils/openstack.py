@@ -100,6 +100,17 @@ class OpenStackCloud(object):
         self.image_cache = image_cache
         self.flavor_cache = flavor_cache
 
+    @classmethod
+    def from_module(klass, module):
+        return klass(
+            name='openstack',
+            username=module.params['login_username'],
+            password=module.params['login_password'],
+            project_id=module.params['login_tenant_name'],
+            auth_url=module.params['auth_url'],
+            region_name=module.params['region_name'],
+            service_type='compute')
+
     def get_name(self):
         return self.name
 
