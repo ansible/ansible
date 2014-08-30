@@ -26,6 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 import os
 
 HAVE_NOVACLIENT = True
@@ -138,7 +139,8 @@ def openstack_cloud_from_module(module, name='openstack'):
         project_id=module.params['login_tenant_name'],
         auth_url=module.params['auth_url'],
         region_name=module.params['region_name'],
-        endpoint_type=module.params['endpoint_type'])
+        endpoint_type=module.params['endpoint_type'],
+        token=module.params.get('token', None))
 
 
 class OpenStackCloudException(Exception):
@@ -150,7 +152,7 @@ class OpenStackCloud(object):
     def __init__(self, name, username, password, project_id, auth_url,
                  region_name, nova_service_type='compute',
                  private=False, insecure=False,
-                 endpoint_type='publicURL', image_cache=None,
+                 endpoint_type='publicURL', token=None, image_cache=None,
                  flavor_cache=None):
 
         self.name = name
@@ -163,6 +165,7 @@ class OpenStackCloud(object):
         self.insecure = insecure
         self.private = private
         self.endpoint_type = endpoint_type
+        self.token = token
         self._image_cache = image_cache
         self.flavor_cache = flavor_cache
 
@@ -221,13 +224,23 @@ class OpenStackCloud(object):
                 "keystoneclient is required. Install python-keystoneclient and try again")
 
         if self._keystone_client is None:
+            # keystoneclient does crazy things with logging that are
+            # none of them interesting
+            keystone_logging = logging.getLogger('keystoneclient')
+            keystone_logging.addHandler(logging.NullHandler())
+
             try:
-                self._keystone_client = keystone_client.Client(
-                        username=self.username,
-                        password=self.password,
-                        tenant_name=self.project_id,
-                        region_name=self.region_name,
-                        auth_url=self.auth_url)
+                if self.token:
+                    self._keystone_client = keystone_client.Client(
+                            endpoint=self.auth_url,
+                            token=self.token)
+                else:
+                    self._keystone_client = keystone_client.Client(
+                            username=self.username,
+                            password=self.password,
+                            tenant_name=self.project_id,
+                            region_name=self.region_name,
+                            auth_url=self.auth_url)
             except Exception as e:
                 raise OpenStackCloudException("Error authenticating to the keystone: %s " % e.message)
         return self._keystone_client
@@ -287,12 +300,12 @@ class OpenStackCloud(object):
     def list_images(self):
         if self._image_cache is None:
             self._image_cache = self._get_images_from_cloud()
-        return self._image_cache()
+        return self._image_cache
 
     def get_image_name(self, image_id):
         if image_id not in self.list_images():
             self._image_cache[image_id] = None
-        return self.image_cache[image_id]
+        return self._image_cache[image_id]
 
     def get_image_id(self, image_name):
         for (image_id, name) in self.list_images().items():
