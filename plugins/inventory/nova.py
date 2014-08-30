@@ -21,11 +21,20 @@ import sys
 import re
 import os
 from novaclient.client import Client
-from credentials import get_nova_credentials_v2
 try:
     import json
 except:
     import simplejson as json
+
+def get_nova_credentials_v2():
+  d               = {}
+  d['version']    = '2'
+  d['username']   = os.environ['OS_USERNAME']
+  d['api_key']    = os.environ['OS_PASSWORD']
+  d['auth_url']   = os.environ['OS_AUTH_URL']
+  d['project_id'] = os.environ['OS_TENANT_NAME']
+  return d
+
 
 from ansible.module_utils.openstack import *
 
