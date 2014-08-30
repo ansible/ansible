@@ -75,6 +75,18 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
     return ret
 
 
+def openstack_cloud_from_module(module, name='openstack'):
+
+    return OpenStackCloud(
+        name=name,
+        username=module.params['login_username'],
+        password=module.params['login_password'],
+        project_id=module.params['login_tenant_name'],
+        auth_url=module.params['auth_url'],
+        region_name=module.params['region_name'],
+        service_type='compute')
+
+
 class OpenStackAnsibleException(Exception):
     pass
 
@@ -101,17 +113,6 @@ class OpenStackCloud(object):
         self.flavor_cache = flavor_cache
 
         self._nova_client = None
-
-    @classmethod
-    def from_module(klass, module):
-        return klass(
-            name='openstack',
-            username=module.params['login_username'],
-            password=module.params['login_password'],
-            project_id=module.params['login_tenant_name'],
-            auth_url=module.params['auth_url'],
-            region_name=module.params['region_name'],
-            service_type='compute')
 
     def get_name(self):
         return self.name

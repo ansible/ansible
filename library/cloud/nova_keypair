@@ -91,7 +91,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
 
     try:
-        nova = OpenStackCloud.from_module(module)
+        nova = openstack_cloud_from_module(module)
 
         if module.params['state'] == 'present':
             for key in nova.list_keypairs():
