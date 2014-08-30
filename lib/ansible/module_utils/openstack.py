@@ -35,6 +35,40 @@ try:
 except:
     HAVE_NOVACLIENT = False
 
+OPENSTACK_OPTIONS = '''
+   login_username:
+     description:
+        - login username to authenticate to keystone
+     required: true
+     default: admin
+   login_password:
+     description:
+        - Password of login user
+     required: true
+     default: 'yes'
+   login_tenant_name:
+     description:
+        - The tenant name of the login user
+     required: true
+     default: 'yes'
+   auth_url:
+     description:
+        - The keystone url for authentication
+     required: false
+     default: 'http://127.0.0.1:35357/v2.0/'
+   region_name:
+     description:
+        - Name of the region
+     required: false
+     default: None
+   availability_zone:
+     description:
+        - Name of the availability zone
+     required: false
+     default: None
+     version_added: "1.8"
+'''
+
 
 def openstack_argument_spec():
     # Consume standard OpenStack environment variables.

@@ -26,32 +26,7 @@ version_added: "1.2"
 short_description: Add/Delete key pair from nova
 description:
    - Add or Remove key pair from nova .
-options:
-   login_username:
-     description:
-        - login username to authenticate to keystone
-     required: true
-     default: admin
-   login_password:
-     description:
-        - Password of login user
-     required: true
-     default: 'yes'
-   login_tenant_name:
-     description:
-        - The tenant name of the login user
-     required: true
-     default: 'yes'
-   auth_url:
-     description:
-        - The keystone url for authentication
-     required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
-   region_name:
-     description:
-        - Name of the region
-     required: false
-     default: None
+options:%(openstack_options)s
    state:
      description:
         - Indicate desired state of the resource
@@ -69,7 +44,7 @@ options:
      default: None
 
 requirements: ["novaclient"]
-'''
+''' % dict(openstack_options=OPENSTACK_OPTIONS)
 EXAMPLES = '''
 # Creates a key pair with the running users public key
 - nova_keypair: state=present login_username=admin

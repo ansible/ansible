@@ -36,32 +36,7 @@ version_added: "1.2"
 short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.
-options:
-   login_username:
-     description:
-        - login username to authenticate to keystone
-     required: true
-     default: admin
-   login_password:
-     description:
-        - Password of login user
-     required: true
-     default: 'yes'
-   login_tenant_name:
-     description:
-        - The tenant name of the login user
-     required: true
-     default: 'yes'
-   auth_url:
-     description:
-        - The keystone url for authentication
-     required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
-   region_name:
-     description:
-        - Name of the region
-     required: false
-     default: None
+options:%(openstack_options)s
    state:
      description:
         - Indicate desired state of the resource
@@ -135,12 +110,6 @@ options:
      required: false
      default: None
      version_added: "1.8"
-   availability_zone:
-     description:
-        - Name of the availability zone
-     required: false
-     default: None
-     version_added: "1.8"
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to the new VM
@@ -169,7 +138,7 @@ options:
      default: None
      version_added: "1.6"
 requirements: ["novaclient"]
-'''
+''' % dict(openstack_options=OPENSTACK_OPTIONS)
 
 EXAMPLES = '''
 # Creates a new VM and attaches to a network and passes metadata to the instance
