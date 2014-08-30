@@ -28,6 +28,13 @@
 
 import os
 
+HAVE_NOVACLIENT = True
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions
+except:
+    HAVE_NOVACLIENT = False
+
 
 def openstack_argument_spec():
     # Consume standard OpenStack environment variables.
@@ -67,3 +74,78 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
                     ret.append(interface_spec['addr'])
     return ret
 
+
+class OpenStackAnsibleException(Exception):
+    pass
+
+
+class OpenStackCloud(object):
+
+    def __init__(self, name, username, password, project_id, auth_url,
+                 region_name, service_type, insecure, private=False,
+                 image_cache=dict(), flavor_cache=None):
+
+        if not HAVE_NOVACLIENT:
+            raise OpenStackAnsibleException(
+                "novaclient is required. Install python-novaclient and try again")
+        self.name = name
+        self.username = username
+        self.password = password
+        self.project_id = project_id
+        self.auth_url = auth_url
+        self.region_name = region_name
+        self.service_type = service_type
+        self.insecure = insecure
+        self.private = private
+        self.image_cache = image_cache
+        self.flavor_cache = flavor_cache
+
+    def get_name(self):
+        return self.name
+
+    def get_region(self):
+        return self.region_name
+
+    def get_flavor_name(self, flavor_id):
+        if not self.flavor_cache:
+            self.flavor_cache = dict([(flavor.id, flavor.name) for flavor in self.client.flavors.list()])
+        return self.flavor_cache.get(flavor_id, None)
+
+    def connect(self):
+        # Make the connection
+        self.client = nova_client.Client(
+            self.username,
+            self.password,
+            self.project_id,
+            self.auth_url,
+            region_name=self.region_name,
+            service_type=self.service_type,
+            insecure=self.insecure
+        )
+
+        try:
+            self.client.authenticate()
+        except exceptions.Unauthorized, e:
+            raise OpenStackAnsibleException(
+                "Invalid OpenStack Nova credentials.: %s" % e.message)
+        except exceptions.AuthorizationFailure, e:
+            raise OpenStackAnsibleException(
+                "Unable to authorize user: %s" % e.message)
+
+        if self.client is None:
+            raise OpenStackAnsibleException(
+                "Failed to instantiate nova client. This could mean that your"
+                " credentials are wrong.")
+
+        return self.client
+
+    def list_servers(self):
+        return self.client.servers.list()
+
+    def get_image_name(self, image_id):
+        if image_id not in self.image_cache:
+            try:
+                self.image_cache[image_id] = self.client.images.get(image_id).name
+            except Exception:
+                self.image_cache[image_id] = None
+        return self.image_cache[image_id]

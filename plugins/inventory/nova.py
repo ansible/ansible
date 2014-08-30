@@ -26,7 +26,6 @@ import os
 import ConfigParser
 import argparse
 import collections
-from novaclient.v1_1 import client as nova_client
 from novaclient import exceptions
 from types import NoneType
 
@@ -44,76 +43,6 @@ NOVA_CONFIG_FILES = [
 ]
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-class OpenStackCloud(object):
-
-    def __init__(self, name, username, password, project_id, auth_url,
-                 region_name, service_type, insecure, private=False,
-                 image_cache=dict(), flavor_cache=None):
-
-        self.name = name
-        self.username = username
-        self.password = password
-        self.project_id = project_id
-        self.auth_url = auth_url
-        self.region_name = region_name
-        self.service_type = service_type
-        self.insecure = insecure
-        self.private = private
-        self.image_cache = image_cache
-        self.flavor_cache = flavor_cache
-
-    def get_name(self):
-        return self.name
-
-    def get_region(self):
-        return self.region_name
-
-    def get_flavor_name(self, flavor_id):
-        if not self.flavor_cache:
-            self.flavor_cache = dict([(flavor.id, flavor.name) for flavor in self.client.flavors.list()])
-        return self.flavor_cache.get(flavor_id, None)
-
-    def connect(self):
-        # Make the connection
-        self.client = nova_client.Client(
-            self.username,
-            self.password,
-            self.project_id,
-            self.auth_url,
-            region_name=self.region_name,
-            service_type=self.service_type,
-            insecure=self.insecure
-        )
-
-        try:
-            self.client.authenticate()
-        except exceptions.Unauthorized, e:
-            print("Invalid OpenStack Nova credentials.: %s" %
-                  e.message)
-            sys.exit(1)
-        except exceptions.AuthorizationFailure, e:
-            print("Unable to authorize user: %s" % e.message)
-            sys.exit(1)
-
-        if self.client is None:
-            print("Failed to instantiate nova client. This "
-                  "could mean that your credentials are wrong.")
-            sys.exit(1)
-
-        return self.client
-
-    def list_servers(self):
-        return self.client.servers.list()
-
-    def get_image_name(self, image_id):
-        if image_id not in self.image_cache:
-            try:
-                self.image_cache[image_id] = self.client.images.get(image_id).name
-            except Exception:
-                self.image_cache[image_id] = None
-        return self.image_cache[image_id]
 
 
 def nova_load_config_file(NOVA_DEFAULTS):
@@ -220,7 +149,11 @@ class NovaInventory(object):
         hostvars = collections.defaultdict(dict)
 
         for cloud in self.clouds:
-            cloud.connect()
+            try:
+                cloud.connect()
+            except OpenStackAnsibleException as e:
+                print(e.message)
+                sys.exit(1)
             region = cloud.get_region()
             cloud_name = cloud.get_name()
 
