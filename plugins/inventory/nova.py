@@ -97,7 +97,7 @@ class NovaInventory(object):
             nova_client_params['project_id'] = config.get(cloud, 'project_id')
             nova_client_params['auth_url'] = config.get(cloud, 'auth_url')
             nova_client_params['region_name'] = config.get(cloud, 'region_name')
-            nova_client_params['service_type'] = config.get(cloud, 'service_type')
+            nova_client_params['nova_service_type'] = config.get(cloud, 'service_type')
             nova_client_params['insecure'] = config.getboolean(cloud, 'insecure')
             nova_client_params['private'] = config.getboolean(cloud, 'private')
             # Provide backwards compat for older nova.ini files

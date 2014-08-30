@@ -138,8 +138,7 @@ def openstack_cloud_from_module(module, name='openstack'):
         project_id=module.params['login_tenant_name'],
         auth_url=module.params['auth_url'],
         region_name=module.params['region_name'],
-        endpoint_type=module.params['endpoint_type'],
-        service_type='compute')
+        endpoint_type=module.params['endpoint_type'])
 
 
 class OpenStackCloudException(Exception):
@@ -149,7 +148,8 @@ class OpenStackCloudException(Exception):
 class OpenStackCloud(object):
 
     def __init__(self, name, username, password, project_id, auth_url,
-                 region_name, service_type, insecure, private=False,
+                 region_name, nova_service_type='compute',
+                 private=False, insecure=False,
                  endpoint_type='publicURL', image_cache=None,
                  flavor_cache=None):
 
@@ -159,15 +159,11 @@ class OpenStackCloud(object):
         self.project_id = project_id
         self.auth_url = auth_url
         self.region_name = region_name
-        self.service_type = service_type
+        self.nova_service_type = nova_service_type
         self.insecure = insecure
-<<<<<<< HEAD
         self.private = private
-        self.image_cache = image_cache
-=======
         self.endpoint_type = endpoint_type
         self._image_cache = image_cache
->>>>>>> fe05bea... Add glance support to OpenStackCloud
         self.flavor_cache = flavor_cache
 
         self._nova_client = None
@@ -198,7 +194,7 @@ class OpenStackCloud(object):
                 self.project_id,
                 self.auth_url,
                 region_name=self.region_name,
-                service_type=self.service_type,
+                service_type=self.nova_service_type,
                 insecure=self.insecure
             )
 
