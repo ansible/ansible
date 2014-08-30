@@ -189,16 +189,27 @@ class OpenStackCloud(object):
         if not HAVE_NOVACLIENT:
             raise OpenStackCloudException(
                 "novaclient is required. Install python-novaclient and try again")
+
         if self._nova_client is None:
+            kwargs = dict(
+                region_name=self.region_name,
+                service_type=self.nova_service_type,
+                insecure=self.insecure,
+            )
+            # Try to use keystone directly first, for potential token reuse
+            try:
+                kwargs['auth_token'] = self.keystone_client.auth_token
+                kwargs['bypass_url'] = self.get_endpoint(self.nova_service_type)
+            except OpenStackCloudException:
+                pass
+
             # Make the connection
             self._nova_client = nova_client.Client(
                 self.username,
                 self.password,
                 self.project_id,
                 self.auth_url,
-                region_name=self.region_name,
-                service_type=self.nova_service_type,
-                insecure=self.insecure
+                **kwargs
             )
 
             try:
