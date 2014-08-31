@@ -1,0 +1,355 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: ec2_eni
+short_description: Creates, destroys and assigns Elastic Network Interfaces 
+description:
+  - This module can create and destroy Elastic Network Interfaces
+  - It accepts subnet and resource_tags as required 
+  - Security groups are optional
+  - It returns the following properties:
+    source_dest_check 
+    description 
+    id
+    private_ip
+    private_dns_name
+    az
+    subnet_id
+  - Known limitations:
+    Does not allow associations to the instances
+version_added: "X.X"
+author: Michal Bicz 
+options:
+  state:
+    description:
+      - create or destroy Elastic Network Interface 
+    required: true
+    choices: ['present', 'absent']
+  description:
+    description:
+      - Description of the Elastic Network Interface. Used to identify ENI. Can be pseudo-JSON. 255 chars 
+    required: true
+  subnet_id:
+    description:
+      - The VPC subnet to be used for creation of the Elastic Network Interface
+    required: true 
+    aliases: ['subnet']
+  resource_tags:
+    description:
+      - 'A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with subnet_id to uniquely identify a ENI in lieu of interface_id. Therefore, if subnet_id/Tag combination does not exits, a new ENI will be created. 
+    required: true
+    default: null
+    aliases: []
+  security_groups:
+    description:
+      - Security Groups to associate with ENI
+    required: false 
+    aliases: ['sg']
+extends_documentation_fragment: aws
+"""
+
+EXAMPLES = """
+#Create ENI
+  - name:
+    local_action: ec2_eni
+    args:
+      subnet_id: subnet-123456
+      description: "az, realm , hostname"
+      resource_tags: { "Environment":"Dev", "Tier" : "DB" }
+      state: present
+
+#Delete ENI
+  - name:
+    local_action: ec2_eni
+    args:
+      subnet_id: subnet-123456
+      description: "az, realm , hostname"
+      resource_tags: { "Environment":"Dev", "Tier" : "DB" }
+      state: absent 
+
+"""
+
+import sys
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+
+class ENIManager(object):
+    """ ENIManager class holds connection and provides
+        interface to manage Elastic Network Interfaces """
+
+    def __init__(self, module, ec2, supports_check_mode):
+        """ Takes module and AWS connection parameters to initialize"""
+        self.module = module
+        self.ec2 = ec2
+        self.supports_check_mode = supports_check_mode
+        self.changed = False
+
+    def find_eni(self, subnet_id, resource_tags):
+        """ENI is identified by the unique combination of
+           subnet_id+resource_tags.
+           It returns a list of ids"""
+        filters = {}
+        filters['subnet_id'] = subnet_id
+        # make magic filter that works on tags
+        # Dict needs to be formatted:
+        # 'tag:tag_key':'tag_value'})
+        for (key, value) in resource_tags.items():
+            filters["tag:{0}".format(key)] = value
+        eni_ids = self.ec2.get_all_network_interfaces(filters=filters)
+        eni_ids = [i.id for i in eni_ids]
+        return eni_ids
+
+    def describe_eni(self, eni_id):
+        """ Gathers information about the ENI id"""
+        filters = {'network_interface_id':eni_id}
+        #ids are uniqe
+        eni = self.ec2.get_all_network_interfaces(filters=filters)
+        if eni:
+            eni = eni[0] #uniqe, take 1 and only element
+            groups = [g.id for g in eni.groups]
+            return (eni.description, groups)
+
+
+    def create_eni(self,
+                  subnet_id,
+                  security_groups,
+                  resource_tags,
+                  description):
+        """Create ENI in the specified subnet with description and resource_tags
+           Returns id of the newly created ENI if successfull"""
+        # Boto call spec:
+        # ec2.create_network_interface(self, subnet_id,
+        # private_ip_address=None, description=None, groups=None, dry_run=False)
+        eni = None
+        if self.supports_check_mode:
+            self.module.exit_json(change=True)
+        else:
+            try:
+                eni = self.ec2.create_network_interface(subnet_id,
+                                                        description=description,
+                                                        groups=security_groups)
+                # tag it accordingly
+                self.tag(eni.id, resource_tags)
+                return eni.id
+
+            except boto.exception.BotoServerError as e:
+                self.module.fail_json(msg="%s: %s" % (e.error_code,
+                                                      e.error_message))
+
+    def tag(self, eni_id, tagdict):
+        """ Tag Elastic Network Interface with the dictionary of tags
+            Takes tagdict (type: dict) as an argument"""
+        self.ec2.create_tags(eni_id, tagdict)
+
+    def delete_eni(self, eni_id):
+        """ Delete Specified Elastic Network Interface """
+        # Boto call spec:
+        # ec2.delete_network_interface(
+        # self, network_interface_id, dry_run=False)
+        if self.supports_check_mode:
+            self.module.exit_json(change=True)
+        else:
+            return self.ec2.delete_network_interface(eni_id)
+
+    def modify_eni(self, eni_id, attributes):
+        """ Modify existing ENI with description and security_groups
+            Returns True if all changes are successful. False otherwise. """
+        # Boto call spec:
+        # ec2.modify_network_interface_attribute(
+        # self, id, attr, value, attachment_id=None, dry_run=False)
+        if self.supports_check_mode:
+            self.module.exit_json(change=True)
+        else:
+            ret = []
+            for attr in attributes:
+                # security_groups are passed as sg-12345,
+                # sg-12346 so no need to convert anything
+                ret.append(
+                        self.ec2.modify_network_interface_attribute(
+                            eni_id, attr, attributes[attr]))
+            if False not in ret:
+                return True
+
+class ENI(object):
+    """ Class for storing Elastic Network Interface"""
+    #def __init__(self, eni_manager, subnet_id, resource_tags):
+    def __init__(self, eni_manager, subnet_id, resource_tags):
+        self.eni_manager = eni_manager
+        self.changed = False
+        self.subnet_id = subnet_id
+        self.resource_tags = resource_tags
+        self.security_groups = None
+        self.description = None
+        self.id = None
+        self.change = [] 
+
+    def set_id(self, eni_id):
+        """ sets the id """
+        self.id = eni_id
+
+    def create(self, description, security_groups):
+        """Creates ENI according to the spec
+           (subnet_id, resource_tags, description, security_groups)"""
+        self.id = self.eni_manager.create_eni(self.subnet_id,
+                                              security_groups,
+                                              self.resource_tags,
+                                              description)
+        self.refresh()
+        self.changed = True
+
+    def delete(self):
+        """Deletes this (self) ENI,
+           exits with error from module if not succesfull"""
+        self.eni_manager.delete_eni(self.id)
+        self.security_groups = []
+        self.description = None
+        self.resource_tags = None
+        self.subnet_id = None
+        self.changed = True
+
+    def modify(self, attributes):
+        """Modifies this (self) ENI,
+           exits with error from module if not successful"""
+        self.eni_manager.modify_eni(self.id, attributes)
+        self.refresh()
+        self.changed = True
+        self.change.append(attributes)
+
+    def tag(self, tagdict):
+        """Tags this (self) ENI,
+           exits with error from module if not successful"""
+        self.eni_manager.create_tags(self.id, tagdict)
+        self.refresh()
+        self.changed = True
+
+    @property
+    def tags(self):
+        """List or the tags assigned to the instance of ENI"""
+        if self.id:
+            return dict((t.name, t.value) for t in \
+                    self.eni_manager.ec2.get_all_tags(
+                        filters={'resource-id': self.id}))
+        else:
+            return {}
+
+    def refresh(self):
+        """ refresh information about the ENI"""
+        (self.description,
+        self.security_groups) = self.eni_manager.describe_eni(self.id)
+
+def main():
+    #spec
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            state={'required': True, 'choices': ['present', 'absent', 'list']},
+            subnet_id={'required': True},
+            resource_tags=dict(type='dict', required=True),
+            description={'required': False},
+            security_groups={'required': False, 'type':'list'}
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        #Allow dry-run
+        supports_check_mode=True
+    )
+    ##required
+    state = module.params['state']
+    subnet_id = module.params['subnet_id']
+    description = module.params['description']
+    resource_tags = module.params['resource_tags']
+    ##optional
+    security_groups = module.params['security_groups']
+    ##misc
+    supports_check_mode = module.params.get('supports_check_mode', False)
+
+    #run
+    ec2 = ec2_connect(module)
+    eni_manager = ENIManager(module, ec2, supports_check_mode)
+    eni = ENI(eni_manager, subnet_id, resource_tags)
+    eni_ids = eni_manager.find_eni(subnet_id, resource_tags)
+    # Support only 1 interface with subnet+tags combination
+    # take 1st element
+    if eni_ids:
+        eni.set_id(eni_ids[0])
+        eni.refresh()
+
+    if state == 'present':
+        #check if the object already exist and it has a matching subnet and tags
+        if eni.id:
+            #identify if the ENI exist
+            eni_tags = eni.tags
+            new_tags = {}
+            # If the supplied list of Tags matches a subset of the ENI Tags,
+            # we found our ENI
+            if resource_tags and \
+                    set(resource_tags.items()).issubset(set(eni_tags.items())):
+                #found our eni, proceeding with the update
+                for (key, value) in set(resource_tags.items()):
+                    if (key, value) not in set(eni_tags.items()):
+                        new_tags[key] = value
+                if new_tags:
+                    eni.tag(new_tags)
+                # update description and security groups if necessary
+                # if not specified it will be assigned the default sg
+                attributes = {}
+                if security_groups:
+                    if eni.security_groups.sort() != security_groups.sort():
+                        attributes['security_groups'] = security_groups
+                # update decription even if set to empty string
+                if eni.description != description:
+                    attributes['description'] = description
+                # execute modification
+                if attributes:
+                    eni.modify(attributes)
+        else:
+            eni.create(description, security_groups)
+
+        ansible_facts = dict(id=eni.id,
+                              subnet_id=eni.subnet_id,
+                              resource_tags=eni.resource_tags,
+                              description=eni.description,
+                              security_groups=eni.security_groups,
+                              change=eni.change,
+                              )
+        ec2_facts_result = dict(changed=eni.changed,
+                                ansible_facts=ansible_facts)
+
+    if state == 'absent':
+        if eni.id:
+            # it exist and needs to be killed
+            eni.delete()
+            ec2_facts_result = dict(changed=True)
+        else:
+            ec2_facts_result = dict(changed=False)
+
+    # gather result of the run for reporting, report
+    module.exit_json(**ec2_facts_result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
