@@ -204,4 +204,3 @@ class CallbackModule(object):
             self.send_msg("%s: Failures detected" % self.playbook_name)
 
         self.send_msg("```\n%s:\n%s\n```" % (self.playbook_name, t))
-print CallbackModule()
