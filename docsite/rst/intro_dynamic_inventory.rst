@@ -216,12 +216,20 @@ to include it in the project.
 
 .. _using_multiple_sources:
 
-Using Multiple Inventory Sources
-````````````````````````````````
+Using Inventory Directories and Multiple Inventory Sources
+``````````````````````````````````````````````````````````
 
 If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
+
+In an inventory directory, executable files will be treated as dynamic inventory sources and most other files as static sources. Some file patterns are ignored by default::
+
+    *~, *.orig, *.bak, *.ini, *.retry, *.pyc, *.pyo, README*
+
+You can replace this list with your own selection by creating a ``.inventoryignore`` file in the directory, containing one pattern per line.
+
+Any ``group_vars`` and ``host_vars`` subdirectories will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
 
 .. seealso::
 

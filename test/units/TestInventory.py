@@ -452,6 +452,28 @@ class TestInventory(unittest.TestCase):
         inventory = self.dir_inventory()
         assert 'skipme' not in [h.name for h in inventory.get_hosts()]
 
+    def test_dir_inventory_ignore_file(self):
+        # A .inventoryignore file overrides the default settings
+        # We should be able to use it to ignore some files and enable others
+        ignore_file = os.path.join(self.inventory_dir, ".inventoryignore")
+        try:
+            # Let's ignore *myth* files
+            with open(ignore_file, 'w') as igf:
+                igf.write("# A comment\n")
+                igf.write("*myth*\n")
+            inventory = self.dir_inventory()
+            
+            # The .ini file should now be included
+            assert 'skipme' in [h.name for h in inventory.get_hosts()]
+
+            # The groups defined by 1mythology should not
+            assert 'norse' not in [g.name for g in inventory.get_groups()]
+
+        finally:
+            # Make sure we tidy up afterwards
+            os.remove(ignore_file)
+
+
     def test_dir_inventory_group_hosts(self):
         inventory = self.dir_inventory()
         expected_groups = {'all': ['morpheus', 'thor', 'zeus'],

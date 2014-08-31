@@ -106,6 +106,13 @@ DIST_MODULE_PATH = os.pathsep.join([DIST_MODULE_PATH, local_module_path])
 # group variables -- really anything we can load
 YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 
+# Files that should be ignored in inventory directories
+IGNORED_INVENTORY_FILES   = [ "*~", "*.orig", "*.bak", "*.ini", "*.retry", 
+                              "*.pyc", "*.pyo", "README*"]
+# Others can be specified in a per-directory file, which will override
+# the above list:
+INVIGNORE_FILE = ".inventoryignore"
+
 # sections in config file
 DEFAULTS='defaults'
 

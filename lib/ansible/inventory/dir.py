@@ -19,6 +19,7 @@
 #############################################
 
 import os
+import fnmatch
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -26,6 +27,7 @@ from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
 from ansible import utils
 from ansible import errors
+
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
@@ -38,12 +40,16 @@ class InventoryDirectory(object):
         self.hosts = {}
         self.groups = {}
 
+        # Get the list of filename patterns that should be skipped
+        ignored_files = self.get_ignored_files()
+
         for i in self.names:
 
-            # Skip files that end with certain extensions or characters
-            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+            # Skip files that should be ignored
+            if any(fnmatch.fnmatch(i, pat) for pat in ignored_files):
                 continue
-            # Skip hidden files
+
+            # Skip hidden files including .inventoryignore
             if i.startswith('.') and not i.startswith('./'):
                 continue
             # These are things inside of an inventory basedir
@@ -227,3 +233,28 @@ class InventoryDirectory(object):
             vars.update(i.get_host_variables(host))
         return vars
 
+
+    def get_ignored_files(self):
+        """ 
+        Returns a glob-style list of files that should not be
+        read as inventory files in a directory.
+        """
+
+        # If there's a .inventoryignore file in the directory
+        # read from it a list of glob patterns to ignore, one per line.
+
+        if C.INVIGNORE_FILE in self.names:
+            full_ignorepath = os.path.join(self.directory, C.INVIGNORE_FILE)
+            with open(full_ignorepath, 'r') as f:
+                # Remove whitespace, blank lines and comments
+                ignored_files = [
+                    pat.strip() for pat in f
+                        if pat.strip() and 
+                           (not pat.strip().startswith('#'))
+                ]
+
+        # Otherwise use the defaults.
+        else:
+            ignored_files = C.IGNORED_INVENTORY_FILES
+
+        return ignored_files
