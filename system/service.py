@@ -979,6 +979,9 @@ class OpenBsdService(Service):
 
         rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'status', self.name))
 
+        if stderr:
+            self.module.fail_json(msg=stderr)
+
         if self.enable:
             action = "enable %s flags %s" % (self.name, self.arguments)
             args = self.arguments
@@ -987,8 +990,6 @@ class OpenBsdService(Service):
         else:
             action = "disable %s" % self.name
             if rc == 1:
-                if stderr:
-                    self.module.fail_json(msg=stderr)
                 return
 
         if self.module.check_mode:
@@ -999,8 +1000,6 @@ class OpenBsdService(Service):
         if rc != 0:
             if stderr:
                 self.module.fail_json(msg=stderr)
-            elif stdout:
-                self.module.fail_json(msg=stdout)
             else:
                 self.module.fail_json(msg="rcctl failed to modify service enablement")
 
