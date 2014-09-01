@@ -237,8 +237,8 @@ def main():
         else:
             relpath = os.path.dirname(path)
 
-        absrc = os.path.normpath('%s/%s' % (relpath, os.path.basename(src)))
-        if not os.path.exists(src) and not os.path.exists(absrc) and not force:
+        absrc = os.path.join(relpath, src)
+        if not os.path.exists(absrc) and not force:
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
