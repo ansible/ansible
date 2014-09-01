@@ -107,8 +107,8 @@ options:
     description:
       - Verify host keys presented by remote machines 
         before initiating SSH connections.
-    required: true
-    default: 0
+    required: false
+    default: true
     aliases: []
 
 # informational: requirements for nodes
@@ -118,66 +118,54 @@ author: Fairiz Azizi <coderfi@gmail.com>
 
 EXAMPLES = '''
 - name: list fleet machines on default host
-  fleet:
-    command: list-machines
+  fleet: command=list-machines
+
 - name: list-machines on the specified remote host
-  fleet:
-    command: list-units
-    tunnel: coreos.example.com
+  fleet: command=list-units
+         tunnel=coreos.example.com
+
 - name: list-machines on a remote host specified by a var
-  fleet:
-    command: list-units
-    tunnel: "{{ fleet_manage_host }}"
+  fleet: command=list-units
+         tunnel="{{ fleet_manage_host }}"
+
+- name: list fleet units on a remote host, disabling strict host key check
+  fleet: command=list-units
+         strict_host_key_checking=false
+
 - name: create a hello unit from a template
   template: src=/mytemplates/hello.service.j2
             dest=/tmp/hello.service
+
 - name: submit the hello unit
-  fleet:
-    command: submit
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: /tmp/hello.service
+  fleet: command=submit
+         tunnel=coreos.example.com
+         strict_host_key_checking=false
+         unit=/tmp/hello.service
+
 - name: start the hello unit
-  fleet:
-    command: start
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: hello
-- name: list fleet units on a remote host, disabling strict host key check
-  fleet:
-    command: list-units
-    strict_host_key_checking: False
-- name: submit the hello unit
-  fleet:
-    command: submit
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: /tmp/hello.service
-- name: start the hello unit
-  fleet:
-    command: start
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: hello
-- name: look at the hello log
-  fleet:
-    command: journal
-    extra_args: "-lines=5"
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: hello
+  fleet: command=start
+         tunnel=coreos.example.com
+         strict_host_key_checking=false
+         unit=hello
+
+- name: look at the hello journal log
+  fleet: command=journal
+         extra_args="-lines=5"
+         tunnel=coreos.example.com
+         strict_host_key_checking=false
+         unit: hello
+
 - name: stop the hello unit
-  fleet:
-    command: stop
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: hello
+  fleet: command=stop
+         tunnel=coreos.example.com
+         strict_host_key_checking=false
+         unit=hello
+
 - name: destroy the hello unit
-  fleet:
-    command: destroy
-    tunnel: coreos.example.com
-    strict_host_key_checking: False
-    unit: hello
+  fleet: command=destroy
+         tunnel=coreos.example.com
+         strict_host_key_checking=false
+         unit=hello
 '''
 
 # ===========================================
