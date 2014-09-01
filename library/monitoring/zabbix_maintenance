@@ -38,19 +38,23 @@ options:
         choices: [ "present", "absent" ]
     server_url:
         description:
-            - Url of Zabbix server, with protocol (http or https).
-              C(url) is an alias for C(server_url).
+            - Url of Zabbix server, with protocol (http or https) e.g.
+              https://monitoring.example.com/zabbix. C(url) is an alias
+              for C(server_url). If not set environment variable
+              C(ZABBIX_SERVER_URL) is used.
         required: true
         default: null
         aliases: [ "url" ]
     login_user:
         description:
-            - Zabbix user name.
+            - Zabbix user name. If not set environment variable
+              C(ZABBIX_LOGIN_USER) is used.
         required: true
         default: null
     login_password:
         description:
-            - Zabbix user password.
+            - Zabbix user password. If not set environment variable
+              C(ZABBIX_LOGIN_PASSWORD) is used.
         required: true
         default: null
     host_names:
@@ -113,6 +117,10 @@ EXAMPLES = '''
                       server_url=https://monitoring.example.com
                       login_user=ansible
                       login_password=pAsSwOrD
+
+# Create maintenance 10 min window. Login data is provided by environment
+# variables: ZABBIX_LOGIN_USER, ZABBIX_LOGIN_PASSWORD, ZABBIX_SERVER_URL:
+- zabbix_maintenance: name="Update of www2" host_name=www2.example.com
 
 # Create maintenance window named "Mass update"
 # for host www1.example.com and host groups Office and Dev
@@ -272,8 +280,8 @@ def main():
             host_names=dict(type='list', required=False, default=None, aliases=['host_name']),
             minutes=dict(type='int', required=False, default=10),
             host_groups=dict(type='list', required=False, default=None, aliases=['host_group']),
-            login_user=dict(required=True, default=None),
-            login_password=dict(required=True, default=None),
+            login_user=dict(required=False, default=None),
+            login_password=dict(required=False, default=None),
             name=dict(required=True, default=None),
             desc=dict(required=False, default="Created by Ansible"),
             collect_data=dict(type='bool', required=False, default=True),
@@ -284,15 +292,19 @@ def main():
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
+    try:
+        login_user = module.params['login_user'] or os.environ['ZABBIX_LOGIN_USER']
+        login_password = module.params['login_password'] or os.environ['ZABBIX_LOGIN_PASSWORD']
+        server_url = module.params['server_url'] or os.environ['ZABBIX_SERVER_URL']
+    except KeyError, e:
+        module.fail_json(msg='Missing login data: %s is not set.' % e.message)
+
     host_names = module.params['host_names']
     host_groups = module.params['host_groups']
     state = module.params['state']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
     minutes = module.params['minutes']
     name = module.params['name']
     desc = module.params['desc']
-    server_url = module.params['server_url']
     collect_data = module.params['collect_data']
     if collect_data:
         maintenance_type = 0
