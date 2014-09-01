@@ -236,7 +236,7 @@ options:
     version_added: 1.8
   tags:
     description:
-      - tags to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
+      - tags dict to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
     required: false
     default: null
     aliases: []
@@ -257,6 +257,9 @@ EXAMPLES = '''
     instance_type: db.m1.small
     username: mysql_admin
     password: 1nsecure
+    tags:
+      Environment: testing
+      Application: cms
 
 # Create a read-only replica and wait for it to become available
 - rds: 
@@ -933,6 +936,10 @@ def validate_parameters(required_vars, valid_vars, module):
         for x in module.params.get('vpc_security_groups'):
             groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
         params["vpc_security_groups"] = groups_list
+
+    # Convert tags dict to list of tuples that rds2 expects
+    if 'tags' in params:
+        params['tags'] = module.params['tags'].items()
     return params
 
 
@@ -968,7 +975,7 @@ def main():
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
             new_instance_name = dict(required=False),
-            tags              = dict(type='list', required=False),
+            tags              = dict(type='dict', required=False),
             publicly_accessible = dict(required=False),
             character_set_name = dict(required=False),
         )
