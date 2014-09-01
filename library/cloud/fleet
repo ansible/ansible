@@ -113,7 +113,7 @@ options:
 
 # informational: requirements for nodes
 requirements: []
-author: Fairiz Azizi<coderfi@gmail.com>
+author: Fairiz Azizi <coderfi@gmail.com>
 '''
 
 EXAMPLES = '''
