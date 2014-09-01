@@ -401,6 +401,7 @@ def main():
 
     if command in ('submit', 'verify',
                    'start', 'stop', 'status',
+                   'destroy',
                    'load', 'unload',
                    'cat', 'journal'):
         # generically pass the unit argument
