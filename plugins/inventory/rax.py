@@ -200,6 +200,15 @@ def _list(regions):
             # And finally, add an IP address
             hostvars[server.name]['ansible_ssh_host'] = server.accessIPv4
 
+        clb = pyrax.connect_to_cloud_loadbalancers(region=region)
+        for lb in clb.list():
+            groups[region].append(lb.name)
+            groups['load_balancers'].append(lb.name)
+            for key, value in to_dict(lb).items():
+                if (key == "rax_virtual_ips"):
+                    continue
+                hostvars[lb.name][key] = value
+
     if hostvars:
         groups['_meta'] = {'hostvars': hostvars}
     print(json.dumps(groups, sort_keys=True, indent=4))
