@@ -67,9 +67,31 @@ Foreach ($ip in $netcfg.IPAddress) { If ($ip) { $ips += $ip } }
 Set-Attr $result.ansible_facts "ansible_ip_addresses" $ips
 
 $psversion = $PSVersionTable.PSVersion.Major
-$winrm_cert_expiry = Get-ChildItem -Path Cert:\LocalMachine\My | where Subject -EQ "CN=$env:COMPUTERNAME" | select NotAfter
-
 Set-Attr $result.ansible_facts "ansible_powershell_version" $psversion
+
+$winrm_https_listener_parent_path = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
+
+if ($winrm_https_listener_parent_path ) {
+    $winrm_https_listener_path = $winrm_https_listener_parent_path.PSParentPath.Substring($winrm_https_listener_parent_path.PSParentPath.LastIndexOf("\"))
+}
+
+if ($winrm_https_listener_path)
+{
+    $https_listener = Get-ChildItem -Path "WSMan:\localhost\Listener$winrm_https_listener_path"
+}
+
+if ($https_listener)
+{
+    $winrm_cert_thumbprint = $https_listener | where {$_.Name -EQ "CertificateThumbprint" } | select Value
+}
+
+if ($winrm_cert_thumbprint)
+{
+   $uppercase_cert_thumbprint = $winrm_cert_thumbprint.Value.ToString().ToUpper()
+}
+
+$winrm_cert_expiry = Get-ChildItem -Path Cert:\LocalMachine\My | where Thumbprint -EQ $uppercase_cert_thumbprint | select NotAfter
+
 if ($winrm_cert_expiry) 
 {
     Set-Attr $result.ansible_facts "ansible_winrm_certificate_expires" $winrm_cert_expiry.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
