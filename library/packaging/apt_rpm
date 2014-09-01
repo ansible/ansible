@@ -49,7 +49,7 @@ notes:  []
 '''
 
 EXAMPLES = '''
-# install package foo
+#  install package foo
 - apt_rpm: pkg=foo state=present
 # remove package foo
 - apt_rpm: pkg=foo state=absent
