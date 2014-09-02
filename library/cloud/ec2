@@ -660,7 +660,7 @@ def enforce_count(module, ec2):
 
     changed = None
     checkmode = False
-    instance_dict_array = None
+    instance_dict_array = []
     changed_instance_ids = None
 
     if len(instances) == exact_count:
