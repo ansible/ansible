@@ -1,6 +1,60 @@
 - name: setup DB name
   set_fact: instancename="{{random_string.stdout}}db"
+
+- name: get facts on non existent db
+  rds:
+    instance_name: "{{instancename}}"
+    command: facts
+  register: noinstance
+  ignore_errors: True
+  tags: test_rds
+
+- name: check facts failed
+  assert:
+    that:
+    - noinstance|failed == True
+  tags: test_rds
+
+- name: snapshot non existent db
+  rds:
+    instance_name: "{{instancename}}"
+    command: snapshot
+    snapshot: "snap-{{instancename}}"
+    wait: True
+  register: snapnoinstance
+  ignore_errors: True
+  tags: test_rds
+
+- name: check snapshot failed
+  assert:
+    that:
+    - snapnoinstance|failed == True
+  tags: test_rds
   
+- name: test broken RDS DB creation
+  rds:
+    instance_name: "{{instancename}}"
+    command: create
+    instance_type: db.t2.micro
+    db_engine: MySQL
+    engine_version: "5.5.37"
+    username: dummyuser
+    password: Mysql123
+    size: 5
+    wait: True
+    wait_timeout: 1200
+    tags:
+    - Name: my database
+      Application: dummy
+  tags: test_rds
+  ignore_errors: True
+  register: rds_fail
+
+- name: the last task should fail
+  assert:
+    that:
+    - rds_fail|failed == True
+
 - name: test RDS DB creation
   rds:
     instance_name: "{{instancename}}"
@@ -13,7 +67,7 @@
     wait: True
     wait_timeout: 1200
     tags:
-      Name: my database
+    - Name: my database
       Application: dummy
   tags: test_rds
 

@@ -2,4 +2,4 @@
   connection: local
 
   roles:
-    - /home/will/src/ansible/test/integration/roles/test_rds
+    - test_rds
