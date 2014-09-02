@@ -131,6 +131,8 @@ EXAMPLES = '''
       register: asg
 '''
 
+import base64
+
 try:
     import pyrax
     HAS_PYRAX = True
@@ -261,14 +263,23 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             if flavor != lc.get('flavor'):
                 lc_args['flavor'] = flavor
 
-            if disk_config != lc.get('disk_config'):
+            disk_config = disk_config or 'AUTO'
+            if ((disk_config or lc.get('disk_config')) and
+                    disk_config != lc.get('disk_config')):
                 lc_args['disk_config'] = disk_config
 
-            if meta != lc.get('metadata'):
+            if (meta or lc.get('meta')) and meta != lc.get('metadata'):
                 lc_args['metadata'] = meta
 
-            if files != lc.get('personality'):
-                lc_args['personality'] = files
+            test_personality = []
+            for p in personality:
+                test_personality.append({
+                    'path': p['path'],
+                    'contents': base64.b64encode(p['contents'])
+                })
+            if ((test_personality or lc.get('personality')) and
+                    test_personality != lc.get('personality')):
+                lc_args['personality'] = personality
 
             if nics != lc.get('networks'):
                 lc_args['networks'] = nics
@@ -283,7 +294,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             if config_drive != lc.get('config_drive'):
                 lc_args['config_drive'] = config_drive
 
-            if user_data != lc.get('user_data'):
+            if base64.b64encode(user_data) != lc.get('user_data'):
                 lc_args['user_data'] = user_data
 
             if lc_args:
