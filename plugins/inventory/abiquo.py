@@ -171,8 +171,7 @@ def generate_inv_from_api(enterprise_entity,config):
                             vm_metadata = metadata['metadata']
                         else:
                             vm_metadata = metadata['metadata']['metadata']
-                        if not vm_metadata is None:
-                            inventory['_meta']['hostvars'][vm_nic] = vm_metadata
+                        inventory['_meta']['hostvars'][vm_nic] = vm_metadata
                     except Exception, e:
                         pass
 
