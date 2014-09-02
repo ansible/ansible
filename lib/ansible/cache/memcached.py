@@ -168,7 +168,7 @@ class CacheModule(BaseCacheModule):
         return value
 
     def set(self, key, value):
-        self._cache.set(self._make_key(key), value, time=self._timeout)
+        self._cache.set(self._make_key(key), value, time=self._timeout, min_compress_len=1)
         self._keys.add(key)
 
     def keys(self):
