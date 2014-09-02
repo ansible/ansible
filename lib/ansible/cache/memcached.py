@@ -150,7 +150,7 @@ class CacheModule(BaseCacheModule):
         self._keys = CacheModuleKeys(self._cache, self._cache.get(CacheModuleKeys.PREFIX) or [])
 
     def _make_key(self, key):
-        return "{}{}".format(self._prefix, key)
+        return "{0}{1}".format(self._prefix, key)
 
     def _expire_keys(self):
         if self._timeout > 0:
