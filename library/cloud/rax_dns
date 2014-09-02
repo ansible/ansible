@@ -160,7 +160,7 @@ def main():
     state = module.params.get('state')
     ttl = module.params.get('ttl')
 
-    setup_rax_module(module, pyrax)
+    setup_rax_module(module, pyrax, False)
 
     rax_dns(module, comment, email, name, state, ttl)
 

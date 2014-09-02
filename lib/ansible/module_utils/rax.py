@@ -212,7 +212,7 @@ def rax_required_together():
     return [['api_key', 'username']]
 
 
-def setup_rax_module(module, rax_module):
+def setup_rax_module(module, rax_module, region_required=True):
     rax_module.USER_AGENT = 'ansible/%s %s' % (ANSIBLE_VERSION,
                                                rax_module.USER_AGENT)
 
@@ -270,7 +270,8 @@ def setup_rax_module(module, rax_module):
     except Exception, e:
         module.fail_json(msg='%s' % e.message)
 
-    rax_module.USER_AGENT = 'ansible/%s %s' % (ANSIBLE_VERSION,
-                                               rax_module.USER_AGENT)
+    if region_required and region not in rax_module.regions:
+        module.fail_json(msg='%s is not a valid region, must be one of: %s' %
+                         (region, ','.join(rax_module.regions)))
 
     return rax_module
