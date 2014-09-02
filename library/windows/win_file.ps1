@@ -20,7 +20,7 @@
 $params = Parse-Args $args;
 $result = New-Object PSObject;
 $force=$false;
-#Set-Attr $result "changed" $true;
+Set-Attr $result "changed" $false;
 
 If (-not $params.name.GetType)
 {
@@ -47,7 +47,7 @@ $name = $params.name.ToString().ToLower()
 $obj =  Get-Item $name -ErrorAction SilentlyContinue
 
 
-If ( $obj -and ($params.override -eq $false))
+If ( $obj -and (-not $params.override))
 {
  
  Fail-Json $result "Item '$name' already exist - use override=true to force"		
