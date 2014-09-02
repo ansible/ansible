@@ -50,6 +50,12 @@ options:
       - The executable location for npm.
       - This is useful if you are using a version manager, such as nvm
     required: false
+  ignoreScripts:
+    description:
+      - Use the --ignore-scripts flag when installing.
+    required: false
+    choices: [ "yes", "no" ]
+    default: no
   production:
     description:
       - Install dependencies in production mode, excluding devDependencies
@@ -111,6 +117,7 @@ class Npm(object):
         self.path = kwargs['path']
         self.registry = kwargs['registry']
         self.production = kwargs['production']
+        self.ignoreScripts = kwargs['ignoreScripts']
 
         if kwargs['executable']:
             self.executable = kwargs['executable'].split(' ')
@@ -130,6 +137,8 @@ class Npm(object):
                 cmd.append('--global')
             if self.production:
                 cmd.append('--production')
+            if self.ignoreScripts:
+                cmd.append('--ignore-scripts')
             if self.name:
                 cmd.append(self.name_version)
             if self.registry:
