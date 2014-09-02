@@ -43,7 +43,7 @@ options:
     aliases: []
   ttl:
     description:
-      - The TTL to give the new record
+      - The TTL to give the new record, must be provided with deletion request.
     required: false
     default: 3600 (one hour)
     aliases: []
