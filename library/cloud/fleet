@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: fleet
-version_added: "0.5.0"
+version_added: "1.8"
 short_description: controls a CoreOS cluster via the `fleetctl` CLI
 description:
      -  This ansible module is a pass-thru to the `fleetctl` CLI.
