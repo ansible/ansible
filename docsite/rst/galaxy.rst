@@ -69,6 +69,10 @@ And here's an example showing some specific version downloads from multiple sour
     # from github
     - src: https://github.com/bennojoy/nginx
 
+    # from github installing to a relative path
+    - src: https://github.com/bennojoy/nginx
+      path: vagrant/roles/
+
     # from github, overriding the name and specifying a specific tag
     - src: https://github.com/bennojoy/nginx
       name: nginx_role
