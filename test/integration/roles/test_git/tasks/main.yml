@@ -22,6 +22,7 @@
     repo_format1: 'https://github.com/jimi-c/test_role'
     repo_format2: 'git@github.com:jimi-c/test_role.git'
     repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
+    repo_withsubmodule: 'https://github.com/joel-airspring/testRepo1.git'
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
@@ -134,3 +135,53 @@
     that:
       - 'git_result.changed'
   when: not git_result|skipped
+
+#
+# Test of recursive=yes
+#
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout of repo with submodule with recursive=yes
+  git: repo={{ repo_withsubmodule }} dest={{ checkout_dir }} recursive=yes
+  register: git_result
+
+- name: check for file from repo 1
+  stat: path={{ checkout_dir }}/fileFromTestRepo1
+  register: fileFromRepo1
+
+- name: check for file from submodule from repo 2
+  stat: path={{ checkout_dir }}/submoduleTestRepo2/fileFromTestRepo2
+  register: fileFromRepo2
+
+- name: assert presence of files from repo 1 and repo 2
+  assert:
+    that:
+      - "fileFromRepo1.stat.isreg"
+      - "fileFromRepo2.stat.isreg"
+
+#
+# Test of recursive=no
+#
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout of repo with submodule with recursive=no
+  git: repo={{ repo_withsubmodule }} dest={{ checkout_dir }} recursive=no
+  register: git_result
+
+- name: check for file from repo 1
+  stat: path={{ checkout_dir }}/fileFromTestRepo1
+  register: fileFromRepo1
+
+- name: check for file from submodule from repo 2
+  stat: path={{ checkout_dir }}/submoduleTestRepo2/fileFromTestRepo2
+  register: fileFromRepo2
+
+- name: assert presence of file from repo 1 and absence of file from repo 2
+  assert:
+    that:
+      - "fileFromRepo1.stat.isreg"
+      - "not fileFromRepo2.stat.exists"
