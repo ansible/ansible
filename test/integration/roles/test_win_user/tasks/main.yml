@@ -1,0 +1,238 @@
+# test code for the win_user module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: remove existing test user if present
+  win_user: name="{{ test_win_user_name }}" state="absent"
+  register: win_user_remove_result
+
+- name: check user removal result
+  assert: 
+    that:
+      - "win_user_remove_result.name"
+      - "win_user_remove_result.state == 'absent'"
+
+- name: try to remove test user again
+  win_user: name="{{ test_win_user_name }}" state="absent"
+  register: win_user_remove_result_again
+
+- name: check user removal result again
+  assert: 
+    that:
+      - "not win_user_remove_result_again|changed"
+      - "win_user_remove_result_again.name"
+      - "win_user_remove_result_again.msg"
+      - "win_user_remove_result.state == 'absent'"
+
+- name: test create user
+  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password }}"
+  register: win_user_create_result
+
+- name: check user creation result
+  assert: 
+    that:
+      - "win_user_create_result|changed"
+      - "win_user_create_result.name == '{{ test_win_user_name }}'"
+      - "win_user_create_result.fullname == '{{ test_win_user_name }}'"
+      - "win_user_create_result.path"
+
+- name: update user full name and description
+  win_user: name="{{ test_win_user_name }}" fullname="Test Ansible User" description="Test user account created by Ansible"
+  register: win_user_update_result
+
+- name: check full name and description update result
+  assert: 
+    that:
+      - "win_user_update_result|changed"
+      - "win_user_update_result.name == '{{ test_win_user_name }}'"
+      - "win_user_update_result.fullname == 'Test Ansible User'"
+      - "win_user_update_result.description == 'Test user account created by Ansible'"
+      - "win_user_update_result.path"
+
+- name: update user full name and description again with same values
+  win_user: name="{{ test_win_user_name }}" fullname="Test Ansible User" description="Test user account created by Ansible"
+  register: win_user_update_result_again
+
+- name: check full name and description result again
+  assert: 
+    that:
+      - "not win_user_update_result_again|changed"
+      - "win_user_update_result_again.name == '{{ test_win_user_name }}'"
+      - "win_user_update_result_again.fullname == 'Test Ansible User'"
+      - "win_user_update_result.description == 'Test user account created by Ansible'"
+      - "win_user_update_result_again.path"
+
+- name: test again with no options or changes
+  win_user: name="{{ test_win_user_name }}"
+  register: win_user_nochange_result
+
+- name: check no changes result
+  assert: 
+    that:
+      - "not win_user_nochange_result|changed"
+      - "win_user_nochange_result.name == '{{ test_win_user_name }}'"
+      - "win_user_nochange_result.fullname == 'Test Ansible User'"
+      - "win_user_nochange_result.description == 'Test user account created by Ansible'"
+      - "win_user_nochange_result.path"
+      - "win_user_nochange_result.sid"
+
+- name: change user password
+  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password2 }}"
+  register: win_user_password_result
+
+- name: check password change result
+  assert: 
+    that:
+      - "win_user_password_result|changed"
+
+- name: change user password again to same value
+  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password2 }}"
+  register: win_user_password_result_again
+
+- name: check password change result again
+  assert: 
+    that:
+      - "not win_user_password_result_again|changed"
+
+- name: check update_password=on_create for existing user
+  win_user: name="{{ test_win_user_name }}" password="ThisP@ssW0rdShouldNotBeUsed" update_password=on_create
+  register: win_user_nopasschange_result
+
+- name: check password change with on_create flag result
+  assert: 
+    that:
+      - "not win_user_nopasschange_result|changed"
+
+- name: set password expired flag
+  win_user: name="{{ test_win_user_name }}" password_expired=yes
+  register: win_user_password_expired_result
+
+- name: check password expired result
+  assert: 
+    that:
+      - "win_user_password_expired_result|changed"
+      - "win_user_password_expired_result.password_expired"
+
+- name: clear password expired flag
+  win_user: name="{{ test_win_user_name }}" password_expired=no
+  register: win_user_clear_password_expired_result
+
+- name: check clear password expired result
+  assert: 
+    that:
+      - "win_user_clear_password_expired_result|changed"
+      - "not win_user_clear_password_expired_result.password_expired"
+
+- name: set password never expires flag
+  win_user: name="{{ test_win_user_name }}" password_never_expires=yes
+  register: win_user_password_never_expires_result
+
+- name: check password never expires result
+  assert: 
+    that:
+      - "win_user_password_never_expires_result|changed"
+      - "win_user_password_never_expires_result.password_never_expires"
+
+- name: clear password never expires flag
+  win_user: name="{{ test_win_user_name }}" password_never_expires=no
+  register: win_user_clear_password_never_expires_result
+
+- name: check clear password never expires result
+  assert: 
+    that:
+      - "win_user_clear_password_never_expires_result|changed"
+      - "not win_user_clear_password_never_expires_result.password_never_expires"
+
+- name: set user cannot change password flag
+  win_user: name="{{ test_win_user_name }}" user_cannot_change_password=yes
+  register: win_user_cannot_change_password_result
+
+- name: check user cannot change password result
+  assert: 
+    that:
+      - "win_user_cannot_change_password_result|changed"
+      - "win_user_cannot_change_password_result.user_cannot_change_password"
+
+- name: clear user cannot change password flag
+  win_user: name="{{ test_win_user_name }}" user_cannot_change_password=no
+  register: win_user_can_change_password_result
+
+- name: check clear user cannot change password result
+  assert: 
+    that:
+      - "win_user_can_change_password_result|changed"
+      - "not win_user_can_change_password_result.user_cannot_change_password"
+
+- name: set account disabled flag
+  win_user: name="{{ test_win_user_name }}" account_disabled=true
+  register: win_user_account_disabled_result
+
+- name: check account disabled result
+  assert: 
+    that:
+      - "win_user_account_disabled_result|changed"
+      - "win_user_account_disabled_result.account_disabled"
+
+- name: clear account disabled flag
+  win_user: name="{{ test_win_user_name }}" account_disabled=false
+  register: win_user_clear_account_disabled_result
+
+- name: check clear account disabled result
+  assert: 
+    that:
+      - "win_user_clear_account_disabled_result|changed"
+      - "not win_user_clear_account_disabled_result.account_disabled"
+
+- name: attempt to set account locked flag
+  win_user: name="{{ test_win_user_name }}" account_locked=yes
+  register: win_user_set_account_locked_result
+  ignore_errors: true
+
+- name: verify that attempting to set account locked flag fails
+  assert:
+    that:
+      - "win_user_set_account_locked_result|failed"
+      - "not win_user_set_account_locked_result|changed"
+
+- name: attempt to lockout test account
+  script: lockout_user.ps1 "{{ test_win_user_name }}"
+
+- name: get user to check if account locked flag is set
+  win_user: name="{{ test_win_user_name }}"
+  register: win_user_account_locked_result
+
+- name: clear account locked flag if set
+  win_user: name="{{ test_win_user_name }}" account_locked=no
+  register: win_user_clear_account_locked_result
+  when: "win_user_account_locked_result.account_locked"
+
+- name: check clear account lockout result if account was locked
+  assert: 
+    that:
+      - "win_user_clear_account_locked_result|changed"
+      - "not win_user_clear_account_locked_result.account_locked"
+  when: "win_user_account_locked_result.account_locked"
+
+- name: remove test user when finished
+  win_user: name="{{ test_win_user_name }}" state="absent"
+  register: win_user_final_remove_result
+
+- name: check final user removal result
+  assert: 
+    that:
+      - "win_user_final_remove_result|changed"
+      - "win_user_final_remove_result.name"

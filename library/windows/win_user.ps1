@@ -20,6 +20,9 @@
 # POWERSHELL_COMMON
 
 ########
+$ADS_UF_PASSWD_CANT_CHANGE = 64
+$ADS_UF_DONT_EXPIRE_PASSWD = 65536
+
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 
 function Get-User($user) {
@@ -27,10 +30,8 @@ function Get-User($user) {
     return
 }
 
-function Create-User([string]$user, [string]$passwd) {
+function Create-User([string]$user) {
    $adsiuser = $adsi.Create("User", $user)
-   $adsiuser.SetPassword($passwd)
-   $adsiuser.SetInfo()
    $adsiuser
    return
 }
@@ -43,6 +44,26 @@ function Update-Password($user, [string]$passwd) {
 function Delete-User($user) {
     $adsi.delete("user", $user.Name.Value)
 }
+
+function Get-UserFlag($user, $flag) {
+    If ($user.UserFlags[0] -band $flag) {
+        $true
+    }
+    Else {
+        $false
+    }
+}
+
+function Set-UserFlag($user, $flag) { 
+    $user.UserFlags = ($user.UserFlags[0] -BOR $flag)
+    $user.SetInfo()
+}
+
+function Clear-UserFlag($user, $flag) {
+    $user.UserFlags = ($user.UserFlags[0] -BXOR $flag)
+    $user.SetInfo()
+}
+
 ########
 
 $params = Parse-Args $args;
@@ -51,10 +72,14 @@ $result = New-Object psobject @{
     changed = $false
 };
 
-If (-not $params.name.GetType)
-{
+If (-not $params.name.GetType) {
     Fail-Json $result "missing required arguments: name"
 }
+
+$username = Get-Attr $params "name"
+$fullname = Get-Attr $params "fullname"
+$description = Get-Attr $params "description"
+$password = Get-Attr $params "password"
 
 If ($params.state) {
     $state = $params.state.ToString().ToLower()
@@ -62,44 +87,140 @@ If ($params.state) {
         Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
     }
 }
-Elseif (!$params.state) {
+ElseIf (!$params.state) {
     $state = "present"
 }
 
-If ((-not $params.password.GetType) -and ($state -eq 'present'))
-{
-    Fail-Json $result "missing required arguments: password"
+If ($params.update_password) {
+    $update_password = $params.update_password.ToString().ToLower()
+    If (($update_password -ne 'always') -and ($update_password -ne 'on_create')) {
+        Fail-Json $result "update_password is '$update_password'; must be 'always' or 'on_create'"
+    }
+}
+ElseIf (!$params.update_password) {
+    $update_password = "always"
 }
 
-$username = Get-Attr $params "name"
-$password = Get-Attr $params "password"
+$password_expired = Get-Attr $params "password_expired" $null;
+If ($password_expired -ne $null) {
+    $password_expired = $password_expired | ConvertTo-Bool;
+}
+
+$password_never_expires = Get-Attr $params "password_never_expires" $null;
+If ($password_never_expires -ne $null) {
+    $password_never_expires = $password_never_expires | ConvertTo-Bool;
+}
+
+$user_cannot_change_password = Get-Attr $params "user_cannot_change_password" $null;
+If ($user_cannot_change_password -ne $null) {
+    $user_cannot_change_password = $user_cannot_change_password | ConvertTo-Bool;
+}
+
+$account_disabled = Get-Attr $params "account_disabled" $null;
+If ($account_disabled -ne $null) {
+    $account_disabled = $account_disabled | ConvertTo-Bool;
+}
+
+$account_locked = Get-Attr $params "account_locked" $null;
+If ($account_locked -ne $null) {
+    $account_locked = $account_locked | ConvertTo-Bool;
+    if ($account_locked) {
+        Fail-Json $result "account_locked must be set to 'no' if provided"
+    }
+}
 
 $user_obj = Get-User $username
 
-if ($state -eq 'present') {
+Set-Attr $result "state" $state
+
+If ($state -eq 'present') {
     # Add or update user
     try {
-        if ($user_obj.GetType) {
-            Update-Password $user_obj $password
+        If (!$user_obj.GetType) {
+            $user_obj = Create-User $username
+            If ($password -ne $null) {
+                Update-Password $user_obj $password
+            }
+            $result.changed = $true
         }
-        else {
-            Create-User $username $password
+        ElseIf (($password -ne $null) -and ($update_password -eq 'always')) {
+            [void][system.reflection.assembly]::LoadWithPartialName('System.DirectoryServices.AccountManagement')
+            $pc = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext 'Machine', $env:COMPUTERNAME
+            # FIXME: ValidateCredentials fails if PasswordExpired == 1
+            If (!$pc.ValidateCredentials($username, $password)) {
+                Update-Password $user_obj $password
+                $result.changed = $true
+            }
         }
-        $result.changed = $true
-        $user_obj = Get-User $username
+        If (($fullname -ne $null) -and ($fullname -ne $user_obj.FullName[0])) {
+            $user_obj.FullName = $fullname
+            $user_obj.SetInfo()
+            $result.changed = $true
+        }
+        If (($description -ne $null) -and ($description -ne $user_obj.Description[0])) {
+            $user_obj.Description = $description
+            $user_obj.SetInfo()
+            $result.changed = $true
+        }
+        If (($password_expired -ne $null) -and ($password_expired -ne ($user_obj.PasswordExpired | ConvertTo-Bool))) {
+            $user_obj.PasswordExpired = If ($password_expired) { 1 } Else { 0 };
+            $user_obj.SetInfo()
+            $result.changed = $true
+        }
+        If (($password_never_expires -ne $null) -and ($password_never_expires -ne (Get-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD))) {
+            If ($password_never_expires) {
+                Set-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD
+            }
+            Else {
+                Clear-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD
+            }
+            $result.changed = $true
+        }
+        If (($user_cannot_change_password -ne $null) -and ($user_cannot_change_password -ne (Get-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE))) {
+            If ($user_cannot_change_password) {
+                Set-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE
+            }
+            Else {
+                Clear-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE
+            }
+            $result.changed = $true
+        }
+        If (($account_disabled -ne $null) -and ($account_disabled -ne $user_obj.AccountDisabled)) {
+            $user_obj.AccountDisabled = $account_disabled
+            $user_obj.SetInfo()
+            $result.changed = $true
+        }
+        If (($account_locked -ne $null) -and ($account_locked -ne $user_obj.IsAccountLocked)) {
+            $user_obj.IsAccountLocked = $account_locked
+            $user_obj.SetInfo()
+            $result.changed = $true
+        }
+        $user_obj.RefreshCache()
+        Set-Attr $result "name" $user_obj.Name[0]
+        Set-Attr $result "fullname" $user_obj.FullName[0]
+        Set-Attr $result "path" $user_obj.Path
+        Set-Attr $result "description" $user_obj.Description[0]
+        Set-Attr $result "password_expired" ($user_obj.PasswordExpired | ConvertTo-Bool)
+        Set-Attr $result "password_never_expires" (Get-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD)
+        Set-Attr $result "user_cannot_change_password" (Get-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE)
+        Set-Attr $result "account_disabled" $user_obj.AccountDisabled
+        Set-Attr $result "account_locked" $user_obj.IsAccountLocked
+        Set-Attr $result "sid" (New-Object System.Security.Principal.SecurityIdentifier($user_obj.ObjectSid.Value, 0)).Value
     }
     catch {
         Fail-Json $result $_.Exception.Message
     }
 }
-else {
+Else {
     # Remove user
     try {
-        if ($user_obj.GetType) {
+        If ($user_obj.GetType) {
+            Set-Attr $result "name" $user_obj.Name[0]
             Delete-User $user_obj
             $result.changed = $true
         }
-        else {
+        Else {
+            Set-Attr $result "name" $username
             Set-Attr $result "msg" "User '$username' was not found"
         }
     }
@@ -107,10 +228,5 @@ else {
         Fail-Json $result $_.Exception.Message
     }
 }
-
-# Set-Attr $result "user" $user_obj
-Set-Attr $result "user_name" $user_obj.Name
-Set-Attr $result "user_fullname" $user_obj.FullName
-Set-Attr $result "user_path" $user_obj.Path
 
 Exit-Json $result;

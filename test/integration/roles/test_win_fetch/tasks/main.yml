@@ -18,11 +18,9 @@
 
 - name: clean out the test directory
   local_action: file name={{ output_dir|mandatory }} state=absent
-  tags: me
 
 - name: create the test directory
   local_action: file name={{ output_dir }} state=directory
-  tags: me
 
 - name: fetch a small file
   fetch: src="C:/Windows/win.ini" dest={{ output_dir }}
