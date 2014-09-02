@@ -135,6 +135,8 @@ will need to ask for a passphrase.
 Run Once
 ````````
 
+.. versionadded:: 1.7
+
 In some cases there may be a need to only run a task one time and only on one host. This can be achieved
 by configuring "run_once" on a task::
 
