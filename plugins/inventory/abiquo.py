@@ -167,7 +167,12 @@ def generate_inv_from_api(enterprise_entity,config):
                     meta_entity = next(link for link in (vmcollection['links']) if (link['rel']=='metadata'))
                     try:
                         metadata = api_get(meta_entity,config)
-                        inventory['_meta']['hostvars'][vm_nic] = metadata['metadata']['metadata']
+                        if (config.getfloat("api","version") >= 3.0):                           
+                            vm_metadata = metadata['metadata']
+                        else:
+                            vm_metadata = metadata['metadata']['metadata']
+                        if not vm_metadata is None:
+                            inventory['_meta']['hostvars'][vm_nic] = vm_metadata
                     except Exception, e:
                         pass
 
