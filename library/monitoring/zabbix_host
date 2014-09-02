@@ -277,9 +277,6 @@ def main():
                     changed = True
                 else:
                     module.fail_json(msg="Failed to get host: %s" % error)
-        else:
-            if module.check_mode:
-                changed = False
 
     if state == "absent":
         (rc, exists, error) = check_host(zbx, host_name)
