@@ -312,7 +312,7 @@ def main():
     ttl = module.params.get('ttl')
     record_type = module.params.get('type')
 
-    setup_rax_module(module, pyrax)
+    setup_rax_module(module, pyrax, False)
 
     if record_type.upper() == 'PTR':
         if not server and not loadbalancer:
