@@ -45,15 +45,13 @@ Elseif (!$params.state) {
 }
 
 
-$type = $params.state.ToString().ToLower()
+$type = $state.ToString().ToLower()
 $name = $params.name.ToString().ToLower()
 $obj =  Get-Item $name -ErrorAction SilentlyContinue
 $force = $false;
 
-$result.name = $name
-$result.msg = "Generic Error"
 
-If ($params.override -eq $true)
+If ($params.force -eq $true)
 {
 	$force=$true
 }
@@ -69,6 +67,8 @@ If ($obj){
 	}	
 }
 
+$result.name = $name
+$result.msg = "Generic Error"
 $result.pre_state = $pre_state
 
 If ( ($type -eq $pre_state) -and (-not $force) )
@@ -78,30 +78,65 @@ If ( ($type -eq $pre_state) -and (-not $force) )
 }
 
 If ( $type -eq "absent" )
-{
-	Remove-Item $name -Force -Recurse
+{	try{
+	$op_status= Remove-Item $name -Force -Recurse -ErrorAction Stop
 	$result.msg = "Item Removed"
 	$result.changed = $true
+	}
+	catch {
+        	Fail-Json $result $_.Exception.Message
+    	}
 
 }
-ElseIf ( ($type -eq "file") -and ($pre_state -ne "directory" ))
+ElseIf ( ($type -eq "file"))
 {
-	$op_status = New-Item $name -type $type -force:$force
-	If (-not $op_status) {
-		Fail-Json $result "Could not create item as requested"
+      try{
+	If (($pre_state -eq "directory"))
+	{
+	   If (-not $force)
+           {
+                        Fail-Json $result "state mismatch - use force=true"
+           }
+
+	  $op_status=Remove-Item $name -Force -Recurse -ErrorAction Stop
+	  
+	}
+	$dirsplit = split-path $name
+	If ($dirsplit)
+	{
+	   New-Item -Path $dirsplit -type directory -ErrorAction  SilentlyContinue
+	}
+	$op_status = New-Item -Path $name -type $type -force:$force -ErrorAction Stop
 			}
 	$result.msg = "Item Created"
         $result.changed = $true
+	}
+	 catch {
+        Fail-Json $result $_.Exception.Message
+    }
+
 
 }
-Elseif ( ($type -eq "directory") -and ($pre_state -ne "file"))
-{ 
-	$op_status = New-Item $name -type $type
-	 If (-not $op_status) {
-                Fail-Json $result "Could not create item as requested"
+Elseif ( ($type -eq "directory"))
+{
+	try{ 
+	If (($pre_state -eq "file"))
+	{	
+		If (-not $force)
+		{
+			Fail-Json $result "state mismatch - use force=true"
+		}
+		$op_status=Remove-Item $name -Force -ErrorAction Stop
+
 	}
+	$op_status = New-Item -Path $name -type $type -ErrorAction Stop
 	$result.msg = "Item Created"
         $result.changed = $true
+	}
+	 catch {
+	        Fail-Json $result $_.Exception.Message
+    	}
+
 }
 Else
 {
