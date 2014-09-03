@@ -1,0 +1,227 @@
+#!/usr/bin/python
+DOCUMENTATION = '''
+---
+module: ec2_iam_role
+short_description: create IAM role
+description:
+    - This module creates IAM roles
+version_added: x.x 
+options:
+  role_name:
+    description:
+      - The IAM role name
+    required: true
+  assume_role_policy_document:
+    description:
+      - URLEncoded JSON string allowing IAM role to assume roles
+      - If absent, default is used.
+    required: false
+  state:
+    description:
+      - If present, role is created
+      - If absent, role is deleted
+    required: true 
+    choices: ['present', 'absent']
+
+extends_documentation_fragment: aws
+author: Michal Bicz <michal@bicz.net>
+notes:
+   - This module will return C(arn), C(role_id), C(path), C(arpd), C(role_name) on success.
+   - If there is a discrepancy betwen the role_policy documents, role will be
+   - recreated with the provided document.
+'''
+
+EXAMPLES = '''
+- name: create EC2 IAM role
+  local_action: 
+  module: ec2_iam_role
+    role_name: webserver
+    state: present
+  register: webserver
+
+- name: output the Role ID
+  debug: msg="Created role with the following id {{ webserver_role.role_id }}"
+
+- name: delete EC2 IAM role
+  local_action: 
+    module: ec2_iam_role
+    role_name: webserver
+    state: absent 
+'''
+
+import json
+import urllib
+
+try:
+    import boto
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+class IAMRole(object):
+    """
+    Class to manipulate IAM Roles
+    """
+    def __init__(self, iam, module, role_name):
+        self.iam = iam
+        self.name = role_name
+        self.module = module
+        self.changed = False
+        self.response = None
+        self.arn = None
+        self.arpd = None
+        self.create_date = None
+        self.path = None
+        self.role_id = None
+        try:
+            self.iam.get_role(self.name)
+            self.exist = True
+            self.refresh()
+        except boto.exception.BotoServerError:
+            self.exist = False
+
+    def refresh(self):
+        """
+        Parse AWS response json metadata
+        """
+        try:
+            response = self.iam.get_role(self.name)
+            iam_role_info = response.get('get_role_response')\
+                    .get('get_role_result')\
+                    .get('role')
+            self.arn = iam_role_info['arn']
+            self.arpd = iam_role_info['assume_role_policy_document']
+            self.create_date = iam_role_info['create_date']
+            self.path = iam_role_info['path']
+            self.role_id = iam_role_info['role_id']
+
+        except boto.exception.BotoServerError:
+            self.arn = None
+            self.arpd = None
+            self.create_date = None
+            self.path = None
+            self.role_id = None
+
+    def create(self, arpd):
+        """
+        Creates role specified by the role_name with the arpd
+        """
+        # If we're in check mode, nothing else to do
+        if self.module.check_mode:
+            self.module.exit_json(change=True)
+        response = self.iam.create_role(self.name,
+                                       assume_role_policy_document=urllib.unquote(arpd.decode('utf8')))
+        if response:
+            self.exist = True
+            self.changed = True
+            self.refresh()
+        else:
+            self.module.fail_json(msg="role creation failed!")
+
+    def delete(self):
+        """ Deletes this instance """
+        # If we're in check mode, nothing else to do
+        if self.module.check_mode:
+            self.module.exit_json(change=True)
+        else:
+            response = self.iam.delete_role(self.name)
+            if response:
+                self.changed = True
+                self.exist = False
+                self.refresh()
+
+    def update_arpd(self, arpd):
+        """ Update arpd policy """
+        response = self.iam.update_assume_role_policy(self.name, arpd)
+        if response:
+            self.changed = True
+            self.refresh()
+        else:
+            self.module.fail_json(msg="role modification failed!")
+
+
+def main():
+    """ run this module """
+    argument_spec = ec2_argument_spec()
+    #
+    # default_arpd 
+    # {"Version":"2008-10-17",
+    # "Statement":[
+    # {"Sid":"",
+    #   "Effect":"Allow",
+    #   "Principal": {"Service":"ec2.amazonaws.com"},
+    #   "Action":"sts:AssumeRole"
+    # }]}
+    #
+    default_arpd = u'\
+    %7B%22Version%22%3A%222008-10-\
+    17%22%2C%22Statement%22%3A%5B%\
+    7B%22Sid%22%3A%22%22%2C%22Effe\
+    ct%22%3A%22Allow%22%2C%22Princ\
+    ipal%22%3A%7B%22Service%22%3A%\
+    22ec2.amazonaws.com%22%7D%2C%2\
+    2Action%22%3A%22sts%3AAssumeRo\
+    le%22%7D%5D%7D\
+    '.replace(' ', '')
+
+    argument_spec.update(dict(
+            state=dict(required=True,
+                       choices=['present', 'absent']),
+            role_name=dict(required=True),
+            assume_role_policy_document=dict(required=False,
+                                               default=default_arpd),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
+
+
+    access_key = module.params.get('aws_access_key')
+    secret_key = module.params.get('aws_secret_key')
+    region = module.params.get('region')
+    role_name = module.params.get('role_name')
+    state = module.params.get('state')
+    arpd = module.params.get('assume_role_policy_document')
+
+    iam = boto.connect_iam()
+
+    iamrole = IAMRole(iam, module, role_name)
+
+    if state == 'present':
+        if iamrole.exist:
+            #role already exist, let's verify if it's right
+            current_arpd = iamrole.arpd
+            if current_arpd != arpd:
+                iamrole.update_arpd(arpd)
+        else:
+            iamrole.create(arpd)
+
+        ansible_facts = dict(arpd=iamrole.arpd,
+                              role_id=iamrole.role_id,
+                              arn=iamrole.arn,
+                              path=iamrole.path
+                              )
+
+        ec2_iam_facts_result = dict(changed=iamrole.changed,
+                                **ansible_facts)
+
+    if state == 'absent':
+        if iamrole.exist:
+            iamrole.delete()
+            ec2_iam_facts_result = dict(changed=True)
+        else:
+            ec2_iam_facts_result = dict(changed=False)
+
+    # gather result of the run for reporting, report
+    module.exit_json(**ec2_iam_facts_result)
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+if __name__ == '__main__':
+    main()
