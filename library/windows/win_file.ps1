@@ -19,60 +19,95 @@
 
 $params = Parse-Args $args;
 $result = New-Object PSObject;
-$force=$false;
-Set-Attr $result "changed" $false;
+$pre_state="absent"
+
+$result = New-Object psobject @{
+    changed = $false
+    name = ""
+    msg = ""
+    pre_state = ""
+};
 
 If (-not $params.name.GetType)
 {
     Fail-Json $result "missing required arguments: name (file or directory)"
 }
 
-If (-not $params.type.GetType)
-{
-   Fail-Json $result "missgin required arguments: type [file] or [directory]"
+
+If ($params.state) {
+    $state = $params.state.ToString().ToLower()
+    If (($state -ne 'file') -and ($state -ne 'absent') -and ($state -ne 'directory' )) {
+        Fail-Json $result "state is '$state'; must be 'file' or 'directory' or 'absent'"
+    }
+}
+Elseif (!$params.state) {
+    $state = "file"
 }
 
 
-If ($params.cwd) {
-    $location = $params.cwd + "/"
-    Set-Location -Path $location
-    $setlocation = Get-Location
-    If ( $setlocation.ToString.ToLower() -ne $location.ToString.ToLower()) {
-  	Fail-Json $result "Could not change working dir to '$location'"
-	}
-}
-
-$type = $params.type.ToString().ToLower()
+$type = $params.state.ToString().ToLower()
 $name = $params.name.ToString().ToLower()
 $obj =  Get-Item $name -ErrorAction SilentlyContinue
+$force = $false;
 
+$result.name = $name
+$result.msg = "Generic Error"
 
-If ( $obj -and (-not $params.override))
+If ($params.override -eq $true)
 {
- 
- Fail-Json $result "Item '$name' already exist - use override=true to force"		
+	$force=$true
+}
+
+If ($obj){
+	If ($obj.PSIsContainer -eq $true)
+	{
+		$pre_state="directory"
+	}
+	Elseif ($obj.PSIsContainer -eq $false)
+	{
+		$pre_state="file"
+	}	
+}
+
+$result.pre_state = $pre_state
+
+If ( ($type -eq $pre_state) -and (-not $force) )
+{
+	 $result.msg="Nothing to do"
+	 Exit-Json $result
+}
+
+If ( $type -eq "absent" )
+{
+	Remove-Item $name -Force -Recurse
+	$result.msg = "Item Removed"
+	$result.changed = $true
+
+}
+ElseIf ( ($type -eq "file") -and ($pre_state -ne "directory" ))
+{
+	$op_status = New-Item $name -type $type -force:$force
+	If (-not $op_status) {
+		Fail-Json $result "Could not create item as requested"
+			}
+	$result.msg = "Item Created"
+        $result.changed = $true
+
+}
+Elseif ( ($type -eq "directory") -and ($pre_state -ne "file"))
+{ 
+	$op_status = New-Item $name -type $type
+	 If (-not $op_status) {
+                Fail-Json $result "Could not create item as requested"
+	}
+	$result.msg = "Item Created"
+        $result.changed = $true
+}
+Else
+{
+	$changed =$false;
+	Fail-Json $result "Item already exist but type mismatch"
 }
 
 
-If ($params.override -eq $true){
-    If (($obj.PSIsContainer -eq $true) -and ($type -eq "file"))
-    {
-	Fail-Json $result "A directory with the same name already exist - cannot procede"
-    }
-    
-     If (($obj.PSIsContainer -eq $false) -and ($type -eq "directory"))
-    {
-        Fail-Json $result "A file with the same name already exist - cannot procede"
-    }
-
-    $force = $true
-}
-
-$op_status = New-Item $name -type $type -force:$force
-
-If (-not $op_status) {
-	Fail-Json $result "Could not create '$name' of type '$type' '$op_status'"
-}
-
-Set-Attr $result "changed" $true;
 Exit-Json $result;
