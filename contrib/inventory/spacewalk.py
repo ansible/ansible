@@ -22,6 +22,9 @@ Tested with Ansible 1.1
 # Author:: Jon Miller <jonEbird@gmail.com>
 # Copyright:: Copyright (c) 2013, Jon Miller
 # 
+# Extended for support of multiple organizations by
+# Bernhard Lichtinger <bernhard.lichtinger@lrz.de> 2014
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or (at
@@ -97,7 +100,24 @@ parser.add_option('--host', default=None, dest="host",
 parser.add_option('-H', '--human', dest="human",
                   default=False, action="store_true",
                   help="Produce a friendlier version of either server list or host detail")
+parser.add_option('-o', '--org', default=None, dest="org_number", 
+		  help="Limit to spacewalk organization number")
+parser.add_option('-p', default=False, dest="prefix_org_name", action="store_true",
+		  help="Prefix the group name with the organization number")
 (options, args) = parser.parse_args()
+
+
+# Generate dictionary for mapping group_id to org_id
+#------------------------------
+org_groups = {}
+try:
+	for group in spacewalk_report('system-groups'):
+	    org_groups[group['group_id']] = group['org_id'] 
+
+except (OSError), e:
+	print >> sys.stderr, 'Problem executing the command "%s system-groups": %s' % \
+	    (SW_REPORT, str(e))
+	sys.exit(2)
 
 
 # List out the known server from Spacewalk
@@ -107,10 +127,29 @@ if options.list:
     groups = {}
     try:
         for system in spacewalk_report('system-groups-systems'):
-            if system['group_name'] not in groups:
-                groups[system['group_name']] = set()
+	# first get org_id of system
+	    org_id =  org_groups[ system['group_id'] ]
 
-            groups[system['group_name']].add(system['server_name'])
+	# shall we add the org_id as prefix to the group name:
+            if options.prefix_org_name:
+		prefix = org_id + "-"
+		group_name = prefix + system['group_name']
+	    else:
+		group_name = system['group_name']
+
+	# if we are limited to one organization:
+	    if options.org_number:
+		if org_id == options.org_number:
+		    if group_name not in groups:
+			groups[group_name] = set()
+
+	            groups[group_name].add(system['server_name'])
+	# or we list all groups and systems:
+	    else:
+		    if group_name not in groups:
+			groups[group_name] = set()
+
+		    groups[group_name].add(system['server_name'])
 
     except (OSError), e:
         print >> sys.stderr, 'Problem executing the command "%s system-groups-systems": %s' % \
