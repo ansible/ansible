@@ -286,7 +286,7 @@ class Connection(object):
             sudocmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
-        vvv("EXEC %s" % ssh_cmd, host=self.host)
+        vvv("EXEC %s" % ' '.join(ssh_cmd), host=self.host)
 
         not_in_host_file = self.not_in_host_file(self.host)
 
