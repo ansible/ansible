@@ -5,6 +5,15 @@ Here are some commonly-asked questions and their answers.
 
 .. _users_and_ports:
 
+If you are looking to set enviroment varialbes remotely for your project (in a task, not locally for Ansible)
+The keyword is simply `enviroment`
+
+```
+  enviroment:
+     PATH:$PATH:/thingy/bin 
+```
+
+
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
