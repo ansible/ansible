@@ -211,7 +211,8 @@ def main():
         production=dict(default='no', type='bool'),
         executable=dict(default=None),
         registry=dict(default=None),
-        state=dict(default='present', choices=['present', 'absent', 'latest'])
+        state=dict(default='present', choices=['present', 'absent', 'latest']),
+        ignore_scripts=dict(default=False, type='bool'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
