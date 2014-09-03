@@ -84,7 +84,10 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
     def connect(self):
         "Connect to a host on a given (SSL) port."
 
-        sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+        if hasattr(self, 'source_address'):
+            sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+        else:
+            sock = socket.create_connection((self.host, self.port), self.timeout)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
