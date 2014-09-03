@@ -72,7 +72,7 @@ options:
     default: "GET"
   return_content:
     description:
-      - Whether or not to return the body of the request as a "content" key in the dictionary result. If the reported Content-type is "application/json", then the JSON is additionally loaded into a key called C(json) in the dictionary results.
+      - Whether or not to return decoded body of the request as a C(content) key in the dictionary result and raw body as C(raw_content). If the reported Content-type is "application/json", then the JSON is additionally loaded into a key called C(json) in the dictionary results.
     required: false
     choices: [ "yes", "no" ]
     default: "no"
@@ -299,14 +299,16 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
 
     # Make the request, or try to :)
     try: 
-        resp, content = h.request(url, method=method, body=body, headers=headers)     
+        resp, raw_content = h.request(url, method=method, body=body, headers=headers)     
         r['redirected'] = redirected
         r.update(resp_redir)
         r.update(resp)
         try:
-            return r, unicode(content.decode('unicode_escape')), dest
+            content = unicode(raw_content.decode('unicode_escape'))
         except:
-            return r, content, dest
+            content = raw_content
+
+        return r, content, raw_content, dest
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
     except httplib2.RedirectLimit:
@@ -400,7 +402,7 @@ def main():
 
 
     # Make the request
-    resp, content, dest = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
+    resp, content, raw_content, dest = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
     resp['status'] = int(resp['status'])
 
     # Write the file out if requested
@@ -408,7 +410,7 @@ def main():
         if resp['status'] == 304:
             changed = False
         else:
-            write_file(module, url, dest, content)
+            write_file(module, url, dest, raw_content)
             # allow file attribute changes
             changed = True
             module.params['path'] = dest
@@ -428,14 +430,14 @@ def main():
     if 'content_type' in uresp:
         if uresp['content_type'].startswith('application/json'):
             try:
-                js = json.loads(content)
+                js = json.loads(raw_content)
                 uresp['json'] = js
             except:
                 pass
     if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
-        module.exit_json(changed=changed, content=content, **uresp)
+        module.exit_json(changed=changed, content=content, raw_content=raw_content, **uresp)
     else:
         module.exit_json(changed=changed, **uresp)
 

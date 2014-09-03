@@ -37,3 +37,4 @@
     - { role: test_failed_when, tags: test_failed_when }
     - { role: test_script, tags: test_script }
     - { role: test_authorized_key, tags: test_authorized_key }
+    - { role: test_uri, tags: test_uri }
