@@ -191,7 +191,7 @@ def main():
             name = dict(required=True, aliases=['pkg']),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
-            disable_recommends = dict(requiered=False, default='yes', type='bool'), 
+            disable_recommends = dict(required=False, default='yes', type='bool'),
         ),
         supports_check_mode = False
     )
