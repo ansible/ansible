@@ -591,7 +591,7 @@ class ElbManager(object):
 
     def _set_cross_az_load_balancing(self):
         attributes = self.elb.get_attributes()
-        if self.cross_az_load_balancing == 'yes':
+        if self.cross_az_load_balancing:
             attributes.cross_zone_load_balancing.enabled = True
         else:
             attributes.cross_zone_load_balancing.enabled = False
