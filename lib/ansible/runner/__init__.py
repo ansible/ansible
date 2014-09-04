@@ -226,10 +226,6 @@ class Runner(object):
         # changed later via options like accelerate
         self.original_transport = self.transport
 
-        # enforce complex_args as a dict
-        if type(self.complex_args) != dict:
-            raise errors.AnsibleError("args must be a dictionary, received %s (%s)" % (self.complex_args, type(self.complex_args)))
-
         # misc housekeeping
         if subset and self.inventory._subset is None:
             # don't override subset when passed from playbook
@@ -677,11 +673,37 @@ class Runner(object):
                 inject['item'] = ",".join(use_these_items)
                 items = None
 
-        # logic to replace complex args if possible
-        complex_args = self.complex_args
+        def _safe_template_complex_args(args, inject):
+            # Ensure the complex args here are a dictionary, but
+            # first template them if they contain a variable
+            returned_args = args
+            if isinstance(args, basestring):
+                # If the complex_args were evaluated to a dictionary and there are
+                # more keys in the templated version than the evaled version, some
+                # param inserted additional keys (the template() call also runs
+                # safe_eval on the var if it looks like it's a datastructure). If the
+                # evaled_args are not a dict, it's most likely a whole variable (ie.
+                # args: {{var}}), in which case there's no way to detect the proper
+                # count of params in the dictionary.
+
+                templated_args = template.template(self.basedir, args, inject, convert_bare=True)
+                evaled_args = utils.safe_eval(args)
+
+                if isinstance(evaled_args, dict) and len(evaled_args) > 0 and len(evaled_args) != len(templated_args):
+                    raise errors.AnsibleError("a variable tried to insert extra parameters into the args for this task")
+
+                # set the returned_args to the templated_args
+                returned_args = templated_args
+
+            # and a final check to make sure the complex args are a dict
+            if not isinstance(returned_args, dict):
+                raise errors.AnsibleError("args must be a dictionary, received %s" % returned_args)
+
+            return returned_args
 
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
+            complex_args = _safe_template_complex_args(self.complex_args, inject)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
@@ -700,12 +722,8 @@ class Runner(object):
                 this_inject = inject.copy()
                 this_inject['item'] = x
 
-                # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
-                if isinstance(self.complex_args, basestring):
-                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
-                    complex_args = utils.safe_eval(complex_args)
-                    if type(complex_args) != dict:
-                        raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
+                complex_args = _safe_template_complex_args(self.complex_args, this_inject)
+
                 result = self._executor_internal_inner(
                      host,
                      self.module_name,
