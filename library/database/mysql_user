@@ -327,73 +327,6 @@ def config_get(config, section, option):
     return strip_quotes(config.get(section, option))
 
 
-def _safe_cnf_load(config, path):
-
-    data = {'user':'', 'password':'', 'socket': ''}
-
-    # read in user/pass
-    f = open(path, 'r')
-    for line in f.readlines():
-        line = line.strip()
-        if line.startswith('user='):
-            data['user'] = line.split('=', 1)[1].strip()
-        if line.startswith('password=') or line.startswith('pass='):
-            data['password'] = line.split('=', 1)[1].strip()
-        if line.startswith('socket='):
-            data['socket'] = line.split('=', 1)[1].strip()
-    f.close()
-
-    # write out a new cnf file with only user/pass   
-    fh, newpath = tempfile.mkstemp(prefix=path + '.')
-    f = open(newpath, 'wb')
-    f.write('[client]\n')
-    f.write('user=%s\n' % data['user'])
-    f.write('password=%s\n' % data['password'])
-    f.write('socket=%s\n' % data['socket'])
-    f.close()
-
-    config.readfp(open(newpath))
-    os.remove(newpath)
-    return config
-
-def load_mycnf():
-    config_options = dict()
-    config = ConfigParser.RawConfigParser()
-    mycnf = os.path.expanduser('~/.my.cnf')
-    if not os.path.exists(mycnf):
-        return False
-    try:
-        config.readfp(open(mycnf))
-    except (IOError):
-        return False
-    except:
-        config = _safe_cnf_load(config, mycnf)
-
-    # We support two forms of passwords in .my.cnf, both pass= and password=,
-    # as these are both supported by MySQL.
-    try:
-        config_options['passwd'] = config_get(config, 'client', 'password');
-    except (ConfigParser.NoOptionError):
-        try:
-            config_options['passwd'] = config_get(config, 'client', 'pass');
-        except (ConfigParser.NoOptionError):
-            pass
-
-    # get the user if we can
-    try:
-        config_options['user'] = config_get(config, 'client', 'user')
-    except (ConfigParser.NoOptionError):
-        pass
-
-    # get the socket if we can
-    try:
-        config_options['socket'] = config_get(config, 'client', 'socket')
-    except (ConfigParser.NoOptionError):
-        pass
-
-    return config_options
-
-
 def connect(module, login_user, login_password, socket):
     if socket:
         db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=socket, user=login_user, passwd=login_password, db="mysql")
@@ -445,7 +378,7 @@ def main():
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     if login_user is None and login_password is None:
-        mycnf = load_mycnf()
+        mycnf = mycnf_options()
         if mycnf and mycnf['user'] and mycnf['passwd']:
             login_user = mycnf["user"]
             login_password = mycnf["passwd"]
@@ -488,4 +421,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.mysql import *
 main()
