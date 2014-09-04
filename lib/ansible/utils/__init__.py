@@ -1268,6 +1268,12 @@ def list_difference(a, b):
             result.append(x)
     return result
 
+def contains_vars(data):
+    '''
+    returns True if the data contains a variable pattern
+    '''
+    return "$" in data or "{{" in data
+
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
     This is intended for allowing things like:
