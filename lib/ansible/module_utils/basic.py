@@ -991,10 +991,12 @@ class AnsibleModule(object):
             else:
                 found = False
                 for filter in filter_re:
-                    if isinstance(self.params[param], unicode):
-                        m = filter.match(self.params[param])
-                    else:
-                        m = filter.match(str(self.params[param]))
+                    param_val = self.params[param]
+                    if not isinstance(param_val, basestring):
+                        param_val = str(param_val)
+                    elif isinstance(param_val, unicode):
+                        param_val = param_val.encode('utf-8')
+                    m = filter.match(param_val)
                     if m:
                         d = m.groupdict()
                         log_args[param] = d['before'] + "********" + d['after']
@@ -1004,22 +1006,27 @@ class AnsibleModule(object):
                     log_args[param] = self.params[param]
 
         module = 'ansible-%s' % os.path.basename(__file__)
-        msg = ''
+        msg = []
         for arg in log_args:
-            if isinstance(log_args[arg], basestring):
-                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
-            else:
-                msg = msg + arg + '=' + str(log_args[arg]) + ' '
+            arg_val = log_args[arg]
+            if not isinstance(arg_val, basestring):
+                arg_val = str(arg_val)
+            elif isinstance(arg_val, unicode):
+                arg_val = arg_val.encode('utf-8')
+            msg.append('%s=%s ' % (arg, arg_val))
         if msg:
-            msg = 'Invoked with %s' % msg
+            msg = 'Invoked with %s' % ''.join(msg)
         else:
             msg = 'Invoked'
 
         # 6655 - allow for accented characters
-        try:
-            msg = msg.encode('utf8')
-        except UnicodeDecodeError, e:
-            pass
+        if isinstance(msg, unicode):
+            # If we've done everything right up above msg should be type
+            # str, not type unicode here.  This is partial protection in case
+            # we've done something wrong.  But if we arrive here we can
+            # potentially get tracebacks in code up above (when mixing unicode
+            # and str together)
+            msg = msg.encode('utf-8')
 
         if (has_journal):
             journal_args = ["MESSAGE=%s %s" % (module, msg)]
