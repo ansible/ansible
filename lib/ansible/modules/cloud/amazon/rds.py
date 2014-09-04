@@ -753,11 +753,10 @@ def facts_db_instance_or_snapshot(module, conn):
 
 def modify_db_instance(module, conn):
     required_vars = ['instance_name']
-    valid_vars = ['backup_retention', 'backup_window', 'db_name', 'engine_version',
-                  'instance_type', 'iops', 'license_model', 'maint_window',
-                  'password', 'multi_zone', 'new_instance_name',
-                  'option_group', 'parameter_group',
-                  'size', 'upgrade']
+    valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
+                  'db_name', 'engine_version', 'instance_type', 'iops', 'license_model',
+                  'maint_window', 'multi_zone', 'new_instance_name',
+                  'option_group', 'parameter_group' 'password', 'size', 'upgrade']
 
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
@@ -770,28 +769,15 @@ def modify_db_instance(module, conn):
     if params.get('apply_immediately'):
         if new_instance_name:
             # Wait until the new instance name is valid
-            found = 0
-            while found == 0:
-                if has_rds2:
-                    instances = conn.describe_all_db_instances()
-                else:
-                    instances = conn.get_all_dbinstances()
-                for i in instances:
-                    if i.id == new_instance_name:
-                        instance_name = new_instance_name
-                        found = 1
-                if found == 0:
-                    time.sleep(5)
+            new_instance = None
+            while not new_instance:
+                new_instance = conn.get_db_instance(new_instance_name)
+                time.sleep(5)
 
-            # The name of the database has now changed, so we have
-            # to force result to contain the new instance, otherwise
-            # the call below to get_current_resource will fail since it
-            # will be looking for the old instance name.
-            result.id = new_instance_name
-        else:
-            # Wait for a few seconds since it takes a while for AWS
-            # to change the instance from 'available' to 'modifying'
-            time.sleep(5)
+            # Found instance but it briefly flicks to available
+            # before rebooting so let's wait until we see it rebooting
+            # before we check whether to 'wait'
+            result = await_resource(conn, new_instance, 'rebooting', module)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -918,6 +904,7 @@ def validate_parameters(required_vars, valid_vars, module):
             'character_set_name': 'character_set_name',
             'instance_type': 'db_instance_class',
             'password': 'master_user_password',
+            'new_instance_name': 'new_db_instance_identifier',
     }
     if has_rds2:
         optional_params.update(optional_params_rds2)
@@ -977,7 +964,7 @@ def main():
             zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
             subnet            = dict(required=False),
             wait              = dict(type='bool', default=False),
-            wait_timeout      = dict(default=300),
+            wait_timeout      = dict(type='int', default=300),
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
             new_instance_name = dict(required=False),
