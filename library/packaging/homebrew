@@ -50,6 +50,12 @@ options:
         required: false
         default: no
         choices: [ "yes", "no" ]
+    cleanup:
+        description:
+            - erase all outdated homebrew packages
+        required: false
+        default: no
+        choices: [ "yes", "no" ]
     install_options:
         description:
             - options flags to install a package
@@ -62,7 +68,7 @@ EXAMPLES = '''
 - homebrew: name=foo state=present
 - homebrew: name=foo state=present update_homebrew=yes
 - homebrew: name=foo state=latest update_homebrew=yes
-- homebrew: update_homebrew=yes upgrade_all=yes
+- homebrew: update_homebrew=yes upgrade_all=yes cleanup=yes
 - homebrew: name=foo state=head
 - homebrew: name=foo state=linked
 - homebrew: name=foo state=absent
@@ -499,7 +505,8 @@ class Homebrew(object):
     def _cleanup(self):
         rc, out, err = self.module.run_command([
             self.brew_path,
-            'cleanup --force',
+            'cleanup',
+            '--force',
         ])
         if rc == 0:
             if not out:
