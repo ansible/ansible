@@ -192,11 +192,13 @@ def main():
         if name:
             module.fail_json(msg='Incompatible option: \'name\'. Do not use name when adding repo files')
     else:
-        if not name:
+        if not name and state == "present":
             module.fail_json(msg='Name required when adding non-repo files:')
 
     if repo and repo.endswith('.repo'):
         exists = repo_exists(module, url=repo, alias=name)
+    elif repo:
+        exists = repo_exists(module, url=repo)
     else:
         exists = repo_exists(module, alias=name)
 
