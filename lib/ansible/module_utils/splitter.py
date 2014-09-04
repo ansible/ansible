@@ -76,7 +76,7 @@ def split_args(args):
         do_decode = True
     except UnicodeDecodeError:
         do_decode = False
-    items = args.split(' ')
+    items = args.strip().split('\n')
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -94,21 +94,15 @@ def split_args(args):
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for item in items:
+    for itemidx,item in enumerate(items):
 
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
         # inside quotation characters
-        tokens = item.split('\n')
+        tokens = item.strip().split(' ')
 
         line_continuation = False
         for idx,token in enumerate(tokens):
-
-            # if there was a newline split, we will re-assemble using
-            # newlines, otherwise we re-assemble using spaces
-            spacer = ' '
-            if idx > 0:
-                spacer = '\n'
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
@@ -136,7 +130,15 @@ def split_args(args):
                 params.append(token)
                 appended = True
             elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
-                params[-1] = "%s%s%s" % (params[-1], spacer, token)
+                if idx == 0 and not inside_quotes and was_inside_quotes:
+                    params[-1] = "%s%s" % (params[-1], token)
+                elif len(tokens) > 1:
+                    spacer = ''
+                    if idx > 0:
+                        spacer = ' '
+                    params[-1] = "%s%s%s" % (params[-1], spacer, token)
+                else:
+                    params[-1] = "%s\n%s" % (params[-1], token)
                 appended = True
 
             # if the number of paired block tags is not the same, the depth has changed, so we calculate that here
@@ -162,19 +164,17 @@ def split_args(args):
             # finally, if we're at zero depth for all blocks and not inside quotes, and have not
             # yet appended anything to the list of params, we do so now
             if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
-                # if the spacer was a newline, prepend this param
-                # with it so that newlines are preserved, unless
-                # we previously hit a line continuation character
-                if spacer == '\n':
-                    if line_continuation:
-                        params.append(token)
-                    else:
-                        params.append('\n%s' % token)
-                else:
-                    params.append(token)
+                params.append(token)
 
-            # always clear the line continuation flag
-            line_continuation = False
+        # if this was the last token in the list, and we have more than
+        # one item (meaning we split on newlines), add a newline back here
+        # to preserve the original structure
+        if len(items) > 1 and itemidx != len(items) - 1 and not line_continuation:
+            if not params[-1].endswith('\n'):
+                params[-1] += '\n'
+
+        # always clear the line continuation flag
+        line_continuation = False
 
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced

@@ -173,8 +173,8 @@
   args:
     executable: /bin/bash
   shell: |
-    echo this is a
-    "multiline echo"
+    echo this is a \
+    "multiline echo" \
     "with a new line
     in quotes" \
     | md5sum \

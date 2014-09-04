@@ -707,7 +707,7 @@ class TestUtils(unittest.TestCase):
             # in memory of neighbors cat
             # we preserve line breaks unless a line continuation character preceeds them
             'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip" \\\ndone\nand done',
-            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done', '\nand', 'done']
+            ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done\n', 'and', 'done']
         )
 
         # test space preservation within quotes
