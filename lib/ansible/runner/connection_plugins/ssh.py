@@ -301,6 +301,8 @@ class Connection(object):
 
         self._send_password()
 
+        no_prompt_out = ''
+        no_prompt_err = ''
         if (self.runner.sudo and sudoable and self.runner.sudo_pass) or \
                 (self.runner.su and su and self.runner.su_pass):
             # several cases are handled for sudo privileges with password
@@ -351,6 +353,9 @@ class Connection(object):
                     stdin.write(self.runner.sudo_pass + '\n')
                 elif su:
                     stdin.write(self.runner.su_pass + '\n')
+            else:
+                no_prompt_out += sudo_output
+                no_prompt_err += sudo_errput
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
@@ -371,7 +376,7 @@ class Connection(object):
         if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, '', no_prompt_out + stdout, no_prompt_err + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
