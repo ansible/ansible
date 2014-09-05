@@ -71,6 +71,9 @@ class Play(object):
         self.vault_password   = vault_password
         self.environment      = ds.get('environment', {})
 
+        if not isinstance(self.environment, dict):
+            raise errors.AnsibleError('environment must be a dictionary')
+
         if self.tags is None:
             self.tags = []
         elif type(self.tags) in [ str, unicode ]:
