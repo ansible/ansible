@@ -967,66 +967,50 @@ class AnsibleModule(object):
         return (params2, args)
 
     def _heuristic_log_sanitize(self, data):
-        ''' Remove strings that look like passwords from log messages
+        ''' Remove strings that look like passwords from log messages '''
+        # Currently filters:
+        # user:pass@foo/whatever and http://username:pass@wherever/foo
+        # This code has false positives and consumes parts of logs that are
+        # not passwds
 
-        Currently filters out things like:
-        * user:pass@foo/whatever
-        * http://username:pass@wherever/foo
-
-        Currently, the heuristics are subject to false positives.  This could
-        change in the future should we decide that no_log is what we want to
-        push people towards.
-        '''
-        # Regexes can be too slow for this.  Pathological cases for regexes
-        # seem to be large amounts of data with many ':' but no '@'
-        # This function gets slower when there are many replacements but not
-        # nearly as slow as the worst case for regexes. If we need the
-        # flexibility of regex's in the future, re.sub() is faster than
-        # re.match() + str.join().  We might be able to decide to use a regex
-        # strategy if we detect a large number of '@' symbolsand use this
-        # function otherwise.
-
-        # begin points to the beginning of a password containing string
-        # end points to the end of the password containing string
-        # sep points to the char in between username and password
-        # prev_begin keeps track of where in the string to start a new search
-        #   for the end of a password substring
-        # sep_search_end keeps track of where in the string to end a search
-        #   for the separator
+        # begin: start of a passwd containing string
+        # end: end of a passwd containing string
+        # sep: char between user and passwd
+        # prev_begin: where in the overall string to start a search for
+        #   a passwd
+        # sep_search_end: where in the string to end a search for the sep
         output = []
         begin = len(data)
         prev_begin = begin
-        sep = 1  # Prime the pump with a sentinel value
+        sep = 1
         while sep:
-            # Find the potential end of a password
+            # Find the potential end of a passwd
             try:
                 end = data.rindex('@', 0, begin)
             except ValueError:
-                # No end marker, so add the rest of the data
+                # No passwd in the rest of the data
                 output.insert(0, data[0:begin])
                 break
 
-            # Search for the beginning of the password
+            # Search for the beginning of a passwd
             sep = None
             sep_search_end = end
             while not sep:
-                # Search for the beginning of a URL-style username+password
+                # URL-style username+password
                 try:
                     begin = data.rindex('://', 0, sep_search_end)
                 except ValueError:
-                    # If we don't find that, then we default to the start of
-                    # the string (b/c ssh-style username+password could
-                    # be taking up all of this parameter).
+                    # No url style in the data, check for ssh style in the
+                    # rest of the string
                     begin = 0
-                # Search for a separator character inside of where we know the
-                # password might live.
+                # Search for separator
                 try:
                     sep = data.index(':', begin + 3, end)
                 except ValueError:
-                    # No separator, now we have choices:
+                    # No separator; choices:
                     if begin == 0:
-                        # We've searched the whole string so there's no
-                        # password here.  Return the remaining data
+                        # Searched the whole string so there's no password
+                        # here.  Return the remaining data
                         output.insert(0, data[0:begin])
                         break
                     # Search for a different beginning of the password field.
@@ -1081,11 +1065,7 @@ class AnsibleModule(object):
 
         # 6655 - allow for accented characters
         if isinstance(msg, unicode):
-            # If we've done everything right up above msg should be type
-            # str, not type unicode here.  This is partial protection in case
-            # we've done something wrong.  But if we arrive here we can
-            # potentially get tracebacks in code up above (when mixing unicode
-            # and str together)
+            # We should never get here as msg should be type str, not unicode
             msg = msg.encode('utf-8')
 
         if (has_journal):

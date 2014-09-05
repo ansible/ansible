@@ -247,10 +247,20 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
     #################################################################################
 
     #
-    # Several speed tests -- previously, the obfuscation of passwords carried
-    # an unreasonable speed penalty for some module parameters.  We want to be
-    # sure we don't regress to that state.
+    # Speed tests
     #
+
+    # Previously, we used regexes which had some pathologically slow cases for
+    # parameters with large amounts of data with many ':' but no '@'.  The
+    # present function gets slower when there are many replacements so we may
+    # want to explore regexes in the future (for the speed when substituting
+    # or flexibility).  These speed tests will hopefully tell us if we're
+    # introducing code that has cases that are simply too slow.
+    #
+    # Some regex notes:
+    # * re.sub() is faster than re.match() + str.join().
+    # * We may be able to detect a large number of '@' symbols and then use
+    #   a regex else use the present function.
 
     @timed(5)
     def test_log_sanitize_speed_many_url(self):
@@ -297,10 +307,15 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         # the same:
         self.assertEqual(len(url_output), len(url_data))
 
-        # ssh checking is somewhat harder as the heuristic is overzealous in
-        # most cases.  Since the input will have at least one ":" present
-        # before the password we can tell some things about the beginning and
-        # end of the data, though:
+        # ssh checking is harder as the heuristic is overzealous in many
+        # cases.  Since the input will have at least one ":" present before
+        # the password we can tell some things about the beginning and end of
+        # the data, though:
         self.assertTrue(ssh_output.startswith("{'"))
         self.assertTrue(ssh_output.endswith("'}}}}"))
         self.assertIn(":********@foo.com/data',", ssh_output)
+
+        # The overzealous-ness here may lead to us changing the algorithm in
+        # the future.  We could make it consume less of the data (with the
+        # possiblity of leaving partial passwords exposed) and encourage
+        # people to use no_log instead of relying on this obfuscation.
