@@ -34,3 +34,14 @@
       - "setup_result.ansible_facts.ansible_ip_addresses"
       - "setup_result.ansible_facts.ansible_system"
       - "setup_result.ansible_facts.ansible_totalmem"
+      - "setup_result.ansible_facts.ansible_interfaces"
+      - "setup_result.ansible_facts.ansible_interfaces[0]"
+      - "setup_result.ansible_facts.ansible_interfaces[0].interface_name"
+      - "setup_result.ansible_facts.ansible_interfaces[0].interface_index"
+      - "setup_result.ansible_facts.ansible_powershell_version"
+
+- name: check setup result only when using https
+  assert: 
+    that:
+      - "setup_result.ansible_facts.ansible_winrm_certificate_expires"
+  when: ansible_ssh_port|default(5986) != 5985

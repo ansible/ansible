@@ -526,7 +526,7 @@ def install_role(role_name, role_version, role_filename, options):
         # we strip off the top-level directory for all of the files contained within
         # the tar file here, since the default is 'github_repo-target', and change it 
         # to the specified role's name
-        role_path = os.path.join(get_opt(options, 'roles_path', '/etc/ansible/roles'), role_name)
+        role_path = os.path.join(get_opt(options, 'roles_path'), role_name)
         role_path = os.path.expanduser(role_path)
         print "- extracting %s to %s" % (role_name, role_path)
         try:
@@ -689,6 +689,7 @@ def execute_install(args, options, parser):
     role_file  = get_opt(options, "role_file", None)
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
     no_deps    = get_opt(options, "no_deps", False)
+    roles_path = get_opt(options, "roles_path")
 
     if len(args) == 0 and not role_file:
         # the user needs to specify one of either --role-file
@@ -723,6 +724,12 @@ def execute_install(args, options, parser):
         role = roles_left.pop(0)
         role_src = role.get("src")
         role_scm = role.get("scm")
+        role_path = role.get("path")
+
+        if role_path:
+            options.roles_path = role_path
+        else:
+            options.roles_path = roles_path
 
         if os.path.isfile(role_src):
             # installing a local tar.gz
@@ -780,7 +787,7 @@ def execute_install(args, options, parser):
                 else:
                     role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
                 for dep in role_dependencies:
-                    if isinstance(dep, str):
+                    if isinstance(dep, basestring):
                         dep = ansible.utils.role_spec_parse(dep)
                     else:
                         dep = ansible.utils.role_yaml_parse(dep)

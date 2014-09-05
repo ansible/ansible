@@ -14,6 +14,7 @@ New core features:
 * no_log parameter now surpressess data from callbacks/output as well as syslog
 * ansible-galaxy install -f requirements.yml allows advanced options and installs from non-galaxy SCM sources and tarballs.
 * command_warnings feature will warn about when usage of the shell/command module can be simplified to use core modules - this can be enabled in ansible.cfg
+* new omit value can be used to leave off a parameter when not set, like so module_name: a=1 b={{ c | default(omit) }}, would not pass value for b (not even an empty value) if c was not set.
 
 New Modules:
 
@@ -22,6 +23,9 @@ New Modules:
 * cloud: rax_cdb_user - manages Rackspace Cloud Database users
 * monitoring: zabbix_maintaince - handles outage windows with Zabbix
 * monitoring: bigpanda - support for bigpanda
+* net_infrastructure: a10_server - manages server objects on A10 devices
+* net_infrastructure: a10_service_group - manages service group objects on A10 devices
+* net_infrastructure: a10_virtual_server - manages virtual server objects on A10 devices
 * system: getent - read getent databases
 
 Some other notable changes:
