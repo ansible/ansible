@@ -110,7 +110,7 @@ class OpenStackCloud(object):
         if image_id not in self.image_cache:
             try:
                 self.image_cache[image_id] = self.client.images.get(image_id).name
-            except exceptions.NotFound:
+            except Exception:
                 self.image_cache[image_id] = None
         return self.image_cache[image_id]
 
@@ -222,8 +222,16 @@ class NovaInventory(object):
             for server in cloud.list_servers():
                 # loop through the networks for this instance, append fixed
                 # and floating IPs in a list
-                private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
-                public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
+
+                # Fist, add an IP address
+                if (self.private is True):
+                    ansible_ssh_hosts = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
+                else:
+                    ansible_ssh_hosts = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
+                if not ansible_ssh_hosts:
+                    # skip this host if it doesn't have a network address
+                    continue
+                hostvars[server.name]['ansible_ssh_host'] = ansible_ssh_hosts[0]
 
                 # Create a group for the cloud
                 groups[cloud_name].append(server.name)
@@ -261,11 +269,6 @@ class NovaInventory(object):
                     prefix = os.getenv('OS_META_PREFIX', 'meta')
                     groups['%s_%s_%s' % (prefix, key, value)].append(server.name)
 
-                if (self.private is True):
-                    hostvars[server.name]['ansible_ssh_host'] = private[0]
-                else:
-                    hostvars[server.name]['ansible_ssh_host'] = public[0]
-
                 groups['instance-%s' % server.id].append(server.name)
                 
                 groups['flavor-%s' % server.flavor['id']].append(server.name)
@@ -277,12 +280,6 @@ class NovaInventory(object):
                 image_name = cloud.get_image_name(server.image['id'])
                 if image_name:
                     groups['image-%s' % image_name].append(server.name)
-
-                # And finally, add an IP address
-                if (self.private is True):
-                    hostvars[server.name]['ansible_ssh_host'] = private[0]
-                else:
-                    hostvars[server.name]['ansible_ssh_host'] = public[0]
 
             if hostvars:
                 groups['_meta'] = {'hostvars': hostvars}
