@@ -5,11 +5,11 @@ Here are some commonly-asked questions and their answers.
 
 .. _users_and_ports:
 
-If you are looking to set enviroment varialbes remotely for your project (in a task, not locally for Ansible)
-The keyword is simply `enviroment`
+If you are looking to set environment varialbes remotely for your project (in a task, not locally for Ansible)
+The keyword is simply `environment`
 
 ```
-  enviroment:
+  environment:
      PATH:$PATH:/thingy/bin 
 ```
 
