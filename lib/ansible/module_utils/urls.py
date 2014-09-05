@@ -80,9 +80,55 @@ zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
 """
 
+# Backported constant from Python 2.7 for Python 2.4 compatibility with
+# socket and httplib
+_GLOBAL_DEFAULT_TIMEOUT = object()
+
+def _create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT,
+                      source_address=None):
+    """This function was backported from the socket module in Python 2.7
+    and modified to support python 2.4"""
+
+    host, port = address
+    err = None
+    for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        sock = None
+        try:
+            sock = socket.socket(af, socktype, proto)
+            if timeout is not _GLOBAL_DEFAULT_TIMEOUT:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sa)
+            return sock
+
+        except error, _:
+            err = _
+            if sock is not None:
+                sock.close()
+
+    if err is not None:
+        raise err
+    else:
+        raise socket.error("getaddrinfo returns an empty list")
+
+# Monkey patch socket to use our _create_connection function if the socket
+# module included with the system python does not include create_connection
+if not hasattr(socket, 'create_connection'):
+    socket.create_connection = _create_connection
+
 class CustomHTTPSConnection(httplib.HTTPSConnection):
+    def __init__(self, *args, **kwargs):
+        """Python 2.4 Compatibility method to ensure we have the necessary
+        instance attributes declared"""
+
+        self.timeout = _GLOBAL_DEFAULT_TIMEOUT
+        self._tunnel_host = None
+        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+
     def connect(self):
-        "Connect to a host on a given (SSL) port."
+        """Connect to a host on a given (SSL) port."""
 
         if hasattr(self, 'source_address'):
             sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
