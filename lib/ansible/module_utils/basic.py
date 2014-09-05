@@ -966,6 +966,81 @@ class AnsibleModule(object):
         params2.update(params)
         return (params2, args)
 
+    def _heuristic_log_sanitize(self, data):
+        ''' Remove strings that look like passwords from log messages
+
+        Currently filters out things like:
+        * user:pass@foo/whatever
+        * http://username:pass@wherever/foo
+
+        Currently, the heuristics are subject to false positives.  This could
+        change in the future should we decide that no_log is what we want to
+        push people towards.
+        '''
+        # Regexes can be too slow for this.  Pathological cases for regexes
+        # seem to be large amounts of data with many ':' but no '@'
+        # This function gets slower when there are many replacements but not
+        # nearly as slow as the worst case for regexes. If we need the
+        # flexibility of regex's in the future, re.sub() is faster than
+        # re.match() + str.join().  We might be able to decide to use a regex
+        # strategy if we detect a large number of '@' symbolsand use this
+        # function otherwise.
+
+        # begin points to the beginning of a password containing string
+        # end points to the end of the password containing string
+        # sep points to the char in between username and password
+        # prev_begin keeps track of where in the string to start a new search
+        #   for the end of a password substring
+        # sep_search_end keeps track of where in the string to end a search
+        #   for the separator
+        output = []
+        begin = len(data)
+        prev_begin = begin
+        sep = 1  # Prime the pump with a sentinel value
+        while sep:
+            # Find the potential end of a password
+            try:
+                end = data.rindex('@', 0, begin)
+            except ValueError:
+                # No end marker, so add the rest of the data
+                output.insert(0, data[0:begin])
+                break
+
+            # Search for the beginning of the password
+            sep = None
+            sep_search_end = end
+            while not sep:
+                # Search for the beginning of a URL-style username+password
+                try:
+                    begin = data.rindex('://', 0, sep_search_end)
+                except ValueError:
+                    # If we don't find that, then we default to the start of
+                    # the string (b/c ssh-style username+password could
+                    # be taking up all of this parameter).
+                    begin = 0
+                # Search for a separator character inside of where we know the
+                # password might live.
+                try:
+                    sep = data.index(':', begin + 3, end)
+                except ValueError:
+                    # No separator, now we have choices:
+                    if begin == 0:
+                        # We've searched the whole string so there's no
+                        # password here.  Return the remaining data
+                        output.insert(0, data[0:begin])
+                        break
+                    # Search for a different beginning of the password field.
+                    sep_search_end = begin
+                    continue
+            if sep:
+                # Password was found; remove it.
+                output.insert(0, data[end:prev_begin])
+                output.insert(0, '********')
+                output.insert(0, data[begin:sep + 1])
+                prev_begin = begin
+
+        return ''.join(output)
+
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
@@ -973,37 +1048,22 @@ class AnsibleModule(object):
         log_args = dict()
         passwd_keys = ['password', 'login_password']
 
-        filter_re = [
-            # filter out things like user:pass@foo/whatever
-            # and http://username:pass@wherever/foo
-            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
-        ]
-
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
-                
+
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
             else:
-                found = False
-                for filter in filter_re:
-                    param_val = self.params[param]
-                    if not isinstance(param_val, basestring):
-                        param_val = str(param_val)
-                    elif isinstance(param_val, unicode):
-                        param_val = param_val.encode('utf-8')
-                    m = filter.match(param_val)
-                    if m:
-                        d = m.groupdict()
-                        log_args[param] = d['before'] + "********" + d['after']
-                        found = True
-                        break
-                if not found:
-                    log_args[param] = self.params[param]
+                param_val = self.params[param]
+                if not isinstance(param_val, basestring):
+                    param_val = str(param_val)
+                elif isinstance(param_val, unicode):
+                    param_val = param_val.encode('utf-8')
+                log_args[param] = self._heuristic_log_sanitize(param_val)
 
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = []
