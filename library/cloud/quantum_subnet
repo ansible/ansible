@@ -284,7 +284,7 @@ def main():
             _delete_subnet(module, neutron, subnet_id)
             module.exit_json(changed = True, result = "deleted")
 
-# this is magic, see lib/ansible/module.params['common.py
+# this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 main()
