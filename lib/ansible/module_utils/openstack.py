@@ -160,7 +160,7 @@ class OpenStackCloud(object):
                  region_name, nova_service_type='compute',
                  private=False, insecure=False,
                  endpoint_type='publicURL', token=None, image_cache=None,
-                 flavor_cache=None):
+                 flavor_cache=None, volume_cache=None):
 
         self.name = name
         self.username = username
@@ -174,7 +174,8 @@ class OpenStackCloud(object):
         self.endpoint_type = endpoint_type
         self.token = token
         self._image_cache = image_cache
-        self.flavor_cache = flavor_cache
+        self._flavor_cache = flavor_cache
+        self._volume_cache = volume_cache
 
         self._nova_client = None
         self._glance_client = None
@@ -188,9 +189,9 @@ class OpenStackCloud(object):
         return self.region_name
 
     def get_flavor_name(self, flavor_id):
-        if not self.flavor_cache:
-            self.flavor_cache = dict([(flavor.id, flavor.name) for flavor in self.nova_client.flavors.list()])
-        return self.flavor_cache.get(flavor_id, None)
+        if not self._flavor_cache:
+            self._flavor_cache = dict([(flavor.id, flavor.name) for flavor in self.nova_client.flavors.list()])
+        return self._flavor_cache.get(flavor_id, None)
 
     @property
     def nova_client(self):
@@ -362,6 +363,25 @@ class OpenStackCloud(object):
             if name == image_name:
                 return image_id
         return None
+
+    def _get_volumes_from_cloud(self):
+        try:
+            return self.cinder_client.volumes.list()
+        except Exception:
+            return []
+
+    def list_volumes(self):
+        if self._volume_cache is None:
+            self._volume_cache = self._get_volumes_from_cloud()
+        return self._volume_cache
+
+    def get_volumes(self, server):
+        volumes = []
+        for volume in self.list_volumes():
+            for attach in volume.attachments:
+                if attach['server_id'] == server.id:
+                    volumes.append(volume)
+        return volumes
 
     def get_volume_id(self, volume_name):
         for v in self.cinder_client.volumes.list():

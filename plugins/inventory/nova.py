@@ -188,7 +188,7 @@ class NovaInventory(object):
                 for key, value in to_dict(server).items():
                     hostvars[server.name][key] = value
 
-                az = hostvars[server.name].get('nova_os-ext-az_availability_zone')
+                az = hostvars[server.name].get('nova_os-ext-az_availability_zone', None)
                 if az:
                     hostvars[server.name]['nova_az'] = az
                     # Make groups for az, region_az and cloud_region_az
@@ -198,6 +198,8 @@ class NovaInventory(object):
 
                 hostvars[server.name]['nova_region'] = region
                 hostvars[server.name]['openstack_cloud'] = cloud_name
+                hostvars[server.name]['cinder_volumes'] = [
+                    to_dict(f, slug=False) for f in cloud.get_volumes(server)]
 
                 for key, value in server.metadata.iteritems():
                     prefix = os.getenv('OS_META_PREFIX', 'meta')
@@ -234,12 +236,13 @@ class NovaInventory(object):
             print(self.json_format_dict(hostvars[hostname]))
 
 
-def to_dict(obj):
+def to_dict(obj, slug=True, prefix='nova'):
     instance = {}
     for key in dir(obj):
         value = getattr(obj, key)
         if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
-            key = slugify('nova', key)
+            if slug:
+                key = slugify(prefix, key)
             instance[key] = value
 
     return instance
