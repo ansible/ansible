@@ -173,8 +173,8 @@ if ($PSVersionTable.PSVersion.Major -lt 3)
     Write-verbose "basic auth already enabled"
  }
  
-#FIrewall
-netsh advfirewall firewall add rule Profile=public name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
+#Firewall
+netsh advfirewall firewall add rule Profile=all name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
 
 
 

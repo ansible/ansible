@@ -129,6 +129,7 @@ class Runner(object):
         setup_cache=None,                   # used to share fact data w/ other tasks
         vars_cache=None,                    # used to store variables about hosts
         transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
+        authorization_type=None,            # only used for Windows WinRM connection type 
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
         sudo=False,                         # whether to run sudo or not
@@ -164,53 +165,54 @@ class Runner(object):
             complex_args = {}
 
         # storage & defaults
-        self.check            = check
-        self.diff             = diff
-        self.setup_cache      = utils.default(setup_cache, lambda: ansible.cache.FactCache())
-        self.vars_cache       = utils.default(vars_cache, lambda: collections.defaultdict(dict))
-        self.basedir          = utils.default(basedir, lambda: os.getcwd())
-        self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
-        self.generated_jid    = str(random.randint(0, 999999999999))
-        self.transport        = transport
-        self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
+        self.check               = check
+        self.diff                = diff
+        self.setup_cache         = utils.default(setup_cache, lambda: ansible.cache.FactCache())
+        self.vars_cache          = utils.default(vars_cache, lambda: collections.defaultdict(dict))
+        self.basedir             = utils.default(basedir, lambda: os.getcwd())
+        self.callbacks           = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
+        self.generated_jid       = str(random.randint(0, 999999999999))
+        self.transport           = transport
+        self.authorization_type  = authorization_type
+        self.inventory           = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
-        self.module_vars      = utils.default(module_vars, lambda: {})
-        self.default_vars     = utils.default(default_vars, lambda: {})
-        self.extra_vars       = utils.default(extra_vars, lambda: {})
+        self.module_vars         = utils.default(module_vars, lambda: {})
+        self.default_vars        = utils.default(default_vars, lambda: {})
+        self.extra_vars          = utils.default(extra_vars, lambda: {})
 
-        self.always_run       = None
-        self.connector        = connection.Connector(self)
-        self.conditional      = conditional
-        self.module_name      = module_name
-        self.forks            = int(forks)
-        self.pattern          = pattern
-        self.module_args      = module_args
-        self.timeout          = timeout
-        self.remote_user      = remote_user
-        self.remote_pass      = remote_pass
-        self.remote_port      = remote_port
-        self.private_key_file = private_key_file
-        self.background       = background
-        self.sudo             = sudo
-        self.sudo_user_var    = sudo_user
-        self.sudo_user        = None
-        self.sudo_pass        = sudo_pass
-        self.is_playbook      = is_playbook
-        self.environment      = environment
-        self.complex_args     = complex_args
+        self.always_run          = None
+        self.connector           = connection.Connector(self)
+        self.conditional         = conditional
+        self.module_name         = module_name
+        self.forks               = int(forks)
+        self.pattern             = pattern
+        self.module_args         = module_args
+        self.timeout             = timeout
+        self.remote_user         = remote_user
+        self.remote_pass         = remote_pass
+        self.remote_port         = remote_port
+        self.private_key_file    = private_key_file
+        self.background          = background
+        self.sudo                = sudo
+        self.sudo_user_var       = sudo_user
+        self.sudo_user           = None
+        self.sudo_pass           = sudo_pass
+        self.is_playbook         = is_playbook
+        self.environment         = environment
+        self.complex_args        = complex_args
         self.error_on_undefined_vars = error_on_undefined_vars
-        self.accelerate       = accelerate
-        self.accelerate_port  = accelerate_port
-        self.accelerate_ipv6  = accelerate_ipv6
-        self.callbacks.runner = self
-        self.su               = su
-        self.su_user_var      = su_user
-        self.su_user          = None
-        self.su_pass          = su_pass
-        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
-        self.vault_pass       = vault_pass
-        self.no_log           = no_log
-        self.run_once         = run_once
+        self.accelerate          = accelerate
+        self.accelerate_port     = accelerate_port
+        self.accelerate_ipv6     = accelerate_ipv6
+        self.callbacks.runner    = self
+        self.su                  = su
+        self.su_user_var         = su_user
+        self.su_user             = None
+        self.su_pass             = su_pass
+        self.omit_token          = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+        self.vault_pass          = vault_pass
+        self.no_log              = no_log
+        self.run_once            = run_once
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -779,6 +781,7 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
+        actual_authorization_type = inject.get('ansible_authorization_type', self.authorization_type)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
         self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
@@ -845,7 +848,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_authorization_type, actual_transport, actual_private_key_file)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 

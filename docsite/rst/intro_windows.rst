@@ -26,7 +26,48 @@ Installing on the Control Machine
 
 On a Linux control machine::
 
-   pip install http://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
+   $ pip install http://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
+
+If you want to use windows domain user accounts, rather than local users, also install the following on the Linux control machine::
+
+   $ yum install krb5-workstation krb5-libs
+   $ pip install kerberos
+
+or:: 
+
+   $ sudo apt-get install krb5-user python-kerberos
+
+.. note::
+
+    What's a domain user?  Do I need this?
+    
+    Domain users, also known as Active Directory users can be set up on windows computers.
+    This lets allows a user to log in on any machine that is part of the same group of computers 
+    using the same username and password, regardless of which computer they are using.
+    The group of computers is known as a domain or a realm.
+    
+    To make this work, a couple of things need to happen:
+    1/ special machines are added to the network which store the usernames and password
+    of anyone who is allowed to log into the realm.  These machines are called domain controllers and typically there is 
+    a primary domain controller and a secondary one that keeps things going if the primary one fails.
+    2/ a configuration change is made on each machine that needs to be a part of the realm, so that it knows 
+    which machine to ask when someone attempts to log in.   Its worth knowing that a conversation happens between 
+    machines on the domain and the domain controllers which results in something called a ticket being stored.
+    A bit like a concert ticket, the ticket says that you, the ticket holder, are allowed in until a certain time, after which you either 
+    need to leave or get another ticket.
+    
+    Fortunately, domain users were implemented using an existing technology called kerberos.  Since kerberos 
+    is freely available, linux machines can also talk to domain controllers and make use of domain users.
+    
+    So, if you happen to have an existing windows domain you can store a single username and password in Ansible inventory
+    and use it to control many computers.  
+
+    For the purposes of controlling windows computers, Ansible only needs to be able to get hold of a ticket and present
+    it when it starts talking to the windows machine, so the setup instructions below only cover this.  
+    You can do other nice things, such as allowing users to log in to your Ansible controller using the domain password, 
+    caching tickets so that you can log in when away from the network, creating home directories and 
+    mapping network drives when users first log in, or even turning your linux host into a domain controller but 
+    since none of this is necessary for Ansible it is not described here.
 
 .. _windows_inventory:
 
@@ -41,6 +82,7 @@ Ansible's windows support relies on a few standard variables to indicate the use
 
 In group_vars/windows.yml, define the following inventory variables::
 
+    # local user example
     # it is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
 
@@ -49,9 +91,78 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_ssh_port: 5986
     ansible_connection: winrm
 
+If you are using windows domain users, the user should be entered as user@fully.qualified.domain.com (not
+fully\\user or user@fully ).  Also, set 'ansible_authorization_type: kerberos' so that ansible knows this is a domain user login::
+
+    # domain user example
+    # it is suggested that these be encrypted with ansible-vault:
+    # ansible-vault edit group_vars/windows.yml
+
+    ansible_ssh_user: domainuser@fully.qualified.domain.com
+    ansible_ssh_pass: SekritDomainPasswordGoesHere
+    ansible_ssh_port: 5986
+    ansible_connection: winrm
+    ansible_authorization_type: kerberos
+
+
 Notice that the ssh_port is not actually for SSH, but this is a holdover variable name from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
+
+If using domain users, you will need to configure the linux control machine to be a Kerberos client.
+
+Kerberos is configured using the file /etc/krb5.conf
+
+This may be configured manually, but on debian-based system, you can use::
+
+    $ sudo dpkg-reconfigure krb5-config
+
+Centos and related distributions have a tool called 'authconfig-tui' which can also be used.::
+
+    $ yum install authconfig; authconfig-tui  
+
+Usually the defaults in the file are acceptable, but the [realms] section needs to be configured so that it shows your full domain name and the full name of the domain controller machines (ask your windows network adminstrator for these).  If your domain is called WORKPLACE.LOCAL and your domain controllers are called DC01 and DC02 then your [realms] section would need to look like the following::
+
+   [realms] 
+    WORKPLACE.LOCAL = {
+     kdc = DC-01.WORKPLACE.LOCAL
+     kdc = DC-02.WORKPLACE.LOCAL
+    }
+
+A full example /etc/krb5.conf file::
+
+     [logging]
+      default = FILE:/var/log/krb5libs.log
+      kdc = FILE:/var/log/krb5kdc.log
+      admin_server = FILE:/var/log/kadmind.log
+     
+     [libdefaults]
+      default_realm = FULLY.QUALIFIED.DOMAIN.COM
+      ticket_lifetime = 24h
+      renew_lifetime = 7d
+      forwardable = true
+      udp_preference_limit = 1
+     
+     [realms]
+      FULLY.QUALIFIED.DOMAIN.COM = {
+       kdc = DOMAINCONTROLLER.fully.qualified.domain.com
+       admin_server = DOMAINCONTROLLER.fully.qualified.domain.com
+       default_domain = fully.qualified.domain.com
+      }
+     
+     [appdefaults]
+     validate=false
+     
+     [domain_realm]
+      .domain.com = FULLY.QUALIFIED.DOMAIN.COM
+      domain.com = FULLY.QUALIFIED.DOMAIN.COM
+
+
+Please also make sure the hostnames given in ansible are available in both forward and reverse DNS lookups.  For best results ensure that the clock on your linux machine is as close as possible to being synchronized with the clocks on your domain controllers.  Typically this is done on linux by installing ntpdate.
+
+Test you are able to log in to the domain using the kinit command::
+
+    $ kinit user@fully.qualified.domain.com
 
 Test your configuration like so, by trying to contact your Windows nodes.  Note this is not an ICMP ping, but tests the Ansible
 communication channel that leverages Windows remoting::
@@ -76,12 +187,23 @@ To automate setup of WinRM, you can run `this powershell script <https://github.
 Admins may wish to modify this setup slightly, for instance to increase the timeframe of
 the certificate.
 
+If you are using windows domain users, any domain user must be added to the group 'WinRMRemoteWMIUsers__' before they can be used for Powershell remoting.  They can be added from a DOS command window using the following command::
+
+    C:\> net localgroup WinRMRemoteWMIUsers__ /add DOMAINNAME\\domainusername
+
+(where DOMAINNAME is the name of your domain and domainusername is the domain user you want to use).
+    
 .. _getting_to_powershell_three_or_higher:
 
 Getting to Powershell 3.0 or higher
 ```````````````````````````````````
 
 Powershell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script.
+
+.. note::
+
+   Powershell 3.0 and above depend on the .NET Framework.  Install .NET Framework 4 before attempting to upgrade to Powershell 3.0.  
+   If you are going for Powershell 4.0, install .NET Framework 4.5.1 or later.  Either version can be found in the microsoft download center.
 
 Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator.  You will now be running Powershell 3 and can try connectivity again using the win_ping technique referenced above.
 

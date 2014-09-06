@@ -25,10 +25,12 @@ import re
 import shlex
 import traceback
 import urlparse
+import subprocess
 from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv, vvvv, verbose
 from ansible.runner.shell_plugins import powershell
+from subprocess import Popen, PIPE
 
 try:
     from winrm import Response
@@ -47,12 +49,13 @@ def vvvvv(msg, host=None):
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
 
-    def __init__(self,  runner, host, port, user, password, *args, **kwargs):
+    def __init__(self,  runner, host, port, user, password, authorization_type, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.port = port
         self.user = user
         self.password = password
+        self.authorization_type = authorization_type
         self.has_pipelining = False
         self.default_shell = 'powershell'
         self.default_suffixes = ['.ps1', '']
@@ -72,16 +75,26 @@ class Connection(object):
         if cache_key in _winrm_cache:
             vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
             return _winrm_cache[cache_key]
-        transport_schemes = [('plaintext', 'https'), ('plaintext', 'http')] # FIXME: ssl/kerberos
+        authorization_type = self.authorization_type or 'plaintext' # either 'kerberos' or 'plaintext'
+        transport_schemes = [(authorization_type, 'https'), (authorization_type, 'http')] # FIXME: ssl/kerberos
         if port == 5985:
             transport_schemes = reversed(transport_schemes)
         exc = None
+        if authorization_type == 'kerberos': # silently call kinit and log in with provided user@fqdn and password
+            try: 
+                kinit = '/usr/bin/kinit' 
+                kinit_args = [kinit, '%s' % (self.user) ]
+                kinit = Popen(kinit_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                kinit.stdin.write('%s\n' % self.password)
+                kinit.wait()
+            except OSError:
+                raise errors.AnsibleError("kinit is not installed in %s.  Please check you have installed krb5-user and can run the program kinit" % kinit)
+            except IOError:
+                raise errors.AnsibleError("could not authenticate as domain user %s.  Please check the domain username and password are correct" % self.user)
         for transport, scheme in transport_schemes:
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
-            vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
-                 host=self.host)
-            protocol = Protocol(endpoint, transport=transport,
-                                username=self.user, password=self.password)
+            vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self.host)
+            protocol = Protocol(endpoint, transport=transport, username=self.user, password=self.password)
             try:
                 protocol.send_message('')
                 _winrm_cache[cache_key] = protocol
