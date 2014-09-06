@@ -33,6 +33,7 @@ docsite/_static/*.png
 docsite/_static/websupport.js
 docsite/searchindex.js
 docsite/htmlout
+docsite/pdfout
 # deb building stuff...
 debian/
 deb-build

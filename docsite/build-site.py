@@ -30,22 +30,26 @@ except ImportError:
     sys.exit(1)
 import os
 
+try:
+    import rst2pdf
+    HAS_RST2PDF = True
+except ImportError:
+    HAS_RST2PDF = False
+
 
 class SphinxBuilder(object):
     """
     Creates HTML documentation using Sphinx.
     """
 
-    def __init__(self):
+    def __init__(self, buildername='html'):
         """
         Run the DocCommand.
         """
         print "Creating html documentation ..."
 
         try:
-            buildername = 'html'
-
-            outdir = os.path.abspath(os.path.join(os.getcwd(), "htmlout"))
+            outdir = os.path.abspath(os.path.join(os.getcwd(), "%sout" % buildername))
             # Create the output directory if it doesn't exist
             if not os.access(outdir, os.F_OK):
                 os.mkdir(outdir)
@@ -81,10 +85,20 @@ class SphinxBuilder(object):
 def build_rst_docs():
     docgen = SphinxBuilder()
 
+def build_pdf_docs():
+    if not HAS_RST2PDF:
+        print "##################################"
+        print "Dependency missing: Python rst2pdf"
+        print "##################################"
+        sys.exit(1)
+    docgen = SphinxBuilder('pdf')
+
 if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
         print "This script builds the html documentation from rst/asciidoc sources.\n"
         print "    Run 'make docs' to build everything."
+        print "    Run 'make htmldocs' to build html docs."
+        print "    Run 'make pdf' to build pdf docs."
         print "    Run 'make viewdocs' to build and then preview in a web browser."
         sys.exit(0)
 
@@ -92,10 +106,13 @@ if __name__ == '__main__':
     # parameter' We don't need to run the 'htmlman' target then.
     if "rst" in sys.argv:
         build_rst_docs()
+    elif "pdf" in sys.argv:
+        build_pdf_docs()
     else:
         # By default, preform the rst->html transformation and then
         # the asciidoc->html trasnformation
         build_rst_docs()
+        build_pdf_docs()
 
     if "view" in sys.argv:
         import webbrowser
