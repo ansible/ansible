@@ -767,7 +767,7 @@ def execute_install(args, options, parser):
                         role["version"] = 'master'
                 else:
                     if role_versions and role["version"] not in [a.get('name',None) for a in role_versions]:
-                        print "- the specified version (%s) was not found in the list of available versions." % role.version
+                        print "- the specified version (%s) was not found in the list of available versions." % role['version']
                         exit_without_ignore(options)
                         continue
 
