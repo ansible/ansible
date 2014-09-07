@@ -60,7 +60,7 @@ options:
     default: None
   esxi:
     description:
-      - Dictionary which includes datacenter and hostname on which the VM should be created.
+      - Dictionary which includes datacenter and hostname on which the VM should be created. For standalone ESXi hosts, ha-datacenter should be used as the datacenter name
     required: false
     default: null
   state:
