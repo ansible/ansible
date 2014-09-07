@@ -23,7 +23,6 @@ import sys
 import time
 import re
 import os
-import ConfigParser
 import argparse
 import collections
 from novaclient import exceptions
@@ -36,87 +35,27 @@ except:
 
 from ansible.module_utils.openstack import *
 
-NOVA_CONFIG_FILES = [
+
+NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
+
+ANSIBLE_CONFIG_FILES = [
     os.getcwd() + "/nova.ini",
     os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
     "/etc/ansible/nova.ini"
 ]
 
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
-
-
-def nova_load_config_file(NOVA_DEFAULTS):
-    p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
-
-    for path in NOVA_CONFIG_FILES:
-        if os.path.exists(path):
-            p.read(path)
-            return p
-    return p
-
 
 class NovaInventory(object):
 
     def __init__(self, private=False, refresh=False):
-        self.clouds = []
+        self.openstack_config = OpenStackConfig(ANSIBLE_CONFIG_FILES, private)
+        self.clouds = self.openstack_config.get_all_clouds()
         self.refresh = refresh
-        if private:
-            private_default = 'true'
-        else:
-            private_default = 'false'
 
-        OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
-        NOVA_DEFAULTS = {
-            'username': OS_USERNAME,
-            'password': os.environ.get('OS_PASSWORD', ''),
-            'project_id': os.environ.get('OS_TENANT_NAME', os.environ.get('OS_PROJECT_ID', OS_USERNAME)),
-            'auth_url': os.environ.get('OS_AUTH_URL', 'https://127.0.0.1:35357/v2.0/'),
-            'region_name': os.environ.get('OS_REGION_NAME', ''),
-            'service_type': 'compute',
-            'insecure': 'false',
-            'private': private_default,
-            'cache_max_age': '300',
-            'cache_path': '~/.ansible/tmp',
-        }
-
-        # use a config file if it exists where expected
-        config = nova_load_config_file(NOVA_DEFAULTS)
-
-        cloud_sections = [ section for section in config.sections() if section != 'cache' ]
-        if not cloud_sections:
-            # Add a default section so that our cloud defaults always work
-            config.add_section('openstack')
-            cloud_sections = ['openstack']
-
-        for cloud in cloud_sections:
-            if cloud == 'cache':
-                continue
-            nova_client_params = dict(name=cloud)
-            nova_client_params['username'] = config.get(cloud, 'username')
-            nova_client_params['password'] = config.get(cloud, 'password')
-            nova_client_params['project_id'] = config.get(cloud, 'project_id')
-            nova_client_params['auth_url'] = config.get(cloud, 'auth_url')
-            nova_client_params['region_name'] = config.get(cloud, 'region_name')
-            nova_client_params['nova_service_type'] = config.get(cloud, 'service_type')
-            nova_client_params['insecure'] = config.getboolean(cloud, 'insecure')
-            nova_client_params['private'] = config.getboolean(cloud, 'private')
-            # Provide backwards compat for older nova.ini files
-            if nova_client_params['password'] == '':
-                nova_client_params['password'] = config.get(cloud, 'api_key')
-
-            if (nova_client_params['username'] == "" and nova_client_params['password'] == ""):
-                sys.exit(
-                    'Unable to find auth information for cloud %s'
-                    ' in config files %s or environment variables'
-                    % ','.join(NOVA_CONFIG_FILES))
-            for region in nova_client_params['region_name'].split(','):
-                nova_client_params['region_name'] = region
-                self.clouds.append(OpenStackCloud(**nova_client_params))
-
-        if 'cache' not in config.sections():
-            config.add_section('cache')
-        self.cache_max_age = config.getint('cache', 'cache_max_age')
-        cache_dir = os.path.expanduser(config.get('cache', 'cache_path'))
+        if 'cache' not in self.openstack_config.config.sections():
+            self.openstack_config.config.add_section('cache')
+        self.cache_max_age = self.openstack_config.config.getint('cache', 'cache_max_age')
+        cache_dir = os.path.expanduser(self.openstack_config.config.get('cache', 'cache_path'))
 
         # Cache related
         if not os.path.exists(cache_dir):

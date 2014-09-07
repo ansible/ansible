@@ -26,6 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import ConfigParser
 import logging
 import os
 
@@ -150,8 +151,112 @@ def openstack_cloud_from_module(module, name='openstack'):
         token=module.params.get('token', None))
 
 
+def openstack_clouds():
+    return OpenStackConfig().get_all_clouds()
+
+
+def openstack_cloud(cloud='openstack'):
+    return OpenStackConfig().get_one_cloud(cloud)
+
+
 class OpenStackCloudException(Exception):
     pass
+
+
+class OpenStackConfig(object):
+
+    _config_files = [
+        os.getcwd() + "/openstack.ini",
+        os.getcwd() + "/nova.ini",
+        os.path.expanduser("~/openstack.ini"),
+        os.path.expanduser("~/nova.ini"),
+        "/etc/openstack/openstack.ini"
+        "/etc/openstack/nova.ini"
+    ]
+
+    def __init__(self, config_files=None, private=False):
+        if config_files:
+            self._config_files = config_files
+
+        if private:
+            private_default = 'true'
+        else:
+            private_default = 'false'
+
+        OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
+        OS_DEFAULTS = {
+            'username': OS_USERNAME,
+            'password': os.environ.get('OS_PASSWORD', ''),
+            'project_id': os.environ.get('OS_TENANT_NAME', os.environ.get('OS_PROJECT_ID', OS_USERNAME)),
+            'auth_url': os.environ.get('OS_AUTH_URL', 'https://127.0.0.1:35357/v2.0/'),
+            'region_name': os.environ.get('OS_REGION_NAME', ''),
+            'insecure': 'false',
+            'private': private_default,
+            # historical
+            'service_type': 'compute',
+            'cache_max_age': '300',
+            'cache_path': '~/.cache/openstack',
+        }
+
+        # use a config file if it exists where expected
+        self.config = self._load_config_file(OS_DEFAULTS)
+
+        self.cloud_sections = [ section for section in self.config.sections() if section != 'cache' ]
+        if not self.cloud_sections:
+            # Add a default section so that our cloud defaults always work
+            self.config.add_section('openstack')
+            self.cloud_sections = ['openstack']
+
+    def _load_config_file(self, defaults):
+        p = ConfigParser.SafeConfigParser(defaults)
+
+        for path in self._config_files:
+            if os.path.exists(path):
+                p.read(path)
+                return p
+        return p
+
+    def _get_region(self, cloud):
+        return self.config.get(cloud, 'region_name')
+
+    def get_all_clouds(self):
+
+        clouds = []
+
+        for cloud in self.cloud_sections:
+            if cloud == 'cache':
+                continue
+
+            for region in self._get_region(cloud).split(','):
+                clouds.append(self.get_one_cloud(cloud, region))
+        return clouds
+
+
+    def get_one_cloud(self, name='openstack', region=None):
+
+        if not region:
+            region = self._get_region(name)
+
+        client_params = dict(name=name)
+        client_params['username'] = self.config.get(name, 'username')
+        client_params['password'] = self.config.get(name, 'password')
+        client_params['project_id'] = self.config.get(name, 'project_id')
+        client_params['auth_url'] = self.config.get(name, 'auth_url')
+        client_params['region_name'] = region
+        client_params['nova_service_type'] = self.config.get(name, 'service_type')
+        client_params['insecure'] = self.config.getboolean(name, 'insecure')
+        client_params['private'] = self.config.getboolean(name, 'private')
+        # Provide backwards compat for older nova.ini files
+        if client_params['password'] == '':
+            client_params['password'] = self.config.get(name, 'api_key')
+
+        if (client_params['username'] == "" and client_params['password'] == ""):
+            sys.exit(
+                'Unable to find auth information for cloud %s'
+                ' in config files %s or environment variables'
+                % (name, ','.join(self._config_files)))
+
+        return OpenStackCloud(**client_params)
 
 
 class OpenStackCloud(object):
