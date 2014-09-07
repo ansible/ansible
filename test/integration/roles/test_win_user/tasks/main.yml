@@ -21,7 +21,7 @@
   register: win_user_remove_result
 
 - name: check user removal result
-  assert: 
+  assert:
     that:
       - "win_user_remove_result.name"
       - "win_user_remove_result.state == 'absent'"
@@ -31,71 +31,91 @@
   register: win_user_remove_result_again
 
 - name: check user removal result again
-  assert: 
+  assert:
     that:
       - "not win_user_remove_result_again|changed"
       - "win_user_remove_result_again.name"
       - "win_user_remove_result_again.msg"
       - "win_user_remove_result.state == 'absent'"
 
+- name: test missing user with query state
+  win_user: name="{{ test_win_user_name }}" state="query"
+  register: win_user_missing_query_result
+
+- name: check missing query result
+  assert:
+    that:
+      - "not win_user_missing_query_result|changed"
+      - "win_user_missing_query_result.name"
+      - "win_user_missing_query_result.msg"
+      - "win_user_missing_query_result.state == 'absent'"
+
 - name: test create user
   win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password }}"
   register: win_user_create_result
 
 - name: check user creation result
-  assert: 
+  assert:
     that:
       - "win_user_create_result|changed"
       - "win_user_create_result.name == '{{ test_win_user_name }}'"
       - "win_user_create_result.fullname == '{{ test_win_user_name }}'"
       - "win_user_create_result.path"
+      - "win_user_create_result.state == 'present'"
 
 - name: update user full name and description
   win_user: name="{{ test_win_user_name }}" fullname="Test Ansible User" description="Test user account created by Ansible"
   register: win_user_update_result
 
 - name: check full name and description update result
-  assert: 
+  assert:
     that:
       - "win_user_update_result|changed"
-      - "win_user_update_result.name == '{{ test_win_user_name }}'"
       - "win_user_update_result.fullname == 'Test Ansible User'"
       - "win_user_update_result.description == 'Test user account created by Ansible'"
-      - "win_user_update_result.path"
 
 - name: update user full name and description again with same values
   win_user: name="{{ test_win_user_name }}" fullname="Test Ansible User" description="Test user account created by Ansible"
   register: win_user_update_result_again
 
 - name: check full name and description result again
-  assert: 
+  assert:
     that:
       - "not win_user_update_result_again|changed"
-      - "win_user_update_result_again.name == '{{ test_win_user_name }}'"
       - "win_user_update_result_again.fullname == 'Test Ansible User'"
-      - "win_user_update_result.description == 'Test user account created by Ansible'"
-      - "win_user_update_result_again.path"
+      - "win_user_update_result_again.description == 'Test user account created by Ansible'"
 
 - name: test again with no options or changes
   win_user: name="{{ test_win_user_name }}"
   register: win_user_nochange_result
 
 - name: check no changes result
-  assert: 
+  assert:
     that:
       - "not win_user_nochange_result|changed"
-      - "win_user_nochange_result.name == '{{ test_win_user_name }}'"
-      - "win_user_nochange_result.fullname == 'Test Ansible User'"
-      - "win_user_nochange_result.description == 'Test user account created by Ansible'"
-      - "win_user_nochange_result.path"
-      - "win_user_nochange_result.sid"
+
+- name: test again with query state
+  win_user: name="{{ test_win_user_name }}" state="query"
+  register: win_user_query_result
+
+- name: check query result
+  assert:
+    that:
+      - "not win_user_query_result|changed"
+      - "win_user_query_result.state == 'present'"
+      - "win_user_query_result.name == '{{ test_win_user_name }}'"
+      - "win_user_query_result.fullname == 'Test Ansible User'"
+      - "win_user_query_result.description == 'Test user account created by Ansible'"
+      - "win_user_query_result.path"
+      - "win_user_query_result.sid"
+      - "win_user_query_result.groups == []"
 
 - name: change user password
   win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password2 }}"
   register: win_user_password_result
 
 - name: check password change result
-  assert: 
+  assert:
     that:
       - "win_user_password_result|changed"
 
@@ -104,7 +124,7 @@
   register: win_user_password_result_again
 
 - name: check password change result again
-  assert: 
+  assert:
     that:
       - "not win_user_password_result_again|changed"
 
@@ -113,7 +133,7 @@
   register: win_user_nopasschange_result
 
 - name: check password change with on_create flag result
-  assert: 
+  assert:
     that:
       - "not win_user_nopasschange_result|changed"
 
@@ -122,7 +142,7 @@
   register: win_user_password_expired_result
 
 - name: check password expired result
-  assert: 
+  assert:
     that:
       - "win_user_password_expired_result|changed"
       - "win_user_password_expired_result.password_expired"
@@ -132,7 +152,7 @@
   register: win_user_clear_password_expired_result
 
 - name: check clear password expired result
-  assert: 
+  assert:
     that:
       - "win_user_clear_password_expired_result|changed"
       - "not win_user_clear_password_expired_result.password_expired"
@@ -142,7 +162,7 @@
   register: win_user_password_never_expires_result
 
 - name: check password never expires result
-  assert: 
+  assert:
     that:
       - "win_user_password_never_expires_result|changed"
       - "win_user_password_never_expires_result.password_never_expires"
@@ -152,7 +172,7 @@
   register: win_user_clear_password_never_expires_result
 
 - name: check clear password never expires result
-  assert: 
+  assert:
     that:
       - "win_user_clear_password_never_expires_result|changed"
       - "not win_user_clear_password_never_expires_result.password_never_expires"
@@ -162,7 +182,7 @@
   register: win_user_cannot_change_password_result
 
 - name: check user cannot change password result
-  assert: 
+  assert:
     that:
       - "win_user_cannot_change_password_result|changed"
       - "win_user_cannot_change_password_result.user_cannot_change_password"
@@ -172,7 +192,7 @@
   register: win_user_can_change_password_result
 
 - name: check clear user cannot change password result
-  assert: 
+  assert:
     that:
       - "win_user_can_change_password_result|changed"
       - "not win_user_can_change_password_result.user_cannot_change_password"
@@ -182,7 +202,7 @@
   register: win_user_account_disabled_result
 
 - name: check account disabled result
-  assert: 
+  assert:
     that:
       - "win_user_account_disabled_result|changed"
       - "win_user_account_disabled_result.account_disabled"
@@ -192,7 +212,7 @@
   register: win_user_clear_account_disabled_result
 
 - name: check clear account disabled result
-  assert: 
+  assert:
     that:
       - "win_user_clear_account_disabled_result|changed"
       - "not win_user_clear_account_disabled_result.account_disabled"
@@ -212,7 +232,7 @@
   script: lockout_user.ps1 "{{ test_win_user_name }}"
 
 - name: get user to check if account locked flag is set
-  win_user: name="{{ test_win_user_name }}"
+  win_user: name="{{ test_win_user_name }}" state="query"
   register: win_user_account_locked_result
 
 - name: clear account locked flag if set
@@ -221,18 +241,160 @@
   when: "win_user_account_locked_result.account_locked"
 
 - name: check clear account lockout result if account was locked
-  assert: 
+  assert:
     that:
       - "win_user_clear_account_locked_result|changed"
       - "not win_user_clear_account_locked_result.account_locked"
   when: "win_user_account_locked_result.account_locked"
+
+- name: assign test user to a group
+  win_user: name="{{ test_win_user_name }}" groups="Users"
+  register: win_user_replace_groups_result
+
+- name: check assign user to group result
+  assert:
+    that:
+      - "win_user_replace_groups_result|changed"
+      - "win_user_replace_groups_result.groups|length == 1"
+      - "win_user_replace_groups_result.groups[0]['name'] == 'Users'"
+
+- name: assign test user to the same group
+  win_user:
+    name: "{{ test_win_user_name }}"
+    groups: ["Users"]
+  register: win_user_replace_groups_again_result
+
+- name: check assign user to group again result
+  assert:
+    that:
+      - "not win_user_replace_groups_again_result|changed"
+
+- name: add user to another group
+  win_user: name="{{ test_win_user_name }}" groups="Power Users" groups_action="add"
+  register: win_user_add_groups_result
+
+- name: check add user to another group result
+  assert:
+    that:
+      - "win_user_add_groups_result|changed"
+      - "win_user_add_groups_result.groups|length == 2"
+      - "win_user_add_groups_result.groups[0]['name'] in ('Users', 'Power Users')"
+      - "win_user_add_groups_result.groups[1]['name'] in ('Users', 'Power Users')"
+
+- name: add user to another group again
+  win_user:
+    name: "{{ test_win_user_name }}"
+    groups: "Power Users"
+    groups_action: add
+  register: win_user_add_groups_again_result
+
+- name: check add user to another group again result
+  assert:
+    that:
+      - "not win_user_add_groups_again_result|changed"
+
+- name: remove user from a group
+  win_user: name="{{ test_win_user_name }}" groups="Users" groups_action="remove"
+  register: win_user_remove_groups_result
+
+- name: check remove user from group result
+  assert:
+    that:
+      - "win_user_remove_groups_result|changed"
+      - "win_user_remove_groups_result.groups|length == 1"
+      - "win_user_remove_groups_result.groups[0]['name'] == 'Power Users'"
+
+- name: remove user from a group again
+  win_user:
+    name: "{{ test_win_user_name }}"
+    groups:
+      - "Users"
+    groups_action: remove
+  register: win_user_remove_groups_again_result
+
+- name: check remove user from group again result
+  assert:
+    that:
+      - "not win_user_remove_groups_again_result|changed"
+
+- name: reassign test user to multiple groups
+  win_user: name="{{ test_win_user_name }}" groups="Users, Guests" groups_action="replace"
+  register: win_user_reassign_groups_result
+
+- name: check reassign user groups result
+  assert:
+    that:
+      - "win_user_reassign_groups_result|changed"
+      - "win_user_reassign_groups_result.groups|length == 2"
+      - "win_user_reassign_groups_result.groups[0]['name'] in ('Users', 'Guests')"
+      - "win_user_reassign_groups_result.groups[1]['name'] in ('Users', 'Guests')"
+
+- name: reassign test user to multiple groups again
+  win_user:
+    name: "{{ test_win_user_name }}"
+    groups:
+      - "Users"
+      - "Guests"
+    groups_action: replace
+  register: win_user_reassign_groups_again_result
+
+- name: check reassign user groups again result
+  assert:
+    that:
+      - "not win_user_reassign_groups_again_result|changed"
+
+- name: remove user from all groups
+  win_user: name="{{ test_win_user_name }}" groups=""
+  register: win_user_remove_all_groups_result
+
+- name: check remove user from all groups result
+  assert:
+    that:
+      - "win_user_remove_all_groups_result|changed"
+      - "win_user_remove_all_groups_result.groups|length == 0"
+
+- name: remove user from all groups again
+  win_user:
+    name: "{{ test_win_user_name }}"
+    groups: []
+  register: win_user_remove_all_groups_again_result
+
+- name: check remove user from all groups again result
+  assert:
+    that:
+      - "not win_user_remove_all_groups_again_result|changed"
+
+- name: assign user to invalid group
+  win_user: name="{{ test_win_user_name }}" groups="Userz"
+  register: win_user_invalid_group_result
+  ignore_errors: true
+
+- name: check invalid group result
+  assert:
+    that:
+      - "win_user_invalid_group_result|failed"
+      - "win_user_invalid_group_result.msg"
 
 - name: remove test user when finished
   win_user: name="{{ test_win_user_name }}" state="absent"
   register: win_user_final_remove_result
 
 - name: check final user removal result
-  assert: 
+  assert:
     that:
       - "win_user_final_remove_result|changed"
       - "win_user_final_remove_result.name"
+      - "win_user_final_remove_result.msg"
+      - "win_user_final_remove_result.state == 'absent'"
+
+- name: test removed user with query state
+  win_user: name="{{ test_win_user_name }}" state="query"
+  register: win_user_removed_query_result
+
+- name: check removed query result
+  assert:
+    that:
+      - "not win_user_removed_query_result|changed"
+      - "win_user_removed_query_result.name"
+      - "win_user_removed_query_result.msg"
+      - "win_user_removed_query_result.state == 'absent'"
