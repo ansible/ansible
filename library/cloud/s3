@@ -17,7 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: s3
-short_description: idempotent S3 module putting a file into S3. 
+short_description: S3 module putting a file into S3.
 description:
     - This module allows the user to dictate the presence of a given file in an S3 bucket. If or once the key (file) exists in the bucket, it returns a time-expired download URL. This module has a dependency on python-boto.
 version_added: "1.1"
@@ -89,6 +89,12 @@ options:
     required: false
     default: null
     version_added: "1.6"
+  region:
+    description:
+     - AWS region to create the bucket in. If not set then the value of the EC2_REGION and AWS_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect.
+    required: false
+    default: null
+    version_added: "1.8"
 
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
@@ -117,6 +123,8 @@ EXAMPLES = '''
 - s3: bucket=mybucket mode=create
 # Create a bucket with key as directory
 - s3: bucket=mybucket object=/my/directory/path mode=create
+# Create an empty bucket in the EU region
+- s3: bucket=mybucket mode=create region=eu-west-1
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
 '''
