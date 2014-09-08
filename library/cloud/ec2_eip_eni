@@ -22,6 +22,7 @@ description:
   - It returns the following properties:
     allocation_id
     public_ip
+    fqdn
 version_added: "X.X"
 author: Michal Bicz 
 options:
@@ -31,11 +32,13 @@ options:
     required: true
     choices: ['present', 'absent']
   vpc_id:
+    required: true
     description:
       - vpc to create ENI "metadata-interface" in, 
         not assigned to the EIP just storing key=value information 
         about the EIP
   fqdn:
+    required: true
     description:
       - fqdn allocated with this EIP 
     required: true
@@ -45,7 +48,7 @@ extends_documentation_fragment: aws
 EXAMPLES = """
 #Create EIP
   - name:
-    local_action: ec2_eip
+    local_action: ec2_eip_eni
     args:
       state: present
       fqdn: testing.example.com
@@ -53,7 +56,7 @@ EXAMPLES = """
 
 #Delete EIP
   - name:
-    local_action: ec2_eip
+    local_action: ec2_eip_eni
     args:
       state: absent 
       fqdn: testing.example.com
