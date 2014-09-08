@@ -38,6 +38,7 @@ class Cli(object):
     def __init__(self):
         self.stats = callbacks.AggregateStats()
         self.callbacks = callbacks.CliRunnerCallbacks()
+        callbacks.load_callback_plugins()
 
     # ----------------------------------------------
 
