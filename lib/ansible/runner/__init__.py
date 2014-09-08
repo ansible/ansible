@@ -676,6 +676,7 @@ class Runner(object):
         def _safe_template_complex_args(args, inject):
             # Ensure the complex args here are a dictionary, but
             # first template them if they contain a variable
+
             returned_args = args
             if isinstance(args, basestring):
                 # If the complex_args were evaluated to a dictionary and there are
@@ -696,7 +697,7 @@ class Runner(object):
                 returned_args = templated_args
 
             # and a final check to make sure the complex args are a dict
-            if not isinstance(returned_args, dict):
+            if returned_args is not None and not isinstance(returned_args, dict):
                 raise errors.AnsibleError("args must be a dictionary, received %s" % returned_args)
 
             return returned_args
