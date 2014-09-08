@@ -143,7 +143,7 @@ def main():
         request_url = url + '/data/events/deployments/end'
 
     # Build the deployment object we return
-    deployment = dict(token=token, state=state,  url=url)
+    deployment = dict(token=token, url=url)
     deployment.update(body)
     if 'errorMessage' in deployment:
         message = deployment.pop('errorMessage')
