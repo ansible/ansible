@@ -128,6 +128,7 @@ import hashlib
 
 try:
     import boto
+    from boto.s3.connection import Location
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -164,9 +165,9 @@ def bucket_check(module, s3, bucket):
     else:
         return False
 
-def create_bucket(module, s3, bucket):
+def create_bucket(module, s3, bucket, location=Location.DEFAULT):
     try:
-        bucket = s3.create_bucket(bucket)
+        bucket = s3.create_bucket(bucket, location=location)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
     if bucket:
@@ -300,7 +301,15 @@ def main():
     metadata = module.params.get('metadata')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    
+
+    if region in ('us-east-1', '', None):
+        # S3ism for the US Standard region
+        location = Location.DEFAULT
+    else:
+        # Boto uses symbolic names for locations but region strings will
+        # actually work fine for everything except us-east-1 (US Standard)
+        location = region
+
     if module.params.get('object'):
         obj = os.path.expanduser(module.params['object'])
 
@@ -413,16 +422,16 @@ def main():
                         upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
                         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
-                                                                                                            
+
         # If neither exist (based on bucket existence), we can create both.
-        if bucketrtn is False and pathrtn is True:      
-            create_bucket(module, s3, bucket)
+        if bucketrtn is False and pathrtn is True:
+            create_bucket(module, s3, bucket, location)
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
 
         # If bucket exists but key doesn't, just upload.
         if bucketrtn is True and pathrtn is True and keyrtn is False:
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
-    
+
     # Support for deleting an object if we have both params.  
     if mode == 'delete':
         if bucket:
@@ -444,7 +453,7 @@ def main():
             if bucketrtn is True:
                 module.exit_json(msg="Bucket already exists.", changed=False)
             else:
-                module.exit_json(msg="Bucket created successfully", changed=create_bucket(module, s3, bucket))
+                module.exit_json(msg="Bucket created successfully", changed=create_bucket(module, s3, bucket, location))
         if bucket and obj:
             bucketrtn = bucket_check(module, s3, bucket)
             if obj.endswith('/'):
@@ -458,7 +467,7 @@ def main():
                 else:      
                     create_dirkey(module, s3, bucket, dirobj)
             if bucketrtn is False:
-                created = create_bucket(module, s3, bucket)
+                created = create_bucket(module, s3, bucket, location)
                 create_dirkey(module, s3, bucket, dirobj)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
