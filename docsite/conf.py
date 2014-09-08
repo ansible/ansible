@@ -15,6 +15,16 @@
 
 import sys
 import os
+try:
+    from ansible import __version__ as ansible_version
+except ImportError:
+    ansible_version = '0.01'
+
+try:
+    import rst2pdf
+    HAS_RST2PDF = True
+except ImportError:
+    HAS_RST2PDF = False
 
 # pip install sphinx_rtd_theme
 #import sphinx_rtd_theme
@@ -28,7 +38,7 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION='0.01'
+VERSION=ansible_version
 AUTHOR='Ansible, Inc'
 
 
@@ -39,6 +49,8 @@ AUTHOR='Ansible, Inc'
 # They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc']
+if HAS_RST2PDF:
+    extensions.append('rst2pdf.pdfbuilder')
 
 # Later on, add 'sphinx.ext.viewcode' to the list if you want to have
 # colorized code generated too for references.
@@ -186,8 +198,7 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-  ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
-   AUTHOR, 'manual'),
+  (master_doc, 'ansible.tex', project, AUTHOR, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -208,3 +219,11 @@ latex_documents = [
 #latex_use_modindex = True
 
 autoclass_content = 'both'
+
+pdf_documents = [
+    (master_doc, 'ansible', project, AUTHOR),
+]
+
+pdf_stylesheets = ['sphinx', 'kerning', 'a4']
+
+pdf_verbosity = 0

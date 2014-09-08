@@ -10,6 +10,9 @@ docs: clean modules staticmin
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
 
+pdf:
+	./build-site.py pdf
+
 variables:
 	(mkdir -p htmlout/)
 	dot variables.dot -Tpng -o htmlout/variables.png
@@ -22,6 +25,7 @@ htmldocs: staticmin
 
 clean:
 	-rm -rf htmlout
+	-rm -rf pdfout
 	-rm -f .buildinfo
 	-rm -f *.inv
 	-rm -rf *.doctrees
