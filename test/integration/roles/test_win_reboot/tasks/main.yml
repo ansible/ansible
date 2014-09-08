@@ -1,0 +1,57 @@
+# test code for the win_reboot module
+# (c) 2014, Chris Church <cchurch@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: test win_reboot module to query status
+  win_reboot: path="C:/Windows/win.ini" s
+  register: win_reboot_query_result
+
+- name: check win_reboot query result
+  assert: 
+    that:
+      - "not win_reboot_query_result|changed"
+      - "win_reboot_query_result.needs_reboot in (True, False)"
+
+- name: get last boot time
+  raw: PowerShell -Command (Get-WmiObject -Class Win32_OperatingSystem -Property LastBootUpTime).LastBootUpTime
+  register: win_reboot_last_boot_time
+
+- name: force a reboot
+  win_reboot: state=reboot force=yes
+  register: win_reboot_force_result
+
+- name: check win_reboot force result
+  assert: 
+    that:
+      - "win_reboot_force_result|changed"
+
+- name: wait for host to become available again
+  local_action: wait_for host={{ ansible_ssh_host|default(inventory_hostname) }} port={{ ansible_ssh_port|default(5986) }} delay=10 timeout=300
+  when: win_reboot_force_result|changed
+  register: win_reboot_wait_result
+
+- name: ping after reboot
+  action: win_ping
+
+- name: get last boot time again
+  raw: PowerShell -Command (Get-WmiObject -Class Win32_OperatingSystem -Property LastBootUpTime).LastBootUpTime
+  register: win_reboot_this_boot_time
+
+- name: check that last boot times differ
+  assert: 
+    that:
+      - "win_reboot_last_boot_time != win_reboot_this_boot_time"
