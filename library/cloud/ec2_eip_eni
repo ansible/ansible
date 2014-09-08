@@ -1,0 +1,236 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: ec2_eip_eni
+short_description: Creates, destroys and assigns Elastic IP Addresses 
+description:
+  - It returns the following properties:
+    allocation_id
+    public_ip
+version_added: "X.X"
+author: Michal Bicz 
+options:
+  state:
+    description:
+      - create or destroy EIP 
+    required: true
+    choices: ['present', 'absent']
+  vpc_id:
+    description:
+      - vpc to create ENI "metadata-interface" in, 
+        not assigned to the EIP just storing key=value information 
+        about the EIP
+  fqdn:
+    description:
+      - fqdn allocated with this EIP 
+    required: true
+extends_documentation_fragment: aws
+"""
+
+EXAMPLES = """
+#Create EIP
+  - name:
+    local_action: ec2_eip
+    args:
+      state: present
+      fqdn: testing.example.com
+      vpc_id : vpc-12345
+
+#Delete EIP
+  - name:
+    local_action: ec2_eip
+    args:
+      state: absent 
+      fqdn: testing.example.com
+      vpc_id : vpc-12345
+
+"""
+
+import sys
+
+try:
+    import boto.ec2
+    import boto.vpc
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+class VPC(object):
+    """
+    Represents VPC 
+    """
+    def __init__(self, vpc, vpc_id):
+        self.vpc = vpc
+        self.vpc_id = vpc_id
+        self.filters = {}
+    @property
+    def subnets(self):
+        """ List subnet ids for the specified VPC"""
+        self.filters['vpc-id'] = self.vpc_id
+        return [s.id for s in self.vpc.get_all_subnets(filters=self.filters)]
+
+class EIP(object):
+    """
+    EIP with Metadata Stored in ENI
+    """
+    def __init__(self, ec2, vpc, fqdn):
+        self.ec2 = ec2
+        self.vpc = vpc
+        self.fqdn = fqdn
+        self.eni = self.find(self.fqdn)
+        if self.eni:
+            self.public_ip = self.eni.tags['public_ip']
+            self.subnet_id = self.eni.subnet_id
+            self.allocation_id = self.eni.tags['allocation_id']
+        else:
+            self.public_ip = None
+            self.subnet_id = self.vpc.subnets[0]
+            self.allocation_id = None
+
+
+    def create(self):
+        """
+        Allocates EIP in VPC domain
+        Creates ENI to hold information about the EIP
+        {'fqdn': '', 'allocation_id': '', 'public_ip': ''}
+        ENI get created in the VPC, random first subnet is taken
+        """
+        eip = self.ec2.allocate_address(domain='vpc')
+        if eip.allocation_id:
+            self.public_ip = eip.public_ip
+            self.allocation_id = eip.allocation_id
+            eni = self.ec2.create_network_interface(self.subnet_id)
+            if eni.id:
+                tagdict = dict(fqdn=self.fqdn,
+                               public_ip=self.public_ip,
+                               allocation_id=self.allocation_id)
+                tags = self.ec2.create_tags(eni.id, tagdict)
+                if tags:
+                    self.eni = eni
+                    return eip.allocation_id
+        else:
+            module.fail_json(msg="could not create Elastic IP")
+
+    def delete(self):
+        """
+        Deletes ENI that holds information
+        Deallocates EIP
+        """
+        if self.eni:
+            eip = self.ec2.get_all_addresses(addresses=self.public_ip,
+                                           allocation_ids=self.allocation_id)[0]
+            if eip:
+                if eip.association_id:
+                    #release address from the instance
+                    eip.disassociate()
+                else:
+                    eip.release()
+                    self.ec2.delete_network_interface(self.eni.id)
+            else:
+                module.fail_json(msg="Delete failed")
+
+    def find(self, fqdn):
+        """
+        scans for ENI with the matching fqdn
+        """
+        #ec2.get_all_network_interfaces(self, filters=None, dry_run=False)
+        filters = {}
+        filters['tag:fqdn'] = fqdn
+        enis = self.ec2.get_all_network_interfaces(filters=filters)
+        #eni_ids = [i.id for i in enis]
+        if enis:
+            return enis[0]
+
+    def associate(self, interface_id):
+        """
+        Not implemented yet
+        """
+        pass
+
+    def disassociate(self, interface_id):
+        """
+        Not implemented yet
+        """
+        pass
+
+    def reassociate(self, source_interface_id, dest_interface_id):
+        """
+        Not implemented yet
+        """
+        self.disassociate(source_interface_id)
+        self.associate(dest_interface_id)
+
+
+
+def main():
+    #spec
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            state={'required': True, 'choices': ['present', 'absent', 'list']},
+            vpc_id={'required': True},
+            fqdn={'required': True},
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        #Allow dry-run
+        supports_check_mode=True
+    )
+
+    state = module.params['state']
+    vpc_id = module.params['vpc_id']
+    fqdn= module.params['fqdn']
+    supports_check_mode = module.params.get('supports_check_mode', False)
+
+    ec2_connection = ec2_connect(module) 
+    vpc_connection = vpc_connect(module) 
+
+    vpc = VPC(vpc_connection, vpc_id)
+    eip = EIP(ec2_connection, vpc, fqdn)
+
+    if state == 'present':
+        if not eip.eni:
+            eip.create()
+            ansible_facts = dict(changed=True)
+        else:
+            ansible_facts = dict(changed=False)
+
+        ansible_facts['allocation_id'] = eip.allocation_id
+        ansible_facts['fqdn'] = eip.fqdn
+        ansible_facts['public_ip'] = eip.public_ip
+
+
+
+    if state == 'absent':
+        if eip.allocation_id:
+            # it exist and needs to be killed
+            eip.delete()
+            ansible_facts = dict(changed=True)
+        else:
+            ansible_facts = dict(changed=False)
+
+    # gather result of the run for reporting, report
+    module.exit_json(**ansible_facts)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()

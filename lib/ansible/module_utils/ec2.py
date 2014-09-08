@@ -168,26 +168,39 @@ def connect_to_aws(aws_module, region, **params):
         conn = boto_fix_security_token_in_profile(conn, params['profile_name'])
     return conn
 
-
 def ec2_connect(module):
 
-    """ Return an ec2 connection"""
+    """ Wrapper for ec2 connection"""
+
+    return connect('ec2', module)
+
+def vpc_connect(module):
+
+    """ Wrapper for vpc connection"""
+
+    return connect('vpc', module)
+
+def connect(service, module):
+
+    """ Return an aws module connection"""
 
     region, ec2_url, boto_params = get_aws_connection_info(module)
 
     # If we have a region specified, connect to its endpoint.
     if region:
         try:
-            ec2 = connect_to_aws(boto.ec2, region, **boto_params)
+            boto_service = connect_to_aws(getattr(boto, service),
+                                          region,
+                                          **boto_params)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
-    elif ec2_url:
+    elif ec2_url and service == 'ec2':
         try:
-            ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
+            boto_service = boto.connect_ec2_endpoint(ec2_url, **boto_params)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
 
-    return ec2
+    return boto_service
