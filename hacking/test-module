@@ -27,6 +27,7 @@
 #    test-module -m ../library/system/service -a "name=httpd ensure=restarted"
 #    test-module -m ../library/system/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
 #    test-modulr -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
 
 import sys
 import base64
@@ -62,6 +63,11 @@ def parse():
         metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
     parser.add_option('-c', '--check', dest='check', action='store_true',
         help="run the module in check mode")
+    parser.add_option('-n', '--noexecute', dest='execute', action='store_false',
+        default=True, help="do not run the resulting module")
+    parser.add_option('-o', '--output', dest='filename', 
+        help="Filename for resulting module",
+        default="~/.ansible_module_generated")
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -80,7 +86,7 @@ def write_argsfile(argstring, json=False):
     argsfile.close()
     return argspath
 
-def boilerplate_module(modfile, args, interpreter, check):
+def boilerplate_module(modfile, args, interpreter, check, destfile):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
@@ -123,7 +129,7 @@ def boilerplate_module(modfile, args, interpreter, check):
         inject 
     )
 
-    modfile2_path = os.path.expanduser("~/.ansible_module_generated")
+    modfile2_path = os.path.expanduser(destfile)
     print "* including generated source, if any, saving to: %s" % modfile2_path
     print "* this may offset any line numbers in tracebacks/debuggers!"
     modfile2 = open(modfile2_path, 'w')
@@ -173,7 +179,7 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check)
+    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check, options.filename)
 
     argspath=None
     if module_style != 'new':
@@ -183,10 +189,11 @@ def main():
             argspath = write_argsfile(options.module_args, json=False)
         else:
             raise Exception("internal error, unexpected module style: %s" % module_style)
-    if options.debugger: 
-        rundebug(options.debugger, modfile, argspath)
-    else:
-        runtest(modfile, argspath)
+    if options.execute:
+        if options.debugger: 
+            rundebug(options.debugger, modfile, argspath)
+        else:
+            runtest(modfile, argspath)
         
 if __name__ == "__main__":
     main()
