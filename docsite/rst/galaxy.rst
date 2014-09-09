@@ -75,6 +75,7 @@ And here's an example showing some specific version downloads from multiple sour
 
     # from github, overriding the name and specifying a specific tag
     - src: https://github.com/bennojoy/nginx
+      version: master
       name: nginx_role
     
     # from a webserver, where the role is packaged in a tar.gz
