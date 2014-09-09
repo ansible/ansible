@@ -704,14 +704,6 @@ def execute_install(args, options, parser):
         print "- please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
-    # error checking to ensure the specified roles path exists and is a directory
-    if not os.path.exists(roles_path):
-        print "- the specified role path %s does not exist" % roles_path
-        sys.exit(1)
-    elif not os.path.isdir(roles_path):
-        print "- the specified role path %s is not a directory" % roles_path
-        sys.exit(1)
-
     roles_done = []
     if role_file:
         f = open(role_file, 'r')
