@@ -89,6 +89,11 @@ options:
     required: false
     default: null
     version_added: "1.6"
+  headers:
+    description:
+      - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
+    required: false
+    default: null
 
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
@@ -109,6 +114,8 @@ EXAMPLES = '''
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip'
 # PUT/upload with multiple metadata
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
+# PUT/upload with custom headers
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put headers='x-amz-grant-full-control=emailAddress=owner@example.com'
 # PUT/upload and do not overwrite remote file (trust local)
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put force=false
 # Download an object as a string to use else where in your playbook
@@ -214,7 +221,7 @@ def path_check(path):
     else:
         return False
 
-def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
+def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, headers):
     try:
         bucket = s3.lookup(bucket)
         key = bucket.new_key(obj)
@@ -222,10 +229,12 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
             for meta_key in metadata.keys():
                 key.set_metadata(meta_key, metadata[meta_key])
 
-        key.set_contents_from_filename(src)
+        key.set_contents_from_filename(src, headers=headers)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except s3.provider.storage_copy_error, e:
+        module.fail_json(msg= str(e))
+    except boto.exception.S3ResponseError, e:
         module.fail_json(msg= str(e))
 
 def download_s3file(module, s3, bucket, obj, dest):
@@ -283,7 +292,8 @@ def main():
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
-            metadata      = dict(type='dict'),
+            metadata       = dict(type='dict'),
+            headers        = dict(type='dict'),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -298,9 +308,10 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
+    headers = module.params.get('headers')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    
+
     if module.params.get('object'):
         obj = os.path.expanduser(module.params['object'])
 
@@ -334,10 +345,10 @@ def main():
             s3 = boto.connect_s3(aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
- 
+
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
-    
+
         # First, we check to see if the bucket exists, we get "bucket" returned.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is False:
@@ -369,7 +380,7 @@ def main():
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
                     module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
-        
+
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
         if sum_matches is True and overwrite is False:
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
@@ -379,8 +390,8 @@ def main():
             download_s3file(module, s3, bucket, obj, dest)
 
         # If sum does not match but the destination exists, we 
-               
-    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...        
+
+    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
 
         # Use this snippet to debug through conditionals:
@@ -391,7 +402,7 @@ def main():
         pathrtn = path_check(src)
         if pathrtn is False:
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
-        
+
         # Lets check to see if bucket exists to get ground truth.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is True:
@@ -404,26 +415,26 @@ def main():
                 if md5_local == md5_remote:
                     sum_matches = True
                     if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, headers)
                     else:
                         get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
                     if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, headers)
                     else:
                         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
-                                                                                                            
+
         # If neither exist (based on bucket existence), we can create both.
-        if bucketrtn is False and pathrtn is True:      
+        if bucketrtn is False and pathrtn is True:
             create_bucket(module, s3, bucket)
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, headers)
 
         # If bucket exists but key doesn't, just upload.
         if bucketrtn is True and pathrtn is True and keyrtn is False:
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
-    
-    # Support for deleting an object if we have both params.  
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, headers)
+
+    # Support for deleting an object if we have both params.
     if mode == 'delete':
         if bucket:
             bucketrtn = bucket_check(module, s3, bucket)
@@ -435,7 +446,7 @@ def main():
                 module.fail_json(msg="Bucket does not exist.", changed=False)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
- 
+
     # Need to research how to create directories without "populating" a key, so this should just do bucket creation for now.
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
     if mode == 'create':
