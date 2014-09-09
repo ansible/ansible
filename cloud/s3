@@ -91,7 +91,7 @@ options:
     version_added: "1.6"
   region:
     description:
-     - AWS region to create the bucket in. If not set then the value of the EC2_REGION and AWS_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but did nothing.
+     - AWS region to create the bucket in. If not set then the value of the EC2_REGION and AWS_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect.
     required: false
     default: null
     version_added: "1.8"
