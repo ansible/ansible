@@ -6,6 +6,13 @@ testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
 # by (preferred) group_vars/ and host_vars/ variables
 # and are used in testing of variable precedence
 
+[inven_overridehosts]
+invenoverride ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+[inven_overridehosts:vars]
+foo=foo
+var_dir=vars
+
 [arbitrary_parent:children]
 local
 
