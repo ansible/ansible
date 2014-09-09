@@ -1043,7 +1043,7 @@ class OpenBsdService(Service):
 
         if self.enable:
             action = "enable %s" % (self.name)
-            if self.arguments or self.arguments != current_flags:
+            if self.arguments or current_flags:
                 action = action + " flags %s" % (self.arguments)
             if rc == 0 and self.arguments == current_flags:
                 return
