@@ -68,7 +68,7 @@ In order to keep the history clean and better audit incoming code, we will requi
 
 We’ll then review your contributions and engage with you about questions and  so on.  
 
-As we have a very large and active community, so it may take awhile to get your contributions 
+As we have a very large and active community, so it may take a while to get your contributions
 in!  See the notes about priorities in a later section for understanding our work queue.
 
 Patches should be made against the 'devel' branch.

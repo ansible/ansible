@@ -290,7 +290,7 @@ def _little_endian_convert_32bit(block):
         String containing the little-endian converted block
     """
     # xrange starts at 6, and increments by -2 until it reaches -2
-    # which lets us start at the end of the string block and work to the begining
+    # which lets us start at the end of the string block and work to the beginning
     return "".join([ block[x:x+2] for x in xrange(6, -2, -2) ])
 
 def main():

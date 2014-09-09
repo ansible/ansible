@@ -101,7 +101,7 @@ options:
     version_added: "1.8"
   cross_az_load_balancing:
     description:
-      - Distribute load across all configured Availablity Zones
+      - Distribute load across all configured Availability Zones
     required: false
     default: "no"
     choices: ["yes", "no"]

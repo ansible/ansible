@@ -243,7 +243,7 @@
     that:
     - "result.stat.md5 == 'f75c9d51f45afd7295000e63ce655220'"
 
-# Test EOF with empty file to make sure no unneccessary newline is added
+# Test EOF with empty file to make sure no unnecessary newline is added
 - name: testempty deploy the testempty file for lineinfile
   copy: src=testempty.txt dest={{output_dir}}/testempty.txt
   register: result

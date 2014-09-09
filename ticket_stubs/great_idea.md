@@ -1,4 +1,4 @@
-Submission Recieved
+Submission Received
 ===================
 
 Hi!
