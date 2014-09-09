@@ -26,3 +26,11 @@
         - 'vars_files_var == "vars_files_var"'
         - 'vars_files_var_role == "vars_files_var_role3"'
         - 'registered_var == "this is from set_fact"'
+
+- hosts: inven_overridehosts
+  vars_files:
+  - "{{ var_dir }}/test_var_precedence.yml"
+  roles:
+  - role: test_var_precedence_inven_override
+    foo: bar
+
