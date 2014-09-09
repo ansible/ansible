@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-class CacheModule(object):
+from ansible.cache.base import BaseCacheModule
+
+class CacheModule(BaseCacheModule):
 
     def __init__(self, *args, **kwargs):
         self._cache = {}
@@ -37,3 +39,6 @@ class CacheModule(object):
 
     def flush(self):
         self._cache = {}
+
+    def copy(self):
+        return self._cache.copy()

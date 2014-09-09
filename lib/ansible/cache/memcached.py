@@ -186,3 +186,6 @@ class CacheModule(BaseCacheModule):
     def flush(self):
         for key in self.keys():
             self.delete(key)
+
+    def copy(self):
+        return self._keys.copy()
