@@ -158,10 +158,47 @@ EXAMPLES = """
 - name: Close the issue
   jira: uri={{server}} username={{user}} password={{pass}}
         issue={{issue.meta.key}} operation=transition status="Done"
+
+# Attach a file to an issue
+- name: attach on issue
+  jira: uri={{server}} username={{user}} password={{password}}
+        issue={{ issue }} operation=attach file=/tmp/{{ stack }}.zip 
 """
 
 import json
 import base64
+import os.path
+try:
+    import requests
+    from requests.auth import HTTPBasicAuth
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+try:
+    import magic
+    HAS_MAGIC = True
+except ImportError:
+    HAS_MAGIC = False
+
+
+
+def request_attach(url, user, passwd, data=None, method=None):
+
+    headers = {'X-Atlassian-Token': 'nocheck'}
+
+    mime = magic.from_file(data['file'], mime=True)
+    files = {'file': (os.path.basename(data['file']), open(data['file'], 'rb'), mime)}
+    r = requests.post(url, files=files, auth=HTTPBasicAuth(user, passwd), headers=headers)
+
+    if r.status_code not in (200, 204):
+        module.fail_json(msg="%s" % r.status_code)
+
+    body = r.text
+
+    if body:
+        return json.loads(body)
+    else:
+        return {}
 
 def request(url, user, passwd, data=None, method=None):
     if data:
@@ -177,7 +214,8 @@ def request(url, user, passwd, data=None, method=None):
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     response, info = fetch_url(module, url, data=data, method=method, 
                                headers={'Content-Type':'application/json',
-                                        'Authorization':"Basic %s" % auth})
+                                        'Authorization':"Basic %s" % auth,
+                                        'X-Atlassian-Token':'nocheck'})
 
     if info['status'] not in (200, 204):
         module.fail_json(msg=info['msg'])
@@ -191,6 +229,9 @@ def request(url, user, passwd, data=None, method=None):
 
 def post(url, user, passwd, data):
     return request(url, user, passwd, data=data, method='POST')
+
+def post_attach(url, user, passwd, data):
+    return request_attach(url, user, passwd, data=data, method='POST')
 
 def put(url, user, passwd, data):
     return request(url, user, passwd, data=data, method='PUT')
@@ -230,6 +271,16 @@ def comment(restbase, user, passwd, params):
 
     return ret
 
+def attach(restbase, user, passwd, params):
+    data = {
+        'file': params['file']
+        }
+
+    url = restbase + '/issue/' + params['issue'] + '/attachments'
+
+    ret = post_attach(url, user, passwd, data)
+
+    return ret
 
 def edit(restbase, user, passwd, params):
     data = {
@@ -279,18 +330,27 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],
                    edit=[],
                    fetch=['issue'],
-                   transition=['status'])
+                   transition=['status'],
+                   attach=['file'])
 
 def main():
+
+    if not HAS_REQUESTS:
+        self.disabled = True
+        utils.warning('The `requests` python module is not installed.')
+
+    if not HAS_MAGIC:
+        self.disabled = True
+        utils.warning('The `magic` python module is not installed.')
 
     global module
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition'],
+            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'attach'],
                            aliases=['command'], required=True),
             username=dict(required=True),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             project=dict(),
             summary=dict(),
             description=dict(),
@@ -299,7 +359,8 @@ def main():
             comment=dict(),
             status=dict(),
             assignee=dict(),
-            fields=dict(default={})
+            fields=dict(default={}),
+            file=dict()
         ),
         supports_check_mode=False
     )
