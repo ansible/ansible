@@ -966,6 +966,65 @@ class AnsibleModule(object):
         params2.update(params)
         return (params2, args)
 
+    def _heuristic_log_sanitize(self, data):
+        ''' Remove strings that look like passwords from log messages '''
+        # Currently filters:
+        # user:pass@foo/whatever and http://username:pass@wherever/foo
+        # This code has false positives and consumes parts of logs that are
+        # not passwds
+
+        # begin: start of a passwd containing string
+        # end: end of a passwd containing string
+        # sep: char between user and passwd
+        # prev_begin: where in the overall string to start a search for
+        #   a passwd
+        # sep_search_end: where in the string to end a search for the sep
+        output = []
+        begin = len(data)
+        prev_begin = begin
+        sep = 1
+        while sep:
+            # Find the potential end of a passwd
+            try:
+                end = data.rindex('@', 0, begin)
+            except ValueError:
+                # No passwd in the rest of the data
+                output.insert(0, data[0:begin])
+                break
+
+            # Search for the beginning of a passwd
+            sep = None
+            sep_search_end = end
+            while not sep:
+                # URL-style username+password
+                try:
+                    begin = data.rindex('://', 0, sep_search_end)
+                except ValueError:
+                    # No url style in the data, check for ssh style in the
+                    # rest of the string
+                    begin = 0
+                # Search for separator
+                try:
+                    sep = data.index(':', begin + 3, end)
+                except ValueError:
+                    # No separator; choices:
+                    if begin == 0:
+                        # Searched the whole string so there's no password
+                        # here.  Return the remaining data
+                        output.insert(0, data[0:begin])
+                        break
+                    # Search for a different beginning of the password field.
+                    sep_search_end = begin
+                    continue
+            if sep:
+                # Password was found; remove it.
+                output.insert(0, data[end:prev_begin])
+                output.insert(0, '********')
+                output.insert(0, data[begin:sep + 1])
+                prev_begin = begin
+
+        return ''.join(output)
+
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
@@ -973,53 +1032,41 @@ class AnsibleModule(object):
         log_args = dict()
         passwd_keys = ['password', 'login_password']
 
-        filter_re = [
-            # filter out things like user:pass@foo/whatever
-            # and http://username:pass@wherever/foo
-            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
-        ]
-
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
-                
+
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
             else:
-                found = False
-                for filter in filter_re:
-                    if isinstance(self.params[param], unicode):
-                        m = filter.match(self.params[param])
-                    else:
-                        m = filter.match(str(self.params[param]))
-                    if m:
-                        d = m.groupdict()
-                        log_args[param] = d['before'] + "********" + d['after']
-                        found = True
-                        break
-                if not found:
-                    log_args[param] = self.params[param]
+                param_val = self.params[param]
+                if not isinstance(param_val, basestring):
+                    param_val = str(param_val)
+                elif isinstance(param_val, unicode):
+                    param_val = param_val.encode('utf-8')
+                log_args[param] = self._heuristic_log_sanitize(param_val)
 
         module = 'ansible-%s' % os.path.basename(__file__)
-        msg = ''
+        msg = []
         for arg in log_args:
-            if isinstance(log_args[arg], basestring):
-                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
-            else:
-                msg = msg + arg + '=' + str(log_args[arg]) + ' '
+            arg_val = log_args[arg]
+            if not isinstance(arg_val, basestring):
+                arg_val = str(arg_val)
+            elif isinstance(arg_val, unicode):
+                arg_val = arg_val.encode('utf-8')
+            msg.append('%s=%s ' % (arg, arg_val))
         if msg:
-            msg = 'Invoked with %s' % msg
+            msg = 'Invoked with %s' % ''.join(msg)
         else:
             msg = 'Invoked'
 
         # 6655 - allow for accented characters
-        try:
-            msg = msg.encode('utf8')
-        except UnicodeDecodeError, e:
-            pass
+        if isinstance(msg, unicode):
+            # We should never get here as msg should be type str, not unicode
+            msg = msg.encode('utf-8')
 
         if (has_journal):
             journal_args = ["MESSAGE=%s %s" % (module, msg)]

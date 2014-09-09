@@ -1268,6 +1268,12 @@ def list_difference(a, b):
             result.append(x)
     return result
 
+def contains_vars(data):
+    '''
+    returns True if the data contains a variable pattern
+    '''
+    return "$" in data or "{{" in data
+
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
     This is intended for allowing things like:
@@ -1488,7 +1494,7 @@ def _load_vars_from_path(path, results, vault_password=None):
                 % (path, err2.strerror, ))
         # follow symbolic link chains by recursing, so we repeat the same
         # permissions checks above and provide useful errors.
-        return _load_vars_from_path(target, results)
+        return _load_vars_from_path(target, results, vault_password)
 
     # directory
     if stat.S_ISDIR(pathstat.st_mode):

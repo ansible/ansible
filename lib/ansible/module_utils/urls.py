@@ -396,7 +396,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         proxyhandler = urllib2.ProxyHandler({})
         handlers.append(proxyhandler)
 
-    handlers.append(CustomHTTPSHandler)
+    # pre-2.6 versions of python cannot use the custom https
+    # handler, since the socket class is lacking this method
+    if hasattr(socket, 'create_connection'):
+        handlers.append(CustomHTTPSHandler)
 
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)
