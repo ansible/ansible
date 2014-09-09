@@ -63,7 +63,7 @@ EXAMPLES = '''
 '''
 
 def spacewalk_channel_found(module):
-     """Checks if spacewalk-channel is installed"""
+    """Checks if spacewalk-channel is installed"""
     cmd = ['which', 'spacewalk-channel']
     rc, stdout, stderr = module.run_command(cmd)
     if "spacewalk-channel" not in stdout:
