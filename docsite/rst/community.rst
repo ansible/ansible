@@ -136,7 +136,7 @@ The Ansible project keeps it’s source on github at
 and takes contributions through
 `github pull requests <https://help.github.com/articles/using-pull-requests>`_.
 
-It is usually a good idea to join the ansible-devel list to discuss any large features prior to submission, and this especially helps in avoiding duplicate work or efforts where we decide, upon seeing a pull request for the first time, that revisions are needed.  (This is not usually needed for module development)
+It is usually a good idea to join the ansible-devel list to discuss any large features prior to submission, and this especially helps in avoiding duplicate work or efforts where we decide, upon seeing a pull request for the first time, that revisions are needed.  (This is not usually needed for module development, but can be nice for large changes).
 
 Note that we do keep Ansible to a particular aesthetic, so if you are unclear about whether a feature
 is a good fit or not, having the discussion on the development list is often a lot easier than having
