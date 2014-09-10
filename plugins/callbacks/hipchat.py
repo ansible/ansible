@@ -61,7 +61,6 @@ class CallbackModule(object):
                           'token can be provided using the `HIPCHAT_TOKEN` '
                           'environment variable.')
 
-        self.printed_playbook = False
         self.playbook_name = None
 
     def send_msg(self, msg, msg_format='text', color='yellow', notify=False):
@@ -110,7 +109,25 @@ class CallbackModule(object):
         pass
 
     def playbook_on_start(self):
-        pass
+        """Display Playbook start messages"""
+
+        self.playbook_name, _ = os.path.splitext(
+            os.path.basename(self.playbook.filename))
+        inventory = os.path.basename(
+            os.path.realpath(self.playbook.inventory.host_list))
+        subset = self.playbook.inventory._subset
+        skip_tags = self.playbook.skip_tags
+
+        self.send_msg("%s: Playbook initiated by %s against %s" %
+                      (self.playbook_name,
+                       self.playbook.remote_user,
+                       inventory), notify=True)
+
+        self.send_msg("%s:\nTags: %s\nSkip Tags: %s\nLimit: %s" %
+                      (self.playbook_name,
+                       ', '.join(self.playbook.only_tags),
+                       ', '.join(skip_tags) if skip_tags else None,
+                       ', '.join(subset) if subset else subset))
 
     def playbook_on_notify(self, host, handler):
         pass
@@ -139,33 +156,8 @@ class CallbackModule(object):
         pass
 
     def playbook_on_play_start(self, name):
-        """Display Playbook and play start messages"""
+        """Display Play start messages"""
 
-        # This block sends information about a playbook when it starts
-        # The playbook object is not immediately available at
-        # playbook_on_start so we grab it via the play
-        #
-        # Displays info about playbook being started by a person on an
-        # inventory, as well as Tags, Skip Tags and Limits
-        if not self.printed_playbook:
-            self.playbook_name, _ = os.path.splitext(
-                os.path.basename(self.play.playbook.filename))
-            host_list = self.play.playbook.inventory.host_list
-            inventory = os.path.basename(os.path.realpath(host_list))
-            self.send_msg("%s: Playbook initiated by %s against %s" %
-                          (self.playbook_name,
-                           self.play.playbook.remote_user,
-                           inventory), notify=True)
-            self.printed_playbook = True
-            subset = self.play.playbook.inventory._subset
-            skip_tags = self.play.playbook.skip_tags
-            self.send_msg("%s:\nTags: %s\nSkip Tags: %s\nLimit: %s" %
-                          (self.playbook_name,
-                           ', '.join(self.play.playbook.only_tags),
-                           ', '.join(skip_tags) if skip_tags else None,
-                           ', '.join(subset) if subset else subset))
-
-        # This is where we actually say we are starting a play
         self.send_msg("%s: Starting play: %s" %
                       (self.playbook_name, name))
 
