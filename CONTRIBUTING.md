@@ -49,7 +49,7 @@ on creating pull requests, please refer to the
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps it’s source on github at 
+The Ansible project keeps its source on github at 
 [github.com/ansible/ansible](http://github.com/ansible/ansible) 
 and takes contributions through
 [github pull requests](https://help.github.com/articles/using-pull-requests).
