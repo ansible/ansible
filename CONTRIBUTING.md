@@ -6,7 +6,7 @@ Hi! Nice to see you here!
 If you'd like to ask a question
 ===============================
 
-Please see [this web page](http://docs.ansible.com/community.html) for community information, which includes pointers on how to ask questions on the mailing list and IRC.  
+Please see [this web page ](http://docs.ansible.com/community.html) for community information, which includes pointers on how to ask questions on the [mailing lists](http://docs.ansible.com/community.html#mailing-list-information) and IRC.  
 
 The github issue tracker is not the best place for questions for various reasons, but both IRC and the mailing list are very helpful places for those things, and that page has the pointers to those.
 
