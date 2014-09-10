@@ -401,6 +401,10 @@ def role_spec_parse(role_spec):
     if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
         tokens[0] = 'git+' + tokens[0]
 
+    # automatically detect git repository on hosted gitlab or similar forge
+    if not tokens[0].startswith("git+") and tokens[0].endswith('.git'):
+        tokens[0] = 'git+' + tokens[0]
+
     if '+' in tokens[0]:
         (scm, role_url) = tokens[0].split('+')
     else:
@@ -418,6 +422,10 @@ def role_spec_parse(role_spec):
 def role_yaml_parse(role):
     if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
         role["src"] = "git+" + role["src"]
+
+    if '+' not in role["src"] and role["src"].endswith('.git'):
+        role["src"] = "git+" + role["src"]
+
     if '+' in role["src"]:
         (scm, src) = role["src"].split('+')
         role["scm"] = scm
