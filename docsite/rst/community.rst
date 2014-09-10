@@ -62,11 +62,11 @@ I'd Like To Report A Bugs
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
-Bugs should be reported to `github.com/ansible/ansible <http://github.com/ansible/ansible>` after 
+Bugs should be reported to `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ after 
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
 to see if the issue has already been reported.  
 
-When filing a bug, please use the `issue template <https://raw2.github.com/ansible/ansible/devel/ISSUE_TEMPLATE.md>` to provide all relevant information.
+When filing a bug, please use the `issue template <https://raw2.github.com/ansible/ansible/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information.
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
 
@@ -134,7 +134,7 @@ The Ansible project keeps it’s source on github at
 `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ 
  
 and takes contributions through
-`github pull requests <https://help.github.com/articles/using-pull-requests>`
+`github pull requests <https://help.github.com/articles/using-pull-requests>`_.
 
 It is usually a good idea to join the ansible-devel list to discuss any large features prior to submission, and this especially helps in avoiding duplicate work or efforts where we decide, upon seeing a pull request for the first time, that revisions are needed.  (This is not usually needed for module development)
 
@@ -217,9 +217,9 @@ Releases are also given code names based on Van Halen songs, that no one really 
 Tower Support Questions
 -----------------------
 
-`Ansible Tower <http://ansible.com/tower>` is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.  
+Ansible `Tower <http://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.  
 
-If you have a question about tower, email `support@ansible.com <mailto:support@ansible.com>` rather than using the IRC
+If you have a question about tower, email `support@ansible.com <mailto:support@ansible.com>`_ rather than using the IRC
 channel or the general project mailing list.
 
 IRC Channel
@@ -263,7 +263,9 @@ Community Code of Conduct
 -------------------------
 
 Ansible’s community welcomes users of all types, backgrounds, and skill levels. Please 
-treat others as you expect to be treated, keep discussions positive, and avoid discrimination, profanity, allegations of Cthulhu worship, or engaging in controversial debates (except vi vs emacs is cool).  
+treat others as you expect to be treated, keep discussions positive, and avoid discrimination of all kinds, profanity, allegations of Cthulhu worship, or engaging in controversial debates (except vi vs emacs is cool).  
+
+The same expectations apply to community events as they do to online interactions.
 
 Posts to mailing lists  should remain focused around Ansible and IT automation.   Abuse of these community guidelines will not be tolerated and may result in banning from community resources.
 
