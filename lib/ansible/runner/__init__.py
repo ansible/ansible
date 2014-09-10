@@ -598,7 +598,7 @@ class Runner(object):
 
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
-        combined_cache.update(self.vars_cache)
+        combined_cache = utils.merge_hash(combined_cache, self.vars_cache)
 
         hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
 
