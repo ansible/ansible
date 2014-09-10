@@ -98,5 +98,5 @@ class CacheModule(BaseCacheModule):
         # FIXME: there is probably a better way to do this in redis
         ret = dict()
         for key in self.keys():
-            ret[key] self.get(key)
+            ret[key] = self.get(key)
         return ret
