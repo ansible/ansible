@@ -71,7 +71,11 @@ def load_config_file():
 
     for path in [path0, path1, path2, path3]:
         if path is not None and os.path.exists(path):
-            p.read(path)
+            try:
+                p.read(path)
+            except ConfigParser.Error as e:
+                print "Error reading config file: \n%s" % e
+                sys.exit(1)
             return p
     return None
 
@@ -171,6 +175,7 @@ SYSTEM_WARNINGS                = get_config(p, DEFAULTS, 'system_warnings', 'ANS
 DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings', 'ANSIBLE_DEPRECATION_WARNINGS', True, boolean=True)
 DEFAULT_CALLABLE_WHITELIST     = get_config(p, DEFAULTS, 'callable_whitelist', 'ANSIBLE_CALLABLE_WHITELIST', [], islist=True)
 COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'ANSIBLE_COMMAND_WARNINGS', False, boolean=True)
+DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'load_callback_plugins', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, boolean=True)
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)

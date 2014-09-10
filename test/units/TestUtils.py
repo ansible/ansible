@@ -518,6 +518,11 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.is_list_of_strings(['foo', 'bar', True]), False)
         self.assertEqual(ansible.utils.is_list_of_strings(['one', 2, 'three']), False)
 
+    def test_contains_vars(self):
+        self.assertTrue(ansible.utils.contains_vars('{{foo}}'))
+        self.assertTrue(ansible.utils.contains_vars('$foo'))
+        self.assertFalse(ansible.utils.contains_vars('foo'))
+
     def test_safe_eval(self):
         # Not basestring
         self.assertEqual(ansible.utils.safe_eval(len), len)

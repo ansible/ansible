@@ -575,11 +575,11 @@ def main():
             wait_timeout = dict(default=300),
             dns_support = dict(type='bool', default=True),
             dns_hostnames = dict(type='bool', default=True),
-            subnets = dict(type='list', default=[]),
+            subnets = dict(type='list'),
             vpc_id = dict(),
             internet_gateway = dict(type='bool', default=False),
             resource_tags = dict(type='dict', required=True),
-            route_tables = dict(type='list', default=[]),
+            route_tables = dict(type='list'),
             state = dict(choices=['present', 'absent'], default='present'),
         )
     )

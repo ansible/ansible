@@ -487,10 +487,19 @@ class PlayBook(object):
 
         def _register_play_vars(host, result):
             # when 'register' is used, persist the result in the vars cache
-            # rather than the setup cache - vars should be transient between playbook executions
+            # rather than the setup cache - vars should be transient between
+            # playbook executions
             if 'stdout' in result and 'stdout_lines' not in result:
                 result['stdout_lines'] = result['stdout'].splitlines()
             utils.update_hash(self.VARS_CACHE, host, {task.register: result})
+
+        def _save_play_facts(host, facts):
+            # saves play facts in SETUP_CACHE, unless the module executed was
+            # set_fact, in which case we add them to the VARS_CACHE
+            if task.module_name == 'set_fact':
+                utils.update_hash(self.VARS_CACHE, host, facts)
+            else:
+                utils.update_hash(self.SETUP_CACHE, host, facts)
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
@@ -500,11 +509,13 @@ class PlayBook(object):
                 for res in result['results']:
                     if type(res) == dict:
                         facts = res.get('ansible_facts', {})
-                        utils.update_hash(self.SETUP_CACHE, host, facts)
+                        _save_play_facts(host, facts)
             else:
                 # when facts are returned, persist them in the setup cache
                 facts = result.get('ansible_facts', {})
-                utils.update_hash(self.SETUP_CACHE, host, facts)
+                _save_play_facts(host, facts)
+
+            # if requested, save the result into the registered variable name
             if task.register:
                 _register_play_vars(host, result)
 

@@ -9,13 +9,28 @@
   roles:
   - { role: test_var_precedence, param_var: "param_var" }
   tasks:
+  - name: register a result
+    command: echo 'BAD!'
+    register: registered_var
+  - name: use set_fact to override the registered_var
+    set_fact: registered_var="this is from set_fact"
   - debug: var=extra_var
   - debug: var=vars_var
   - debug: var=vars_files_var
   - debug: var=vars_files_var_role
+  - debug: var=registered_var
   - assert:
       that:
         - 'extra_var == "extra_var"'
         - 'vars_var == "vars_var"'
         - 'vars_files_var == "vars_files_var"'
         - 'vars_files_var_role == "vars_files_var_role3"'
+        - 'registered_var == "this is from set_fact"'
+
+- hosts: inven_overridehosts
+  vars_files:
+  - "{{ var_dir }}/test_var_precedence.yml"
+  roles:
+  - role: test_var_precedence_inven_override
+    foo: bar
+

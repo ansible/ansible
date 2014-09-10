@@ -84,7 +84,10 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
     def connect(self):
         "Connect to a host on a given (SSL) port."
 
-        sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+        if hasattr(self, 'source_address'):
+            sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+        else:
+            sock = socket.create_connection((self.host, self.port), self.timeout)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
@@ -204,6 +207,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
             paths_checked.append('/etc/ssl')
         elif platform == 'NetBSD':
             ca_certs.append('/etc/openssl/certs')
+        elif platform == 'SunOS':
+            paths_checked.append('/opt/local/etc/openssl/certs')
 
         # fall back to a user-deployed cert in a standard
         # location if the OS platform one is not available
@@ -391,7 +396,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         proxyhandler = urllib2.ProxyHandler({})
         handlers.append(proxyhandler)
 
-    handlers.append(CustomHTTPSHandler)
+    # pre-2.6 versions of python cannot use the custom https
+    # handler, since the socket class is lacking this method
+    if hasattr(socket, 'create_connection'):
+        handlers.append(CustomHTTPSHandler)
 
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)

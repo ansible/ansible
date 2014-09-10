@@ -1,5 +1,6 @@
-# (c) 2014, Brian Coca, Josh Drake, et al
-#
+# Test code for the file module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -15,30 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.cache.base import BaseCacheModule
+- name: test https fetch
+  get_url: url="https://raw.githubusercontent.com/ansible/ansible/devel/README.md" dest={{output_dir}}/get_url.txt force=yes
+  register: result
 
-class CacheModule(BaseCacheModule):
-
-    def __init__(self, *args, **kwargs):
-        self._cache = {}
-
-    def get(self, key):
-        return self._cache.get(key)
-
-    def set(self, key, value):
-        self._cache[key] = value
-
-    def keys(self):
-        return self._cache.keys()
-
-    def contains(self, key):
-        return key in self._cache
-
-    def delete(self, key):
-        del self._cache[key]
-
-    def flush(self):
-        self._cache = {}
-
-    def copy(self):
-        return self._cache.copy()
+- name: assert the get_url call was successful
+  assert:
+    that:
+    - result.changed 
+    - '"OK" in result.msg'
