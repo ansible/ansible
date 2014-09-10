@@ -362,7 +362,7 @@ def repo_url_to_role_name(repo_url):
     # gets the role name out of a repo like 
     # http://git.example.com/repos/repo.git" => "repo"
 
-    if '://' not in repo_url:
+    if '://' not in repo_url and '@' not in repo_url:
         return repo_url
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
