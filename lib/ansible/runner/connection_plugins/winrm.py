@@ -83,7 +83,11 @@ class Connection(object):
             protocol = Protocol(endpoint, transport=transport,
                                 username=self.user, password=self.password)
             try:
-                protocol.send_message('')
+                shell_id = protocol.open_shell()
+                command_id = protocol.run_command(shell_id, 'rem')
+                print (protocol.get_command_output(shell_id, command_id)[0])
+                protocol.cleanup_command(shell_id, command_id)
+                protocol.close_shell(shell_id)
                 _winrm_cache[cache_key] = protocol
                 return protocol
             except WinRMTransportError, exc:
