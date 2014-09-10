@@ -46,4 +46,12 @@ EXAMPLES = '''
 - set_fact:
      one_fact: something
      other_fact: "{{ local_var * 2 }}"
+
+# As of 1.8, Ansible will convert boolean strings ('true', 'false', 'yes', 'no')
+# to proper boolean values when using the key=value syntax, however it is still
+# recommended that booleans be set using the complex argument style:
+- set_fact:
+    one_fact: true
+    other_fact: false
+
 '''
