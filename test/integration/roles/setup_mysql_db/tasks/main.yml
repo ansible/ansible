@@ -19,7 +19,7 @@
 # ============================================================
 - include_vars: '{{ item }}'
   with_first_found:
-      - files:
+    - files:
         - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml'
         - '{{ ansible_os_family }}.yml'
       paths: '../vars'
