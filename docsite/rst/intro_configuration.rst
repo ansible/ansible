@@ -120,11 +120,15 @@ Users on platforms where sudo passwords are enabled should consider changing thi
 bin_ansible_callbacks
 =====================
 
+.. versionadded:: 1.8
+
 Controls whether callback plugins are loaded when running /usr/bin/ansible.  This may be used to log activity from
 the command line, send notifications, and so on.  Callback plugins are always loaded for /usr/bin/ansible-playbook
 if present and cannot be disabled::
 
     bin_ansible_callbacks=False
+
+Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
 
 .. _callback_plugins:
 
