@@ -366,3 +366,4 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
+warnings.simplefilter("ignore")
