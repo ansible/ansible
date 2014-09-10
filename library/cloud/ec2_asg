@@ -57,6 +57,30 @@ options:
     description:
       - Desired number of instances in group
     required: false
+  replace_all_instances:
+    description:
+      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuraiton.
+    required: false
+    version_added: "1.8"
+    default: False
+  replace_batch_size:
+    description:
+      - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
+    required: false
+    version_added: "1.8"
+    default: 1  
+  replace_instances:
+    description:
+      - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch configuration.
+    required: false
+    version_added: "1.8"
+    default: None
+  lc_check:
+    description:
+      - Check to make sure instances that are being replaced with replace_instances do not aready have the current launch_config.
+    required: false
+    version_added: "1.8"
+    default: True
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -86,6 +110,11 @@ options:
     default: EC2
     version_added: "1.7"
     choices: ['EC2', 'ELB']
+  wait_timeout:
+    description:
+      - how long before wait instances to become viable when replaced.  Used in concjunction with instance_ids option.
+    default: 300
+    version_added: "1.8"
 extends_documentation_fragment: aws
 """
 
@@ -109,6 +138,51 @@ deprecated method of expressing tags:
         value: production
         propagate_at_launch: no
 
+Example of how to assign a new launch config to an ASG and terminate old instances.  
+All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in 
+a rolling fashion with instances using the current launch configuration, "my_new_lc".
+This could also be considered a rolling deploy of a pre-baked AMI.
+
+If this is a newly created group, the instances will not be replaced since all instances
+will have the current launch configuration.
+
+- name: create launch config
+  ec2_lc:
+    name: my_new_lc
+    image_id: ami-lkajsf
+    key_name: mykey
+    region: us-east-1
+    security_groups: sg-23423
+    instance_type: m1.small
+    assign_public_ip: yes
+
+- ec2_asg:
+    name: myasg
+    launch_config_name: my_new_lc
+    health_check_period: 60
+    health_check_type: ELB
+    replace_all_instances: yes
+    min_size: 5
+    max_size: 5
+    desired_capacity: 5
+    region: us-east-1
+
+
+If you only wanted to replace a couple of instances instead of all of them, supply a list
+to "replace_instances":
+
+- ec2_asg:
+    name: myasg
+    launch_config_name: my_new_lc
+    health_check_period: 60
+    health_check_type: ELB
+    replace_instances:
+    - i-b345231
+    - i-24c2931
+    min_size: 5
+    max_size: 5
+    desired_capacity: 5
+    region: us-east-1
 '''
 
 import sys
@@ -130,6 +204,8 @@ ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
     'load_balancers', 'max_size', 'min_size', 'name', 'placement_group',
     'tags', 'termination_policies', 'vpc_zone_identifier')
 
+INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
+
 def enforce_required_arguments(module):
     ''' As many arguments are not required for autoscale group deletion
         they cannot be mandatory arguments for the module, so we enforce
@@ -144,8 +220,33 @@ def enforce_required_arguments(module):
 
 def get_properties(autoscaling_group):
     properties = dict((attr, getattr(autoscaling_group, attr)) for attr in ASG_ATTRIBUTES)
+    properties['healthy_instances'] = 0
+    properties['in_service_instances'] = 0
+    properties['unhealthy_instances'] = 0
+    properties['pending_instances'] = 0
+    properties['viable_instances'] = 0
+    properties['terminating_instances'] = 0
+
     if autoscaling_group.instances:
         properties['instances'] = [i.instance_id for i in autoscaling_group.instances]
+        instance_facts = {}
+        for i in autoscaling_group.instances:
+            instance_facts[i.instance_id] = {'health_status': i.health_status,
+                                            'lifecycle_state': i.lifecycle_state,
+                                            'launch_config_name': i.launch_config_name }
+            if i.health_status == 'Healthy' and i.lifecycle_state == 'InService':
+                properties['viable_instances'] += 1
+            if i.health_status == 'Healthy':
+                properties['healthy_instances'] += 1
+            else:
+                properties['unhealthy_instances'] += 1
+            if i.lifecycle_state == 'InService':
+                properties['in_service_instances'] += 1
+            if i.lifecycle_state == 'Terminating':
+                properties['terminating_instances'] += 1
+            if i.lifecycle_state == 'Pending':
+                properties['pending_instances'] += 1
+        properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
     return properties
 
@@ -210,16 +311,30 @@ def create_autoscaling_group(connection, module):
         try:
             connection.create_auto_scaling_group(ag)
             asg_properties = get_properties(ag)
-            module.exit_json(changed=True, **asg_properties)
+            changed = True
+            return(changed, asg_properties)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
     else:
         as_group = as_groups[0]
         changed = False
         for attr in ASG_ATTRIBUTES:
-            if module.params.get(attr) and getattr(as_group, attr) != module.params.get(attr):
-                changed = True
-                setattr(as_group, attr, module.params.get(attr))
+            if module.params.get(attr):
+                module_attr = module.params.get(attr)
+                group_attr = getattr(as_group, attr)
+                # we do this because AWS and the module may return the same list
+                # sorted differently
+                try:
+                    module_attr.sort()
+                except:
+                    pass
+                try:
+                    group_attr.sort()
+                except:
+                    pass
+                if group_attr != module_attr:
+                    changed = True
+                    setattr(as_group, attr, module_attr)
 
         if len(set_tags) > 0:
             existing_tags = as_group.tags
@@ -256,9 +371,10 @@ def create_autoscaling_group(connection, module):
             if changed:
                 as_group.update()
             asg_properties = get_properties(as_group)
-            module.exit_json(changed=changed, **asg_properties)
+            return(changed, asg_properties)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
+
 
     result = as_groups[0]
     module.exit_json(changed=changed, name=result.name,
@@ -274,6 +390,7 @@ def create_autoscaling_group(connection, module):
         load_balancers=result.load_balancers,
         min_size=result.min_size, max_size=result.max_size,
         placement_group=result.placement_group,
+        wait_timeout = dict(default=300),
         tags=result.tags,
         termination_policies=result.termination_policies,
         vpc_zone_identifier=result.vpc_zone_identifier)
@@ -298,9 +415,148 @@ def delete_autoscaling_group(connection, module):
             time.sleep(10)
 
         group.delete()
-        module.exit_json(changed=True)
+        changed=True
+        return changed
     else:
-        module.exit_json(changed=False)
+        changed=False
+        return changed
+
+def get_chunks(l, n):
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+def replace(connection, module):
+
+    batch_size = module.params.get('replace_batch_size')
+    wait_timeout = module.params.get('wait_timeout')
+    group_name = module.params.get('group_name')
+    max_size =  module.params.get('max_size')
+    min_size =  module.params.get('min_size')
+    desired_capacity =  module.params.get('desired_capacity')
+    replace_instances = module.params.get('replace_instances')
+    
+    
+    # wait for instance list to be populated on a newly provisioned ASG
+    instance_wait = time.time() + 30
+    while instance_wait > time.time():
+        as_group = connection.get_all_groups(names=[group_name])[0]
+        props = get_properties(as_group)
+        if props.has_key('instances'):
+            instances = props['instances']
+            break
+        time.sleep(10)
+    if instance_wait <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "Waited too for instances to appear. %s" % time.asctime())
+    # determine if we need to continue
+    replaceable = 0
+    if replace_instances:
+        instances = replace_instances
+    for k in props['instance_facts'].keys():
+        if k in instances:
+          if  props['instance_facts'][k]['launch_config_name'] != props['launch_config_name']:
+              replaceable += 1
+    if replaceable == 0:
+        changed = False
+        return(changed, props)
+        
+    # set temporary settings and wait for them to be reached
+    as_group.max_size = max_size + batch_size
+    as_group.min_size = min_size + batch_size
+    as_group.desired_capacity = desired_capacity + batch_size
+    as_group.update()
+    wait_timeout = time.time() + wait_timeout
+    while wait_timeout > time.time() and min_size + batch_size > props['viable_instances']:
+        time.sleep(10)
+        as_groups = connection.get_all_groups(names=[group_name])
+        as_group = as_groups[0]
+        props = get_properties(as_group)
+    if wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "Waited too for instances to appear. %s" % time.asctime())
+    instances = props['instances']
+    if replace_instances:
+        instances = replace_instances
+    for i in get_chunks(instances, batch_size):
+        replace_batch(connection, module, i)
+    # return settings to normal
+    as_group = connection.get_all_groups(names=[group_name])[0]
+    as_group.max_size = max_size 
+    as_group.min_size = min_size 
+    as_group.desired_capacity = desired_capacity
+    as_group.update()
+    as_group = connection.get_all_groups(names=[group_name])[0]
+    asg_properties = get_properties(as_group)
+    changed=True
+    return(changed, asg_properties)
+
+def replace_batch(connection, module, replace_instances):
+    
+    
+    group_name = module.params.get('group_name')
+    wait_timeout = int(module.params.get('wait_timeout'))
+    lc_check = module.params.get('lc_check')
+
+    as_group = connection.get_all_groups(names=[group_name])[0]
+    props = get_properties(as_group)
+
+    # check to make sure instances given are actually in the given ASG
+    # and they have a non-current launch config
+    old_instances = []
+    instances = ( inst_id for inst_id in replace_instances if inst_id in props['instances'])
+
+    if lc_check:
+        for i in instances:
+           if props['instance_facts'][i]['launch_config_name']  != props['launch_config_name']:
+                old_instances.append(i)
+    else:
+        old_instances = instances
+
+    # set all instances given to unhealthy
+    for instance_id in old_instances:
+        connection.set_instance_health(instance_id,'Unhealthy')
+    
+    # we wait to make sure the machines we marked as Unhealthy are
+    # no longer in the list
+
+    count = 1
+    wait_timeout = time.time() + wait_timeout
+    while wait_timeout > time.time() and count > 0:
+        count = 0
+        as_group = connection.get_all_groups(names=[group_name])[0]
+        props = get_properties(as_group)
+        instance_facts = props['instance_facts']
+        instances = ( i for i in instance_facts if i in old_instances)
+        for i in instances:
+            if  ( instance_facts[i]['lifecycle_state'] == 'Terminating'
+                 or instance_facts[i]['health_status'] == 'Unhealthy' ):
+                count += 1
+        time.sleep(10)
+
+    if wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "Waited too long for old instances to terminate. %s" % time.asctime())
+
+    # make sure we have the latest stats after that last loop.
+    as_group = connection.get_all_groups(names=[group_name])[0]
+    props = get_properties(as_group)
+
+    # now we make sure that we have enough instances in a viable state
+    wait_timeout = time.time() + wait_timeout
+    while wait_timeout > time.time() and props['min_size'] > props['viable_instances']:
+        time.sleep(10)
+        as_groups = connection.get_all_groups(names=[group_name])
+        as_group = as_groups[0]
+        props = get_properties(as_group)
+
+    if wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "Waited too long for new instances to become viable. %s" % time.asctime())
+
+    # collect final stats info
+    as_group = connection.get_all_groups(names=[group_name])[0]
+    asg_properties = get_properties(as_group)
+
 
 
 def main():
@@ -315,6 +571,11 @@ def main():
             max_size=dict(type='int'),
             desired_capacity=dict(type='int'),
             vpc_zone_identifier=dict(type='str'),
+            replace_batch_size=dict(type='int', default=1),
+            replace_all_instances=dict(type='bool', default=False),
+            replace_instances=dict(type='list', default=[]),
+            lc_check=dict(type='bool', default=True),
+            wait_timeout=dict(type='int', default=300),
             state=dict(default='present', choices=['present', 'absent']),
             tags=dict(type='list', default=[]),
             health_check_period=dict(type='int', default=300),
@@ -324,7 +585,8 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
 
     state = module.params.get('state')
-
+    replace_instances = module.params.get('replace_instances')
+    replace_all_instances = module.params.get('replace_all_instances')
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
@@ -332,10 +594,18 @@ def main():
             module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
-
+    changed = False
+    if replace_all_instances and replace_instances:
+        module.fail_json(msg="You can't use replace_instances and replace_all_instances in the same task.")
     if state == 'present':
-        create_autoscaling_group(connection, module)
+        create_changed, asg_properties=create_autoscaling_group(connection, module)
+    if replace_all_instances or replace_instances:
+        replace_changed, asg_properties=replace(connection, module)
     elif state == 'absent':
-        delete_autoscaling_group(connection, module)
+       changed = delete_autoscaling_group(connection, module)
+       module.exit_json( changed = changed )
+    if create_changed or replace_changed:
+        changed = True
+    module.exit_json( changed = changed, **asg_properties )
 
 main()
