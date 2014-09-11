@@ -493,7 +493,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if returned_msg:
             display("msg: %s" % returned_msg, color='red', runner=self.runner)
         if not parsed and module_msg:
-            display("invalid output was: %s" % module_msg, color='red', runner=self.runner)
+            display(module_msg, color='red', runner=self.runner)
         if ignore_errors:
             display("...ignoring", color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)

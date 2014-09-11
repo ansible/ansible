@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 ## 1.8 "You Really Got Me" - Active Development
 
-New core features:
+Major changes:
 
 * fact caching support, pluggable, initially supports Redis (DOCS pending)
 * 'serial' size in a rolling update can be specified as a percentage
@@ -15,6 +15,7 @@ New core features:
 * ansible-galaxy install -f requirements.yml allows advanced options and installs from non-galaxy SCM sources and tarballs.
 * command_warnings feature will warn about when usage of the shell/command module can be simplified to use core modules - this can be enabled in ansible.cfg
 * new omit value can be used to leave off a parameter when not set, like so module_name: a=1 b={{ c | default(omit) }}, would not pass value for b (not even an empty value) if c was not set.
+* developers: 'baby JSON' in module responses, originally intended for writing modules in bash, is removed as a feature to simplify logic, script module remains available for running bash scripts.
 
 New Modules:
 
@@ -30,6 +31,7 @@ New Modules:
 
 Some other notable changes:
 
+* if a module should ever traceback, it will return a standard error, catchable by ignore_errors, versus an 'unreachable'
 * ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
 * ec2_elb_lb: added support for the connection_draining_timeout and cross_az_load_balancing options.
 * support for symbolic representations (ie. u+rw) for file permission modes (file/copy/template modules etc.).

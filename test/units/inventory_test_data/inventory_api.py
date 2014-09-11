@@ -34,7 +34,10 @@ if options.host is not None:
     if options.extra:
         k,v = options.extra.split("=")
         variables[options.host][k] = v
-    print json.dumps(variables[options.host])
+    if options.host in variables:
+        print json.dumps(variables[options.host])
+    else:
+        print "{}"
     sys.exit(0)
 
 parser.print_help()

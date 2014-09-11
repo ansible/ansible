@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import traceback
 import unittest
 import os
 import os.path
@@ -217,36 +218,23 @@ class TestUtils(unittest.TestCase):
         # leading junk
         self.assertEqual(ansible.utils.parse_json('ansible\n{"foo": "bar"}'), dict(foo="bar"))
 
-        # "baby" json
-        self.assertEqual(ansible.utils.parse_json('foo=bar baz=qux'), dict(foo='bar', baz='qux'))
-
         # No closing quotation
         try:
-            ansible.utils.parse_json('foo=bar "')
+            rc = ansible.utils.parse_json('foo=bar "')
+            print rc
         except ValueError:
             pass
         else:
+            traceback.print_exc()
             raise AssertionError('Incorrect exception, expected ValueError')
 
         # Failed to parse
         try:
             ansible.utils.parse_json('{')
-        except ansible.errors.AnsibleError:
+        except ValueError:
             pass
         else:
-            raise AssertionError('Incorrect exception, expected ansible.errors.AnsibleError')
-
-        # boolean changed/failed
-        self.assertEqual(ansible.utils.parse_json('changed=true'), dict(changed=True))
-        self.assertEqual(ansible.utils.parse_json('changed=false'), dict(changed=False))
-        self.assertEqual(ansible.utils.parse_json('failed=true'), dict(failed=True))
-        self.assertEqual(ansible.utils.parse_json('failed=false'), dict(failed=False))
-
-        # rc
-        self.assertEqual(ansible.utils.parse_json('rc=0'), dict(rc=0))
-
-        # Just a string
-        self.assertEqual(ansible.utils.parse_json('foo'), dict(failed=True, parsed=False, msg='foo'))
+            raise AssertionError('Incorrect exception, expected ValueError')
 
     def test_parse_yaml(self):
         #json
