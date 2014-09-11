@@ -49,8 +49,8 @@ NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 class OpenStackCloud(object):
 
     def __init__(self, name, username, password, project_id, auth_url,
-                 region_name, service_type, insecure, image_cache=dict(),
-                 flavor_cache=None):
+                 region_name, service_type, insecure, private=False,
+                 image_cache=dict(), flavor_cache=None):
 
         self.name = name
         self.username = username
@@ -60,6 +60,7 @@ class OpenStackCloud(object):
         self.region_name = region_name
         self.service_type = service_type
         self.insecure = insecure
+        self.private = private
         self.image_cache = image_cache
         self.flavor_cache = flavor_cache
 
@@ -129,8 +130,11 @@ class NovaInventory(object):
 
     def __init__(self, private=False, refresh=False):
         self.clouds = []
-        self.private = private
         self.refresh = refresh
+        if private:
+            private_default = 'true'
+        else:
+            private_default = 'false'
 
         OS_USERNAME = os.environ.get('OS_USERNAME', 'admin')
         NOVA_DEFAULTS = {
@@ -141,6 +145,7 @@ class NovaInventory(object):
             'region_name': os.environ.get('OS_REGION_NAME', ''),
             'service_type': 'compute',
             'insecure': 'false',
+            'private': private_default,
             'cache_max_age': '300',
             'cache_path': '~/.ansible/tmp',
         }
@@ -165,6 +170,7 @@ class NovaInventory(object):
             nova_client_params['region_name'] = config.get(cloud, 'region_name')
             nova_client_params['service_type'] = config.get(cloud, 'service_type')
             nova_client_params['insecure'] = config.getboolean(cloud, 'insecure')
+            nova_client_params['private'] = config.getboolean(cloud, 'private')
             # Provide backwards compat for older nova.ini files
             if nova_client_params['password'] == '':
                 nova_client_params['password'] = config.get(cloud, 'api_key')
@@ -224,7 +230,7 @@ class NovaInventory(object):
                 # and floating IPs in a list
 
                 # Fist, add an IP address
-                if (self.private is True):
+                if (cloud.private):
                     ansible_ssh_hosts = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
                 else:
                     ansible_ssh_hosts = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
