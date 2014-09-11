@@ -506,7 +506,7 @@ def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
         data = orig_data
     return data
 
-def parse_json(raw_data, from_remote=False, from_inventory=False):
+def parse_json(raw_data, from_remote=False, from_inventory=False, no_exceptions=False):
     ''' this version for module return data only '''
 
     orig_data = raw_data
@@ -517,28 +517,10 @@ def parse_json(raw_data, from_remote=False, from_inventory=False):
     try:
         results = json.loads(data)
     except:
-        # not JSON, but try "Baby JSON" which allows many of our modules to not
-        # require JSON and makes writing modules in bash much simpler
-        results = {}
-        try:
-            tokens = shlex.split(data)
-        except:
-            print "failed to parse json: "+ data
+        if no_exceptions:
+            return dict(failed=True, parsed=False, msg=raw_data)
+        else:
             raise
-        for t in tokens:
-            if "=" not in t:
-                raise errors.AnsibleError("failed to parse: %s" % orig_data)
-            (key,value) = t.split("=", 1)
-            if key == 'changed' or 'failed':
-                if value.lower() in [ 'true', '1' ]:
-                    value = True
-                elif value.lower() in [ 'false', '0' ]:
-                    value = False
-            if key == 'rc':
-                value = int(value)
-            results[key] = value
-        if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : orig_data }
 
     if from_remote:
         results = _clean_data_struct(results, from_remote, from_inventory)
