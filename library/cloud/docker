@@ -506,12 +506,15 @@ class DockerManager:
 
 
     def get_split_image_tag(self, image):
-        if '/' in image:
-            image = image.split('/')[-1]
-        tag = "latest"
-        if image.find(':') > 0:
-            return image.split(':')
+        # If image contains a host or org name, omit that from our check
+        resource = image.rsplit('/', 1)[-1]
+
+        # now we can determine if image has a tag
+        if resource.find(':') > 0:
+            # Use image here so that host and org name are included
+            return image.split(':', 1)
         else:
+            tag = "latest"
             return image, tag
 
     def get_summary_counters_msg(self):
@@ -626,7 +629,7 @@ class DockerManager:
                 except:
                     self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
             try:
-                self.client.pull(resource, tag=tag)
+                self.client.pull(image, tag=tag)
             except:
                 self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
             self.increment_counter('pull')
