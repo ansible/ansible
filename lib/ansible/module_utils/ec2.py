@@ -68,6 +68,7 @@ def ec2_argument_spec():
 
 
 def boto_supports_profile_name():
+    import boto.ec2
     return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
 
