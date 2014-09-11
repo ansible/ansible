@@ -1,0 +1,546 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: ec2_asg_cycle
+description: Cycles all of the currently running instances in an autoscaling group by terminating the instances and waiting for new ones to start.
+short_description: Cycles all of the currently running instances in an autoscaling group
+version_added: "1.6"
+requirements: [ "boto" ]
+author: Scott Anderson
+options:
+  name:
+    description:
+      - The name of the autoscaling group
+    required: true
+  wait_timeout:
+    description:
+      - Maximum time to wait while checking for running/terminating instances. 
+    required: false
+  method:
+    description:
+      - Type of cycle to perform, 'fast' or 'slow'. A fast cycle will create enough new instances to completely replace the group, add them, then terminate all of the old ones at once. A slow cycle will replace deprecated instances one at a time.
+    required: false
+  cycle_all:
+    description:
+      - If provided, recycles every instance in the group regardless of instance type. The default is to only cycle instances that do not belong to the current launch configuration.
+    required: false
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    default: None
+    aliases: ['ec2_secret_key', 'secret_key']
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_access_key', 'access_key']
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    aliases: ['aws_region', 'ec2_region']
+
+"""
+
+EXAMPLES = """
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
+# Basic provisioning example
+- local_action:
+    module: ec2_asg_cycle
+    name: "app-asg"
+    method: fast
+"""
+
+import os, pprint, sys, time
+
+from collections import defaultdict
+
+import logging
+logging.basicConfig(filename='ec2_asg_cycle.log')
+
+try:
+    import boto
+    import boto.ec2.autoscale
+    import boto.ec2.elb
+    import boto.iam
+    from boto.regioninfo import RegionInfo
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+# The list of processes to suspend while we're managing the autoscaling group. We do not suspend AddToLoadBalancer , 'HealthCheck'
+# as we'll need it while we're moving things around.
+
+ASG_SUSPEND_PROCESSES = (
+    'AddToLoadBalancer', 'AZRebalance', 'AlarmNotification', 'HealthCheck', 'Launch', 'RemoveFromLoadBalancerLowPriority', 'ReplaceUnhealthy', 'ScheduledActions', 'Terminate',
+)
+
+class CycleMethod():
+    def __init__(self, module, ec2_connection, asg_connection, iam_connection, elb_connection, group_name, wait_timeout=300, cycle_all=False):
+        self.module = module
+        self.ec2_connection = ec2_connection
+        self.asg_connection = asg_connection
+        self.iam_connection = iam_connection
+        self.elb_connection = elb_connection
+
+        self.group_name = group_name
+        self.wait_timeout = wait_timeout
+        self.cycle_all = cycle_all
+
+        self.autoscaling_group = self.get_autoscaling_group()
+        self.launch_config = self.get_launch_config()
+
+        self.group_instance_filters = {
+            'tag:aws:autoscaling:groupName' : self.group_name,
+        }
+
+    def run(self):
+        try:
+            self.autoscaling_group.suspend_processes(ASG_SUSPEND_PROCESSES)
+
+            instances = self.get_all_instances(filters=self.group_instance_filters)
+            # Wait until any pending instances in the autoscaling group are actually running.
+            self.wait_for_group_instances_to_run(instances)
+
+            target_instances = self.get_target_instances(instances)
+            if not target_instances:
+                return False, {}
+
+            self.autoscaling_group.resume_processes(['Launch'])
+            return self.cycle(target_instances)
+
+        except Exception as e:
+            logging.error('PROBLEM WHILE RUNNING %s', e)
+            raise
+        finally:
+            try:
+                self.autoscaling_group.resume_processes()
+            except:
+                # If this fails, try it again, for craft.
+                time.sleep(1)
+                self.autoscaling_group.resume_processes()
+
+        return changed, results
+
+    def cycle(self, group_instances):
+        raise Exception('Implement cycle() in subclass.')
+
+    def get_autoscaling_group(self):
+        groups = self.asg_connection.get_all_groups(names=[self.group_name])
+        if not groups:
+            self.module.fail_json('Autoscaling group %s does not exist.' % self.group_name)
+
+        return groups[0]
+
+    def get_launch_config(self):
+        assert self.autoscaling_group is not None
+        config_name = self.autoscaling_group.launch_config_name
+
+        configs = self.asg_connection.get_all_launch_configurations(names=[config_name])
+        if not configs:
+            self.module.fail_json('Launch configuration %s does not exist.' % config_name)
+
+        return configs[0]
+
+    def retry_call(self, call, call_args=[], max_tries=3):
+        tries = 0
+        while tries < max_tries:
+            try:
+                results = call(*call_args)
+                break
+            except boto.exception.BotoServerError as e:
+                tries += 1
+                if tries >= max_tries:
+                    raise
+                time.sleep(1)
+            except Exception as e:
+                raise
+
+        return results
+            
+    def get_autoscale_instances(self, instances):
+        return self.asg_connection.get_all_autoscaling_instances([i.id for i in instances])
+
+    def get_all_instances(self, instance_ids=None, filters={}):
+        # TODO use a generator and markers to allow for AWS paging
+        reservations = self.ec2_connection.get_all_instances(instance_ids=instance_ids, filters=filters)
+        return sum([res.instances for res in reservations], [])
+
+    def get_group_instances(self, all_instances):
+        group_instances = self.get_autoscale_instances(all_instances)
+        logging.warning('GROUP INSTANCES: %s', group_instances)
+        return [i for i in group_instances if self.is_not_terminated(i)]
+
+    def is_not_terminated(self, instance):
+        logging.warning('\tINSTANCE: %s %s', instance, instance.lifecycle_state)
+        return instance.lifecycle_state not in ('Terminating', 'Terminated')
+
+    def get_pending_group_instances(self, instances):
+        return [instance for instance in instances if instance.lifecycle_state == 'Pending']
+
+    def wait_for_group_instances_to_run(self, instances):
+        logging.warning('WAITING FOR GROUP INSTANCES %s', instances)
+
+        end_time = time.time() + self.wait_timeout
+        while end_time > time.time():
+            try:
+                current_group_instances = self.get_group_instances(instances)
+                logging.warning('CURRENT GROUP INSTANCES %s', current_group_instances)
+
+                current_pending = self.get_pending_group_instances(current_group_instances)
+                logging.warning('CURRENT PENDING %s', current_pending)
+                if not current_pending:
+                    logging.warning('NONE PENDING')
+                    break
+
+                time.sleep(5)
+
+            except Exception as e:
+                logging.error('WAIT FOR INSTANCES ERRAR %s', e)
+                time.sleep(1)
+                continue
+
+        if current_pending:
+            logging.warning('WAIT FOR INSTANCES TIME OUT')
+            self.module.fail_json(msg="Wait for autoscaling to restart instances timeout")
+
+        return current_group_instances
+
+    def check_pending_elb_instances(self, elb):
+        """
+        Checks to see if any instances in an elb are not in service.
+        """
+        current_instances = self.elb_connection.describe_instance_health(elb)
+        logging.warning('CURRENT ELB INSTANCES %s', current_instances)
+
+        for instance in current_instances:
+            logging.warning('    ELB INSTANCE %s STATE: %s', (instance.instance_id, instance.state))
+            if instance.state != 'InService':
+                return True
+        return False
+
+    def check_elbs_for_pending_instances(self):
+        """
+        Checks to see if any elbs serviced by the autoscaling group has pending instances.
+        """
+        for elb in self.autoscaling_group.load_balancers:
+            logging.warning('CURRENT ELB %s', elb)
+            if self.check_pending_elb_instances(elb):
+                return True
+        return False
+
+    def wait_for_elb_to_stabilize(self):
+        """
+        Ensures that all of the instances in the load balancer are InService.
+        """
+        logging.warning('WAITING FOR ELB TO STABILIZE')
+
+        pending = True
+        end_time = time.time() + self.wait_timeout
+        while end_time > time.time():
+            try:
+                if self.check_elbs_for_pending_instances():
+                    time.sleep(5)
+                else:
+                    logging.warning('ALL INSTANCES IN SERVICE!')
+                    pending = False
+                    break
+
+            except Exception as e:
+                logging.error('WAIT FOR INSTANCES ERRAR %s', e)
+                time.sleep(1)
+                continue
+
+        if pending:
+            logging.warning('WAIT FOR STABILIZATION TIME OUT')
+            self.module.fail_json(msg="Wait for elb stabilization timeout")
+
+
+    def get_pending_instances(self, instances):
+        logging.warning('RUNSZ: %s', [instance.state for instance in instances])
+        return [instance for instance in instances if instance.state != 'running']
+
+    def wait_for_instances_to_run(self, instances):
+        logging.warning('WAITING FOR INSTANCES %s', instances)
+
+        end_time = time.time() + self.wait_timeout
+        while end_time > time.time():
+            try:
+                current_instances = self.get_all_instances(instance_ids=[i.id for i in instances])
+                current_pending = self.get_pending_instances(current_instances)
+                logging.warning('CURRENT PENDING %s', current_pending)
+                if not current_pending:
+                    logging.warning('NONE PENDING')
+                    break
+
+                time.sleep(5)
+
+            except Exception as e:
+                logging.error('WAIT FOR INSTANCES ERRAR %s', e)
+                time.sleep(1)
+                continue
+
+        if current_pending:
+            logging.warning('WAIT FOR INSTANCES TIME OUT')
+            self.module.fail_json(msg="Wait for autoscaling to restart instances timeout")
+
+        return current_instances
+
+    def create_instances(self, subnet_counts, fail_if_missing=False, retries=3):
+        # Tags on autoscaling groups can propagate to instances created by those groups.
+        group_tags = dict((tag.key, tag.value) for tag in self.autoscaling_group.tags if tag.propagate_at_launch)
+
+        all_instances = []
+
+        for subnet_id in subnet_counts:
+            count = subnet_counts[subnet_id]
+            logging.warning('SUBNET: %s for %d', subnet_id, count)
+
+            interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
+                subnet_id=subnet_id,
+                groups=self.launch_config.security_groups,
+                associate_public_ip_address=self.launch_config.associate_public_ip_address,
+            )
+
+            logging.warning('INTERFACE: %s %s %s', subnet_id, self.launch_config.security_groups, self.launch_config.associate_public_ip_address)
+
+            interfaces = boto.ec2.networkinterface.NetworkInterfaceCollection(interface)
+
+            if self.launch_config.instance_profile_name:
+                profile = self.iam_connection.get_instance_profile(self.launch_config.instance_profile_name)
+                profile_info = profile['get_instance_profile_response']['get_instance_profile_result']['instance_profile']
+                profile_arn = profile_info['arn']
+            else:
+                profile_arn = None
+                
+            params = dict(
+                min_count=count,
+                max_count=count,
+                image_id=self.launch_config.image_id,
+                key_name=self.launch_config.key_name,
+                user_data=self.launch_config.user_data,
+                instance_type=self.launch_config.instance_type,
+                kernel_id=self.launch_config.kernel_id,
+                ramdisk_id=self.launch_config.ramdisk_id,
+                monitoring_enabled=self.launch_config.instance_monitoring,
+                placement_group=self.autoscaling_group.placement_group,
+                block_device_map=self.launch_config.block_device_mappings,
+                instance_profile_arn=profile_arn,
+                ebs_optimized=self.launch_config.ebs_optimized,
+                network_interfaces=interfaces,
+            )
+
+            logging.warning('PARAMS: %s', pprint.pformat(params))
+            reservation = self.ec2_connection.run_instances(**params)
+            all_instances += reservation.instances
+
+        logging.warning('RESERVED INSTANCES %s', all_instances)
+
+        self.wait_for_instances_to_run(all_instances)
+
+        if group_tags:
+            for instance in all_instances:
+                try:
+                    self.ec2_connection.create_tags(instance.id, group_tags)
+                except Exception as e:
+                    logging.error('Error while tagging... retry: %s', e)
+                    time.sleep(1)
+                    self.ec2_connection.create_tags(instance.id, group_tags)
+
+        return all_instances
+
+    def get_target_instances(self, instances):
+        if self.cycle_all:
+            # Just copy the list of instances and replace them all.
+            target_instances = list(instances)
+        else:
+            # Figure out which instances are not running the image specified in the current
+            # launch configuration.
+            target_image = self.launch_config.image_id
+            target_instances = [i for i in instances if i.image_id != target_image]
+            
+        target_instances = [target for target in target_instances if target.state == 'running']
+        return target_instances
+
+    def terminate_instances(self, instances, wait=True):
+        #self.autoscaling_group.resume_processes(['Terminate'])
+
+        for instance in instances:
+            self.asg_connection.terminate_instance(instance.id, decrement_capacity=False)
+
+        if not wait:
+            return
+
+        end_time = time.time() + self.wait_timeout
+        while end_time > time.time():
+            try:
+                current_instances = self.get_all_instances(instance_ids=[i.id for i in instances])
+                current_pending = [instance for instance in current_instances if instance.state != 'terminated']
+                logging.warning('CURRENT TERM PENDING %s', current_pending)
+                if not current_pending:
+                    logging.warning('NONE PENDING')
+                    break
+
+                time.sleep(5)
+
+            except Exception as e:
+                logging.error('WAIT FOR TERMINATION ERRAR %s', e)
+                time.sleep(1)
+                continue
+
+        if current_pending:
+            logging.warning('WAIT FOR TERMINATION TIME OUT')
+            self.module.fail_json(msg="Wait for autoscaling to restart instances timeout")
+
+    def attach_instances(self, instances):
+        """
+        Makes sure the autoscaling group can actually handle the extra instances.
+        """
+        current_max = self.autoscaling_group.max_size
+        current_desired = self.autoscaling_group.desired_capacity
+        self.autoscaling_group.max_size = current_max + len(instances)
+        self.autoscaling_group.update()
+
+        instance_ids = [instance.id for instance in instances]
+
+        self.autoscaling_group.resume_processes(['Launch'])
+        self.asg_connection.attach_instances(self.group_name, instance_ids)
+        self.autoscaling_group.resume_processes(['AddToLoadBalancer', 'HealthCheck'])
+        
+        self.wait_for_group_instances_to_run(instances)
+        self.wait_for_elb_to_stabilize()
+
+        time.sleep(5)
+
+        self.autoscaling_group.max_size = current_max
+        self.autoscaling_group.update()
+
+
+
+class FastCycleMethod(CycleMethod):
+    """
+    This method starts up enough instances to replace all of the old instances in the group,
+    adds them to the group, then terminates all of the old instances.
+    """
+    def cycle(self, target_instances):
+        logging.warning('FAST')
+
+        changed = False
+        results = {}
+
+        logging.warning('TARGETS %s', target_instances)
+        
+        subnet_counts = defaultdict(int)
+        for target in target_instances:
+            subnet_id = target.subnet_id
+            subnet_counts[subnet_id] += 1
+
+        # TODO do something if not all instances requested start
+        new_instances = self.create_instances(subnet_counts)
+
+        # TODO durr, make this mean something. It's not actually tracking if new instances were
+        # created, etc.
+        changed = True
+
+        results['new_instances'] = [instance.id for instance in new_instances]
+
+        self.attach_instances(new_instances)
+
+        self.terminate_instances(target_instances, wait=True)
+
+        results['terminated_instances'] = [instance.id for instance in target_instances]
+
+        return changed, results
+
+
+class SlowCycleMethod(CycleMethod):
+    """
+    This method starts up one new instance at a time, adds it to the group, then terminates
+    an old instance until there are no longer any old instances left.
+    """
+    def cycle(self):
+        # TODO
+        logging.warning('SLOW')
+        changed = False
+        results = {}
+        return changed, results
+
+
+METHODS = {
+    'fast': FastCycleMethod,
+    'slow': SlowCycleMethod,
+}
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            name={'required': True},
+            wait_timeout={'required': False, 'type': 'int', 'default': 300},
+            method={'required': False, 'type': 'str', 'default': 'fast', 'choices': ['fast', 'slow']},
+            cycle_all={'required': False, 'type': 'bool'},
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+    )
+
+    group_name = module.params['name']
+    method = module.params['method']
+
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    try:
+        ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg=str(e))
+
+    try:
+        asg_connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg=str(e))
+
+    try:
+        iam_connection = connect_to_aws(boto.iam, region, **aws_connect_params)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg=str(e))
+
+    try:
+        elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg=str(e))
+
+    cycler_class = METHODS[method]
+    cycler = cycler_class(module,
+                          ec2_connection, asg_connection, iam_connection, elb_connection,
+                          module.params.get('name'), wait_timeout=module.params.get('wait_timeout'), cycle_all=module.params.get('cycle_all')
+                          )
+    changed, results = cycler.run()
+        
+    module.exit_json(changed=changed, **results)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
