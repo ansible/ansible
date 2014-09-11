@@ -56,3 +56,9 @@
         - "'ansible_job_id' in async_result"
         - "'started' in async_result"
         - "'finished' not in async_result"
+
+- name: test skipped task handling
+  command: /bin/true 
+  async: 15
+  poll: 0
+  when: False
