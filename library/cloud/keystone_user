@@ -8,9 +8,10 @@ DOCUMENTATION = '''
 module: keystone_user
 version_added: "1.2"
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
+extends_documentation_fragment: openstack
 description:
    - Manage users,tenants, roles from OpenStack.
-options:%(openstack_options)s
+options:
    token:
      description:
         - The token to be uses in case the password is not specified
@@ -58,7 +59,7 @@ options:%(openstack_options)s
      default: present
 requirements: [ python-keystoneclient ]
 author: Lorin Hochstein
-''' % dict(openstack_options=OPENSTACK_OPTIONS)
+'''
 
 EXAMPLES = '''
 # Create a tenant

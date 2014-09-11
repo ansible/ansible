@@ -26,9 +26,10 @@ DOCUMENTATION = '''
 module: cinder_volume
 version_added: "1.8"
 short_description: Create/Delete Cinder Volumes
+extends_documentation_fragment: openstack
 description:
    - Create or Remove cinder block storage volumes
-options:%(openstack_options)s
+options:
    state:
      description:
         - Indicate desired state of the resource
@@ -70,7 +71,7 @@ options:%(openstack_options)s
      required: false
      default: None
 requirements: ["cinderclient"]
-''' % dict(openstack_options=OPENSTACK_OPTIONS)
+'''
 
 EXAMPLES = '''
 # Creates a new cinder volume

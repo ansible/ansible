@@ -31,6 +31,7 @@ DOCUMENTATION = '''
 module: nova_volume
 version_added: "1.8"
 short_description: Attach/Detach Volumes from OpenStack VM's
+extends_documentation_fragment: openstack
 description:
    - Attach or Detach volumes from OpenStack VM's
 options:
@@ -65,8 +66,7 @@ options:
      required: false
      default: None
 requirements: ["novaclient", "cinderclient"]
-''' % dict(openstack_options=OPENSTACK_OPTIONS)
-
+'''
 
 EXAMPLES = '''
 # Creates a new VM and attaches to a network and passes metadata to the instance

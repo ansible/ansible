@@ -34,9 +34,10 @@ DOCUMENTATION = '''
 module: nova_compute
 version_added: "1.2"
 short_description: Create/Delete VMs from OpenStack
+extends_documentation_fragment: openstack
 description:
    - Create or Remove virtual machines from Openstack.
-options:%(openstack_options)s
+options:
    state:
      description:
         - Indicate desired state of the resource
@@ -138,7 +139,7 @@ options:%(openstack_options)s
      default: None
      version_added: "1.6"
 requirements: ["novaclient"]
-''' % dict(openstack_options=OPENSTACK_OPTIONS)
+'''
 
 EXAMPLES = '''
 # Creates a new VM and attaches to a network and passes metadata to the instance

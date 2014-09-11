@@ -24,9 +24,10 @@ DOCUMENTATION = '''
 module: nova_keypair
 version_added: "1.2"
 short_description: Add/Delete key pair from nova
+extends_documentation_fragment: openstack
 description:
    - Add or Remove key pair from nova .
-options:%(openstack_options)s
+options:
    state:
      description:
         - Indicate desired state of the resource
@@ -44,7 +45,8 @@ options:%(openstack_options)s
      default: None
 
 requirements: ["novaclient"]
-''' % dict(openstack_options=OPENSTACK_OPTIONS)
+'''
+
 EXAMPLES = '''
 # Creates a key pair with the running users public key
 - nova_keypair: state=present login_username=admin

@@ -21,9 +21,10 @@ DOCUMENTATION = '''
 module: glance_image
 version_added: "1.2"
 short_description: Add/Delete images from glance
+extends_documentation_fragment: openstack
 description:
    - Add or Remove images from the glance repository.
-options:%(openstack_options)s
+options:
    state:
      description:
         - Indicate desired state of the resource
@@ -80,8 +81,7 @@ options:%(openstack_options)s
      required: false
      default: None
 requirements: ["glanceclient", "keystoneclient"]
-
-''' % dict(openstack_options=OPENSTACK_OPTIONS)
+'''
 
 EXAMPLES = '''
 # Upload an image from an HTTP URL
