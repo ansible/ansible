@@ -71,15 +71,14 @@ and destination repositories. It will look something like this::
    It is important that the PR request target be ansible:devel, as we do not accept pull requests into any other branch.
    Dot releases are cherry-picked manually by ansible staff.
 
-At the bottom of the GitHub page, there is a link that says "You can also merge this request on the command line".  Click this link
-to expand the GitHub interface, and it will show instructions that look somewhat like this::
+The username and branch at the end are the important parts, which will be turned into git commands as follows::
 
-    Step 1: From your project repository, check out a new branch and test the changes.
+   git checkout -b testing_PRXXXX devel
+   git pull https://github.com/someuser/ansible.git feature_branch_name
 
-    git checkout -b username-branchname branchname
-    git pull git://github.com/username/branchname.git branchname
-
-Do not follow step 2, as you don't want to merge the user features back into your branch.
+The first command creates and switches to a new branch named testing_PRXXXX, where the XXXX is the actual issue number associated 
+with the pull request (for example, 1234). This branch is based on the devel branch. The second command pulls the new code from the 
+users feature branch into the newly created branch.
 
 .. note::
    If the GitHub user interface shows that the pull request will not merge cleanly, we do not recommend proceeding if you
@@ -162,6 +161,10 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
       StrackTrace
       RRRARRGGG
       ```
+
+When you are done testing a feature branch, you can remove it with the following command::
+
+   git branch -D someuser-feature_branch_name
 
 We understand some users may be inexperienced with git, or other aspects of the above procedure, so feel free to stop by ansible-devel
 list for questions and we'd be happy to help answer them.  
