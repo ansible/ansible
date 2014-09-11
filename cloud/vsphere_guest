@@ -67,7 +67,7 @@ options:
     description:
      - Indicate desired state of the vm.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_on', 'absent', 'powered_off', 'restarted', 'reconfigured']
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
