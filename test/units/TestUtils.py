@@ -453,8 +453,6 @@ class TestUtils(unittest.TestCase):
                          '{"foo": "bar"}\n')
         self.assertEqual(ansible.utils.filter_leading_non_json_lines('a\nb\nansible!\n["foo", "bar"]'),
                          '["foo", "bar"]\n')
-        self.assertEqual(ansible.utils.filter_leading_non_json_lines('a\nb\nansible!\nfoo=bar'),
-                         'foo=bar\n')
 
     def test_boolean(self):
         self.assertEqual(ansible.utils.boolean("true"), True)
