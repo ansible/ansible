@@ -84,36 +84,58 @@ EXAMPLES = '''
 - zypper: name=nmap state=absent
 '''
 
-# Function used for getting the name of a currently installed package.
-def get_current_name(m, name):
-    cmd = '/bin/rpm -q --qf \'%{NAME}-%{VERSION}\''
-    (rc, stdout, stderr) = m.run_command("%s %s" % (cmd, name))
+# Function used for getting versions of currently installed packages.
+def get_current_version(m, name):
+    cmd = ['/bin/rpm', '-q', '--qf', '%{NAME} %{VERSION}-%{RELEASE}\n']
+    cmd.extend(name)
+    (rc, stdout, stderr) = m.run_command(cmd)
 
-    if rc != 0:
-        return (rc, stdout, stderr)
+    current_version = {}
+    rpmoutput_re = re.compile('^(\S+) (\S+)$')
+    for stdoutline, package in zip(stdout.splitlines(), name):
+        m = rpmoutput_re.match(stdoutline)
+        if m == None:
+            return None
+        rpmpackage = m.group(1)
+        rpmversion = m.group(2)
+        if package != rpmpackage:
+            return None
+        current_version[package] = rpmversion
 
-    syntax = "%s"
-
-    for line in stdout.splitlines():
-        if syntax % name in line:
-            current_name = line.split()[0]
-
-    return current_name
+    return current_version
 
 # Function used to find out if a package is currently installed.
-def get_package_state(m, name):
-    cmd = ['/bin/rpm', '--query', '--info', name]
+def get_package_state(m, packages):
+    cmd = ['/bin/rpm', '--query', '--qf', 'package %{NAME} is installed\n']
+    cmd.extend(packages)
 
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-    if rc == 0:
-        return True
-    else:
-        return False
+    installed_state = {}
+    rpmoutput_re = re.compile('^package (\S+) (.*)$')
+    for stdoutline, name in zip(stdout.splitlines(), packages):
+        m = rpmoutput_re.match(stdoutline)
+        if m == None:
+            return None
+        package = m.group(1)
+        result = m.group(2)
+        if not name.startswith(package):
+            print name + ':' + package + ':' + stdoutline + '\n'
+            return None
+        if result == 'is installed':
+            installed_state[name] = True
+        else:
+            installed_state[name] = False
+
+    return installed_state
 
 # Function used to make sure a package is present.
 def package_present(m, name, installed_state, disable_gpg_check, disable_recommends):
-    if installed_state is False:
+    packages = []
+    for package in name:
+        if installed_state[package] is False:
+            packages.append(package)
+    if len(packages) != 0:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
         if disable_gpg_check:
@@ -123,7 +145,7 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
         # add install parameter
         if disable_recommends:
             cmd.append('--no-recommends')
-        cmd.append(name)
+        cmd.extend(packages)
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
         if rc == 0:
@@ -141,33 +163,34 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
 # Function used to make sure a package is the latest available version.
 def package_latest(m, name, installed_state, disable_gpg_check, disable_recommends):
 
-    if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
-        pre_upgrade_name = ''
-        post_upgrade_name = ''
+    # first of all, make sure all the packages are installed
+    (rc, stdout, stderr, changed) = package_present(m, name, installed_state, disable_gpg_check)
 
-        # Compare the installed package before and after to know if we changed anything.
-        pre_upgrade_name = get_current_name(m, name)
+    # if we've already made a change, we don't have to check whether a version changed
+    if not changed:
+        pre_upgrade_versions = get_current_version(m, name)
 
-        rc, stdout, stderr = m.run_command(cmd, check_rc=False)
+    cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses']
+    cmd.extend(name)
+    rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-        post_upgrade_name = get_current_name(m, name)
-
-        if pre_upgrade_name == post_upgrade_name:
-            changed = False
-        else:
+    # if we've already made a change, we don't have to check whether a version changed
+    if not changed:
+        post_upgrade_versions = get_current_version(m, name)
+        if pre_upgrade_versions != post_upgrade_versions:
             changed = True
 
-        return (rc, stdout, stderr, changed)
-
-    else:
-        # If package was not installed at all just make it present.
-        return package_present(m, name, installed_state, disable_gpg_check, disable_recommends)
+    return (rc, stdout, stderr, changed)
 
 # Function used to make sure a package is not installed.
 def package_absent(m, name, installed_state):
-    if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'remove', name]
+    packages = []
+    for package in name:
+        if installed_state[package] is True:
+            packages.append(package)
+    if len(packages) != 0:
+        cmd = ['/usr/bin/zypper', '--non-interactive', 'remove']
+        cmd.extend(packages)
         rc, stdout, stderr = m.run_command(cmd)
 
         if rc == 0:
@@ -188,7 +211,7 @@ def package_absent(m, name, installed_state):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, aliases=['pkg']),
+            name = dict(required=True, aliases=['pkg'], type='list'),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
             disable_recommends = dict(required=False, default='yes', type='bool'),
