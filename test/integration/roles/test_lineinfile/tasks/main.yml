@@ -294,3 +294,65 @@
     that:
     - "result.stat.md5 == '65f955c2a9722fd43d07103d7756ff9b'"
 
+###################################################################
+# issue 8535
+
+- name: create a new file for testing quoting issues
+  file: dest={{output_dir}}/test_quoting.txt state=touch
+  register: result
+
+- name: assert the new file was created
+  assert:
+    that:
+    - result.changed
+
+- name: use with_items to add code-like strings to the quoting txt file
+  lineinfile: >
+    dest={{output_dir}}/test_quoting.txt
+    line="{{ item }}"
+    insertbefore=BOF
+  with_items:
+    - "'foo'"
+    - "dotenv.load();"
+    - "var dotenv = require('dotenv');"
+  register: result
+
+- name: assert the quote test file was modified correctly
+  assert:
+    that:
+    - result.results|length == 3
+    - result.results[0].changed
+    - result.results[0].item == "'foo'"
+    - result.results[1].changed
+    - result.results[1].item == "dotenv.load();"
+    - result.results[2].changed
+    - result.results[2].item == "var dotenv = require('dotenv');"
+
+- name: stat the quote test file
+  stat: path={{output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert test md5 matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.md5 == '29f349baf1b9c6703beeb346fe8dc669'"
+
+- name: insert a line into the quoted file with a single quote
+  lineinfile: dest={{output_dir}}/test_quoting.txt line="import g'"
+  register: result
+
+- name: assert that the quoted file was changed
+  assert:
+    that:
+    - result.changed
+
+- name: stat the quote test file
+  stat: path={{output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert test md5 matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.md5 == 'fbe9c4ba2490f70eb1974ce31ec4a39f'"
+
+###################################################################
