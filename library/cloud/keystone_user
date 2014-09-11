@@ -8,25 +8,10 @@ DOCUMENTATION = '''
 module: keystone_user
 version_added: "1.2"
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
+extends_documentation_fragment: openstack
 description:
    - Manage users,tenants, roles from OpenStack.
 options:
-   login_user:
-     description:
-        - login username to authenticate to keystone
-     required: false
-     default: admin
-   login_password:
-     description:
-        - Password of login user
-     required: false
-     default: 'yes'
-   login_tenant_name:
-     description:
-        - The tenant login_user belongs to
-     required: false
-     default: None
-     version_added: "1.3"
    token:
      description:
         - The token to be uses in case the password is not specified
@@ -86,23 +71,6 @@ EXAMPLES = '''
 # Apply the admin role to the john user in the demo tenant
 - keystone_user: role=admin user=john tenant=demo
 '''
-
-try:
-    from keystoneclient.v2_0 import client
-except ImportError:
-    keystoneclient_found = False
-else:
-    keystoneclient_found = True
-
-
-def authenticate(endpoint, token, login_user, login_password, login_tenant_name):
-    """Return a keystone client object"""
-
-    if token:
-        return client.Client(endpoint=endpoint, token=token)
-    else:
-        return client.Client(auth_url=endpoint, username=login_user,
-                             password=login_password, tenant_name=login_tenant_name)
 
 
 def tenant_exists(keystone, tenant):
@@ -293,25 +261,17 @@ def main():
             email=dict(required=False),
             role=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
-            endpoint=dict(required=False,
-                          default="http://127.0.0.1:35357/v2.0"),
+            endpoint=dict(required=False),
             token=dict(required=False),
-            login_user=dict(required=False),
-            login_password=dict(required=False),
-            login_tenant_name=dict(required=False)
     ))
-    # keystone operations themselves take an endpoint, not a keystone auth_url
-    del(argument_spec['auth_url'])
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[['token', 'login_user'],
                             ['token', 'login_password'],
-                            ['token', 'login_tenant_name']]
+                            ['token', 'login_tenant_name'],
+                            ['endpoint', 'auth_url']],
     )
-
-    if not keystoneclient_found:
-        module.fail_json(msg="the python-keystoneclient module is required")
 
     user = module.params['user']
     password = module.params['password']
@@ -320,20 +280,19 @@ def main():
     email = module.params['email']
     role = module.params['role']
     state = module.params['state']
-    endpoint = module.params['endpoint']
-    token = module.params['token']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_tenant_name = module.params['login_tenant_name']
-
-    keystone = authenticate(endpoint, token, login_user, login_password, login_tenant_name)
+    if module.params['endpoint']:
+        module.params['auth_url'] = module.params['endpoint']
 
     check_mode = module.check_mode
 
     try:
+        keystone = openstack_cloud_from_module(module).keystone_client
+    except OpenStackCloudException as e:
+        module.fail_json(msg=e.message)
+
+    try:
         d = dispatch(keystone, user, password, tenant, tenant_description,
-                     email, role, state, endpoint, token, login_user,
-                     login_password, check_mode)
+                     email, role, state, check_mode)
     except Exception, e:
         if check_mode:
             # If we have a failure in check mode
@@ -347,8 +306,7 @@ def main():
 
 def dispatch(keystone, user=None, password=None, tenant=None,
              tenant_description=None, email=None, role=None,
-             state="present", endpoint=None, token=None, login_user=None,
-             login_password=None, check_mode=False):
+             state="present", check_mode=False):
     """ Dispatch to the appropriate method.
 
         Returns a dict that will be passed to exit_json

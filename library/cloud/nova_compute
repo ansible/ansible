@@ -34,34 +34,10 @@ DOCUMENTATION = '''
 module: nova_compute
 version_added: "1.2"
 short_description: Create/Delete VMs from OpenStack
+extends_documentation_fragment: openstack
 description:
    - Create or Remove virtual machines from Openstack.
 options:
-   login_username:
-     description:
-        - login username to authenticate to keystone
-     required: true
-     default: admin
-   login_password:
-     description:
-        - Password of login user
-     required: true
-     default: 'yes'
-   login_tenant_name:
-     description:
-        - The tenant name of the login user
-     required: true
-     default: 'yes'
-   auth_url:
-     description:
-        - The keystone url for authentication
-     required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
-   region_name:
-     description:
-        - Name of the region
-     required: false
-     default: None
    state:
      description:
         - Indicate desired state of the resource
@@ -132,12 +108,6 @@ options:
    floating_ip_pools:
      description:
         - list of floating IP pools from which to choose a floating IP
-     required: false
-     default: None
-     version_added: "1.8"
-   availability_zone:
-     description:
-        - Name of the availability zone
      required: false
      default: None
      version_added: "1.8"
@@ -388,13 +358,13 @@ def _add_floating_ip(module, nova, server):
     return server
 
 
-def _get_image_id(module, nova):
+def _get_image_id(module, cloud):
     if module.params['image_name']:
-        for image in nova.images.list():
-            if (module.params['image_name'] in image.name and (
+        for (image_id, image_name) in cloud.list_images().items():
+            if (module.params['image_name'] in image_name and (
                     not module.params['image_exclude']
-                    or module.params['image_exclude'] not in image.name)):
-                return image.id
+                    or module.params['image_exclude'] not in image_name)):
+                return image_id
         module.fail_json(msg = "Error finding image id from name(%s)" % module.params['image_name'])
     return module.params['image_id']
 
@@ -409,8 +379,8 @@ def _get_flavor_id(module, nova):
     return module.params['flavor_id']
 
 
-def _create_server(module, nova):
-    image_id = _get_image_id(module, nova)
+def _create_server(module, cloud, nova):
+    image_id = _get_image_id(module, cloud)
     flavor_id = _get_flavor_id(module, nova)
     bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
@@ -555,28 +525,21 @@ def main():
         ],
     )
 
-    nova = nova_client.Client(module.params['login_username'],
-                              module.params['login_password'],
-                              module.params['login_tenant_name'],
-                              module.params['auth_url'],
-                              region_name=module.params['region_name'],
-                              service_type='compute')
     try:
-        nova.authenticate()
-    except exceptions.Unauthorized, e:
-        module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exceptions.AuthorizationFailure, e:
-        module.fail_json(msg = "Unable to authorize user: %s" % e.message)
+        cloud = openstack_cloud_from_module(module)
+        nova = cloud.nova_client
 
-    if module.params['state'] == 'present':
-        if not module.params['image_id'] and not module.params['image_name']:
-            module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
-        else:
+        if module.params['state'] == 'present':
+            if not module.params['image_id'] and not module.params['image_name']:
+                module.fail_json( msg = "Parameter 'image_id' or `image_name` is required if state == 'present'")
+            else:
+                _get_server_state(module, nova)
+                _create_server(module, cloud, nova)
+        if module.params['state'] == 'absent':
             _get_server_state(module, nova)
-            _create_server(module, nova)
-    if module.params['state'] == 'absent':
-        _get_server_state(module, nova)
-        _delete_server(module, nova)
+            _delete_server(module, nova)
+    except OpenStackCloudException as e:
+        module.fail_json(msg=e.message)
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
