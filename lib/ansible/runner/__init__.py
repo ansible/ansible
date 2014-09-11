@@ -101,8 +101,8 @@ class HostVars(dict):
     def __getitem__(self, host):
         if host not in self.lookup:
             result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
-            result.update(self.vars_cache.get(host, {}))
-            self.lookup[host] = result
+            result.update(self.vars_cache)
+            self.lookup[host] = template.template('.', result, self.vars_cache)
         return self.lookup[host]
 
 
@@ -583,24 +583,14 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal(self, host, new_stdin):
-        ''' executes any module one or more times '''
-
-        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
-        host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
-            port = host_variables.get('ansible_ssh_port', self.remote_port)
-            if port is None:
-                port = C.DEFAULT_REMOTE_PORT
-        else:
-            # fireball, local, etc
-            port = self.remote_port
-
+    def get_combined_cache(self):
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
-        combined_cache = utils.merge_hash(combined_cache, self.vars_cache)
+        return utils.merge_hash(combined_cache, self.vars_cache)
 
-        hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
+    def get_inject_vars(self, host):
+        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        combined_cache = self.get_combined_cache()
 
         # use combined_cache and host_variables to template the module_vars
         # we update the inject variables with the data we're about to template
@@ -611,21 +601,45 @@ class Runner(object):
 
         inject = {}
 
+        # default vars are the lowest priority
         inject = utils.combine_vars(inject, self.default_vars)
+        # next come inventory variables for the host
         inject = utils.combine_vars(inject, host_variables)
+        # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
+        # then come the module variables
         inject = utils.combine_vars(inject, module_vars)
+        # followed by vars (vars, vars_files, vars/main.yml)
         inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
+        # and then special vars
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars']    = hostvars
-        inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups']      = self.inventory.groups_list()
-        inject['vars']        = self.module_vars
-        inject['defaults']    = self.default_vars
-        inject['environment'] = self.environment
+        inject['group_names']  = host_variables.get('group_names', [])
+        inject['groups']       = self.inventory.groups_list()
+        inject['vars']         = self.module_vars
+        inject['defaults']     = self.default_vars
+        inject['environment']  = self.environment
         inject['playbook_dir'] = os.path.abspath(self.basedir)
-        inject['omit']        = self.omit_token
+        inject['omit']         = self.omit_token
+
+        return inject
+
+    def _executor_internal(self, host, new_stdin):
+        ''' executes any module one or more times '''
+
+        inject = self.get_inject_vars(host)
+        hostvars = HostVars(inject, self.inventory, vault_password=self.vault_pass)
+        inject['hostvars'] = hostvars
+
+        host_connection = inject.get('ansible_connection', self.transport)
+        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
+            port = hostvars.get('ansible_ssh_port', self.remote_port)
+            if port is None:
+                port = C.DEFAULT_REMOTE_PORT
+        else:
+            # fireball, local, etc
+            port = self.remote_port
 
         # template this one is available, callbacks use this
         delegate_to = self.module_vars.get('delegate_to')
