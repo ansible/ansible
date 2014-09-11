@@ -287,10 +287,10 @@ def main():
         args.append(name)
         if stripe:
             args.append('stripe')
-            args.append(stripe)
+            args.append(str(stripe))
         if replica:
             args.append('replica')
-            args.append(replica)
+            args.append(str(replica))
         args.append('transport')
         args.append(transport)
         for host in hosts:
