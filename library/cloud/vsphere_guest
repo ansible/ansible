@@ -67,7 +67,13 @@ options:
     description:
      - Indicate desired state of the vm.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured', 'clone']
+  template:
+    description:
+    - Template, or VM in which to clone from
+    required: false
+    default: null
+    version_added: "1.8"
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -108,6 +114,7 @@ options:
 notes:
   - This module should run from a system that can access vSphere directly.
     Either by using local_action, or using delegate_to.
+  - When state == clone the cluster and resource_pool directives become required.
 author: Richard Hoop <wrhoop@gmail.com>
 requirements: [ pysphere ]
 '''
@@ -216,6 +223,16 @@ EXAMPLES = '''
     guest: newvm001
     state: absent
     force: yes
+
+# Clone a VM or Template
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    pass: mypass
+    guest: newvm001
+    state: clone
+    template: rhel6_64_template
+    resource_pool: '/Resources/Development'
 '''
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
@@ -840,6 +857,29 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
             changed=True,
             changes="Created VM %s" % guest)
 
+def create_vm_folder(module, vsphere_client, folder_name, parent_folder_name):
+    folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+    found = None
+    for f in folders:
+        get_folder_name = folders[f]
+        if get_folder_name == parent_folder_name:
+            found = True
+            vm_folder = f
+            break
+
+    if not found:
+        module.fail_json(
+            msg="Can not Create folder %s, Parent Folder %s does not exist" %
+            (folder_name, parent_folder_name))
+
+    # Create folder
+    request = VI.CreateFolderRequestMsg()
+    _this = request.new__this(vm_folder)
+    _this.set_attribute_type(vm_folder.get_attribute_type())
+    request.set_element__this(_this)
+    request.set_element_name(folder_name)
+    vsphere_client._proxy.CreateFolder(request)
+
 
 def delete_vm(vsphere_client, module, guest, vm, force):
     try:
@@ -996,6 +1036,59 @@ class DefaultVMConfig(object):
 
         return self.recursive_missing
 
+def clone_vm(vsphere_client, resource_pool, module, cluster_name, guest, vm, template, vm_folder, parent_folder):
+    changed=False
+    # Folder work. If vm_folder is set, look for folder, if match set if not create
+    if vm_folder:
+        if not parent_folder:
+            parent_folder = 'vm'
+        folder_found = None
+        folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+        for f in folders:
+            get_folder_name = folders[f]
+            if vm_folder == get_folder_name:
+                folder_found = True
+                vmfmor = f
+                break
+        if not folder_found:
+            create_vm_folder(module, vsphere_client, vm_folder, parent_folder)
+            folders = vsphere_client._get_managed_objects(MORTypes.Folder)
+            for f in folders:
+                get_folder_name = folders[f]
+                if vm_folder == get_folder_name:
+                    vmfmor = f
+                    break
+
+    # Get resource pool managed reference
+    # Requires that a cluster name be specified.
+    if resource_pool:
+        try:
+            cluster = [k for k,
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find Cluster named: %s" %
+                             cluster_name)
+
+        try:
+            rpmor = [k for k, v in vsphere_client.get_resource_pools(
+                from_mor=cluster).items()
+                if v == resource_pool][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find Resource Pool named: %s" %
+                             resource_pool)
+
+    else:
+        rpmor = crprops.resourcePool._o
+
+    try:
+        vm.clone(guest, folder=vm_folder, resourcepool=rpmor)
+        module.exit_json(changed=True)
+    except Exception, e:
+        module.fail_json(
+            msg="Clone VM failed with exception %s" %e)
+
 
 def config_check(name, passed, default, module):
     """
@@ -1062,13 +1155,17 @@ def main():
                     'present',
                     'absent',
                     'restarted',
-                    'reconfigured'
+                    'reconfigured',
+                    'clone'
                 ],
                 default='present'),
             vmware_guest_facts=dict(required=False, choices=BOOLEANS),
             guest=dict(required=True, type='str'),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
+            vm_folder=dict(required=False, type='str', default=None),
+            parent_folder=dict(required=False, type='str', default=None),
+            template=dict(required=False, type='str', default=None),
             vm_hardware=dict(required=False, type='dict', default={}),
             vm_extra_config=dict(required=False, type='dict', default={}),
             vm_hw_version=dict(required=False, default=None, type='str'),
@@ -1100,6 +1197,9 @@ def main():
     vcenter_hostname = module.params['vcenter_hostname']
     username = module.params['username']
     password = module.params['password']
+    vm_folder = module.params['vm_folder']
+    parent_folder = module.params['parent_folder']
+    template = module.params['template']
     vmware_guest_facts = module.params['vmware_guest_facts']
     state = module.params['state']
     guest = module.params['guest']
@@ -1112,6 +1212,7 @@ def main():
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
+    
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1174,9 +1275,33 @@ def main():
                 guest=guest,
                 vm=vm,
                 force=force)
+        elif state == 'clone':
+            module.fail_json(
+                msg="VM %s already exists, can not clone"
+                    % guest)
 
     # VM doesn't exist
     else:
+
+        if state == 'clone':
+            # set VM to template for cloning
+            try:
+                vm = viserver.get_vm_by_name(template)
+            except:
+                module.fail_json(
+                    msg="No Such VM %s. Template must exist to clone"
+                        % template)
+            # If VM doesn't exist, and template does, run clone_vm
+            clone_vm(
+                vsphere_client=viserver,
+                module=module,
+                cluster_name=cluster,
+                guest=guest,
+                vm=vm,
+                template=template,
+                vm_folder=vm_folder,
+                resource_pool=resource_pool,
+                parent_folder=parent_folder)
 
         # Fail for fact gather task
         if vmware_guest_facts:
