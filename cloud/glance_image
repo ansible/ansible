@@ -106,10 +106,11 @@ options:
      default: None
    endpoint_type:
      description:
-        - endpoint URL type
+        - The name of the glance service's endpoint URL type
      choices: [publicURL, internalURL]
      required: false
      default: publicURL
+     version_added: "1.7"
 requirements: ["glanceclient", "keystoneclient"]
 
 '''
