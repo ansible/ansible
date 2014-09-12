@@ -6,6 +6,7 @@ uno: 1
 dos: 2
 tres: 3
 etest: 'from group_vars'
+extra_var: 'should be overridden'
 inventory_beats_default: 'narf'
 # variables used for hash merging behavior testing
 test_hash:
