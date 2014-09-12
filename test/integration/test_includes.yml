@@ -1,1 +1,2 @@
-- include: test_includes2.yml parameter1=asdf parameter2=jkl
+# test parameter passing and variable overriding with extras
+- include: test_includes2.yml parameter1=asdf parameter2=jkl parameter3='{{extra_var}}'
