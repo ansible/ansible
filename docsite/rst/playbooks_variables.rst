@@ -349,6 +349,8 @@ To match strings against a regex, use the "match" or "search" filter::
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
+.. versionadded:: 1.6
+
     # convert "ansible" to "able"    
     {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
 
