@@ -23,112 +23,200 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.package) {
+if ($params.package)
+{
     $package = $params.package
 }
-Else {
+else
+{
     Fail-Json $result "missing required argument: package"
 }
 
-If ($params.force) {
+if ($params.force)
+{
     $force = $params.force | ConvertTo-Bool
 }
-Else
+else
 {
     $force = $false
 }
 
-
-If ($params.version) {
+if ($params.version)
+{
     $version = $params.version
 }
-Else
+else
 {
     $version = $null
 }
 
-If ($params.showlog) {
+if ($params.showlog)
+{
     $showlog = $params.showlog | ConvertTo-Bool
 }
-Else
+else
 {
     $showlog = $null
 }
 
+if ($params.state)
+{
+    $state = $params.state.ToString().ToLower()
+    if (($state -ne "present") -and ($state -ne "absent"))
+    {
+        Fail-Json $result "state is $state; must be present or absent"
+    }
+}
+else
+{
+    $state = "present"
+}
 
 $ChocoAlreadyInstalled = get-command choco -ErrorAction 0
 if ($ChocoAlreadyInstalled -eq $null)
 {
     #We need to install chocolatey
-    iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
-    $result.changed -eq $true
+    $install_choco_result = iex ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
+    $result.changed = $true
     $executable = "C:\ProgramData\chocolatey\bin\choco.exe"
 }
-Else
+else
 {
     $executable = "choco.exe"
 }
 
-If ($params.source) {
+if ($params.source)
+{
     $source = $params.source.ToString().ToLower()
-    If (($source -ne 'chocolatey') -and ($source -ne 'webpi') -and ($source -ne 'windowsfeatures')) {
-        Fail-Json $result "source is '$source'; must be one of 'default', 'webpi' or 'windowsfeatures'."
-    }
-    If ($source -eq 'chocolatey') {
-        $source = "https://chocolatey.org/api/v2/"
+    if (($source -ne "chocolatey") -and ($source -ne "webpi") -and ($source -ne "windowsfeatures"))
+    {
+        Fail-Json $result "source is $source - must be one of chocolatey, webpi or windowsfeatures."
     }
 }
-Elseif (!$params.source)
+elseif (!$params.source)
 {
-    $source = "https://chocolatey.org/api/v2/"
+    $source = "chocolatey"
 }
 
-if ($params.source -eq "webpi")
+if ($source -eq "webpi")
 {
-    # check whether webpi source is available; if it isn't, install it
-    $local = & executable list webpicmd -localonly
-    $ll = ($local.count) - 1
-    if ($local[0] -like "No packages found") {
-      & $executable install webpicmd
+    # check whether 'webpi' installation source is available; if it isn't, install it
+    $webpi_check_cmd = "$executable list webpicmd -localonly"
+    $webpi_check_result = invoke-expression $webpi_check_cmd
+    Set-Attr $result "chocolatey_bootstrap_webpi_check_cmd" $webpi_check_cmd
+    Set-Attr $result "chocolatey_bootstrap_webpi_check_log" $webpi_check_result
+    if (
+        (
+            ($webpi_check_result.GetType().Name -eq "String") -and
+            ($webpi_check_result -match "No packages found")
+        ) -or
+        ($webpi_check_result -contains "No packages found.")
+    )
+    {
+        #lessmsi is a webpicmd dependency, but dependency resolution fails unless it's installed separately
+        $lessmsi_install_cmd = "$executable install lessmsi"
+        $lessmsi_install_result = invoke-expression $lessmsi_install_cmd
+        Set-Attr $result "chocolatey_bootstrap_lessmsi_install_cmd" $lessmsi_install_cmd
+        Set-Attr $result "chocolatey_bootstrap_lessmsi_install_log" $lessmsi_install_result
+
+        $webpi_install_cmd = "$executable install webpicmd"
+        $webpi_install_result = invoke-expression $webpi_install_cmd
+        Set-Attr $result "chocolatey_bootstrap_webpi_install_cmd" $webpi_install_cmd
+        Set-Attr $result "chocolatey_bootstrap_webpi_install_log" $webpi_install_result
+
+        if (($webpi_install_result | select-string "already installed").length -gt 0)
+        {
+            #no change
+        }
+        elseif (($webpi_install_result | select-string "webpicmd has finished successfully").length -gt 0)
+        {
+            $result.changed = $true
+        }
+        else
+        {
+            Fail-Json $result "WebPI install error: $webpi_install_result"
+        }
+    }
+}
+$expression = $executable
+if ($state -eq "present")
+{
+    $expression += " install $package"
+}
+elseif ($state -eq "absent")
+{
+    $expression += " uninstall $package"
+}
+if ($force)
+{
+    if ($state -eq "present")
+    {
+        $expression += " -force"
+    }
+}
+if ($version)
+{
+    $expression += " -version $version"
+}
+if ($source -eq "chocolatey")
+{
+    $expression += " -source https://chocolatey.org/api/v2/"
+}
+elseif (($source -eq "windowsfeatures") -or ($source -eq "webpi"))
+{
+    $expression += " -source $source"
+}
+
+Set-Attr $result "chocolatey command" $expression
+$op_result = invoke-expression $expression
+if ($state -eq "present")
+{
+    if (
+        (($op_result | select-string "already installed").length -gt 0) -or
+        # webpi has different text output, and that doesn't include the package name but instead the human-friendly name
+        (($op_result | select-string "No products to be installed").length -gt 0)
+    )
+    {
+        #no change
+    }
+    elseif (
+        (($op_result | select-string "has finished successfully").length -gt 0) -or
+        # webpi has different text output, and that doesn't include the package name but instead the human-friendly name
+        (($op_result | select-string "Install of Products: SUCCESS").length -gt 0)
+    )
+    {
+        $result.changed = $true
+    }
+    else
+    {
+        Fail-Json $result "Install error: $op_result"
+    }
+}
+elseif ($state -eq "absent")
+{
+    $op_result = invoke-expression "$executable uninstall $package"
+    # HACK: Misleading - 'Uninstalling from folder' appears in output even when package is not installed, hence order of checks this way
+    if (
+        (($op_result | select-string "not installed").length -gt 0) -or
+        (($op_result | select-string "Cannot find path").length -gt 0)
+    )
+    {
+        #no change
+    }
+    elseif (($op_result | select-string "Uninstalling from folder").length -gt 0)
+    {
+        $result.changed = $true
+    }
+    else
+    {
+        Fail-Json $result "Uninstall error: $op_result"
     }
 }
 
-####### Install
-if (($force) -and ($version))
-{
-    $installresult = & $executable install $package -version $version -force
-}
-Elseif (($force) -and (!$version))
-{
-    $installresult = & $executable install $package -force
-}
-Elseif (!($force) -and ($version))
-{
-    $installresult = & $executable install $package -version $version
-}
-Else
-{
-    $installresult = & $executable install $package
-}
-
-$lastline = ($installresult.count) - 1
-if ($installresult[1] -match "already installed")
-{
-    #no change
-}
-elseif ($installresult[$lastline] -like "finished installing*")
-{
-    $result.changed = $true
-}
-Else
-{
-    Fail-Json $result "something bad happened: $installresult"
-}
-
-Set-Attr $result "chocolatey_success" "true"
 if ($showlog)
 {
-    Set-Attr $result "chocolatey_log" $installresult
+    Set-Attr $result "chocolatey_log" $op_result
 }
+Set-Attr $result "chocolatey_success" "true"
 
 Exit-Json $result;

@@ -35,6 +35,15 @@ options:
     required: true
     default: null
     aliases: []
+  state:
+    description:
+      - State of the package on the system
+    required: false
+    choices:
+      - present
+      - absent
+    default: present
+    aliases: []
   force:
     description:
       - Forces install of the package (even if it already exists). Using Force will cause ansible to always report "changed: true" on its run
@@ -47,6 +56,7 @@ options:
   version:
     description:
       - Specific version of the package to be installed
+      - Ignored when state == 'absent'
     required: false
     default: null
     aliases: []
@@ -69,8 +79,12 @@ options:
       - windowsfeatures
     default: chocolatey
     aliases: []
-author: Trond Hindenes
+author: Peter Mounce, Trond Hindenes
 '''
+
+# TODO:
+# * Better parsing when a package has dependencies - currently fails
+# * Time each item that is run
 
 EXAMPLES = '''
   # Install git
@@ -81,4 +95,16 @@ EXAMPLES = '''
   win_chocolatey:
     package: notepadplusplus.install
     version: 6.6
+
+  # Uninstall git
+  win_chocolatey:
+    package: git
+    state: absent
+
+  # Install Application Request Routing v3 from webpi source
+  # Logically, this requires that you install IIS first (use win_feature module)
+  # To find a list of packages available via webpi source, `choco list -source webpi`
+  win_chocolatey:
+    package: ARRv3_0
+    source: webpi
 '''
