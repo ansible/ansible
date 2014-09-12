@@ -65,9 +65,9 @@ options:
     default: null
   state:
     description:
-     - Indicate desired state of the vm.
+     - Indicate desired state of the vm. Vmware tools is required for rebooted and shutdown, as they communicated directly with the guest OS.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_on', 'absent', 'powered_off', 'restarted', 'reconfigured', 'rebooted', 'shutdown']
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -879,6 +879,28 @@ def delete_vm(vsphere_client, module, guest, vm, force):
             msg='Failed to delete vm %s : %s' % (guest, e))
 
 
+def tools_power_state(vm, state, module):
+    tools_status = vm.get_tools_status()
+    power_status = vm.get_status()
+    if tools_status == 'RUNNING':
+        tools = True
+    if tools_status == 'NOT RUNNING':
+        tools = False
+    if not tools and power_status == 'POWERED ON':
+        module.fail_json(msg="Tools not installed/not running")
+    if state == 'shutdown' and power_status == 'POWERED OFF':
+        module.exit_json(changed=False)
+    if state == 'rebooted' and power_status == 'POWERED OFF':
+        vm.power_on()
+        module.exit_json(changed=True)
+    if state == 'rebooted' and tools:
+        vm.reboot_guest()
+        module.exit_json(changed=True)
+    if state == 'shutdown' and tools:
+        vm.shutdown_guest()
+        module.exit_json(changed=True)
+
+
 def power_state(vm, state, force):
     """
     Correctly set the power status for a VM determined by the current and
@@ -1062,6 +1084,8 @@ def main():
                     'present',
                     'absent',
                     'restarted',
+                    'rebooted',
+                    'shutdown',
                     'reconfigured'
                 ],
                 default='present'),
@@ -1146,6 +1170,8 @@ def main():
             else:
                 module.exit_json(changed=state_result)
 
+        elif state in ['rebooted', 'shutdown']:
+            tools_power_state(vm, state, module)
         # Just check if there
         elif state == 'present':
             module.exit_json(changed=False)
