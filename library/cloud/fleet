@@ -78,8 +78,7 @@ options:
     default: fleetctl
   debug:
     description:
-      - Print out more debug information to stderr. 
-        Equivalent to --verbosity=1.
+      - Print out more debug information to stderr.
     required: false
     default: false
     aliases: []
@@ -89,12 +88,6 @@ options:
         Alternatively defined by the FLEETCTL_ENDPOINT environment variable.
     required: true
     default: http://127.0.0.1:4001
-    aliases: []
-  verbosity:
-    description:
-      - Log at a specified level of verbosity to stderr.
-    required: false
-    default: 0
     aliases: []
   known_hosts_file:
     description:
@@ -342,9 +335,6 @@ def main():
                                   default='~/.fleetctl/known_hosts'),
             tunnel=dict(required=False,
                         default=''),
-            verbosity=dict(required=False,
-                           type='int',
-                           default=0),
         ),
         supports_check_mode=False,
         check_invalid_arguments=False
@@ -359,7 +349,6 @@ def main():
     endpoint         = module.params.get('endpoint')
     known_hosts_file = module.params.get('known_hosts_file')
     tunnel           = module.params.get('tunnel')
-    verbosity        = module.params.get('verbosity')
 
     args = []
 
@@ -376,7 +365,6 @@ def main():
     argh('endpoint', endpoint)
     argh('known-hosts-file', known_hosts_file)
     argh('tunnel', tunnel)
-    argh('verbosity', verbosity)
     args.append(command)
 
     if extra_args:
