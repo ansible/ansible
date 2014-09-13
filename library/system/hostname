@@ -372,7 +372,7 @@ class CentOSHostname(Hostname):
 class CentOSLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos linux'
-    strategy_class = FedoraStrategy
+    strategy_class = RedHatStrategy
 
 class ScientificHostname(Hostname):
     platform = 'Linux'
