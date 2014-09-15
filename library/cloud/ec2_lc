@@ -259,7 +259,6 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             spot_price=dict(type='float'),
             ramdisk_id=dict(type='str'),
-            instance_profile_name=dict(type='str'),
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
