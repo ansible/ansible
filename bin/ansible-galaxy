@@ -810,8 +810,6 @@ def execute_install(args, options, parser):
                     else:
                         print '- dependency %s is already installed, skipping.' % dep["name"]
         if not tmp_file or not installed:
-            if tmp_file and installed:
-                os.unlink(tmp_file)
             print "- %s was NOT installed successfully." % role.get("name")
             exit_without_ignore(options)
     sys.exit(0)
