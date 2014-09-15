@@ -269,53 +269,54 @@ class Facts(object):
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
             for (path, name) in Facts.OSDIST_DICT.items():
-                if os.path.exists(path) and os.path.getsize(path) > 0:
-                    if self.facts['distribution'] == 'Fedora':
-                        pass
-                    elif name == 'RedHat':
-                        data = get_file_content(path)
-                        if 'Red Hat' in data:
-                            self.facts['distribution'] = name
-                        else:
+                if os.path.exists(path):
+                    if os.path.getsize(path) > 0:
+                        if self.facts['distribution'] == 'Fedora':
+                            pass
+                        elif name == 'RedHat':
+                            data = get_file_content(path)
+                            if 'Red Hat' in data:
+                                self.facts['distribution'] = name
+                            else:
+                                self.facts['distribution'] = data.split()[0]
+                        elif name == 'OtherLinux':
+                            data = get_file_content(path)
+                            if 'Amazon' in data:
+                                self.facts['distribution'] = 'Amazon'
+                                self.facts['distribution_version'] = data.split()[-1]
+                        elif name == 'OpenWrt':
+                            data = get_file_content(path)
+                            if 'OpenWrt' in data:
+                                self.facts['distribution'] = name
+                            version = re.search('DISTRIB_RELEASE="(.*)"', data)
+                            if version:
+                                self.facts['distribution_version'] = version.groups()[0]
+                            release = re.search('DISTRIB_CODENAME="(.*)"', data)
+                            if release:
+                                self.facts['distribution_release'] = release.groups()[0]
+                        elif name == 'Alpine':
+                            data = get_file_content(path)
+                            self.facts['distribution'] = 'Alpine'
+                            self.facts['distribution_version'] = data
+                        elif name == 'Solaris':
+                            data = get_file_content(path).split('\n')[0]
+                            ora_prefix = ''
+                            if 'Oracle Solaris' in data:
+                                data = data.replace('Oracle ','')
+                                ora_prefix = 'Oracle '
                             self.facts['distribution'] = data.split()[0]
-                    elif name == 'OtherLinux':
-                        data = get_file_content(path)
-                        if 'Amazon' in data:
-                            self.facts['distribution'] = 'Amazon'
-                            self.facts['distribution_version'] = data.split()[-1]
-                    elif name == 'OpenWrt':
-                        data = get_file_content(path)
-                        if 'OpenWrt' in data:
-                            self.facts['distribution'] = name
-                        version = re.search('DISTRIB_RELEASE="(.*)"', data)
-                        if version:
-                            self.facts['distribution_version'] = version.groups()[0]
-                        release = re.search('DISTRIB_CODENAME="(.*)"', data)
-                        if release:
-                            self.facts['distribution_release'] = release.groups()[0]
-                    elif name == 'Alpine':
-                        data = get_file_content(path)
-                        self.facts['distribution'] = 'Alpine'
-                        self.facts['distribution_version'] = data
-                    elif name == 'Solaris':
-                        data = get_file_content(path).split('\n')[0]
-                        ora_prefix = ''
-                        if 'Oracle Solaris' in data:
-                            data = data.replace('Oracle ','')
-                            ora_prefix = 'Oracle '
-                        self.facts['distribution'] = data.split()[0]
-                        self.facts['distribution_version'] = data.split()[1]
-                        self.facts['distribution_release'] = ora_prefix + data
-                    elif name == 'SuSE':
-                        data = get_file_content(path).splitlines()
-                        for line in data:
-                            if '=' in line:
-                            	self.facts['distribution_release'] = line.split('=')[1].strip()
-                    elif name == 'Debian':
-                        data = get_file_content(path).split('\n')[0]
-                        release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
-                        if release:
-                            self.facts['distribution_release'] = release.groups()[0]
+                            self.facts['distribution_version'] = data.split()[1]
+                            self.facts['distribution_release'] = ora_prefix + data
+                        elif name == 'SuSE':
+                            data = get_file_content(path).splitlines()
+                            for line in data:
+                                if '=' in line:
+                                    self.facts['distribution_release'] = line.split('=')[1].strip()
+                        elif name == 'Debian':
+                            data = get_file_content(path).split('\n')[0]
+                            release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
+                            if release:
+                                self.facts['distribution_release'] = release.groups()[0]
                     else:
                         self.facts['distribution'] = name
 
