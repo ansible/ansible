@@ -294,12 +294,20 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         ssh_output = self.module._heuristic_log_sanitize(ssh_data)
 
         # Basic functionality: Successfully hid the password
-        self.assertNotIn('pas:word', url_output)
-        self.assertNotIn('pas:word', ssh_output)
+        if 'assertNotIn' in dir(self):
+            self.assertNotIn('pas:word', url_output)
+            self.assertNotIn('pas:word', ssh_output)
+        else:
+            self.assertFalse('pas:word' in url_output)
+            self.assertFalse('pas:word' in ssh_output)
 
         # Slightly more advanced, we hid all of the password despite the ":"
-        self.assertNotIn('pas', url_output)
-        self.assertNotIn('pas', ssh_output)
+        if 'assertNotIn' in dir(self):
+            self.assertNotIn('pas', url_output)
+            self.assertNotIn('pas', ssh_output)
+        else:
+            self.assertFalse('pas' in url_output)
+            self.assertFalse('pas' in ssh_output)
 
         # In this implementation we replace the password with 8 "*" which is
         # also the length of our password.  The url fields should be able to
@@ -313,7 +321,10 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         # the data, though:
         self.assertTrue(ssh_output.startswith("{'"))
         self.assertTrue(ssh_output.endswith("'}}}}"))
-        self.assertIn(":********@foo.com/data',", ssh_output)
+        if 'assertIn' in dir(self):
+            self.assertIn(":********@foo.com/data',", ssh_output)
+        else:
+            self.assertTrue(":********@foo.com/data'," in ssh_output)
 
         # The overzealous-ness here may lead to us changing the algorithm in
         # the future.  We could make it consume less of the data (with the
