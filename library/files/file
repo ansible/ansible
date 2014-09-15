@@ -331,8 +331,16 @@ def main():
                     module.fail_json(path=path, msg='Error while touching existing target: %s' % str(e))
             else:
                 module.fail_json(msg='Cannot touch other than files and directories')
-
-            module.set_fs_attributes_if_different(file_args, True)
+            try:
+                module.set_fs_attributes_if_different(file_args, True)
+            except SystemExit as e:
+                if e.code:
+                    # We take this to mean that fail_json() was called from
+                    # somewhere in basic.py
+                    if prev_state == 'absent':
+                        # If we just created the file we can safely remove it
+                        os.remove(path)
+                raise e
 
         module.exit_json(dest=path, changed=True)
 
