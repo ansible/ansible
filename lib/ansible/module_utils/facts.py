@@ -1232,7 +1232,7 @@ class AIX(Hardware):
 
 class HPUX(Hardware):
     """
-    HP-UX-specifig subclass of Hardware. Defines memory and CPU facts:
+    HP-UX-specific subclass of Hardware. Defines memory and CPU facts:
     - memfree_mb
     - memtotal_mb
     - swapfree_mb
@@ -1799,7 +1799,7 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['options'] = self.get_options(words[0])
 
     def parse_nd6_line(self, words, current_if, ips):
-        # FreBSD has options like this...
+        # FreeBSD has options like this...
         current_if['options'] = self.get_options(words[1])
 
     def parse_ether_line(self, words, current_if, ips):
