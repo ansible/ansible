@@ -51,6 +51,8 @@ The top level of the directory would contain files and directories like so::
                 foo.sh        #  <-- script files for use with the script resource
             vars/             #
                 main.yml      #  <-- variables associated with this role
+            defaults/         #
+                main.yml      #  <-- default lower priority variables for this role
             meta/             #
                 main.yml      #  <-- role dependencies
 
