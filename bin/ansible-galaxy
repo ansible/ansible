@@ -787,7 +787,8 @@ def execute_install(args, options, parser):
         if tmp_file:
             installed = install_role(role.get("name"), role.get("version"), tmp_file, options)
             # we're done with the temp file, clean it up
-            os.unlink(tmp_file)
+            if tmp_file != role_src:
+                os.unlink(tmp_file)
             # install dependencies, if we want them
             if not no_deps and installed:
                 if not role_data:
