@@ -507,12 +507,12 @@ class DockerManager:
 
     def get_split_image_tag(self, image):
         # If image contains a host or org name, omit that from our check
-        resource = image.rsplit('/', 1)[-1]
+        registry, resource = image.rsplit('/', 1)
 
         # now we can determine if image has a tag
         if resource.find(':') > 0:
-            # Use image here so that host and org name are included
-            return image.split(':', 1)
+            resource, tag = resource.split(':', 1)
+            return '/'.join((registry, resource)), tag
         else:
             tag = "latest"
             return image, tag
