@@ -172,6 +172,7 @@ Example project structure::
          tasks/
          handlers/
          vars/
+         defaults/
          meta/
        webservers/
          files/
@@ -179,6 +180,7 @@ Example project structure::
          tasks/
          handlers/
          vars/
+         defaults/
          meta/
 
 In a playbook, it would look like this::
