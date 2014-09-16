@@ -548,6 +548,20 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+
+.. _vault_password_file:
+
+vault_password_file
+===================
+
+.. versionadded:: 1.7
+
+Configures the path to the Vault password file as an alternative to specifying ``--vault-password-file`` on the command line::
+
+   vault_password_file = /path/to/vault_password_file
+
+As of 1.7 this file can also be a script. If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output. If your script needs to prompt for data, prompts can be sent to standard error.
+
 .. _paramiko_settings:
 
 Paramiko Specific Settings
