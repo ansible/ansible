@@ -507,7 +507,10 @@ class DockerManager:
 
     def get_split_image_tag(self, image):
         # If image contains a host or org name, omit that from our check
-        registry, resource = image.rsplit('/', 1)
+        if image.find('/') > 0:
+            registry, resource = image.rsplit('/', 1)
+        else:
+            registry, resource = '', image
 
         # now we can determine if image has a tag
         if resource.find(':') > 0:
