@@ -42,7 +42,7 @@ class ActionModule(object):
         args.update(kv)
 
         if not 'msg' in args and not 'var' in args:
-            args['msg'] = 'Hello world!'
+            args['msg'] = 'No var or msg supplied to debug'
 
         result = {}
         if 'msg' in args:
