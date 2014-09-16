@@ -587,10 +587,16 @@ class LinuxService(Service):
         if self.enable_cmd is None:
             self.module.fail_json(msg='cannot detect command to enable service %s, typo or init system potentially unknown' % self.name)
 
+        self.changed = True
+        action = None
+
         # FIXME: we use chkconfig or systemctl
         # to decide whether to run the command here but need something
         # similar for upstart
 
+        #
+        # Upstart's initctl
+        #
         if self.enable_cmd.endswith("initctl"):
             def write_to_override_file(file_name, file_contents, ):
                 override_file = open(file_name, 'w')
@@ -611,23 +617,48 @@ class LinuxService(Service):
             if manreg.search(open(conf_file_name).read()):
                 self.module.fail_json(msg="manual stanza not supported in a .conf file")
 
+            self.changed = False
             if os.path.exists(override_file_name):
                 override_file_contents = open(override_file_name).read()
                 # Remove manual stanza if present and service enabled
                 if self.enable and manreg.search(override_file_contents):
-                    write_to_override_file(override_file_name, manreg.sub('', override_file_contents))
+                    self.changed = True
+                    override_state = manreg.sub('', override_file_contents)
                 # Add manual stanza if not present and service disabled
                 elif not (self.enable) and not (manreg.search(override_file_contents)):
-                    write_to_override_file(override_file_name, override_file_contents + '\n' + config_line)
+                    self.changed = True
+                    override_state = '\n'.join((override_file_contents, config_line))
+                # service already in desired state
                 else:
-                    return
+                    pass
             # Add file with manual stanza if service disabled
             elif not (self.enable):
-                write_to_override_file(override_file_name, config_line)
+                self.changed = True
+                override_state = config_line
             else:
-                return
+                # service already in desired state
+                pass
 
+            if self.module.check_mode:
+                self.module.exit_json(changed=self.changed)
+
+            # The initctl method of enabling and disabling services is much
+            # different than for the other service methods.  So actually
+            # committing the change is done in this conditional and then we
+            # skip the boilerplate at the bottom of the method
+            if self.changed:
+                write_to_override_file(override_file_name, override_state)
+            return
+
+        #
+        # SysV's chkconfig
+        #
         if self.enable_cmd.endswith("chkconfig"):
+            if self.enable:
+                action = 'on'
+            else:
+                action = 'off'
+
             (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
             if 'chkconfig --add %s' % self.name in err:
                 self.execute_command("%s --add %s" % (self.enable_cmd, self.name))
@@ -635,22 +666,42 @@ class LinuxService(Service):
             if not self.name in out:
                 self.module.fail_json(msg="service %s does not support chkconfig" % self.name)
             state = out.split()[-1]
-            if self.enable and ( "3:on" in out and "5:on" in out ):
-                return
-            elif not self.enable and ( "3:off" in out and "5:off" in out ):
+
+            # Check if we're already in the correct state
+            if "3:%s" % action in out and "5:%s" % action in out:
                 return
 
+        #
+        # Systemd's systemctl
+        #
         if self.enable_cmd.endswith("systemctl"):
+            if self.enable:
+                action = 'enable'
+            else:
+                action = 'disable'
+
+            # Check if we're already in the correct state
             d = self.get_systemd_status_dict()
             if "UnitFileState" in d:
                 if self.enable and d["UnitFileState"] == "enabled":
-                    return
+                    self.changed = False
                 elif not self.enable and d["UnitFileState"] == "disabled":
-                    return
+                    self.changed = False
             elif not self.enable:
+                self.changed = False
+
+            if not self.changed:
                 return
 
+        #
+        # OpenRC's rc-update
+        #
         if self.enable_cmd.endswith("rc-update"):
+            if self.enable:
+                action = 'add'
+            else:
+                action = 'delete'
+
             (rc, out, err) = self.execute_command("%s show" % self.enable_cmd)
             for line in out.splitlines():
                 service_name, runlevels = line.split('|')
@@ -660,21 +711,32 @@ class LinuxService(Service):
                 runlevels = re.split(r'\s+', runlevels)
                 # service already enabled for the runlevel
                 if self.enable and self.runlevel in runlevels:
-                    return
+                    self.changed = False
                 # service already disabled for the runlevel
                 elif not self.enable and self.runlevel not in runlevels:
-                    return
+                    self.changed = False
                 break
             else:
                 # service already disabled altogether
                 if not self.enable:
-                    return
+                    self.changed = False
+
+            if not self.changed:
+                return
 
         if self.enable_cmd.endswith("update-rc.d"):
             if self.enable:
                 action = 'enable'
             else:
                 action = 'disable'
+
+            if self.enable:
+                # make sure the init.d symlinks are created
+                # otherwise enable might not work
+                (rc, out, err) = self.execute_command("%s %s defaults" \
+                                                      % (self.enable_cmd, self.name))
+                if rc != 0:
+                    return (rc, out, err)
 
             (rc, out, err) = self.execute_command("%s -n %s %s" \
                                                   % (self.enable_cmd, self.name, action))
@@ -696,51 +758,26 @@ class LinuxService(Service):
                     self.changed = True
                     break
 
-            if self.module.check_mode:
-                self.module.exit_json(changed=self.changed)
-
             if not self.changed:
                 return
 
-            if self.enable:
-                # make sure the init.d symlinks are created
-                # otherwise enable might not work
-                (rc, out, err) = self.execute_command("%s %s defaults" \
-                                                      % (self.enable_cmd, self.name))
-                if rc != 0:
-                    return (rc, out, err)
-
-                return self.execute_command("%s %s enable" % (self.enable_cmd, self.name))
-            else:
-                return self.execute_command("%s %s disable" % (self.enable_cmd,
-                                                               self.name))
-
-        # we change argument depending on real binary used:
-        # - update-rc.d and systemctl wants enable/disable
-        # - chkconfig wants on/off
-        # - rc-update wants add/delete
-        # also, rc-update and systemctl needs the argument order reversed
-        if self.enable:
-            on_off = "on"
-            enable_disable = "enable"
-            add_delete = "add"
-        else:
-            on_off = "off"
-            enable_disable = "disable"
-            add_delete = "delete"
-
-        if self.enable_cmd.endswith("rc-update"):
-            args = (self.enable_cmd, add_delete, self.name + " " + self.runlevel)
-        elif self.enable_cmd.endswith("systemctl"):
-            args = (self.enable_cmd, enable_disable, self.__systemd_unit)
-        else:
-            args = (self.enable_cmd, self.name, on_off)
-
+        # If we've gotten to the end, the service needs to be updated
         self.changed = True
 
-        if self.module.check_mode and self.changed:
-            self.module.exit_json(changed=True)
+        # we change argument order depending on real binary used:
+        # rc-update and systemctl need the argument order reversed
 
+        if self.enable_cmd.endswith("rc-update"):
+            args = (self.enable_cmd, action, self.name + " " + self.runlevel)
+        elif self.enable_cmd.endswith("systemctl"):
+            args = (self.enable_cmd, action, self.__systemd_unit)
+        else:
+            args = (self.enable_cmd, self.name, action)
+
+        if self.module.check_mode:
+            self.module.exit_json(changed=self.changed)
+
+        self.module.fail_json(msg=self.execute_command("%s %s %s" % args))
         return self.execute_command("%s %s %s" % args)
 
 
