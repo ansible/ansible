@@ -237,6 +237,15 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _force_color:
+
+force_color
+===========
+
+This options forces color mode even when running without a TTY::
+
+    force_color = 1
+
 .. _forks:
 
 forks
