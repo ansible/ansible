@@ -405,3 +405,29 @@
     that:
     - result.mode == '0444'
 
+# test the file module using follow=yes, so that the target of a
+# symlink is modified, rather than the link itself
+
+- name: create a test file
+  copy: dest={{output_dir}}/test_follow content="this is a test file\n" mode=0666
+
+- name: create a symlink to the test file
+  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link
+
+- name: modify the permissions on the link using follow=yes
+  file: path={{output_dir}}/test_follow_link mode=0644 follow=yes
+  register: result
+
+- name: assert that the chmod worked
+  assert:
+    that:
+    - result.changed
+
+- name: stat the link target
+  stat: path={{output_dir}}/test_follow
+  register: result
+
+- name: assert that the link target was modified correctly
+  assert:
+    that:
+    - result.stat.mode == '0644'

@@ -160,6 +160,7 @@ def main():
     force  = module.params['force']
     original_basename = module.params.get('original_basename',None)
     validate = module.params.get('validate',None)
+    follow = module.params['follow']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -187,6 +188,8 @@ def main():
             adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
 
     if os.path.exists(dest):
+        if os.path.islink(dest) and follow:
+            dest = os.path.realpath(dest)
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if (os.path.isdir(dest)):

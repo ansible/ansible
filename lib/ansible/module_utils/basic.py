@@ -151,6 +151,7 @@ FILE_COMMON_ARGUMENTS=dict(
     serole = dict(),
     selevel = dict(),
     setype = dict(),
+    follow = dict(type='bool', default=False),
     # not taken by the file module, but other modules call file so it must ignore them.
     content = dict(no_log=True),
     backup = dict(),
@@ -294,6 +295,11 @@ class AnsibleModule(object):
             return {}
         else:
             path = os.path.expanduser(path)
+
+        # if the path is a symlink, and we're following links, get
+        # the target of the link instead for testing
+        if params.get('follow', False) and os.path.islink(path):
+            path = os.path.realpath(path)
 
         mode   = params.get('mode', None)
         owner  = params.get('owner', None)

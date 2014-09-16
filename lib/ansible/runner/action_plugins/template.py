@@ -33,9 +33,6 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for template operations '''
 
-        # note: since this module just calls the copy module, the --check mode support
-        # can be implemented entirely over there
-
         if not self.runner.is_playbook:
             raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
 
@@ -121,6 +118,7 @@ class ActionModule(object):
                src=xfered,
                dest=dest,
                original_basename=os.path.basename(source),
+               follow=True,
             )
             module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
@@ -132,12 +130,18 @@ class ActionModule(object):
                     res.diff = dict(before=dest_contents, after=resultant)
                 return res
         else:
-            # if we're running in check mode, we still want the file module
-            # to execute, since we can't know if anything would be changed here,
-            # so we inject the check mode param into the module args and rely on
-            # the file module to report its changed status
+            # when running the file module based on the template data, we do
+            # not want the source filename (the name of the template) to be used,
+            # since this would mess up links, so we clear the src param and tell
+            # the module to follow links
+            new_module_args = dict(
+                src=None,
+                follow=True,
+            )
+            # be sure to inject the check mode param into the module args and
+            # rely on the file module to report its changed status
             if self.runner.noop_on_check(inject):
-                new_module_args = dict(CHECKMODE=True)
-                module_args = utils.merge_module_args(module_args, new_module_args)
+                new_module_args['CHECKMODE'] = True
+            module_args = utils.merge_module_args(module_args, new_module_args)
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
