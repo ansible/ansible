@@ -125,6 +125,7 @@ def main():
     force = params['force']
     diff_peek = params['diff_peek']
     src = params['src']
+    follow = params['follow']
 
     # modify source as we later reload and pass, specially relevant when used by other modules.
     params['path'] = path = os.path.expanduser(params['path'])
@@ -177,14 +178,19 @@ def main():
             params['path'] = path = os.path.join(path, basename)
     else:
         if state in ['link','hard']:
-            module.fail_json(msg='src and dest are required for creating links')
+            if follow:
+                # use the current target of the link as the source
+                src = os.readlink(path)
+            else:
+                module.fail_json(msg='src and dest are required for creating links')
 
-    file_args = module.load_file_common_arguments(params)
-    changed = False
-
+    # make sure the target path is a directory when we're doing a recursive operation
     recurse = params['recurse']
     if recurse and state != 'directory':
         module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
+
+    file_args = module.load_file_common_arguments(params)
+    changed = False
 
     if state == 'absent':
         if state != prev_state:
