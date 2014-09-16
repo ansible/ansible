@@ -318,11 +318,13 @@ class VaultEditor(object):
     def shred_file(self, file_path):
         # event though it could be implemented in-program it's more safe to use
         # well tested and well known tool
-        try:
-            call(['shred', '-u', file_path])
-        except OSError:
-            return False
-        return True
+        for command in 'shred -u', 'srm':
+            try:
+                call(command.split() + [file_path])
+                return True
+            except OSError:
+                pass
+        return False
 
     def read_data(self, filename):
         f = open(filename, "rb")
