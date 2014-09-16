@@ -367,12 +367,20 @@ class RedHatWorkstationHostname(Hostname):
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
-    strategy_class = RedHatStrategy
+    distribution_version = _get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
 
 class CentOSLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos linux'
-    strategy_class = FedoraStrategy
+    distribution_version = _get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = FedoraStrategy
+    else:
+        strategy_class = RedHatStrategy
 
 class ScientificHostname(Hostname):
     platform = 'Linux'
