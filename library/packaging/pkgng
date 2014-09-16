@@ -4,7 +4,7 @@
 # (c) 2013, bleader
 # Written by bleader <bleader@ratonland.org>
 # Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn> 
+# that was based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@ options:
         description:
             - a comma-separated list of keyvalue-pairs of the form
               <+/-/:><key>[=<value>]. A '+' denotes adding an annotation, a
-              '-' denotes removing an annotation, and ':' denotes modifying an 
+              '-' denotes removing an annotation, and ':' denotes modifying an
               annotation.
               If setting or modifying annotations, a value must be provided.
         required: false
@@ -75,7 +75,7 @@ EXAMPLES = '''
 # Annotate package foo and bar
 - pkgng: name=foo,bar annotation=+test1=baz,-test2,:test3=foobar
 
-# Remove packages foo and bar 
+# Remove packages foo and bar
 - pkgng: name=foo,bar state=absent
 '''
 
@@ -113,7 +113,7 @@ def pkgng_older_than(module, pkgng_path, compare_version):
 
 
 def remove_packages(module, pkgng_path, packages):
-    
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -126,7 +126,7 @@ def remove_packages(module, pkgng_path, packages):
 
         if not module.check_mode and query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -171,7 +171,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
 
         install_c += 1
-    
+
     if install_c > 0:
         return (True, "added %s package(s)" % (install_c))
 
@@ -294,8 +294,11 @@ def main():
     module.exit_json(changed=changed, msg=", ".join(msgs))
 
 
+if __name__ == "__main__":
 
-# import module snippets
-from ansible.module_utils.basic import *
-    
-main()        
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

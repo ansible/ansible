@@ -116,7 +116,7 @@ def main():
         params["application_id"] = module.params["application_id"]
     else:
         module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
-    
+
     for item in [ "changelog", "description", "revision", "user", "appname", "environment" ]:
         if module.params[item]:
             params[item] = module.params[item]
@@ -137,9 +137,12 @@ def main():
     else:
         module.fail_json(msg="unable to update newrelic: %s" % info['msg'])
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()
 

@@ -105,7 +105,7 @@ options:
 
 EXAMPLES = '''
 # Create a new service-group
-- a10_service_group: 
+- a10_service_group:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
@@ -333,9 +333,12 @@ def main():
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
 
-# standard ansible module imports
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.a10 import *
 
-main()
+if __name__ == "__main__":
+
+    # standard ansible module imports
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+    from ansible.module_utils.a10 import *
+
+    main()

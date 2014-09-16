@@ -37,22 +37,22 @@ options:
     aliases: []
   instance_name:
     description:
-      - instance name if you wish to attach or detach the disk 
+      - instance name if you wish to attach or detach the disk
     required: false
-    default: null 
+    default: null
     aliases: []
   mode:
     description:
       - GCE mount mode of disk, READ_ONLY (default) or READ_WRITE
     required: false
-    default: "READ_ONLY" 
+    default: "READ_ONLY"
     choices: ["READ_WRITE", "READ_ONLY"]
     aliases: []
   name:
     description:
       - name of the disk
     required: true
-    default: null 
+    default: null
     aliases: []
   size_gb:
     description:
@@ -209,9 +209,9 @@ def main():
             module.fail_json(msg="Must supply a size_gb", changed=False)
         try:
             size_gb = int(round(float(size_gb)))
-            if size_gb < 1: 
+            if size_gb < 1:
                 raise Exception
-        except:        
+        except:
             module.fail_json(msg="Must supply a size_gb larger than 1 GB",
                     changed=False)
 
@@ -278,8 +278,11 @@ def main():
     print json.dumps(json_output)
     sys.exit(0)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.gce import *
+
+    main()

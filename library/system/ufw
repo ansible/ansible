@@ -263,7 +263,10 @@ def main():
 
     return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

@@ -228,7 +228,10 @@ def main():
         elif p['state'] == 'absent':
             remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
-    
-main()        
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

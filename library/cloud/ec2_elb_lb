@@ -68,7 +68,7 @@ options:
     aliases: ['aws_region', 'ec2_region']
   subnets:
     description:
-      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this. 
+      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this.
     required: false
     default: None
     aliases: []
@@ -77,7 +77,7 @@ options:
     description:
       - Purge existing subnet on ELB that are not found in subnets
     required: false
-    default: false  
+    default: false
     version_added: "1.7"
   scheme:
     description:
@@ -141,7 +141,7 @@ EXAMPLES = """
     name: "test-vpc"
     scheme: internal
     state: present
-    subnets: 
+    subnets:
       - subnet-abcd1234
       - subnet-1a2b3c4d
     listeners:
@@ -207,7 +207,7 @@ EXAMPLES = """
         instance_port: 80
     purge_zones: yes
 
-# Creates a ELB and assigns a list of subnets to it. 
+# Creates a ELB and assigns a list of subnets to it.
 - local_action:
     module: ec2_elb_lb
     state: present
@@ -257,7 +257,7 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, security_group_ids=None, 
+                 zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
                  cross_az_load_balancing=None,  region=None, **aws_connect_params):
@@ -532,7 +532,7 @@ class ElbManager(object):
                 self._attach_subnets(subnets_to_attach)
             if subnets_to_detach:
                 self._detach_subnets(subnets_to_detach)
-                
+
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
         if self.zones:
@@ -691,8 +691,11 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

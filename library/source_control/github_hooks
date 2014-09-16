@@ -90,7 +90,7 @@ def clean504(module, hookurl, oauthkey, repo, user):
             # print "Last response was an ERROR for hook:"
             # print hook['id']
             delete(module, hookurl, oauthkey, repo, user, hook['id'])
-            
+
     return 0, current_hooks
 
 def cleanall(module, hookurl, oauthkey, repo, user):
@@ -102,7 +102,7 @@ def cleanall(module, hookurl, oauthkey, repo, user):
             # print "Last response was an ERROR for hook:"
             # print hook['id']
             delete(module, hookurl, oauthkey, repo, user, hook['id'])
-            
+
     return 0, current_hooks
 
 def create(module, hookurl, oauthkey, repo, user):
@@ -171,8 +171,11 @@ def main():
     module.exit_json(msg="success", result=out)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+if __name__ == "__main__":
 
-main()
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()

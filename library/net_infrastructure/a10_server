@@ -95,7 +95,7 @@ options:
 
 EXAMPLES = '''
 # Create a new server
-- a10_server: 
+- a10_server:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
@@ -183,8 +183,8 @@ def main():
 
     json_post = {
         'server': {
-            'name': slb_server, 
-            'host': slb_server_ip, 
+            'name': slb_server,
+            'host': slb_server_ip,
             'status': axapi_enabled_disabled(slb_server_status),
             'port_list': slb_server_ports,
         }
@@ -261,9 +261,12 @@ def main():
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
 
-# standard ansible module imports
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.a10 import *
 
-main()
+if __name__ == "__main__":
+
+    # standard ansible module imports
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+    from ansible.module_utils.a10 import *
+
+    main()

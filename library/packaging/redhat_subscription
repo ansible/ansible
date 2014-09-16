@@ -174,7 +174,7 @@ class Rhsm(RegistrationBase):
         for k,v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
                 args.append('--%s=%s' % (k.replace('_','.'), v))
-        
+
         self.module.run_command(args, check_rc=True)
 
     @property
@@ -391,6 +391,9 @@ def main():
                 module.exit_json(changed=True, msg="System successfully unregistered from %s." % server_hostname)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == "__main__":
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

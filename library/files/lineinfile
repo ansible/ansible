@@ -113,7 +113,7 @@ options:
   validate:
      required: false
      description:
-       - validation to run before copying into place. 
+       - validation to run before copying into place.
          Use %s in the command to indicate the current file to validate.
          The command is passed securely so shell features like
          expansion and pipes won't work.
@@ -372,7 +372,7 @@ def main():
         # always add one layer of quotes
         line = "'%s'" % line
 
-        # Replace escape sequences like '\n' while being sure 
+        # Replace escape sequences like '\n' while being sure
         # not to replace octal escape sequences (\ooo) since they
         # match the backref syntax.
         if backrefs:
@@ -393,8 +393,11 @@ def main():
 
         absent(module, dest, params['regexp'], params.get('line', None), backup)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.splitter import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.splitter import *
+
+    main()

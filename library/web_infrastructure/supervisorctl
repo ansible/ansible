@@ -30,7 +30,7 @@ version_added: "0.7"
 options:
   name:
     description:
-      - The name of the supervisord program or group to manage.  
+      - The name of the supervisord program or group to manage.
       - The name will be taken as group name when it ends with a colon I(:)
       - Group support is only available in Ansible version 1.6 or later.
     required: true
@@ -215,7 +215,10 @@ def main():
     if state == 'stopped':
         take_action_on_processes(processes, lambda s: s == 'RUNNING', 'stop', 'stopped')
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

@@ -62,7 +62,7 @@ options:
     disable_recommends:
         version_added: "1.8"
         description:
-          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages. 
+          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages.
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
@@ -255,6 +255,9 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

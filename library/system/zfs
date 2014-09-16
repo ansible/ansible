@@ -213,7 +213,7 @@ EXAMPLES = '''
 # Create a new file system called myfs in pool rpool
 - zfs: name=rpool/myfs state=present
 
-# Create a new volume called myvol in pool rpool. 
+# Create a new volume called myvol in pool rpool.
 - zfs: name=rpool/myvol state=present volsize=10M
 
 # Create a snapshot of rpool/myfs file system.
@@ -307,7 +307,7 @@ class Zfs(object):
                 if prop in self.immutable_properties:
                     self.module.fail_json(msg='Cannot change property %s after creation.' % prop)
                 else:
-                    self.set_property(prop, value) 
+                    self.set_property(prop, value)
 
     def get_current_properties(self):
         def get_properties_by_name(propname):
@@ -412,6 +412,9 @@ def main():
     result['changed'] = zfs.changed
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

@@ -388,7 +388,7 @@ class DockerManager:
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
-                # with bind mode 
+                # with bind mode
                 elif len(parts) == 3:
                     if parts[2] not in ['ro', 'rw']:
                         self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
@@ -842,7 +842,10 @@ def main():
         changed = manager.has_changed()
         module.exit_json(failed=True, changed=changed, msg=repr(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

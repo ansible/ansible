@@ -150,7 +150,7 @@ class SunOS(Group):
 
     This overrides the following methods from the generic class:-
         - group_add()
-    """ 
+    """
 
     platform = 'SunOS'
     distribution = None
@@ -398,6 +398,9 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

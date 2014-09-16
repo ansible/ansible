@@ -142,8 +142,11 @@ def main():
     changed = True
     module.exit_json(changed=changed, room=room, msg_from=msg_from, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()

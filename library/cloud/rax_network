@@ -137,9 +137,12 @@ def main():
     cloud_network(module, state, label, cidr)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
+if __name__ == "__main__":
 
-### invoke the module
-main()
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.rax import *
+
+    ### invoke the module
+    main()

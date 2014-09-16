@@ -228,7 +228,7 @@ def main():
     try:
         cf_region = Region(region)
         cfn = boto.cloudformation.connection.CloudFormationConnection(
-                  aws_access_key_id=aws_access_key, 
+                  aws_access_key_id=aws_access_key,
                   aws_secret_access_key=aws_secret_key,
                   region=cf_region,
               )
@@ -306,8 +306,11 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

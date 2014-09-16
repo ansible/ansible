@@ -79,7 +79,7 @@ import os
 
 # class to handle .zip files
 class ZipFile(object):
-    
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -106,7 +106,7 @@ class ZipFile(object):
 
 # class to handle gzipped tar files
 class TgzFile(object):
-    
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -245,6 +245,9 @@ def main():
 
     module.exit_json(**res_args)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

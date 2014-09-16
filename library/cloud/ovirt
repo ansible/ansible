@@ -158,33 +158,33 @@ EXAMPLES = '''
 # Basic example provisioning from image.
 
 action: ovirt >
-    user=admin@internal 
-    url=https://ovirt.example.com 
-    instance_name=ansiblevm04 
-    password=secret 
-    image=centos_64 
-    zone=cluster01 
+    user=admin@internal
+    url=https://ovirt.example.com
+    instance_name=ansiblevm04
+    password=secret
+    image=centos_64
+    zone=cluster01
     resource_type=template"
 
 # Full example to create new instance from scratch
-action: ovirt > 
-    instance_name=testansible 
-    resource_type=new 
-    instance_type=server 
-    user=admin@internal 
-    password=secret 
-    url=https://ovirt.example.com 
-    instance_disksize=10 
-    zone=cluster01 
-    region=datacenter1 
-    instance_cpus=1 
-    instance_nic=nic1 
-    instance_network=rhevm 
-    instance_mem=1000 
-    disk_alloc=thin 
-    sdomain=FIBER01 
-    instance_cores=1 
-    instance_os=rhel_6x64 
+action: ovirt >
+    instance_name=testansible
+    resource_type=new
+    instance_type=server
+    user=admin@internal
+    password=secret
+    url=https://ovirt.example.com
+    instance_disksize=10
+    zone=cluster01
+    region=datacenter1
+    instance_cpus=1
+    instance_nic=nic1
+    instance_network=rhevm
+    instance_mem=1000
+    disk_alloc=thin
+    sdomain=FIBER01
+    instance_cores=1
+    instance_os=rhel_6x64
     disk_int=virtio"
 
 # stopping an instance
@@ -197,10 +197,10 @@ action: ovirt >
 
 # starting an instance
 action: ovirt >
-    instance_name=testansible 
-    state=started 
-    user=admin@internal 
-    password=secret 
+    instance_name=testansible
+    state=started
+    user=admin@internal
+    password=secret
     url=https://ovirt.example.com
 
 
@@ -245,7 +245,7 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         # define network parameters
         network_net = params.Network(name=vmnetwork)
         nic_net1 = params.NIC(name=vmnic, network=network_net, interface='virtio')
-        
+
     try:
         conn.vms.add(vmparams)
     except:
@@ -364,7 +364,7 @@ def main():
     vmcpus        = module.params['instance_cpus']      # number of cpu
     vmnic         = module.params['instance_nic']       # network interface
     vmnetwork     = module.params['instance_network']   # logical network
-    vmmem         = module.params['instance_mem']       # mem size 
+    vmmem         = module.params['instance_mem']       # mem size
     vmdisk_alloc  = module.params['disk_alloc']         # thin, preallocated
     vmdisk_int    = module.params['disk_int']           # disk interface virtio or ide
     vmos          = module.params['instance_os']        # Operating System
@@ -402,7 +402,7 @@ def main():
         else:
             vm_stop(c, vmname)
             module.exit_json(changed=True, msg="VM %s is shutting down" % vmname)
-    
+
     if state == 'restart':
         if vm_status(c, vmname) == 'up':
             vm_restart(c, vmname)
@@ -418,8 +418,11 @@ def main():
             module.exit_json(changed=True, msg="VM %s removed" % vmname)
 
 
+if __name__ == "__main__":
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

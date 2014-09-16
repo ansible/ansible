@@ -130,7 +130,7 @@ options:
     required: false
   rsync_timeout:
     description:
-      - Specify a --timeout for the rsync command in seconds. 
+      - Specify a --timeout for the rsync command in seconds.
     default: 0
     required: false
   set_remote_user:
@@ -148,12 +148,12 @@ notes:
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
    - The remote user for the dest path will always be the remote_user, not
-     the sudo_user. 
+     the sudo_user.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
-   - To exclude files and directories from being synchronized, you may add 
+   - To exclude files and directories from being synchronized, you may add
      C(.rsync-filter) files to the source directory.
-     
-     
+
+
 author: Timothy Appnel
 '''
 
@@ -197,7 +197,7 @@ synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rs
 + /var/conf # include /var/conf even though it was previously excluded
 
 # Synchronize passing in extra rsync options
-synchronize: src=/tmp/helloworld dest=/var/www/helloword rsync_opts=--no-motd,--exclude=.git 
+synchronize: src=/tmp/helloworld dest=/var/www/helloword rsync_opts=--no-motd,--exclude=.git
 '''
 
 
@@ -301,7 +301,7 @@ def main():
     if private_key is None:
         private_key = ''
     else:
-        private_key = '-i '+ private_key 
+        private_key = '-i '+ private_key
 
     ssh_opts = '-S none -o StrictHostKeyChecking=no'
     if dest_port != 22:
@@ -320,9 +320,9 @@ def main():
 
     # expand the paths
     if '@' not in source:
-        source = os.path.expanduser(source) 
+        source = os.path.expanduser(source)
     if '@' not in dest:
-        dest = os.path.expanduser(dest) 
+        dest = os.path.expanduser(dest)
 
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
@@ -333,13 +333,16 @@ def main():
         changed = changed_marker in out
         out_clean=out.replace(changed_marker,'')
         out_lines=out_clean.split('\n')
-        while '' in out_lines: 
+        while '' in out_lines:
             out_lines.remove('')
         return module.exit_json(changed=changed, msg=out_clean,
                                 rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

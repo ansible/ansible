@@ -225,8 +225,11 @@ def main():
 
     module.exit_json(msg="success", result=out)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()

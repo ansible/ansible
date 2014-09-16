@@ -43,7 +43,7 @@ author: Michael DeHaan
 EXAMPLES = '''
 ansible host -m slurp -a 'src=/tmp/xx'
    host | success >> {
-      "content": "aGVsbG8gQW5zaWJsZSB3b3JsZAo=", 
+      "content": "aGVsbG8gQW5zaWJsZSB3b3JsZAo=",
       "encoding": "base64"
    }
 '''
@@ -68,8 +68,11 @@ def main():
 
     module.exit_json(content=data, encoding='base64')
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

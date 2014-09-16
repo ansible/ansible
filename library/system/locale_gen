@@ -55,7 +55,7 @@ def replace_line(existing_line, new_line):
 
 def apply_change(targetState, name, encoding):
     """Create or remove locale.
-    
+
     Keyword arguments:
     targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
@@ -67,14 +67,14 @@ def apply_change(targetState, name, encoding):
     else:
         # Delete locale.
         replace_line(name+" "+encoding, "# "+name+" "+encoding)
-    
+
     localeGenExitValue = call("locale-gen")
     if localeGenExitValue!=0:
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
 def apply_change_ubuntu(targetState, name, encoding):
     """Create or remove locale.
-    
+
     Keyword arguments:
     targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
@@ -95,7 +95,7 @@ def apply_change_ubuntu(targetState, name, encoding):
         # Purge locales and regenerate.
         # Please provide a patch if you know how to avoid regenerating the locales to keep!
         localeGenExitValue = call(["locale-gen", "--purge"])
-    
+
     if localeGenExitValue!=0:
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
@@ -126,10 +126,10 @@ def main():
     else:
         # We found the common way to manage locales.
         ubuntuMode = False
-    
+
     prev_state = "present" if is_present(name) else "absent"
     changed = (prev_state!=state)
-    
+
     if module.check_mode:
         module.exit_json(changed=changed)
     else:
@@ -142,10 +142,13 @@ def main():
                     apply_change_ubuntu(state, name, encoding)
             except EnvironmentError as e:
                 module.fail_json(msg=e.strerror, exitValue=e.errno)
-      
+
         module.exit_json(name=name, changed=changed, msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

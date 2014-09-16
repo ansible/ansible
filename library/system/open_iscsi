@@ -159,7 +159,7 @@ def target_loggedon(module, target):
 
     cmd = '%s --mode session' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
-    
+
     if rc == 0:
         return target in out
     elif rc == 21:
@@ -186,7 +186,7 @@ def target_login(module, target):
 
     cmd = '%s --mode node --targetname %s --login' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
-    
+
     if rc > 0:
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
@@ -195,7 +195,7 @@ def target_logout(module, target):
 
     cmd = '%s --mode node --targetname %s --logout' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
-    
+
     if rc > 0:
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
@@ -224,7 +224,7 @@ def target_isauto(module, target):
 
     cmd = '%s --mode node --targetname %s' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
-    
+
     if rc == 0:
         lines = out.splitlines()
         for line in lines:
@@ -239,7 +239,7 @@ def target_setauto(module, target):
 
     cmd = '%s --mode node --targetname %s --op=update --name node.startup --value automatic' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
-    
+
     if rc > 0:
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
@@ -248,7 +248,7 @@ def target_setmanual(module, target):
 
     cmd = '%s --mode node --targetname %s --op=update --name node.startup --value manual' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
-    
+
     if rc > 0:
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
@@ -259,7 +259,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
 
-            # target 
+            # target
             portal = dict(required=False, aliases=['ip']),
             port = dict(required=False, default=3260),
             target = dict(required=False, aliases=['name', 'targetname']),
@@ -272,14 +272,14 @@ def main():
             auto_node_startup = dict(type='bool', aliases=['automatic']),
             discover = dict(type='bool', default=False),
             show_nodes = dict(type='bool', default=False)
-        ),  
+        ),
 
         required_together=[['discover_user', 'discover_pass'],
                            ['node_user', 'node_pass']],
         supports_check_mode=True
     )
 
-    global iscsiadm_cmd 
+    global iscsiadm_cmd
     iscsiadm_cmd = module.get_bin_path('iscsiadm', required=True)
 
     # parameters
@@ -295,7 +295,7 @@ def main():
 
     cached = iscsi_get_cached_nodes(module, portal)
 
-    # return json dict 
+    # return json dict
     result = {}
     result['changed'] = False
 
@@ -371,9 +371,12 @@ def main():
     module.exit_json(**result)
 
 
+if __name__ == "__main__":
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

@@ -212,9 +212,12 @@ def main():
     cloud_block_storage(module, state, name, description, meta, size,
                         snapshot_id, volume_type, wait, wait_timeout)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
 
-### invoke the module
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.rax import *
+
+    ### invoke the module
+    main()

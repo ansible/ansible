@@ -67,7 +67,7 @@ def main():
         if rc != 0:
             module.fail_json(msg='monit reload failed', stdout=out, stderr=err)
         module.exit_json(changed=True, name=name, state=state)
-    
+
     def status():
         """Return the status of the process in monit, or the empty string if not present."""
         rc, out, err = module.run_command('%s summary' % MONIT, check_rc=True)
@@ -149,7 +149,10 @@ def main():
 
     module.exit_json(changed=False, name=name, state=state)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

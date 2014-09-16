@@ -174,4 +174,7 @@ def main():
         delete_scaling_policy(connection, module)
 
 
-main()
+if __name__ == "__main__":
+
+
+    main()

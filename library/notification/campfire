@@ -138,6 +138,9 @@ def main():
 
     module.exit_json(changed=True, room=room, msg=msg, notify=notify)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

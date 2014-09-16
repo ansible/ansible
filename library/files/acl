@@ -289,7 +289,10 @@ def main():
 
     module.exit_json(changed=changed, msg=msg, acl=currentacls)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

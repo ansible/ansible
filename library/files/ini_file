@@ -27,7 +27,7 @@ description:
      - Manage (add, remove, change) individual settings in an INI-style file without having
        to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
        sections if they don't exist.
-     - Comments are discarded when the source file is read, and therefore will not 
+     - Comments are discarded when the source file is read, and therefore will not
        show up in the destination file.
 version_added: "0.9"
 options:
@@ -95,7 +95,7 @@ import sys
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
     changed = False
-    if (sys.version_info[0] == 2 and sys.version_info[1] >= 7) or sys.version_info[0] >= 3: 
+    if (sys.version_info[0] == 2 and sys.version_info[1] >= 7) or sys.version_info[0] >= 3:
     	cp = ConfigParser.ConfigParser(allow_no_value=True)
     else:
     	cp = ConfigParser.ConfigParser()
@@ -202,6 +202,9 @@ def main():
     # Mission complete
     module.exit_json(dest=dest, changed=changed, msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

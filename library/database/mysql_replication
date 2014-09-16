@@ -363,7 +363,10 @@ def main():
         else:
             module.exit_json(msg="Slave already stopped", changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
-warnings.simplefilter("ignore")
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()
+    warnings.simplefilter("ignore")

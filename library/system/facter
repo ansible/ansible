@@ -49,8 +49,11 @@ def main():
     rc, out, err = module.run_command(cmd, check_rc=True)
     module.exit_json(**json.loads(out))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

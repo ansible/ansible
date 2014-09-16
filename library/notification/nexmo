@@ -133,8 +133,11 @@ def main():
     send_msg(module)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+if __name__ == "__main__":
 
-main()
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()
