@@ -198,6 +198,7 @@ def main():
         url = dict(required=True),
         dest = dict(required=True),
         sha256sum = dict(default=''),
+        md5sum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
     )
 
@@ -211,6 +212,7 @@ def main():
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
     sha256sum = module.params['sha256sum']
+    md5sum = module.params['md5sum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
 
@@ -294,6 +296,10 @@ def main():
         if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
+    if md5sum != '':
+        destination_checksum = module.md5(dest)
+        if md5sum != destination_checksum :
+            module.fail_json(msg="The md5 checksum for %s did not match %s; it was %s." % (dest, md5sum, destination_checksum))
 
     os.remove(tmpsrc)
 

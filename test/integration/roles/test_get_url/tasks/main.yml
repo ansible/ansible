@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: test https fetch
-  get_url: url="https://raw.githubusercontent.com/ansible/ansible/devel/README.md" dest={{output_dir}}/get_url.txt force=yes
+  get_url: url="https://raw.githubusercontent.com/ansible/ansible/0.0.1/README.md" dest={{output_dir}}/get_url.txt force=yes md5sum=1ae7d56a56f87c94d59b45da498b3e73 sha256sum=56892221c696656bb2ee79c8b310fe07bb43b91fdabc3229c8ced49dfd00973e
   register: result
 
 - name: assert the get_url call was successful
