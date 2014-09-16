@@ -507,18 +507,21 @@ class DockerManager:
 
     def get_split_image_tag(self, image):
         # If image contains a host or org name, omit that from our check
-        if image.find('/') > 0:
+        if '/' in image:
             registry, resource = image.rsplit('/', 1)
         else:
-            registry, resource = '', image
+            registry, resource = None, image
 
         # now we can determine if image has a tag
-        if resource.find(':') > 0:
+        if ':' in resource:
             resource, tag = resource.split(':', 1)
-            return '/'.join((registry, resource)), tag
+            if registry:
+                resource = '/'.join((registry, resource))
         else:
             tag = "latest"
-            return image, tag
+            resource = image
+
+        return resource, tag
 
     def get_summary_counters_msg(self):
         msg = ""
