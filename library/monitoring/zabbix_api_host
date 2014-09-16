@@ -1,0 +1,542 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Igor A. Borisov <ig.borisov@2gis.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+
+"""Ansible module to create, delete or modify hosts via Zabbix API"""
+
+DOCUMENTATION = '''
+---
+module: zabbix_api_host
+short_description: Add/delete host to Zabbix using Zabbix API
+description:
+     - Add/remove host to Zabbix using API
+     - Change host monitoring status 
+     - Add/remove Zabbix groups
+     - Link/unlink Zabbix templates 
+version_added: "1.8"
+author: Igor A. Borisov
+options:
+  api_url:
+     description:
+     - URL of desired Zabbix frontend
+  api_user:
+    description:
+     - Zabbix username, must have API access. 
+     - Permission to operate target hosts/groups required.
+  api_password:
+    description:
+     - Password for Zabbix user
+  name:
+    description:
+     - Host name in Zabbix inventory.
+  state:
+    description:
+     - Indicate desired state of the target.
+    default: present
+    choices: ['present', 'absent']
+  enabled:
+    description:
+     - Bool, monitoring status of the host
+    default: yes
+    choices: [ "yes", "no" ]
+  dns_name:
+    description:
+     - DNS name of host interface (required if use_ip set to no)
+  ip_address:
+    description:
+     - IP address of host interface (required if use_ip set to yes)
+  agent_port:
+    description:
+     - Port on which Zabbix agent is listening
+    default: 10050
+  use_ip:
+    description:
+     - Use IP address instead of hostname for monitoring
+    choices: [ "yes", "no" ]
+    default: yes
+  groups:
+    description:
+     - List of Zabbix hostgroups for host
+  templates:
+    description:
+     - List of Zabbix templates linked with host
+  remove_groups:
+    description:
+     - Exclude host from groups not listed in 'groups' variable
+    choices: [ "yes", "no" ]
+    default: no
+  remove_templates:
+    description:
+     - Unlink host from templates not listed in 'templates' variable
+    choices: [ "yes", "no" ]
+    default: no
+  clear_templates:
+    description:
+     - Clear data of unlinked templates
+    choices: [ "yes", "no" ]
+    default: no
+
+notes:
+   - Install pyzabbix python module before use.
+   - Network parameters (dns_name, ip_address, port) 
+     works for new hosts only. If host already exists, 
+     these parameters are ignored.
+
+requirements: [ pyzabbix ]
+'''
+
+EXAMPLES = '''
+# Ensure host is present in Zabbix inventory.
+# If not, add it to Zabbix inventory with given parameters, using IP address
+# for connection instead of DNS name and non-standard agent port 10051
+# If server present but monitoring is disabled, enable it
+# Put server in groups 'Linux servers' and 'Webservers'
+# Link server with templates 'Common', 'LAMP' and 'Nginx'
+
+local_action:
+     module: zabbix_api_host
+     name: 'My server name'
+     state: present
+     enabled: yes
+     dns_name: webserver.domain.com
+     ip_address: 11.22.33.44
+     agent_port: 10051
+     use_ip: yes
+     groups: ['Linux servers','Webservers']
+     templates: ['Common','LAMP','Nginx server']
+     api_url: 'http://zabbix.domain.com/'
+     api_user: 'ansible'
+     api_password: 'aNs1ble_pas$'
+
+# Remove host from Zabbix inventory
+local_action:
+     module: zabbix_api_host
+     name: 'My server'
+     state: absent
+     api_url: 'http://zabbix.domain.com/'
+     api_user: 'ansible'
+     api_password: 'aNs1ble_pas$'
+
+# Disable host monitoring
+local_action:
+     module: zabbix_api_host
+     name: 'My server'
+     enabled: no
+     api_url: 'http://zabbix.domain.com/'
+     api_user: 'ansible'
+     api_password: 'aNs1ble_pas$'
+'''
+
+import sys
+
+try:
+    from pyzabbix import ZabbixAPI, ZabbixAPIException
+except ImportError:
+    print "failed=True msg='pyzabbix required for this module'"
+    sys.exit(1)
+
+
+class ZabbixAPIHost(object):
+    """Zabbix host API main object"""
+    def __init__(self):
+        self.module = AnsibleModule(
+            argument_spec=dict(
+                api_url=dict(type='str', required=True),
+                api_user=dict(type='str', required=True),
+                api_password=dict(type='str', required=True),
+                name=dict(type='str', required=True),
+                state=dict(choices=['present', 'absent'], default='present'),
+                enabled=dict(type='bool', default='yes'),
+                dns_name=dict(type='str', default='localhost.localdomain'),
+                ip_address=dict(type='str', default='0.0.0.0'),
+                use_ip=dict(type='bool', default='yes'),
+                agent_port=dict(type='int', default=10050),
+                groups=dict(type='list', required=False),
+                templates=dict(type='list', required=False),
+                remove_groups=dict(type='bool', default='no'),
+                remove_templates=dict(type='bool', default='no'),
+                clear_templates=dict(type='bool', default='no'),
+            ),
+            required_together=(
+                ['remove_groups', 'groups']
+            ),
+
+            # todo: check mode support
+            # supports_check_mode=True
+        )
+        self.api_url = self.module.params['api_url']
+        self.api_user = self.module.params['api_user']
+        self.api_password = self.module.params['api_password']
+        self.name = self.module.params['name']
+        self.state = self.module.params['state']
+        self.enabled = self.module.params['enabled']
+        self.dns_name = self.module.params['dns_name']
+        self.ip_address = self.module.params['ip_address']
+        self.use_ip = self.module.params['use_ip']
+        self.agent_port = self.module.params['agent_port']
+        self.groups = self.module.params['groups']
+        self.templates = self.module.params['templates']
+        self.remove_groups = self.module.params['remove_groups']
+        self.remove_templates = self.module.params['remove_templates']
+        self.clear_templates = self.module.params['clear_templates']
+
+        self.changed = False
+        self.failed = False
+        self.msg = u""
+
+        if not (self.api_url.startswith('http://')
+                or self.api_url.startswith('https://')):
+            self.module.fail_json(msg='Invalid Zabbix URL')
+
+        self.zapi = ZabbixAPI(self.api_url)
+
+        try:
+            self.zapi.login(self.api_user, self.api_password)
+        except ZabbixAPIException:
+            self.module.fail_json(msg="Error logging in Zabbix")
+
+        self.host_id = self.get_host_id(self.name)
+
+        self.group_id = {
+            group: self.get_group_id(group) for group in self.groups
+        } if self.groups else {}
+
+        self.template_id = {
+            tpl: self.get_template_id(tpl) for tpl in self.templates
+        } if self.templates else {}
+
+    def get_host_id(self, host_name):
+        """Return host id by name"""
+        try:
+            inv = self.zapi.do_request(
+                method='host.get',
+                params={
+                    'output': 'extend',
+                }
+            )
+        except ZabbixAPIException:
+            return None
+        for host in inv['result']:
+            if host_name == host['name']:
+                return host['hostid']
+        return None
+
+    def get_group_id(self, group_name):
+        """Return group id by name"""
+        try:
+            inv = self.zapi.do_request(
+                method='hostgroup.get',
+                params={
+                    'output': 'extend',
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        for hostgroup in inv['result']:
+            if group_name == hostgroup['name']:
+                return hostgroup['groupid']
+        self.module.fail_json(
+            msg=u"FATAL: Group {} not found".format(group_name)
+        )
+
+    def get_template_id(self, template_name):
+        """Return template id by name"""
+        try:
+            inv = self.zapi.do_request(
+                method='template.get',
+                params={
+                    'output': 'extend',
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        for template in inv['result']:
+            if template_name == template['name']:
+                return template['templateid']
+        return None
+
+    def get_host_groups(self):
+        """Return list of host groups"""
+        try:
+            inv = self.zapi.do_request(
+                method='hostgroup.get',
+                params={
+                    'output': 'extend',
+                    'hostids': [self.host_id]
+                }
+            )
+        except ZabbixAPIException:
+            return None
+        return {group['name']: group['groupid'] for group in inv['result']}
+
+    def get_host_templates(self, host_id):
+        """Return list of host templates"""
+        try:
+            inv = self.zapi.do_request(
+                method='template.get',
+                params={
+                    'output': 'extend',
+                    'hostids': [host_id]
+                }
+            )
+        except ZabbixAPIException:
+            return None
+        return {template['name']: template['templateid']
+                for template in inv['result']}
+
+    def add_host(self):
+        """Add host to Zabbix inventory"""
+        create_groups = [{'groupid': group}
+            for group in self.group_id.values()]
+        create_templates = [{'templateid': tpl}
+            for tpl in self.template_id.values()]
+        status = 0 if self.enabled else 1
+
+        create_params = {
+            'host': self.name,
+            'groups': create_groups,
+            'templates': create_templates,
+            'status': status,
+            'interfaces': [
+                {
+                    "type": 1,
+                    "main": 1,
+                    "useip": self.use_ip,
+                    "ip": self.ip_address,
+                    "dns": self.dns_name,
+                    "port": self.agent_port
+                }
+            ]
+        }
+        try:
+            created_host = self.zapi.do_request(
+                method='host.create',
+                params=create_params
+            )['result']['hostids'][0]
+        except ZabbixAPIException:
+            return None
+
+        return int(created_host)
+
+    def remove_host(self):
+        """Remove host from Zabbix inventory"""
+        try:
+            self.zapi.do_request(method='host.delete', params=[self.host_id])
+        except ZabbixAPIException:
+            return False
+        return True
+
+    def host_enabled(self):
+        """Return host monitoring status"""
+        try:
+            status = self.zapi.do_request(
+                method='host.get',
+                params={
+                    'output': 'extend',
+                    'hostids': [self.host_id]
+                }
+            )['result'][0]['status']
+        except ZabbixAPIException:
+            return sys.exc_info()[1]
+        if int(status) == 0:
+            return True
+        return False
+
+    def change_host_status(self):
+        """Change host monitoring status"""
+        status = 0 if self.enabled else 1
+        try:
+            self.zapi.do_request(
+                method='host.update',
+                params={
+                    'hostid': self.host_id,
+                    'status': status
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        return True
+
+    def group_add(self, host_id, group_id):
+        """Add host to group"""
+        try:
+            self.zapi.do_request(
+                method='host.massadd',
+                params={
+                    'hosts': {
+                        'hostid': host_id
+                    },
+                    'groups': {
+                        'groupid': group_id
+                    }
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        return True
+
+    def group_remove(self, host_id, group_id):
+        """Remove host from group"""
+        try:
+            self.zapi.do_request(
+                method='hostgroup.massremove',
+                params={
+                    'hostids': [host_id],
+                    'groupids': [group_id]
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        return True
+
+    def template_link(self, host_id, template_id):
+        """Link host with template"""
+        try:
+            self.zapi.do_request(
+                method='host.massadd',
+                params={
+                    'hosts': {
+                        'hostid': host_id
+                    },
+                    'templates': {
+                        'templateid': template_id
+                    }
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        return True
+
+    def template_unlink(self, host_id, template_id, clear):
+        """Unlink host from template"""
+        command = 'templateids_clear' if clear else 'templateids'
+        try:
+            self.zapi.do_request(
+                method='host.massremove',
+                params={
+                    'hostids': [host_id],
+                    command: [template_id]
+                }
+            )
+        except ZabbixAPIException:
+            return False
+        return True
+
+    def process_host_state(self):
+        """Process host state, create or delete if needed"""
+        if self.state == 'present' and not self.host_id:
+            self.host_id = self.add_host()
+            if not self.host_id:
+                self.module.fail_json(msg="Host creation failed")
+            self.module.exit_json(
+                changed=True,
+                msg="Host created with id {0}".format(self.host_id)
+            )
+        elif self.state == 'absent' and self.host_id:
+            if not self.remove_host():
+                self.module.fail_json(
+                    msg=u"Host removal failed"
+                )
+            self.module.exit_json(changed=True, msg="Host removed")
+        elif self.state == 'absent' and not self.host_id:
+            self.module.exit_json(
+                changed=False,
+                msg=u"Host absent, nothing to do"
+            )
+        else:
+            self.msg = self.msg + u"Host exists, id {}\n".format(self.host_id)
+
+    def process_host_status(self):
+        """Check host status and change it if needed"""
+        is_enabled = self.host_enabled()
+        if bool(self.enabled) != bool(is_enabled):
+            if not self.change_host_status():
+                self.module.fail_json(msg=u"Host status change failed.")
+            self.changed = True
+            self.msg = self.msg + u"Changed host status.\n"
+        return True
+
+    def process_host_groups(self):
+        """Add host to groups from list or remove grom grops if needed"""
+        host_group_id = self.get_host_groups()
+        for group in self.group_id.keys():
+            if group in host_group_id.keys():
+                continue
+            if not self.group_add(self.host_id, self.group_id[group]):
+                self.module.fail_json(
+                    msg=u"Can't add host to group {0}\n".format(group)
+                )
+            self.changed = True
+            self.msg += u"Added to group {0}.\n".format(group)
+        if self.remove_groups:
+            for group in host_group_id.keys():
+                if group in self.group_id.keys():
+                    continue
+                if not self.group_remove(self.host_id,
+                                         host_group_id[group]):
+                    self.module.fail_json(
+                        msg=u"Can't remove from group {0}".format(group)
+                    )
+                self.changed = True
+                self.msg += u"Removed from group {}.\n".format(group)
+        return True
+
+    def process_host_templates(self):
+        """Link host with templates from list, unlink if needed"""
+        host_template_id = self.get_host_templates(self.host_id)
+        for template in self.template_id.keys():
+            if template not in host_template_id.keys():
+                if not self.template_link(self.host_id,
+                                          self.template_id[template]):
+                    self.module.fail_json(
+                        msg=u"Can't link template {0}".format(template)
+                    )
+                self.changed = True
+                self.msg += u"Linked with template {0}.\n".format(template)
+
+        if self.remove_templates:
+            for tpl in host_template_id.keys():
+                if tpl in self.template_id.keys():
+                    continue
+                if not self.template_unlink(self.host_id,
+                                            host_template_id[tpl],
+                                            self.clear_templates):
+                    self.module.fail_json(
+                        msg=u"Can't unlink template {0}".format(tpl)
+                    )
+                self.changed = True
+                self.msg += u"Unlinked template {0}.\n".format(tpl)
+
+
+def main():
+    """Main module workflow"""
+    zbx = ZabbixAPIHost()
+
+    zbx.process_host_state()
+    zbx.process_host_status()
+    zbx.process_host_groups()
+    zbx.process_host_templates()
+
+    zbx.module.exit_json(failed=zbx.failed, changed=zbx.changed, msg=zbx.msg)
+
+
+# Import module snippets
+from ansible.module_utils.basic import *
+
+main()
