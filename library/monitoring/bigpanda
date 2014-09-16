@@ -6,7 +6,7 @@ module: bigpanda
 author: BigPanda
 short_description: Notify BigPanda about deployments
 version_added: "1.8"
-description: 
+description:
    - Notify BigPanda when deployments start and end (successfully or not). Returns a deployment object containing all the parameters for future module calls.
 options:
   component:
@@ -165,8 +165,11 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()

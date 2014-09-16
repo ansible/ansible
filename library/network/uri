@@ -88,9 +88,9 @@ options:
   follow_redirects:
     description:
       - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
-        C(safe) will follow only "safe" redirects, where "safe" means that the client is only 
+        C(safe) will follow only "safe" redirects, where "safe" means that the client is only
         doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility, 
+        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
         where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
         are deprecated and will be removed in some future version of Ansible.
     required: false
@@ -111,7 +111,7 @@ options:
     default: 200
   timeout:
     description:
-      - The socket level timeout in seconds 
+      - The socket level timeout in seconds
     required: false
     default: 30
   HEADER_:
@@ -145,25 +145,25 @@ EXAMPLES = '''
 
 # Create a JIRA issue
 
-- uri: url=https://your.jira.example.com/rest/api/2/issue/ 
-       method=POST user=your_username password=your_pass 
-       body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
-       status_code=201 HEADER_Content-Type="application/json"  
+- uri: url=https://your.jira.example.com/rest/api/2/issue/
+       method=POST user=your_username password=your_pass
+       body="{{ lookup('file','issue.json') }}" force_basic_auth=yes
+       status_code=201 HEADER_Content-Type="application/json"
 
 # Login to a form based webpage, then use the returned cookie to
 # access the app in later tasks
 
-- uri: url=https://your.form.based.auth.examle.com/index.php 
-       method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
+- uri: url=https://your.form.based.auth.examle.com/index.php
+       method=POST body="name=your_username&password=your_password&enter=Sign%20in"
        status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
   register: login
 
 - uri: url=https://your.form.based.auth.example.com/dashboard.php
        method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
-            
+
 # Queue build of a project in Jenkins:
 
-- uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
+- uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}}
        method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
 
 '''
@@ -193,10 +193,10 @@ def write_file(module, url, dest, content):
         os.remove(tmpsrc)
         module.fail_json(msg="failed to create temporary content file: %s" % str(err))
     f.close()
- 
+
     md5sum_src   = None
     md5sum_dest  = None
- 
+
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
@@ -205,7 +205,7 @@ def write_file(module, url, dest, content):
         os.remove(tmpsrc)
         module.fail_json( msg="Source %s not readable" % (tmpsrc))
     md5sum_src = module.md5(tmpsrc)
- 
+
     # check if there is no dest file
     if os.path.exists(dest):
         # raise an error if copy has no permission on dest
@@ -220,14 +220,14 @@ def write_file(module, url, dest, content):
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination dir %s not writable" % (os.path.dirname(dest)))
-     
+
     if md5sum_src != md5sum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
- 
+
     os.remove(tmpsrc)
 
 
@@ -242,7 +242,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
     # To debug
     #httplib2.debug = 4
 
-    # Handle Redirects         
+    # Handle Redirects
     if redirects == "all" or redirects == "yes":
         follow_redirects = True
         follow_all_redirects = True
@@ -298,8 +298,8 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
     h.follow_redirects=follow_redirects
 
     # Make the request, or try to :)
-    try: 
-        resp, content = h.request(url, method=method, body=body, headers=headers)     
+    try:
+        resp, content = h.request(url, method=method, body=body, headers=headers)
         r['redirected'] = redirected
         r.update(resp_redir)
         r.update(resp)
@@ -374,7 +374,7 @@ def main():
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
 
-  
+
     if creates is not None:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
@@ -394,9 +394,9 @@ def main():
 
     # httplib2 only sends authentication after the server asks for it with a 401.
     # Some 'basic auth' servies fail to send a 401 and require the authentication
-    # up front. This creates the Basic authentication header and sends it immediately. 
+    # up front. This creates the Basic authentication header and sends it immediately.
     if force_basic_auth:
-        dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password))) 
+        dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password)))
 
 
     # Make the request
@@ -422,7 +422,7 @@ def main():
     # Transmogrify the headers, replacing '-' with '_', since variables dont work with dashes.
     uresp = {}
     for key, value in resp.iteritems():
-        ukey = key.replace("-", "_")  
+        ukey = key.replace("-", "_")
         uresp[ukey] = value
 
     if 'content_type' in uresp:
@@ -440,6 +440,9 @@ def main():
         module.exit_json(changed=changed, **uresp)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == "__main__":
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

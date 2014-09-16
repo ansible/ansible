@@ -88,7 +88,7 @@ options:
     choices: [ "yes", "no" ]
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: None
     aliases: ['ec2_secret_key', 'secret_key']
@@ -540,8 +540,11 @@ def main():
 
     module.exit_json(**facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

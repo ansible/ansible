@@ -279,4 +279,7 @@ def main():
     elif state == 'absent':
         delete_metric_alarm(connection, module)
 
-main()
+
+if __name__ == "__main__":
+
+    main()

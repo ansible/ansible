@@ -89,7 +89,7 @@ extends_documentation_fragment: aws
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
-# 
+#
 # See http://alestic.com/2011/06/ec2-ami-security for more information about ensuring the security of your AMI.
 
 EXAMPLES = '''
@@ -265,9 +265,12 @@ def main():
         create_image(module, ec2)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+if __name__ == "__main__":
 
-main()
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()
 

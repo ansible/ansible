@@ -127,7 +127,10 @@ def main():
         else:
             module.fail_json(msg='HTTP result code: %d connecting to %s' % (info['status'], url))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == "__main__":
+
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()

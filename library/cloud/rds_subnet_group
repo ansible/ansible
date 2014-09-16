@@ -61,7 +61,7 @@ options:
     aliases: [ 'ec2_access_key', 'access_key' ]
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
@@ -142,7 +142,7 @@ def main():
         except BotoServerError, e:
             if e.error_code != 'DBSubnetGroupNotFoundFault':
                 module.fail_json(msg = e.error_message)
-        
+
         if state == 'absent':
             if exists:
                 conn.delete_db_subnet_group(group_name)
@@ -159,8 +159,11 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

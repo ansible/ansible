@@ -73,7 +73,7 @@ options:
       - Kernel id for the EC2 instance
     required: false
     default: null
-    aliases: []    
+    aliases: []
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
@@ -271,4 +271,7 @@ def main():
     elif state == 'absent':
         delete_launch_config(connection, module)
 
-main()
+
+if __name__ == "__main__":
+
+    main()

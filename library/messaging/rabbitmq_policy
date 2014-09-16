@@ -151,6 +151,9 @@ def main():
 
     module.exit_json(changed=changed, name=name, state=state)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

@@ -102,9 +102,12 @@ def main():
 
     cloud_identity(module, state, pyrax.identity)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
 
-### invoke the module
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.rax import *
+
+    ### invoke the module
+    main()

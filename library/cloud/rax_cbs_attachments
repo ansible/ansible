@@ -218,9 +218,12 @@ def main():
     cloud_block_storage_attachments(module, state, volume, server, device,
                                     wait, wait_timeout)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
 
-### invoke the module
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.rax import *
+
+    ### invoke the module
+    main()

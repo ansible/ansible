@@ -112,7 +112,7 @@ EXAMPLES = """
 
 - name: Comment on issue
   jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=comment 
+        issue={{issue.meta.key}} operation=comment
         comment="A comment added by Ansible"
 
 # Assign an existing issue using edit
@@ -125,20 +125,20 @@ EXAMPLES = """
 - name: Create an assigned issue
   jira: uri={{server}} username={{user}} password={{pass}}
         project=ANS operation=create
-        summary="Assigned issue" description="Created and assigned using Ansible" 
+        summary="Assigned issue" description="Created and assigned using Ansible"
         issuetype=Task assignee=ssmith
 
 # Edit an issue using free-form fields
 - name: Set the labels on an issue using free-form fields
   jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit 
+        issue={{issue.meta.key}} operation=edit
   args: { fields: {labels: ["autocreated", "ansible"]}}
 
 - name: Set the labels on an issue, YAML version
   jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit 
-  args: 
-    fields: 
+        issue={{issue.meta.key}} operation=edit
+  args:
+    fields:
       labels:
         - "autocreated"
         - "ansible"
@@ -175,7 +175,7 @@ def request(url, user, passwd, data=None, method=None):
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    response, info = fetch_url(module, url, data=data, method=method, 
+    response, info = fetch_url(module, url, data=data, method=method,
                                headers={'Content-Type':'application/json',
                                         'Authorization':"Basic %s" % auth})
 
@@ -214,7 +214,7 @@ def create(restbase, user, passwd, params):
 
     url = restbase + '/issue/'
 
-    ret = post(url, user, passwd, data) 
+    ret = post(url, user, passwd, data)
 
     return ret
 
@@ -236,16 +236,16 @@ def edit(restbase, user, passwd, params):
         'fields': params['fields']
         }
 
-    url = restbase + '/issue/' + params['issue']    
+    url = restbase + '/issue/' + params['issue']
 
-    ret = put(url, user, passwd, data) 
+    ret = put(url, user, passwd, data)
 
     return ret
 
 
 def fetch(restbase, user, passwd, params):
     url = restbase + '/issue/' + params['issue']
-    ret = get(url, user, passwd) 
+    ret = get(url, user, passwd)
     return ret
 
 
@@ -327,7 +327,7 @@ def main():
 
     # Dispatch
     try:
-        
+
         # Lookup the corresponding method for this operation. This is
         # safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]
@@ -342,6 +342,9 @@ def main():
     module.exit_json(changed=True, meta=ret)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-main()
+if __name__ == "__main__":
+
+
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+    main()

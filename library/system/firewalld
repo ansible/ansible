@@ -128,7 +128,7 @@ def set_port_disabled_permanent(zone, port, protocol):
     fw_settings = fw_zone.getSettings()
     fw_settings.removePort(port, protocol)
     fw_zone.update(fw_settings)
-    
+
 
 ####################
 # service handling
@@ -164,7 +164,7 @@ def set_service_disabled_permanent(zone, service):
     fw_settings = fw_zone.getSettings()
     fw_settings.removeService(service)
     fw_zone.update(fw_settings)
-    
+
 
 ####################
 # rich rule handling
@@ -390,9 +390,12 @@ def main():
     module.exit_json(changed=changed, msg=', '.join(msgs))
 
 
-#################################################
-# import module snippets
-from ansible.module_utils.basic import *
+if __name__ == "__main__":
 
-main()
+
+    #################################################
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

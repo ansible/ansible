@@ -193,8 +193,11 @@ def main():
     # Mission complete
     module.exit_json(src=src, dest=dest, md5sum=pathmd5, changed=changed, msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

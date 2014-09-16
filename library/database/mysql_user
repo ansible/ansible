@@ -123,7 +123,7 @@ EXAMPLES = """
 # Specify grants composed of more than one word
 - mysql_user: name=replication password=12345 priv=*.*:"REPLICATION CLIENT" state=present
 
-# Revoke all privileges for user 'bob' and password '12345' 
+# Revoke all privileges for user 'bob' and password '12345'
 - mysql_user: name=bob password=12345 priv=*.*:USAGE state=present
 
 # Example privileges string format
@@ -341,7 +341,7 @@ def _safe_cnf_load(config, path):
             data['password'] = line.split('=', 1)[1].strip()
     f.close()
 
-    # write out a new cnf file with only user/pass   
+    # write out a new cnf file with only user/pass
     fh, newpath = tempfile.mkstemp(prefix=path + '.')
     f = open(newpath, 'wb')
     f.write('[client]\n')
@@ -471,6 +471,9 @@ def main():
             changed = False
     module.exit_json(changed=changed, user=user)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

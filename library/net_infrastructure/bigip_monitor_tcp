@@ -94,19 +94,19 @@ options:
         required: true
         default: none
     ip:
-        description: 
+        description:
             - IP address part of the ipport definition. The default API setting
               is "0.0.0.0".
         required: false
         default: none
     port:
-        description: 
+        description:
             - port address part op the ipport definition. The default API
               setting is 0.
         required: false
         default: none
     interval:
-        description: 
+        description:
             - The interval specifying how frequently the monitor instance
               of this template will run. By default, this interval is used for up and
               down states. The default API setting is 5.
@@ -218,7 +218,7 @@ def check_monitor_exists(module, api, monitor, parent):
 
 def create_monitor(api, monitor, template_attributes):
 
-    try: 
+    try:
         api.LocalLB.Monitor.create_template(templates=[{'template_name': monitor, 'template_type': TEMPLATE_TYPE}], template_attributes=[template_attributes])
     except bigsuds.OperationFailed, e:
         if "already exists" in str(e):
@@ -319,7 +319,7 @@ def set_ipport(api, monitor, ipport):
 # ===========================================
 # main loop
 #
-# writing a module for other monitor types should 
+# writing a module for other monitor types should
 # only need an updated main() (and monitor specific functions)
 
 def main():
@@ -386,17 +386,17 @@ def main():
         if port is None:
             port = cur_ipport['ipport']['port']
     else: # use API defaults if not defined to create it
-        if interval is None:        
+        if interval is None:
             interval = 5
-        if timeout is None:         
+        if timeout is None:
             timeout = 16
-        if ip is None:              
+        if ip is None:
             ip = '0.0.0.0'
-        if port is None:            
+        if port is None:
             port = 0
-        if send is None:            
+        if send is None:
             send = ''
-        if receive is None:         
+        if receive is None:
             receive = ''
 
     # define and set address type
@@ -445,7 +445,7 @@ def main():
         if state == 'absent':
             if monitor_exists:
                 if not module.check_mode:
-                    # possible race condition if same task 
+                    # possible race condition if same task
                     # on other node deleted it first
                     result['changed'] |= delete_monitor(api, monitor)
                 else:
@@ -454,11 +454,11 @@ def main():
         else: # state present
             ## check for monitor itself
             if not monitor_exists: # create it
-                if not module.check_mode: 
+                if not module.check_mode:
                     # again, check changed status here b/c race conditions
                     # if other task already created it
                     result['changed'] |= create_monitor(api, monitor, template_attributes)
-                else: 
+                else:
                     result['changed'] |= True
 
             ## check for monitor parameters
@@ -473,7 +473,7 @@ def main():
 
             # we just have to update the ipport if monitor already exists and it's different
             if monitor_exists and cur_ipport != ipport:
-                set_ipport(api, monitor, ipport)    
+                set_ipport(api, monitor, ipport)
                 result['changed'] |= True
             #else: monitor doesn't exist (check mode) or ipport is already ok
 
@@ -483,7 +483,10 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()
 

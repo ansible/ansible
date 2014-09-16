@@ -153,7 +153,7 @@ def main():
         if key:
             # existing key found
             if key_material:
-                # EC2's fingerprints are non-trivial to generate, so push this key 
+                # EC2's fingerprints are non-trivial to generate, so push this key
                 # to a temporary name and make ec2 calculate the fingerprint for us.
                 #
                 # http://blog.jbrowne.com/?p=23
@@ -176,7 +176,7 @@ def main():
                 if key.fingerprint != tmpfingerprint:
                     if not module.check_mode:
                         key.delete()
-                        key = ec2.import_key_pair(name, key_material)    
+                        key = ec2.import_key_pair(name, key_material)
 
                         if wait:
                             start = time.time()
@@ -201,7 +201,7 @@ def main():
                     key = ec2.import_key_pair(name, key_material)
                 else:
                     '''
-                    No material provided, let AWS handle the key creation and 
+                    No material provided, let AWS handle the key creation and
                     retrieve the private key
                     '''
                     key = ec2.create_key_pair(name)
@@ -231,8 +231,11 @@ def main():
     else:
         module.exit_json(changed=changed, key=None)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

@@ -137,10 +137,13 @@ def main():
     data = run_setup(module)
     module.exit_json(**data)
 
-# import module snippets
 
-from ansible.module_utils.basic import *
+if __name__ == "__main__":
 
-from ansible.module_utils.facts import *
+    # import module snippets
 
-main()
+    from ansible.module_utils.basic import *
+
+    from ansible.module_utils.facts import *
+
+    main()

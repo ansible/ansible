@@ -105,7 +105,7 @@ def download_url(url, dest):
         response = urlopen(request)
     except URLError, e:
         raise ModuleError("Failed to get %s: %s" % (url, str(e)))
-    
+
     try:
         with open(dest, 'w') as f:
             shutil.copyfileobj(response, f)
@@ -231,6 +231,9 @@ def main():
         module.exit_json(changed=changed, name=name)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == "__main__":
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

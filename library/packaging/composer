@@ -136,7 +136,7 @@ def main():
     if module.check_mode:
         options.add("--dry-run")
 
-    # Get composer command with fallback to default  
+    # Get composer command with fallback to default
     command = module.params['command']
     del module.params['command'];
 
@@ -158,7 +158,10 @@ def main():
         output = parse_out(out)
         module.exit_json(changed=has_changed(output), msg=output)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

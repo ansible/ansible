@@ -51,7 +51,7 @@ options:
         description:
             - If a supplied key is missing this will make the task fail if True
 
-notes: 
+notes:
    - "Not all databases support enumeration, check system documentation for details"
 requirements: [ ]
 author: Brian Coca
@@ -136,8 +136,11 @@ def main():
 
     module.fail_json(msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

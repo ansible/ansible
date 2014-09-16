@@ -24,7 +24,7 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.  
+      - Specifies the action to take.
     required: true
     default: null
     aliases: []
@@ -43,7 +43,7 @@ options:
     aliases: []
   db_engine:
     description:
-      - The type of database.  Used only when command=create. 
+      - The type of database.  Used only when command=create.
     required: false
     default: null
     aliases: []
@@ -56,7 +56,7 @@ options:
     aliases: []
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance. 
+      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance.
     required: false
     default: null
     aliases: []
@@ -98,7 +98,7 @@ options:
     aliases: []
   license_model:
     description:
-      - The license model for this DB instance. Used only when command=create or command=restore. 
+      - The license model for this DB instance. Used only when command=create or command=restore.
     required: false
     default: null
     aliases: []
@@ -106,7 +106,7 @@ options:
   multi_zone:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or command=modify.
-    choices: [ "yes", "no" ] 
+    choices: [ "yes", "no" ]
     required: false
     default: null
     aliases: []
@@ -136,7 +136,7 @@ options:
     aliases: []
   upgrade:
     description:
-      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate. 
+      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate.
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -185,7 +185,7 @@ options:
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
@@ -261,7 +261,7 @@ EXAMPLES = '''
       instance_name=new_database
       new_instance_name=renamed_database
       wait=yes
-    
+
 '''
 
 import sys
@@ -288,7 +288,7 @@ def main():
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
-            size              = dict(required=False), 
+            size              = dict(required=False),
             instance_type     = dict(aliases=['type'], required=False),
             username          = dict(required=False),
             password          = dict(no_log=True, required=False),
@@ -297,7 +297,7 @@ def main():
             parameter_group   = dict(required=False),
             license_model     = dict(choices=['license-included', 'bring-your-own-license', 'general-public-license'], required=False),
             multi_zone        = dict(type='bool', default=False),
-            iops              = dict(required=False), 
+            iops              = dict(required=False),
             security_groups   = dict(required=False),
             vpc_security_groups = dict(type='list', required=False),
             port              = dict(required=False),
@@ -305,7 +305,7 @@ def main():
             option_group      = dict(required=False),
             maint_window      = dict(required=False),
             backup_window     = dict(required=False),
-            backup_retention  = dict(required=False), 
+            backup_retention  = dict(required=False),
             zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
             subnet            = dict(required=False),
             wait              = dict(type='bool', default=False),
@@ -398,7 +398,7 @@ def main():
     elif command == 'promote':
         required_vars = [ 'instance_name' ]
         invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
-    
+
     elif command == 'snapshot':
         required_vars = [ 'instance_name', 'snapshot']
         invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'apply_immediately', 'new_instance_name' ]
@@ -406,11 +406,11 @@ def main():
     elif command == 'restore':
         required_vars = [ 'instance_name', 'snapshot', 'instance_type' ]
         invalid_vars = [ 'db_engine', 'db_name', 'username', 'password', 'engine_version',  'option_group', 'source_instance', 'apply_immediately', 'new_instance_name', 'vpc_security_groups', 'security_groups' ]
- 
+
     for v in required_vars:
         if not module.params.get(v):
             module.fail_json(msg = str("Parameter %s required for %s command" % (v, command)))
-            
+
     for v in invalid_vars:
         if module.params.get(v):
             module.fail_json(msg = str("Parameter %s invalid for %s command" % (v, command)))
@@ -429,7 +429,7 @@ def main():
 
     if zone:
         params["availability_zone"] = zone
-  
+
     if maint_window:
         params["preferred_maintenance_window"] = maint_window
 
@@ -480,7 +480,7 @@ def main():
             changed = False
         except boto.exception.BotoServerError, e:
             try:
-                if command == 'create': 
+                if command == 'create':
                     result = conn.create_dbinstance(instance_name, size, instance_type, username, password, **params)
                 if command == 'restore':
                     result = conn.restore_dbinstance_from_dbsnapshot(snapshot, instance_name, instance_type, **params)
@@ -498,7 +498,7 @@ def main():
                 result = conn.create_dbsnapshot(snapshot, instance_name)
             except boto.exception.BotoServerError, e:
                 module.fail_json(msg = e.error_message)
-        
+
     if command == 'delete':
         try:
             result = conn.get_all_dbinstances(instance_name)[0]
@@ -517,7 +517,7 @@ def main():
             module.fail_json(msg = e.error_message)
 
     if command == 'replicate':
-        try: 
+        try:
             if instance_type:
                 params["instance_class"] = instance_type
             result = conn.create_dbinstance_read_replica(instance_name, source_instance, **params)
@@ -571,7 +571,7 @@ def main():
 
     # Wait for the resource to be available if requested
     if wait:
-        try: 
+        try:
             wait_timeout = time.time() + wait_timeout
             time.sleep(5)
 
@@ -582,17 +582,17 @@ def main():
                 resource = get_current_resource(conn, result.id, command)
         except boto.exception.BotoServerError, e:
             # If we're waiting for an instance to be deleted then
-            # get_all_dbinstances will eventually throw a 
+            # get_all_dbinstances will eventually throw a
             # DBInstanceNotFound error.
             if command == 'delete' and e.error_code == 'DBInstanceNotFound':
-                module.exit_json(changed=True)                
+                module.exit_json(changed=True)
             else:
                 module.fail_json(msg = e.error_message)
 
     # If we got here then pack up all the instance details to send
     # back to ansible
     if command == 'snapshot':
-        d = { 
+        d = {
             'id'                 : resource.id,
             'create_time'        : resource.snapshot_create_time,
             'status'             : resource.status,
@@ -643,8 +643,11 @@ def main():
 
     module.exit_json(changed=changed, instance=d)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

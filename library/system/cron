@@ -517,8 +517,11 @@ def main():
     # --- should never get here
     module.exit_json(msg="Unable to execute cron task.")
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()
 

@@ -75,7 +75,7 @@ options:
     aliases: [ 'ec2_access_key', 'access_key' ]
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
@@ -209,7 +209,7 @@ def modify_group(group, params, immediate=False):
                     raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
                 changed[key] = {'old': param.value, 'new': new_value}
-                
+
                 set_parameter(param, new_value, immediate)
 
                 del new_params[key]
@@ -269,7 +269,7 @@ def main():
             if e.error_code != 'DBParameterGroupNotFound':
                 module.fail_json(msg = e.error_message)
             exists = False
-        
+
         if state == 'absent':
             if exists:
                 conn.delete_parameter_group(group_name)
@@ -293,7 +293,7 @@ def main():
                     marker = next_group.Marker
                 else:
                     break
-                
+
 
     except BotoServerError, e:
         module.fail_json(msg = e.error_message)
@@ -306,8 +306,11 @@ def main():
 
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

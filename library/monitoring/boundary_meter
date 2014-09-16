@@ -89,7 +89,7 @@ def auth_encode(apikey):
     auth = base64.standard_b64encode(apikey)
     auth.replace("\n", "")
     return auth
-    
+
 def build_url(name, apiid, action, meter_id=None, cert_type=None):
     if action == "create":
         return 'https://%s/%s/meters' % (api_host, apiid)
@@ -103,7 +103,7 @@ def build_url(name, apiid, action, meter_id=None, cert_type=None):
         return  "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
 def http_request(module, name, apiid, apikey, action, data=None, meter_id=None, cert_type=None):
-    
+
     if meter_id is None:
         url = build_url(name, apiid, action)
     else:
@@ -191,7 +191,7 @@ def delete_meter(module, name, apiid, apikey):
             try:
                 cert_file = '%s/%s.pem' % (config_directory,cert_type)
                 os.remove(cert_file)
-            except OSError, e:  
+            except OSError, e:
                 module.fail_json("Failed to remove " + cert_type + ".pem file")
 
     return 0, "Meter " + name + " deleted"
@@ -214,7 +214,7 @@ def download_request(module, name, apiid, apikey, cert_type):
                 cert_file.write(body)
                 cert_file.close
                 os.chmod(cert_file_path, 0o600)
-            except: 
+            except:
                 module.fail_json("Could not write to certificate file")
 
         return True
@@ -249,8 +249,11 @@ def main():
 
     module.exit_json(status=result,changed=True)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+    main()
 

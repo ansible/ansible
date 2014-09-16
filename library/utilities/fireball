@@ -49,7 +49,7 @@ author: Michael DeHaan
 '''
 
 EXAMPLES = '''
-# This example playbook has two plays: the first launches 'fireball' mode on all hosts via SSH, and 
+# This example playbook has two plays: the first launches 'fireball' mode on all hosts via SSH, and
 # the second actually starts using it for subsequent management over the fireball connection
 
 - hosts: devservers
@@ -275,6 +275,9 @@ def main():
     daemonize(module, password, port, minutes)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == "__main__":
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

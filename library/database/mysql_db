@@ -332,8 +332,8 @@ def main():
             except Exception, e:
                 module.fail_json(msg="error deleting database: " + str(e))
         elif state == "dump":
-            rc, stdout, stderr = db_dump(module, login_host, login_user, 
-                                        login_password, db, target, 
+            rc, stdout, stderr = db_dump(module, login_host, login_user,
+                                        login_password, db, target,
                                         port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
@@ -341,8 +341,8 @@ def main():
             else:
                 module.exit_json(changed=True, db=db, msg=stdout)
         elif state == "import":
-            rc, stdout, stderr = db_import(module, login_host, login_user, 
-                                        login_password, db, target, 
+            rc, stdout, stderr = db_import(module, login_host, login_user,
+                                        login_password, db, target,
                                         port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
@@ -358,6 +358,9 @@ def main():
 
     module.exit_json(changed=changed, db=db)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

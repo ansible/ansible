@@ -55,10 +55,10 @@ options:
     choices: [ "yes", "no" ]
   wait:
     description:
-      - Wait for instance registration or deregistration to complete successfully before returning.  
+      - Wait for instance registration or deregistration to complete successfully before returning.
     required: false
     default: yes
-    choices: [ "yes", "no" ] 
+    choices: [ "yes", "no" ]
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
@@ -128,9 +128,9 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) 
+            initial_state = self._get_instance_health(lb)
             if initial_state is None:
-                # The instance isn't registered with this ELB so just 
+                # The instance isn't registered with this ELB so just
                 # return unchanged
                 return
 
@@ -256,7 +256,7 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         try:
-            elb = connect_to_aws(boto.ec2.elb, self.region, 
+            elb = connect_to_aws(boto.ec2.elb, self.region,
                                  **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
@@ -276,7 +276,7 @@ class ElbManager:
     def _get_instance(self):
         """Returns a boto.ec2.InstanceObject for self.instance_id"""
         try:
-            ec2 = connect_to_aws(boto.ec2, self.region, 
+            ec2 = connect_to_aws(boto.ec2, self.region,
                                  **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
@@ -301,7 +301,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
-    if not region: 
+    if not region:
         module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
 
     ec2_elbs = module.params['ec2_elbs']
@@ -313,7 +313,7 @@ def main():
         module.fail_json(msg="ELBs are required for registration")
 
     instance_id = module.params['instance_id']
-    elb_man = ElbManager(module, instance_id, ec2_elbs, 
+    elb_man = ElbManager(module, instance_id, ec2_elbs,
                          region=region, **aws_connect_params)
 
     if ec2_elbs is not None:
@@ -332,8 +332,11 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.ec2 import *
+
+    main()

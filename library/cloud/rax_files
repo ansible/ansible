@@ -373,7 +373,10 @@ def main():
                private, web_index, web_error)
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
+if __name__ == "__main__":
 
-main()
+
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.rax import *
+
+    main()

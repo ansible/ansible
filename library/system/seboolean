@@ -207,6 +207,9 @@ def main():
         module.fail_json(msg="Failed to commit pending boolean %s value" % name)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

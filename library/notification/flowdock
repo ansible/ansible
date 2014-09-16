@@ -135,7 +135,7 @@ def main():
         url = "https://api.flowdock.com/v1/messages/team_inbox/%s" % (token)
     else:
         url = "https://api.flowdock.com/v1/messages/chat/%s" % (token)
-    
+
     params = {}
 
     # required params
@@ -184,9 +184,12 @@ def main():
 
     module.exit_json(changed=True, msg=module.params["msg"])
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+
+    main()
 

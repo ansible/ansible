@@ -26,7 +26,7 @@ description:
 version_added: "1.1"
 author: Vincent Van der Kussen
 notes:
-    - this module fetches the system id from RHN. 
+    - this module fetches the system id from RHN.
 requirements:
     - none
 options:
@@ -46,7 +46,7 @@ options:
         required: false
         default: present
     url:
-        description: 
+        description:
             - The full url to the RHN/Satellite api
         required: true
     user:
@@ -135,18 +135,18 @@ def main():
     saturl = module.params['url']
     user = module.params['user']
     password = module.params['password']
-    
+
     #initialize connection
     client = xmlrpclib.Server(saturl, verbose=0)
     session = client.auth.login(user, password)
-     
+
     # get systemid
     sys_id = get_systemid(client, session, systname)
 
     # get channels for system
     chans = base_channels(client, session, sys_id)
-    
-    
+
+
     if state == 'present':
         if channelname in chans:
             module.exit_json(changed=False, msg="Channel %s already exists" % channelname)
@@ -164,6 +164,9 @@ def main():
     client.auth.logout(session)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == "__main__":
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

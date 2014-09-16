@@ -38,14 +38,14 @@ DOCUMENTATION = '''
 module: wait_for
 short_description: Waits for a condition before continuing.
 description:
-     - Waiting for a port to become available is useful for when services 
-       are not immediately available after their init scripts return - 
-       which is true of certain Java application servers. It is also 
+     - Waiting for a port to become available is useful for when services
+       are not immediately available after their init scripts return -
+       which is true of certain Java application servers. It is also
        useful when starting guests with the M(virt) module and
-       needing to pause until they are ready. 
+       needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
-     - In 1.6 and later, this module can 
-       also be used to wait for a file to be available or absent on the 
+     - In 1.6 and later, this module can
+       also be used to wait for a file to be available or absent on the
        filesystem.
      - In 1.8 and later, this module can also be used to wait for active
        connections to be closed before continuing, useful if a node
@@ -118,7 +118,7 @@ EXAMPLES = '''
 - wait_for: path=/tmp/foo search_regex=completed
 
 # wait until the lock file is removed
-- wait_for: path=/var/lock/file.lock state=absent 
+- wait_for: path=/var/lock/file.lock state=absent
 
 # wait until the process is finished and pid was destroyed
 - wait_for: path=/proc/3466/status state=absent
@@ -326,7 +326,7 @@ def main():
         exclude_hosts = params['exclude_hosts'].split(',')
     else:
         exclude_hosts = []
-    
+
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for")
     if path and state == 'stopped':
@@ -335,7 +335,7 @@ def main():
         module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
     if exclude_hosts and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
-        
+
     start = datetime.datetime.now()
 
     if delay:
@@ -457,6 +457,9 @@ def main():
     elapsed = datetime.datetime.now() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

@@ -307,7 +307,10 @@ def main():
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
         sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+    main()

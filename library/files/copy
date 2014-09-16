@@ -205,7 +205,7 @@ def main():
                 # os.path.exists() can return false in some
                 # circumstances where the directory does not have
                 # the execute bit for the current user set, in
-                # which case the stat() call will raise an OSError 
+                # which case the stat() call will raise an OSError
                 os.stat(os.path.dirname(dest))
             except OSError, e:
                 if "permission denied" in str(e).lower():
@@ -249,6 +249,9 @@ def main():
 
     module.exit_json(**res_args)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

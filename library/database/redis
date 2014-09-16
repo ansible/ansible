@@ -306,7 +306,7 @@ def main():
         except Exception, e:
             module.fail_json(msg="unable to connect to database: %s" % e)
 
-        
+
         try:
             old_value = r.config_get(name)[name]
         except Exception, e:
@@ -324,6 +324,9 @@ def main():
     else:
         module.fail_json(msg='A valid command must be provided')
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

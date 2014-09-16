@@ -242,8 +242,11 @@ def main():
         _remove_interface_router(neutron, module, router_id, subnet_id)
         module.exit_json(changed=True, result="Deleted")
 
-# this is magic, see lib/ansible/module.params['common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
-main()
+
+if __name__ == "__main__":
+
+    # this is magic, see lib/ansible/module.params['common.py
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.openstack import *
+    main()
 

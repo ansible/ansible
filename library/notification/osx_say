@@ -26,7 +26,7 @@ short_description: Makes an OSX computer to speak.
 description:
    - makes an OS computer speak!  Amuse your friends, annoy your coworkers!
 notes:
-   - If you like this module, you may also be interested in the osx_say callback in the plugins/ directory of the source checkout. 
+   - If you like this module, you may also be interested in the osx_say callback in the plugins/ directory of the source checkout.
 options:
   msg:
     description:
@@ -67,8 +67,11 @@ def main():
 
     say(module, msg, voice)
 
-    module.exit_json(msg=msg, changed=False) 
+    module.exit_json(msg=msg, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    main()

@@ -199,8 +199,11 @@ def main():
     RpmKey(module)
 
 
+if __name__ == "__main__":
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-main()
+
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.urls import *
+    main()

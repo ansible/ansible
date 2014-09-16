@@ -212,9 +212,12 @@ def main():
     rax_cdb_user(module, state, cdb_id, name, password, databases, host)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
+if __name__ == "__main__":
 
-# invoke the module
-main()
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.rax import *
+
+    # invoke the module
+    main()

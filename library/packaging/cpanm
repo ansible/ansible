@@ -77,7 +77,7 @@ def _is_package_installed(module, name, locallib, cpanm):
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
     if res == 0:
        return True
-    else: 
+    else:
        return False
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm):
@@ -139,7 +139,10 @@ def main():
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == "__main__":
+
+    # import module snippets
+    from ansible.module_utils.basic import *
+
+    main()

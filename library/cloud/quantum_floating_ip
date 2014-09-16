@@ -259,8 +259,11 @@ def main():
             _update_floating_ip(neutron, module, None, floating_id)
         module.exit_json(changed=False)
 
-# this is magic, see lib/ansible/module.params['common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
-main()
+
+if __name__ == "__main__":
+
+    # this is magic, see lib/ansible/module.params['common.py
+    from ansible.module_utils.basic import *
+    from ansible.module_utils.openstack import *
+    main()
 
