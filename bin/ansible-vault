@@ -15,10 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# ansible-pull is a script that runs ansible in local mode
-# after checking out a playbooks directory from source repo.  There is an
-# example playbook to bootstrap this script in the examples/ dir which
-# installs ansible and sets it up to run on cron.
+# ansible-vault is a script that encrypts/decrypts YAML files. See
+# http://docs.ansible.com/playbooks_vault.html for more details.
 
 #__requires__ = ['ansible']
 #import pkg_resources
