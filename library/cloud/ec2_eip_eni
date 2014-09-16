@@ -65,6 +65,7 @@ EXAMPLES = """
 """
 
 import sys
+import subprocess
 
 try:
     import boto.ec2
@@ -102,7 +103,9 @@ class EIP(object):
             self.subnet_id = self.eni.subnet_id
             self.allocation_id = self.eni.tags['allocation_id']
         else:
-            self.public_ip = None
+            response =  subprocess.check_output(['dig', '+short', self.fqdn, '@8.8.8.8']).strip()
+            if reponse:
+                (_, self.public_ip) = response.split('\n')
             self.subnet_id = self.vpc.subnets[0]
             self.allocation_id = None
 
@@ -114,21 +117,30 @@ class EIP(object):
         {'fqdn': '', 'allocation_id': '', 'public_ip': ''}
         ENI get created in the VPC, random first subnet is taken
         """
-        eip = self.ec2.allocate_address(domain='vpc')
-        if eip.allocation_id:
-            self.public_ip = eip.public_ip
+        if self.public_ip:
+            filters = {}
+            filters['public-ip']=self.public_ip
+            eip = self.ec2.get_all_addresses(filters=filters)[0]
             self.allocation_id = eip.allocation_id
-            eni = self.ec2.create_network_interface(self.subnet_id)
-            if eni.id:
-                tagdict = dict(fqdn=self.fqdn,
-                               public_ip=self.public_ip,
-                               allocation_id=self.allocation_id)
-                tags = self.ec2.create_tags(eni.id, tagdict)
-                if tags:
-                    self.eni = eni
-                    return eip.allocation_id
         else:
-            module.fail_json(msg="could not create Elastic IP")
+            eip = self.ec2.allocate_address(domain='vpc')
+            if eip.allocation_id:
+                self.public_ip = eip.public_ip
+                self.allocation_id = eip.allocation_id
+            else:
+                module.fail_json(msg="could not create Elastic IP Address")
+
+        eni = self.ec2.create_network_interface(self.subnet_id)
+        if eni.id:
+            tagdict = dict(fqdn=self.fqdn,
+                           public_ip=self.public_ip,
+                           allocation_id=self.allocation_id)
+            tags = self.ec2.create_tags(eni.id, tagdict)
+            if tags:
+                self.eni = eni
+                return eip.allocation_id
+            else:
+                module.fail_json(msg="could not create Elastic Network Interface")
 
     def delete(self):
         """
@@ -159,6 +171,7 @@ class EIP(object):
         #eni_ids = [i.id for i in enis]
         if enis:
             return enis[0]
+
 
     def associate(self, interface_id):
         """
