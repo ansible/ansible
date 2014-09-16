@@ -31,6 +31,8 @@ New Modules:
 
 Some other notable changes:
 
+* added the ability to set "instance filters" in the ec2.ini to limit results from the inventory plugin.
+* added a new "follow" parameter to the file and copy modules, which allows actions to be taken on the target of a symlink rather than the symlink itself.
 * if a module should ever traceback, it will return a standard error, catchable by ignore_errors, versus an 'unreachable'
 * ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
 * ec2_elb_lb: added support for the connection_draining_timeout and cross_az_load_balancing options.
