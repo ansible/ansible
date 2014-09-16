@@ -17,10 +17,10 @@
 DOCUMENTATION = """
 ---
 module: ec2_elb_lb
-description: Creates or destroys Amazon ELB.
-short_description: Creates or destroys Amazon ELB.
+description:
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.
+short_description: Creates or destroys Amazon ELB.
 version_added: "1.5"
 author: Jim Dalton
 options:
