@@ -230,26 +230,35 @@ class VaultEditor(object):
         _, tmp_path = tempfile.mkstemp()
         self.write_data(dec_data, tmp_path)
 
+        old_file_status = os.stat(tmp_path)
+        old_data_md5 = md5(dec_data).digest()
+
         # drop the user into vim on the tmp file
         EDITOR = os.environ.get('EDITOR','vim')
         call([EDITOR, tmp_path])
+
         new_data = self.read_data(tmp_path)
+        new_file_status = os.stat(tmp_path)
+        new_data_md5 = md5(new_data).digest()
+        
+        if (old_file_status.st_size != new_file_status.st_size or
+                old_file_status.st_mtime != new_file_status.st_mtime or
+                old_data_md5 != new_data_md5):
+            # create new vault
+            new_vault = VaultLib(self.password)
 
-        # create new vault
-        new_vault = VaultLib(self.password)
+            # we want the cipher to default to AES256
+            #new_vault.cipher_name = this_vault.cipher_name
 
-        # we want the cipher to default to AES256
-        #new_vault.cipher_name = this_vault.cipher_name
+            # encrypt new data a write out to tmp
+            enc_data = new_vault.encrypt(new_data)
+            self.write_data(enc_data, tmp_path)
 
-        # encrypt new data a write out to tmp
-        enc_data = new_vault.encrypt(new_data)
-        self.write_data(enc_data, tmp_path)
+            # shuffle tmp file into place
+            self.shuffle_files(tmp_path, self.filename)
 
-        # shuffle tmp file into place
-        self.shuffle_files(tmp_path, self.filename)
-
-        # and restore the old umask
-        os.umask(old_mask)
+            # and restore the old umask
+            os.umask(old_mask)
 
     def view_file(self):
 
