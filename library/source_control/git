@@ -65,8 +65,7 @@ options:
         default: None
         version_added: "1.5"
         description:
-            - Uses the same wrapper method as ssh_opts to pass 
-              "-i <key_file>" to the ssh arguments used by git
+            - Specify an optional private key file to use for the checkout.
     reference:
         required: false
         default: null
