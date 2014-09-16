@@ -240,10 +240,11 @@ class VaultEditor(object):
         new_data = self.read_data(tmp_path)
         new_file_status = os.stat(tmp_path)
         new_data_md5 = md5(new_data).digest()
-        
+       
         if (old_file_status.st_size != new_file_status.st_size or
                 old_file_status.st_mtime != new_file_status.st_mtime or
-                old_data_md5 != new_data_md5):
+                old_data_md5 != new_data_md5 or not
+                self.shred_file(tmp_path)):
             # create new vault
             new_vault = VaultLib(self.password)
 
@@ -313,6 +314,15 @@ class VaultEditor(object):
         # re-encrypt data and re-write file
         enc_data = new_vault.encrypt(dec_data)
         self.write_data(enc_data, self.filename)
+
+    def shred_file(self, file_path):
+        # event though it could be implemented in-program it's more safe to use
+        # well tested and well known tool
+        try:
+            call(['shred', '-u', file_path])
+        except OSError:
+            return False
+        return True
 
     def read_data(self, filename):
         f = open(filename, "rb")
