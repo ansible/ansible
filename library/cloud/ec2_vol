@@ -94,7 +94,7 @@ options:
     version_added: "1.5"
   state:
     description: 
-      - whether to ensure the volume is present or absent, or to list existing volumes
+      - whether to ensure the volume is present or absent, or to list existing volumes (The C(list) option was added in version 1.8).
     required: false
     default: present
     choices: ['absent', 'present', 'list']
