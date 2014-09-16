@@ -100,12 +100,16 @@ class EIP(object):
         self.eni = self.find(self.fqdn)
         if self.eni:
             self.public_ip = self.eni.tags['public_ip']
+            self.cname = subprocess.check_output(['dig', '-x', self.public_ip, '+short']).strip()
             self.subnet_id = self.eni.subnet_id
             self.allocation_id = self.eni.tags['allocation_id']
         else:
             response =  subprocess.check_output(['dig', '+short', self.fqdn, '@8.8.8.8']).strip()
-            if reponse:
-                (_, self.public_ip) = response.split('\n')
+            if response:
+                (self.cname, self.public_ip) = response.split('\n')
+            else:
+                self.cname = None
+                self.public_ip = None
             self.subnet_id = self.vpc.subnets[0]
             self.allocation_id = None
 
@@ -117,15 +121,16 @@ class EIP(object):
         {'fqdn': '', 'allocation_id': '', 'public_ip': ''}
         ENI get created in the VPC, random first subnet is taken
         """
-        if self.public_ip:
+        if getattr(self, 'public_ip'):
             filters = {}
-            filters['public-ip']=self.public_ip
+            filters['public-ip'] = self.public_ip
             eip = self.ec2.get_all_addresses(filters=filters)[0]
             self.allocation_id = eip.allocation_id
         else:
             eip = self.ec2.allocate_address(domain='vpc')
             if eip.allocation_id:
                 self.public_ip = eip.public_ip
+                self.cname = subprocess.check_output(['dig', '-x', self.public_ip, '+short']).strip()
                 self.allocation_id = eip.allocation_id
             else:
                 module.fail_json(msg="could not create Elastic IP Address")
@@ -231,7 +236,7 @@ def main():
         ansible_facts['allocation_id'] = eip.allocation_id
         ansible_facts['fqdn'] = eip.fqdn
         ansible_facts['public_ip'] = eip.public_ip
-
+        ansible_facts['cname'] = eip.cname
 
 
     if state == 'absent':
