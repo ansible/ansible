@@ -181,6 +181,7 @@ class Runner(object):
         self.always_run       = None
         self.connector        = connection.Connector(self)
         self.conditional      = conditional
+        self.delegate_to      = None
         self.module_name      = module_name
         self.forks            = int(forks)
         self.pattern          = pattern
@@ -312,16 +313,13 @@ class Runner(object):
 
     # *****************************************************
 
-    def _compute_delegate(self, host, password, remote_inject):
+    def _compute_delegate(self, password, remote_inject):
 
         """ Build a dictionary of all attributes for the delegate host """
 
         delegate = {}
 
         # allow delegated host to be templated
-        delegate['host'] = template.template(self.basedir, host,
-                                remote_inject, fail_on_undefined=True)
-
         delegate['inject'] = remote_inject.copy()
 
         # set any interpreters
@@ -333,36 +331,33 @@ class Runner(object):
             del delegate['inject'][i]
         port = C.DEFAULT_REMOTE_PORT
 
-        this_host = delegate['host']
-
         # get the vars for the delegate by its name
         try:
-            this_info = delegate['inject']['hostvars'][this_host]
+            this_info = delegate['inject']['hostvars'][self.delegate_to]
         except:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
 
         # get the real ssh_address for the delegate
         # and allow ansible_ssh_host to be templated
-        delegate['ssh_host'] = template.template(self.basedir,
-                            this_info.get('ansible_ssh_host', this_host),
-                            this_info, fail_on_undefined=True)
+        delegate['ssh_host'] = template.template(
+                                   self.basedir,
+                                   this_info.get('ansible_ssh_host', self.delegate_to),
+                                   this_info,
+                                   fail_on_undefined=True
+                               )
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
-
-        delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
-
+        delegate['user'] = self._compute_delegate_user(self.delegate_to, delegate['inject'])
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
-        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file',
-                                        self.private_key_file)
+        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', self.private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
 
         # Last chance to get private_key_file from global variables.
         # this is useful if delegated host is not defined in the inventory
         if delegate['private_key_file'] is None:
-            delegate['private_key_file'] = remote_inject.get(
-                'ansible_ssh_private_key_file', None)
+            delegate['private_key_file'] = remote_inject.get('ansible_ssh_private_key_file', None)
 
         if delegate['private_key_file'] is not None:
             delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
@@ -642,11 +637,6 @@ class Runner(object):
             # fireball, local, etc
             port = self.remote_port
 
-        # template this one is available, callbacks use this
-        delegate_to = self.module_vars.get('delegate_to')
-        if delegate_to:
-            self.module_vars['delegate_to'] = template.template(self.basedir, delegate_to, inject)
-
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
@@ -846,9 +836,12 @@ class Runner(object):
 
         # the delegated host may have different SSH port configured, etc
         # and we need to transfer those, and only those, variables
-        delegate_to = inject.get('delegate_to', None)
-        if delegate_to is not None:
-            delegate = self._compute_delegate(delegate_to, actual_pass, inject)
+        self.delegate_to = inject.get('delegate_to', None)
+        if self.delegate_to:
+            self.delegate_to = template.template(self.basedir, self.delegate_to, inject)
+
+        if self.delegate_to is not None:
+            delegate = self._compute_delegate(actual_pass, inject)
             actual_transport = delegate['transport']
             actual_host = delegate['ssh_host']
             actual_port = delegate['port']
@@ -880,7 +873,7 @@ class Runner(object):
 
         try:
             conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
-            if delegate_to or host != actual_host:
+            if self.delegate_to or host != actual_host:
                 conn.delegate = host
 
             default_shell = getattr(conn, 'default_shell', '')
