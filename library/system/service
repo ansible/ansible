@@ -777,7 +777,6 @@ class LinuxService(Service):
         if self.module.check_mode:
             self.module.exit_json(changed=self.changed)
 
-        self.module.fail_json(msg=self.execute_command("%s %s %s" % args))
         return self.execute_command("%s %s %s" % args)
 
 
