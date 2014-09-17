@@ -230,6 +230,9 @@ class AnsibleShell(cmd.Cmd):
     def do_shell(self, arg):
         self.default(arg, True)
 
+    def do_forks(self, arg):
+        self.do_serial(arg)
+
     def do_serial(self, arg):
         """Set the number of forks"""
         if not arg:
