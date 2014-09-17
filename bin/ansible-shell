@@ -77,6 +77,7 @@ class AnsibleShell(cmd.Cmd):
         self.intro = 'Welcome to the ansible-shell.\nType help or ? to list commands.\n'
         self.set_prompt()
         self.modules = self.list_modules()
+        self.modules.remove('shell')
         for module in self.modules:
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
             setattr(self, 'help_' + module, lambda module=module: self.helpdefault(module))
@@ -228,9 +229,21 @@ class AnsibleShell(cmd.Cmd):
         return
 
     def do_shell(self, arg):
+        """
+        You can run shell commands through the shell module.
+
+        eg.:
+        shell ps uax | grep java | wc -l
+        shell killall python
+        shell halt -n
+
+        You can use the ! to force the shell module. eg.:
+        !ps aux | grep java | wc -l
+        """
         self.default(arg, True)
 
     def do_forks(self, arg):
+        """Set the number of forks"""
         self.do_serial(arg)
 
     def do_serial(self, arg):
