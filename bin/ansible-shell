@@ -239,7 +239,14 @@ class AnsibleShell(cmd.Cmd):
         self.set_prompt()
 
     def do_cd(self, arg):
-        """Change active host/group"""
+        """
+            Change active host/group. You can use hosts patterns as well eg.:
+            cd webservers
+            cd webservers:dbservers
+            cd webservers:!phoenix
+            cd webservers:&staging
+            cd webservers:dbservers:&staging:!phoenix
+        """
         if not arg:
             self.options.cwd = ''
         elif arg == '..':
