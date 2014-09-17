@@ -33,9 +33,12 @@ options:
         description:
             - git, SSH, or HTTP protocol address of the git repository.
     dest:
-        required: true
+        required: false
         description:
             - Absolute path of where the repository should be checked out to.
+              This parameter is required, unless C(update) is set to C(no)
+              This change was made in version 1.8. Prior to this version, the
+              C(dest) parameter was always required.
     version:
         required: false
         default: "HEAD"
@@ -474,7 +477,7 @@ def switch_version(git_path, module, dest, remote, version, recursive):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            dest=dict(required=True),
+            dest=dict(),
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
@@ -492,7 +495,7 @@ def main():
         supports_check_mode=True
     )
 
-    dest      = os.path.abspath(os.path.expanduser(module.params['dest']))
+    dest      = module.params['dest']
     repo      = module.params['repo']
     version   = module.params['version']
     remote    = module.params['remote']
@@ -502,9 +505,18 @@ def main():
     bare      = module.params['bare']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
-    
-    key_file   = module.params['key_file']
-    ssh_opts   = module.params['ssh_opts']
+    key_file  = module.params['key_file']
+    ssh_opts  = module.params['ssh_opts']
+
+    gitconfig = None
+    if not dest and update:
+        module.fail_json(msg="the destination directory must be specified unless update=no")
+    elif dest:
+        dest = os.path.abspath(os.path.expanduser(dest))
+        if bare:
+            gitconfig = os.path.join(dest, 'config')
+        else:
+            gitconfig = os.path.join(dest, '.git', 'config')
 
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
@@ -524,23 +536,19 @@ def main():
 
     recursive = module.params['recursive']
 
-    if bare:
-        gitconfig = os.path.join(dest, 'config')
-    else:
-        gitconfig = os.path.join(dest, '.git', 'config')
-
     rc, out, err, status = (0, None, None, None)
 
-    # if there is no git configuration, do a clone operation
-    # else pull and switch the version
     before = None
     local_mods = False
-    if not os.path.exists(gitconfig):
-        if module.check_mode:
+    if gitconfig and not os.path.exists(gitconfig) or not gitconfig and not update:
+        # if there is no git configuration, do a clone operation  unless the
+        # user requested no updates or we're doing a check mode test (in
+        # which case we do a ls-remote), otherwise clone the repo
+        if module.check_mode or not update:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
-        clone(git_path, module, repo, dest, remote, depth, version, bare,
-              reference, recursive)
+        # there's no git config, so clone
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, recursive)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
