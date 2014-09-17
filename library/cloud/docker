@@ -450,7 +450,7 @@ class DockerManager:
         if expose_list:
             exposed = []
             for port in expose_list:
-                port = port.strip()
+                port = str(port).strip()
                 if port.endswith('/tcp') or port.endswith('/udp'):
                     port_with_proto = tuple(port.split('/'))
                 else:
