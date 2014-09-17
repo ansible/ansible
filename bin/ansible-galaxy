@@ -759,6 +759,7 @@ def execute_install(args, options, parser):
                 role_data = api_lookup_role_by_name(api_server, role_src)
                 if not role_data:
                     print "- sorry, %s was not found on %s." % (role_src, api_server)
+                    exit_without_ignore(options)
                     continue
 
                 role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
