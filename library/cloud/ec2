@@ -483,10 +483,10 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-def find_running_instances_by_count_tag(module, ec2, count_tag):
+def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
 
     # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, tags=count_tag, state="running")
+    reservations = get_reservations(module, ec2, tags=count_tag, state="running", zone=zone)
 
     instances = []
     for res in reservations:
@@ -507,7 +507,7 @@ def _set_none_to_blank(dictionary):
     return result                        
 
 
-def get_reservations(module, ec2, tags=None, state=None):
+def get_reservations(module, ec2, tags=None, state=None, zone=None):
 
     # TODO: filters do not work with tags that have underscores
     filters = dict()
@@ -541,6 +541,9 @@ def get_reservations(module, ec2, tags=None, state=None):
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
         filters.update({'instance-state-name': state})
+
+    if zone:
+        filters.update({'availability-zone': zone})
 
     results = ec2.get_all_instances(filters=filters)
 
@@ -655,8 +658,9 @@ def enforce_count(module, ec2):
 
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
+    zone = module.params.get('zone')
 
-    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag)
+    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
 
     changed = None
     checkmode = False
