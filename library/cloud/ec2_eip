@@ -279,7 +279,11 @@ def main():
             instance = find_instance(ec2, instance_id, module)
             if instance.vpc_id:
                 domain = "vpc"
-            address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
+            addresses = ec2.get_all_addresses(filters={'instance-id': instance_id})
+            if len(addresses) >= 1:
+                address = addresses[0]
+            else:
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
             # overriding the timeout since this is a a newly provisioned ip
             global wait_timeout
             wait_timeout = new_eip_timeout       
