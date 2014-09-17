@@ -316,13 +316,12 @@ class AnsibleShell(cmd.Cmd):
             print "Please specify a sudo user, e.g. `sudo_user jenkins`"
             print "Current sudo user is %s" % self.options.sudo_user
 
-    def do_EOF(self, args):
+    def do_exit(self, args):
+        """Exits from the console"""
         sys.stdout.write('\n')
         return -1
 
-    def do_exit(self, args):
-        """Exits from the console"""
-        return -1
+    do_EOF = do_exit
 
     def helpdefault(self, module_name):
         if module_name in self.modules:
