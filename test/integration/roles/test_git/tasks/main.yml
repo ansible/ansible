@@ -134,3 +134,16 @@
     that:
       - 'git_result.changed'
   when: not git_result|skipped
+
+# Test a non-updating repo query with no destination specified
+
+- name: get info on a repo without updating and with no destination specified
+  git:
+    repo: '{{ repo_format1 }}'
+    update: no
+    accept_hostkey: yes
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.changed'
