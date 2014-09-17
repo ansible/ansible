@@ -114,6 +114,9 @@ class AnsibleShell(cmd.Cmd):
         parser.add_option('-i', '--inventory', default=C.DEFAULT_HOST_LIST,
                           dest='host_list',
                           help='Inventory file')
+        parser.add_option('-c', '--connection', default='smart',
+                          dest='connection',
+                          help='connection type to use (default=smart)')
 
         return parser.parse_args()
 
@@ -187,12 +190,16 @@ class AnsibleShell(cmd.Cmd):
         try:
             opts = self.options
             results = ansible.runner.Runner(
-                pattern=self.options.cwd, forks=self.options.serial,
-                module_name=module, module_args=module_args,
+                pattern=self.options.cwd,
+                forks=self.options.serial,
+                module_name=module,
+                module_args=module_args,
                 remote_user=opts.remote_user,
-                sudo=opts.sudo, sudo_user=opts.sudo_user,
+                sudo=opts.sudo,
+                sudo_user=opts.sudo_user,
                 timeout=int(opts.timeout),
-                host_list=opts.host_list
+                host_list=opts.host_list,
+                transport=opts.connection
             ).run()
             if results is None:
                 print "No hosts found"
