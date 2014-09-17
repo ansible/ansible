@@ -615,6 +615,7 @@ class Runner(object):
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars
         inject.setdefault('ansible_ssh_user', self.remote_user)
+        inject['combined_cache'] = combined_cache
         inject['group_names']  = host_variables.get('group_names', [])
         inject['groups']       = self.inventory.groups_list()
         inject['vars']         = self.module_vars
@@ -629,7 +630,7 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject, self.inventory, vault_password=self.vault_pass)
+        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
