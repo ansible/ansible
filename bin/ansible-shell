@@ -249,10 +249,6 @@ class AnsibleShell(cmd.Cmd):
         """
         self.default(arg, True)
 
-    def do_forks(self, arg):
-        """Set the number of forks"""
-        self.do_serial(arg)
-
     def do_serial(self, arg):
         """Set the number of forks"""
         if not arg:
@@ -260,6 +256,8 @@ class AnsibleShell(cmd.Cmd):
             return
         self.options.serial = arg
         self.set_prompt()
+
+    do_forks = do_serial
 
     def do_cd(self, arg):
         """
