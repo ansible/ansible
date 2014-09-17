@@ -222,9 +222,12 @@ def main():
     else:
         module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
 
-    after = svn.get_revision()
-    changed = before != after or local_mods
-    module.exit_json(changed=changed, before=before, after=after)
+    if not export:
+        after = svn.get_revision()
+        changed = before != after or local_mods
+        module.exit_json(changed=changed, before=before, after=after)
+    else:
+        module.exit_json(changed=True)
 
 # import module snippets
 from ansible.module_utils.basic import *
