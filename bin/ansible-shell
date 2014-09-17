@@ -68,7 +68,7 @@ class AnsibleShell(cmd.Cmd):
 
     def __init__(self, options, args):
         self.options = options
-        self.options.cwd = ''
+        self.options.cwd = '*'
         self.options.serial = 2
         self.ansible = ansible.runner.Runner(host_list=self.options.host_list)
         self.groups = self.ansible.inventory.groups_list().keys()
