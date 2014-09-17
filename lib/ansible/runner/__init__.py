@@ -101,7 +101,7 @@ class HostVars(dict):
     def __getitem__(self, host):
         if host not in self.lookup:
             result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
-            result.update(self.vars_cache)
+            result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = template.template('.', result, self.vars_cache)
         return self.lookup[host]
 
@@ -622,6 +622,7 @@ class Runner(object):
         inject['environment']  = self.environment
         inject['playbook_dir'] = os.path.abspath(self.basedir)
         inject['omit']         = self.omit_token
+        inject['combined_cache'] = combined_cache
 
         return inject
 
@@ -629,7 +630,7 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject, self.inventory, vault_password=self.vault_pass)
+        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
