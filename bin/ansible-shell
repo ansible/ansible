@@ -127,8 +127,7 @@ class AnsibleShell(cmd.Cmd):
         try:
             cmd.Cmd.cmdloop(self)
         except KeyboardInterrupt:
-            self.intro = " "
-            self.cmdloop()
+            self.do_exit(self)
 
     def set_prompt(self):
         self.selected = self.ansible.inventory.list_hosts(self.options.cwd)
