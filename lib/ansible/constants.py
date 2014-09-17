@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils
 import os
 import pwd
 import sys
@@ -104,7 +105,10 @@ else:
 local_module_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', '..', 'library')
 )
-DIST_MODULE_PATH = os.pathsep.join([DIST_MODULE_PATH, local_module_path])
+site_packages_usr_share_ansible = os.path.join(
+    distutils.sysconfig.get_python_lib(),
+    'usr', 'share', 'ansible')
+DIST_MODULE_PATH = os.pathsep.join([DIST_MODULE_PATH, site_packages_usr_share_ansible, local_module_path])
 
 # check all of these extensions when looking for yaml files for things like
 # group variables -- really anything we can load
