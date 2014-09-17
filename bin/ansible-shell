@@ -354,9 +354,6 @@ class AnsibleShell(cmd.Cmd):
         oc, a = ansible.utils.module_docs.get_docstring(in_path)
         return oc['options'].keys()
 
-    def do_dump(self, a):
-        print readline.get_current_history_length()
-
 
 if __name__ == '__main__':
     # This hack is to work around readline issues on a mac:
