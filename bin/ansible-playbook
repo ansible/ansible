@@ -47,7 +47,6 @@ import ansible.utils.template
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
-from ansible.utils import to_unicode
 from ansible.color import ANSIBLE_COLOR, stringc
 from ansible.callbacks import display
 
@@ -84,8 +83,6 @@ def main(args):
     )
     #parser.add_option('--vault-password', dest="vault_password",
     #    help="password for vault encrypted files")
-    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-        help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
@@ -143,18 +140,7 @@ def main(args):
     if not options.ask_vault_pass and options.vault_password_file:
         vault_pass = utils.read_vault_file(options.vault_password_file)
 
-    extra_vars = {}
-    for extra_vars_opt in options.extra_vars:
-        extra_vars_opt = to_unicode(extra_vars_opt)
-        if extra_vars_opt.startswith(u"@"):
-            # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
-        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
-            # Arguments as YAML
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
-        else:
-            # Arguments as Key-value
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
+    extra_vars = utils.parse_extra_vars(options.extra_vars, vault_pass)
 
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
