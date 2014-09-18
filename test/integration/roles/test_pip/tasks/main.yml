@@ -72,12 +72,49 @@
     that:
       - "absent2.changed"
 
+# install package with version= specified
+
+- name: install pip package with version= specified
+  pip: name={{ pip_test_package }} version={{ pip_test_package_version }}
+  register: install_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "install_result.changed == True"
+
+- name: remove pip package
+  pip: name={{ pip_test_package }} state=absent
+
+# install package with version>= specified
+
+- name: install pip package with version>= specified
+  pip: name={{ pip_test_package }} version>={{ pip_test_package_version }}
+  register: install_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "install_result.changed == True"
+
+- name: remove pip package
+  pip: name={{ pip_test_package }} state=absent
+
+# install package with version<= specified
+
+- name: install pip package with version<= specified
+  pip: name={{ pip_test_package }} version<={{ pip_test_package_version }}
+  register: install_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "install_result.changed == True"
+
+- name: remove pip package
+  pip: name={{ pip_test_package }} state=absent
+
 # put the test package back
 
 - name: now put it back in case someone wanted it (like us!)
   pip: name={{ pip_test_package }} state=present
-
-
-
-
-

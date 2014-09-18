@@ -219,7 +219,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=state_map.keys()),
             name=dict(default=None, required=False),
-            version=dict(default=None, required=False, type='str'),
+            version=dict(default=None, required=False, type='str', aliases=['version>', 'version<']),
             requirements=dict(default=None, required=False),
             virtualenv=dict(default=None, required=False),
             virtualenv_site_packages=dict(default='no', type='bool'),
@@ -278,7 +278,7 @@ def main():
     pip = _get_pip(module, env, module.params['executable'])
 
     cmd = '%s %s' % (pip, state_map[state])
-    
+
     # If there's a virtualenv we want things we install to be able to use other
     # installations that exist as binaries within this virtualenv. Example: we 
     # install cython and then gevent -- gevent needs to use the cython binary, 
