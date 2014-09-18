@@ -46,7 +46,6 @@ import pwd
 import readline
 import rlcompleter
 import atexit
-from optparse import OptionParser
 
 
 class colorizer(object):
@@ -69,8 +68,7 @@ class AnsibleShell(cmd.Cmd):
     def __init__(self, options, args):
         self.options = options
         self.options.cwd = '*'
-        self.options.serial = 2
-        self.ansible = ansible.runner.Runner(host_list=self.options.host_list)
+        self.ansible = ansible.runner.Runner(host_list=self.options.inventory)
         self.groups = self.ansible.inventory.groups_list().keys()
         self.hosts = self.ansible.inventory.groups_list()['all']
         self.read_config_file()
@@ -98,25 +96,21 @@ class AnsibleShell(cmd.Cmd):
 
     @staticmethod
     def parse_opts():
-        parser = OptionParser()
-        parser.add_option("-s", "--sudo", default=False, action="store_true",
-                          dest='sudo', help="run operations with sudo (nopasswd)")
-        parser.add_option('-U', '--sudo-user', dest='sudo_user',
-                          help='desired sudo user (default=root)', default="root")
-        parser.add_option('-t', '--timeout', dest='timeout', default=5,
-                          help='timeout (default=5)')
-        parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
-                          dest='remote_user',
-                          help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+        parser = utils.base_parser(
+            constants=C,
+            runas_opts=True,
+            subset_opts=True,
+            async_opts=True,
+            output_opts=True,
+            connect_opts=True,
+            check_opts=True,
+            diff_opts=False,
+            usage='%prog <host-pattern> [options]'
+        )
+
         parser.add_option('-p', '--step', default=False, action="store_true",
                           dest='step',
                           help='one-step-at-a-time: confirm each task before running')
-        parser.add_option('-i', '--inventory', default=C.DEFAULT_HOST_LIST,
-                          dest='host_list',
-                          help='Inventory file')
-        parser.add_option('-c', '--connection', default='smart',
-                          dest='connection',
-                          help='connection type to use (default=smart)')
 
         return parser.parse_args()
 
@@ -131,7 +125,7 @@ class AnsibleShell(cmd.Cmd):
 
     def set_prompt(self):
         self.selected = self.ansible.inventory.list_hosts(self.options.cwd)
-        self.prompt = "%s@%s (%d)[s:%s]$ " % (self.options.remote_user, self.options.cwd, len(self.selected), self.options.serial)
+        self.prompt = "%s@%s (%d)[f:%s]$ " % (self.options.remote_user, self.options.cwd, len(self.selected), self.options.forks)
 
     def list_modules(self):
         modules = []
@@ -187,18 +181,22 @@ class AnsibleShell(cmd.Cmd):
             return
 
         try:
-            opts = self.options
             results = ansible.runner.Runner(
                 pattern=self.options.cwd,
-                forks=self.options.serial,
                 module_name=module,
                 module_args=module_args,
-                remote_user=opts.remote_user,
-                sudo=opts.sudo,
-                sudo_user=opts.sudo_user,
-                timeout=int(opts.timeout),
-                host_list=opts.host_list,
-                transport=opts.connection
+                host_list=self.options.inventory,
+                remote_user=self.options.remote_user,
+                timeout=self.options.timeout,
+                private_key_file=self.options.private_key_file,
+                forks=self.options.forks,
+                sudo=self.options.sudo,
+                sudo_user=self.options.sudo_user,
+                transport=self.options.connection,
+                subset=self.options.subset,
+                check=self.options.check,
+                diff=self.options.check,
+                su=self.options.su
             ).run()
             if results is None:
                 print "No hosts found"
@@ -248,15 +246,15 @@ class AnsibleShell(cmd.Cmd):
         """
         self.default(arg, True)
 
-    def do_serial(self, arg):
+    def do_forks(self, arg):
         """Set the number of forks"""
         if not arg:
-            print 'Usage: serial <number>'
+            print 'Usage: forks <number>'
             return
-        self.options.serial = arg
+        self.options.forks = arg
         self.set_prompt()
 
-    do_forks = do_serial
+    do_serial = do_forks
 
     def do_cd(self, arg):
         """
@@ -279,7 +277,7 @@ class AnsibleShell(cmd.Cmd):
         elif self.ansible.inventory.get_hosts(arg):
             self.options.cwd = arg
         else:
-            print "incorrect path"
+            print "no host matched"
 
         self.set_prompt()
 
