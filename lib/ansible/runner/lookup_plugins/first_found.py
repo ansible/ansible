@@ -172,14 +172,21 @@ class LookupModule(object):
         else:
             total_search = terms
 
-        result = None
         for fn in total_search:
+            if inject and '_original_file' in inject:
+                # check the templates and vars directories too,
+                # if they exist
+                for roledir in ('templates', 'vars'):
+                    path = utils.path_dwim(os.path.join(self.basedir, '..', roledir), fn)
+                    if os.path.exists(path):
+                        return [path]
+            # if none of the above were found, just check the
+            # current filename against the basedir (this will already
+            # have ../files from runner, if it's a role task
             path = utils.path_dwim(self.basedir, fn)
             if os.path.exists(path):
                 return [path]
-
-
-        if not result:
+        else:
             if skip:
                 return []
             else:
