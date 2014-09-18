@@ -65,7 +65,7 @@ When run against a specific host, this script returns the following variables:
 
 -----
 ```
-usage: digital_ocean.py [-h] [--list] [--host HOST] [--all]
+usage: digital_ocean.py [-h] [--list] [--private-ips] [--host HOST] [--all]
                                  [--droplets] [--regions] [--images] [--sizes]
                                  [--ssh-keys] [--domains] [--pretty]
                                  [--cache-path CACHE_PATH]
@@ -79,6 +79,7 @@ optional arguments:
   -h, --help            show this help message and exit
   --list                List all active Droplets as Ansible inventory
                         (default: True)
+  --private-ips         Uses Private IP's for Ansible inventory                        
   --host HOST           Get all Ansible inventory variables about a specific
                         Droplet
   --all                 List all DigitalOcean information as JSON
@@ -254,6 +255,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on DigitalOcean credentials')
 
         parser.add_argument('--list', action='store_true', help='List all active Droplets as Ansible inventory (default: True)')
+        parser.add_argument('--private-ips', action='store_true', help='Uses Private IP\'s for Ansible inventory')
         parser.add_argument('--host', action='store', help='Get all Ansible inventory variables about a specific Droplet')
 
         parser.add_argument('--all', action='store_true', help='List all DigitalOcean information as JSON')
@@ -264,7 +266,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         parser.add_argument('--ssh-keys', action='store_true', help='List SSH keys as JSON')
         parser.add_argument('--domains', action='store_true',help='List Domains as JSON')
 
-        parser.add_argument('--pretty','-p', action='store_true', help='Pretty-print results')
+        parser.add_argument('--pretty','-p', action='store_true', help='Pretty-print results')        
 
         parser.add_argument('--cache-path', action='store', help='Path to the cache files (default: .)')
         parser.add_argument('--cache-max_age', action='store', help='Maximum age of the cached items (default: 0)')
@@ -341,7 +343,10 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            dest = droplet['ip_address']
+            if self.args.private_ips:
+                dest = droplet['private_ip_address']
+            else:
+                dest = droplet['ip_address']
 
             self.inventory[droplet['id']] = [dest]
             self.push(self.inventory, droplet['name'], dest)
