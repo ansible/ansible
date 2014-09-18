@@ -33,7 +33,8 @@ First, you will need to configure your testing environment with the neccessary t
 suites. You will need at least::
 
    git
-   python-nosetests
+   python-nosetests (sometimes named python-nose)
+   python-passlib
 
 Second, if you haven't already, clone the Ansible source code from GitHub::
 
