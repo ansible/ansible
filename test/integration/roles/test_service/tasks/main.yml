@@ -91,7 +91,7 @@
     - "disable_result.enabled == false"
 
 - name: try to enable a broken service
-  service: name=ansible_test_broken enabled=yes
+  service: name=ansible_broken_test enabled=yes
   register: broken_enable_result
   ignore_errors: True
 
