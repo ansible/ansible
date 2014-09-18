@@ -120,6 +120,8 @@ class Cli(object):
         if not options.ask_vault_pass and options.vault_password_file:
             vault_pass = utils.read_vault_file(options.vault_password_file)
 
+        extra_vars = utils.parse_extra_vars(options.extra_vars, vault_pass)
+
         inventory_manager = inventory.Inventory(options.inventory, vault_password=vault_pass)
         if options.subset:
             inventory_manager.subset(options.subset)
@@ -168,7 +170,8 @@ class Cli(object):
             su=options.su,
             su_pass=su_pass,
             su_user=options.su_user,
-            vault_pass=vault_pass
+            vault_pass=vault_pass,
+            extra_vars=extra_vars,
         )
 
         if options.seconds:
