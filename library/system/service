@@ -647,7 +647,11 @@ class LinuxService(Service):
             # committing the change is done in this conditional and then we
             # skip the boilerplate at the bottom of the method
             if self.changed:
-                write_to_override_file(override_file_name, override_state)
+                try:
+                    write_to_override_file(override_file_name, override_state)
+                except:
+                    self.module.fail_json(msg='Could not modify override file')
+
             return
 
         #
@@ -724,6 +728,9 @@ class LinuxService(Service):
             if not self.changed:
                 return
 
+        #
+        # update-rc.d style
+        #
         if self.enable_cmd.endswith("update-rc.d"):
             if self.enable:
                 action = 'enable'
@@ -736,7 +743,10 @@ class LinuxService(Service):
                 (rc, out, err) = self.execute_command("%s %s defaults" \
                                                       % (self.enable_cmd, self.name))
                 if rc != 0:
-                    return (rc, out, err)
+                    if err:
+                        self.module.fail_json(msg=err)
+                    else:
+                        self.module.fail_json(msg=out)
 
             (rc, out, err) = self.execute_command("%s -n %s %s" \
                                                   % (self.enable_cmd, self.name, action))
@@ -761,7 +771,9 @@ class LinuxService(Service):
             if not self.changed:
                 return
 
+        #
         # If we've gotten to the end, the service needs to be updated
+        #
         self.changed = True
 
         # we change argument order depending on real binary used:
@@ -777,7 +789,14 @@ class LinuxService(Service):
         if self.module.check_mode:
             self.module.exit_json(changed=self.changed)
 
-        return self.execute_command("%s %s %s" % args)
+        (rc, out, err) = self.execute_command("%s %s %s" % args)
+        if rc != 0:
+            if err:
+                self.module.fail_json(msg=err)
+            else:
+                self.module.fail_json(msg=out)
+
+        return (rc, out, err)
 
 
     def service_control(self):
@@ -900,7 +919,10 @@ class FreeBsdService(Service):
         if self.rcconf_key is None:
             self.module.fail_json(msg="unable to determine rcvar", stdout=stdout, stderr=stderr)
 
-        return self.service_enable_rcconf()
+        try:
+            return self.service_enable_rcconf()
+        except:
+            self.module.fail_json(msg='unable to set rcvar')
 
     def service_control(self):
 
