@@ -134,7 +134,7 @@ def main():
         if rc_cpanm != 0:
             module.fail_json(msg=err_cpanm, cmd=cmd)
 
-        if err_cpanm and 'is up to date' not in err_cpanm:
+        if out_cpanm and 'is up to date' not in out_cpanm:
             changed = True
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
