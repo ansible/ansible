@@ -194,6 +194,24 @@ You may also wish to run from source to get the latest, which is covered above.
 
 .. _from_pkg:
 
+Latest Releases Via Portage (Gentoo)
+++++++++++++++++++++++++++++++++++++
+
+.. code-block:: bash
+
+    $ emerge -av app-admin/ansible
+
+To install the newest version, you may need to unmask the ansible package prior to emerging:
+
+.. code-block:: bash
+
+    $ echo 'app-admin/ansible' >> /etc/portage/package.accept_keywords
+
+.. note::
+
+   If you have Python 3 as a default Python slot on your Gentoo nodes (default setting), then you
+   must set ``ansible_python_interpreter = /usr/bin/python2`` in your group or inventory variables.
+
 Latest Releases Via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
