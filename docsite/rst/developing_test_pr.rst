@@ -36,6 +36,13 @@ suites. You will need at least::
    python-nosetests (sometimes named python-nose)
    python-passlib
 
+If you want to run the full integration test suite you'll also need the following packages installed::
+
+   svn
+   hg
+   python-pip
+   gem 
+
 Second, if you haven't already, clone the Ansible source code from GitHub::
 
    git clone https://github.com/ansible/ansible.git
