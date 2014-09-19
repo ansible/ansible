@@ -163,11 +163,13 @@ class DigitalOceanInventory(object):
         # Define defaults
         self.cache_path = '.'
         self.cache_max_age = 0
+        self.private_ips = False
 
         # Read settings, environment variables, and CLI arguments
         self.read_settings()
         self.read_environment()
         self.read_cli_args()
+
 
         # Verify credentials were set
         if not hasattr(self, 'client_id') or not hasattr(self, 'api_key'):
@@ -242,6 +244,10 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         if config.has_option('digital_ocean', 'cache_max_age'):
             self.cache_max_age = config.getint('digital_ocean', 'cache_max_age')
 
+        # Enable reading private IP's for inventory list
+        if config.has_option('digital_ocean', 'private_ips'):
+            self.private_ips = config.getboolean('digital_ocean', 'private_ips')
+
 
     def read_environment(self):
         ''' Reads the settings from environment variables '''
@@ -283,6 +289,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         if self.args.api_key: self.api_key = self.args.api_key
         if self.args.cache_path: self.cache_path = self.args.cache_path
         if self.args.cache_max_age: self.cache_max_age = self.args.cache_max_age
+        if self.args.private_ips: self.private_ips = self.args.private_ips
 
         # Make --list default if none of the other commands are specified
         if (not self.args.droplets and not self.args.regions and not self.args.images and
@@ -343,7 +350,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            if self.args.private_ips:
+            if self.private_ips:
                 dest = droplet['private_ip_address']
             else:
                 dest = droplet['ip_address']
