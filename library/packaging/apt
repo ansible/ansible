@@ -148,7 +148,8 @@ import fnmatch
 # APT related constants
 APT_ENV_VARS = dict(
   DEBIAN_FRONTEND = 'noninteractive',
-  DEBIAN_PRIORITY = 'critical'
+  DEBIAN_PRIORITY = 'critical',
+  LANG = 'C'
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
