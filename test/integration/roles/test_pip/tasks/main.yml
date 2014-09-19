@@ -86,10 +86,10 @@
 - name: remove pip package
   pip: name={{ pip_test_package }} state=absent
 
-# install package with version>= specified
+# install package with version=' >x.x.x' specified
 
-- name: install pip package with version>= specified
-  pip: name={{ pip_test_package }} version>={{ pip_test_package_version }}
+- name: install package with version='>x.x.x' specified
+  pip: name={{ pip_test_package }} version=' >{{ pip_test_package_version }}'
   register: install_result
 
 - name: verify we recorded a change
@@ -100,10 +100,38 @@
 - name: remove pip package
   pip: name={{ pip_test_package }} state=absent
 
-# install package with version<= specified
+# install package with version='>=x.x.x' specified
 
-- name: install pip package with version<= specified
-  pip: name={{ pip_test_package }} version<={{ pip_test_package_version }}
+- name: install package with version='>=x.x.x' specified
+  pip: name={{ pip_test_package }} version='>={{ pip_test_package_version }}'
+  register: install_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "install_result.changed == True"
+
+- name: remove pip package
+  pip: name={{ pip_test_package }} state=absent
+
+# install package with version='<x.x.x' specified
+
+- name: install package with version='<x.x.x' specified
+  pip: name={{ pip_test_package }} version='<{{ pip_test_package_version }}'
+  register: install_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "install_result.changed == True"
+
+- name: remove pip package
+  pip: name={{ pip_test_package }} state=absent
+
+# install package with version='<=x.x.x' specified
+
+- name: install package with version='<=x.x.x' specified
+  pip: name={{ pip_test_package }} version='<={{ pip_test_package_version }}'
   register: install_result
 
 - name: verify we recorded a change

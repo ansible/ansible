@@ -147,10 +147,18 @@ def _get_cmd_options(module, cmd):
     
 
 def _get_full_name(name, version=None):
-    if version is None:
-        resp = name
-    else:
+    resp = name
+
+    if version is not None:
+        # this will support version='>1.0.1'
+        for op in ('>', '>=', '<', '<='):
+            # remove all white space so it can support version=' >1.0.1'
+            version = str(version).strip()
+            if version.startswith(op):
+                return name + version
+
         resp = name + '==' + version
+
     return resp
 
 def _is_present(name, version, installed_pkgs):
@@ -219,7 +227,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=state_map.keys()),
             name=dict(default=None, required=False),
-            version=dict(default=None, required=False, type='str', aliases=['version>', 'version<']),
+            version=dict(default=None, required=False, type='str'),
             requirements=dict(default=None, required=False),
             virtualenv=dict(default=None, required=False),
             virtualenv_site_packages=dict(default='no', type='bool'),
