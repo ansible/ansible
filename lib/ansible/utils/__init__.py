@@ -669,6 +669,11 @@ def parse_yaml_from_file(path, vault_password=None):
 
     vault = VaultLib(password=vault_password)
     if vault.is_encrypted(data):
+        # if the file is encrypted and no password was specified,
+        # the decrypt call would throw an error, but we check first
+        # since the decrypt function doesn't know the file name
+        if vault_password is None:
+            raise errors.AnsibleError("A vault password must be specified to decrypt %s" % path)
         data = vault.decrypt(data)
         show_content = False
 
