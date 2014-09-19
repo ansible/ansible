@@ -168,6 +168,15 @@ options:
      required: false
      default: None
      version_added: "1.6"
+   root_volume:
+     description:
+       - Boot instance from a volume id
+     required: false
+     default: None
+   terminate_volume:
+     description:
+       - If true, delete volume when delting instance ( if booted from volume )
+     default: false
 requirements: ["novaclient"]
 '''
 
@@ -421,7 +430,12 @@ def _create_server(module, nova):
                 'userdata': module.params['user_data'],
                 'config_drive': module.params['config_drive'],
     }
-
+    if module.params['root_volume']:
+        if module.params['terminate_volume']:
+            suffix = ':::1'
+        else:
+            suffix = ':::0'
+        bootkwargs['block_device_mapping'] = {'vda' : module.params['root_volume'] + suffix}
     for optional_param in ('region_name', 'key_name', 'availability_zone'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
@@ -543,6 +557,8 @@ def main():
         auto_floating_ip                = dict(default=False, type='bool'),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
+        root_volume                     = dict(default=None),
+        terminate_volume                = dict(default=False, type='bool'),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
