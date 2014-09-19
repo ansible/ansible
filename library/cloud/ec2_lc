@@ -21,6 +21,10 @@ short_description: Create or delete AWS Autoscaling Launch Configurations
 description:
   - Can create or delete AwS Autoscaling Configurations
   - Works with the ec2_asg module to manage Autoscaling Groups
+notes:
+  - "Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration
+    after it is changed will not modify the launch configuration on AWS. You must create a new config and assign
+    it to the ASG instead."
 version_added: "1.6"
 author: Gareth Rushgrove
 options:
