@@ -42,7 +42,10 @@ options:
   content:
     version_added: "1.1"
     description:
-      - When used instead of 'src', sets the contents of a file directly to the specified value.
+      - When used instead of 'src', sets the contents of a file directly
+        to the specified value. The use of "key: value" syntax is
+        recommended if the specified content contains quotes or
+        newlines.
     required: false
     default: null
   dest:
