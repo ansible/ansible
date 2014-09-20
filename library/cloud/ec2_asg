@@ -567,7 +567,7 @@ def main():
             min_size=dict(type='int'),
             max_size=dict(type='int'),
             desired_capacity=dict(type='int'),
-            vpc_zone_identifier=dict(type='str'),
+            vpc_zone_identifier=dict(type='list'),
             replace_batch_size=dict(type='int', default=1),
             replace_all_instances=dict(type='bool', default=False),
             replace_instances=dict(type='list', default=[]),
