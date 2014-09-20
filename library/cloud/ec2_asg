@@ -129,7 +129,9 @@ A basic example of configuration:
     min_size: 1
     max_size: 10
     desired_capacity: 5
-    vpc_zone_identifier: 'subnet-abcd1234,subnet-1a2b3c4d'
+    vpc_zone_identifier:
+      - subnet-abcd1234
+      - subnet-1a2b3c4d
     tags:
       - environment: production
         propagate_at_launch: no
