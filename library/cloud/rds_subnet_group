@@ -72,13 +72,13 @@ author: Scott Anderson
 EXAMPLES = '''
 # Add or change a subnet group
 - local_action:
-  module: rds_subnet_group
-  state: present
-  name: norwegian-blue
-  description: My Fancy Ex Parrot Subnet Group
-  subnets:
-    - subnet-aaaaaaaa
-    - subnet-bbbbbbbb
+    module: rds_subnet_group
+    state: present
+    name: norwegian-blue
+    description: My Fancy Ex Parrot Subnet Group
+    subnets:
+      - subnet-aaaaaaaa
+      - subnet-bbbbbbbb
 
 # Remove a parameter group
 - rds_param_group: >
