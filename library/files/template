@@ -6,10 +6,9 @@ module: template
 version_added: historical
 short_description: Templates a file out to a remote server.
 description:
-     - Templates are processed by the Jinja2 templating language
-       (U(http://jinja.pocoo.org/docs/)) - documentation on the template
-       formatting can be found in the Template Designer Documentation
-       (U(http://jinja.pocoo.org/docs/templates/)).
+     - Templates are processed by the U(http://jinja.pocoo.org/docs/|Jinja2 templating language) -
+       documentation on the template formatting can be found in the
+       U(http://jinja.pocoo.org/docs/templates/|Template Designer Documentation).
      - "Six additional variables can be used in templates: C(ansible_managed) 
        (configurable via the C(defaults) section of C(ansible.cfg)) contains a string
        which can be used to describe the template name, host, modification time of the

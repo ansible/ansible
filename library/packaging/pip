@@ -98,7 +98,7 @@ options:
     required: false
     default: null
 notes:
-   - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified.
+   - Please note that U(http://www.virtualenv.org/|virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
 requirements: [ "virtualenv", "pip" ]
 author: Matt Wright
 '''

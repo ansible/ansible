@@ -79,8 +79,8 @@ options:
 # informational: requirements for nodes
 requirements: [ mosquitto ]
 notes:
- - This module requires a connection to an MQTT broker such as Mosquitto
-   U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.python.org/pypi/paho-mqtt)).
+ - This module requires a connection to an MQTT broker such as
+   U(http://mosquitto.org|Mosquitto) and the U(https://pypi.python.org/pypi/paho-mqtt|Paho mqtt python client).
 author: Jan-Piet Mens
 '''
 

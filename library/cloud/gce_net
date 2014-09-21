@@ -22,12 +22,12 @@ module: gce_net
 version_added: "1.5"
 short_description: create/destroy GCE networks and firewall rules
 description:
-    - This module can create and destroy Google Compue Engine networks and
-      firewall rules U(https://developers.google.com/compute/docs/networking).
+    - This module can create and destroy Google Compute Engine
+      U(https://developers.google.com/compute/docs/networking|networks and firewall rules).
       The I(name) parameter is reserved for referencing a network while the
       I(fwname) parameter is used to reference firewall rules.
-      IPv4 Address ranges must be specified using the CIDR
-      U(http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) format.
+      IPv4 Address ranges must be specified using the
+      U(http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing|CIDR format).
       Full install/configuration instructions for the gce* modules can
       be found in the comments of ansible/test/gce_tests.py.
 options:
