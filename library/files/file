@@ -339,7 +339,7 @@ def main():
                 module.fail_json(msg='Cannot touch other than files and directories')
             try:
                 module.set_fs_attributes_if_different(file_args, True)
-            except SystemExit as e:
+            except SystemExit, e:
                 if e.code:
                     # We take this to mean that fail_json() was called from
                     # somewhere in basic.py
