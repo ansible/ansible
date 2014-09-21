@@ -436,7 +436,7 @@ def main():
         argument_spec=dict(
             login_user=dict(default="postgres"),
             login_password=dict(default=""),
-            login_host=dict(default=""),
+            login_host=dict(default="localhost"),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             state=dict(default="present", choices=["absent", "present"]),
