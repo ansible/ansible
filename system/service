@@ -673,6 +673,7 @@ class LinuxService(Service):
 
             # Check if we're already in the correct state
             if "3:%s" % action in out and "5:%s" % action in out:
+                self.changed = False
                 return
 
         #
