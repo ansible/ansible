@@ -247,7 +247,7 @@ class AnsibleShell(cmd.Cmd):
             cd webservers:dbservers:&staging:!phoenix
         """
         if not arg:
-            self.options.cwd = ''
+            self.options.cwd = '*'
         elif arg == '..':
             try:
                 self.options.cwd = self.ansible.inventory.groups_for_host(self.options.cwd)[1].name
@@ -312,7 +312,7 @@ class AnsibleShell(cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
 
-        if self.options.cwd == '':
+        if self.options.cwd == '*':
             completions = self.hosts + self.groups
         else:
             completions = self.ansible.inventory.list_hosts(self.options.cwd)
