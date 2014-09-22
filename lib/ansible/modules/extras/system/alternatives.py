@@ -62,7 +62,8 @@ def main():
             name = dict(required=True),
             path  = dict(required=True),
             link = dict(required=False),
-        )
+        ),
+        supports_check_mode=True,
     )
 
     params = module.params
@@ -114,6 +115,8 @@ def main():
                     link = value
 
     if current_path != path:
+        if module.check_mode:
+            module.exit_json(changed=True, current_path=current_path)
         try:
             # install the requested path if necessary
             if path not in all_alternatives:
