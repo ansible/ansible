@@ -252,6 +252,43 @@
       - 'file17_result.failed == true'
       - 'file17_result.state == "directory"'
 
+- name: create soft link to directory using absolute path
+  file: src=/ dest={{output_dir}}/root state=link
+  register: file18_result
+
+- name: verify that the result was marked as changed
+  assert:
+    that:
+      - "file18_result.changed == true"
+
+- name: create another test sub-directory
+  file: dest={{output_dir}}/sub2 state=directory
+  register: file19_result
+
+- name: verify that the new directory was created
+  assert:
+    that:
+      - 'file19_result.changed == true'
+      - 'file19_result.state == "directory"'
+
+- name: create soft link to relative file
+  file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
+  register: file20_result
+
+- name: verify that the result was marked as changed
+  assert:
+    that:
+      - "file20_result.changed == true"
+
+- name: create soft link to relative directory
+  file: src=sub1 dest={{output_dir}}/sub1-link state=link
+  register: file21_result
+
+- name: verify that the result was marked as changed
+  assert:
+    that:
+      - "file21_result.changed == true"
+
 - name: test file creation with symbolic mode
   file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
   register: result
