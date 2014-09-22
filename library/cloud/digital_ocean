@@ -63,6 +63,15 @@ options:
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server.
+  size:
+    description:
+     - String, the slug associated with the size (e.g. 512mb)
+  image:
+    description:
+     - String, the slug or name associated with an image. Includes global and private images.
+  region:
+    description:
+     - String, the slug associated with a region.
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
@@ -157,9 +166,9 @@ EXAMPLES = '''
       name=mydroplet
       client_id=XXX
       api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      size=512mb
+      region=nyc2
+      image=centos-5-8-x64
 '''
 
 import sys
@@ -236,6 +245,22 @@ class Droplet(JsonfyMixIn):
 
     @classmethod
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
+
+        try:
+            size_id = int(size_id)
+        except:
+            size_id = cls.get_size_id(size_id)
+
+        try:
+            image_id = int(image_id)
+        except:
+            image_id = cls.get_image_id(image_id)
+
+        try:
+            region_id = int(region_id)
+        except:
+            region_id = cls.get_region_id(region_id)
+
         json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking, backups_enabled)
         droplet = cls(json)
         return droplet
@@ -263,6 +288,30 @@ class Droplet(JsonfyMixIn):
     def list_all(cls):
         json = cls.manager.all_active_droplets()
         return map(cls, json)
+
+    @classmethod
+    def get_size_id(cls, slug):
+        sizes = cls.manager.sizes()
+        for size in sizes:
+            if size['slug'] == slug:
+                return size['id']
+        return False
+
+    @classmethod
+    def get_region_id(cls, slug):
+        regions = cls.manager.all_regions()
+        for region in regions:
+            if region['slug'] == slug:
+                return region['id']
+        return False
+
+    @classmethod
+    def get_image_id(cls, name):
+        images = cls.manager.all_images(filter=None)
+        for image in images:
+            if image['slug'] == name or image['name'] == name:
+                return image['id']
+        return False
 
 class SSH(JsonfyMixIn):
     manager = None
@@ -395,9 +444,9 @@ def main():
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(type='str'),
-            size_id = dict(type='int'),
-            image_id = dict(type='int'),
-            region_id = dict(type='int'),
+            size_id = dict(aliases=['size']),
+            image_id = dict(aliases=['image']),
+            region_id = dict(aliases=['region']),
             ssh_key_ids = dict(default=''),
             virtio = dict(type='bool', default='yes'),
             private_networking = dict(type='bool', default='no'),
