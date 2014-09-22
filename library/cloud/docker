@@ -216,6 +216,12 @@ options:
     required: false
     default: ''
     aliases: []
+  insecure_registry:
+    description:
+      - Allow pulling from plain HTTP registries
+    required: false
+    default: false
+    aliases: []
 
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
@@ -638,15 +644,15 @@ class DockerManager:
                         self.module.params.get('username'),
                         password=self.module.params.get('password'),
                         email=self.module.params.get('email'),
-                        registry=self.module.params.get('registry')
+                        registry=self.module.params.get('registry'),
                     )
                 except:
                     self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
             try:
-                self.client.pull(resource, tag=tag)
+                self.client.pull(resource, tag=tag, insecure_registry=self.module.params.get('insecure_registry'))
                 self.increment_counter('pull')
-            except:
-                self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
+            except Exception as e:
+                self.module.fail_json(msg="failed to pull the specified image: %s, error: %s" % (resource, e))
 
         resource = self.module.params.get('image')
         image, tag = self.get_split_image_tag(resource)
@@ -762,7 +768,8 @@ def main():
             name            = dict(default=None),
             net             = dict(default=None),
             pull_latest     = dict(default=False, type='bool'),
-            restart_policy  = dict(default=None)
+            restart_policy  = dict(default=None),
+            insecure_registry = dict(default=False, type='bool')
         )
     )
 
