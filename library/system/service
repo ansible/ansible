@@ -543,7 +543,10 @@ class LinuxService(Service):
             self.crashed = "crashed" in openrc_status_stderr
 
         # if the job status is still not known check it by status output keywords
-        if self.running is None:
+        # Only check keywords if there's only one line of output (some init
+        # scripts will output verbosely in case of error and those can emit
+        # keywords that are picked up as false positives
+        if self.running is None and status_stdout.count('\n') <= 1:
             # first transform the status output that could irritate keyword matching
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
