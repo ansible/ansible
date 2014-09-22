@@ -71,6 +71,7 @@ class AnsibleShell(cmd.Cmd):
         self.ansible = ansible.runner.Runner(host_list=self.options.inventory)
         self.groups = self.ansible.inventory.groups_list().keys()
         self.hosts = self.ansible.inventory.groups_list()['all']
+        self.callbacks = callbacks.CliRunnerCallbacks()
         self.read_config_file()
         self.intro = 'Welcome to the ansible-shell.\nType help or ? to list commands.\n'
         self.set_prompt()
@@ -180,6 +181,9 @@ class AnsibleShell(cmd.Cmd):
             callbacks.display("Command canceled by user")
             return
 
+        self.options.module_name = module
+        self.callbacks.options = self.options
+
         try:
             results = ansible.runner.Runner(
                 pattern=self.options.cwd,
@@ -196,6 +200,7 @@ class AnsibleShell(cmd.Cmd):
                 subset=self.options.subset,
                 check=self.options.check,
                 diff=self.options.check,
+                callbacks=self.callbacks,
                 su=self.options.su
             ).run()
             if results is None:
@@ -204,30 +209,6 @@ class AnsibleShell(cmd.Cmd):
         except Exception as e:
             print e.msg
             return False
-
-        for (hostname, result) in results['contacted'].items():
-            print "=============== %-30s ================" % stringc(hostname, 'bright gray')
-
-            if 'stderr' in result.keys():
-                # this is a shell output
-                # maybe both stderr and stdout are set,so try to print them all
-                try:
-                    callbacks.display(result['stdout'], 'green')
-                    callbacks.display(result['stderr'], 'red')
-                except:
-                    pass
-            else:
-                # this is not a shell output
-                if 'failed' not in result.keys():
-                    callbacks.display(utils.jsonify(result,True), 'green')
-                else:
-                    callbacks.display(utils.jsonify(result,True), 'red')
-
-        # connect failed
-        for (hostname, result) in results['dark'].items():
-            print "=============== %s ================" % stringc(hostname, 'red')
-            callbacks.display(result['msg'], 'red')
-
 
     def emptyline(self):
         return
