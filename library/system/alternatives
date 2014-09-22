@@ -75,13 +75,14 @@ def main():
 
     current_path = None
     all_alternatives = []
+    os_family = None
 
     (rc, query_output, query_error) = module.run_command(
         [UPDATE_ALTERNATIVES, '--query', name]
     )
 
     # Gather the current setting and all alternatives from the query output.
-    # Query output should look something like this:
+    # Query output should look something like this on Debian systems:
 
         # Name: java
         # Link: /usr/bin/java
@@ -102,6 +103,7 @@ def main():
         #  java.1.gz /usr/lib/jvm/java-7-openjdk-amd64/jre/man/man1/java.1.gz
 
     if rc == 0:
+        os_family = "Debian"
         for line in query_output.splitlines():
             split_line = line.split(':')
             if len(split_line) == 2:
@@ -113,13 +115,27 @@ def main():
                     all_alternatives.append(value)
                 elif key == 'Link' and not link:
                     link = value
+    elif rc == 2:
+        os_family = "RedHat"
+        # This is the version of update-alternatives that is shipped with
+        # chkconfig on RedHat-based systems. Try again with the right options.
+        (rc, query_output, query_error) = module.run_command(
+            [UPDATE_ALTERNATIVES, '--list']
+        )
+        for line in query_output.splitlines():
+            line_name, line_mode, line_path = line.strip().split("\t")
+            if line_name != name:
+                continue
+            current_path = line_path
+            break
 
     if current_path != path:
         if module.check_mode:
             module.exit_json(changed=True, current_path=current_path)
         try:
             # install the requested path if necessary
-            if path not in all_alternatives:
+            # (unsupported on the RedHat version)
+            if path not in all_alternatives and os_family == "Debian":
                 module.run_command(
                     [UPDATE_ALTERNATIVES, '--install', link, name, path, str(DEFAULT_LINK_PRIORITY)],
                     check_rc=True
