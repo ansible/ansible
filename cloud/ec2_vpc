@@ -451,6 +451,7 @@ def create_vpc(module, vpc_conn):
                     old_rt = vpc_conn.get_all_route_tables(
                         filters={'association.subnet_id': rsn.id, 'vpc_id': vpc.id}
                     )
+                    old_rt = [ x for x in old_rt if x.id != None ]
                     if len(old_rt) == 1:
                         old_rt = old_rt[0]
                         association_id = None
@@ -474,6 +475,8 @@ def create_vpc(module, vpc_conn):
         # table yet.
         all_rts = vpc_conn.get_all_route_tables(filters={'vpc-id': vpc.id})
         for rt in all_rts:
+            if rt.id is None:
+                continue
             delete_rt = True
             for newrt in all_route_tables:
                 if newrt.id == rt.id:
