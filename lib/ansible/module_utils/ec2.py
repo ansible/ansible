@@ -54,7 +54,6 @@ def aws_common_argument_spec():
         security_token=dict(no_log=True),
         profile=dict(),
     )
-    return spec
 
 
 def ec2_argument_spec():
