@@ -1,12 +1,15 @@
 
 - name: verify playbook includes can take parameters
   hosts: testhost
+  
   tasks:
+    - debug: msg="{{parameter3}}"
     - assert: 
         that:
           - "parameter1 == 'asdf'"
           - "parameter2 == 'jkl'"
-
+          - "parameter3 == 'extra_var'"
+          
 - name: verify task include logic
   hosts: testhost
   gather_facts: True
