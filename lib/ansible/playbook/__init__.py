@@ -21,6 +21,7 @@ import ansible.runner
 from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.callbacks
 import ansible.cache
 import os
@@ -209,12 +210,15 @@ class PlayBook(object):
         name and returns the merged vars along with the path
         '''
         new_vars = existing_vars.copy()
-        tokens = shlex.split(play_ds.get('include', ''))
+        tokens = split_args(play_ds.get('include', ''))
         for t in tokens[1:]:
-            (k,v) = t.split("=", 1)
-            new_vars[k] = template(basedir, v, new_vars)
+            try:
+                (k,v) = unquote(t).split("=", 1)
+                new_vars[k] = template(basedir, v, new_vars)
+            except ValueError, e:
+                raise errors.AnsibleError('included playbook variables must be in the form k=v, got: %s' % t)
 
-        return (new_vars, tokens[0])
+        return (new_vars, unquote(tokens[0]))
 
     # *****************************************************
 
