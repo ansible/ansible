@@ -56,8 +56,28 @@ class ActionModule(object):
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
 
-        source = os.path.expanduser(source)
         source = conn.shell.join_path(source)
+
+        # calculate md5 sum for the remote file
+        remote_md5 = self.runner._remote_md5(conn, tmp, source)
+
+        # use slurp if sudo and permissions are lacking
+        remote_data = None
+        if remote_md5 in ('1', '2') or self.runner.sudo:
+            slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
+            if slurpres.is_successful():
+                if slurpres.result['encoding'] == 'base64':
+                    remote_data = base64.b64decode(slurpres.result['content'])
+                if remote_data is not None:
+                    remote_md5 = utils.md5s(remote_data)
+                # the source path may have been expanded on the
+                # target system, so we compare it here and use the
+                # expanded version if it's different
+                remote_source = slurpres.result.get('source')
+                if remote_source and remote_source != source:
+                    source = remote_source
+
+        # calculate the destination name
         if os.path.sep not in conn.shell.join_path('a', ''):
             source_local = source.replace('\\', '/')
         else:
@@ -76,20 +96,7 @@ class ActionModule(object):
             # files are saved in dest dir, with a subdir for each host, then the filename
             dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source_local)
 
-        dest = os.path.expanduser(dest.replace("//","/"))
-
-        # calculate md5 sum for the remote file
-        remote_md5 = self.runner._remote_md5(conn, tmp, source)
-
-        # use slurp if sudo and permissions are lacking
-        remote_data = None
-        if remote_md5 in ('1', '2') or self.runner.sudo:
-            slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
-            if slurpres.is_successful():
-                if slurpres.result['encoding'] == 'base64':
-                    remote_data = base64.b64decode(slurpres.result['content'])
-                if remote_data is not None:
-                    remote_md5 = utils.md5s(remote_data)
+        dest = dest.replace("//","/")
 
         # these don't fail because you may want to transfer a log file that possibly MAY exist
         # but keep going to fetch other log files

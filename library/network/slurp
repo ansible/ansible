@@ -57,7 +57,7 @@ def main():
         ),
         supports_check_mode=True
     )
-    source = module.params['src']
+    source = os.path.expanduser(module.params['src'])
 
     if not os.path.exists(source):
         module.fail_json(msg="file not found: %s" % source)
@@ -66,7 +66,7 @@ def main():
 
     data = base64.b64encode(file(source).read())
 
-    module.exit_json(content=data, encoding='base64')
+    module.exit_json(content=data, source=source, encoding='base64')
 
 # import module snippets
 from ansible.module_utils.basic import *
