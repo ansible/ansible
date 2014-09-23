@@ -83,6 +83,7 @@ class ActionModule(object):
         else:
             source_local = source
 
+        dest = os.path.expanduser(dest)
         if flat:
             if dest.endswith("/"):
                 # if the path ends with "/", we'll use the source filename as the
