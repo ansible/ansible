@@ -6,3 +6,8 @@
 
 - src: https://bitbucket.org/willthames/http-ansible-galaxy/get/master.tar.gz
   name: http-role
+
+- src: git@github.com:geerlingguy/ansible-role-php.git
+  scm: git
+  name: php
+

@@ -362,7 +362,7 @@ def repo_url_to_role_name(repo_url):
     # gets the role name out of a repo like 
     # http://git.example.com/repos/repo.git" => "repo"
 
-    if '://' not in repo_url:
+    if '://' not in repo_url and '@' not in repo_url:
         return repo_url
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
@@ -387,15 +387,12 @@ def role_spec_parse(role_spec):
   
     role_spec = role_spec.strip()
     role_version = ''
+    default_role_versions = dict(git='master', hg='tip')
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
     tokens = [s.strip() for s in role_spec.split(',')]
     
-    if not tokens[0].endswith('.tar.gz'): 
-        # pick a reasonable default branch
-        role_version = 'master'
-
     # assume https://github.com URLs are git+https:// URLs and not
     # tarballs unless they end in '.zip'
     if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
@@ -412,6 +409,8 @@ def role_spec_parse(role_spec):
         role_name = tokens[2]
     else:
         role_name = repo_url_to_role_name(tokens[0])
+    if scm and not role_version:
+        role_version = default_role_versions.get(scm, '')
     return dict(scm=scm, src=role_url, version=role_version, name=role_name)
 
 
