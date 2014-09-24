@@ -30,6 +30,10 @@ See http://ansible.github.com/api.html for more info
 Tested with Cobbler 2.0.11.
 
 Changelog:
+    - 2014-09-24 etrikp: Add the ability to limit what cobbler returns based on the
+        cobbler status attribute. See --status under
+        http://www.cobblerd.org/manuals/2.6.0/3/1/3_-_Systems.html see cobbler.ini
+        for examples.
     - 2013-09-01 pgehres: Refactored implementation to make use of caching and to
         limit the number of connections to external cobbler server for performance.
         Added use of cobbler.ini file to configure settings. Tested with Cobbler 2.4.0
