@@ -60,6 +60,7 @@ import ConfigParser
 import os
 import re
 from time import time
+from collections import defaultdict
 import xmlrpclib
 
 try:
@@ -78,13 +79,16 @@ class CobblerInventory(object):
         """ Main execution path """
         self.conn = None
 
-        self.inventory = dict()  # A list of groups and the hosts in that group
+        self.inventory = defaultdict(list)  # A list of groups and the hosts in that group
         self.cache = dict()  # Details about hosts in the inventory
 
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
 
+        # This cache engine is broken, always refresh,
+        # TODO: replace with PersistentDict used in the vagrant ansible dynamic inventory plugin.
+        self.update_cache()
         # Cache
         if self.args.refresh_cache:
             self.update_cache()
