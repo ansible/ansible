@@ -115,6 +115,12 @@ rm -rf %{buildroot}
 
 %changelog
 
+* Wed Sep 24 2014 Michael DeHaan <michael@ansible.com> - 1.7.2
+- Release 1.7.2
+
+* Thu Aug 14 2014 Michael DeHaan <michael@ansible.com> - 1.7.1
+- Release 1.7.1
+
 * Wed Aug 06 2014 Michael DeHaan <michael@ansible.com> - 1.7.0
 - Release 1.7.0
 
