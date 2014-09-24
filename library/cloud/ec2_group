@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -31,6 +31,11 @@ options:
       - List of firewall outbound rules to enforce in this group (see example).
     required: false
     version_added: "1.6"
+  tags:
+    description:
+      - List of tags to apply to this security group
+    required: false
+    version_added: "1.8"
   region:
     description:
       - the EC2 region to use
@@ -90,6 +95,9 @@ EXAMPLES = '''
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
+    tags:
+      - key: environment
+        value: production
 '''
 
 try:
@@ -153,7 +161,6 @@ def get_target_from_rule(module, rule, name, group, groups):
 
     return group_id, ip, target_group_created
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -162,6 +169,7 @@ def main():
             vpc_id=dict(),
             rules=dict(),
             rules_egress=dict(),
+            tags=dict(type='list', default=[]),
             state = dict(default='present', choices=['present', 'absent']),
         )
     )
@@ -175,6 +183,7 @@ def main():
     vpc_id = module.params['vpc_id']
     rules = module.params['rules']
     rules_egress = module.params['rules_egress']
+    tags = module.params['tags']
     state = module.params.get('state')
 
     changed = False
@@ -236,6 +245,9 @@ def main():
 
                 group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
             changed = True
+
+        # tag the security group, function imported from ansible.module_utils.ec2
+        do_tags(module, group, tags)
     else:
         module.fail_json(msg="Unsupported state requested: %s" % state)
 
