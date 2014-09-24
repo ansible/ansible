@@ -22,11 +22,11 @@ you need to define:
 
     export EC2_URL=http://hostname_of_your_cc:port/services/Eucalyptus
 
-If you're using boto profiles (requires boto>=2.24.0) you can choose a profile 
-using the --profile command line argument (e.g. ec2.py --profile prod) or using
-the EC2_PROFILE variable:
+If you're using boto profiles (requires boto>=2.24.0) you can choose a profile
+using the --boto-profile command line argument (e.g. ec2.py --boto-profile prod) or using
+the AWS_PROFILE variable:
 
-    EC2_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml
+    AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml
 
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
@@ -154,20 +154,19 @@ class Ec2Inventory(object):
         # Index of hostname (address) to instance ID
         self.index = {}
 
-        # Parse CLI arguments and read settings
+        # Boto profile to use (if any)
+        self.boto_profile = None
+
+        # Read settings and parse CLI arguments
         self.parse_cli_args()
         self.read_settings()
 
-        # boto profile to use (if any)
         # Make sure that profile_name is not passed at all if not set
         # as pre 2.24 boto will fall over otherwise
-        if self.args.profile:
+        if self.boto_profile:
             if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
                 sys.stderr.write("boto version must be >= 2.24 to use profile\n")
                 sys.exit(1)
-            self.profile = dict(profile_name=self.args.profile)
-        else:
-            self.profile = dict()
 
         # Cache
         if self.args.refresh_cache:
@@ -307,21 +306,21 @@ class Ec2Inventory(object):
         else:
             self.all_elasticache_nodes = False
 
+        # boto configuration profile (prefer CLI argument)
+        self.boto_profile = self.args.boto_profile
+        if config.has_option('ec2', 'boto_profile') and not self.boto_profile:
+            self.boto_profile = config.get('ec2', 'boto_profile')
+
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
-        if self.args.profile:
-            cache_dir = os.path.join(cache_dir, 'profile_' + self.args.profile)
+        if self.boto_profile:
+            cache_dir = os.path.join(cache_dir, 'profile_' + self.boto_profile)
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-
-        # boto configuration profile
-        self.boto_profile = None
-        if config.has_option('ec2', 'boto_profile'):
-            self.boto_profile = config.get('ec2', 'boto_profile')
 
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
@@ -387,6 +386,7 @@ class Ec2Inventory(object):
                     continue
                 self.ec2_instance_filters[filter_key].append(filter_value)
 
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -397,7 +397,7 @@ class Ec2Inventory(object):
                            help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                            help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
-        parser.add_argument('--profile', action='store', default=os.environ.get('EC2_PROFILE'),
+        parser.add_argument('--boto-profile', action='store',
                            help='Use boto profile for connections to EC2')
         self.args = parser.parse_args()
 
@@ -431,18 +431,23 @@ class Ec2Inventory(object):
             self.fail_with_error("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
         return conn
 
-    def boto_fix_security_token_in_profile(self, conn):
+    def boto_fix_security_token_in_profile(self, connect_args):
         ''' monkey patch for boto issue boto/boto#2100 '''
-        profile = 'profile ' + self.profile.get('profile_name')
+        profile = 'profile ' + self.boto_profile
         if boto.config.has_option(profile, 'aws_security_token'):
-            conn.provider.set_security_token(boto.config.get(profile, 'aws_security_token'))
-        return conn
+            connect_args['secuirty_token'] = boto.config.get(profile, 'aws_security_token')
+        return connect_args
 
 
     def connect_to_aws(self, module, region):
-        conn = module.connect_to_region(region, **self.profile)
-        if 'profile_name' in self.profile:
-            conn = self.boto_fix_security_token_in_profile(conn)
+        connect_args = {}
+
+        # only pass the profile name if it's set (as it is not supported by older boto versions)
+        if self.boto_profile:
+            connect_args['profile_name'] = self.boto_profile
+            self.boto_fix_security_token_in_profile(connect_args)
+
+        conn = module.connect_to_region(region, **connect_args)
         return conn
 
 
