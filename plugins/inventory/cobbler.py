@@ -132,7 +132,8 @@ class CobblerInventory(object):
     def read_settings(self):
         """ Reads the settings from the cobbler.ini file """
 
-        config = ConfigParser.SafeConfigParser()
+        config = ConfigParser.SafeConfigParser({'filter_status': 'production'})
+
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
 
         self.cobbler_host = config.get('cobbler', 'host')
@@ -142,6 +143,7 @@ class CobblerInventory(object):
         self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
         self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
         self.cache_max_age = config.getint('cobbler', 'cache_max_age')
+        self.filter_status = config.get('cobbler', 'filter_status')
 
     def parse_cli_args(self):
         """ Command line argument processing """
@@ -179,19 +181,19 @@ class CobblerInventory(object):
             status = host['status']
             profile = host['profile']
             classes = host['mgmt_classes']
+            # print "status: %s" % status
+            # print "profile: %s" % profile
+            # print "classes: %s" % classes
 
-            if status not in self.inventory:
-                self.inventory[status] = []
-            self.inventory[status].append(dns_name)
+            # allow the ability to limit whats retruned from cobbler by
+            # its status attribure. see --status under
+            # http://www.cobblerd.org/manuals/2.6.0/3/1/3_-_Systems.html
+            if status in self.filter_status:
+                self.inventory[status].append(dns_name)
+                self.inventory[profile].append(dns_name)
 
-            if profile not in self.inventory:
-                self.inventory[profile] = []
-            self.inventory[profile].append(dns_name)
-
-            for cls in classes:
-                if cls not in self.inventory:
-                    self.inventory[cls] = []
-                self.inventory[cls].append(dns_name)
+                for cls in classes:
+                    self.inventory[cls].append(dns_name)
 
             # Since we already have all of the data for the host, update the host details as well
 
