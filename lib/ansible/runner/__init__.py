@@ -354,6 +354,8 @@ class Runner(object):
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
 
+        delegate['ssh_proxy'] = this_info.get('ansible_ssh_proxy')
+
         # Last chance to get private_key_file from global variables.
         # this is useful if delegated host is not defined in the inventory
         if delegate['private_key_file'] is None:
@@ -811,6 +813,8 @@ class Runner(object):
         self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
+        ssh_proxy = inject.get('ansible_ssh_proxy')
+
         # select default root user in case self.sudo requested
         # but no user specified; happens e.g. in host vars when
         # just ansible_sudo=True is specified
@@ -850,11 +854,15 @@ class Runner(object):
             actual_private_key_file = delegate['private_key_file']
             self.sudo_pass = delegate['sudo_pass']
             inject = delegate['inject']
+            ssh_proxy = delegate['ssh_proxy']
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
         actual_pass = template.template(self.basedir, actual_pass, inject)
         self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject)
+
+        # Template ansible_ssh_proxy
+        ssh_proxy = template.template(self.basedir, ssh_proxy, inject)
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
@@ -872,7 +880,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, ssh_proxy)
             if self.delegate_to or host != actual_host:
                 conn.delegate = host
 
