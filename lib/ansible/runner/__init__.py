@@ -377,6 +377,7 @@ class Runner(object):
             delegate['private_key_file'] = remote_inject.get('ansible_ssh_private_key_file', None)
 
         if delegate['private_key_file'] is not None:
+            delegate['private_key_file'] = template.template(self.basedir, delegate['private_key_file'], delegate['inject'], fail_on_undefined=True)
             delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
 
         for i in this_info:
