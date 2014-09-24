@@ -25,6 +25,7 @@ import glob
 import re
 import collections
 import operator as py_operator
+import urllib
 from ansible import errors
 from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
@@ -107,6 +108,10 @@ def bool(a):
 def quote(a):
     ''' return its argument quoted for shell usage '''
     return pipes.quote(a)
+
+def urlquote(a):
+    ''' return its argument quoted for URL usage '''
+    return urllib.quote(a)
 
 def fileglob(pathname):
     ''' return list of matched files for glob '''
@@ -280,6 +285,9 @@ class FilterModule(object):
 
             # quote string for shell usage
             'quote': quote,
+
+            # quote string for URL usage
+            'urlquote': urlquote,
 
             # md5 hex digest of string
             'md5': md5s,

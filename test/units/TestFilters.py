@@ -84,6 +84,10 @@ class TestFilters(unittest.TestCase):
         a = ansible.runner.filter_plugins.core.quote('ls | wc -l')
         assert a == "'ls | wc -l'"
 
+    def test_urlquotes(self):
+        a = ansible.runner.filter_plugins.core.urlquote(' /%')
+        assert a == "%20/%25"
+
     def test_fileglob(self):
         pathname = os.path.join(os.path.dirname(__file__), '*')
         a = ansible.runner.filter_plugins.core.fileglob(pathname)
