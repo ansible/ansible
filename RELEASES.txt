@@ -6,6 +6,7 @@ Active Development
 
 1.8    "You Really Got Me" ---- FALL 2014
 
+1.7.2  "Summer Nights" -------- 09-24-2014
 1.7.1  "Summer Nights" -------- 08-14-2014
 1.7    "Summer Nights" -------- 08-06-2014
 1.6.10 "The Cradle Will Rock" - 07-25-2014
