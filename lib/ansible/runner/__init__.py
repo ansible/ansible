@@ -840,7 +840,7 @@ class Runner(object):
         if self.delegate_to:
             self.delegate_to = template.template(self.basedir, self.delegate_to, inject)
 
-        if self.delegate_to is not None:
+        if self.delegate_to is not None and self.transport != 'local':
             delegate = self._compute_delegate(actual_pass, inject)
             actual_transport = delegate['transport']
             actual_host = delegate['ssh_host']
