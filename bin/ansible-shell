@@ -22,14 +22,14 @@
 # Available commands:
 #  cd - change host/group (you can use host patterns eg.: app*.dc*:!app01*)
 #  list - list available hosts in the current path
-#  serial - change serial
+#  forks - change fork
 #  sudo - sudo
 #  ! - forces shell module instead of the ansible module (!yum update -y)
 #
 # Configuration:
 # create a [ansible-shell] section in your ansbile.cfg
 #  cwd=app-servers - you can set your default host pattern
-#  serial=100 - default serial
+#  forks=100 - default forks
 
 
 import cmd
@@ -86,10 +86,10 @@ class AnsibleShell(cmd.Cmd):
         allowed_items = {
             # name: type
             'cwd': 'str',
-            'serial': 'int',
+            'forks': 'int',
         }
         config = C.load_config_file()
-        if config.has_section('ansible-shell'):
+        if config is not None and config.has_section('ansible-shell'):
             for item in config.items('ansible-shell'):
                 if item[0] in allowed_items.keys():
                     value = vars(__builtins__)[allowed_items[item[0]]](item[1])
@@ -232,7 +232,7 @@ class AnsibleShell(cmd.Cmd):
         if not arg:
             print 'Usage: forks <number>'
             return
-        self.options.forks = arg
+        self.options.forks = int(arg)
         self.set_prompt()
 
     do_serial = do_forks
