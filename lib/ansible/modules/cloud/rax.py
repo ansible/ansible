@@ -64,7 +64,10 @@ options:
   exact_count:
     description:
       - Explicitly ensure an exact count of instances, used with
-        state=active/present
+        state=active/present. If specified as C(yes) and I(count) is less than
+        the servers matched, servers will be deleted to match the count. If
+        the number of matched servers is fewer than specified in I(count)
+        additional servers will be added.
     default: no
     choices:
       - "yes"
@@ -150,6 +153,12 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 author: Jesse Keating, Matt Martz
+notes:
+  - I(exact_count) can be "destructive" if the number of running servers in
+    the I(group) is larger than that specified in I(count). In such a case, the
+    I(state) is effectively set to C(absent) and the extra servers are deleted.
+    In the case of deletion, the returned data structure will have C(action)
+    set to C(delete), and the oldest servers in the group will be deleted.
 extends_documentation_fragment: rackspace.openstack
 '''
 
@@ -441,79 +450,102 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
             if group is None:
                 module.fail_json(msg='"group" must be provided when using '
                                      '"exact_count"')
-            else:
+
+            if auto_increment:
+                numbers = set()
+
+                # See if the name is a printf like string, if not append
+                # %d to the end
+                try:
+                    name % 0
+                except TypeError, e:
+                    if e.message.startswith('not all'):
+                        name = '%s%%d' % name
+                    else:
+                        module.fail_json(msg=e.message)
+
+                # regex pattern to match printf formatting
+                pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
+                for server in cs.servers.list():
+                    # Ignore DELETED servers
+                    if server.status == 'DELETED':
+                        continue
+                    if server.metadata.get('group') == group:
+                        servers.append(server)
+                    match = re.search(pattern, server.name)
+                    if match:
+                        number = int(match.group(1))
+                        numbers.add(number)
+
+                number_range = xrange(count_offset, count_offset + count)
+                available_numbers = list(set(number_range)
+                                         .difference(numbers))
+            else:  # Not auto incrementing
+                for server in cs.servers.list():
+                    # Ignore DELETED servers
+                    if server.status == 'DELETED':
+                        continue
+                    if server.metadata.get('group') == group:
+                        servers.append(server)
+                # available_numbers not needed here, we inspect auto_increment
+                # again later
+
+            # If state was absent but the count was changed,
+            # assume we only wanted to remove that number of instances
+            if was_absent:
+                diff = len(servers) - count
+                if diff < 0:
+                    count = 0
+                else:
+                    count = diff
+
+            if len(servers) > count:
+                # We have more servers than we need, set state='absent'
+                # and delete the extras, this should delete the oldest
+                state = 'absent'
+                kept = servers[:count]
+                del servers[:count]
+                instance_ids = []
+                for server in servers:
+                    instance_ids.append(server.id)
+                delete(module, instance_ids=instance_ids, wait=wait,
+                       wait_timeout=wait_timeout, kept=kept)
+            elif len(servers) < count:
+                # we have fewer servers than we need
                 if auto_increment:
-                    numbers = set()
-
-                    try:
-                        name % 0
-                    except TypeError, e:
-                        if e.message.startswith('not all'):
-                            name = '%s%%d' % name
-                        else:
-                            module.fail_json(msg=e.message)
-
-                    pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
-                    for server in cs.servers.list():
-                        if server.metadata.get('group') == group:
-                            servers.append(server)
-                        match = re.search(pattern, server.name)
-                        if match:
-                            number = int(match.group(1))
-                            numbers.add(number)
-
-                    number_range = xrange(count_offset, count_offset + count)
-                    available_numbers = list(set(number_range)
-                                             .difference(numbers))
+                    # auto incrementing server numbers
+                    names = []
+                    name_slice = count - len(servers)
+                    numbers_to_use = available_numbers[:name_slice]
+                    for number in numbers_to_use:
+                        names.append(name % number)
                 else:
-                    for server in cs.servers.list():
-                        if server.metadata.get('group') == group:
-                            servers.append(server)
-
-                # If state was absent but the count was changed,
-                # assume we only wanted to remove that number of instances
-                if was_absent:
-                    diff = len(servers) - count
-                    if diff < 0:
-                        count = 0
-                    else:
-                        count = diff
-
-                if len(servers) > count:
-                    state = 'absent'
-                    kept = servers[:count]
-                    del servers[:count]
-                    instance_ids = []
-                    for server in servers:
-                        instance_ids.append(server.id)
-                    delete(module, instance_ids=instance_ids, wait=wait,
-                           wait_timeout=wait_timeout, kept=kept)
-                elif len(servers) < count:
-                    if auto_increment:
-                        names = []
-                        name_slice = count - len(servers)
-                        numbers_to_use = available_numbers[:name_slice]
-                        for number in numbers_to_use:
-                            names.append(name % number)
-                    else:
-                        names = [name] * (count - len(servers))
-                else:
-                    instances = []
-                    instance_ids = []
-                    for server in servers:
-                        instances.append(rax_to_dict(server, 'server'))
-                        instance_ids.append(server.id)
-                    module.exit_json(changed=False, action=None,
-                                     instances=instances,
-                                     success=[], error=[], timeout=[],
-                                     instance_ids={'instances': instance_ids,
-                                                   'success': [], 'error': [],
-                                                   'timeout': []})
-        else:
+                    # We are not auto incrementing server numbers,
+                    # create a list of 'name' that matches how many we need
+                    names = [name] * (count - len(servers))
+            else:
+                # we have the right number of servers, just return info
+                # about all of the matched servers
+                instances = []
+                instance_ids = []
+                for server in servers:
+                    instances.append(rax_to_dict(server, 'server'))
+                    instance_ids.append(server.id)
+                module.exit_json(changed=False, action=None,
+                                 instances=instances,
+                                 success=[], error=[], timeout=[],
+                                 instance_ids={'instances': instance_ids,
+                                               'success': [], 'error': [],
+                                               'timeout': []})
+        else:  # not called with exact_count=True
             if group is not None:
                 if auto_increment:
+                    # we are auto incrementing server numbers, but not with
+                    # exact_count
                     numbers = set()
 
+                    # See if the name is a printf like string, if not append
+                    # %d to the end
                     try:
                         name % 0
                     except TypeError, e:
@@ -522,8 +554,12 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                         else:
                             module.fail_json(msg=e.message)
 
+                    # regex pattern to match printf formatting
                     pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
                     for server in cs.servers.list():
+                        # Ignore DELETED servers
+                        if server.status == 'DELETED':
+                            continue
                         if server.metadata.get('group') == group:
                             servers.append(server)
                         match = re.search(pattern, server.name)
@@ -540,8 +576,11 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                     for number in numbers_to_use:
                         names.append(name % number)
                 else:
+                    # Not auto incrementing
                     names = [name] * count
             else:
+                # No group was specified, and not using exact_count
+                # Perform more simplistic matching
                 search_opts = {
                     'name': '^%s$' % name,
                     'image': image,
@@ -549,11 +588,18 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 }
                 servers = []
                 for server in cs.servers.list(search_opts=search_opts):
+                    # Ignore DELETED servers
+                    if server.status == 'DELETED':
+                        continue
+                    # Ignore servers with non matching metadata
                     if server.metadata != meta:
                         continue
                     servers.append(server)
 
                 if len(servers) >= count:
+                    # We have more servers than were requested, don't do
+                    # anything. Not running with exact_count=True, so we assume
+                    # more is OK
                     instances = []
                     for server in servers:
                         instances.append(rax_to_dict(server, 'server'))
@@ -566,6 +612,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                                                    'success': [], 'error': [],
                                                    'timeout': []})
 
+                # We need more servers to reach out target, create names for
+                # them, we aren't performing auto_increment here
                 names = [name] * (count - len(servers))
 
         create(module, names=names, flavor=flavor, image=image,
@@ -577,6 +625,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
 
     elif state == 'absent':
         if instance_ids is None:
+            # We weren't given an explicit list of server IDs to delete
+            # Let's match instead
             for arg, value in dict(name=name, flavor=flavor,
                                    image=image).iteritems():
                 if not value:
@@ -588,10 +638,15 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 'flavor': flavor
             }
             for server in cs.servers.list(search_opts=search_opts):
+                # Ignore DELETED servers
+                if server.status == 'DELETED':
+                    continue
+                # Ignore servers with non matching metadata
                 if meta != server.metadata:
                     continue
                 servers.append(server)
 
+            # Build a list of server IDs to delete
             instance_ids = []
             for server in servers:
                 if len(instance_ids) < count:
@@ -600,6 +655,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                     break
 
         if not instance_ids:
+            # No server IDs were matched for deletion, or no IDs were
+            # explicitly provided, just exit and don't do anything
             module.exit_json(changed=False, action=None, instances=[],
                              success=[], error=[], timeout=[],
                              instance_ids={'instances': [],
