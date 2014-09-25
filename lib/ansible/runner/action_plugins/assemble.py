@@ -147,6 +147,11 @@ class ActionModule(object):
                 dest=dest,
                 original_basename=os.path.basename(src),
             )
+
+            # make sure checkmod is passed on correctly
+            if self.runner.noop_on_check(inject):
+                new_module_args['CHECKMODE'] = True
+
             module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             return self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject)
