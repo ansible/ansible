@@ -122,12 +122,14 @@ def validate_json_file(module, json_file):
     try:
         f = open(json_file, 'r')
         json.load(f)
-    except (IOError, ValueError) as e:
+    except IOError, e:
         module.fail_json(msg="%s" % e, changed=False, rc=1)
-    finally:
+    except ValueError, e:
         f.close
-
-    module.exit_json(msg="json file is valid", changed=False, rc=0)
+        module.fail_json(msg="%s" % e, changed=False, rc=1)
+    else:
+        f.close
+        module.exit_json(msg="json file is valid", changed=False, rc=0)
 
 
 def update_key(module, json_file, key, value):
