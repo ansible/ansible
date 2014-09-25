@@ -17,7 +17,7 @@ description:
         `fleetctl` binary.
         Unfortunately, this is probably not a CoreOS host itself,
         since CoreOS lacks a python interpreter.
-        The `fleetctl` binary is available for Mac OSX and linux, 
+        The `fleetctl` binary is available for Mac OSX and linux,
         see https://github.com/coreos/fleet/releases.
 
 options:
@@ -65,14 +65,14 @@ options:
       - Establish an SSH tunnel through the provided
         address for communication with fleet and etcd.
         Defaults to localhost (port 22).
-        Alternatively defined by the FLEETCTL_TUNNEL environment variable. 
+        Alternatively defined by the FLEETCTL_TUNNEL environment variable.
         e.g. 192.168.0.20 or 192.168.0.20:22
     required: false
     default: 0
     aliases: []
   binary:
     description:
-      - Path and name of the fleetctl binary. 
+      - Path and name of the fleetctl binary.
         Defaults to `fleetctl` (to be found on the default PATH).
     required: false
     default: fleetctl
@@ -91,14 +91,14 @@ options:
     aliases: []
   known_hosts_file:
     description:
-      - File used to store remote machine fingerprints. 
+      - File used to store remote machine fingerprints.
         Ignored if strict host key checking is disabled.
     required: false
     default: ~/.fleetctl/known_hosts
     aliases: []
   strict_host_key_checking:
     description:
-      - Verify host keys presented by remote machines 
+      - Verify host keys presented by remote machines
         before initiating SSH connections.
     required: false
     default: true
@@ -234,6 +234,10 @@ def parse_facts(command,
 
                 if row[2]:
                     for kv in row[2].split(','):
+                        if '=' not in kv:
+                            # then must be blank (i.e. not tags)
+                            continue
+
                         k, v = kv.split('=')
 
                         kmeta = by_meta.get(k, None)
@@ -391,8 +395,7 @@ def main():
 
     try:
         output = subprocess.check_output(
-                     args,
-                     stderr=subprocess.STDOUT)
+                     args)
 
         ansible_facts = parse_facts(command,
                                     command_args,
