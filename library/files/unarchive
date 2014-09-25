@@ -75,6 +75,7 @@ EXAMPLES = '''
 '''
 
 import os
+import re
 
 
 # class to handle .zip files
@@ -166,9 +167,63 @@ class TarXz(TgzFile):
         self.zipflag = 'J'
 
 
+# class to handle .rar files
+class RarFile(object):
+
+    def __init__(self, src, dest, module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+        self.cmd_path = self.module.get_bin_path('unrar')
+
+    def is_unarchived(self):
+        return dict(unarchived=False)
+
+    def unarchive(self):
+        cmd = '%s x -o+ "%s" "%s"/' % (self.cmd_path, self.src, self.dest)
+        rc, out, err = self.module.run_command(cmd)
+        return dict(cmd=cmd, rc=rc, out=out, err=err)
+
+    def can_handle_archive(self):
+        if not self.cmd_path:
+            return False
+        cmd = '%s l "%s"' % (self.cmd_path, self.src)
+        rc, out, err = self.module.run_command(cmd)
+        if re.search('is not RAR archive', out):
+            return False
+        return True
+
+
+# class to handle .7z files
+class SevenZipFile(object):
+
+    def __init__(self, src, dest, module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+        self.cmd_path = self.module.get_bin_path('7z')
+
+    def is_unarchived(self):
+        return dict(unarchived=False)
+
+    def unarchive(self):
+        cmd = '%s x -y -o"%s" "%s"' % (self.cmd_path, self.dest, self.src)
+        rc, out, err = self.module.run_command(cmd)
+        return dict(cmd=cmd, rc=rc, out=out, err=err)
+
+    def can_handle_archive(self):
+        if not self.cmd_path:
+            return False
+        cmd = '%s l "%s"' % (self.cmd_path, self.src)
+        rc, out, err = self.module.run_command(cmd)
+        if rc == 0:
+            return True
+        return False
+
+
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, module):
-    handlers = [TgzFile, ZipFile, TarFile, TarBzip, TarXz]
+    handlers = [TgzFile, ZipFile, TarFile, TarBzip, TarXz, RarFile, SevenZipFile]
     for handler in handlers:
         obj = handler(src, dest, module)
         if obj.can_handle_archive():
