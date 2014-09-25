@@ -283,6 +283,9 @@ def main(args):
 
             for h in hosts:
                 t = pb.stats.summarize(h)
+                h_ip = pb.inventory.get_host(h)
+                if h_ip.vars.get('ansible_ssh_host'):
+                    h = '%s - %s' % (h, h_ip.vars['ansible_ssh_host'])
 
                 display("%s : %s %s %s %s" % (
                     hostcolor(h, t),
