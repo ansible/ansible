@@ -235,7 +235,7 @@ def parse_facts(command,
                 if row[2]:
                     for kv in row[2].split(','):
                         if '=' not in kv:
-                            # then must be blank (i.e. not tags)
+                            # then must be blank (i.e. no tags)
                             continue
 
                         k, v = kv.split('=')
