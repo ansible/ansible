@@ -110,6 +110,9 @@ def main():
             state = dict(choices=['file','directory','link','hard','touch','absent'], default=None),
             path  = dict(aliases=['dest', 'name'], required=True),
             original_basename = dict(required=False), # Internal use only, for recursive ops
+            archive = dict(type='bool',required=False), # Internal use only, delegated here (see template)
+            atime = dict(required=False),
+            mtime = dict(required=False),
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
