@@ -42,6 +42,11 @@ Else {
 
 $client = New-Object System.Net.WebClient
 
+If ($params.cookie) {
+    $cookie = $params.cookie
+    $client.Headers.Add([System.Net.HttpRequestHeader]::Cookie, $cookie)
+}
+
 Try {
     $client.DownloadFile($url, $dest)
     $result.changed = $true
