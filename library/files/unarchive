@@ -185,6 +185,7 @@ def main():
             dest              = dict(required=True),
             copy              = dict(default=True, type='bool'),
             creates           = dict(required=False),
+            precheck          = dict(default=False, type='bool'),
         ),
         add_file_common_args=True,
     )
@@ -193,15 +194,7 @@ def main():
     dest   = os.path.expanduser(module.params['dest'])
     copy   = module.params['copy']
     creates = module.params['creates']
-
-    # did tar file arrive?
-    if not os.path.exists(src):
-        if copy:
-            module.fail_json(msg="Source '%s' failed to transfer" % src)
-        else:
-            module.fail_json(msg="Source '%s' does not exist" % src)
-    if not os.access(src, os.R_OK):
-        module.fail_json(msg="Source '%s' not readable" % src)
+    precheck = module.params['precheck']
 
     if creates:
         # do not run the command if the line contains creates=filename
@@ -216,6 +209,23 @@ def main():
                 stderr=False,
                 rc=0
             )
+        if precheck:
+            module.exit_json(
+                stdout="transferring archive, pre-check indicates non-existent %s" % v,
+                skipped=False,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
+
+    # did tar file arrive?
+    if not os.path.exists(src):
+        if copy:
+            module.fail_json(msg="Source '%s' failed to transfer (precheck=%s)" % (src, precheck))
+        else:
+            module.fail_json(msg="Source '%s' does not exist" % src)
+    if not os.access(src, os.R_OK):
+        module.fail_json(msg="Source '%s' not readable" % src)
 
     # is dest OK to receive tar file?
     if not os.path.isdir(dest):
