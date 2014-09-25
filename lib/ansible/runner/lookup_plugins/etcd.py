@@ -55,9 +55,9 @@ class etcd():
 
             if 'errorCode' in item:
                 value = "ENOENT"
-            elif ANSIBLE_ETCD_API_VERSION = 'v1'
+            elif ANSIBLE_ETCD_API_VERSION == 'v1':
                 value = item['value']
-            elif ANSIBLE_ETCD_API_VERSION = 'v2'
+            elif ANSIBLE_ETCD_API_VERSION == 'v2':
                 value = item['node']['value']
         except:
             raise
