@@ -28,10 +28,14 @@ ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
 if os.getenv('ANSIBLE_ETCD_URL') is not None:
     ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
 
+ANSIBLE_ETCD_API_VERSION = 'v1'
+if os.getenv('ANSIBLE_ETCD_API_VERSION') is not None:
+    ANSIBLE_ETCD_API_VERSION  = os.environ['ANSIBLE_ETCD_API_VERSION']
+
 class etcd():
     def __init__(self, url=ANSIBLE_ETCD_URL):
         self.url = url
-        self.baseurl = '%s/v1/keys' % (self.url)
+        self.baseurl = '%s/%s/keys' % (self.url, ANSIBLE_ETCD_API_VERSION)
 
     def get(self, key):
         url = "%s/%s" % (self.baseurl, key)
@@ -45,12 +49,16 @@ class etcd():
             return value
 
         try:
-            # {"action":"get","key":"/name","value":"Jane Jolie","index":5}
+            # v1: {"action":"get","key":"/name","value":"Jane Jolie","index":5}
+            # v2: {"action":"get","node":{"key":"/name","value":"Jane Jolie","modifiedIndex":5,"createdIndex":5}}
             item = json.loads(data)
-            if 'value' in item:
-                value = item['value']
+
             if 'errorCode' in item:
                 value = "ENOENT"
+            elif ANSIBLE_ETCD_API_VERSION = 'v1'
+                value = item['value']
+            elif ANSIBLE_ETCD_API_VERSION = 'v2'
+                value = item['node']['value']
         except:
             raise
             pass
