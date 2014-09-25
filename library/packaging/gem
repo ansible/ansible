@@ -77,8 +77,8 @@ author: Johan Wiren
 '''
 
 EXAMPLES = '''
-# Installs version 1.0 of vagrant.
-- gem: name=vagrant version=1.0 state=present
+# Installs version 3.1.0 of rspec.
+- gem: name=rspec version=3.1.0 state=present
 
 # Installs latest available version of rake.
 - gem: name=rake state=latest
