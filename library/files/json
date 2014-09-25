@@ -120,9 +120,12 @@ def write_json_file(json_file, json_obj):
 
 def validate_json_file(module, json_file):
     try:
-        json.loads(open(json_file, 'r').read())
-    except ValueError, e:
+        f = open(json_file, 'r')
+        json.load(f)
+    except (IOError, ValueError) as e:
         module.fail_json(msg="%s" % e, changed=False, rc=1)
+    finally:
+        f.close
 
     module.exit_json(msg="json file is valid", changed=False, rc=0)
 
