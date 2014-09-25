@@ -83,7 +83,7 @@ Else
 
 If ($state -eq "present") {
     try {
-        if ($OSVersion -notmatch "2012"){
+        if ($OSVersion -match "2008"){
             $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures
         } else {
             $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools
