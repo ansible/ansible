@@ -146,10 +146,10 @@ import getpass
 import tempfile
 try:
     import MySQLdb
-except ImportError:
-    mysqldb_found = False
+except ImportError, e:
+    mysqldb_import_error = e
 else:
-    mysqldb_found = True
+    mysqldb_import_error = None
 
 # ===========================================
 # MySQL module specific support methods.
@@ -419,8 +419,8 @@ def main():
     check_implicit_admin = module.params['check_implicit_admin']
     append_privs = module.boolean(module.params["append_privs"])
 
-    if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+    if mysqldb_import_error is not None:
+        module.fail_json(msg="the python mysqldb module failed to import: %s" % mysqldb_import_error)
 
     if priv is not None:
         try:

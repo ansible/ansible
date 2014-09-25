@@ -70,10 +70,10 @@ import warnings
 
 try:
     import MySQLdb
-except ImportError:
-    mysqldb_found = False
+except ImportError, e:
+    mysqldb_import_error = e
 else:
-    mysqldb_found = True
+    mysqldb_import_error = None
 
 
 def typedvalue(value):
@@ -201,8 +201,8 @@ def main():
     host = module.params["login_host"]
     mysqlvar = module.params["variable"]
     value = module.params["value"]
-    if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+    if mysqldb_import_error is not None:
+        module.fail_json(msg="the python mysqldb module failed to import: %s" % mysqldb_import_error)
     else:
         warnings.filterwarnings('error', category=MySQLdb.Warning)
 
