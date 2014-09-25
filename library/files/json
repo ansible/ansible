@@ -108,14 +108,14 @@ def del_key(my_dict, key):
 def read_json_file(json_file):
     f = open(json_file, 'r')
     json_obj = json.load(f)
-    f.close
+    f.close()
     return json_obj
 
 
 def write_json_file(json_file, json_obj):
     f = open(json_file, 'w')
     f.write(json.dumps(json_obj, indent=4, sort_keys=True))
-    f.close
+    f.close()
 
 
 def validate_json_file(module, json_file):
@@ -125,10 +125,10 @@ def validate_json_file(module, json_file):
     except IOError, e:
         module.fail_json(msg="%s" % e, changed=False, rc=1)
     except ValueError, e:
-        f.close
+        f.close()
         module.fail_json(msg="%s" % e, changed=False, rc=1)
     else:
-        f.close
+        f.close()
         module.exit_json(msg="json file is valid", changed=False, rc=0)
 
 
