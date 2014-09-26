@@ -192,6 +192,7 @@ def process_module(module, options, env, template, outputname, module_map):
 
     print "rendering: %s" % module
 
+
     fname = module_map[module]
 
     # ignore files with extensions
@@ -208,6 +209,13 @@ def process_module(module, options, env, template, outputname, module_map):
 
     if doc is None:
         return "SKIPPED"
+
+    if "core" in module:
+        print "CORE"
+        doc['core'] = True
+    else:
+        doc['core'] = False
+
 
     all_keys = []
 
