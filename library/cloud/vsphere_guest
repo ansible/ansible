@@ -206,6 +206,23 @@ EXAMPLES = '''
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
 
+# Transfer a local file to a machine running vmwaretools
+# If overwrite is not specified it defaults to False
+# guest_user/passwd is a local account on the guest machine
+
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    password: mypass
+    guest: newvm001
+    send: yes
+    src_file: /path/to/local/file
+    dst_file: /path/on/guest
+    overwrite: no
+    guest_user: guestadmin
+    guest_passwd: supersecret
+
+
 # Remove a vm from vSphere
 # The VM must be powered_off of you need to use force to force a shutdown
 
@@ -922,6 +939,32 @@ def power_state(vm, state, force):
     return False
 
 
+def send_file(vm, guest_user, guest_passwd, src_file, dst_file, module, overwrite=False):
+    toolsStatus = vm.get_tools_status()
+    if toolsStatus == 'NOT RUNNING':
+        module.fail_json(msg='VMware Tools not running')
+    elif toolsStatus == 'RUNNING':
+        try:
+            vm.login_in_guest(guest_user, guest_passwd)
+        except Exception as e:
+            module.fail_json(changed=True, msg="Could not login to guest: %s" % e)
+        exists = False
+        if not overwrite:
+            try:
+                vm.list_files(dst_file)
+                exists = True
+            except:
+                pass
+        try:
+            if exists and not overwrite:
+                module.exit_json(changed=False, msg="File exists on remote machine")
+            if not exists or overwrite:
+                vm.send_file(src_file, dst_file, overwrite=overwrite)
+                module.exit_json(changed=True, msg="File transfered")
+        except Exception as e:
+            module.fail_json(msg="Could not transfer file: %s" % e)
+
+
 def gather_facts(vm):
     """
     Gather facts for VM directly from vsphere.
@@ -1054,6 +1097,8 @@ def main():
             vcenter_hostname=dict(required=True, type='str'),
             username=dict(required=True, type='str'),
             password=dict(required=True, type='str'),
+            guest_user=dict(required=False, type='str'),
+            guest_passwd=dict(required=False, type='str'),
             state=dict(
                 required=False,
                 choices=[
@@ -1067,6 +1112,10 @@ def main():
                 default='present'),
             vmware_guest_facts=dict(required=False, choices=BOOLEANS),
             guest=dict(required=True, type='str'),
+            src_file=dict(required=False, type='str'),
+            dst_file=dict(required=False, type='str'),
+            overwrite=dict(required=False, choices=BOOLEANS, default=False),
+            send=dict(required=False, choices=BOOLEANS),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
             vm_hardware=dict(required=False, type='dict', default={}),
@@ -1080,7 +1129,7 @@ def main():
 
         ),
         supports_check_mode=False,
-        mutually_exclusive=[['state', 'vmware_guest_facts']],
+        mutually_exclusive=[['state', 'vmware_guest_facts'],['send', 'state']],
         required_together=[
             ['state', 'force'],
             [
@@ -1090,7 +1139,8 @@ def main():
                 'vm_hardware',
                 'esxi'
             ],
-            ['resource_pool', 'cluster']
+            ['resource_pool', 'cluster'],
+            ['send', 'src_file', 'dst_file', 'guest_user', 'guest_passwd']
         ],
     )
 
@@ -1112,6 +1162,12 @@ def main():
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
+    guest_user = module.params['guest_user']
+    guest_passwd = module.params['guest_passwd']
+    src_file = module.params['src_file']
+    dst_file = module.params['dst_file']
+    overwrite = module.params['overwrite']
+    send = module.params['send']
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1135,6 +1191,16 @@ def main():
             except Exception, e:
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
+        elif send:
+            send_file(
+                vm=vm,
+                guest_user=guest_user,
+                guest_passwd=guest_passwd,
+                src_file=src_file,
+                dst_file=dst_file,
+                module=module,
+                overwrite=overwrite
+            )
 
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
