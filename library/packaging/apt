@@ -231,7 +231,8 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     for pkgname_or_fnmatch_pattern in pkgspec:
         # note that any of these chars is not allowed in a (debian) pkgname
-        if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
+        pkg_name = pkgname_or_fnmatch_pattern.split('=')[0]
+        if [c for c in pkg_name if c in "*?[]!"]:
             if "=" in pkgname_or_fnmatch_pattern:
                 m.fail_json(msg="pkgname wildcard and version can not be mixed")
             # handle multiarch pkgnames, the idea is that "apt*" should
