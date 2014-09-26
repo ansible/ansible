@@ -272,4 +272,6 @@ class CommandModule(AnsibleModule):
 
         return (params, params['args'])
 
-main()
+
+if __name__ == "__main__":
+    main()
