@@ -19,7 +19,16 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-Import-Module Servermanager;
+#Detect OS
+$Win32_OS = Get-WmiObject Win32_OperatingSystem
+
+switch ($Win32_OS.Version)
+{
+   "6.2.9200" {$OSVersion = "Windows Server 2012"}
+   "6.1.7601" {$OSVersion = "Windows Server 2008R2"}
+}
+
+Import-Module ServerManager;
 
 $params = Parse-Args $args;
 
@@ -74,7 +83,11 @@ Else
 
 If ($state -eq "present") {
     try {
-        $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools
+        if ($OSVersion -match "2008"){
+            $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures
+        } else {
+            $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools
+        }
     }
     catch {
         Fail-Json $result $_.Exception.Message
