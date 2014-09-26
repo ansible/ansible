@@ -28,7 +28,7 @@ options:
     required: true
     default: null
     aliases: []
-    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'restore' ]
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'restore', 'reboot' ]
   instance_name:
     description:
       - Database instance identifier.
@@ -284,7 +284,7 @@ def get_current_resource(conn, resource, command):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
+            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore', 'reboot'], required=True),
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
@@ -376,6 +376,10 @@ def main():
     if command == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
         invalid_vars  = [ 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ] + [invalid_security_group_type(subnet)]
+
+    elif command == 'reboot':
+        required_vars = [ 'instance_name' ]
+        invalid_vars  = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'vpc_security_groups', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately', 'new_instance_name', 'source_name' ]
 
     elif command == 'replicate':
         required_vars = [ 'instance_name', 'source_instance' ]
@@ -513,6 +517,12 @@ def main():
             else:
                 params["skip_final_snapshot"] = True
             result = conn.delete_dbinstance(instance_name, **params)
+        except boto.exception.BotoServerError, e:
+            module.fail_json(msg = e.error_message)
+
+    if command == 'reboot':
+        try:
+            result = conn.reboot_dbinstance(instance_name)
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = e.error_message)
 
