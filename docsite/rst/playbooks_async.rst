@@ -61,7 +61,7 @@ If you would like to perform a variation of the "fire and forget" where you
 following::
 
       --- 
-      # Requires ansible 1.7+
+      # Requires ansible 1.8+
       - name: 'YUM - fire and forget task'
         yum: name=docker-io state=installed
         async: 1000
