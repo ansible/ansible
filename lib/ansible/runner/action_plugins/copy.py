@@ -70,6 +70,9 @@ class ActionModule(object):
         elif (source is not None or 'first_available_file' in inject) and content is not None:
             result=dict(failed=True, msg="src and content are mutually exclusive")
             return ReturnData(conn=conn, result=result)
+        elif content is not None and dest is not None and dest.endswith("/"):
+            result=dict(failed=True, msg="dest must be a file if content is defined")
+            return ReturnData(conn=conn, result=result)
 
         # Check if the source ends with a "/"
         source_trailing_slash = False
@@ -295,7 +298,7 @@ class ActionModule(object):
             or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self.runner._remove_tmp_path(conn, tmp_path)
 
-        # the file module returns the file path as 'path', but 
+        # the file module returns the file path as 'path', but
         # the copy module uses 'dest', so add it if it's not there
         if 'path' in module_result and 'dest' not in module_result:
             module_result['dest'] = module_result['path']
@@ -365,7 +368,7 @@ class ActionModule(object):
         if content is not None:
             os.remove(content_tempfile)
 
-    
+
     def _result_key_merge(self, options, results):
         # add keys to file module results to mimic copy
         if 'path' in results.result and 'dest' not in results.result:
