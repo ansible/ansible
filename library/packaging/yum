@@ -207,7 +207,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
             
         if rc == 0 and rc2 == 0:
             out += out2
-            return [ p for p in out.split('\n') if p.strip() ]
+            return [ p for p in out.split('\n') if pkgspec in p.strip() ]
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
             
@@ -345,7 +345,7 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
         rc2,out2,err2 = module.run_command(cmd)
         if rc == 0 and rc2 == 0:
             out += out2
-            pkgs = set([ p for p in out.split('\n') if p.strip() ])
+            pkgs = set([ p for p in out.split('\n') if req_spec in p.strip() ])
             if not pkgs:
                 pkgs = is_installed(module, repoq, req_spec, conf_file, qf=qf)
             return pkgs
