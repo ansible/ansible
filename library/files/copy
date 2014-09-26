@@ -42,7 +42,8 @@ options:
   content:
     version_added: "1.1"
     description:
-      - When used instead of 'src', sets the contents of a file directly to the specified value.
+      - When used instead of 'src', sets the contents of a file directly to the
+        specified value. Destination must be a file (without / at the end)
     required: false
     default: null
   dest:
@@ -205,7 +206,7 @@ def main():
                 # os.path.exists() can return false in some
                 # circumstances where the directory does not have
                 # the execute bit for the current user set, in
-                # which case the stat() call will raise an OSError 
+                # which case the stat() call will raise an OSError
                 os.stat(os.path.dirname(dest))
             except OSError, e:
                 if "permission denied" in str(e).lower():

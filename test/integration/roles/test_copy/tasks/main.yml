@@ -237,3 +237,16 @@
   assert:
     that:
     - replace_follow_result.md5sum == target_file_result.stdout
+
+# test check if raise an error when try to copy content without define
+# a file
+
+- name: trying to copy content without define a dest file
+  copy: content="lorem ipsum" dest={{output_dir}}/follow_test/
+  ignore_errors: true
+  register: failed_copy
+
+- name: check that copy content ran but failed with errors
+  assert:
+    that:
+      - "failed_copy|failed"
