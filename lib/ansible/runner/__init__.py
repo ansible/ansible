@@ -1215,7 +1215,7 @@ class Runner(object):
         module_suffixes = getattr(conn, 'default_suffixes', None)
         module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes)
         if module_path is None:
-            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
+            raise errors.AnsibleFileNotFound("module %s not found in configured module paths" % (module_name))
 
 
         # insert shared code and arguments into the module
