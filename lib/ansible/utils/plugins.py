@@ -75,6 +75,15 @@ class PluginLoader(object):
                 ret.append(i)
         return os.pathsep.join(ret)
 
+    def _all_directories(self, dir):
+        results = []
+        results.append(dir)
+        for root, subdirs, files in os.walk(dir):
+           if '__init__.py' in files:
+               for x in subdirs:
+                   results.append(os.path.join(root,x))
+        return results
+
     def _get_package_paths(self):
         ''' Gets the path of a Python package '''
 
@@ -85,7 +94,7 @@ class PluginLoader(object):
             m = __import__(self.package)
             parts = self.package.split('.')[1:]
             self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
-            paths.append(self.package_path)
+            paths.extend(self._all_directories(self.package_path))
             return paths
         else:
             return [ self.package_path ]
@@ -107,7 +116,8 @@ class PluginLoader(object):
                 # allow directories to be two levels deep
                 files2 = glob.glob("%s/*/*" % fullpath)
 
-                files = files.extend(files2)
+                if files2 is not None:
+                    files.extend(files2)
 
                 for file in files:
                     if os.path.isdir(file) and file not in ret:
@@ -128,6 +138,8 @@ class PluginLoader(object):
 
         # look for any plugins installed in the package subtree
         ret.extend(self._get_package_paths())
+        package_dirs = self._get_package_paths()
+
 
         self._paths = ret
 
@@ -153,7 +165,7 @@ class PluginLoader(object):
             if self.class_name:
                 suffixes = ['.py']
             else:
-                suffixes = ['', '.ps1']
+                suffixes = ['', '.ps1', '.py']
 
         for suffix in suffixes:
             full_name = '%s%s' % (name, suffix)

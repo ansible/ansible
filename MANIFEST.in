@@ -5,7 +5,6 @@ graft examples/playbooks
 include packaging/distutils/setup.py
 include lib/ansible/module_utils/powershell.ps1
 recursive-include docs *
-recursive-include library *
 include Makefile
 include VERSION
 include MANIFEST.in
