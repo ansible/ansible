@@ -603,6 +603,7 @@ def main():
        module.exit_json( changed = changed )
     if create_changed or replace_changed:
         changed = True
+    asg_properties.pop('tags', None)
     module.exit_json( changed = changed, **asg_properties )
 
 main()
