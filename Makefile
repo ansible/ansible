@@ -91,7 +91,7 @@ NOSETESTS ?= nosetests
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
+	PYTHONPATH=./lib ANSIBLE_LIBRARY=./lib/ansible/modules  $(NOSETESTS) -d -w test/units -v
 
 authors:
 	sh hacking/authors.sh
@@ -114,7 +114,7 @@ pep8:
 	@echo "# Running PEP8 Compliance Tests"
 	@echo "#############################################"
 	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	# -pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
 
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
