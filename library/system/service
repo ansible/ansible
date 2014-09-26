@@ -394,48 +394,41 @@ class LinuxService(Service):
             location[binary] = self.module.get_bin_path(binary)
 
         def check_systemd(name):
-            # verify service is managed by systemd
-            if not location.get('systemctl', None):
+            """Verify if unit (service) is managed by systemd"""
+
+            # sd_booted(3) reimplemented in pure Python
+            # systemd.daemon.booted() could also be used
+            try:
+                st = os.lstat("/run/systemd/system/")
+                if not stat.S_ISDIR(st.st_mode):
+                    return False
+            except OSError:
                 return False
 
             # default to .service if the unit type is not specified
-            if name.find('.') > 0:
-                unit_name, unit_type = name.rsplit('.', 1)
-                if unit_type not in ("service", "socket", "device", "mount", "automount",
-                                     "swap", "target", "path", "timer", "snapshot"):
-                    name = "%s.service" % name
-            else:
+            # use the same logic as unit_name_mangle from systemctl
+            if '.' not in name:
                 name = "%s.service" % name
 
-            rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
-
-            # adjust the service name to account for template service unit files
-            index = name.find('@')
-            if index != -1:
-                template_name = name[:index+1]
-            else:
-                template_name = name
-
-            self.__systemd_unit = None
-            for line in out.splitlines():
-                if line.startswith(template_name):
-                    self.__systemd_unit = name
-                    return True
-            return False
+            rc, out, err = self.execute_command("%s -p LoadState show %s" % \
+                                                 (location['systemctl'], name))
+            if rc != 0:
+                return False
+            load_state = out.split('=')[1].rstrip()
+            if load_state not in ('loaded', 'merged'):
+                return False
+            self.__systemd_unit = name
+            return True
 
         # Locate a tool for enable options
-        if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
-            if check_systemd(self.name):
-                # service is managed by systemd
-                self.enable_cmd = location['systemctl']
-            else:
-                # we are using a standard SysV service
-                self.enable_cmd = location['chkconfig']
-        elif location.get('update-rc.d', None):
-            if check_systemd(self.name):
-                # service is managed by systemd
-                self.enable_cmd = location['systemctl']
-            elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
+        if check_systemd(self.name):
+            # service is managed by systemd
+            self.enable_cmd = location['systemctl']
+        elif location.get('chkconfig') and os.path.exists("/etc/init.d/%s" % self.name):
+            # we are using a standard SysV service
+            self.enable_cmd = location['chkconfig']
+        elif location.get('update-rc.d'):
+            if location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
                 # service is managed by upstart
                 self.enable_cmd = location['initctl']
             elif location['update-rc.d'] and os.path.exists("/etc/init.d/%s" % self.name):
@@ -443,14 +436,11 @@ class LinuxService(Service):
                 self.enable_cmd = location['update-rc.d']
             else:
                 self.module.fail_json(msg="service not found: %s" % self.name)
-        elif location.get('rc-service', None) and not location.get('systemctl', None):
+        elif location.get('rc-service'):
             # service is managed by OpenRC
             self.svc_cmd = location['rc-service']
             self.enable_cmd = location['rc-update']
             return
-        elif check_systemd(self.name):
-            # service is managed by systemd
-            self.enable_cmd = location['systemctl']
         elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
             # service is managed by upstart
             self.enable_cmd = location['initctl']
@@ -473,10 +463,12 @@ class LinuxService(Service):
                 pass
 
         # Locate a tool for runtime service management (start, stop etc.)
-        if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
+        if check_systemd(self.name):
+            self.svc_cmd = location['systemctl']
+        elif location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # SysV init script
             self.svc_cmd = location['service']
-        elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
+        elif location.get('start') and os.path.exists("/etc/init/%s.conf" % self.name):
             # upstart -- rather than being managed by one command, start/stop/restart are actual commands
             self.svc_cmd = ''
         else:
@@ -486,15 +478,10 @@ class LinuxService(Service):
                 if os.path.isfile(initscript):
                     self.svc_initscript = initscript
 
-        # couldn't find anything yet, assume systemd
-        if self.svc_cmd is None and self.svc_initscript is None:
-            if location.get('systemctl'):
-                self.svc_cmd = location['systemctl']
-
         if self.svc_cmd is None and not self.svc_initscript:
             self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
 
-        if location.get('initctl', None):
+        if location.get('initctl'):
             self.svc_initctl = location['initctl']
 
     def get_systemd_status_dict(self):
