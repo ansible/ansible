@@ -67,7 +67,7 @@ def query_package(module, opkg_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s list-installed | grep -q ^%s" % (pipes.quote(opkg_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s list-installed | grep -q \"^%s \"" % (pipes.quote(opkg_path), pipes.quote(name)), use_unsafe_shell=True)
         if rc == 0:
             return True
 
