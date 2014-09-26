@@ -195,34 +195,6 @@ def config_get(config, section, option):
     return strip_quotes(config.get(section, option))
 
 
-def load_mycnf():
-    config = ConfigParser.RawConfigParser()
-    mycnf = os.path.expanduser('~/.my.cnf')
-    if not os.path.exists(mycnf):
-        return False
-    try:
-        config.readfp(open(mycnf))
-    except (IOError):
-        return False
-    # We support two forms of passwords in .my.cnf, both pass= and password=,
-    # as these are both supported by MySQL.
-    try:
-        passwd = config_get(config, 'client', 'password')
-    except (ConfigParser.NoOptionError):
-        try:
-            passwd = config_get(config, 'client', 'pass')
-        except (ConfigParser.NoOptionError):
-            return False
-
-    # If .my.cnf doesn't specify a user, default to user login name
-    try:
-        user = config_get(config, 'client', 'user')
-    except (ConfigParser.NoOptionError):
-        user = getpass.getuser()
-    creds = dict(user=user, passwd=passwd)
-    return creds
-
-
 def main():
     module = AnsibleModule(
             argument_spec = dict(
@@ -279,19 +251,23 @@ def main():
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     if login_user is None and login_password is None:
-        mycnf_creds = load_mycnf()
-        if mycnf_creds is False:
+        mycnf = mycnf_options()
+        if mycnf and mycnf['user'] and mycnf['passwd']:
+            login_user = mycnf["user"]
+            login_password = mycnf["passwd"]
+        else:
             login_user = "root"
             login_password = ""
-        else:
-            login_user = mycnf_creds["user"]
-            login_password = mycnf_creds["passwd"]
     elif login_password is None or login_user is None:
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
 
+    socket = module.params["login_unix_socket"]
+    if socket is None and mycnf:
+        socket = socket = mycnf['socket']
+
     try:
-        if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+        if socket:
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=socket, user=login_user, passwd=login_password, db="mysql")
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
     except Exception, e:
@@ -365,5 +341,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.mysql import *
 main()
 warnings.simplefilter("ignore")
