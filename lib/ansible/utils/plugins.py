@@ -101,7 +101,14 @@ class PluginLoader(object):
         for basedir in _basedirs:
             fullpath = os.path.realpath(os.path.join(basedir, self.subdir))
             if os.path.isdir(fullpath):
+
                 files = glob.glob("%s/*" % fullpath)
+
+                # allow directories to be two levels deep
+                files2 = glob.glob("%s/*/*" % fullpath)
+
+                files = files.extend(files2)
+
                 for file in files:
                     if os.path.isdir(file) and file not in ret:
                         ret.append(file)
@@ -232,7 +239,7 @@ shell_loader = PluginLoader(
 
 module_finder = PluginLoader(
     '',
-    '',
+    'ansible.modules',
     C.DEFAULT_MODULE_PATH,
     'library'
 )
