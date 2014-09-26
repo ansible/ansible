@@ -1,0 +1,341 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to manage A10 Networks slb service-group objects
+(c) 2014, Mischa Peters <mpeters@a10networks.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: a10_service_group
+version_added: 1.8
+short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
+description:
+    - Manage slb service-group objects on A10 Networks devices via aXAPI
+author: Mischa Peters
+notes:
+    - Requires A10 Networks aXAPI 2.1
+    - When a server doesn't exist and is added to the service-group the server will be created
+options:
+  host:
+    description:
+      - hostname or ip of your A10 Networks device
+    required: true
+    default: null
+    aliases: []
+    choices: []
+  username:
+    description:
+      - admin account of your A10 Networks device
+    required: true
+    default: null
+    aliases: ['user', 'admin']
+    choices: []
+  password:
+    description:
+      - admin password of your A10 Networks device
+    required: true
+    default: null
+    aliases: ['pass', 'pwd']
+    choices: []
+  service_group:
+    description:
+      - slb service-group name
+    required: true
+    default: null
+    aliases: ['service', 'pool', 'group']
+    choices: []
+  service_group_protocol:
+    description:
+      - slb service-group protocol
+    required: false
+    default: tcp
+    aliases: ['proto', 'protocol']
+    choices: ['tcp', 'udp']
+  service_group_method:
+    description:
+      - slb service-group loadbalancing method
+    required: false
+    default: round-robin
+    aliases: ['method']
+    choices: ['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']
+  servers:
+    description:
+      - A list of servers to add to the service group. Each list item should be a
+        dictionary which specifies the C(server:) and C(port:), but can also optionally
+        specify the C(status:). See the examples below for details.
+    required: false
+    default: null
+    aliases: []
+    choices: []
+  write_config:
+    description:
+      - If C(yes), any changes will cause a write of the running configuration
+        to non-volatile memory. This will save I(all) configuration changes,
+        including those that may have been made manually or through other modules,
+        so care should be taken when specifying C(yes).
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled devices using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+
+'''
+
+EXAMPLES = '''
+# Create a new service-group
+- a10_service_group: 
+    host: a10.mydomain.com
+    username: myadmin
+    password: mypassword
+    service_group: sg-80-tcp
+    servers:
+      - server: foo1.mydomain.com
+        port: 8080
+      - server: foo2.mydomain.com
+        port: 8080
+      - server: foo3.mydomain.com
+        port: 8080
+      - server: foo4.mydomain.com
+        port: 8080
+        status: disabled
+
+'''
+
+VALID_SERVICE_GROUP_FIELDS = ['name', 'protocol', 'lb_method']
+VALID_SERVER_FIELDS = ['server', 'port', 'status']
+
+def validate_servers(module, servers):
+    for item in servers:
+        for key in item:
+            if key not in VALID_SERVER_FIELDS:
+                module.fail_json(msg="invalid server field (%s), must be one of: %s" % (key, ','.join(VALID_SERVER_FIELDS)))
+
+        # validate the server name is present
+        if 'server' not in item:
+            module.fail_json(msg="server definitions must define the server field")
+
+        # validate the port number is present and an integer
+        if 'port' in item:
+            try:
+                item['port'] = int(item['port'])
+            except:
+                module.fail_json(msg="server port definitions must be integers")
+        else:
+            module.fail_json(msg="server definitions must define the port field")
+
+        # convert the status to the internal API integer value
+        if 'status' in item:
+            item['status'] = axapi_enabled_disabled(item['status'])
+        else:
+            item['status'] = 1
+
+
+def main():
+    argument_spec = a10_argument_spec()
+    argument_spec.update(url_argument_spec())
+    argument_spec.update(
+        dict(
+            state=dict(type='str', default='present', choices=['present', 'absent']),
+            service_group=dict(type='str', aliases=['service', 'pool', 'group'], required=True),
+            service_group_protocol=dict(type='str', default='tcp', aliases=['proto', 'protocol'], choices=['tcp', 'udp']),
+            service_group_method=dict(type='str', default='round-robin',
+                                      aliases=['method'],
+                                      choices=['round-robin',
+                                               'weighted-rr',
+                                               'least-connection',
+                                               'weighted-least-connection',
+                                               'service-least-connection',
+                                               'service-weighted-least-connection',
+                                               'fastest-response',
+                                               'least-request',
+                                               'round-robin-strict',
+                                               'src-ip-only-hash',
+                                               'src-ip-hash']),
+            servers=dict(type='list', aliases=['server', 'member'], default=[]),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False
+    )
+
+    host = module.params['host']
+    username = module.params['username']
+    password = module.params['password']
+    state = module.params['state']
+    write_config = module.params['write_config']
+    slb_service_group = module.params['service_group']
+    slb_service_group_proto = module.params['service_group_protocol']
+    slb_service_group_method = module.params['service_group_method']
+    slb_servers = module.params['servers']
+
+    if slb_service_group is None:
+        module.fail_json(msg='service_group is required')
+
+    axapi_base_url = 'https://' + host + '/services/rest/V2.1/?format=json'
+    load_balancing_methods = {'round-robin': 0,
+                              'weighted-rr': 1,
+                              'least-connection': 2,
+                              'weighted-least-connection': 3,
+                              'service-least-connection': 4,
+                              'service-weighted-least-connection': 5,
+                              'fastest-response': 6,
+                              'least-request': 7,
+                              'round-robin-strict': 8,
+                              'src-ip-only-hash': 14,
+                              'src-ip-hash': 15}
+
+    if not slb_service_group_proto or slb_service_group_proto.lower() == 'tcp':
+        protocol = 2
+    else:
+        protocol = 3
+
+    # validate the server data list structure
+    validate_servers(module, slb_servers)
+
+    json_post = {
+        'service_group': {
+            'name': slb_service_group,
+            'protocol': protocol,
+            'lb_method': load_balancing_methods[slb_service_group_method],
+        }
+    }
+
+    # first we authenticate to get a session id
+    session_url = axapi_authenticate(module, axapi_base_url, username, password)
+
+    # then we check to see if the specified group exists
+    slb_result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': slb_service_group}))
+    slb_service_group_exist = not axapi_failure(slb_result)
+
+    changed = False
+    if state == 'present':
+        # before creating/updating we need to validate that servers
+        # defined in the servers list exist to prevent errors
+        checked_servers = []
+        for server in slb_servers:
+            result = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': server['server']}))
+            if axapi_failure(result):
+                module.fail_json(msg="the server %s specified in the servers list does not exist" % server['server'])
+            checked_servers.append(server['server'])
+
+        if not slb_service_group_exist:
+            result = axapi_call(module, session_url + '&method=slb.service_group.create', json.dumps(json_post))
+            if axapi_failure(result):
+                module.fail_json(msg=result['response']['err']['msg'])
+            changed = True
+        else:
+            # check to see if the service group definition without the
+            # server members is different, and update that individually
+            # if it needs it
+            do_update = False
+            for field in VALID_SERVICE_GROUP_FIELDS:
+                if json_post['service_group'][field] != slb_result['service_group'][field]:
+                    do_update = True
+                    break
+
+            if do_update:
+                result = axapi_call(module, session_url + '&method=slb.service_group.update', json.dumps(json_post))
+                if axapi_failure(result):
+                    module.fail_json(msg=result['response']['err']['msg'])
+                changed = True
+
+        # next we pull the defined list of servers out of the returned
+        # results to make it a bit easier to iterate over
+        defined_servers = slb_result.get('service_group', {}).get('member_list', [])
+
+        # next we add/update new member servers from the user-specified
+        # list if they're different or not on the target device
+        for server in slb_servers:
+            found = False
+            different = False
+            for def_server in defined_servers:
+                if server['server'] == def_server['server']:
+                    found = True
+                    for valid_field in VALID_SERVER_FIELDS:
+                        if server[valid_field] != def_server[valid_field]:
+                            different = True
+                            break
+                    if found or different:
+                        break
+            # add or update as required
+            server_data = {
+                "name": slb_service_group,
+                "member": server,
+            }
+            if not found:
+                result = axapi_call(module, session_url + '&method=slb.service_group.member.create', json.dumps(server_data))
+                changed = True
+            elif different:
+                result = axapi_call(module, session_url + '&method=slb.service_group.member.update', json.dumps(server_data))
+                changed = True
+
+        # finally, remove any servers that are on the target
+        # device but were not specified in the list given
+        for server in defined_servers:
+            found = False
+            for slb_server in slb_servers:
+                if server['server'] == slb_server['server']:
+                    found = True
+                    break
+            # remove if not found
+            server_data = {
+                "name": slb_service_group,
+                "member": server,
+            }
+            if not found:
+                result = axapi_call(module, session_url + '&method=slb.service_group.member.delete', json.dumps(server_data))
+                changed = True
+
+        # if we changed things, get the full info regarding
+        # the service group for the return data below
+        if changed:
+            result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': slb_service_group}))
+        else:
+            result = slb_result
+    elif state == 'absent':
+        if slb_service_group_exist:
+            result = axapi_call(module, session_url + '&method=slb.service_group.delete', json.dumps({'name': slb_service_group}))
+            changed = True
+        else:
+            result = dict(msg="the service group was not present")
+
+    # if the config has changed, save the config unless otherwise requested
+    if changed and write_config:
+        write_result = axapi_call(module, session_url + '&method=system.action.write_memory')
+        if axapi_failure(write_result):
+            module.fail_json(msg="failed to save the configuration: %s" % write_result['response']['err']['msg'])
+
+    # log out of the session nicely and exit
+    axapi_call(module, session_url + '&method=session.close')
+    module.exit_json(changed=changed, content=result)
+
+# standard ansible module imports
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+from ansible.module_utils.a10 import *
+
+main()
