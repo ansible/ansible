@@ -108,6 +108,13 @@ options:
     required: false
     default: null
     aliases: []
+  disk_type:
+    description:
+      - standard or ssd
+    required: false
+    default: pd-standard
+    choices: ["pd-standard","pd-ssd"]
+    aliases: []
 
 requirements: [ "libcloud" ]
 author: Eric Johnson <erjohnso@google.com>
@@ -151,6 +158,7 @@ def main():
             service_account_email = dict(),
             pem_file = dict(),
             project_id = dict(),
+            disk_type = dict(default='pd-standard', choices=['pd-standard', 'pd-ssd']),
         )
     )
 
@@ -165,6 +173,7 @@ def main():
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
+    disk_type = module.params.get('disk_type')
 
     if detach_only and not instance_name:
         module.fail_json(
@@ -233,7 +242,7 @@ def main():
             try:
                 disk = gce.create_volume(
                     size_gb, name, location=zone, image=lc_image,
-                    snapshot=lc_snapshot)
+                    snapshot=lc_snapshot, ex_disk_type=disk_type)
             except ResourceExistsError:
                 pass
             except QuotaExceededError:
