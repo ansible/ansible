@@ -41,6 +41,12 @@ options:
     required: false
     default: yes
     aliases: []
+  cookie:
+    description:
+      - String to pass as cookie for the request for the file
+    required: false
+    default: null
+    aliases: []
 author: Paul Durivage
 '''
 
@@ -54,4 +60,11 @@ $ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthr
   win_get_url:
     url: 'http://www.example.com/earthrise.jpg'
     dest: 'C:\Users\RandomUser\earthrise.jpg'
+    
+# Playbook example with cookie
+- name: Get Java SDK
+  win_get_url:
+    url: 'http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-windows-x64.exe'
+    dest: 'C:\jdk-7u67-windows-x64.exe'
+    cookie: 'oraclelicense=accept-securebackup-cookie'
 '''
