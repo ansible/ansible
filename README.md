@@ -1,13 +1,10 @@
-ansible-modules-core
-====================
+ansible-modules-extras
+======================
 
-This repo is transitional and not yet enabled.  Do not send issues or pull requests here yet.
+This repo contains a subset of ansible-modules with slightly lower use or priority than "core" modules.
 
-The goal is to split library/ from ansible into git submodules. 
+All new modules should be submitted here, and have a chance to be promoted to core over time.
 
-See details:  https://groups.google.com/forum/#!topic/ansible-devel/W2FYdXZ7zlM
-
-Once complete, core modules will be manually promoted from new submissions to extras.  New modules must be submitted first to extras, and tickets should be opened in the appropriate repo (ansible/ansible, ansible/ansible-modules-core, or ansible/ansible-modules-extras).
 
 License
 =======
