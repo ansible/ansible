@@ -43,8 +43,7 @@ options:
     required: true
     description:
       - The regular expression to look for in the contents of the file.
-        Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        Uses U(http://docs.python.org/2/library/re.html|Python regular expressions).
         Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
   replace:

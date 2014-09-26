@@ -86,7 +86,7 @@ options:
     required: false
     version_added: "1.3"
 notes:
-   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
+   - U(http://www.virtualenv.org|virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
    - To be able to use the migrate command, you must have south installed and added as an app in your settings

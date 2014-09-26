@@ -23,7 +23,7 @@ version_added: "1.4"
 short_description: create or terminate GCE instances
 description:
      - Creates or terminates Google Compute Engine (GCE) instances.  See
-       U(https://cloud.google.com/products/compute-engine) for an overview.
+       U(https://cloud.google.com/products/compute-engine|here) for an overview.
        Full install/configuration instructions for the gce* modules can
        be found in the comments of ansible/test/gce_tests.py.
 options:

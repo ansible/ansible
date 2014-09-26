@@ -75,8 +75,7 @@ options:
     description:
       - Assemble files only if C(regex) matches the filename. If not set,
         all files are assembled. All "\\" (backslash) must be escaped as
-        "\\\\" to comply yaml syntax. Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        "\\\\" to comply yaml syntax. Uses U(http://docs.python.org/2/library/re.html|Python regular expressions).
     required: false
     default: null
 author: Stephen Fromm

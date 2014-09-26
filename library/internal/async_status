@@ -41,7 +41,7 @@ options:
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
-    - See also U(http://docs.ansible.com/playbooks_async.html)
+    - See also U(http://docs.ansible.com/playbooks_async.html|http://docs.ansible.com/playbooks_async.html)
 requirements: []
 author: Michael DeHaan
 '''

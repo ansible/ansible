@@ -55,7 +55,7 @@ EXAMPLE_YAML=os.path.abspath(os.path.join(
 _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD   = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
-_URL    = re.compile(r"U\(([^)]+)\)")
+_URL    = re.compile(r"U\(([^)]+)\|([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
 #####################################################################################
@@ -66,7 +66,7 @@ def rst_ify(text):
     t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
     t = _BOLD.sub(r'**' + r"\1" + r"**", t)
     t = _MODULE.sub(r'``' + r"\1" + r"``", t)
-    t = _URL.sub(r"\1", t)
+    t = _URL.sub(r'`' + r"\2 " +  r"<\1>" + r"`_", t)
     t = _CONST.sub(r'``' + r"\1" + r"``", t)
 
     return t
@@ -80,7 +80,7 @@ def html_ify(text):
     t = _ITALIC.sub("<em>" + r"\1" + "</em>", t)
     t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
     t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
-    t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
+    t = _URL.sub("<a href='" + r"\1" + "'>" + r"\2" + "</a>", t)
     t = _CONST.sub("<code>" + r"\1" + "</code>", t)
 
     return t

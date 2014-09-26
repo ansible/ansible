@@ -22,8 +22,8 @@ module: gce_pd
 version_added: "1.4"
 short_description: utilize GCE persistent disk resources
 description:
-    - This module can create and destroy unformatted GCE persistent disks
-      U(https://developers.google.com/compute/docs/disks#persistentdisks).
+    - This module can create and destroy unformatted
+      U(https://developers.google.com/compute/docs/disks#persistentdisks|GCE persistent disks).
       It also supports attaching and detaching disks from running instances.
       Full install/configuration instructions for the gce* modules can
       be found in the comments of ansible/test/gce_tests.py.

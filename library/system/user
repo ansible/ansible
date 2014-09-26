@@ -79,7 +79,7 @@ options:
         description:
             - Optionally set the user's password to this crypted value.  See
               the user example in the github examples directory for what this looks
-              like in a playbook. The `FAQ <http://docs.ansible.com/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module>`_
+              like in a playbook. The U(http://docs.ansible.com/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module|FAQ)
               contains details on various ways to generate these password values.
     state:
         required: false
