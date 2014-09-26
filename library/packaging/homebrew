@@ -50,6 +50,12 @@ options:
         required: false
         default: no
         choices: [ "yes", "no" ]
+    cleanup:
+        description:
+            - erase all outdated homebrew packages
+        required: false
+        default: no
+        choices: [ "yes", "no" ]
     install_options:
         description:
             - options flags to install a package
@@ -62,7 +68,7 @@ EXAMPLES = '''
 - homebrew: name=foo state=present
 - homebrew: name=foo state=present update_homebrew=yes
 - homebrew: name=foo state=latest update_homebrew=yes
-- homebrew: update_homebrew=yes upgrade_all=yes
+- homebrew: update_homebrew=yes upgrade_all=yes cleanup=yes
 - homebrew: name=foo state=head
 - homebrew: name=foo state=linked
 - homebrew: name=foo state=absent
@@ -297,14 +303,14 @@ class Homebrew(object):
     # /class properties -------------------------------------------- }}}
 
     def __init__(self, module, path=None, packages=None, state=None,
-                 update_homebrew=False, upgrade_all=False,
+                 update_homebrew=False, upgrade_all=False, cleanup=False,
                  install_options=None):
         if not install_options:
             install_options = list()
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, packages=packages,
                                   state=state, update_homebrew=update_homebrew,
-                                  upgrade_all=upgrade_all,
+                                  upgrade_all=upgrade_all, cleanup=cleanup,
                                   install_options=install_options, )
 
         self._prep()
@@ -431,6 +437,9 @@ class Homebrew(object):
         if self.upgrade_all:
             self._upgrade_all()
 
+        if self.cleanup:
+            self._cleanup()
+
         if self.packages:
             if self.state == 'installed':
                 return self._install_packages()
@@ -491,6 +500,28 @@ class Homebrew(object):
             self.message = err.strip()
             raise HomebrewException(self.message)
     # /_upgrade_all -------------------------- }}}
+
+    # _cleanup --------------------------- {{{
+    def _cleanup(self):
+        rc, out, err = self.module.run_command([
+            self.brew_path,
+            'cleanup',
+            '--force',
+        ])
+        if rc == 0:
+            if not out:
+                self.message = 'Homebrew not cleaned.'
+
+            else:
+                self.changed = True
+                self.message = 'Homebrew cleaned.'
+
+            return True
+        else:
+            self.failed = True
+            self.message = err.strip()
+            raise HomebrewException(self.message)
+    # /_cleanup -------------------------- }}}
 
     # installed ------------------------------ {{{
     def _install_current_package(self):
@@ -780,6 +811,11 @@ def main():
                 aliases=["upgrade"],
                 type='bool',
             ),
+            cleanup=dict(
+                default="no",
+                aliases=["clean"],
+                type='bool',
+            ),
             install_options=dict(
                 default=None,
                 aliases=['options'],
@@ -817,13 +853,15 @@ def main():
 
     update_homebrew = p['update_homebrew']
     upgrade_all = p['upgrade_all']
+    cleanup = p['cleanup']
     p['install_options'] = p['install_options'] or []
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
 
     brew = Homebrew(module=module, path=path, packages=packages,
                     state=state, update_homebrew=update_homebrew,
-                    upgrade_all=upgrade_all, install_options=install_options)
+                    upgrade_all=upgrade_all, cleanup=cleanup,
+                    install_options=install_options)
     (failed, changed, message) = brew.run()
     if failed:
         module.fail_json(msg=message)
