@@ -15,8 +15,15 @@ version_added: "1.6"
 options:
     name:
         description:
-             - Name and encoding of the locale, such as "en_GB.UTF-8".
+             - Name and encoding of the locale, such as "en_GB.UTF-8", "en_GB".
         required: true
+        default: null
+        aliases: []
+    encoding:
+        description:
+             - Encoding of the locale, such as "UTF-8", "ISO-8859-1".
+        version_added: "1.8"
+        required: false
         default: null
         aliases: []
     state:
@@ -30,6 +37,7 @@ options:
 EXAMPLES = '''
 # Ensure a locale exists.
 - locale_gen: name=de_CH.UTF-8 state=present
+- locale_gen: name=en_US encoding=ISO-8859-1
 '''
 
 # ===========================================
@@ -107,14 +115,13 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['present','absent'], required=True),
+            encoding = dict(default=None),
+            state = dict(default='present', choices=['present','absent']),
         ),
         supports_check_mode=True
     )
 
     name = module.params['name']
-    if not "." in name:
-        module.fail_json(msg="Locale does not match pattern. Did you specify the encoding?")
     state = module.params['state']
 
     if not os.path.exists("/etc/locale.gen"):
@@ -133,7 +140,12 @@ def main():
     if module.check_mode:
         module.exit_json(changed=changed)
     else:
-        encoding = name.split(".")[1]
+        if module.params['encoding']:
+            encoding = module.params['encoding']
+        elif not "." in name:
+            module.fail_json(msg="Locale does not match pattern. Did you specify the encoding?")
+        else:
+            encoding = name.split(".")[1]
         if changed:
             try:
                 if ubuntuMode==False:
