@@ -111,10 +111,11 @@ options:
   special_time:
     description:
       - Special time specification nickname.
+        If set to "env", creates a line without time fields: used to specify enviroment variables.
     version_added: "1.3"
     required: false
     default: null
-    choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly" ]
+    choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly", "env" ]
 requirements:
   - cron
 author: Dane Summers
@@ -132,6 +133,9 @@ EXAMPLES = '''
 
 # Creates an entry like "@reboot /some/job.sh"
 - cron: name="a job for reboot" special_time=reboot job="/some/job.sh"
+
+# Creates an entry like "PATH=/opt/bin"
+- cron: name="set PATH environment" special_time=env job="PATH=/opt/bin"
 
 # Creates a cron file under /etc/cron.d
 - cron: name="yum autoupdate" weekday="2" minute=0 hour=12
@@ -291,6 +295,8 @@ class CronTab(object):
 
     def get_cron_job(self,minute,hour,day,month,weekday,job,special):
         if special:
+            if 'env' in special:
+                return job
             if self.cron_file:
                 return "@%s %s %s" % (special, self.user, job)
             else:
@@ -411,7 +417,7 @@ def main():
             reboot=dict(required=False, default=False, type='bool'),
             special_time=dict(required=False,
                               default=None,
-                              choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"],
+                              choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly", "env"],
                               type='str')
         ),
         supports_check_mode = False,
