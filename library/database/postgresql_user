@@ -167,7 +167,7 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
+def user_add(cursor, module, user, password, role_attr_flags,  encrypted, expires):
     """Create a new database user (role)."""
     query_password_data = dict()
     query = 'CREATE USER "%(user)s"' % { "user": user}
@@ -178,7 +178,19 @@ def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
     if expires is not None:
         query = query + " VALID UNTIL '%(expires)s'" % { "expires": expires }
     query = query + " " + role_attr_flags
-    cursor.execute(query, query_password_data)
+
+    try:
+        cursor.execute(query, query_password_data)
+    except psycopg2.ProgrammingError, e:
+        if e.pgcode == '42601':
+            # Error when using redundant role attributes like 
+            # NOCREATEUSER with NOSUPERUSER.
+            changed = False
+            module.fail_json(msg=e.pgerror)
+            return changed
+        else:
+            raise psycopg2.ProgrammingError, e
+
     return True
 
 def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires):
@@ -224,6 +236,15 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
                 return changed
             else:
                 raise psycopg2.InternalError, e
+        except psycopg2.ProgrammingError, e:
+            if e.pgcode == '42601':
+                # Error when using redundant role attributes like 
+                # NOCREATEUSER with NOSUPERUSER.
+                changed = False
+                module.fail_json(msg=e.pgerror)
+                return changed
+            else:
+                raise psycopg2.ProgrammingError, e
 
         # Grab new role attributes.
         cursor.execute(select, {"user": user})
@@ -496,7 +517,7 @@ def main():
         if user_exists(cursor, user):
             changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires)
         else:
-            changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires)
+            changed = user_add(cursor, module, user, password, role_attr_flags, encrypted, expires)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
         if user_exists(cursor, user):
