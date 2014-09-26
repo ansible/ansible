@@ -47,6 +47,12 @@ options:
     required: false
     default: null
     aliases: []
+  entrypoint:
+    description:
+       - Set container entrypoint
+    required: false
+    default: null
+    aliases: []
   name:
     description:
        - Set name for container (used to find single container or to provide links)
@@ -595,6 +601,7 @@ class DockerManager:
     def create_containers(self, count=1):
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
+                  'entrypoint':   self.module.params.get('entrypoint'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
                   'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
@@ -715,6 +722,7 @@ def main():
             count           = dict(default=1),
             image           = dict(required=True),
             command         = dict(required=False, default=None),
+            entrypoint      = dict(required=False, default=None),
             expose          = dict(required=False, default=None, type='list'),
             ports           = dict(required=False, default=None, type='list'),
             publish_all_ports = dict(default=False, type='bool'),
