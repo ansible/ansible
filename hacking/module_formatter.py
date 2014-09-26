@@ -210,8 +210,7 @@ def process_module(module, options, env, template, outputname, module_map):
     if doc is None:
         return "SKIPPED"
 
-    if "core" in module:
-        print "CORE"
+    if "/core/" in fname:
         doc['core'] = True
     else:
         doc['core'] = False
