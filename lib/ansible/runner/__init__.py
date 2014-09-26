@@ -214,14 +214,18 @@ class Runner(object):
         self.run_once         = run_once
 
         if self.transport == 'smart':
-            # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
+            # If the transport is 'smart', check to see if certain conditions
+            # would prevent us from using ssh, and fallback to paramiko.
             # 'smart' is the default since 1.2.1/1.3
-            cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = cmd.communicate()
-            if "Bad configuration option" in err:
+            self.transport = "ssh"
+            if sys.platform.startswith('darwin'):
                 self.transport = "paramiko"
             else:
-                self.transport = "ssh"
+                # see if SSH can support ControlPersist if not use paramiko
+                cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                if "Bad configuration option" in err:
+                    self.transport = "paramiko"
 
         # save the original transport, in case it gets
         # changed later via options like accelerate
