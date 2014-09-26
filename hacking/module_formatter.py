@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
 #
 # This file is part of Ansible
 #
@@ -44,7 +45,7 @@ TO_OLD_TO_BE_NOTABLE = 1.0
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'lib', 'ansible', 'modules'
 ))
 
 # The name of the DOCUMENTATION template
@@ -106,7 +107,9 @@ def write_data(text, options, outputname, module):
     ''' dumps module output to a file or the screen, as requested '''
 
     if options.output_dir is not None:
-        f = open(os.path.join(options.output_dir, outputname % module), 'w')
+        fname = os.path.join(options.output_dir, outputname % module)
+        fname = fname.replace(".py","")
+        f = open(fname, 'w')
         f.write(text.encode('utf-8'))
         f.close()
     else:
@@ -114,23 +117,24 @@ def write_data(text, options, outputname, module):
 
 #####################################################################################
 
+
 def list_modules(module_dir):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
     categories = dict(all=dict())
-    files = glob.glob("%s/*" % module_dir)
+    files = glob.glob("%s/*/*" % module_dir)
     for d in files:
         if os.path.isdir(d):
             files2 = glob.glob("%s/*" % d)
             for f in files2:
 
-                if f.endswith(".ps1"):
+                if not f.endswith(".py") or f.endswith('__init__.py'):
                     # windows powershell modules have documentation stubs in python docstring
                     # format (they are not executed) so skip the ps1 format files
                     continue
 
                 tokens = f.split("/")
-                module = tokens[-1]
+                module = tokens[-1].replace(".py","")
                 category = tokens[-2]
                 if not category in categories:
                     categories[category] = {}
@@ -191,7 +195,7 @@ def process_module(module, options, env, template, outputname, module_map):
     fname = module_map[module]
 
     # ignore files with extensions
-    if "." in os.path.basename(fname):
+    if not os.path.basename(fname).endswith(".py"):
         return
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
@@ -201,6 +205,7 @@ def process_module(module, options, env, template, outputname, module_map):
     if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
         sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
+
     if doc is None:
         return "SKIPPED"
 
