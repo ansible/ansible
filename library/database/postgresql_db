@@ -84,7 +84,11 @@ options:
       - The database state
     required: false
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "dump", "import" ]
+  target:
+    description:
+      - Where to dump/get the C(.sql) file
+    required: false
 notes:
    - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
@@ -143,6 +147,38 @@ def get_db_info(cursor, db):
     """
     cursor.execute(query, {'db':db})
     return cursor.fetchone()
+
+def db_dump(module, db, host, port, user, password, target):
+    cmd = "PGPASSWORD=%s " % password
+    cmd += module.get_bin_path('pg_dump', True)
+    cmd += " --host=%s --port=%s" % (host, port)
+    cmd += " --username=%s --no-password" % user
+    cmd += " %s" % db
+    if os.path.splitext(target)[-1] == '.gz':
+        cmd = cmd + ' | gzip > ' + target
+    elif os.path.splitext(target)[-1] == '.bz2':
+        cmd = cmd + ' | bzip2 > ' + target
+    else:
+        cmd += " > %s" % target
+    
+    changed = module.run_command(cmd)
+    return changed
+
+def db_import(module, db, host, port, user, password, target):
+    cmd = "PGPASSWORD=%s " % password
+    cmd += module.get_bin_path('psql', True)
+    cmd += " --host=%s --port=%s" % (host, port)
+    cmd += " --username=%s --no-password" % user
+    cmd += " %s" % db
+    if os.path.splitext(target)[-1] == '.gz':
+        cmd = 'gunzip < ' + target + ' | ' + cmd
+    elif os.path.splitext(target)[-1] == '.bz2':
+        cmd = 'bunzip2 < ' + target + ' | ' + cmd
+    else:
+        cmd += " < %s" % target
+
+    changed = module.run_command(cmd)
+    return changed
 
 def db_exists(cursor, db):
     query = "SELECT * FROM pg_database WHERE datname=%(db)s"
@@ -231,7 +267,8 @@ def main():
             encoding=dict(default=""),
             lc_collate=dict(default=""),
             lc_ctype=dict(default=""),
-            state=dict(default="present", choices=["absent", "present"]),
+            state=dict(default="present", choices=["absent", "present", "dump", "import"]),
+            target=dict(default=None)
         ),
         supports_check_mode = True
     )
@@ -276,12 +313,34 @@ def main():
 
     try:
         if module.check_mode:
+            if state in ['dump', 'import']:
+                changed = False
             if state == "absent":
                 changed = not db_exists(cursor, db)
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding,
                                          lc_collate, lc_ctype)
             module.exit_json(changed=changed,db=db)
+
+        if state == "dump":
+            changed = db_dump(  module,
+                                db, 
+                                module.params['login_host'],
+                                port,
+                                module.params['login_user'], 
+                                module.params['login_password'],
+                                module.params['target'])
+        
+        if state == "import":
+            changed = db_create(cursor, db, owner, template, encoding,
+                                lc_collate, lc_ctype)
+            changed = db_import(module,
+                                db, 
+                                module.params['login_host'],
+                                port,
+                                module.params['login_user'], 
+                                module.params['login_password'],
+                                module.params['target'])
 
         if state == "absent":
             changed = db_delete(cursor, db)
