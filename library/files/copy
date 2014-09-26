@@ -148,7 +148,10 @@ def main():
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
             validate          = dict(required=False, type='str'),
-            directory_mode    = dict(required=False)
+            directory_mode    = dict(required=False),
+            atime             = dict(required=False),
+            mtime             = dict(required=False),
+            archive           = dict(type='bool',required=False), # Dissolved into other parameters before delegation to remote host
         ),
         add_file_common_args=True,
         supports_check_mode=True,

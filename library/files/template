@@ -47,6 +47,12 @@ options:
     required: false
     default: ""
     version_added: "1.2"
+  archive:
+    description:
+      - When set to true, the created file retains permissions and ownership of the source template file.
+    required: false
+    default: ""
+    version_added: "1.8"
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 requirements: []
