@@ -36,6 +36,7 @@ Branch Info
 
    * Releases are named after Van Halen songs.
    * The devel branch corresponds to the release actively under development.
+   * Note that modules are contained in two different git submodule projects, under lib/ansible/modules/{core,extras}
    * Various release-X.Y branches exist for previous releases.
    * We'd love to have your contributions, read "CONTRIBUTING.md" for process notes.
 
