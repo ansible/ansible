@@ -154,10 +154,12 @@ It might happen like so::
     - user: name={{ item.name }} state=present generate_ssh_key=yes
       with_items: users
 
-    - authorized_key: "user={{ item.0.name }} key='{{ lookup('file', item.1) }}'"
+    - authorized_key:
+        user: "{{ item.0.name }}"
+        key: "{{ lookup('file', item.1) }}"
       with_subelements:
-         - users
-         - authorized
+        - users
+        - authorized
 
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given key inside of those
 records.
