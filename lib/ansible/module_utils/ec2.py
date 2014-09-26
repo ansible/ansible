@@ -150,7 +150,7 @@ def get_ec2_creds(module):
     ''' for compatibility mode with old modules that don't/can't yet
         use ec2_connect method '''
     region, ec2_url, boto_params = get_aws_connection_info(module)
-    return ec2_url, boto_params['aws_access_key_id'], boto_params['aws_secret_access_key'], region
+    return ec2_url, boto_params['aws_access_key_id'], boto_params['aws_secret_access_key'], boto_params['security_token'], region
 
 
 def boto_fix_security_token_in_profile(conn, profile_name):

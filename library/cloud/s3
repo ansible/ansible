@@ -89,6 +89,13 @@ options:
     required: false
     default: null
     version_added: "1.6"
+  aws_security_token:
+    description:
+      - AWS STS Security Token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.8"
   region:
     description:
      - "AWS region to create the bucket in. If not set then the value of the EC2_REGION and AWS_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect."
@@ -137,6 +144,7 @@ import hashlib
 try:
     import boto
     from boto.s3.connection import Location
+    from boto.s3.connection import S3Connection
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -308,7 +316,7 @@ def main():
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, aws_security_token, region = get_ec2_creds(module)
 
     if region in ('us-east-1', '', None):
         # S3ism for the US Standard region
@@ -348,7 +356,10 @@ def main():
             module.fail_json(msg = str(e))
     else:
         try:
-            s3 = boto.connect_s3(aws_access_key, aws_secret_key)
+            s3 = S3Connection(
+                aws_access_key_id=aws_access_key,
+                aws_secret_access_key=aws_secret_key,
+                security_token=aws_security_token)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
  
