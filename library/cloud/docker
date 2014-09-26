@@ -134,7 +134,10 @@ options:
     aliases: []
   env:
     description:
-      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
+      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4").
+        If a string starting with "@", read in a line delimited file of
+        environment variables from the specified "@/path/to/file".
+        The format of the file is the same one docker run --env-file takes.
     required: false
     default: null
     aliases: []
@@ -388,7 +391,7 @@ class DockerManager:
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
-                # with bind mode 
+                # with bind mode
                 elif len(parts) == 3:
                     if parts[2] not in ['ro', 'rw']:
                         self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
@@ -420,12 +423,26 @@ class DockerManager:
             self.links = self.get_links(self.module.params.get('links'))
 
         self.env = self.module.params.get('env', None)
+        if isinstance(self.env, basestring) and self.env.startswith('@'):
+            # Same as docker run --env-file
+            self.env = self.env_vars_from_file(self.env[1:])
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         docker_api_version = module.params.get('docker_api_version')
         self.client = docker.Client(base_url=docker_url.geturl(), version=docker_api_version)
 
+    def env_vars_from_file(self, filename):
+        """
+        Read in a line delimited file of environment variables.
+        """
+        env = {}
+        for line in open(filename, 'r'):
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                env[k] = v
+        return env
 
     def get_links(self, links):
         """
@@ -730,7 +747,7 @@ def main():
             email           = dict(),
             registry        = dict(),
             hostname        = dict(default=None),
-            env             = dict(type='dict'),
+            env             = dict(),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='running', choices=['absent', 'present', 'running', 'stopped', 'killed', 'restarted']),
