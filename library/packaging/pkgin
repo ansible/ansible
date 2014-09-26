@@ -93,7 +93,7 @@ def query_package(module, pkgin_path, name, state="present"):
                 # (results in sth like 'gcc47-libs')
                 pkgname_without_version = '-'.join(pkgname_with_version.split('-')[:-1])
 
-                if name == pkgname_without_version:
+                if name == pkgname_without_version or name == pkgname_with_version:
                     return True
 
         return False
