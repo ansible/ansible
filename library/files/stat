@@ -40,6 +40,92 @@ options:
     required: false
     default: yes
     aliases: []
+returns:
+  exists:
+    description:
+    type: boolean
+  isdir:
+    description: is a directory
+    type: boolean
+  ischr:
+    description: is a character device
+    type: boolean
+  isblk:
+    description: is block device
+    type: boolean
+  isreg:
+    description: is a regular file
+    type: boolean
+  isfifo:
+    description: is a named pipe
+    type: boolean
+  islnk:
+    description: is a symbolic link
+    type: boolean
+  issock:
+    description: is a socket
+    type: boolean
+  uid:
+    description: user ID of owner
+    type: int
+  gid:
+    description: group ID of owner
+    type: int
+  size:
+    description: total size, in bytes
+    type: int
+  inode:
+    description: inode number
+    type: int
+  dev:
+    description: device ID
+    type: int
+  nlink:
+    description: number of hard links
+    type: int
+  atime:
+    description: time of last access
+    type: int
+  mtime:
+    description: time of last modification
+    type: int
+  ctime:
+    description: time of last status change
+    type: int
+  wusr:
+    description: write permission, owner
+    type: boolean
+  rusr:
+    description: read permission, owner
+    type: boolean
+  xusr:
+    description: execute/search permission, owner
+    type: boolean
+  wgrp:
+    description: write permission, group
+    type: boolean
+  rgrp:
+    description: read permission, group
+    type: boolean
+  xgrp:
+    description: execute/search permission, group
+    type: boolean
+  woth:
+    description: write permission, other
+    type: boolean
+  roth:
+    description: read permission, other
+    type: boolean
+  xoth:
+    description: execute/search permission, other
+    type: boolean
+  isuid:
+    description:
+    type: boolean
+  isgid:
+    description:
+    type: boolean
+
 author: Bruce Pennypacker
 '''
 

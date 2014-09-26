@@ -85,6 +85,7 @@ def tty_ify(text):
 
     return t
 
+
 def get_man_text(doc):
 
     opt_indent="        "
@@ -124,6 +125,18 @@ def get_man_text(doc):
         text.append("Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
                             subsequent_indent=opt_indent))
 
+    if 'returns' in doc and len(doc['returns']) > 0:
+        text.append('\n\nReturns :\n')
+
+        for key, value in doc['returns'].items():
+            text.append(key)
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    returns = '{0} : {1}'.format(str(k), str(v))
+                    text.append('{}'.format(textwrap.fill(tty_ify(returns), initial_indent="  ",
+                            subsequent_indent=opt_indent)))
+
+        text.append('\n\n')
 
     if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
         req = ", ".join(doc['requirements'])
