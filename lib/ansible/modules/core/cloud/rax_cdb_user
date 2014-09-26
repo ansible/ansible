@@ -1,0 +1,220 @@
+#!/usr/bin/python -tt
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
+DOCUMENTATION = '''
+---
+module: rax_cdb_user
+short_description: create / delete a Rackspace Cloud Database
+description:
+  - create / delete a database in the Cloud Databases.
+version_added: "1.8"
+options:
+  cdb_id:
+    description:
+      - The databases server UUID
+    default: null
+  db_username:
+    description:
+      - Name of the database user
+    default: null
+  db_password:
+    description:
+      - Database user password
+    default: null
+  databases:
+    description:
+      - Name of the databases that the user can access
+    default: []
+  host:
+    description:
+      - Specifies the host from which a user is allowed to connect to
+        the database. Possible values are a string containing an IPv4 address
+        or "%" to allow connecting from any host
+    default: '%'
+  state:
+    description:
+      - Indicate desired state of the resource
+    choices: ['present', 'absent']
+    default: present
+author: Simon JAILLET
+extends_documentation_fragment: rackspace
+'''
+
+EXAMPLES = '''
+- name: Build a user in Cloud Databases
+  tasks:
+    - name: User build request
+      local_action:
+        module: rax_cdb_user
+        credentials: ~/.raxpub
+        region: IAD
+        cdb_id: 323e7ce0-9cb0-11e3-a5e2-0800200c9a66
+        db_username: user1
+        db_password: user1
+        databases: ['db1']
+        state: present
+      register: rax_db_user
+'''
+
+try:
+    import pyrax
+    HAS_PYRAX = True
+except ImportError:
+    HAS_PYRAX = False
+
+
+def find_user(instance, name):
+    try:
+        user = instance.get_user(name)
+    except Exception:
+        return False
+
+    return user
+
+
+def save_user(module, cdb_id, name, password, databases, host):
+
+    for arg, value in dict(cdb_id=cdb_id, name=name).iteritems():
+        if not value:
+            module.fail_json(msg='%s is required for the "rax_cdb_user" '
+                                 'module' % arg)
+
+    cdb = pyrax.cloud_databases
+
+    try:
+        instance = cdb.get(cdb_id)
+    except Exception, e:
+        module.fail_json(msg='%s' % e.message)
+
+    changed = False
+
+    user = find_user(instance, name)
+
+    if not user:
+        action = 'create'
+        try:
+            user = instance.create_user(name=name,
+                                        password=password,
+                                        database_names=databases,
+                                        host=host)
+        except Exception, e:
+            module.fail_json(msg='%s' % e.message)
+        else:
+            changed = True
+    else:
+        action = 'update'
+
+        if user.host != host:
+            changed = True
+
+        user.update(password=password, host=host)
+
+        former_dbs = set([item.name for item in user.list_user_access()])
+        databases = set(databases)
+
+        if databases != former_dbs:
+            try:
+                revoke_dbs = [db for db in former_dbs if db not in databases]
+                user.revoke_user_access(db_names=revoke_dbs)
+
+                new_dbs = [db for db in databases if db not in former_dbs]
+                user.grant_user_access(db_names=new_dbs)
+            except Exception, e:
+                module.fail_json(msg='%s' % e.message)
+            else:
+                changed = True
+
+    module.exit_json(changed=changed, action=action, user=rax_to_dict(user))
+
+
+def delete_user(module, cdb_id, name):
+
+    for arg, value in dict(cdb_id=cdb_id, name=name).iteritems():
+        if not value:
+            module.fail_json(msg='%s is required for the "rax_cdb_user"'
+                                 ' module' % arg)
+
+    cdb = pyrax.cloud_databases
+
+    try:
+        instance = cdb.get(cdb_id)
+    except Exception, e:
+        module.fail_json(msg='%s' % e.message)
+
+    changed = False
+
+    user = find_user(instance, name)
+
+    if user:
+        try:
+            user.delete()
+        except Exception, e:
+            module.fail_json(msg='%s' % e.message)
+        else:
+            changed = True
+
+    module.exit_json(changed=changed, action='delete')
+
+
+def rax_cdb_user(module, state, cdb_id, name, password, databases, host):
+
+    # act on the state
+    if state == 'present':
+        save_user(module, cdb_id, name, password, databases, host)
+    elif state == 'absent':
+        delete_user(module, cdb_id, name)
+
+
+def main():
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
+            cdb_id=dict(type='str', required=True),
+            db_username=dict(type='str', required=True),
+            db_password=dict(type='str', required=True, no_log=True),
+            databases=dict(type='list', default=[]),
+            host=dict(type='str', default='%'),
+            state=dict(default='present', choices=['present', 'absent'])
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together(),
+    )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
+    cdb_id = module.params.get('cdb_id')
+    name = module.params.get('db_username')
+    password = module.params.get('db_password')
+    databases = module.params.get('databases')
+    host = unicode(module.params.get('host'))
+    state = module.params.get('state')
+
+    setup_rax_module(module, pyrax)
+    rax_cdb_user(module, state, cdb_id, name, password, databases, host)
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
+
+# invoke the module
+main()
