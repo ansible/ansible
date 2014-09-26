@@ -16,7 +16,7 @@ class TestModules(unittest.TestCase):
             for (dirpath, dirnames, filenames) in os.walk(path):
                 for filename in filenames:
                     (path, ext) = os.path.splitext(filename)
-                    if ext != ".ps1":
+                    if ext == ".py":
                         module_list.append(os.path.join(dirpath, filename))
         return module_list
 
