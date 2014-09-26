@@ -1,7 +1,8 @@
 ---
 output_dir: ~/ansible_testing
 non_root_test_user: ansible
-pip_test_package: epdb
+pip_test_package: "dummy_test"
+pip_test_package_version: 0.1.2
 
 # variables used in precedence tests, here passed to -e
 etest: 'from -e'
