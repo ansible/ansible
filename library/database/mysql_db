@@ -104,10 +104,10 @@ import os
 import pipes
 try:
     import MySQLdb
-except ImportError:
-    mysqldb_found = False
+except ImportError, e:
+    mysqldb_import_error = e
 else:
-    mysqldb_found = True
+    mysqldb_import_error = None
 
 # ===========================================
 # MySQL module specific support methods.
@@ -273,8 +273,8 @@ def main():
         )
     )
 
-    if not mysqldb_found:
-        module.fail_json(msg="the python mysqldb module is required")
+    if mysqldb_import_error is not None:
+        module.fail_json(msg="the python mysqldb module failed to import: %s" % mysqldb_import_error)
 
     db = module.params["name"]
     encoding = module.params["encoding"]
