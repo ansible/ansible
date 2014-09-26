@@ -117,6 +117,11 @@ options:
         - A list of network id's to which the VM's interface should be attached
      required: false
      default: None
+   files:
+     description:
+        - A list of file to include in config drive
+     required: false
+     default: None
    auto_floating_ip:
      description:
         - Should a floating ip be auto created and assigned
@@ -412,9 +417,17 @@ def _get_flavor_id(module, nova):
 def _create_server(module, nova):
     image_id = _get_image_id(module, nova)
     flavor_id = _get_flavor_id(module, nova)
+    try:
+        for dest_path, source_path in module.params['files'].items():
+            source_file = open(source_path)
+            module.params['files'][dest_path] = source_file.read()  
+    except Exception, e:
+        module.fail_json( msg = "Error in reading file: %s" % e.message)
+
     bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
                 'nics' : module.params['nics'],
+                'files' : module.params['files'],
                 'meta' : module.params['meta'],
                 'security_groups': module.params['security_groups'].split(','),
                 #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
@@ -534,6 +547,7 @@ def main():
         key_name                        = dict(default=None),
         security_groups                 = dict(default='default'),
         nics                            = dict(default=None),
+        files                           = dict(default=None),
         meta                            = dict(default=None),
         wait                            = dict(default='yes', choices=['yes', 'no']),
         wait_for                        = dict(default=180),
