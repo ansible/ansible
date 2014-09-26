@@ -18,7 +18,7 @@ from ansible.constants import DEFAULT_MODULE_PATH
 module_paths = DEFAULT_MODULE_PATH.split(os.pathsep)
 # always install in /usr/share/ansible if specified
 # otherwise use the first module path listed
-if '/usr/share/ansible' in module_paths:
+if '/usr/share/ansible' in module_paths or 'bdist_wheel' in sys.argv:
     install_path = '/usr/share/ansible'
 else:
     install_path = module_paths[0]
