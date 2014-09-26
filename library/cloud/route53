@@ -113,6 +113,7 @@ EXAMPLES = '''
       record={{ rec.set.record }}
       type={{ rec.set.type }}
       value={{ rec.set.value }}
+      ttl={{ rec.set.value }}
 
 # Add an AAAA record.  Note that because there are colons in the value
 # that the entire parameter list must be quoted:
