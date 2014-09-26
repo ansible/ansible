@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Patrick Pelletier <pp.pelletier@gmail.com>
+# (c) 2014, Andy Gospodarek <gospo@cumulusnetworks.com>
 # Based on pacman (Afterburn) and pkgin (Shaun Zinck) modules
 #
 # This module is free software: you can redistribute it and/or modify
@@ -20,11 +21,11 @@
 DOCUMENTATION = '''
 ---
 module: opkg
-author: Patrick Pelletier
+author: Patrick Pelletier, Andy Gospodarek
 short_description: Package manager for OpenWrt
 description:
     - Manages OpenWrt packages
-version_added: "1.1"
+version_added: "1.2"
 options:
     name:
         description:
@@ -42,12 +43,19 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    upgrade:
+	description:
+            - upgrade the package if installed
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
 notes:  []
 '''
 EXAMPLES = '''
 - opkg: name=foo state=present
 - opkg: name=foo state=present update_cache=yes
 - opkg: name=foo state=absent
+- opkg: name=foo upgrade=yes
 - opkg: name=foo,bar state=absent
 '''
 
@@ -120,12 +128,47 @@ def install_packages(module, opkg_path, packages):
     module.exit_json(changed=False, msg="package(s) already present")
 
 
+def upgrade_packages(module, opkg_path, packages):
+    """ Upgrades one or more installed packages. """
+
+    upgraded_pkgs = []
+    skipped_pkgs = []
+
+    for package in packages:
+        if not query_package(module, opkg_path, package):
+            skipped_pkgs.append(package)
+            continue
+
+        rc, out, err = module.run_command("%s upgrade %s" % (opkg_path, package))
+
+        if out:
+            upgraded_pkgs.append(package)
+        else:
+            skipped_pkgs.append(package)
+
+    exit_str = ""
+    modded=False
+
+    if upgraded_pkgs:
+        exit_str += "upgraded packages: " + ', '.join(upgraded_pkgs) + " -- "
+        modded=True
+
+    if skipped_pkgs:
+        exit_str += "skipped packages: " + ', '.join(skipped_pkgs)
+
+    if modded:
+        module.exit_json(changed=True, msg=exit_str)
+    else:
+        module.exit_json(changed=False, msg=exit_str)
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(aliases=["pkg"], required=True),
             state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+            update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
+            upgrade = dict(default="no", type='bool')
         )
     )
 
@@ -139,7 +182,10 @@ def main():
     pkgs = p["name"].split(",")
 
     if p["state"] in ["present", "installed"]:
-        install_packages(module, opkg_path, pkgs)
+        if p["upgrade"]:
+            upgrade_packages(module, opkg_path, pkgs)
+	else:
+            install_packages(module, opkg_path, pkgs)
 
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, opkg_path, pkgs)
