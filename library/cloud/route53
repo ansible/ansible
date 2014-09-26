@@ -183,7 +183,7 @@ def main():
     record_in             = module.params.get('record')
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
-    retry_interval_in     = module.params.get('retry_interval')
+    retry_interval_in     = int(module.params.get('retry_interval'))
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
