@@ -59,6 +59,11 @@ options:
      - root password to apply to a new server (auto generated if missing)
     default: null
     type: string
+  private_ip:
+    description:
+     - Adds a private IP to the server if it does not exist
+    default: False
+    type: bool
   ssh_pub_key:
     description:
      - SSH public key applied to root user
@@ -69,6 +74,11 @@ options:
      - swap size in MB
     default: 512
     type: integer
+  partitions:
+    description:
+      - optional, list of partitions in JSON with size and type, such as [{"size":2500,"type":"ext4"}]
+    default: []
+    type: list
   distribution:
     description:
      - distribution to use for the instance (Linode Distribution)
@@ -88,6 +98,18 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
+  domain_host:
+    description:
+     - the domain host, such as example.com
+    default: null
+  domain_name:
+    description:
+     - the domain name, such as "node" (for node.example.com)
+    default: null
+  domain_email:
+    description:
+     - the domain email, such as me@example.com. Required when you are creating a domain
+    default: null
 requirements: [ "linode-python", "pycurl" ]
 author: Vincent Viallet
 notes:
@@ -108,6 +130,25 @@ EXAMPLES = '''
      swap: 768
      wait: yes
      wait_timeout: 600
+     state: present
+
+# Create a server with an extra partition of 10GB and set its DNS to node.example.com
+- local_action:
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     plan: 1
+     datacenter: 2
+     distribution: 99
+     partitions: "[{\"size\":30000,\"type\":\"ext4\"}]"
+     password: 'superSecureRootPassword'
+     ssh_pub_key: 'ssh-rsa qwerty'
+     swap: 768
+     wait: yes
+     wait_timeout: 600
+     domain_host: example.com
+     domain_name: node
+     domain_email: admin@example.com
      state: present
 
 # Ensure a running server (create if missing)
@@ -213,7 +254,8 @@ def getInstanceDetails(api, server):
     return instance
 
 def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                  payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
+                  partitions, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout,
+                  domain_host, domain_name, domain_email):
     instances = []
     changed = False
     new_server = False   
@@ -224,14 +266,21 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
 
     # See if we can match an existing server details with the provided linode_id
     if linode_id:
-        # For the moment we only consider linode_id as criteria for match
-        # Later we can use more (size, name, etc.) and update existing
+        # Search first by linode_id as criteria for match
         servers = api.linode_list(LinodeId=linode_id)
-        # Attempt to fetch details about disks and configs only if servers are 
-        # found with linode_id
+
+    # not found, try by name
+    if not servers and name:
+        allservers = api.linode_list()
+        servers = [l for l in allservers if name ==  l['LABEL']]
         if servers:
-            disks = api.linode_disk_list(LinodeId=linode_id)
-            configs = api.linode_config_list(LinodeId=linode_id)
+            linode_id = servers[0]['LINODEID']
+        
+    # Attempt to fetch details about disks and configs only if servers are 
+    # found with linode_id
+    if servers:
+        disks = api.linode_disk_list(LinodeId=linode_id)
+        configs = api.linode_config_list(LinodeId=linode_id)
 
     # Act on the state
     if state in ('active', 'present', 'started'):
@@ -254,7 +303,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
-                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
+                api.linode_update(LinodeId=linode_id, Label=name)
                 # Save server
                 servers = api.linode_list(LinodeId=linode_id)
             except Exception, e:
@@ -272,8 +321,21 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                     password = randompass()
                 if not swap:
                     swap = 512
-                # Create data disk
+                    
                 size = servers[0]['TOTALHD'] - swap
+
+                # check if we have extra partitions and the main partition will be the leftover
+                if partitions:
+                    for p in partitions:
+                        if not 'type' in p or not 'size' in p:
+                            module.fail_json(msg = "Invalid partition: provide both size and type")
+                        size -= p['size']
+                
+                # at least 750MB for main partition
+                if size < 750:
+                    raise Exception("Not enough space left for main partition")
+                
+                # Create data disk
                 if ssh_pub_key:
                     res = api.linode_disk_createfromdistribution(
                               LinodeId=linode_id, DistributionID=distribution, 
@@ -289,9 +351,53 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                                              Label='%s swap disk (lid: %s)' % (name, linode_id), 
                                              Size=swap)
                 jobs.append(res['JobID'])
+                
+                # now create the extra partitions
+                if partitions:
+                    partitionid = 0
+                    for p in partitions:
+                        if p['type'] not in ['ext3', 'ext4', 'raw']:
+                            raise Exception("Invalid partition type")
+                        res = api.linode_disk_create(LinodeId=linode_id, Type=p['type'], 
+                                        Label='%s partition %s %s' % (name[:25], partitionid, linode_id), 
+                                        Size=p['size'])
+                        jobs.append(res['JobID'])
+                        partitionid += 1
+                
             except Exception, e:
                 # TODO: destroy linode ?
-                module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
+                module.fail_json(msg = str(e))
+
+        # Get a fresh copy of the server details because we need the ip
+        server = api.linode_list(LinodeId=linode_id)[0]
+        if server['STATUS'] == -2:
+            module.fail_json(msg = '(lid: %s) failed to list')
+
+        # From now on we know the task is a success
+        # Build instance report
+        instance = getInstanceDetails(api, server)
+
+        if domain_host and domain_name:
+            domain_list = api.domain_list()
+            domain_data = [dc for dc in domain_list if domain_host == dc['DOMAIN']]
+            if not domain_data:
+                res = api.domain_create(Domain = domain_host, Type="master", SOA_Email=domain_email) #TODO
+                domain_id = res['DomainID']
+            else:
+                domain_id = domain_data[0]['DOMAINID']
+            
+            domain_resource_list = api.domain_resource_list(DomainID=domain_id)
+            domain_resource_data = [dc for dc in domain_resource_list if domain_name in dc['NAME']]
+            if not domain_resource_data:
+                res = api.domain_resource_create(DomainID=domain_id, Name=domain_name, Type="A", Target=instance["ipv4"])
+                resource_id = res['ResourceID'];
+            else:
+                resource_id = domain_resource_data[0]["RESOURCEID"]
+                res = api.domain_resource_update(DomainID=domain_id, ResourceId = resource_id, Name=domain_name, Type="A", Target=instance["ipv4"])
+        
+        if not instance['private'] and private_ip:
+            res = api.linode_ip_addprivate(LinodeID = linode_id)
+            instance = getInstanceDetails(api, server)
 
         if not configs:
             for arg in ('name', 'linode_id', 'distribution'):
@@ -317,7 +423,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             # Get disk list
             disks_id = []
             for disk in api.linode_disk_list(LinodeId=linode_id):
-                if disk['TYPE'] == 'ext3':
+                if 'data disk' in disk['LABEL']:
                     disks_id.insert(0, str(disk['DISKID']))
                     continue
                 disks_id.append(str(disk['DISKID']))
@@ -330,7 +436,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             new_server = True
             try:
                 api.linode_config_create(LinodeId=linode_id, KernelId=kernel_id,
-                                         Disklist=disks_list, Label='%s config' % name)
+                                         Disklist=disks_list, Label='%s config' % name,
+                                         RootDeviceNum = 1)
                 configs = api.linode_config_list(LinodeId=linode_id)
             except Exception, e:
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
@@ -448,11 +555,16 @@ def main():
             datacenter = dict(type='int'),
             linode_id = dict(type='int', aliases=['lid']),
             payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
+            partitions = dict(type='str'),
             password = dict(type='str'),
+            private_ip = dict(type='bool', default=False),
             ssh_pub_key = dict(type='str'),
             swap = dict(type='int', default=512),
             wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300),
+            domain_host = dict(type='str'),
+            domain_name = dict(type='str'),
+            domain_email = dict(type='str'),
         )
     )
 
@@ -463,12 +575,17 @@ def main():
     distribution = module.params.get('distribution')
     datacenter = module.params.get('datacenter')
     linode_id = module.params.get('linode_id')
+    partitions = module.params.get('partitions')
     payment_term = module.params.get('payment_term')
     password = module.params.get('password')
+    private_ip = module.params.get('private_ip')
     ssh_pub_key = module.params.get('ssh_pub_key')
     swap = module.params.get('swap')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    domain_host = module.params.get('domain_host')
+    domain_name = module.params.get('domain_name')
+    domain_email = module.params.get('domain_email')
 
     # Setup the api_key
     if not api_key:
@@ -476,6 +593,12 @@ def main():
             api_key = os.environ['LINODE_API_KEY']
         except KeyError, e:
             module.fail_json(msg = 'Unable to load %s' % e.message)
+
+    if partitions:
+        try:
+            partitions = eval(partitions)
+        except Exception, e:
+            module.fail_json(msg = 'Invalid json in partition')
 
     # setup the auth
     try:
@@ -485,7 +608,8 @@ def main():
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
     linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                 payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
+                 partitions, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout,
+                 domain_host, domain_name, domain_email)
 
 # import module snippets
 from ansible.module_utils.basic import *
