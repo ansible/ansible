@@ -69,6 +69,37 @@ def ec2_argument_spec():
 def boto_supports_profile_name():
     return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
+def is_taggable(object):
+
+    from boto.ec2.ec2object import TaggedEC2Object
+    if not object or not issubclass(object.__class__, TaggedEC2Object):
+        return False
+
+    return True
+
+def do_tags(module, object, tags):
+    """
+    General function for adding tags to objects that are subclasses
+    of boto.ec2.ec2object.TaggedEC2Object.  Currently updates
+    existing tags, as the API overwrites them, but does not remove
+    orphans.
+    :param module:
+    :param object:
+    :param tags:
+    """
+    dry_run = True if module.check_mode else False
+
+    if (is_taggable(object)):
+
+        tag_dict = {}
+
+        for tag in tags:
+            tag_dict[tag['key']] = tag['value']
+
+        object.add_tags(tag_dict, dry_run)
+    else:
+        module.fail_json(msg="Security group object is not a subclass of TaggedEC2Object")
+
 
 def get_aws_connection_info(module):
 
