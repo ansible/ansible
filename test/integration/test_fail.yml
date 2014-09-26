@@ -1,0 +1,47 @@
+# test code for the fail module
+# (c) 2014, Amr Abed <amrenator@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+---
+- hosts: local
+  vars:
+    fail_run: "YES"
+    
+  tasks:
+    - name: test fail with all
+      fail: msg="Failed" all=yes
+      when: fail_run == "YES" and inventory_hostname == "testhost"
+      tags: ["fail_with_all"]    
+      
+    - name: test fail with all
+      debug: msg="Dummy run"
+      tags: ["fail_with_all"]  
+      
+    - name: test fail without all
+      debug: msg="Dummy run"
+      tags: ["fail_without_all"]  
+      
+    - name: test fail without all
+      fail: msg="Failed"
+      when: fail_run == "YES" and inventory_hostname == "testhost"
+      tags: ["fail_without_all"]
+
+    - name:
+      debug: msg="Still running"
+      tags: ["fail_with_all", "fail_without_all"]
+
+
