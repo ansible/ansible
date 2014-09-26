@@ -5,6 +5,7 @@ This repo contains a subset of ansible-modules with slightly lower use or priori
 
 All new modules should be submitted here, and have a chance to be promoted to core over time.
 
+Take care to submit tickets to the appropriate repo where modules are contained. The docs.ansible.com website indicates this at the bottom of each module documentation page.
 
 License
 =======
