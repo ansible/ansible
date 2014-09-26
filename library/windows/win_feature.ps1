@@ -97,9 +97,13 @@ if ($featureresult.FeatureResult)
 {
     ForEach ($item in $featureresult.FeatureResult) {
         $installed_features += New-Object psobject @{
+            $msg = ""
+            ForEach ($m in $item.Message){
+                $msg += $m.ToString()
+            }
             id = $item.id.ToString()
             display_name = $item.DisplayName
-            message = $item.Message.ToString()
+            message = $msg
             restart_needed = $item.RestartNeeded.ToString()
             skip_reason = $item.SkipReason.ToString()
             success = $item.Success.ToString()
