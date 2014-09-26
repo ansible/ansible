@@ -90,6 +90,16 @@ def main():
 
     ### create fs
 
+    if force:
+        if fstype.startswith('ext'):
+            force_flag='-F'
+        elif fstype == 'xfs':
+            force_flag='-f'
+        else: 
+            module.fail_json(msg="Don't know the correct flag to force filesystem type %s"%(fstype), rc=rc, err=err)
+    else:
+        force_flag=''
+
     if module.check_mode:
         changed = True
     else:
