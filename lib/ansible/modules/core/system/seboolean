@@ -1,0 +1,212 @@
+#!/usr/bin/python
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: seboolean
+short_description: Toggles SELinux booleans.
+description:
+     - Toggles SELinux booleans.
+version_added: "0.7"
+options:
+  name:
+    description:
+      - Name of the boolean to configure
+    required: true
+    default: null
+  persistent:
+    description:
+      - Set to C(yes) if the boolean setting should survive a reboot
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+  state:
+    description:
+      - Desired boolean value
+    required: true
+    default: null
+    choices: [ 'yes', 'no' ]
+notes:
+   - Not tested on any debian based system
+requirements: [ ]
+author: Stephen Fromm
+'''
+
+EXAMPLES = '''
+# Set (httpd_can_network_connect) flag on and keep it persistent across reboots
+- seboolean: name=httpd_can_network_connect state=yes persistent=yes
+'''
+
+try:
+    import selinux
+    HAVE_SELINUX=True
+except ImportError:
+    HAVE_SELINUX=False
+
+try:
+    import semanage
+    HAVE_SEMANAGE=True
+except ImportError:
+    HAVE_SEMANAGE=False
+
+def has_boolean_value(module, name):
+    bools = []
+    try:
+        rc, bools = selinux.security_get_boolean_names()
+    except OSError, e:
+        module.fail_json(msg="Failed to get list of boolean names")
+    if name in bools:
+        return True
+    else:
+        return False
+
+def get_boolean_value(module, name):
+    state = 0
+    try:
+        state = selinux.security_get_boolean_active(name)
+    except OSError, e:
+        module.fail_json(msg="Failed to determine current state for boolean %s" % name)
+    if state == 1:
+        return True
+    else:
+        return False
+
+# The following method implements what setsebool.c does to change
+# a boolean and make it persist after reboot..
+def semanage_boolean_value(module, name, state):
+    rc = 0
+    value = 0
+    if state:
+        value = 1
+    handle = semanage.semanage_handle_create()
+    if handle is None:
+        module.fail_json(msg="Failed to create semanage library handle")
+    try:
+        managed = semanage.semanage_is_managed(handle)
+        if managed < 0:
+            module.fail_json(msg="Failed to determine whether policy is manage")
+        if managed == 0:
+            if os.getuid() == 0:
+                module.fail_json(msg="Cannot set persistent booleans without managed policy")
+            else:
+                module.fail_json(msg="Cannot set persistent booleans; please try as root")
+        if semanage.semanage_connect(handle) < 0:
+            module.fail_json(msg="Failed to connect to semanage")
+
+        if semanage.semanage_begin_transaction(handle) < 0:
+            module.fail_json(msg="Failed to begin semanage transaction")
+
+        rc, sebool = semanage.semanage_bool_create(handle)
+        if rc < 0:
+            module.fail_json(msg="Failed to create seboolean with semanage")
+        if semanage.semanage_bool_set_name(handle, sebool, name) < 0:
+            module.fail_json(msg="Failed to set seboolean name with semanage")
+        semanage.semanage_bool_set_value(sebool, value)
+
+        rc, boolkey = semanage.semanage_bool_key_extract(handle, sebool)
+        if rc < 0:
+            module.fail_json(msg="Failed to extract boolean key with semanage")
+
+        if semanage.semanage_bool_modify_local(handle, boolkey, sebool) < 0:
+            module.fail_json(msg="Failed to modify boolean key with semanage")
+
+        if semanage.semanage_bool_set_active(handle, boolkey, sebool) < 0:
+            module.fail_json(msg="Failed to set boolean key active with semanage")
+
+        semanage.semanage_bool_key_free(boolkey)
+        semanage.semanage_bool_free(sebool)
+
+        semanage.semanage_set_reload(handle, 0)
+        if semanage.semanage_commit(handle) < 0:
+            module.fail_json(msg="Failed to commit changes to semanage")
+
+        semanage.semanage_disconnect(handle)
+        semanage.semanage_handle_destroy(handle)
+    except Exception, e:
+        module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
+    return True
+
+def set_boolean_value(module, name, state):
+    rc = 0
+    value = 0
+    if state:
+        value = 1
+    try:
+        rc = selinux.security_set_boolean(name, value)
+    except OSError, e:
+        module.fail_json(msg="Failed to set boolean %s to %s" % (name, value))
+    if rc == 0:
+        return True
+    else:
+        return False
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(required=True),
+            persistent=dict(default='no', type='bool'),
+            state=dict(required=True, type='bool')
+        ),
+        supports_check_mode=True
+    )
+
+    if not HAVE_SELINUX:
+        module.fail_json(msg="This module requires libselinux-python support")
+
+    if not HAVE_SEMANAGE:
+        module.fail_json(msg="This module requires libsemanage-python support")
+
+    if not selinux.is_selinux_enabled():
+        module.fail_json(msg="SELinux is disabled on this host.")
+
+    name = module.params['name']
+    persistent = module.params['persistent']
+    state = module.params['state']
+    result = {}
+    result['name'] = name
+
+    if not has_boolean_value(module, name):
+        module.fail_json(msg="SELinux boolean %s does not exist." % name)
+
+    cur_value = get_boolean_value(module, name)
+
+    if cur_value == state:
+        result['state'] = cur_value
+        result['changed'] = False
+        module.exit_json(**result)
+
+    if module.check_mode:
+        module.exit_json(changed=True)
+    if persistent:
+        r = semanage_boolean_value(module, name, state)
+    else:
+        r = set_boolean_value(module, name, state)
+
+    result['changed'] = r
+    if not r:
+        module.fail_json(msg="Failed to set boolean %s to %s" % (name, value))
+    try:
+        selinux.security_commit_booleans()
+    except:
+        module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
