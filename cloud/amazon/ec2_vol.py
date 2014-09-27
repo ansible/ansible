@@ -48,6 +48,13 @@ options:
     required: false
     default: null
     aliases: []
+  volume_type:
+    description:
+      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS). "Standard" is the old EBS default
+        and continues to remain the Ansible default for backwards compatibility. 
+    required: false
+    default: standard
+    aliases: []
   iops:
     description:
       - the provisioned IOPs you want to associate with this volume (integer).
@@ -173,6 +180,14 @@ EXAMPLES = '''
     module: ec2_vol
     instance: i-XXXXXX
     state: list
+    
+# Create new volume using SSD storage
+- local_action: 
+    module: ec2_vol 
+    instance: XXXXXX 
+    volume_size: 50 
+    volume_type: gp2
+    device_name: /dev/xvdf
 '''
 
 # Note: this module needs to be made idempotent. Possible solution is to use resource tags with the volumes.
@@ -253,12 +268,11 @@ def create_volume(module, ec2, zone):
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
     volume_size = module.params.get('volume_size')
+    volume_type = module.params.get('volume_type')
     snapshot = module.params.get('snapshot')
     # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
     if iops:
         volume_type = 'io1'
-    else:
-        volume_type = 'standard'
 
     # If no instance supplied, try volume creation based on module parameters.
     if name or id:
@@ -338,6 +352,7 @@ def main():
             id = dict(),
             name = dict(),
             volume_size = dict(),
+            volume_type = dict(choices=['standard', 'gp2', 'io1'], default='standard'),
             iops = dict(),
             encrypted = dict(),
             device_name = dict(),
@@ -352,6 +367,7 @@ def main():
     name = module.params.get('name')
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
+    volume_type = module.params.get('volume_type')
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
     device_name = module.params.get('device_name')
@@ -425,7 +441,7 @@ def main():
         volume = create_volume(module, ec2, zone)
         if instance:
             attach_volume(module, ec2, volume, inst)
-        module.exit_json(volume_id=volume.id, device=device_name)
+        module.exit_json(volume_id=volume.id, device=device_name, volume_type=volume.type)
 
 # import module snippets
 from ansible.module_utils.basic import *
