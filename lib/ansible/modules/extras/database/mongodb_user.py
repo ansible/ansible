@@ -67,6 +67,10 @@ options:
             - The password to use for the user
         required: false
         default: null
+    ssl:
+        description:
+            - Whether to use an SSL connection when connecting to the database
+        default: False
     roles:
         version_added: "1.3"
         description:
@@ -91,6 +95,9 @@ author: Elliott Foster
 EXAMPLES = '''
 # Create 'burgers' database user with name 'bob' and password '12345'.
 - mongodb_user: database=burgers name=bob password=12345 state=present
+
+# Create a database user via SSL (MongoDB must be compiled with the SSL option and configured properly)
+- mongodb_user: database=burgers name=bob password=12345 state=present ssl=True
 
 # Delete 'burgers' database user with name 'bob'.
 - mongodb_user: database=burgers name=bob state=absent
@@ -172,6 +179,7 @@ def main():
             database=dict(required=True, aliases=['db']),
             user=dict(required=True, aliases=['name']),
             password=dict(aliases=['pass']),
+            ssl=dict(default=False),
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
         )
@@ -188,14 +196,15 @@ def main():
     db_name = module.params['database']
     user = module.params['user']
     password = module.params['password']
+    ssl = module.params['ssl']
     roles = module.params['roles']
     state = module.params['state']
 
     try:
     	if replica_set:
-    	   client = MongoClient(login_host, int(login_port), replicaset=replica_set)
+    	   client = MongoClient(login_host, int(login_port), replicaset=replica_set, ssl=ssl)
     	else:
-    	   client = MongoClient(login_host, int(login_port))
+    	   client = MongoClient(login_host, int(login_port), ssl=ssl)
 
         # try to authenticate as a target user to check if it already exists
         try:
