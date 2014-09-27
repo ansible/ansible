@@ -471,7 +471,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.boolean("foo"), False)
 
     def test_make_sudo_cmd(self):
-        cmd = ansible.utils.make_sudo_cmd('root', '/bin/sh', '/bin/ls')
+        cmd = ansible.utils.make_sudo_cmd(C.DEFAULT_SUDO_EXE, 'root', '/bin/sh', '/bin/ls')
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('-u root' in cmd[0])
