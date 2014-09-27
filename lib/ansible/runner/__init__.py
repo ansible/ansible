@@ -154,6 +154,7 @@ class Runner(object):
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         run_once=False,                     # option to enable/disable host bypass loop for a given task
+        sudo_exe=C.DEFAULT_SUDO_EXE,        # ex: /usr/local/bin/sudo
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -212,6 +213,7 @@ class Runner(object):
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
+        self.sudo_exe         = sudo_exe
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -810,6 +812,7 @@ class Runner(object):
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
         self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
+        self.sudo_exe = inject.get('ansible_sudo_exe', self.sudo_exe)
 
         # select default root user in case self.sudo requested
         # but no user specified; happens e.g. in host vars when

@@ -239,7 +239,7 @@ class Connection(object):
             executable = constants.DEFAULT_EXECUTABLE
 
         if self.runner.sudo and sudoable and sudo_user:
-            cmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
 
         vvv("EXEC COMMAND %s" % cmd)
 

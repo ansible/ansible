@@ -225,7 +225,7 @@ class Connection(object):
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
             if self.runner.sudo or sudoable:
-                shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+                shcmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
             elif self.runner.su or su:
                 shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
 
