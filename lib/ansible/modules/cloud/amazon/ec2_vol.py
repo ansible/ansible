@@ -167,16 +167,20 @@ EXAMPLES = '''
     id: vol-XXXXXXXX
     state: absent
 
+# Detach a volume
+- ec2_vol:
+    id: vol-XXXXXXXX
+    instance: None
+
 # List volumes for an instance
 - ec2_vol:
     instance: i-XXXXXX
     state: list
     
 # Create new volume using SSD storage
-- local_action: 
-    module: ec2_vol 
-    instance: XXXXXX 
-    volume_size: 50 
+- ec2_vol:
+    instance: XXXXXX
+    volume_size: 50
     volume_type: gp2
     device_name: /dev/xvdf
 '''
@@ -260,15 +264,18 @@ def create_volume(module, ec2, zone):
     if iops:
         volume_type = 'io1'
 
+    if instance == 'None' or instance == '':
+        instance = None
+
     # If no instance supplied, try volume creation based on module parameters.
     if name or id:
-        if not instance:
-            module.fail_json(msg = "If name or id is specified, instance must also be specified")
         if iops or volume_size:
             module.fail_json(msg = "Parameters are not compatible: [id or name] and [iops or volume_size]")
 
         volume = get_volume(module, ec2)
         if volume.attachment_state() is not None:
+            if instance is None:
+                return volume
             adata = volume.attach_data
             if adata.instance_id != instance:
                 module.fail_json(msg = "Volume %s is already attached to another instance: %s"
@@ -330,6 +337,13 @@ def attach_volume(module, ec2, volume, instance):
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
+def detach_volume(module, ec2):
+    vol = get_volume(module, ec2)
+    if not vol or vol.attachment_state() is None:
+        module.exit_json(changed=False)
+    else:
+        vol.detach()
+        module.exit_json(changed=True)
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -360,6 +374,9 @@ def main():
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
+
+    if instance == 'None' or instance == '':
+        instance = None
 
     ec2 = ec2_connect(module)
 
@@ -427,6 +444,8 @@ def main():
         volume = create_volume(module, ec2, zone)
         if instance:
             attach_volume(module, ec2, volume, inst)
+        else:
+            detach_volume(module, ec2)    
         module.exit_json(volume_id=volume.id, device=device_name, volume_type=volume.type)
 
 # import module snippets
