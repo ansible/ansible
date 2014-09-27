@@ -185,14 +185,13 @@ class CobblerInventory(object):
             status = host['status']
             profile = host['profile']
             classes = host['mgmt_classes']
-            # print "status: %s" % status
-            # print "profile: %s" % profile
-            # print "classes: %s" % classes
 
             # allow the ability to limit whats retruned from cobbler by
             # its status attribure. see --status under
             # http://www.cobblerd.org/manuals/2.6.0/3/1/3_-_Systems.html
-            if status in self.filter_status:
+            # check if the filter_status is false (None or empty string)
+
+            if status in self.filter_status or not self.filter_status:
                 self.inventory[status].append(dns_name)
                 self.inventory[profile].append(dns_name)
 
