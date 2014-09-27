@@ -61,6 +61,12 @@ options:
     required: true
     default: null
     aliases: []
+  tenancy:
+    description:
+      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC. Valid values are:"default" or "dedicated". NOTE: To use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances. 
+    required: false
+    default: default
+    aliases: []
   spot_price:
     version_added: "1.5"
     description:
@@ -298,6 +304,18 @@ EXAMPLES = '''
     monitoring: yes
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
+
+# Dedicated tenancy example
+- local_action:
+    module: ec2
+    assign_public_ip: yes
+    group_id: sg-1dc53f72
+    key_name: mykey
+    image: ami-6e649707
+    instance_type: m1.small
+    tenancy: dedicated
+    vpc_subnet_id: subnet-29e63245
+    wait: yes
 
 # Spot instance example
 - ec2:
@@ -725,6 +743,7 @@ def create_instances(module, ec2, override_count=None):
     group_id = module.params.get('group_id')
     zone = module.params.get('zone')
     instance_type = module.params.get('instance_type')
+    tenancy = module.params.get('tenancy')
     spot_price = module.params.get('spot_price')
     image = module.params.get('image')
     if override_count:
@@ -808,6 +827,9 @@ def create_instances(module, ec2, override_count=None):
 
             if ebs_optimized:
               params['ebs_optimized'] = ebs_optimized
+              
+            if tenancy:
+              params['tenancy'] = tenancy
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
@@ -1150,6 +1172,7 @@ def main():
             count_tag = dict(),
             volumes = dict(type='list'),
             ebs_optimized = dict(type='bool', default=False),
+            tenancy = dict(default='default'),
         )
     )
 
