@@ -33,8 +33,8 @@ options:
     state:
         description:
             - Create or remove a maintenance window.
-        required: true
-        default: null
+        required: false
+        default: present
         choices: [ "present", "absent" ]
     server_url:
         description:
@@ -267,7 +267,7 @@ def get_host_ids(zbx, host_names):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, default=None, choices=['present', 'absent']),
+            state=dict(required=False, default='present', choices=['present', 'absent']),
             server_url=dict(required=True, default=None, aliases=['url']),
             host_names=dict(type='list', required=False, default=None, aliases=['host_name']),
             minutes=dict(type='int', required=False, default=10),
