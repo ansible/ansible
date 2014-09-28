@@ -44,6 +44,7 @@ def openstack_argument_spec():
         auth_url                        = dict(default=OS_AUTH_URL),
         region_name                     = dict(default=OS_REGION_NAME),
         availability_zone               = dict(default=None),
+        endpoint_type                   = dict(default='publicURL', choices=['publicURL', 'internalURL']),
     )
     if OS_PASSWORD:
         spec['login_password'] = dict(default=OS_PASSWORD)
