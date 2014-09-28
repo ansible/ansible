@@ -1215,7 +1215,11 @@ class Runner(object):
         module_suffixes = getattr(conn, 'default_suffixes', None)
         module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes)
         if module_path is None:
-            raise errors.AnsibleFileNotFound("module %s not found in configured module paths" % (module_name))
+            module_path2 = utils.plugins.module_finder.find_plugin('ping', module_suffixes)
+            if module_path2 is not None:
+                raise errors.AnsibleFileNotFound("module %s not found in configured module paths" % (module_name))
+            else:
+                raise errors.AnsibleFileNotFound("module %s not found in configured module paths.  Additionally, core modules are missing. If this is a checkout, run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
 
         # insert shared code and arguments into the module
