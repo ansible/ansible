@@ -123,7 +123,7 @@ Note when updating ansible, be sure to not only update the source tree, but also
 which point at Ansible's own modules (not the same kind of modules, alas).
 
     $ git pull --rebase
-    $ git submodule update
+    $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
 will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
