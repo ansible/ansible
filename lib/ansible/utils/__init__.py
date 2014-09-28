@@ -883,8 +883,11 @@ def _gitinfo():
     for line in f:
         tokens = line.strip().split(' ')
         if tokens[0] == 'path':
-            repo_path = tokens[2]
-            result += "\n  {0}: {1}".format(repo_path, _gitrepoinfo(os.path.join(basedir, repo_path, '.git')))
+            submodule_path = tokens[2]
+            submodule_info =_gitrepoinfo(os.path.join(basedir, submodule_path, '.git'))
+            if not submodule_info:
+                submodule_info = ' not found - use git submodule update --init ' + submodule_path
+            result += "\n  {0}: {1}".format(submodule_path, submodule_info)
     f.close()
     return result
 
