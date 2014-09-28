@@ -833,7 +833,7 @@ def default(value, function):
     return value
 
 
-def _gitrepoinfo(repo_path):
+def _git_repo_info(repo_path):
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
     if os.path.exists(repo_path):
@@ -877,14 +877,16 @@ def _gitrepoinfo(repo_path):
 def _gitinfo():
     basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
     repo_path = os.path.join(basedir, '.git')
-    result = _gitrepoinfo(repo_path)
+    result = _git_repo_info(repo_path)
     submodules = os.path.join(basedir, '.gitmodules')
+    if not os.path.exists(submodules):
+       return result
     f = open(submodules)
     for line in f:
         tokens = line.strip().split(' ')
         if tokens[0] == 'path':
             submodule_path = tokens[2]
-            submodule_info =_gitrepoinfo(os.path.join(basedir, submodule_path, '.git'))
+            submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
             if not submodule_info:
                 submodule_info = ' not found - use git submodule update --init ' + submodule_path
             result += "\n  {0}: {1}".format(submodule_path, submodule_info)
