@@ -9,7 +9,7 @@ Ansible is a radically simple configuration-management, application deployment, 
 Read the documentation and more at http://ansible.com/
 
 Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.  You can find 
-instructions [here](http://docs.ansible.com/intro_getting_started.html) for a variety of platforms.  If you want a tarball of the last release, go to [releases.ansible.com](http://releases.ansible.com/ansible) and you can also install with pip.
+instructions [here](http://docs.ansible.com/intro_getting_started.html) for a variety of platforms.  If you want to download a tarball of a previous/latest release, go to [releases.ansible.com](http://releases.ansible.com/ansible). You can also install Ansible using pip.
 
 Design Principles
 =================
