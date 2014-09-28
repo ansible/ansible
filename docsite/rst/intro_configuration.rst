@@ -154,9 +154,9 @@ command module appear to be simplified by using a default Ansible module
 instead.  This can include reminders to use the 'git' module instead of
 shell commands to execute 'git'.  Using modules when possible over arbitrary
 shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks.
+also easier to maintain playbooks::
 
-    command_warnings=False
+    command_warnings = False
 
 These warnings can be silenced by adjusting the following
 setting or adding warn=yes or warn=no to the end of the command line
