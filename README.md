@@ -46,11 +46,11 @@ Branch Info
    * Various release-X.Y branches exist for previous releases.
    * We'd love to have your contributions, read [Community Information](http://docs.ansible.com/community.html) for notes on how to get started.
 
-Author
-======
+Authors
+=======
 
-Ansible was created by Michael DeHaan (michael@ansible.com) and has contributions from over
+Ansible was created by [Michael DeHaan](github.com/mpdehaan) (michael@ansible.com) and has contributions from over
 800 users (and growing).  Thanks everyone!
 
-[Ansible, Inc](http://ansible.com)
+Ansible is sponsored by [Ansible, Inc](http://ansible.com)
 
