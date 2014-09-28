@@ -122,6 +122,8 @@ Ansible also uses the following Python modules that need to be installed::
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
 which point at Ansible's own modules (not the same kind of modules, alas).
 
+.. code-block:: bash
+
     $ git pull --rebase
     $ git submodule update --init --recursive
 
