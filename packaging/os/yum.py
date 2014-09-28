@@ -96,6 +96,16 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
+  update_cache:
+    description:
+      - Force updating the cache. Has an effect only if state is I(present)
+        or I(latest).
+    required: false
+    version_added: "1.9"
+    default: "no"
+    choices: ["yes", "no"]
+    aliases: []
+
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
@@ -746,6 +756,10 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
         yum_basecmd.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
+
+        if module.params.get('update_cache'):
+            module.run_command(yum_basecmd + ['makecache'])
+
         my = yum_base(conf_file)
         try:
             for r in dis_repos:
@@ -803,6 +817,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            update_cache=dict(required=False, default="no", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
