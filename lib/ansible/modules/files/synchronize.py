@@ -255,7 +255,7 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
 
-    cmd = '%s --delay-updates -FF' % rsync
+    cmd = '%s --delay-updates -F' % rsync
     if compress:
         cmd = cmd + ' --compress'
     if rsync_timeout:
