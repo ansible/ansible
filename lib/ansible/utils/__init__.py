@@ -832,11 +832,10 @@ def default(value, function):
         return function()
     return value
 
-def _gitinfo():
+
+def _gitrepoinfo(repo_path):
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
-
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -857,16 +856,38 @@ def _gitinfo():
             f = open(branch_path)
             commit = f.readline()[:10]
             f.close()
-            date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:
-                offset = time.timezone
-            else:
-                offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+        else:
+            # detached HEAD
+            commit = branch[:10]
+            branch = 'detached HEAD'
+            branch_path = os.path.join(repo_path, "HEAD")
+
+        date = time.localtime(os.stat(branch_path).st_mtime)
+        if time.daylight == 0:
+            offset = time.timezone
+        else:
+            offset = time.altzone
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+            time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
     return result
+
+
+def _gitinfo():
+    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    repo_path = os.path.join(basedir, '.git')
+    result = _gitrepoinfo(repo_path)
+    submodules = os.path.join(basedir, '.gitmodules')
+    f = open(submodules)
+    for line in f:
+        tokens = line.strip().split(' ')
+        if tokens[0] == 'path':
+            repo_path = tokens[2]
+            result += "\n  {0}: {1}".format(repo_path, _gitrepoinfo(os.path.join(basedir, repo_path, '.git')))
+    f.close()
+    return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
