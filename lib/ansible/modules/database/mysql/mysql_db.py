@@ -102,6 +102,7 @@ EXAMPLES = '''
 import ConfigParser
 import os
 import pipes
+import stat
 try:
     import MySQLdb
 except ImportError:
@@ -283,6 +284,7 @@ def main():
     collation = module.params["collation"]
     state = module.params["state"]
     target = module.params["target"]
+    socket = module.params["login_unix_socket"]
 
     # make sure the target path is expanded for ~ and $HOME
     if target is not None:
@@ -312,8 +314,14 @@ def main():
     else:
         connect_to_db = 'mysql'
     try:
-        if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db=connect_to_db)
+        if socket:
+            try:
+                socketmode = os.stat(socket).st_mode
+                if not stat.S_ISSOCK(socketmode):
+                    module.fail_json(msg="%s, is not a socket, unable to connect" % socket)
+            except OSError:
+                module.fail_json(msg="%s, does not exist, unable to connect" % socket)
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=socket, user=login_user, passwd=login_password, db=connect_to_db)
         elif module.params["login_port"] != "3306" and module.params["login_host"] == "localhost":
             module.fail_json(msg="login_host is required when login_port is defined, login_host cannot be localhost when login_port is defined")
         else:
@@ -324,7 +332,7 @@ def main():
                 errno, errstr = e.args
                 module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+                module.fail_json(msg="unable to connect, check login credentials (login_user, and login_password, which can be defined in ~/.my.cnf), check that mysql socket exists and mysql server is running")
 
     changed = False
     if db_exists(cursor, db):
