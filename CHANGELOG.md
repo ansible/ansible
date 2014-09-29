@@ -105,6 +105,7 @@ New Modules:
 * windows: win_user
 * windows: win_service
 * windows: win_group
+* windows: iis_app_pool
 
 Other notable changes:
 
