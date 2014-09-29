@@ -178,9 +178,9 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
 
     command_in            = module.params.get('command')
-    zone_in               = module.params.get('zone').tolower
+    zone_in               = module.params.get('zone').lower()
     ttl_in                = module.params.get('ttl')
-    record_in             = module.params.get('record').tolower
+    record_in             = module.params.get('record').lower()
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
     retry_interval_in     = module.params.get('retry_interval')
