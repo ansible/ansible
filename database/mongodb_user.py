@@ -68,6 +68,7 @@ options:
         required: false
         default: null
     ssl:
+        version_added: "1.8"
         description:
             - Whether to use an SSL connection when connecting to the database
         default: False
