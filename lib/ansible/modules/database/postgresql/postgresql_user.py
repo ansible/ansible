@@ -78,6 +78,11 @@ options:
       - Host running PostgreSQL.
     required: false
     default: localhost
+  login_unix_socket:
+    description
+      - Path to a Unix domain socket for local connections
+    required: false
+    default: null
   priv:
     description:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
@@ -456,6 +461,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default=""),
             login_host=dict(default=""),
+            login_unix_socket=dict(default=""),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             state=dict(default="present", choices=["absent", "present"]),
@@ -504,6 +510,12 @@ def main():
     }
     kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
               if k in params_map and v != "" )
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
