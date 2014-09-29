@@ -16,7 +16,7 @@ pull request unfortunately cannot be applied.
 We apologize that we are not able to make this transition happen seamlessly, though this is a one-time change and your help is greatly appreciated -- 
 this will greatly improve velocity going forward.
 
-Both sets of modules will ship with Ansible, though they'll recieve slightly different ticket handling.
+Both sets of modules will ship with Ansible, though they'll receive slightly different ticket handling.
 
 To locate where a module lives between 'core' and 'extras'
 
