@@ -29,7 +29,7 @@ description:
 options:
   database:
     description:
-      - Name of database to connect to. 
+      - Name of database to connect to.
       - 'Alias: I(db)'
     required: yes
   state:
@@ -53,7 +53,7 @@ options:
               schema, language, tablespace, group]
   objs:
     description:
-      - Comma separated list of database objects to set privileges on. 
+      - Comma separated list of database objects to set privileges on.
       - If I(type) is C(table) or C(sequence), the special value
         C(ALL_IN_SCHEMA) can be provided instead to specify all database
         objects of type I(type) in the schema specified via I(schema). (This
@@ -99,6 +99,12 @@ options:
       - Database port to connect to.
     required: no
     default: 5432
+  unix_socket:
+    description
+      - Path to a Unix domain socket for local connections.
+      - 'Alias: I(login_unix_socket)'
+    required: false
+    default: null
   login:
     description:
       - The username to authenticate with.
@@ -135,7 +141,7 @@ author: Bernhard Weitzhofer
 
 EXAMPLES = """
 # On database "library":
-# GRANT SELECT, INSERT, UPDATE ON TABLE public.books, public.authors 
+# GRANT SELECT, INSERT, UPDATE ON TABLE public.books, public.authors
 # TO librarian, reader WITH GRANT OPTION
 - postgresql_privs: >
     database=library
@@ -155,8 +161,8 @@ EXAMPLES = """
     roles=librarian,reader
     grant_option=yes
 
-# REVOKE GRANT OPTION FOR INSERT ON TABLE books FROM reader 
-# Note that role "reader" will be *granted* INSERT privilege itself if this 
+# REVOKE GRANT OPTION FOR INSERT ON TABLE books FROM reader
+# Note that role "reader" will be *granted* INSERT privilege itself if this
 # isn't already the case (since state=present).
 - postgresql_privs: >
     db=library
@@ -214,7 +220,7 @@ EXAMPLES = """
     role=librarian
 
 # GRANT ALL PRIVILEGES ON DATABASE library TO librarian
-# If objs is omitted for type "database", it defaults to the database 
+# If objs is omitted for type "database", it defaults to the database
 # to which the connection is established
 - postgresql_privs: >
     db=library
@@ -267,6 +273,12 @@ class Connection(object):
         }
         kw = dict( (params_map[k], getattr(params, k)) for k in params_map
                    if getattr(params, k) != '' )
+
+        # If a unix_socket is specified, incorporate it here.
+        is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+        if is_localhost and params.unix_socket != "":
+            kw["host"] = params.unix_socket
+
         self.connection = psycopg2.connect(**kw)
         self.cursor = self.connection.cursor()
 
@@ -389,9 +401,9 @@ class Connection(object):
 
     def get_group_memberships(self, groups):
         query = """SELECT roleid, grantor, member, admin_option
-                   FROM pg_catalog.pg_auth_members am 
+                   FROM pg_catalog.pg_auth_members am
                    JOIN pg_catalog.pg_roles r ON r.oid = am.roleid
-                   WHERE r.rolname = ANY(%s) 
+                   WHERE r.rolname = ANY(%s)
                    ORDER BY roleid, grantor, member"""
         self.cursor.execute(query, (groups,))
         return self.cursor.fetchall()
@@ -405,14 +417,14 @@ class Connection(object):
 
         :param obj_type: Type of database object to grant/revoke
                          privileges for.
-        :param privs: Either a list of privileges to grant/revoke 
+        :param privs: Either a list of privileges to grant/revoke
                       or None if type is "group".
         :param objs: List of database objects to grant/revoke
                      privileges for.
         :param roles: Either a list of role names or "PUBLIC"
                       for the implicitly defined "PUBLIC" group
         :param state: "present" to grant privileges, "absent" to revoke.
-        :param grant_option: Only for state "present": If True, set 
+        :param grant_option: Only for state "present": If True, set
                              grant/admin option. If False, revoke it.
                              If None, don't change grant option.
         :param schema_qualifier: Some object types ("TABLE", "SEQUENCE",
@@ -481,7 +493,7 @@ class Connection(object):
                 else:
                     query = 'GRANT %s TO %s WITH GRANT OPTION'
             else:
-                query = 'GRANT %s TO %s' 
+                query = 'GRANT %s TO %s'
             self.cursor.execute(query % (set_what, for_whom))
 
             # Only revoke GRANT/ADMIN OPTION if grant_option actually is False.
@@ -492,7 +504,7 @@ class Connection(object):
                     query = 'REVOKE GRANT OPTION FOR %s FROM %s'
                 self.cursor.execute(query % (set_what, for_whom))
         else:
-            query = 'REVOKE %s FROM %s' 
+            query = 'REVOKE %s FROM %s'
             self.cursor.execute(query % (set_what, for_whom))
         status_after = get_status(objs)
         return status_before != status_after
@@ -516,10 +528,11 @@ def main():
             objs=dict(required=False, aliases=['obj']),
             schema=dict(required=False),
             roles=dict(required=True, aliases=['role']),
-            grant_option=dict(required=False, type='bool', 
+            grant_option=dict(required=False, type='bool',
                               aliases=['admin_option']),
             host=dict(default='', aliases=['login_host']),
             port=dict(type='int', default=5432),
+            unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
             password=dict(default='', aliases=['login_password'])
         ),
