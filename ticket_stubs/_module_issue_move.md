@@ -30,6 +30,6 @@ Additionally, should you need more help with this, you can ask questions on:
 
    * the ansible-project mailing list: https://groups.google.com/forum/#!forum/ansible-project
 
-Thanks you very much!
+Thank you very much!
 
 
