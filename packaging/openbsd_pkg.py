@@ -59,6 +59,9 @@ EXAMPLES = '''
 
 # Specify the default flavour to avoid ambiguity errors
 - openbsd_pkg: name=vim-- state=present
+
+# Update all packages on the system
+- openbsd_pkg: name=* state=latest
 '''
 
 # Control if we write debug information to syslog.
@@ -266,8 +269,8 @@ def package_absent(name, installed_state, module):
 
     return (rc, stdout, stderr, changed)
 
-# Function used to parse the package name based on packages-specs(7)
-# The general name structure is "stem-version[-flavors]"
+# Function used to parse the package name based on packages-specs(7).
+# The general name structure is "stem-version[-flavors]".
 def parse_package_name(name, pkg_spec, module):
     # Do some initial matches so we can base the more advanced regex on that.
     version_match = re.search("-[0-9]", name)
@@ -321,8 +324,39 @@ def parse_package_name(name, pkg_spec, module):
         if match:
             module.fail_json(msg="Trailing dash in flavor: " + pkg_spec['flavor'])
 
+# Function used for upgrading all installed packages.
+def upgrade_packages(module):
+    if module.check_mode:
+        upgrade_cmd = 'pkg_add -Imnu'
+    else:
+        upgrade_cmd = 'pkg_add -Imu'
+
+    # Attempt to upgrade all packages.
+    rc, stdout, stderr = execute_command("%s" % upgrade_cmd, module)
+
+    # Try to find any occurance of a package changing version like:
+    # "bzip2-1.0.6->1.0.6p0: ok".
+    match = re.search("\W\w.+->.+: ok\W", stdout)
+    if match:
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        changed=True
+
+    else:
+        changed=False
+
+    # It seems we can not trust the return value, so depend on the presence of
+    # stderr to know if something failed.
+    if stderr:
+        rc = 1
+    else:
+        rc = 0
+
+    return (rc, stdout, stderr, changed)
+
 # ===========================================
-# Main control flow
+# Main control flow.
 
 def main():
     module = AnsibleModule(
@@ -343,20 +377,27 @@ def main():
     result['name'] = name
     result['state'] = state
 
-    # Parse package name and put results in the pkg_spec dictionary.
-    pkg_spec = {}
-    parse_package_name(name, pkg_spec, module)
+    if name == '*':
+        if state != 'latest':
+            module.fail_json(msg="the package name '*' is only valid when using state=latest")
+        else:
+            # Perform an upgrade of all installed packages.
+            (rc, stdout, stderr, changed) = upgrade_packages(module)
+    else:
+        # Parse package name and put results in the pkg_spec dictionary.
+        pkg_spec = {}
+        parse_package_name(name, pkg_spec, module)
 
-    # Get package state.
-    installed_state = get_package_state(name, pkg_spec, module)
+        # Get package state.
+        installed_state = get_package_state(name, pkg_spec, module)
 
-    # Perform requested action.
-    if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(name, installed_state, pkg_spec, module)
-    elif state in ['absent', 'removed']:
-        (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
-    elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(name, installed_state, pkg_spec, module)
+        # Perform requested action.
+        if state in ['installed', 'present']:
+            (rc, stdout, stderr, changed) = package_present(name, installed_state, pkg_spec, module)
+        elif state in ['absent', 'removed']:
+            (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
+        elif state == 'latest':
+            (rc, stdout, stderr, changed) = package_latest(name, installed_state, pkg_spec, module)
 
     if rc != 0:
         if stderr:
@@ -368,6 +409,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
+# Import module snippets.
 from ansible.module_utils.basic import *
 main()
