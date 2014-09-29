@@ -97,7 +97,7 @@ def main():
         cmd = None
         if fstype in ['ext2', 'ext3', 'ext4', 'ext4dev']:
           force_flag="-F"
-        elif fstype in ['btrfs']:
+        elif fstype in ['xfs', 'btrfs']:
           force_flag="-f"
         else:
           force_flag=""
