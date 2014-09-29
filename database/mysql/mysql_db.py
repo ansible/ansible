@@ -30,6 +30,8 @@ options:
   name:
     description:
       - name of the database to add or remove
+      - name=all May only be provided if I(state) is C(dump) or C(import). 
+      - if name=all Works like --all-databases option for mysqldump (Added in 2.0)
     required: true
     default: null
     aliases: [ db ]
@@ -97,6 +99,12 @@ EXAMPLES = '''
 # Copy database dump file to remote host and restore it to database 'my_db'
 - copy: src=dump.sql.bz2 dest=/tmp
 - mysql_db: name=my_db state=import target=/tmp/dump.sql.bz2
+
+# Dumps all databases to hostname.sql
+- mysql_db: state=dump name=all target=/tmp/{{ inventory_hostname }}.sql
+
+# Imports file.sql similiar to mysql -u <username> -p <password> < hostname.sql
+- mysql_db: state=import name=all target=/tmp/{{ inventory_hostname }}.sql
 '''
 
 import ConfigParser
@@ -123,14 +131,17 @@ def db_delete(cursor, db):
     cursor.execute(query)
     return True
 
-def db_dump(module, host, user, password, db_name, target, port, socket=None):
+def db_dump(module, host, user, password, db_name, target, all_databases, port, socket=None):
     cmd = module.get_bin_path('mysqldump', True)
     cmd += " --quick --user=%s --password=%s" % (pipes.quote(user), pipes.quote(password))
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
     else:
         cmd += " --host=%s --port=%i" % (pipes.quote(host), port)
-    cmd += " %s" % pipes.quote(db_name)
+    if all_databases:
+        cmd += " --all-databases"
+    else:
+        cmd += " %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
         cmd = cmd + ' | gzip > ' + pipes.quote(target)
     elif os.path.splitext(target)[-1] == '.bz2':
@@ -140,7 +151,7 @@ def db_dump(module, host, user, password, db_name, target, port, socket=None):
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
-def db_import(module, host, user, password, db_name, target, port, socket=None):
+def db_import(module, host, user, password, db_name, target, all_databases, port, socket=None):
     if not os.path.exists(target):
         return module.fail_json(msg="target %s does not exist on the host" % target)
 
@@ -150,7 +161,8 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
         cmd += " --socket=%s" % pipes.quote(socket)
     else:
         cmd += " --host=%s --port=%i" % (pipes.quote(host), port)
-    cmd += " -D %s" % pipes.quote(db_name)
+    if not all_databases:
+    	cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
         gzip_path = module.get_bin_path('gzip')
         if not gzip_path:
@@ -313,8 +325,16 @@ def main():
     if state in ['dump','import']:
         if target is None:
             module.fail_json(msg="with state=%s target is required" % (state))
-        connect_to_db = db
+	if db == 'all':
+            connect_to_db = 'mysql'
+            db = 'mysql'
+            all_databases = True
+        else:
+            connect_to_db = db
+            all_databases = False
     else:
+        if db == 'all':
+            module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
         connect_to_db = ''
     try:
         if socket:
@@ -346,7 +366,7 @@ def main():
                 module.fail_json(msg="error deleting database: " + str(e))
         elif state == "dump":
             rc, stdout, stderr = db_dump(module, login_host, login_user, 
-                                        login_password, db, target, 
+                                        login_password, db, target, all_databases,
                                         port=login_port,
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
@@ -355,7 +375,7 @@ def main():
                 module.exit_json(changed=True, db=db, msg=stdout)
         elif state == "import":
             rc, stdout, stderr = db_import(module, login_host, login_user, 
-                                        login_password, db, target, 
+                                        login_password, db, target, all_databases,
                                         port=login_port,
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
