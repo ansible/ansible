@@ -84,8 +84,11 @@ class Task(object):
 
             # code to allow "with_glob" and to reference a lookup plugin named glob
             elif x.startswith("with_"):
-
-                if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
+                # Only a variable, no logic
+                if (isinstance(ds[x], basestring) and
+                        ds[x].startswith('{{') and
+                        ds[x].find('}}') == len(ds[x]) - 2 and
+                        find ('|') == -1):
                     utils.warning("It is unnecessary to use '{{' in loops, leave variables in loop expressions bare.")
 
                 plugin_name = x.replace("with_","")
@@ -97,7 +100,11 @@ class Task(object):
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
             elif x in [ 'changed_when', 'failed_when', 'when']:
-                if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
+                # Only a variable, no logic
+                if (isinstance(ds[x], basestring) and
+                        ds[x].startswith('{{') and
+                        ds[x].find('}}') == len(ds[x]) - 2 and
+                        find ('|') == -1):
                     utils.warning("It is unnecessary to use '{{' in conditionals, leave variables in loop expressions bare.")
             elif x.startswith("when_"):
                 utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described on docs.ansible.com.","1.5", removed=True)
