@@ -2,6 +2,7 @@ include README.md packaging/rpm/ansible.spec COPYING
 include examples/hosts
 include examples/ansible.cfg
 include lib/ansible/module_utils/powershell.ps1
+recursive-include lib/ansible/modules *
 recursive-include docs *
 include Makefile
 include VERSION
