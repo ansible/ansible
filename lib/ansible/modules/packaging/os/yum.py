@@ -247,13 +247,11 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
     else:
         myrepoq = list(repoq)
                  
-        for repoid in dis_repos:
-            r_cmd = ['--disablerepo', repoid]
-            myrepoq.extend(r_cmd)
+        r_cmd = ['--disablerepo', ','.join(dis_repos)]
+        myrepoq.extend(r_cmd)
 
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
+        r_cmd = ['--enablerepo', ','.join(en_repos)]
+        myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -296,13 +294,11 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
 
     else:
         myrepoq = list(repoq)
-        for repoid in dis_repos:
-            r_cmd = ['--disablerepo', repoid]
-            myrepoq.extend(r_cmd)
+        r_cmd = ['--disablerepo', ','.join(dis_repos)]
+        myrepoq.extend(r_cmd)
 
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
+        r_cmd = ['--enablerepo', ','.join(en_repos)]
+        myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -341,13 +337,11 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
 
     else:
         myrepoq = list(repoq)
-        for repoid in dis_repos:
-            r_cmd = ['--disablerepo', repoid]
-            myrepoq.extend(r_cmd)
+        r_cmd = ['--disablerepo', ','.join(dis_repos)]
+        myrepoq.extend(r_cmd)
 
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
+        r_cmd = ['--enablerepo', ','.join(en_repos)]
+        myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, "--whatprovides", req_spec]
         rc,out,err = module.run_command(cmd)
@@ -682,7 +676,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     nothing_to_do = False
                     break
                     
-                if basecmd == 'update' and is_update(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                if basecmd == 'update' and is_update(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=en_repos):
                     nothing_to_do = False
                     break
                     
@@ -744,16 +738,14 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     en_repos = []
     if disablerepo:
         dis_repos = disablerepo.split(',')
+        r_cmd = ['--disablerepo=%s' % disablerepo]
+        yum_basecmd.extend(r_cmd)
     if enablerepo:
         en_repos = enablerepo.split(',')
+        r_cmd = ['--enablerepo=%s' % enablerepo]
+        yum_basecmd.extend(r_cmd)
            
-    for repoid in dis_repos:
-        r_cmd = ['--disablerepo=%s' % repoid]
-        yum_basecmd.extend(r_cmd)
 
-    for repoid in en_repos:
-        r_cmd = ['--enablerepo=%s' % repoid]
-        yum_basecmd.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
 
@@ -762,13 +754,12 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
 
         my = yum_base(conf_file)
         try:
-            for r in dis_repos:
-                my.repos.disableRepo(r)
-
+            if disablerepo:
+                my.repos.disableRepo(disablerepo)
             current_repos = my.repos.repos.keys()
-            for r in en_repos:
+            if enablerepo:
                 try:
-                    my.repos.enableRepo(r)
+                    my.repos.enableRepo(enablerepo)
                     new_repos = my.repos.repos.keys()
                     for i in new_repos:
                         if not i in current_repos:
@@ -779,7 +770,6 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
                     module.fail_json(msg="Error setting/accessing repo %s: %s" % (r, e))
         except yum.Errors.YumBaseError, e:
             module.fail_json(msg="Error accessing repos: %s" % e)
-
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
