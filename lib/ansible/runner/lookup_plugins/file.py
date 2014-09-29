@@ -16,13 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible import utils, errors
+from ansible.utils.vault import VaultLib
 import os
 import codecs
 
 class LookupModule(object):
 
-    def __init__(self, basedir=None, **kwargs):
+    def __init__(self, basedir=None, vault_password=None, **kwargs):
         self.basedir = basedir
+        self.vault_password = vault_password
 
     def run(self, terms, inject=None, **kwargs):
 
@@ -55,5 +57,11 @@ class LookupModule(object):
                     break
             else:
                 raise errors.AnsibleError("could not locate file in lookup: %s" % term)
+
+        if self.vault_password:
+            vault = VaultLib(password=self.vault_password)
+            for i in xrange(len(ret)):
+                if vault.is_encrypted(ret[i]):
+                    ret[i] = vault.decrypt(ret[i])
 
         return ret
