@@ -57,6 +57,12 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  content_type:
+    description:
+      - Content type to use for requests made to the webhook
+    required: false
+    default: 'json'
+    choices: ['json', 'form']
 
 author: Phillip Gentry, CX Inc
 '''
@@ -105,14 +111,14 @@ def cleanall(module, hookurl, oauthkey, repo, user):
             
     return 0, current_hooks
 
-def create(module, hookurl, oauthkey, repo, user):
+def create(module, hookurl, oauthkey, repo, user, content_type):
     url = "%s/hooks" % repo
     values = {
         "active": True,
         "name": "web",
         "config": {
             "url": "%s" % hookurl,
-            "content_type": "json"
+            "content_type": "%s" % content_type
             }
         }
     data = json.dumps(values)
@@ -144,6 +150,7 @@ def main():
         repo=dict(required=True),
         user=dict(required=True),
         validate_certs=dict(default='yes', type='bool'),
+        content_type=dict(default='json', choices=['json', 'form']),
         )
     )
 
@@ -152,6 +159,7 @@ def main():
     oauthkey = module.params['oauthkey']
     repo = module.params['repo']
     user = module.params['user']
+    content_type = module.params['content_type']
 
     if action == "list":
         (rc, out) = list_(module, hookurl, oauthkey, repo, user)
@@ -163,7 +171,7 @@ def main():
         (rc, out) = cleanall(module, hookurl, oauthkey, repo, user)
 
     if action == "create":
-        (rc, out) = create(module, hookurl, oauthkey, repo, user)
+        (rc, out) = create(module, hookurl, oauthkey, repo, user, content_type)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
