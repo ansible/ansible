@@ -180,7 +180,9 @@ local_action: synchronize src=some/relative/path dest=/some/absolute/path
 pull mode
 synchronize: mode=pull src=some/relative/path dest=/some/absolute/path
 
-# Synchronization of src on delegate host to dest on the current inventory host
+# Synchronization of src on delegate host to dest on the current inventory host.
+# If delegate_to is set to the current inventory host, this can be used to syncronize
+# two directories on that host. 
 synchronize: >
     src=some/relative/path dest=/some/absolute/path
     delegate_to: delegate.host
