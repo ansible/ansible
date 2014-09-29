@@ -166,6 +166,7 @@ class _jinja2_vars(object):
         return False
 
     def __getitem__(self, varname):
+        from ansible.runner import HostVars
         if varname not in self.vars:
             for i in self.extras:
                 if varname in i:
@@ -175,8 +176,9 @@ class _jinja2_vars(object):
             else:
                 raise KeyError("undefined variable: %s" % varname)
         var = self.vars[varname]
-        # HostVars is special, return it as-is
-        if isinstance(var, dict) and type(var) != dict:
+        # HostVars is special, return it as-is, as is the special variable
+        # 'vars', which contains the vars structure
+        if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
             return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)

@@ -154,9 +154,9 @@ command module appear to be simplified by using a default Ansible module
 instead.  This can include reminders to use the 'git' module instead of
 shell commands to execute 'git'.  Using modules when possible over arbitrary
 shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks.
+also easier to maintain playbooks::
 
-    command_warnings=False
+    command_warnings = False
 
 These warnings can be silenced by adjusting the following
 setting or adding warn=yes or warn=no to the end of the command line
@@ -236,6 +236,15 @@ different locations::
     filter_plugins = /usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _force_color:
+
+force_color
+===========
+
+This options forces color mode even when running without a TTY::
+
+    force_color = 1
 
 .. _forks:
 
@@ -547,6 +556,20 @@ different locations::
     vars_plugins = /usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+
+.. _vault_password_file:
+
+vault_password_file
+===================
+
+.. versionadded:: 1.7
+
+Configures the path to the Vault password file as an alternative to specifying ``--vault-password-file`` on the command line::
+
+   vault_password_file = /path/to/vault_password_file
+
+As of 1.7 this file can also be a script. If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output. If your script needs to prompt for data, prompts can be sent to standard error.
 
 .. _paramiko_settings:
 

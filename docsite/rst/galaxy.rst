@@ -20,21 +20,21 @@ The ansible-galaxy command line tool
 The command line ansible-galaxy has many different subcommands.
 
 Installing Roles
-++++++++++++++++
+----------------
 
 The most obvious is downloading roles from the Ansible Galaxy website::
 
    ansible-galaxy install username.rolename
 
 Building out Role Scaffolding
-+++++++++++++++++++++++++++++
+-----------------------------
 
 It can also be used to initialize the base structure of a new role, saving time on creating the various directories and main.yml files a role requires::
 
    ansible-galaxy init rolename
 
 Installing Multiple Roles From A File
-+++++++++++++++++++++++++++++++++++++
+-------------------------------------
 
 To install multiple roles, the ansible-galaxy CLI can be fed a requirements file.  All versions of ansible allow the following syntax for installing roles from the Ansible Galaxy website::
 
@@ -53,7 +53,7 @@ To request specific versions (tags) of a role, use this syntax in the roles file
 Available versions will be listed on the Ansible Galaxy webpage for that role.
 
 Advanced Control over Role Requirements Files
-+++++++++++++++++++++++++++++++++++++++++++++
+---------------------------------------------
 
 For more advanced control over where to download roles from, including support for remote repositories, Ansible 1.8 and later support a new YAML format for the role requirements file, which must end in a 'yml' extension.  It works like this::
 

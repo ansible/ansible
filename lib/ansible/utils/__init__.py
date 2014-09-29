@@ -362,7 +362,7 @@ def repo_url_to_role_name(repo_url):
     # gets the role name out of a repo like 
     # http://git.example.com/repos/repo.git" => "repo"
 
-    if '://' not in repo_url:
+    if '://' not in repo_url and '@' not in repo_url:
         return repo_url
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
@@ -387,15 +387,12 @@ def role_spec_parse(role_spec):
   
     role_spec = role_spec.strip()
     role_version = ''
+    default_role_versions = dict(git='master', hg='tip')
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
     tokens = [s.strip() for s in role_spec.split(',')]
     
-    if not tokens[0].endswith('.tar.gz'): 
-        # pick a reasonable default branch
-        role_version = 'master'
-
     # assume https://github.com URLs are git+https:// URLs and not
     # tarballs unless they end in '.zip'
     if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
@@ -412,6 +409,8 @@ def role_spec_parse(role_spec):
         role_name = tokens[2]
     else:
         role_name = repo_url_to_role_name(tokens[0])
+    if scm and not role_version:
+        role_version = default_role_versions.get(scm, '')
     return dict(scm=scm, src=role_url, version=role_version, name=role_name)
 
 
@@ -738,6 +737,11 @@ def parse_yaml_from_file(path, vault_password=None):
 
     vault = VaultLib(password=vault_password)
     if vault.is_encrypted(data):
+        # if the file is encrypted and no password was specified,
+        # the decrypt call would throw an error, but we check first
+        # since the decrypt function doesn't know the file name
+        if vault_password is None:
+            raise errors.AnsibleError("A vault password must be specified to decrypt %s" % path)
         data = vault.decrypt(data)
         show_content = False
 
@@ -828,11 +832,10 @@ def default(value, function):
         return function()
     return value
 
-def _gitinfo():
+
+def _git_repo_info(repo_path):
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
-
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -853,22 +856,50 @@ def _gitinfo():
             f = open(branch_path)
             commit = f.readline()[:10]
             f.close()
-            date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:
-                offset = time.timezone
-            else:
-                offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+        else:
+            # detached HEAD
+            commit = branch[:10]
+            branch = 'detached HEAD'
+            branch_path = os.path.join(repo_path, "HEAD")
+
+        date = time.localtime(os.stat(branch_path).st_mtime)
+        if time.daylight == 0:
+            offset = time.timezone
+        else:
+            offset = time.altzone
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+            time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
     return result
+
+
+def _gitinfo():
+    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    repo_path = os.path.join(basedir, '.git')
+    result = _git_repo_info(repo_path)
+    submodules = os.path.join(basedir, '.gitmodules')
+    if not os.path.exists(submodules):
+       return result
+    f = open(submodules)
+    for line in f:
+        tokens = line.strip().split(' ')
+        if tokens[0] == 'path':
+            submodule_path = tokens[2]
+            submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
+            if not submodule_info:
+                submodule_info = ' not found - use git submodule update --init ' + submodule_path
+            result += "\n  {0}: {1}".format(submodule_path, submodule_info)
+    f.close()
+    return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
     gitinfo = _gitinfo()
     if gitinfo:
         result = result + " {0}".format(gitinfo)
+    result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
     return result
 
 def version_info(gitinfo=False):

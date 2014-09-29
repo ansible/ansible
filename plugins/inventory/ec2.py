@@ -123,6 +123,7 @@ from boto import ec2
 from boto import rds
 from boto import route53
 import ConfigParser
+from collections import defaultdict
 
 try:
     import json
@@ -272,6 +273,13 @@ class Ec2Inventory(object):
         except ConfigParser.NoOptionError, e:
             self.pattern_exclude = None
 
+        # Instance filters (see boto and EC2 API docs)
+        self.ec2_instance_filters = defaultdict(list)
+        if config.has_option('ec2', 'instance_filters'):
+            for x in config.get('ec2', 'instance_filters', '').split(','):
+                filter_key, filter_value = x.split('=')
+                self.ec2_instance_filters[filter_key].append(filter_value)
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -316,7 +324,13 @@ class Ec2Inventory(object):
                 print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
                 sys.exit(1)
 
-            reservations = conn.get_all_instances()
+            reservations = []
+            if self.ec2_instance_filters:
+                for filter_key, filter_values in self.ec2_instance_filters.iteritems():
+                    reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
+            else:
+                reservations = conn.get_all_instances()
+
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)

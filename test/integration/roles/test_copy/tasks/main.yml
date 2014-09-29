@@ -207,3 +207,33 @@
 - name: clean up
   file: dest=/tmp/worldwritable state=absent
 
+# test overwritting a link using "follow=yes" so that the link
+# is preserved and the link target is updated
+
+- name: create a test file to symlink to
+  copy: dest={{output_dir}}/follow_test content="this is the follow test file\n"
+
+- name: create a symlink to the test file
+  file: path={{output_dir}}/follow_link src='./follow_test' state=link
+
+- name: update the test file using follow=True to preserve the link
+  copy: dest={{output_dir}}/follow_link content="this is the new content\n" follow=yes
+  register: replace_follow_result
+
+- name: stat the link path
+  stat: path={{output_dir}}/follow_link
+  register: stat_link_result
+
+- name: assert that the link is still a link
+  assert:
+    that:
+    - stat_link_result.stat.islnk
+
+- name: get the md5 of the link target
+  shell: md5sum {{output_dir}}/follow_test | cut -f1 -sd ' '
+  register: target_file_result
+
+- name: assert that the link target was updated
+  assert:
+    that:
+    - replace_follow_result.md5sum == target_file_result.stdout

@@ -90,6 +90,16 @@
     that:
     - "disable_result.enabled == false"
 
+- name: try to enable a broken service
+  service: name=ansible_broken_test enabled=yes
+  register: broken_enable_result
+  ignore_errors: True
+
+- name: assert that the broken test failed
+  assert:
+    that:
+    - "broken_enable_result.failed == True"
+
 - name: remove the test daemon script
   file: path=/usr/sbin/ansible_test_service state=absent
   register: remove_result
