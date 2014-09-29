@@ -39,6 +39,6 @@ Additionally, should you need more help with this, you can ask questions on:
 
    * the development mailing list: https://groups.google.com/forum/#!forum/ansible-devel
 
-Thanks you very much!
+Thank you very much!
 
 
