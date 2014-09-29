@@ -99,6 +99,7 @@ def main():
     # back to ansible
     d = {
         'exists'   : True,
+        'path'     : path,
         'mode'    : "%04o" % S_IMODE(mode),
         'isdir'    : S_ISDIR(mode),
         'ischr'    : S_ISCHR(mode),
