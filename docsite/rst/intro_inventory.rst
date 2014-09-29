@@ -207,7 +207,7 @@ mentioned::
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
     ansible_sudo_pass
       The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
-    ansible_sudo_exe
+    ansible_sudo_exe (new in version 1.8)
       The sudo command path.
     ansible_connection
       Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
