@@ -84,10 +84,12 @@ options:
     state:
         required: false
         default: "present"
-        choices: [ present, absent ]
+        choices: [ present, absent, expired ]
         description:
-            - Whether the account should exist.  When C(absent), removes
-              the user account.
+            - Whether the account should exist, and whether it is expired.
+              When C(absent), removes the user account.
+              When C(expired), the user will not be able to login through any means.
+              Expired state is only implemented for Linux.
     createhome:
         required: false
         default: "yes"
@@ -318,6 +320,10 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
+        if self.state == 'expired':
+            cmd.append('--expiredate')
+            cmd.append('1')
+
         if self.password is not None:
             cmd.append('-p')
             cmd.append(self.password)
@@ -423,6 +429,10 @@ class User(object):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
+
+        if self.state == 'expired':
+            cmd.append('--expiredate')
+            cmd.append('1')
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
@@ -692,6 +702,10 @@ class FreeBsdUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1970-01-01')
+
         # system cannot be handled currently - should we error if its requested?
         # create the user
         (rc, out, err) = self.execute_command(cmd)
@@ -776,6 +790,10 @@ class FreeBsdUser(User):
                     new_groups = groups | set(current_groups)
                 cmd.append(','.join(new_groups))
 
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1970-01-01')
+
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
@@ -851,6 +869,10 @@ class OpenBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
+
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1')
 
         if self.password is not None:
             cmd.append('-p')
@@ -946,6 +968,10 @@ class OpenBSDUser(User):
                 cmd.append('-L')
                 cmd.append(self.login_class)
 
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1')
+
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
@@ -1018,6 +1044,10 @@ class NetBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
+
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1')
 
         if self.password is not None:
             cmd.append('-p')
@@ -1101,6 +1131,10 @@ class NetBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1')
+
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
@@ -1177,6 +1211,10 @@ class SunOS(User):
 
         if self.createhome:
             cmd.append('-m')
+
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1/1/70')
 
         cmd.append(self.name)
 
@@ -1261,6 +1299,10 @@ class SunOS(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
+
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('1/1/70')
 
         if self.module.check_mode:
             return (0, '', '')
@@ -1351,6 +1393,10 @@ class AIX(User):
         if self.createhome:
             cmd.append('-m')
 
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('0101000070')
+
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -1420,6 +1466,9 @@ class AIX(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
+        if self.state == 'expired':
+            cmd.append('-e')
+            cmd.append('0101000070')
 
         # skip if no changes to be made
         if len(cmd) == 1:
@@ -1457,7 +1506,7 @@ def main():
     }
     module = AnsibleModule(
         argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            state=dict(default='present', choices=['present', 'absent', 'expired'], type='str'),
             name=dict(required=True, aliases=['user'], type='str'),
             uid=dict(default=None, type='str'),
             non_unique=dict(default='no', type='bool'),
@@ -1512,7 +1561,10 @@ def main():
                 module.fail_json(name=user.name, msg=err, rc=rc)
             result['force'] = user.force
             result['remove'] = user.remove
-    elif user.state == 'present':
+    elif user.state == 'expired' and user.platform != 'Generic':
+                module.fail_json(name=user.state,
+                        msg='expired state not yet support for {0} platform'.format(user.platform))
+    elif user.state == 'present' or user.state == 'expired':
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
