@@ -44,6 +44,8 @@ class ActionModule(object):
     def _process_origin(self, host, path, user):
 
         if not host in ['127.0.0.1', 'localhost']:
+            # Wrap host in brackets in case it's IPv6. Harmless for IPv4.
+            host = '[%s]' % host
             if user:
                 return '%s@%s:%s' % (user, host, path)
             else:
@@ -58,6 +60,8 @@ class ActionModule(object):
         transport = self.runner.transport
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
+            # Wrap host in brackets in case it's IPv6. Harmless for IPv4.
+            host = '[%s]' % host
             if user:
                 return_data = '%s@%s:%s' % (user, host, path)
             else:

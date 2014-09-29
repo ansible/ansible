@@ -48,7 +48,7 @@ class TestSynchronize(unittest.TestCase):
     def test_synchronize_action_basic(self):
 
         """ verify the synchronize action plugin sets 
-            the delegate to 127.0.0.1 and remote path to user@host:/path """
+            the delegate to 127.0.0.1 and remote path to user@[host]:/path """
 
         runner = FakeRunner()
         runner.remote_user = "root"
@@ -68,8 +68,35 @@ class TestSynchronize(unittest.TestCase):
         x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
 
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
-        assert runner.executed_complex_args == {"dest":"root@el6.lab.net:/tmp/bar", "src":"/tmp/foo"}, "wrong args used"
+        assert runner.executed_complex_args == {"dest":"root@[el6.lab.net]:/tmp/bar", "src":"/tmp/foo"}, "wrong args used"
         assert runner.sudo == None, "sudo was not reset to None" 
+
+    def test_synchronize_action_ipv6(self):
+
+        """ verify the synchronize action plugin sets
+            the IPv6 remote path to user@[host]:/path """
+
+        runner = FakeRunner()
+        runner.remote_user = "root"
+        runner.transport = "ssh"
+        conn = FakeConn()
+        inject = {
+                    'inventory_hostname': "2001:470:1f05:1a07::1",
+                    'inventory_hostname_short': "2001:470:1f05:1a07::1",
+                    'ansible_connection': None,
+                    'ansible_ssh_user': 'root',
+                    'delegate_to': None,
+                    'playbook_dir': '.',
+                 }
+
+        x = Synchronize(runner)
+        x.setup("synchronize", inject)
+        x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
+
+        assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
+        assert runner.executed_complex_args == {"dest":"root@[2001:470:1f05:1a07::1]:/tmp/bar", "src":"/tmp/foo"}, "wrong args used"
+        assert runner.sudo == None, "sudo was not reset to None"
+
 
     def test_synchronize_action_sudo(self):
 
@@ -94,7 +121,7 @@ class TestSynchronize(unittest.TestCase):
         x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
 
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
-        assert runner.executed_complex_args == {'dest':'root@el6.lab.net:/tmp/bar',
+        assert runner.executed_complex_args == {'dest':'root@[el6.lab.net]:/tmp/bar',
                                                 'src':'/tmp/foo',
                                                 'rsync_path':'"sudo rsync"'}, "wrong args used"
         assert runner.sudo == True, "sudo was not reset to True" 
@@ -169,5 +196,5 @@ class TestSynchronize(unittest.TestCase):
         assert runner.executed_inject['ansible_ssh_user'] == "vagrant", "runner user was changed"
         assert runner.executed_complex_args.get("dest_port") == "2222", "remote port was not set to 2222"
         assert runner.executed_complex_args.get("src") == "/tmp/foo", "source was set incorrectly"
-        assert runner.executed_complex_args.get("dest") == "vagrant@127.0.0.1:/tmp/bar", "dest was set incorrectly"
+        assert runner.executed_complex_args.get("dest") == "vagrant@[127.0.0.1]:/tmp/bar", "dest was set incorrectly"
 
