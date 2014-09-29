@@ -1,0 +1,9 @@
+- name: slapcat
+  sudo: true
+  shell: "/usr/sbin/slapcat -s 'olcDatabase={1}hdb,cn=config' | grep olcDbIndex | sed 's/^olcDbIndex: //'"
+  register: result
+
+- name: assert olcDbIndex state
+  assert:
+    that:
+      - 'result.stdout == "{{ expected|join("\n") }}"'

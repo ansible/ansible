@@ -1,0 +1,9 @@
+- name: look for {{ dn }}
+  sudo: true
+  shell: 'if slapcat -s {{ dn }} | grep -q {{ dn }}; then echo present; else echo absent; fi'
+  register: result
+
+- name: assert that {{ dn }} is {{ state }}
+  assert:
+    that:
+      - 'result.stdout == "{{ state }}"'

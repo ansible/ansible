@@ -1,0 +1,6 @@
+ldap_service: slapd
+
+ldap_packages: 
+    - slapd
+    - ldap-utils
+    - python-ldap

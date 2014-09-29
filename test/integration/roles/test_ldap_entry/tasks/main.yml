@@ -1,0 +1,155 @@
+# test code for the ldap_entry module
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: set up directory
+  sudo: true
+  ldap_attr:
+    dn: olcDatabase={1}hdb,cn=config
+    name: olcAccess
+    values:
+      - '{0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage'
+      - '{1}to attrs=userPassword,shadowLastChange
+         by self write
+         by anonymous auth
+         by dn="cn=admin,dc=example,dc=com" write
+         by * none'
+      - '{2}to dn.base="dc=example,dc=com"
+         by dn="cn=admin,dc=example,dc=com" write
+         by * read'
+    state: exact
+
+- name: reset test entry
+  sudo: true
+  ldap_entry: dn='{{ test_dn }}' state=absent
+
+
+# ============================================================
+- name: test state=present (expect changed)
+  sudo: true
+  ldap_entry:
+    dn: '{{ test_dn }}'
+    objectClass: organizationalUnit
+  register: result
+
+- name: assert ou=users added
+  assert:
+    that:
+      - 'result.changed'
+
+- include: assert_dn.yml dn='{{ test_dn }}' state=present
+
+- name: test state=present (expect no-op)
+  sudo: true
+  ldap_entry:
+    dn: '{{ test_dn }}'
+    objectClass: organizationalUnit
+  register: result
+
+- name: assert no-op
+  assert:
+    that:
+      - 'not result.changed'
+
+- include: assert_dn.yml dn='{{ test_dn }}' state=present
+
+
+# ============================================================
+- name: test state=absent (expect changed)
+  sudo: true
+  ldap_entry: dn='{{ test_dn }}' state=absent
+  register: result
+
+- name: assert ou=users deleted
+  assert:
+    that:
+      - 'result.changed'
+
+- include: assert_dn.yml dn='{{ test_dn }}' state=absent
+
+- name: test state=absent (expect no-op)
+  sudo: true
+  ldap_entry: dn='{{ test_dn }}' state=absent
+  register: result
+
+- name: assert no-op
+  assert:
+    that:
+      - 'not result.changed'
+
+- include: assert_dn.yml dn='{{ test_dn }}' state=absent
+
+
+# ============================================================
+- name: reset complex entry
+  sudo: true
+  ldap_entry: dn='{{ admin2_dn }}' state=absent
+
+- name: test complex entry (expect changed)
+  sudo: true
+  ldap_entry:
+    dn: '{{ admin2_dn }}'
+    objectClass: ['simpleSecurityObject', 'organizationalRole']
+    description: Another LDAP administrator
+    userPassword: '{SSHA}pedsA5Y9wHbZ5R90pRdxTEZmn6qvPdzm'
+  register: result
+
+- name: assert cn=admin2 added
+  assert:
+    that:
+      - 'result.changed'
+
+- include: assert_dn.yml dn='{{ admin2_dn }}' state=present
+- include: assert_attr.yml
+  dn: '{{ admin2_dn }}'
+  name: description
+  values: ['Another LDAP administrator']
+
+- name: test complex entry (expect no-op)
+  sudo: true
+  ldap_entry:
+    dn: '{{ admin2_dn }}'
+    objectClass: simpleSecurityObject,organizationalRole
+    description: A different description
+  register: result
+
+- name: assert no-op
+  assert:
+    that:
+      - 'not result.changed'
+
+- include: assert_attr.yml
+  dn: '{{ admin2_dn }}'
+  name: description
+  values: ['Another LDAP administrator']
+
+
+# ============================================================
+- name: test simple bind (expect changed)
+  ldap_entry:
+    dn: '{{ test_dn }}'
+    objectClass: organizationalUnit
+    server_uri: ldap://localhost/
+    bind_dn: cn=admin,dc=example,dc=com
+    bind_pw: password
+  register: result
+
+- name: assert ou=users added
+  assert:
+    that:
+      - 'result.changed'
+
+- include: assert_dn.yml dn='{{ test_dn }}' state=present

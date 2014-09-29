@@ -1,0 +1,41 @@
+# setup code for the ldap_attr module
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- include_vars: '{{ ansible_os_family }}.yml' 
+
+
+# APT
+- name: pre-configure slapd
+  sudo: true
+  debconf: name=slapd question={{ item.key }} vtype=string value={{ item.value }}
+  with_dict:
+    'slapd/password1': password
+    'slapd/password2': password
+    'slapd/domain': example.com
+  when: ansible_pkg_mgr == 'apt'
+
+- name: install ldap debian dependencies 
+  sudo: true
+  apt: name={{ item }} state=latest 
+  with_items: ldap_packages
+  when: ansible_pkg_mgr == 'apt'
+
+
+- name: start ldap service if not running
+  sudo: true
+  service: name={{ ldap_service }} state=started
