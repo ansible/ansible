@@ -75,7 +75,7 @@ EXAMPLES = '''
 - local_action: github_hooks action=cleanall user={{ gituser }} oauthkey={{ oauthkey }} repo={{ repo }}
 '''
 
-def list_(module, hookurl, oauthkey, repo, user):
+def _list(module, hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
@@ -88,7 +88,7 @@ def list_(module, hookurl, oauthkey, repo, user):
         return False, response.read()
 
 def clean504(module, hookurl, oauthkey, repo, user):
-    current_hooks = list_(hookurl, oauthkey, repo, user)[1]
+    current_hooks = _list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
     for hook in decoded:
@@ -100,7 +100,7 @@ def clean504(module, hookurl, oauthkey, repo, user):
     return 0, current_hooks
 
 def cleanall(module, hookurl, oauthkey, repo, user):
-    current_hooks = list_(hookurl, oauthkey, repo, user)[1]
+    current_hooks = _list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
     for hook in decoded:
@@ -162,7 +162,7 @@ def main():
     content_type = module.params['content_type']
 
     if action == "list":
-        (rc, out) = list_(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _list(module, hookurl, oauthkey, repo, user)
 
     if action == "clean504":
         (rc, out) = clean504(module, hookurl, oauthkey, repo, user)
