@@ -87,7 +87,7 @@ def _list(module, hookurl, oauthkey, repo, user):
     else:
         return False, response.read()
 
-def clean504(module, hookurl, oauthkey, repo, user):
+def _clean504(module, hookurl, oauthkey, repo, user):
     current_hooks = _list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
@@ -95,11 +95,11 @@ def clean504(module, hookurl, oauthkey, repo, user):
         if hook['last_response']['code'] == 504:
             # print "Last response was an ERROR for hook:"
             # print hook['id']
-            delete(module, hookurl, oauthkey, repo, user, hook['id'])
+            _delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
 
-def cleanall(module, hookurl, oauthkey, repo, user):
+def _cleanall(module, hookurl, oauthkey, repo, user):
     current_hooks = _list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
@@ -107,11 +107,11 @@ def cleanall(module, hookurl, oauthkey, repo, user):
         if hook['last_response']['code'] != 200:
             # print "Last response was an ERROR for hook:"
             # print hook['id']
-            delete(module, hookurl, oauthkey, repo, user, hook['id'])
+            _delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
 
-def create(module, hookurl, oauthkey, repo, user, content_type):
+def _create(module, hookurl, oauthkey, repo, user, content_type):
     url = "%s/hooks" % repo
     values = {
         "active": True,
@@ -132,7 +132,7 @@ def create(module, hookurl, oauthkey, repo, user, content_type):
     else:
         return 0, response.read()
 
-def delete(module, hookurl, oauthkey, repo, user, hookid):
+def _delete(module, hookurl, oauthkey, repo, user, hookid):
     url = "%s/hooks/%s" % (repo, hookid)
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
@@ -165,13 +165,13 @@ def main():
         (rc, out) = _list(module, hookurl, oauthkey, repo, user)
 
     if action == "clean504":
-        (rc, out) = clean504(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _clean504(module, hookurl, oauthkey, repo, user)
 
     if action == "cleanall":
-        (rc, out) = cleanall(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _cleanall(module, hookurl, oauthkey, repo, user)
 
     if action == "create":
-        (rc, out) = create(module, hookurl, oauthkey, repo, user, content_type)
+        (rc, out) = _create(module, hookurl, oauthkey, repo, user, content_type)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
