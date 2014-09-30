@@ -100,7 +100,12 @@ options:
     version_added: "1.9"
     description:
       - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
-
+  config_file:
+    description:
+      - Specify a config file from which user and password are to be read 
+    required: false
+    default: null
+    version_added: "1.8"
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
@@ -114,7 +119,7 @@ notes:
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
 
-requirements: [ "ConfigParser", "MySQLdb" ]
+requirements: [ "MySQLdb" ]
 author: Mark Theunissen
 '''
 
@@ -152,7 +157,6 @@ user=root
 password=n<_665{vS43y
 """
 
-import ConfigParser
 import getpass
 import tempfile
 try:
@@ -178,6 +182,30 @@ class InvalidPrivsError(Exception):
 # ===========================================
 # MySQL module specific support methods.
 #
+
+def connect(module, login_user, login_password, config_file):
+    default_file = '~/.my.cnf'
+    if config_file is not None:
+        default_file = config_file
+    
+    config = {
+        'host': module.params['login_host'],
+        'db': 'mysql'
+    }
+
+    if module.params['login_unix_socket']:
+        config['unix_socket'] = module.params['login_unix_socket']
+    else:
+        config['port'] = module.params['login_port']
+
+    if os.path.exists(default_file):
+        config['read_default_file'] = default_file
+    else:
+        config['user'] = login_user
+        config['passwd'] = login_password
+        
+    db_connection = MySQLdb.connect(**config)
+    return db_connection.cursor()
 
 def user_exists(cursor, user, host):
     cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
@@ -341,100 +369,6 @@ def privileges_grant(cursor, user,host,db_table,priv):
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
-def strip_quotes(s):
-    """ Remove surrounding single or double quotes
-
-    >>> print strip_quotes('hello')
-    hello
-    >>> print strip_quotes('"hello"')
-    hello
-    >>> print strip_quotes("'hello'")
-    hello
-    >>> print strip_quotes("'hello")
-    'hello
-
-    """
-    single_quote = "'"
-    double_quote = '"'
-
-    if s.startswith(single_quote) and s.endswith(single_quote):
-        s = s.strip(single_quote)
-    elif s.startswith(double_quote) and s.endswith(double_quote):
-        s = s.strip(double_quote)
-    return s
-
-
-def config_get(config, section, option):
-    """ Calls ConfigParser.get and strips quotes
-
-    See: http://dev.mysql.com/doc/refman/5.0/en/option-files.html
-    """
-    return strip_quotes(config.get(section, option))
-
-
-def _safe_cnf_load(config, path):
-
-    data = {'user':'', 'password':''}
-
-    # read in user/pass
-    f = open(path, 'r')
-    for line in f.readlines():
-        line = line.strip()
-        if line.startswith('user='):
-            data['user'] = line.split('=', 1)[1].strip()
-        if line.startswith('password=') or line.startswith('pass='):
-            data['password'] = line.split('=', 1)[1].strip()
-    f.close()
-
-    # write out a new cnf file with only user/pass   
-    fh, newpath = tempfile.mkstemp(prefix=path + '.')
-    f = open(newpath, 'wb')
-    f.write('[client]\n')
-    f.write('user=%s\n' % data['user'])
-    f.write('password=%s\n' % data['password'])
-    f.close()
-
-    config.readfp(open(newpath))
-    os.remove(newpath)
-    return config
-
-def load_mycnf():
-    config = ConfigParser.RawConfigParser()
-    mycnf = os.path.expanduser('~/.my.cnf')
-    if not os.path.exists(mycnf):
-        return False
-    try:
-        config.readfp(open(mycnf))
-    except (IOError):
-        return False
-    except:
-        config = _safe_cnf_load(config, mycnf)
-
-    # We support two forms of passwords in .my.cnf, both pass= and password=,
-    # as these are both supported by MySQL.
-    try:
-        passwd = config_get(config, 'client', 'password')
-    except (ConfigParser.NoOptionError):
-        try:
-            passwd = config_get(config, 'client', 'pass')
-        except (ConfigParser.NoOptionError):
-            return False
-
-    # If .my.cnf doesn't specify a user, default to user login name
-    try:
-        user = config_get(config, 'client', 'user')
-    except (ConfigParser.NoOptionError):
-        user = getpass.getuser()
-    creds = dict(user=user,passwd=passwd)
-    return creds
-
-def connect(module, login_user, login_password):
-    if module.params["login_unix_socket"]:
-        db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
-    else:
-        db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], user=login_user, passwd=login_password, db="mysql")
-    return db_connection.cursor()
-
 # ===========================================
 # Module execution.
 #
@@ -455,14 +389,18 @@ def main():
             append_privs=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
             update_password=dict(default="always", choices=["always", "on_create"]),
+            config_file=dict(default=None),
         )
     )
+    login_user = module.params["login_user"]
+    login_password = module.params["login_password"]
     user = module.params["user"]
     password = module.params["password"]
     host = module.params["host"]
     state = module.params["state"]
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
+    config_file = module.params['config_file']
     append_privs = module.boolean(module.params["append_privs"])
     update_password = module.params['update_password']
 
@@ -475,32 +413,16 @@ def main():
         except Exception, e:
             module.fail_json(msg="invalid privileges string: %s" % str(e))
 
-    # Either the caller passes both a username and password with which to connect to
-    # mysql, or they pass neither and allow this module to read the credentials from
-    # ~/.my.cnf.
-    login_password = module.params["login_password"]
-    login_user = module.params["login_user"]
-    if login_user is None and login_password is None:
-        mycnf_creds = load_mycnf()
-        if mycnf_creds is False:
-            login_user = "root"
-            login_password = ""
-        else:
-            login_user = mycnf_creds["user"]
-            login_password = mycnf_creds["passwd"]
-    elif login_password is None or login_user is None:
-        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
-
     cursor = None
     try:
         if check_implicit_admin:
             try:
-                cursor = connect(module, 'root', '')
+                cursor = connect(module, 'root', '', config_file)
             except:
                 pass
 
         if not cursor:
-            cursor = connect(module, login_user, login_password)
+            cursor = connect(module, login_user, login_password, config_file)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 
