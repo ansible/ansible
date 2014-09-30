@@ -186,15 +186,20 @@ class Facts(object):
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
-            try:
-                rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
+            # Attempt to use getconf to figure out architechture
+            # fall back to bootinfo if needed
+            if module.get_bin_path('getconf'):
+                rc, out, err = module.run_command([module.get_bin_path('getconf'),
+                                                   'MACHINE_ARCHITECTURE'])
                 data = out.split('\n')
                 self.facts['architecture'] = data[0]
-            except:
-                self.facts['architecture'] = 'Not Available'
+            else:
+                rc, out, err = module.run_command([module.get_bin_path('bootinfo'),
+                                                   '-p'])
+                data = out.split('\n')
+                self.facts['architecture'] = data[0]
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
-
 
     def get_local_facts(self):
 
