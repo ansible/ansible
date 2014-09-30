@@ -495,7 +495,7 @@ the sudo implementation is matching CLI flags with the standard sudo::
 sudo_flags
 ==========
 
-Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the environment
+Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the home directory
 of the original user.  In some situations you may wish to add or remote flags, but in general most users
 will not need to change this setting::
 
