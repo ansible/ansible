@@ -32,8 +32,10 @@ short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
   - This module will search a file for a line, and ensure that it is present or absent.
-  - This is primarily useful when you want to change a single line in a
-    file only. For other cases, see the M(copy) or M(template) modules.
+  - This is primarily useful when you want to change a single line in
+    a file only. See the M(replace) module if you want to change
+    multiple, similar lines; for other cases, see the M(copy) or
+    M(template) modules.
 version_added: "0.7"
 options:
   dest:
