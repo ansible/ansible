@@ -49,6 +49,8 @@ class ActionModule(ActionBase):
             return dict(failed=True, msg="src (or content) and dest are required")
         elif (source is not None or faf is not None) and content is not None:
             return dict(failed=True, msg="src and content are mutually exclusive")
+        elif content is not None and dest is not None and dest.endswith("/"):
+            return dict(failed=True, msg="dest must be a file if content is defined")
 
         # Check if the source ends with a "/"
         source_trailing_slash = False
