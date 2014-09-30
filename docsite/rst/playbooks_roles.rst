@@ -153,7 +153,7 @@ Roles
 
 .. versionadded:: 1.2
 
-Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
+Now that you have learned about `vars_files <http://docs.ansible.com/playbooks_variables.html#variable-file-separation>`_, tasks, and handlers, what is the best way to organize your playbooks?
 The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
 handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
 
