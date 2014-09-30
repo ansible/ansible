@@ -68,6 +68,14 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
+As an advanced usage, you can also select the numbered server in a group::
+   
+    webservers[0]
+
+Or a portion of servers in a group::
+
+    webservers[0:25]
+
 Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
     ~(web|db).*\.example\.com
