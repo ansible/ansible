@@ -26,18 +26,14 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
-from ansible.callbacks import display
 from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
 import time
 import StringIO
 import stat
-import termios
-import tty
 import pipes
 import random
 import difflib
@@ -98,6 +94,7 @@ try:
             import keyczar.errors as key_errors
             from keyczar.keys import AesKey
         except PowmInsecureWarning:
+            from ansible.utils.display_functions import system_warning
             system_warning(
                 "The version of gmp you have installed has a known issue regarding " + \
                 "timing vulnerabilities when used with pycrypto. " + \
@@ -926,16 +923,6 @@ def version_info(gitinfo=False):
             'minor':       ansible_versions[1],
             'revision':    ansible_versions[2]}
 
-def getch():
-    ''' read in a single character '''
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
 
 def sanitize_output(str):
     ''' strips private info out of a string '''
@@ -1488,8 +1475,9 @@ def _load_vars_from_path(path, results, vault_password=None):
         # not its target
         pathstat = os.lstat(path)
     except os.error, err:
-        # most common case is that nothing exists at that path.
-        if err.errno == errno.ENOENT:
+        # most common case is that nothing exists at that path (ENOENT).
+        # an alternative is that windows doesn't like the path (EINVAL).
+        if err.errno == errno.ENOENT or err.errno == errno.EINVAL:
             return False, results
         # otherwise this is a condition we should report to the user
         raise errors.AnsibleError(

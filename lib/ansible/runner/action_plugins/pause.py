@@ -18,7 +18,8 @@
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import getch, parse_kv
+from ansible.utils import parse_kv
+from ansible.utils.unix import getch
 import ansible.utils.template as template
 from termios import tcflush, TCIFLUSH
 import datetime

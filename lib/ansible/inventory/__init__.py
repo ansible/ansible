@@ -638,12 +638,12 @@ class Inventory(object):
 
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = os.path.join(basedir, "group_vars/%s" % group.name)
+                base_path = os.path.join(basedir, "group_vars", group.name)
                 results = utils.load_vars(base_path, results, vault_password=self._vault_password)
 
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = os.path.join(basedir, "host_vars/%s" % host.name)
+                base_path = os.path.join(basedir, "host_vars", host.name)
                 results = utils.load_vars(base_path, results, vault_password=self._vault_password)
 
         # all done, results is a dictionary of variables for this particular host.
