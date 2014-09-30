@@ -372,7 +372,7 @@ class Play(object):
         # flush handlers after pre_tasks
         new_tasks.append(dict(meta='flush_handlers'))
 
-        roles = self._build_role_dependencies(roles, [], self.vars)
+        roles = self._build_role_dependencies(roles, [], {})
 
         # give each role an uuid and
         # make role_path available as variable to the task
