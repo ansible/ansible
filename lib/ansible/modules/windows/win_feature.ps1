@@ -23,7 +23,7 @@ Import-Module Servermanager;
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject @{
+$result = New-Object PSObject -Property @{
     changed = $false
 }
 
@@ -70,19 +70,33 @@ Else
     $includemanagementtools = $false
 }
 
-
-
 If ($state -eq "present") {
     try {
-        $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools
+        If (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {
+            $featureresult = Install-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools -ErrorAction SilentlyContinue
+        }
+        ElseIf (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
+            $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -ErrorAction SilentlyContinue
+        }
+        Else {
+            Fail-Json $result "Not supported on this version of Windows"
+        }
     }
     catch {
         Fail-Json $result $_.Exception.Message
     }
 }
-Elseif ($state -eq "absent") {
+ElseIf ($state -eq "absent") {
     try {
-        $featureresult = Remove-WindowsFeature -Name $name -Restart:$restart
+        If (Get-Command "Uninstall-WindowsFeature" -ErrorAction SilentlyContinue) {
+            $featureresult = Uninstall-WindowsFeature -Name $name -Restart:$restart -ErrorAction SilentlyContinue
+        }
+        ElseIf (Get-Command "Remove-WindowsFeature" -ErrorAction SilentlyContinue) {
+            $featureresult = Remove-WindowsFeature -Name $name -Restart:$restart -ErrorAction SilentlyContinue
+        }
+        Else {
+            Fail-Json $result "Not supported on this version of Windows"
+        }
     }
     catch {
         Fail-Json $result $_.Exception.Message
@@ -93,30 +107,40 @@ Elseif ($state -eq "absent") {
 # each role/feature that is installed/removed
 $installed_features = @()
 #$featureresult.featureresult is filled if anything was changed
-if ($featureresult.FeatureResult)
+If ($featureresult.FeatureResult)
 {
     ForEach ($item in $featureresult.FeatureResult) {
-        $installed_features += New-Object psobject @{
-            id = $item.id.ToString()
+        $message = @()
+        ForEach ($msg in $item.Message) {
+            $message += New-Object PSObject -Property @{
+                message_type = $msg.MessageType.ToString()
+                error_code = $msg.ErrorCode
+                text = $msg.Text
+            }
+        }
+        $installed_features += New-Object PSObject -Property @{
+            id = $item.Id
             display_name = $item.DisplayName
-            message = $item.Message.ToString()
-            restart_needed = $item.RestartNeeded.ToString()
+            message = $message
+            restart_needed = $item.RestartNeeded.ToString() | ConvertTo-Bool
             skip_reason = $item.SkipReason.ToString()
-            success = $item.Success.ToString()
+            success = $item.Success.ToString() | ConvertTo-Bool
         }
     }
-    Set-Attr $result "feature_result" $installed_features
-    
-
     $result.changed = $true
 }
-Else
-{
-    Set-Attr $result "feature_result" $null
+
+Set-Attr $result "feature_result" $installed_features
+Set-Attr $result "success" ($featureresult.Success.ToString() | ConvertTo-Bool)
+Set-Attr $result "exitcode" $featureresult.ExitCode.ToString()
+Set-Attr $result "restart_needed" ($featureresult.RestartNeeded.ToString() | ConvertTo-Bool)
+
+If ($result.success) {
+    Exit-Json $result
 }
-
-Set-Attr $result "feature_success" $featureresult.Success.ToString()
-Set-Attr $result "feature_exitcode" $featureresult.ExitCode.ToString()
-Set-Attr $result "feature_restart_needed" $featureresult.RestartNeeded.ToString()
-
-Exit-Json $result;
+ElseIf ($state -eq "present") {
+    Fail-Json $result "Failed to add feature"
+}
+Else {
+    Fail-Json $result "Failed to remove feature"
+}
