@@ -509,6 +509,6 @@ def main():
         hostname.set_permanent_hostname(name)
         changed = True
 
-    module.exit_json(changed=changed, name=name)
+    module.exit_json(changed=changed, name=name, ansible_facts=dict(ansible_hostname=name))
 
 main()
