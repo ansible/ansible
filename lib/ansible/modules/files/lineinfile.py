@@ -127,7 +127,7 @@ options:
 """
 
 EXAMPLES = r"""
-- lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+- lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=enforcing
 
 - lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"
 
