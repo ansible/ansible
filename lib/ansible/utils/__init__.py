@@ -1175,7 +1175,7 @@ def boolean(value):
     else:
         return False
 
-def make_sudo_cmd(sudo_user, executable, cmd):
+def make_sudo_cmd(sudo_exe, sudo_user, executable, cmd):
     """
     helper function for connection plugins to create sudo commands
     """
@@ -1190,7 +1190,7 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
+        sudo_exe, sudo_exe, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 

@@ -283,7 +283,7 @@ class Connection(object):
             else:
                 ssh_cmd.append(cmd)
         else:
-            sudocmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            sudocmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
         vvv("EXEC %s" % ' '.join(ssh_cmd), host=self.host)
