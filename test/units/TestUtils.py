@@ -687,8 +687,8 @@ class TestUtils(unittest.TestCase):
         )
 
         # invalid quote detection
-            self.assertRaises(Exception, split_args, 'hey I started a quote"')
-            self.assertRaises(Exception, split_args, 'hey I started a\' quote')
+        self.assertRaises(Exception, split_args, 'hey I started a quote"')
+        self.assertRaises(Exception, split_args, 'hey I started a\' quote')
 
         # jinja2 loop blocks with lots of complexity
         _test_combo(
