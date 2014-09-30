@@ -74,6 +74,10 @@ options:
         required: false
         description:
             - Optionally set the user's home directory.
+    skeleton:
+        required: false
+        description:
+            - Optionally set a home skeleton directory. Requires createhome option!
     password:
         required: false
         description:
@@ -260,6 +264,7 @@ class User(object):
         self.remove     = module.params['remove']
         self.createhome = module.params['createhome']
         self.move_home  = module.params['move_home']
+        self.skeleton   = module.params['skeleton']
         self.system     = module.params['system']
         self.login_class = module.params['login_class']
         self.append     = module.params['append']
@@ -360,6 +365,10 @@ class User(object):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
         else:
             cmd.append('-M')
 
@@ -635,10 +644,14 @@ class User(object):
 
     def create_homedir(self, path):
         if not os.path.exists(path):
-            # use /etc/skel if possible
-            if os.path.exists('/etc/skel'):
+            if self.skeleton is not None:
+                skeleton = self.skeleton
+            else:
+                skeleton = '/etc/skel'
+
+            if os.path.exists(skeleton):
                 try:
-                    shutil.copytree('/etc/skel', path, symlinks=True)
+                    shutil.copytree(skeleton, path, symlinks=True)
                 except OSError, e:
                     self.module.exit_json(failed=True, msg="%s" % e)
         else:
@@ -725,6 +738,10 @@ class FreeBsdUser(User):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
 
         if self.shell is not None:
             cmd.append('-s')
@@ -920,6 +937,10 @@ class OpenBSDUser(User):
         if self.createhome:
             cmd.append('-m')
 
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
+
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -1087,6 +1108,10 @@ class NetBSDUser(User):
         if self.createhome:
             cmd.append('-m')
 
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
+
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -1238,6 +1263,10 @@ class SunOS(User):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
 
         cmd.append(self.name)
 
@@ -1747,6 +1776,10 @@ class AIX(User):
         if self.createhome:
             cmd.append('-m')
 
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
+
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -2018,6 +2051,7 @@ def main():
             remove=dict(default='no', type='bool'),
             # following options are specific to useradd
             createhome=dict(default='yes', type='bool'),
+            skeleton=dict(default=None, type='str'),
             system=dict(default='no', type='bool'),
             # following options are specific to usermod
             move_home=dict(default='no', type='bool'),
