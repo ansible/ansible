@@ -67,7 +67,16 @@ options:
     description:
      - Indicate desired state of the vm.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_off', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured']
+  from_template:
+    description:
+     - Specifies if the VM should be deployed from a template (cannot be ran with state)
+     default: no
+     choices: ['yes', 'no']
+  template_src:
+    description:
+     - Name of the source template to deploy from
+     default: None
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -181,6 +190,18 @@ EXAMPLES = '''
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
 
+# Deploy a guest from a template
+# No reconfiguration of the destination guest is done at this stage, a reconfigure would be needed to adjust memory/cpu etc..
+- vsphere_guest:
+    vcenter_hostname: vcenter.mydomain.local
+    username: myuser
+    password: mypass
+    guest: newvm001
+    from_template: yes
+    template_src: centosTemplate
+    cluster: MainCluster
+    resource_pool: "/Resources"
+
 # Task to gather facts from a vSphere cluster only if the system is a VMWare guest
 
 - vsphere_guest:
@@ -192,12 +213,14 @@ EXAMPLES = '''
 
 
 # Typical output of a vsphere_facts run on a guest
+# If vmware tools is not installed, ipadresses with return None
 
 - hw_eth0:
   - addresstype: "assigned"
     label: "Network adapter 1"
     macaddress: "00:22:33:33:44:55"
     macaddress_dash: "00-22-33-33-44-55"
+    ipaddresses: ['192.0.2.100', '2001:DB8:56ff:feac:4d8a']
     summary: "VM Network"
   hw_guest_full_name: "newvm001"
   hw_guest_id: "rhel6_64Guest"
@@ -488,6 +511,49 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name):
+    vmTemplate = vsphere_client.get_vm_by_name(template_src)
+    vmTarget = None
+
+    try:
+        cluster = [k for k,
+                   v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+    except IndexError, e:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find Cluster named: %s" %
+                         cluster_name)
+
+    try:
+        rpmor = [k for k, v in vsphere_client.get_resource_pools(
+            from_mor=cluster).items()
+            if v == resource_pool][0]
+    except IndexError, e:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Cannot find Resource Pool named: %s" %
+                         resource_pool)
+
+    try:
+        vmTarget = vsphere_client.get_vm_by_name(guest)
+    except Exception:
+        pass
+    if not vmTemplate.properties.config.template:
+        module.fail_json(
+            msg="Target %s is not a registered template" % template_src
+        )
+    try:
+        if vmTarget:
+            changed = False
+        else:
+            vmTemplate.clone(guest, resourcepool=rpmor)
+            changed = True
+        vsphere_client.disconnect()
+        module.exit_json(changed=changed)
+    except Exception as e:
+        module.fail_json(
+            msg="Could not clone selected machine: %s" % e
+        )
+
+
 def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state, force):
     spec = None
     changed = False
@@ -618,7 +684,16 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     hfmor = dcprops.hostFolder._obj
 
     # virtualmachineFolder managed object reference
-    vmfmor = dcprops.vmFolder._obj
+    if vm_extra_config['folder']:
+        if vm_extra_config['folder'] not in vsphere_client._get_managed_objects(MORTypes.Folder).values():
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find folder named: %s" % vm_extra_config['folder'])
+
+        for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
+            if name == vm_extra_config['folder']:
+                vmfmor = mor
+    else:
+        vmfmor = dcprops.vmFolder._obj
 
     # networkFolder managed object reference
     nfmor = dcprops.networkFolder._obj
@@ -936,6 +1011,11 @@ def gather_facts(vm):
         'hw_processor_count': vm.properties.config.hardware.numCPU,
         'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
     }
+    netInfo = vm.get_property('net')
+    netDict = {}
+    if netInfo:
+        for net in netInfo:
+            netDict[net['mac_address']] = net['ip_addresses']
 
     ifidx = 0
     for entry in vm.properties.config.hardware.device:
@@ -948,6 +1028,7 @@ def gather_facts(vm):
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,
             'macaddress': entry.macAddress,
+            'ipaddresses': netDict.get(entry.macAddress, None),
             'macaddress_dash': entry.macAddress.replace(':', '-'),
             'summary': entry.deviceInfo.summary,
         }
@@ -1066,6 +1147,8 @@ def main():
                 ],
                 default='present'),
             vmware_guest_facts=dict(required=False, choices=BOOLEANS),
+            from_template=dict(required=False, choices=BOOLEANS),
+            template_src=dict(required=False, type='str'),
             guest=dict(required=True, type='str'),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
@@ -1080,7 +1163,7 @@ def main():
 
         ),
         supports_check_mode=False,
-        mutually_exclusive=[['state', 'vmware_guest_facts']],
+        mutually_exclusive=[['state', 'vmware_guest_facts'],['state', 'from_template']],
         required_together=[
             ['state', 'force'],
             [
@@ -1090,7 +1173,8 @@ def main():
                 'vm_hardware',
                 'esxi'
             ],
-            ['resource_pool', 'cluster']
+            ['resource_pool', 'cluster'],
+            ['from_template', 'resource_pool', 'template_src']
         ],
     )
 
@@ -1112,6 +1196,8 @@ def main():
     esxi = module.params['esxi']
     resource_pool = module.params['resource_pool']
     cluster = module.params['cluster']
+    template_src = module.params['template_src']
+    from_template = module.params['from_template']
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1135,7 +1221,6 @@ def main():
             except Exception, e:
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
-
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
             state_result = power_state(vm, state, force)
@@ -1183,6 +1268,17 @@ def main():
             module.fail_json(
                 msg="No such VM %s. Fact gathering requires an existing vm"
                     % guest)
+
+        elif from_template:
+            deploy_template(
+                vsphere_client=viserver,
+                esxi=esxi,
+                resource_pool=resource_pool,
+                guest=guest,
+                template_src=template_src,
+                module=module,
+                cluster_name=cluster
+            )
         if state in ['restarted', 'reconfigured']:
             module.fail_json(
                 msg="No such VM %s. States ["
