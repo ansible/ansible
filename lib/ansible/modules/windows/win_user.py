@@ -31,32 +31,109 @@ description:
 options:
   name:
     description:
-      - Username of the user to manage
+      - Name of the user to create, remove or modify.
     required: true
+  fullname:
+    description:
+      - Full name of the user
+    required: false
     default: null
-    aliases: []
+    version_added: "1.8"
+  description:
+    description:
+      - Description of the user
+    required: false
+    default: null
+    version_added: "1.8"
   password:
     description:
-      - Password for the user (plain text)
-    required: true
+      - Optionally set the user's password to this (plain text) value.
+    required: false
     default: null
-    aliases: []
+  update_password:
+    description:
+      - C(always) will update passwords if they differ.  C(on_create) will
+      only set the password for newly created users.
+    required: false
+    choices: [ 'always', 'on_create' ]
+    default: always
+    version_added: "1.8"
+  password_expired:
+    description:
+      - C(yes) will require the user to change their password at next login.
+        C(no) will clear the expired password flag.
+    required: false
+    choices: [ 'yes', 'no' ]
+    default: null
+    version_added: "1.8"
+  password_never_expires:
+    description:
+      - C(yes) will set the password to never expire.  C(no) will allow the
+        password to expire.
+    required: false
+    choices: [ 'yes', 'no' ]
+    default: null
+    version_added: "1.8"
+  user_cannot_change_password:
+    description:
+      - C(yes) will prevent the user from changing their password.  C(no) will
+        allow the user to change their password.
+    required: false
+    choices: [ 'yes', 'no' ]
+    default: null
+    version_added: "1.8"
+  account_disabled:
+    description:
+      - C(yes) will disable the user account.  C(no) will clear the disabled
+        flag.
+    required: false
+    choices: [ 'yes', 'no' ]
+    default: null
+    version_added: "1.8"
+  account_locked:
+    description:
+      - C(no) will unlock the user account if locked.
+    required: false
+    choices: [ 'no' ]
+    default: null
+    version_added: "1.8"
+  groups:
+    description:
+      - Adds or removes the user from this comma-separated lis of groups,
+        depending on the value of I(groups_action). When I(groups_action) is
+        C(replace) and I(groups) is set to the empty string ('groups='), the
+        user is removed from all groups.
+    required: false
+    version_added: "1.8"
+  groups_action:
+    description:
+      - If C(replace), the user is added as a member of each group in
+        I(groups) and removed from any other groups.  If C(add), the user is
+        added to each group in I(groups) where not already a member.  If
+        C(remove), the user is removed from each group in I(groups).
+    required: false
+    choices: [ "replace", "add", "remove" ]
+    default: "replace"
+    version_added: "1.8"
   state:
     description:
-      - Whether to create or delete a user
+      - When C(present), creates or updates the user account.  When C(absent),
+        removes the user account if it exists.  When C(query) (new in 1.8),
+        retrieves the user account details without making any changes.
     required: false
     choices:
       - present
       - absent
+      - query
     default: present
     aliases: []
-author: Paul Durivage
+author: Paul Durivage / Chris Church
 '''
 
 EXAMPLES = '''
 # Ad-hoc example
-$ ansible -i hosts -m win_user -a "name=bob password=Password12345" all
-$ ansible -i hosts -m win_user -a "name=bob password=Password12345 state=absent" all
+$ ansible -i hosts -m win_user -a "name=bob password=Password12345 groups=Users" all
+$ ansible -i hosts -m win_user -a "name=bob state=absent" all
 
 # Playbook example
 ---
@@ -68,4 +145,5 @@ $ ansible -i hosts -m win_user -a "name=bob password=Password12345 state=absent"
       win_user:
         name: ansible
         password: "@ns1bl3"
+        groups: ["Users"]
 '''
