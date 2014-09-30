@@ -150,7 +150,6 @@ class PluginLoader(object):
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
 
-        self._paths = None
         directory = os.path.realpath(directory)
 
         if directory is not None:
