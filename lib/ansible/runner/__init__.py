@@ -600,6 +600,14 @@ class Runner(object):
         module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
+        # remove bad variables from the module vars, which may be in there due
+        # the way role declarations are specified in playbooks
+        if 'tags' in module_vars:
+            del module_vars['tags']
+        if 'when' in module_vars:
+            del module_vars['when']
+
+        # start building the dictionary of injected variables
         inject = {}
 
         # default vars are the lowest priority
@@ -608,10 +616,10 @@ class Runner(object):
         inject = utils.combine_vars(inject, host_variables)
         # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
-        # then come the module variables
-        inject = utils.combine_vars(inject, module_vars)
         # followed by vars (vars, vars_files, vars/main.yml)
         inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # then come the module variables
+        inject = utils.combine_vars(inject, module_vars)
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars
