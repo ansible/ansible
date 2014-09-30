@@ -56,6 +56,8 @@ Some other notable changes:
 * various parser improvements
 * produce a friendly error message if the SSH key is too permissive
 * ec2_ami_search: support for SSD and IOPS provisioned EBS images
+* can set ansible_sudo_exe as an inventory variable which allows specifying
+  a different sudo (or equivalent) command
 
 And various other bug fixes and improvements ...
 
