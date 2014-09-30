@@ -320,6 +320,17 @@ def main():
             if os.path.ismount(name):
                 if changed:
                     res,msg = mount(module, **args)
+            elif "bind" in args['opts']:
+                changed = True
+                cmd = 'mount -l'
+                rc, out, err = module.run_command(cmd)
+                allmounts = out.split('\n')
+                for mounts in allmounts[:-1]:
+                    arguments = mounts.split()
+                    if arguments[0] == args['src'] and arguments[2] == args['name'] and arguments[4] == args['fstype']:
+                        changed = False
+                if changed:
+                    res,msg = mount(module, **args)
             else:
                 changed = True
                 res,msg = mount(module, **args)
