@@ -593,14 +593,7 @@ class Runner(object):
         host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
         combined_cache = self.get_combined_cache()
 
-        # use combined_cache and host_variables to template the module_vars
-        # we update the inject variables with the data we're about to template
-        # since some of the variables we'll be replacing may be contained there too
-        module_vars_inject = utils.combine_vars(host_variables, combined_cache.get(host, {}))
-        module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
-        module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
-
-        inject = {}
+        inject = utils.combine_vars({}, combined_cache.get(host, {}))
 
         # default vars are the lowest priority
         inject = utils.combine_vars(inject, self.default_vars)
@@ -609,11 +602,16 @@ class Runner(object):
         # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
         # then come the module variables
-        inject = utils.combine_vars(inject, module_vars)
+        inject = utils.combine_vars(inject, self.module_vars)
         # followed by vars (vars, vars_files, vars/main.yml)
         inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
+
+        # once all variables have been gathered and their precedence worked out
+        # resolve any templates within variables.
+        inject = template.template(self.basedir, inject, self.module_vars)
+
         # and then special vars
         inject.setdefault('ansible_ssh_user', self.remote_user)
         inject['group_names']  = host_variables.get('group_names', [])
@@ -626,6 +624,7 @@ class Runner(object):
         inject['combined_cache'] = combined_cache
 
         return inject
+
 
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''

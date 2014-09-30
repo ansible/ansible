@@ -5,5 +5,4 @@ pip_test_package: epdb
 
 # variables used in precedence tests, here passed to -e
 etest: 'from -e'
-
-
+extra_var: extra_var
