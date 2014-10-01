@@ -57,7 +57,7 @@ feature development, so clearing bugs out of the way is one of the best things y
 If you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.  You can do this by checking out ansible, making a test
 branch off the main one, merging a GitHub issue, testing, and then commenting on that particular issue on GitHub.
 
-I'd Like To Report A Bugs
+I'd Like To Report A Bug
 ------------------------------------
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
