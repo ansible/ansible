@@ -393,7 +393,7 @@ class LinuxService(Service):
     def get_service_tools(self):
 
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart', 'insserv' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
@@ -461,6 +461,9 @@ class LinuxService(Service):
             if location.get('update-rc.d', False):
                 # and uses update-rc.d
                 self.enable_cmd = location['update-rc.d']
+            elif location.get('insserv', None):
+                # and uses insserv
+                self.enable_cmd = location['insserv']
             elif location.get('chkconfig', False):
                 # and uses chkconfig
                 self.enable_cmd = location['chkconfig']
@@ -770,6 +773,41 @@ class LinuxService(Service):
                         self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
 
             return
+
+        #
+        # insserv (Debian 7)
+        #
+        if self.enable_cmd.endswith("insserv"):
+            if self.enable:
+                (rc, out, err) = self.execute_command("%s -n %s" % (self.enable_cmd, self.name))
+            else:
+                (rc, out, err) = self.execute_command("%s -nr %s" % (self.enable_cmd, self.name))
+
+            self.changed = False
+            for line in err.splitlines():
+                if self.enable and line.find('enable service') != -1:
+                    self.changed = True
+                    break
+                if not self.enable and line.find('remove service') != -1:
+                    self.changed = True
+                    break
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=self.changed)
+
+            if not self.changed:
+                return
+
+            if self.enable:
+                (rc, out, err) = self.execute_command("%s %s" % (self.enable_cmd, self.name))
+                if (rc != 0) or (err != ''):
+                    self.module.fail_json(msg=("Failed to install service. rc: %s, out: %s, err: %s" % (rc, out, err)))
+                return (rc, out, err)
+            else:
+                (rc, out, err) = self.execute_command("%s -r %s" % (self.enable_cmd, self.name))
+                if (rc != 0) or (err != ''):
+                    self.module.fail_json(msg=("Failed to remove service. rc: %s, out: %s, err: %s" % (rc, out, err)))
+                return (rc, out, err)
 
         #
         # If we've gotten to the end, the service needs to be updated
