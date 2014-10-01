@@ -93,7 +93,7 @@ And here's an example showing some specific version downloads from multiple sour
 As you can see in the above, there are a large amount of controls available
 to customize where roles can be pulled from, and what to save roles as.     
 
-Roles pulled from galaxy work as with othe SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
+Roles pulled from galaxy work as with other SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
 
 .. seealso::
 
