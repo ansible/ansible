@@ -625,6 +625,10 @@ def main():
         else:
             gitconfig = os.path.join(dest, '.git', 'config')
 
+    # make sure the key_file path is expanded for ~ and $HOME
+    if key_file is not None:
+        key_file = os.path.abspath(os.path.expanduser(key_file))
+
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
