@@ -432,7 +432,7 @@ built and appear in the 'docsite/' directory.
 
 .. tip::
 
-    You can use ANSIBLE_KEEP_REMOTE_FILES=1 to prevent ansible from
+    You can set the environment variable ANSIBLE_KEEP_REMOTE_FILES=1 on the controlling host to prevent ansible from
     deleting the remote files so you can debug your module.
 
 .. _module_contribution:
