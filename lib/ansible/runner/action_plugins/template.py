@@ -22,6 +22,9 @@ from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
+from stat import *
+import time
+from ansible.module_utils.basic import TOUCH_DATETIME_FORMAT
 
 class ActionModule(object):
 
@@ -86,6 +89,21 @@ class ActionModule(object):
         except Exception, e:
             result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
+
+        # check if we need to retain exact permissions and ownership of the created/touched file
+        archive = options.get('archive', None)
+        if (archive is not None and utils.boolean(archive) is True):
+            source_stat = os.stat(source)
+            new_module_args = dict(
+                mode=oct(source_stat.st_mode & 0777),
+                owner=str(source_stat.st_uid),
+                group=str(source_stat.st_gid),
+                mtime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_mtime)),
+                atime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_atime)),
+                # we need to remove archive - copy would re-execute it with local transferred string in mind rather than source
+                archive=None
+            )
+            module_args = utils.merge_module_args(module_args, new_module_args)
 
         local_md5 = utils.md5s(resultant)
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
