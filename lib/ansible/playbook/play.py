@@ -38,7 +38,7 @@ class Play(object):
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user',
-       'vault_password', 'no_log',
+       'vault_password', 'no_log', 'description',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -48,7 +48,7 @@ class Play(object):
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user', 'vault_password', 'no_log',
+       'su', 'su_user', 'vault_password', 'no_log', 'description',
     ]
 
     # *************************************************
