@@ -93,7 +93,6 @@ options:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
     required: false
-    default: false
     aliases: []
     version_added: "1.8"
   ramdisk_id:
@@ -255,7 +254,7 @@ def main():
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
-            assign_public_ip=dict(default=False, type='bool')
+            assign_public_ip=dict(type='bool')
         )
     )
 
