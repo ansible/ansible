@@ -47,7 +47,8 @@ options:
     aliases: []
   metadata:
     description:
-      - a hash/dictionary of custom data for the instance; '{"key":"value",...}'
+      - a hash/dictionary of custom data for the instance;
+        '{"key": "value", ...}'
     required: false
     default: null
     aliases: []
@@ -61,11 +62,17 @@ options:
   service_account_permissions:
     version_added: 2.0
     description:
-      - service account permissions (see U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create), --scopes section for detailed information)
+      - service account permissions (see
+        U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
+        --scopes section for detailed information)
     required: false
     default: null
-    aliases: []
-    choices: ["bigquery", "cloud-platform", "compute-ro", "compute-rw", "computeaccounts-ro", "computeaccounts-rw", "datastore", "logging-write", "monitoring", "sql", "sql-admin", "storage-full", "storage-ro", "storage-rw", "taskqueue", "userinfo-email"]
+    choices: [
+      "bigquery", "cloud-platform", "compute-ro", "compute-rw",
+      "computeaccounts-ro", "computeaccounts-rw", "datastore", "logging-write",
+      "monitoring", "sql", "sql-admin", "storage-full", "storage-ro",
+      "storage-rw", "taskqueue", "userinfo-email"
+    ]
   pem_file:
     version_added: 1.5.1
     description:
@@ -99,7 +106,10 @@ options:
     aliases: []
   disks:
     description:
-      - a list of persistent disks to attach to the instance; a string value gives the name of the disk; alternatively, a dictionary value can define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry will be the boot disk (which must be READ_WRITE).
+      - a list of persistent disks to attach to the instance; a string value
+        gives the name of the disk; alternatively, a dictionary value can
+        define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
+        will be the boot disk (which must be READ_WRITE).
     required: false
     default: null
     aliases: []
@@ -126,7 +136,8 @@ options:
   ip_forward:
     version_added: "1.9"
     description:
-      - set to true if the instance can forward ip packets (useful for gateways)
+      - set to true if the instance can forward ip packets (useful for
+        gateways)
     required: false
     default: "false"
     aliases: []
@@ -185,7 +196,8 @@ EXAMPLES = '''
   tasks:
     - name: Launch instances
       local_action: gce instance_names={{names}} machine_type={{machine_type}}
-                    image={{image}} zone={{zone}} service_account_email={{ service_account_email }}
+                    image={{image}} zone={{zone}}
+                    service_account_email={{ service_account_email }}
                     pem_file={{ pem_file }} project_id={{ project_id }}
       register: gce
     - name: Wait for SSH to come up
@@ -213,10 +225,11 @@ EXAMPLES = '''
 '''
 
 try:
+    import libcloud
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceInUseError, ResourceNotFoundError
+        ResourceExistsError, ResourceInUseError, ResourceNotFoundError
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
@@ -257,7 +270,7 @@ def get_instance_info(inst):
         public_ip = inst.public_ips[0]
 
     return({
-        'image': not inst.image is None and inst.image.split('/')[-1] or None,
+        'image': inst.image is not None and inst.image.split('/')[-1] or None,
         'disks': disk_names,
         'machine_type': inst.size,
         'metadata': metadata,
@@ -268,7 +281,8 @@ def get_instance_info(inst):
         'status': ('status' in inst.extra) and inst.extra['status'] or None,
         'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
         'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
-   })
+    })
+
 
 def create_instances(module, gce, instance_names):
     """Creates new instances. Attributes other than instance_names are picked
@@ -326,25 +340,31 @@ def create_instances(module, gce, instance_names):
     # with:
     # [ {'key': key1, 'value': value1}, {'key': key2, 'value': value2}, ...]
     if metadata:
-        try:
-            md = literal_eval(str(metadata))
-            if not isinstance(md, dict):
-                raise ValueError('metadata must be a dict')
-        except ValueError, e:
-            module.fail_json(msg='bad metadata: %s' % str(e))
-        except SyntaxError, e:
-            module.fail_json(msg='bad metadata syntax')
+        if isinstance(metadata, dict):
+            md = metadata
+        else:
+            try:
+                md = literal_eval(str(metadata))
+                if not isinstance(md, dict):
+                    raise ValueError('metadata must be a dict')
+            except ValueError as e:
+                module.fail_json(msg='bad metadata: %s' % str(e))
+            except SyntaxError as e:
+                module.fail_json(msg='bad metadata syntax')
 
+    if hasattr(libcloud, '__version__') and libcloud.__version__ < '0.15':
         items = []
-        for k,v in md.items():
-            items.append({"key": k,"value": v})
+        for k, v in md.items():
+            items.append({"key": k, "value": v})
         metadata = {'items': items}
+    else:
+        metadata = md
 
     ex_sa_perms = []
     bad_perms = []
     if service_account_permissions:
         for perm in service_account_permissions:
-            if not perm in gce.SA_SCOPES_MAP.keys():
+            if perm not in gce.SA_SCOPES_MAP.keys():
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
@@ -357,7 +377,7 @@ def create_instances(module, gce, instance_names):
     # These variables all have default values but check just in case
     if not lc_image or not lc_network or not lc_machine_type or not lc_zone:
         module.fail_json(msg='Missing required create instance variable',
-                changed=False)
+                         changed=False)
 
     for name in instance_names:
         pd = None
@@ -370,16 +390,19 @@ def create_instances(module, gce, instance_names):
                 pd = gce.ex_get_volume("%s" % name, lc_zone)
         inst = None
         try:
-            inst = gce.create_node(name, lc_machine_type, lc_image,
-                    location=lc_zone, ex_network=network, ex_tags=tags,
-                    ex_metadata=metadata, ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
-                    external_ip=external_ip, ex_disk_auto_delete=disk_auto_delete, ex_service_accounts=ex_sa_perms)
+            inst = gce.create_node(
+                name, lc_machine_type, lc_image, location=lc_zone,
+                ex_network=network, ex_tags=tags, ex_metadata=metadata,
+                ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
+                external_ip=external_ip, ex_disk_auto_delete=disk_auto_delete,
+                ex_service_accounts=ex_sa_perms
+            )
             changed = True
         except ResourceExistsError:
             inst = gce.ex_get_node(name, lc_zone)
-        except GoogleBaseError, e:
-            module.fail_json(msg='Unexpected error attempting to create ' + \
-                    'instance %s, error: %s' % (name, e.value))
+        except GoogleBaseError as e:
+            module.fail_json(msg='Unexpected error attempting to create ' +
+                             'instance %s, error: %s' % (name, e.value))
 
         for i, lc_disk in enumerate(lc_disks):
             # Check whether the disk is already attached
@@ -435,7 +458,7 @@ def terminate_instances(module, gce, instance_names, zone_name):
             inst = gce.ex_get_node(name, zone_name)
         except ResourceNotFoundError:
             pass
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
         if inst:
             gce.destroy_node(inst)
@@ -447,27 +470,27 @@ def terminate_instances(module, gce, instance_names, zone_name):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            image = dict(default='debian-7'),
-            instance_names = dict(),
-            machine_type = dict(default='n1-standard-1'),
-            metadata = dict(),
-            name = dict(),
-            network = dict(default='default'),
-            persistent_boot_disk = dict(type='bool', default=False),
-            disks = dict(type='list'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted'],
-                    default='present'),
-            tags = dict(type='list'),
-            zone = dict(default='us-central1-a'),
-            service_account_email = dict(),
-            service_account_permissions = dict(type='list'),
-            pem_file = dict(),
-            project_id = dict(),
-            ip_forward = dict(type='bool', default=False),
-            external_ip = dict(choices=['ephemeral', 'none'],
-                    default='ephemeral'),
-            disk_auto_delete = dict(type='bool', default=True),
+        argument_spec=dict(
+            image=dict(default='debian-7'),
+            instance_names=dict(),
+            machine_type=dict(default='n1-standard-1'),
+            metadata=dict(),
+            name=dict(),
+            network=dict(default='default'),
+            persistent_boot_disk=dict(type='bool', default=False),
+            disks=dict(type='list'),
+            state=dict(choices=['active', 'present', 'absent', 'deleted'],
+                       default='present'),
+            tags=dict(type='list'),
+            zone=dict(default='us-central1-a'),
+            service_account_email=dict(),
+            service_account_permissions=dict(type='list'),
+            pem_file=dict(),
+            project_id=dict(),
+            ip_forward=dict(type='bool', default=False),
+            external_ip=dict(choices=['ephemeral', 'none'],
+                             default='ephemeral'),
+            disk_auto_delete=dict(type='bool', default=True),
         )
     )
 
@@ -500,15 +523,15 @@ def main():
         inames.append(name)
     if not inames:
         module.fail_json(msg='Must specify a "name" or "instance_names"',
-                changed=False)
+                         changed=False)
     if not zone:
         module.fail_json(msg='Must specify a "zone"', changed=False)
 
     json_output = {'zone': zone}
     if state in ['absent', 'deleted']:
         json_output['state'] = 'absent'
-        (changed, terminated_instance_names) = terminate_instances(module,
-                gce, inames, zone)
+        (changed, terminated_instance_names) = terminate_instances(
+            module, gce, inames, zone)
 
         # based on what user specified, return the same variable, although
         # value could be different if an instance could not be destroyed
@@ -519,14 +542,13 @@ def main():
 
     elif state in ['active', 'present']:
         json_output['state'] = 'present'
-        (changed, instance_data,instance_name_list) = create_instances(
-                module, gce, inames)
+        (changed, instance_data, instance_name_list) = create_instances(
+            module, gce, inames)
         json_output['instance_data'] = instance_data
         if instance_names:
             json_output['instance_names'] = instance_name_list
         elif name:
             json_output['name'] = name
-
 
     json_output['changed'] = changed
     module.exit_json(**json_output)
