@@ -845,7 +845,7 @@ def _git_repo_info(repo_path):
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
                 else:
-                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+                    repo_path = os.path.join(repo_path[:-4], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
