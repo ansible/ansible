@@ -22,7 +22,7 @@ The GCE modules all require the apache-libcloud module, which you can install fr
 Credentials
 -----------
 
-To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section. Once you've created a new client ID and downloaded the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
+To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section and choosing to create a new client ID for a service account. Once you've created a new client ID and downloaded the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
 
 .. code-block:: bash
 
