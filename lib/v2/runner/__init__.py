@@ -19,18 +19,4 @@ from v2.inventory import Host
 from v2.playbook import Task
 
 class Runner(object):
-    def __init__(self, host, task):
-        self.host   = host
-        self.task   = task
-        self.action = self.get_action()
-
-    def get_action(self):
-        # returns the action plugin from plugins/action/
-        # for the given task
-        return None
-
-    def execute(self):
-        # runs the given task on the given host using
-        # the action determined by get_action()
-        return
-
+   pass
