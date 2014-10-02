@@ -78,6 +78,7 @@ with warnings.catch_warnings(record=True) as warning_handler:
         )
         warnings.resetwarnings()
         warnings.simplefilter("ignore")
+        HAS_ATFORK=False
     except ImportError:
         HAS_ATFORK=False
 multiprocessing_runner = None
