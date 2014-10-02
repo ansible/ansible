@@ -91,7 +91,11 @@ NOSETESTS ?= nosetests
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./lib/ansible/modules  $(NOSETESTS) -d -w test/units -v
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v
+
+newtests:
+	PYTHONPATH=./lib $(NOSETESTS) -d -w lib/v2/test -v
+
 
 authors:
 	sh hacking/authors.sh
