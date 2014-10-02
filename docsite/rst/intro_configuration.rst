@@ -653,6 +653,7 @@ Enabling pipelining reduces the number of SSH operations required to
 execute a module on the remote server, by executing many ansible modules without actual file transfer. 
 This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
 first disable 'requiretty' in /etc/sudoers on all managed hosts.
+You must also not have any "ssh_args" value in the ssh_configuration section of your Ansible configuration file.
 
 By default, this option is disabled to preserve compatibility with
 sudoers configurations that have requiretty (the default on many distros), but is highly

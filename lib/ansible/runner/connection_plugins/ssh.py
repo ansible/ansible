@@ -62,6 +62,8 @@ class Connection(object):
         if extra_args is not None:
             # make sure there is no empty string added as this can produce weird errors
             self.common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
+            if C.ANSIBLE_SSH_PIPELINING:
+                vvv("WARNING: pipelining is not available when ssh_args is set", host=self.host)
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
