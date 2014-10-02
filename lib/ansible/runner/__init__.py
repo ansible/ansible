@@ -71,13 +71,13 @@ with warnings.catch_warnings(record=True) as warning_handler:
     try:
         from Crypto.Random import atfork
     except PowmInsecureWarning:
-            system_warning(
-                "The version of gmp you have installed has a known issue regarding " + \
-                "timing vulnerabilities when used with pycrypto. " + \
-                "If possible, you should update it (ie. yum update gmp)."
-            )
-            warnings.resetwarnings()
-            warnings.simplefilter("ignore")
+        system_warning(
+            "The version of gmp you have installed has a known issue regarding " + \
+            "timing vulnerabilities when used with pycrypto. " + \
+            "If possible, you should update it (ie. yum update gmp)."
+        )
+        warnings.resetwarnings()
+        warnings.simplefilter("ignore")
     except ImportError:
         HAS_ATFORK=False
 multiprocessing_runner = None
