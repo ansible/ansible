@@ -253,26 +253,6 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
-    # *****************************************************
-
-    def _complex_args_hack(self, complex_args, module_args):
-        """
-        ansible-playbook both allows specifying key=value string arguments and complex arguments
-        however not all modules use our python common module system and cannot
-        access these.  An example might be a Bash module.  This hack allows users to still pass "args"
-        as a hash of simple scalars to those arguments and is short term.  We could technically
-        just feed JSON to the module, but that makes it hard on Bash consumers.  The way this is implemented
-        it does mean values in 'args' have LOWER priority than those on the key=value line, allowing
-        args to provide yet another way to have pluggable defaults.
-        """
-        if complex_args is None:
-            return module_args
-        if not isinstance(complex_args, dict):
-            raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
-        for (k,v) in complex_args.iteritems():
-            if isinstance(v, basestring):
-                module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
-        return module_args
 
     # *****************************************************
 
