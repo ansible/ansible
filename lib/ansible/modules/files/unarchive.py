@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 module: unarchive
 version_added: 1.4
 short_description: Copies an archive to a remote location and unpack it
+extends_documentation_fragment: files
 description:
      - The M(unarchive) module copies an archive file from the local machine to a remote and unpacks it.
 options:

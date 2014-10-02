@@ -28,6 +28,7 @@ DOCUMENTATION = """
 ---
 module: lineinfile
 author: Daniel Hokka Zakrisson, Ahti Kitsik
+extends_documentation_fragment: files
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
