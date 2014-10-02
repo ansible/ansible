@@ -138,7 +138,7 @@ Note that you cannot do variable substitution when including one playbook
 inside another.
 
 .. note::
-   You can not conditionally path the location to an include file,
+   You can not conditionally pass the location to an include file,
    like you can with 'vars_files'.  If you find yourself needing to do
    this, consider how you can restructure your playbook to be more
    class/role oriented.  This is to say you cannot use a 'fact' to
