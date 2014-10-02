@@ -69,6 +69,17 @@ options:
       - The body of the email being sent.
     default: $subject
     required: false
+  username:
+    description:
+      - If SMTP requires username
+    default: null
+    required: false
+    version_added: "1.6"
+  password:
+      - If SMTP requires password
+    default: null
+    required: false
+    version_added: "1.6"
   host:
     description:
       - The mail server
@@ -122,6 +133,7 @@ EXAMPLES = '''
 import os
 import sys
 import smtplib
+import ssl
 
 try:
     from email import encoders
@@ -142,6 +154,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
+            username = dict(default=None),
+            password = dict(default=None),
             host = dict(default='localhost'),
             port = dict(default='25'),
             sender = dict(default='root', aliases=['from']),
@@ -156,6 +170,8 @@ def main():
         )
     )
 
+    username = module.params.get('username')
+    password = module.params.get('password')
     host = module.params.get('host')
     port = module.params.get('port')
     sender = module.params.get('sender')
@@ -167,17 +183,23 @@ def main():
     attach_files = module.params.get('attach')
     headers = module.params.get('headers')
     charset = module.params.get('charset')
-
     sender_phrase, sender_addr = parseaddr(sender)
 
     if not body:
         body = subject
 
     try:
+        smtp = smtplib.SMTP_SSL(host, port=int(port))
+    except (smtplib.SMTPException, ssl.SSLError):
         smtp = smtplib.SMTP(host, port=int(port))
-    except Exception, e:
-        module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
-
+    smtp.ehlo()
+    if username and password:
+        if smtp.has_extn('STARTTLS'):
+            smtp.starttls()
+        try:
+            smtp.login(username, password)
+        except smtplib.SMTPAuthenticationError:
+            module.fail_json(msg="Authentication to %s:%s failed, please check your username and/or password" % (host, port))
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
