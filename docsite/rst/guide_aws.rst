@@ -271,7 +271,7 @@ Example 4
 
     # Using the instanceid, call the ec2 module
     # locally to remove the instance by declaring
-    # it's state is "absent"
+    # its state is "absent"
 
     - hosts: ec2hosts
       gather_facts: True    
