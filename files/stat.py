@@ -51,12 +51,12 @@ EXAMPLES = '''
 - fail: msg="Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
-# Determine if a path exists and is a directory.  Note we need to test
+# Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
 - stat: path=/path/to/something
   register: p
 - debug: msg="Path exists and is a directory"
-  when: p.stat.isdir is defined and p.stat.isdir == true
+  when: p.stat.isdir is defined and p.stat.isdir
 
 # Don't do md5 checksum
 - stat: path=/path/to/myhugefile get_md5=no
