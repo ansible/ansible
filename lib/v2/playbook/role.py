@@ -19,19 +19,20 @@ from v2.playbook.base import PlaybookBase
 from v2.utils import list_union
 
 class Role(PlaybookBase):
+
     def __init__(self):
         pass
 
     def load(self, ds):
-        self.ds = ds
-        self.tasks = []
-        self.handlers = []
-        self.blocks = []
-        self.dependencies = []
-        self.metadata = dict()
-        self.defaults = dict()
-        self.vars = dict()
-        self.params = dict()
+        self._ds = ds
+        self._tasks = []
+        self._handlers = []
+        self._blocks = []
+        self._dependencies = []
+        self._metadata = dict()
+        self._defaults = dict()
+        self._vars = dict()
+        self._params = dict()
 
     def get_vars(self):
         # returns the merged variables for this role, including
@@ -39,13 +40,13 @@ class Role(PlaybookBase):
         return dict()
 
     def get_immediate_dependencies(self):
-        return self.dependencies
+        return self._dependencies
 
     def get_all_dependencies(self):
         # returns a list built recursively, of all deps from
         # all child dependencies
         all_deps = []
-        for dep in self.dependencies:
+        for dep in self._dependencies:
             list_union(all_deps, dep.get_all_dependencies())
         all_deps = list_union(all_deps, self.dependencies)
         return all_deps
@@ -53,3 +54,5 @@ class Role(PlaybookBase):
     def get_blocks(self):
         # should return 
         return self.blocks
+
+
