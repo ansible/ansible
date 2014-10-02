@@ -20,20 +20,17 @@ from v2.inventory import Host
 from v2.playbook import Task
 
 class Handler(Task):
+
     def __init__(self):
-        self.triggered    = False
-        self.triggered_by = []
+        pass
 
     def flag_for_host(self, host):
-        if not isinstance(host, Host):
-            raise AnsibleError('handlers expected to be triggered by a Host(), instead got %s' % type(host))
-        if host.name not in self.triggered_by:
-            triggered_by.append(host.name)
+        assert instanceof(host, Host)
+        pass
 
-    def get_has_triggered(self):
-        return self.triggered
+    def has_triggered(self):
+        return self._triggered
 
-    def set_has_triggered(self, triggered):
-        if not isinstance(triggered, bool):
-            raise AnsibleError('a handlers triggered property should be a boolean, instead got %s' % type(triggered))
-        self.triggered = triggered
+    def set_triggered(self, triggered):
+        assert instanceof(triggered, bool)
+        self._triggered = triggered

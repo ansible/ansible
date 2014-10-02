@@ -15,13 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from v2.playbook import Tag, Conditional
-
-class PlaybookBase(Tag, Conditional):
-   '''
-   Implements a common object, which supports filtering based on
-   both tags and when: conditional statements
-   '''
+class Base(object):
 
    def __init__(self):
        pass

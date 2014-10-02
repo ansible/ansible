@@ -18,13 +18,7 @@
 from v2.playbook.base import PlaybookBase
 
 class Block(PlaybookBase):
+
     def __init__(self):
-        self.ds = None
-        self.plays = []
+        pass
 
-    def load(self, ds):
-        self.ds = ds
-        self.plays = []
-
-    def get_plays(self):
-        return self.plays
