@@ -15,8 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from errors import AnsibleError
+from playbook.tag import Tag
+
 class Base(object):
 
-   def __init__(self):
-       pass
+    def __init__(self):
+        pass
 
