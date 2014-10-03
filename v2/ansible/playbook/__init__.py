@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import v2.utils
+import ansible.utils
 
 class Playbook(object):
     def __init__(self, filename):
