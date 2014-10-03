@@ -132,7 +132,7 @@ Modules are some of the easiest places to get started.
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps it’s source on github at 
+The Ansible project keeps its source on github at 
 `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ for the core application, and two sub repos ansible/ansible-modules-core and ansible/ansible-modules-extras for module related items.   If you need to know if a module is in 'core' or 'extras', consult the web documentation page for that module.
 
 The project takes contributions through
