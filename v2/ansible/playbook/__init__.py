@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils
-
 class Playbook(object):
     def __init__(self, filename):
         self.ds = v2.utils.load_yaml_from_file(filename)
