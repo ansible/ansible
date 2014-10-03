@@ -43,6 +43,7 @@ class Task(Base):
     # will be used if defined
     # might be possible to define others 
 
+    action               = FieldAttribute(isa='string')
     always_run           = FieldAttribute(isa='bool')
     any_errors_fatal     = FieldAttribute(isa='bool')
     async                = FieldAttribute(isa='int') 
@@ -54,14 +55,14 @@ class Task(Base):
     ignore_errors        = FieldAttribute(isa='bool')
 
     # FIXME: this should not be a Task
-    # include              = FieldAttribute(isa='string')
+    # include            = FieldAttribute(isa='string')
 
-    local_action         = FieldAttribute(isa='string', alias='action', post_validate='_set_local_action')
+    local_action         = FieldAttribute(isa='string')
   
     # FIXME: this should not be a Task
     meta                 = FieldAttribute(isa='string')
 
-    name                 = FieldAttribute(isa='string', validate=self._set_name)
+    name                 = FieldAttribute(isa='string')
 
     no_log               = FieldAttribute(isa='bool')
     notify               = FieldAttribute(isa='list')
@@ -82,28 +83,32 @@ class Task(Base):
     role                 = Attribute()
     block                = Attribute()
 
-    # ==================================================================================
-
     def __init__(self, block=None, role=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
-        self.block = block
-        self.role  = role
+        self._block = block
+        self._role  = role
         super(Task, self).__init__()
 
-    # ==================================================================================
-    # BASIC ACCESSORS
-       
     def get_name(self):
        ''' return the name of the task '''
-       if self._role:
-           return "%s : %s" % (self._role.get_name(), self._name)
+
+       # FIXME: getattr magic in baseclass so this is not required:
+       original = self.attribute_value('name')
+       role_value = self.attribute_value('role')
+
+       if role_value:
+           return "%s : %s" % (role_value.get_name(), original)
        else:
-           return self._name
+           return original
+
+    @staticmethod
+    def load(data, block=block, role=role):
+        t = Task(block=block, role=role)
+        return t.load_data(data)
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
-
 
     # ==================================================================================
     # BELOW THIS LINE
@@ -236,27 +241,6 @@ LEGACY = """
             return self._load_invalid_key
         else:
             return self._load_other_valid_key
- 
-    @classmethod
-    def load(self, ds, block=None, role=None):
-        ''' walk the datastructure and store/validate parameters '''
-
-        self = Task(block=block, role=role)
-        return self._load_from_datastructure(ds)
-
-    # TODO: move to BaseObject
-    def _load_from_datastructure(ds)
-        
-        self._pre_validate(ds)
-
-        # load the keys from the datastructure
-        for k,v in ds.iteritems():
-            mods = self._loader_for_key(k)(k,v)
-            if (k,v) in mods.iteritems():
-                setattr(self,k,v)
-
-        self._post_validate()
-        return self 
  
     # ==================================================================================
     # PRE-VALIDATION - expected to be uncommonly used, this checks for arguments that

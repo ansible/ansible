@@ -23,6 +23,7 @@ class Attribute(object):
        self.isa = isa
        self.validator = validator
        self.post_validator = post_validator
+       self.value = None
 
 class FieldAttribute(Attribute):
     
