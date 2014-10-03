@@ -16,20 +16,22 @@ class TestTask(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_can_construct_empty_task():
+    def test_can_construct_empty_task(self):
         t = Task()
     
-    def test_can_construct_task_with_role():
+    def test_can_construct_task_with_role(self):
         pass
 
-    def test_can_construct_task_with_block():
+    def test_can_construct_task_with_block(self):
         pass
 
-    def test_can_construct_task_with_role_and_block():
+    def test_can_construct_task_with_role_and_block(self):
         pass
 
-    def test_can_load_simple_task():
+    def test_can_load_simple_task(self):
        t = Task.load(basic_shell_task)
+       assert t is not None
+       print "T.NAME = %s" % t.name
        assert t.name == basic_shell_task['name']
        assert t.module == 'shell'
        assert t.args == 'echo hi'

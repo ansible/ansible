@@ -20,8 +20,13 @@ from v2.utils import list_union
 
 class Role(PlaybookBase):
 
+    # TODO: this will be overhauled to match Task.py at some point
+
     def __init__(self):
         pass
+
+    def get_name(self):
+        return "TEMPORARY"
 
     def load(self, ds):
         self._ds = ds
