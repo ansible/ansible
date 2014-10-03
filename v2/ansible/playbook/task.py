@@ -61,7 +61,8 @@ class Task(Base):
     # FIXME: this should not be a Task
     meta                 = FieldAttribute(isa='string')
 
-    name                 = FieldAttribute(isa='string', post_validate='_set_name')
+    name                 = FieldAttribute(isa='string', validate=self._set_name)
+
     no_log               = FieldAttribute(isa='bool')
     notify               = FieldAttribute(isa='list')
     poll                 = FieldAttribute(isa='integer')
@@ -102,20 +103,6 @@ class Task(Base):
     def __repr__(self):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
-
-    @classmethod
-    def load(self, block=None, role=None, data=None):
-        self = Task(block=block, role=role)
-        self._load_field_attributes(data)   # from BaseObject
-        self._load_plugin_attributes(data)  # from here, becuase of lookupPlugins
-        return self
-
-    def _load_plugin_attributes(self, data):
-        module_names = self._module_names()
-        for (k,v) in data.iteritems():
-            if k in module_names:
-                self.module = k 
-                self.args   = v
 
 
     # ==================================================================================
