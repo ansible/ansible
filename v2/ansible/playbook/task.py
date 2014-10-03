@@ -89,7 +89,7 @@ class Task(Base):
         raise exception.NotImplementedError()
 
     def get_role(self):
-        '' return the role associated with the task '''
+        ''' return the role associated with the task '''
         return self._role
 
     def get_block(self):
