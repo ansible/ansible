@@ -15,15 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import v2.config as C
-from v2.utils import template
-from v2.utils import list_union
-
 class Conditional(object):
 
     def __init__(self, task):
-        pass
+        self._task = task
+        self._conditionals = []
 
     def evaluate(self, context):
         pass
 
+    def push(self, conditionals):
+        if not isinstance(conditionals, list):
+            conditionals = [ conditionals ]
+        self._conditionals.extend(conditionals)

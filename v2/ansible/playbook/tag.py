@@ -15,19 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from v2.errors import AnsibleError
-from v2.utils import list_union
+from errors import AnsibleError
+from ansible.utils import list_union
 
 class Tag(object):
     def __init__(self, tags=[]):
-        self.tags = tags
+        assert isinstance(tags, list)
+        self._tags = tags
 
-    def push(self, tag):
-        if tag not in self.tags:
-            self.tags.append(tag)
+    def push(self, tags):
+        if not isinstance(tags, list):
+            tags = [ tags ]
+        for tag in tags:
+            if not isinstance(tag, basestring):
+                tag = str(tag)
+            if tag not in self._tags:
+                self._tags.append(tag)
 
     def get_tags(self):
-        return self.tags
+        return self._tags
 
     def merge(self, tags):
         # returns a union of the tags, which can be a string,
@@ -38,8 +44,8 @@ class Tag(object):
             tags = Tag(tags)
         elif not isinstance(tags, Tag):
             raise AnsibleError('expected a Tag() instance, instead got %s' % type(tags))
-        return utils.list_union(self.tags, tags.get_tags())
+        return utils.list_union(self._tags, tags.get_tags())
 
     def matches(self, tag):
-        return tag in self.tags
+        return tag in self._tags
         
