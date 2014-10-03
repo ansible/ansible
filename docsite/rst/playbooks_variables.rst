@@ -317,6 +317,10 @@ To get the directory from a path::
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
+    
+To get the real path of a link (new in version 1.8)::
+
+   {{ path | readlink }}
 
 To work with Base64 encoded strings::
 
