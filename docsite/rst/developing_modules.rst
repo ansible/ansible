@@ -11,7 +11,7 @@ See :doc:`modules` for a list of various ones developed in core.
 Modules can be written in any language and are found in the path specified
 by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
-By default, everything that ships with ansible is pulled from it's source tree, but
+By default, everything that ships with ansible is pulled from its source tree, but
 additional paths can be added.
 
 The directory "./library", alongside your top level playbooks, is also automatically
