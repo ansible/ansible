@@ -43,45 +43,45 @@ class Task(Base):
     # will be used if defined
     # might be possible to define others 
 
-    action               = FieldAttribute(isa='string')
-    always_run           = FieldAttribute(isa='bool')
-    any_errors_fatal     = FieldAttribute(isa='bool')
-    async                = FieldAttribute(isa='int') 
-    connection           = FieldAttribute(isa='string')
-    delay                = FieldAttribute(isa='int')
-    delegate_to          = FieldAttribute(isa='string')
-    environment          = FieldAttribute(isa='dict')
-    first_available_file = FieldAttribute(isa='list')
-    ignore_errors        = FieldAttribute(isa='bool')
+    _action               = FieldAttribute(isa='string')
+    _always_run           = FieldAttribute(isa='bool')
+    _any_errors_fatal     = FieldAttribute(isa='bool')
+    _async                = FieldAttribute(isa='int') 
+    _connection           = FieldAttribute(isa='string')
+    _delay                = FieldAttribute(isa='int')
+    _delegate_to          = FieldAttribute(isa='string')
+    _environment          = FieldAttribute(isa='dict')
+    _first_available_file = FieldAttribute(isa='list')
+    _ignore_errors        = FieldAttribute(isa='bool')
 
     # FIXME: this should not be a Task
     # include            = FieldAttribute(isa='string')
 
-    local_action         = FieldAttribute(isa='string')
+    _local_action         = FieldAttribute(isa='string')
   
     # FIXME: this should not be a Task
-    meta                 = FieldAttribute(isa='string')
+    _meta                 = FieldAttribute(isa='string')
 
-    name                 = FieldAttribute(isa='string')
+    _name                 = FieldAttribute(isa='string')
 
-    no_log               = FieldAttribute(isa='bool')
-    notify               = FieldAttribute(isa='list')
-    poll                 = FieldAttribute(isa='integer')
-    register             = FieldAttribute(isa='string')
-    remote_user          = FieldAttribute(isa='string')
-    retries              = FieldAttribute(isa='integer')
-    run_once             = FieldAttribute(isa='bool')
-    su                   = FieldAttribute(isa='bool')
-    su_pass              = FieldAttribute(isa='string')
-    su_user              = FieldAttribute(isa='string')
-    sudo                 = FieldAttribute(isa='bool')
-    sudo_user            = FieldAttribute(isa='string')
-    sudo_pass            = FieldAttribute(isa='string')
-    transport            = FieldAttribute(isa='string')
-    until                = FieldAttribute(isa='list') # ?
+    _no_log               = FieldAttribute(isa='bool')
+    _notify               = FieldAttribute(isa='list')
+    _poll                 = FieldAttribute(isa='integer')
+    _register             = FieldAttribute(isa='string')
+    _remote_user          = FieldAttribute(isa='string')
+    _retries              = FieldAttribute(isa='integer')
+    _run_once             = FieldAttribute(isa='bool')
+    _su                   = FieldAttribute(isa='bool')
+    _su_pass              = FieldAttribute(isa='string')
+    _su_user              = FieldAttribute(isa='string')
+    _sudo                 = FieldAttribute(isa='bool')
+    _sudo_user            = FieldAttribute(isa='string')
+    _sudo_pass            = FieldAttribute(isa='string')
+    _transport            = FieldAttribute(isa='string')
+    _until                = FieldAttribute(isa='list') # ?
 
-    role                 = Attribute()
-    block                = Attribute()
+    _role                 = Attribute()
+    _block                = Attribute()
 
     def __init__(self, block=None, role=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -92,17 +92,13 @@ class Task(Base):
     def get_name(self):
        ''' return the name of the task '''
 
-       # FIXME: getattr magic in baseclass so this is not required:
-       original = self.attribute_value('name')
-       role_value = self.attribute_value('role')
-
-       if role_value:
-           return "%s : %s" % (role_value.get_name(), original)
+       if self.role:
+           return "%s : %s" % (self.role.get_name(), self.name)
        else:
-           return original
+           return self.name
 
     @staticmethod
-    def load(data, block=block, role=role):
+    def load(data, block=None, role=None):
         t = Task(block=block, role=role)
         return t.load_data(data)
 

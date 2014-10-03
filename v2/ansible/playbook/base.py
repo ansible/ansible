@@ -24,44 +24,61 @@ class Base(object):
     def __init__(self):
         self._data = dict()
         self._attributes = dict()
+        
+        for name in self.__class__.__dict__:
+            aname = name[1:]
+            if isinstance(aname, Attribute) and not isinstance(aname, FieldAttribute):
+                self._attributes[aname] = None
 
     def load_data(self, ds):
         ''' walk the input datastructure and assign any values '''
 
         assert ds is not None
 
-        for name in self.__class__.__dict__:
+        for (name, attribute) in self.__class__.__dict__.iteritems():
+            aname = name[1:]
 
-            print "DEBUG: processing attribute: %s" % name
-
-            attribute = self.__class__.__dict__[name]
-
+            # process Fields
             if isinstance(attribute, FieldAttribute):
-                method = getattr(self, '_load_%s' % name, None)
+                method = getattr(self, '_load_%s' % aname, None)
                 if method:
-                    self._attributes[name] = method(self, attribute)
+                    self._attributes[aname] = method(self, attribute)
                 else:
-                    if name in ds:
-                        self._attributes[name] = ds[name]
+                    if aname in ds:
+                        self._attributes[aname] = ds[aname]
 
-             # implement PluginAtrribute which allows "with_" and "action" aliases.
+             # TODO: implement PluginAtrribute which allows "with_" and "action" aliases.
 
         return self
 
 
-    def attribute_value(self, name):
-        return self._attributes[name]
-
     def validate(self):
-
+        # TODO: finish
         for name in self.__dict__:
-            attribute = self.__dict__[name]
+            aname = name[1:]
+            attribute = self.__dict__[aname]
             if instanceof(attribute, FieldAttribute):
-                method = getattr(self, '_validate_%s' % (prefix, name), None)
+                method = getattr(self, '_validate_%s' % (prefix, aname), None)
                 if method:
                     method(self, attribute)
 
     def post_validate(self, runner_context):
+        # TODO: finish
         raise exception.NotImplementedError
 
-    # TODO: __getattr__ that looks inside _attributes
+    def __getattr__(self, needle):
+        if needle in self._attributes:
+            return self._attributes[needle]
+        if needle in self.__dict__:
+            return self.__dict__[needle]
+        raise AttributeError
+
+    #def __setattr__(self, needle, value):
+    #    if needle in self._attributes:
+    #        self._attributes[needle] = value
+    #    if needle in self.__dict__:
+    #        super(Base, self).__setattr__(needle, value)
+    #        # self.__dict__[needle] = value
+    #    raise AttributeError
+
+
