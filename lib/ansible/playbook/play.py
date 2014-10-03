@@ -287,7 +287,8 @@ class Play(object):
                         if os.path.isfile(vars):
                             vars_data = utils.parse_yaml_from_file(vars, vault_password=self.vault_password)
                             if vars_data:
-                                dep_vars = utils.combine_vars(vars_data, dep_vars)
+                                #dep_vars = utils.combine_vars(vars_data, dep_vars)
+                                dep_vars = utils.combine_vars(dep_vars, vars_data)
                         defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
                         dep_defaults_data = {}
                         if os.path.isfile(defaults):
