@@ -17,36 +17,14 @@
 
 #from ansible.common.errors import AnsibleError
 
-class MyMeta(type):
-
-    def __call__(self, *args, **kwargs):
-
-         obj = type.__call__(self, *args)
-         for name, value in kwargs.items():
-             setattr(obj, name, value)
-         return obj
-
 class Attribute(object):
 
-    __metaclass__ = MyMeta
-
-    def load(self, data, base_object):
-        ''' the loader is called to store the attribute from a datastructure when key names match.  The default is very basic '''
-        self._validate(base_object, data)
-        setattr(base_object, self.name,  data)
-
-    def _validate(self, data, base_object):
-        ''' validate is called after loading an object data structure to massage any input or raise errors on any incompatibilities '''
-        if self.validator:
-           self.validator(base_object)
-
-    def post_validate(self, base_object):
-        ''' post validate is called after templating the context of a Task (usually in Runner) to validate the types of arguments '''
-        if self.post_validator:
-           self.post_validator(base_object)
+    def __init__(self, isa=None, validator=None, post_validator=None):
+       self.isa = isa
+       self.validator = validator
+       self.post_validator = post_validator
 
 class FieldAttribute(Attribute):
     
-    __metaclass__ = MyMeta
     pass
 
