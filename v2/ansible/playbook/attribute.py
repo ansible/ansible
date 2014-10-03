@@ -18,14 +18,13 @@
 #from ansible.common.errors import AnsibleError
 
 class Attribute(object):
-
-    def __init__(self, isa=None, validator=None, post_validator=None):
+    def __init__(self, isa=None):
        self.isa = isa
-       self.validator = validator
-       self.post_validator = post_validator
        self.value = None
 
+    def __call__(self):
+       return self.value
+
 class FieldAttribute(Attribute):
-    
     pass
 
