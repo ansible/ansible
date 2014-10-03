@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from playbook.base import Base
-from playbook.conditional import Conditional
-from errors import AnsibleError
-from ansible import utils
+from ansible.playbook.base import Base
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.conditional import Conditional
+#from ansible.common.errors import AnsibleError
+#from ansible import utils
 
 # TODO: it would be fantastic (if possible) if a task new where in the YAML it was defined for describing
 # it in error conditions
@@ -36,38 +37,57 @@ class Task(Base):
     """
 
     # =================================================================================
-    # KEYS AND SLOTS:  defines what variables in are valid in the data structure and 
-    # the object itself
+    # ATTRIBUTES
+    # load_<attribute_name> and
+    # validate_<attribute_name>
+    # will be used if defined
+    # might be possible to define others 
 
-    VALID_KEYS = [
-        'always_run', 'any_errors_fatal', 'async', 'connection', 'delay', 'delegate_to', 'environment',
-        'first_available_file', 'ignore_errors', 'include', 'local_action', 'meta', 'name', 'no_log',
-        'notify', 'poll', 'register', 'remote_user', 'retries', 'run_once', 'su', 'su_pass', 'su_user',
-        'sudo', 'sudo_pass', 'sudo_user', 'transport', 'until'
-    ]
+    always_run           = FieldAttribute(isa='bool')
+    any_errors_fatal     = FieldAttribute(isa='bool')
+    async                = FieldAttribute(isa='int') 
+    connection           = FieldAttribute(isa='string')
+    delay                = FieldAttribute(isa='int')
+    delegate_to          = FieldAttribute(isa='string')
+    environment          = FieldAttribute(isa='dict')
+    first_available_file = FieldAttribute(isa='list')
+    ignore_errors        = FieldAttribute(isa='bool')
 
-    __slots__ = [
-        '_always_run', '_any_errors_fatal', '_async', '_connection', '_delay', '_delegate_to', '_environment',
-        '_first_available_file', '_ignore_errors', '_include', '_local_action', '_meta', '_name', '_no_log',
-        '_notify', '_poll', '_register', '_remote_user', '_retries', '_run_once', '_su', '_su_pass', '_su_user',
-        '_sudo', '_sudo_pass', '_sudo_user', '_transport', '_until'
-    ]
+    # FIXME: this should not be a Task
+    # include              = FieldAttribute(isa='string')
+
+    local_action         = FieldAttribute(isa='string', alias='action', post_validate='_set_local_action')
+  
+    # FIXME: this should not be a Task
+    meta                 = FieldAttribute(isa='string')
+
+    name                 = FieldAttribute(isa='string', post_validate='_set_name')
+    no_log               = FieldAttribute(isa='bool')
+    notify               = FieldAttribute(isa='list')
+    poll                 = FieldAttribute(isa='integer')
+    register             = FieldAttribute(isa='string')
+    remote_user          = FieldAttribute(isa='string')
+    retries              = FieldAttribute(isa='integer')
+    run_once             = FieldAttribute(isa='bool')
+    su                   = FieldAttribute(isa='bool')
+    su_pass              = FieldAttribute(isa='string')
+    su_user              = FieldAttribute(isa='string')
+    sudo                 = FieldAttribute(isa='bool')
+    sudo_user            = FieldAttribute(isa='string')
+    sudo_pass            = FieldAttribute(isa='string')
+    transport            = FieldAttribute(isa='string')
+    until                = FieldAttribute(isa='list') # ?
+
+    role                 = Attribute()
+    block                = Attribute()
 
     # ==================================================================================
 
     def __init__(self, block=None, role=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
-        self._block = block
-        self._role  = role
-        self._reset()
+        self.block = block
+        self.role  = role
         super(Task, self).__init__()
-
-    # TODO: move to BaseObject
-    def _reset(self):
-        ''' clear out the object '''
-
-        for x in __slots__:
-            setattr(x, None)
 
     # ==================================================================================
     # BASIC ACCESSORS
@@ -75,42 +95,36 @@ class Task(Base):
     def get_name(self):
        ''' return the name of the task '''
        if self._role:
-            return "%s : %s" % (self._role.get_name(), self._name)
-        else:
-            return self._name
+           return "%s : %s" % (self._role.get_name(), self._name)
+       else:
+           return self._name
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
 
-    # FIXME: does a task have variables?
-    def get_vars(self):
-        ''' return the variables associated with the task '''
-        raise exception.NotImplementedError()
+    @classmethod
+    def load(self, block=None, role=None, data=None):
+        self = Task(block=block, role=role)
+        self._load_field_attributes(data)   # from BaseObject
+        self._load_plugin_attributes(data)  # from here, becuase of lookupPlugins
+        return self
 
-    def get_role(self):
-        ''' return the role associated with the task '''
-        return self._role
-
-    def get_block(self):
-        ''' return the block the task is in '''
-        return self._block
+    def _load_plugin_attributes(self, data):
+        module_names = self._module_names()
+        for (k,v) in data.iteritems():
+            if k in module_names:
+                self.module = k 
+                self.args   = v
 
 
     # ==================================================================================
-    # LOAD: functions related to walking the datastructure and storing data
+    # BELOW THIS LINE
+    # info below this line is "old" and is before the attempt to build Attributes
+    # use as reference but plan to replace and radically simplify
+    # ==================================================================================
 
-    def _load_parameters(data):
-        ''' validate/transmogrify/assign any module parameters for this task '''
- 
-       if isinstance(data, dict):
-            return dict(_parameters=data)
-        elif isinstance(data, basestring):
-            return dict(_parameters=utils.parse_kv(data))
-        elif isinstance(data, None):
-            return dict(_parameters='')
-        else:
-            raise AnsibleError("invalid arguments specified, got '%s' (type=%s')" % (data, type(data)))
+LEGACY = """
 
     def _load_action(self, ds, k, v):
         ''' validate/transmogrify/assign the module and parameters if used in 'action/local_action' format '''
@@ -300,4 +314,6 @@ class Task(Base):
 
         if self._first_available_file and self._lookup_plugin:
             raise AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
+
+"""
 

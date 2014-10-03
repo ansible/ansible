@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from v2.inventory import Host
-from v2.playbook import Task
+#from v2.inventory import Host
+#from v2.playbook import Task
 
 class Runner(object):
    pass
