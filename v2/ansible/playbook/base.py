@@ -19,6 +19,19 @@
 #from playbook.tag import Tag
 from ansible.playbook.attribute import Attribute, FieldAttribute
 
+
+# general concept
+#  FooObject.load(datastructure) -> Foo
+#  FooObject._load_field # optional
+#  FooObject._validate_field # optional
+#  FooObject._post_validate_field # optional
+# FooObject.evaluate(host_context) -> FooObject ?  (calls post_validators, templates all members)
+# question - are there some things that need to be evaluated *before* host context, i.e. globally?
+# most things should be templated but want to provide as much early checking as possible
+# TODO: also check for fields in datastructure that are not valid
+# TODO: PluginAttribute(type) allows all the valid plugins as valid types of names
+#   lookupPlugins start with "with_", ModulePluginAttribute allows any key
+
 class Base(object):
 
     def __init__(self):
