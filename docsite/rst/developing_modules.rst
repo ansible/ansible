@@ -18,7 +18,7 @@ The directory "./library", alongside your top level playbooks, is also automatic
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
-`moudule-extras project <http://github.com/ansible/ansible-module-extras>`_.  There's also a core
+`moudules-extras project <http://github.com/ansible/ansible-modules-extras>`_.  There's also a core
 repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
 but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
 of how you acquire ansible.
@@ -48,7 +48,7 @@ modules.   Keep in mind, though, that some modules in ansible's source tree are 
 so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
 you'll turn to stone.  Nobody ever executes async_wrapper directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time.py`::
 
     #!/usr/bin/python
 
@@ -73,7 +73,7 @@ There's a useful test script in the source checkout for ansible::
 
 Let's run the script you just wrote with that::
 
-    ansible/hacking/test-module -m ./time
+    ansible/hacking/test-module -m ./time.py
 
 You should see output that looks something like this::
 
@@ -444,7 +444,7 @@ If you are having trouble getting your module "found" by ansible, be sure it is 
 
 If you have a fork of one of the ansible module projects, do something like this::
 
-    ANSIBLE_LIBRARY=~/ansible-module-core:~/ansible-module-extras 
+    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras 
 
 And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
 to make sure you're not reporting bugs on versions from your fork!
