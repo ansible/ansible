@@ -94,10 +94,8 @@ class PluginLoader(object):
             m = __import__(self.package)
             parts = self.package.split('.')[1:]
             self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
-            paths.extend(self._all_directories(self.package_path))
-            return paths
-        else:
-            return [ self.package_path ]
+        paths.extend(self._all_directories(self.package_path))
+        return paths
 
     def _get_paths(self):
         ''' Return a list of paths to search for plugins in '''
@@ -105,8 +103,7 @@ class PluginLoader(object):
         if self._paths is not None:
             return self._paths
 
-        ret = []
-        ret += self._extra_dirs
+        ret = self._extra_dirs[:]
         for basedir in _basedirs:
             fullpath = os.path.realpath(os.path.join(basedir, self.subdir))
             if os.path.isdir(fullpath):
@@ -139,11 +136,9 @@ class PluginLoader(object):
 
         # look for any plugins installed in the package subtree
         ret.extend(self._get_package_paths())
-        package_dirs = self._get_package_paths()
 
-
+        # cache and return the result
         self._paths = ret
-
         return ret
 
 
@@ -156,7 +151,9 @@ class PluginLoader(object):
             if with_subdir:
                 directory = os.path.join(directory, self.subdir)
             if directory not in self._extra_dirs:
+                # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
+                self._paths = None
 
     def find_plugin(self, name, suffixes=None, transport=''):
         ''' Find a plugin named name '''
