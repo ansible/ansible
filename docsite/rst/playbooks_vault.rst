@@ -77,7 +77,7 @@ If you have existing files that you no longer want to keep encrypted, you can pe
 Inventory Variables
 ```````````````````
 
-In some cases encrypting just the inventory variable values may be desirable, such as in the case where dev and operations teams need to collaborate on settings, but not necessarily passwords and keys. The following example encrypts the passwords in a list of database accounts, while leaving the rest of the configuration unencrypted.
+In some cases encrypting just the inventory variable values may be desirable, such as in the case where dev and operations teams need to collaborate on settings, but not necessarily passwords and keys. The following example encrypts the passwords in a list of database accounts, while leaving the rest of the configuration unencrypted::
 
     group_vars/group1/          # group1 is a directory instead of a file
        main.yml                 # the group variables file is unencrypted 
