@@ -8,6 +8,10 @@ basic_shell_task = dict(
    shell = 'echo hi'
 )
 
+kv_shell_task = dict(
+   action = 'shell echo hi'
+)
+
 class TestTask(unittest.TestCase):
 
     def setUp(self):
@@ -36,6 +40,17 @@ class TestTask(unittest.TestCase):
         assert t.args == 'echo hi'
 
     def test_can_load_action_kv_form(self):
+        t = Task.load(kv_shell_task)
+        assert t.action == 'shell'
+        assert t.args == 'echo hi'
+
+    def test_can_auto_name(self):
+        assert 'name' not in kv_shell_task
+        t = Task.load(kv_shell_task)
+        print "GOT NAME=(%s)" % t.name
+        assert t.name == 'shell echo hi'
+
+    def test_can_auto_name_with_role(self):
         pass
 
     def test_can_load_action_complex_form(self):

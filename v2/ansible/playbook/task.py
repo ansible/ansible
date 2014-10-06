@@ -87,9 +87,6 @@ class Task(Base):
     _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
 
-    _role                 = Attribute()
-    _block                = Attribute()
-
     def __init__(self, block=None, role=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
         self._block = block
@@ -99,10 +96,24 @@ class Task(Base):
     def get_name(self):
        ''' return the name of the task '''
 
-       if self.role:
-           return "%s : %s" % (self.role.get_name(), self.name)
-       else:
+       if self._role and self.name:
+           return "%s : %s" % (self._role.name, self.name)
+       elif self.name:
            return self.name
+       else:
+           return "%s %s" % (self.action, self._merge_kv(self.args))
+
+    def _merge_kv(self, ds):
+        if ds is None:
+           return ""
+        elif isinstance(ds, basestring):
+           return ds
+        elif instance(ds, dict):
+           buf = ""
+           for (k,v) in ds.iteritems():
+               buf = buf + "%s=%s " % (k,v)
+           buf = buf.strip()
+           return buf
 
     @staticmethod
     def load(data, block=None, role=None):

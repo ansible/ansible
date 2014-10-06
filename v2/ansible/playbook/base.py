@@ -23,10 +23,11 @@ class Base(object):
      
         # each class knows attributes set upon it, see Task.py for example 
         self._attributes = dict()
-        for name in self.__class__.__dict__:
+
+        for (name, value) in self.__class__.__dict__.iteritems():
             aname = name[1:]
-            if isinstance(aname, Attribute) and not isinstance(aname, FieldAttribute):
-                self._attributes[aname] = None
+            if isinstance(value, Attribute):
+                self._attributes[aname] = value.default
 
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
@@ -94,9 +95,16 @@ class Base(object):
 
     def __getattr__(self, needle):
 
-        # return any attribute names as if they were real.
-        # access them like obj.attrname()
+        # return any attribute names as if they were real
+        # optionally allowing masking by accessors
+
+        if not needle.startswith("_"):
+            method = "get_%s" % needle
+            if method in self.__dict__:
+                return method(self)
+
         if needle in self._attributes:
             return self._attributes[needle]
 
         raise AttributeError("attribute not found: %s" % needle)
+
