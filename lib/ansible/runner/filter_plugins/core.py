@@ -28,7 +28,7 @@ import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
-from random import SystemRandom
+from random import SystemRandom, shuffle
 from jinja2.filters import environmentfilter
 
 
@@ -235,6 +235,9 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+def randomize_list(mylist):
+    shuffle(mylist)
+    return mylist
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -305,6 +308,7 @@ class FilterModule(object):
             # version comparison
             'version_compare': version_compare,
 
-            # random numbers
+            # random stuff
             'random': rand,
+            'shuffle': randomize_list,
         }
