@@ -32,7 +32,6 @@ import pipes
 import jinja2
 import subprocess
 import getpass
-import warnings
 
 import ansible.constants as C
 import ansible.inventory
@@ -50,7 +49,6 @@ from ansible.module_common import ModuleReplacer
 from ansible.module_utils.splitter import split_args, unquote
 from ansible.cache import FactCache
 from ansible.utils import update_hash
-from ansible.utils.display_functions import *
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -61,26 +59,10 @@ except ImportError:
 
 HAS_ATFORK=True
 try:
-    # some versions of pycrypto may not have this?
-    from Crypto.pct_warnings import PowmInsecureWarning
+    from Crypto.Random import atfork
 except ImportError:
-    PowmInsecureWarning = RuntimeWarning
+    HAS_ATFORK=False
 
-with warnings.catch_warnings(record=True) as warning_handler:
-    warnings.simplefilter("error", PowmInsecureWarning)
-    try:
-        from Crypto.Random import atfork
-    except PowmInsecureWarning:
-        system_warning(
-            "The version of gmp you have installed has a known issue regarding " + \
-            "timing vulnerabilities when used with pycrypto. " + \
-            "If possible, you should update it (ie. yum update gmp)."
-        )
-        warnings.resetwarnings()
-        warnings.simplefilter("ignore")
-        HAS_ATFORK=False
-    except ImportError:
-        HAS_ATFORK=False
 multiprocessing_runner = None
 
 OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
