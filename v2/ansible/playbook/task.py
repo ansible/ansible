@@ -45,6 +45,8 @@ class Task(Base):
     # will be used if defined
     # might be possible to define others 
 
+  
+    _args                 = FieldAttribute(isa='dict')
     _action               = FieldAttribute(isa='string')
     
     _always_run           = FieldAttribute(isa='bool')
@@ -60,11 +62,11 @@ class Task(Base):
     # FIXME: this should not be a Task
     # include             = FieldAttribute(isa='string')
 
-    _loop                 = Attribute()
+    _loop                 = FieldAttribute(isa='string', private=True)
+    _loop_args            = FieldAttribute(isa='list', private=True)
     _local_action         = FieldAttribute(isa='string')
   
     # FIXME: this should not be a Task
-    _module_args          = Attribute(isa='dict')
     _meta                 = FieldAttribute(isa='string')    
 
     _name                 = FieldAttribute(isa='string')
@@ -127,25 +129,31 @@ class Task(Base):
             # convert it to "module + args"
 
             if k in module_finder:
-                if _module.value is not None or 'action' in ds or 'local_action' in ds:
+                
+
+                if self._action.value is not None or 'action' in ds or 'local_action' in ds:
                     raise AnsibleError("duplicate action in task: %s" % k)
-                _module.value      = k
-                _module_args.value = v
+
+                print "SCANNED: %s" % k
+                new_ds['action'] = k
+                new_ds['args'] = v
 
             # handle any loops, there can be only one kind of loop
 
             elif "with_%s" % k in lookup_finder:
-                if _loop.value is not None:
+                if self._loop.value is not None:
                     raise AnsibleError("duplicate loop in task: %s" % k)
-                _loop.value      = k
-                _loop_args.value = v
+                new_ds['loop'] = k
+                new_ds['loop_args'] = v
 
             # otherwise send it through straight
 
             else:
                 # nothing we need to filter
+                print "PASSING: %s => %s" % (k,v)
                 new_ds[k] = v
 
+        print "NEW_DS=%s" % new_ds
         return new_ds
 
 

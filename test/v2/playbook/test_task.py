@@ -32,7 +32,7 @@ class TestTask(unittest.TestCase):
         t = Task.load(basic_shell_task)
         assert t is not None
         assert t.name == basic_shell_task['name']
-        assert t.module == 'shell'
+        assert t.action == 'shell'
         assert t.args == 'echo hi'
 
     def test_can_load_action_kv_form(self):

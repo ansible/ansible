@@ -37,6 +37,10 @@ class Base(object):
         ''' walk the input datastructure and assign any values '''
 
         assert ds is not None
+
+        # we currently don't do anything with private attributes but may
+        # later decide to filter them out of 'ds' here.
+
         ds = self.munge(ds)
 
         # walk all attributes in the class
@@ -54,7 +58,7 @@ class Base(object):
                 else:
                     if aname in ds:
                         self._attributes[aname] = ds[aname]
-
+ 
         # return the constructed object
         self.validate()
         return self
@@ -64,7 +68,7 @@ class Base(object):
         ''' validation that is done at parse time, not load time ''' 
 
         # walk all fields in the object
-        for (name, attribute) in self.__dict__:
+        for (name, attribute) in self.__dict__.iteritems():
 
             # find any field attributes
             if isinstance(attribute, FieldAttribute):
@@ -95,5 +99,4 @@ class Base(object):
         if needle in self._attributes:
             return self._attributes[needle]
 
-        raise AttributeError
-
+        raise AttributeError("attribute not found: %s" % needle)

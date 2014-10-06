@@ -18,8 +18,9 @@
 #from ansible.common.errors import AnsibleError
 
 class Attribute(object):
-    def __init__(self, isa=None):
+    def __init__(self, isa=None, private=False):
        self.isa = isa
+       self.private = private
        self.value = None
 
     def __call__(self):
