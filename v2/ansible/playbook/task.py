@@ -103,17 +103,20 @@ class Task(Base):
        else:
            return "%s %s" % (self.action, self._merge_kv(self.args))
 
+    def _parse_kv(self, str):
+        return ansible.utils.parse_kv(str)
+
     def _merge_kv(self, ds):
         if ds is None:
-           return ""
+            return ""
         elif isinstance(ds, basestring):
-           return ds
+            return ds
         elif instance(ds, dict):
-           buf = ""
-           for (k,v) in ds.iteritems():
-               buf = buf + "%s=%s " % (k,v)
-           buf = buf.strip()
-           return buf
+            buf = ""
+            for (k,v) in ds.iteritems():
+                buf = buf + "%s=%s " % (k,v)
+            buf = buf.strip()
+            return buf
 
     @staticmethod
     def load(data, block=None, role=None):
@@ -123,6 +126,39 @@ class Task(Base):
     def __repr__(self):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
+                
+
+    def _munge_action(self, ds, new_ds, k, v):
+        ''' take a module name and split into action and args '''
+        if self._action.value is not None or 'action' in ds or 'local_action' in ds:
+            raise AnsibleError("duplicate action in task: %s" % k)
+        new_ds['action'] = k
+        new_ds['args'] = v
+                
+
+    def _munge_loop(self, ds, new_ds, k, v):
+        ''' take a lookup plugin name and store it correctly '''
+        if self._loop.value is not None:
+            raise AnsibleError("duplicate loop in task: %s" % k)
+        new_ds['loop'] = k
+        new_ds['loop_args'] = v
+                
+    def _munge_action2(self, ds, new_ds, k, v, local=False):
+        ''' take an old school action/local_action and reformat it '''
+        if isinstance(v, basestring):
+            (module, args) = self._parse_kv(v)
+            new_ds['action'] = module
+            if 'args' in ds:
+                raise AnsibleError("unexpected and redundant 'args'")
+                new_ds['args'] = args
+                if local:
+                    if 'delegate_to' in ds:
+                       raise AnsbileError("local_action and action conflict")
+                    new_ds['delegate_to'] = 'localhost'
+            else:
+                raise AnsibleError("unexpected use of 'action'")
+        else:
+            raise AnsibleError("unexpected use of 'action'")
 
     def munge(self, ds):
         ''' 
@@ -130,41 +166,20 @@ class Task(Base):
         keep it short.
         '''
 
-
         assert isinstance(ds, dict)
 
         new_ds = dict()
         for (k,v) in ds.iteritems():
-        
-            # if any attributes of the datastructure match a module name
-            # convert it to "module + args"
-
             if k in module_finder:
-                
-
-                if self._action.value is not None or 'action' in ds or 'local_action' in ds:
-                    raise AnsibleError("duplicate action in task: %s" % k)
-
-                print "SCANNED: %s" % k
-                new_ds['action'] = k
-                new_ds['args'] = v
-
-            # handle any loops, there can be only one kind of loop
-
+                self._munge_action(ds, new_ds, k, v)
             elif "with_%s" % k in lookup_finder:
-                if self._loop.value is not None:
-                    raise AnsibleError("duplicate loop in task: %s" % k)
-                new_ds['loop'] = k
-                new_ds['loop_args'] = v
-
-            # otherwise send it through straight
-
+                self._munge_loop(new_ds, k, v)
+            elif k == 'action':
+                self._munge_action2(ds, new_ds, k, v) 
+            elif k == 'local_action':
+                self._munge_action2(ds, new_ds, k, v, local=True)
             else:
-                # nothing we need to filter
-                print "PASSING: %s => %s" % (k,v)
                 new_ds[k] = v
-
-        print "NEW_DS=%s" % new_ds
         return new_ds
 
 
@@ -184,7 +199,7 @@ LEGACY = """
         if module_name not in module_finder:
             raise AnsibleError("the specified module '%s' could not be found, check your module path" % module_name)
         results['_module_name'] = module_name
-        results['_parameters'] = utils.parse_kv(params)
+        results['_parameters'] = self._parse_kv(params)
 
         if k == 'local_action':
             if 'delegate_to' in ds:
