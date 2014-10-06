@@ -297,6 +297,19 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(start=1, step=10) }}    => 51
 
 
+Shuffle Filter
+--------------
+
+.. versionadded:: 1.8
+
+This filter will randomize an existing list, giving a differnt order every invocation.
+
+To get a random list from an existing  list::
+
+    {{ ['a','b','c']|shuffle }} => ['c','a','b']
+    {{ ['a','b','c']|shuffle }} => ['b','c','a']
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
