@@ -17,12 +17,14 @@
 
 from ansible.playbook.base import Base
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.playbook.conditional import Conditional
-#from ansible.common.errors import AnsibleError
-#from ansible import utils
+
+# from ansible.playbook.conditional import Conditional
+# from ansible.common.errors import AnsibleError
 
 # TODO: it would be fantastic (if possible) if a task new where in the YAML it was defined for describing
 # it in error conditions
+
+from ansible.plugins import module_finder, lookup_finder
 
 class Task(Base):
 
@@ -44,6 +46,7 @@ class Task(Base):
     # might be possible to define others 
 
     _action               = FieldAttribute(isa='string')
+    
     _always_run           = FieldAttribute(isa='bool')
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int') 
@@ -55,12 +58,14 @@ class Task(Base):
     _ignore_errors        = FieldAttribute(isa='bool')
 
     # FIXME: this should not be a Task
-    # include            = FieldAttribute(isa='string')
+    # include             = FieldAttribute(isa='string')
 
+    _loop                 = Attribute()
     _local_action         = FieldAttribute(isa='string')
   
     # FIXME: this should not be a Task
-    _meta                 = FieldAttribute(isa='string')
+    _module_args          = Attribute(isa='dict')
+    _meta                 = FieldAttribute(isa='string')    
 
     _name                 = FieldAttribute(isa='string')
 
@@ -106,6 +111,44 @@ class Task(Base):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
 
+    def munge(self, ds):
+        ''' 
+        tasks are especially complex arguments so need pre-processing.
+        keep it short.
+        '''
+
+
+        assert isinstance(ds, dict)
+
+        new_ds = dict()
+        for (k,v) in ds.iteritems():
+        
+            # if any attributes of the datastructure match a module name
+            # convert it to "module + args"
+
+            if k in module_finder:
+                if _module.value is not None or 'action' in ds or 'local_action' in ds:
+                    raise AnsibleError("duplicate action in task: %s" % k)
+                _module.value      = k
+                _module_args.value = v
+
+            # handle any loops, there can be only one kind of loop
+
+            elif "with_%s" % k in lookup_finder:
+                if _loop.value is not None:
+                    raise AnsibleError("duplicate loop in task: %s" % k)
+                _loop.value      = k
+                _loop_args.value = v
+
+            # otherwise send it through straight
+
+            else:
+                # nothing we need to filter
+                new_ds[k] = v
+
+        return new_ds
+
+
     # ==================================================================================
     # BELOW THIS LINE
     # info below this line is "old" and is before the attempt to build Attributes
@@ -119,7 +162,7 @@ LEGACY = """
 
         results = dict()
         module_name, params = v.strip().split(' ', 1)
-        if module_name not in utils.plugins.module_finder:
+        if module_name not in module_finder:
             raise AnsibleError("the specified module '%s' could not be found, check your module path" % module_name)
         results['_module_name'] = module_name
         results['_parameters'] = utils.parse_kv(params)
