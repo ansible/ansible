@@ -94,7 +94,7 @@ tests:
 	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v
 
 newtests:
-	PYTHONPATH=./v2 $(NOSETESTS) -d -w test/v2 -v
+	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w test/v2 -v
 
 
 authors:
