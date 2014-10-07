@@ -1,5 +1,5 @@
 from yaml.constructor import Constructor
-from parsing.yaml.objects import AnsibleMapping
+from ansible.parsing.yaml.objects import AnsibleMapping
 
 class AnsibleConstructor(Constructor):
     def construct_yaml_map(self, node):
