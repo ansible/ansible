@@ -47,7 +47,6 @@ class TestTask(unittest.TestCase):
     def test_can_auto_name(self):
         assert 'name' not in kv_shell_task
         t = Task.load(kv_shell_task)
-        print "GOT NAME=(%s)" % t.name
         assert t.name == 'shell echo hi'
 
     def test_can_auto_name_with_role(self):

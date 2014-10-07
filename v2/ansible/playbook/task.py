@@ -19,7 +19,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.attribute import Attribute, FieldAttribute
 
 # from ansible.playbook.conditional import Conditional
-# from ansible.common.errors import AnsibleError
+from ansible.errors import AnsibleError
 
 # TODO: it would be fantastic (if possible) if a task new where in the YAML it was defined for describing
 # it in error conditions
@@ -125,9 +125,21 @@ class Task(Base):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
                 
+    def _parse_old_school_action(self, v):
+        ''' given a action/local_action line, return the module and args ''' 
+        tokens = v.split()
+        if len(tokens) < 2:
+            return [v,{}]
+        else:
+            if v not in [ 'command', 'shell' ]:
+                joined = " ".join(tokens[1:])
+                return [tokens[0], parse_kv(joined)]
+            else:
+                return [tokens[0], joined] 
 
     def _munge_action(self, ds, new_ds, k, v):
         ''' take a module name and split into action and args '''
+
         if self._action.value is not None or 'action' in ds or 'local_action' in ds:
             raise AnsibleError("duplicate action in task: %s" % k)
         new_ds['action'] = k
@@ -136,6 +148,7 @@ class Task(Base):
 
     def _munge_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
+
         if self._loop.value is not None:
             raise AnsibleError("duplicate loop in task: %s" % k)
         new_ds['loop'] = k
@@ -143,9 +156,10 @@ class Task(Base):
                 
     def _munge_action2(self, ds, new_ds, k, v, local=False):
         ''' take an old school action/local_action and reformat it '''
+
         if isinstance(v, basestring):
-            (module, args) = parse_kv(v)
-            new_ds['action'] = module
+            tokens = self._parse_old_school_action(v)
+            new_ds['action'] = tokens[0]
             if 'args' in ds:
                 raise AnsibleError("unexpected and redundant 'args'")
                 new_ds['args'] = args
@@ -153,8 +167,6 @@ class Task(Base):
                     if 'delegate_to' in ds:
                        raise AnsbileError("local_action and action conflict")
                     new_ds['delegate_to'] = 'localhost'
-            else:
-                raise AnsibleError("unexpected use of 'action'")
         else:
             raise AnsibleError("unexpected use of 'action'")
 
@@ -171,7 +183,7 @@ class Task(Base):
             if k in module_finder:
                 self._munge_action(ds, new_ds, k, v)
             elif "with_%s" % k in lookup_finder:
-                self._munge_loop(new_ds, k, v)
+                self._munge_loop(ds, new_ds, k, v)
             elif k == 'action':
                 self._munge_action2(ds, new_ds, k, v) 
             elif k == 'local_action':
