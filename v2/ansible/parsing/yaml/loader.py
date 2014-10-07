@@ -3,8 +3,8 @@ from yaml.scanner import Scanner
 from yaml.parser import Parser
 from yaml.resolver import Resolver
 
-from parsing.yaml.composer import AnsibleComposer
-from parsing.yaml.constructor import AnsibleConstructor
+from ansible.parsing.yaml.composer import AnsibleComposer
+from ansible.parsing.yaml.constructor import AnsibleConstructor
 
 class AnsibleLoader(Reader, Scanner, Parser, AnsibleComposer, AnsibleConstructor, Resolver):
     def __init__(self, stream):
