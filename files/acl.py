@@ -79,6 +79,14 @@ options:
     description:
       - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
+  recursive:
+    version_added: "@@@"
+    required: false
+    default: no
+    choices: [ 'yes', 'no' ]
+    description:
+      - Recursively sets the specified ACL (added in Ansible @@@). Incompatible with C(state=query).
+
 author: "Brian Coca (@bcoca)"
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
@@ -110,20 +118,6 @@ acl:
     sample: [ "user::rwx", "group::rwx", "other::rwx" ]
 '''
 
-def normalize_permissions(p):
-    perms = ['-','-','-']
-    for char in p:
-        if char == 'r':
-            perms[0] = 'r'
-        if char == 'w':
-            perms[1] = 'w'
-        if char == 'x':
-            perms[2] = 'x'
-        if char == 'X':
-            if perms[2] != 'x':  # 'x' is more permissive
-              perms[2] = 'X'
-    return ''.join(perms)
-
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
@@ -132,9 +126,9 @@ def split_entry(entry):
     if len(a) == 3:
         a.append(False)
     try:
-        p,e,t,d = a
+        p, e, t, d = a
     except ValueError, e:
-        print "wtf?? %s => %s" % (entry,a)
+        print "wtf?? %s => %s" % (entry, a)
         raise e
 
     if d:
@@ -151,69 +145,87 @@ def split_entry(entry):
     else:
         t = None
 
-    p = normalize_permissions(p)
+    return [d, t, e, p]
 
-    return [d,t,e,p]
 
-def get_acls(module,path,follow):
+def build_entry(etype, entity, permissions=None):
+    '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
+    return etype + ':' + entity + (':' + permissions if permissions else '')
 
-    cmd = [ module.get_bin_path('getfacl', True) ]
+
+def build_command(module, mode, path, follow, default, recursive, entry=''):
+    '''Builds and returns agetfacl/setfacl command.'''
+    if mode == 'set':
+        cmd = [module.get_bin_path('setfacl', True)]
+        cmd.append('-m "%s"' % entry)
+    elif mode == 'rm':
+        cmd = [module.get_bin_path('setfacl', True)]
+        cmd.append('-x "%s"' % entry)
+    else:  # mode == 'get'
+        cmd = [module.get_bin_path('getfacl', True)]
+        cmd.append('--omit-header')
+        cmd.append('--absolute-names')
+
+    if recursive:
+        cmd.append('--recursive')
+
     if not follow:
         cmd.append('-h')
-    # prevents absolute path warnings and removes headers
-    cmd.append('--omit-header')
-    cmd.append('--absolute-names')
-    cmd.append(path)
 
-    return _run_acl(module,cmd)
-
-def set_acl(module,path,entry,follow,default):
-
-    cmd = [ module.get_bin_path('setfacl', True) ]
-    if not follow:
-        cmd.append('-h')
     if default:
-        cmd.append('-d')
-    cmd.append('-m "%s"' % entry)
+        if(mode == 'rm'):
+            cmd.append('-k')
+        else:  # mode == 'set' or mode == 'get'
+            cmd.append('-d')
+
     cmd.append(path)
+    return cmd
 
-    return _run_acl(module,cmd)
 
-def rm_acl(module,path,entry,follow,default):
+def acl_changed(module, cmd):
+    '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
+    cmd = cmd[:]  # lists are mutables so cmd would be overriden without this
+    cmd.insert(1, '--test')
+    lines = run_acl(module, cmd)
+    return not all(line.endswith('*,*') for line in lines)
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
-    if not follow:
-        cmd.append('-h')
-    if default:
-        cmd.append('-k')
-    entry = entry[0:entry.rfind(':')]
-    cmd.append('-x "%s"' % entry)
-    cmd.append(path)
 
-    return _run_acl(module,cmd,False)
-
-def _run_acl(module,cmd,check_rc=True):
+def run_acl(module, cmd, check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
     except Exception, e:
         module.fail_json(msg=e.strerror)
 
-    # trim last line as it is always empty
-    ret = out.splitlines()
-    return ret[0:len(ret)-1]
+    lines = out.splitlines()
+    if lines and not lines[-1].split():
+        # trim last line only when it is empty
+        return lines[:-1]
+    else:
+        return lines
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True,aliases=['path'], type='str'),
-            entry = dict(required=False, etype='str'),
-            entity = dict(required=False, type='str', default=''),
-            etype = dict(required=False, choices=['other', 'user', 'group', 'mask'], type='str'),
-            permissions = dict(required=False, type='str'),
-            state = dict(required=False, default='query', choices=[ 'query', 'present', 'absent' ], type='str'),
-            follow = dict(required=False, type='bool', default=True),
-            default= dict(required=False, type='bool', default=False),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['path'], type='str'),
+            entry=dict(required=False, type='str'),
+            entity=dict(required=False, type='str', default=''),
+            etype=dict(
+                required=False,
+                choices=['other', 'user', 'group', 'mask'],
+                type='str'
+            ),
+            permissions=dict(required=False, type='str'),
+            state=dict(
+                required=False,
+                default='query',
+                choices=['query', 'present', 'absent'],
+                type='str'
+            ),
+            follow=dict(required=False, type='bool', default=True),
+            default=dict(required=False, type='bool', default=False),
+            recursive=dict(required=False, type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -226,79 +238,72 @@ def main():
     state = module.params.get('state')
     follow = module.params.get('follow')
     default = module.params.get('default')
-
-    if permissions:
-        permissions = normalize_permissions(permissions)
+    recursive = module.params.get('recursive')
 
     if not os.path.exists(path):
-        module.fail_json(msg="path not found or not accessible!")
+        module.fail_json(msg="Path not found or not accessible.")
 
-    if state in ['present','absent']:
-        if  not entry and not etype:
-            module.fail_json(msg="%s requires either etype and permissions or just entry be set" % state)
+    if state == 'query' and recursive:
+        module.fail_json(msg="'recursive' MUST NOT be set when 'state=query'.")
+
+    if not entry:
+        if state == 'absent' and permissions:
+            module.fail_json(msg="'permissions' MUST NOT be set when 'state=absent'.")
+
+        if state == 'absent' and not entity:
+            module.fail_json(msg="'entity' MUST be set when 'state=absent'.")
+
+        if state in ['present', 'absent'] and not etype:
+            module.fail_json(msg="'etype' MUST be set when 'state=%s'." % state)
 
     if entry:
         if etype or entity or permissions:
-            module.fail_json(msg="entry and another incompatible field (entity, etype or permissions) are also set")
-        if entry.count(":") not in [2,3]:
-            module.fail_json(msg="Invalid entry: '%s', it requires 3 or 4 sections divided by ':'" % entry)
+            module.fail_json(msg="'entry' MUST NOT be set when 'entity', 'etype' or 'permissions' are set.")
+
+        if state == 'present' and entry.count(":") != 3:
+            module.fail_json(msg="'entry' MUST have 3 sections divided by ':' when 'state=present'.")
+
+        if state == 'absent' and entry.count(":") != 2:
+            module.fail_json(msg="'entry' MUST have 2 sections divided by ':' when 'state=absent'.")
 
         default, etype, entity, permissions = split_entry(entry)
 
-    changed=False
+    changed = False
     msg = ""
-    currentacls = get_acls(module,path,follow)
 
-    if (state == 'present'):
-        matched = False
-        for oldentry in currentacls:
-            if oldentry.count(":") == 0:
-                continue
-            old_default, old_type, old_entity, old_permissions = split_entry(oldentry)
-            if old_default == default:
-                if old_type == etype:
-                    if etype in ['user', 'group']:
-                        if old_entity == entity:
-                            matched = True
-                            if not old_permissions == permissions:
-                                changed = True
-                            break
-                    else:
-                        matched = True
-                        if not old_permissions == permissions:
-                            changed = True
-                        break
-        if not matched:
-            changed=True
+    if state == 'present':
+        entry = build_entry(etype, entity, permissions)
+        command = build_command(
+            module, 'set', path, follow,
+            default, recursive, entry
+        )
+        changed = acl_changed(module, command)
 
         if changed and not module.check_mode:
-            set_acl(module,path,':'.join([etype, str(entity), permissions]),follow,default)
-        msg="%s is present" % ':'.join([etype, str(entity), permissions])
+            run_acl(module, command)
+        msg = "%s is present" % entry
 
     elif state == 'absent':
-        for oldentry in currentacls:
-            if oldentry.count(":") == 0:
-                continue
-            old_default, old_type, old_entity, old_permissions = split_entry(oldentry)
-            if old_default == default:
-                if old_type == etype:
-                    if etype in ['user', 'group']:
-                        if old_entity == entity:
-                            changed=True
-                            break
-                    else:
-                        changed=True
-                        break
+        entry = build_entry(etype, entity)
+        command = build_command(
+            module, 'rm', path, follow,
+            default, recursive, entry
+        )
+        changed = acl_changed(module, command)
+
         if changed and not module.check_mode:
-            rm_acl(module,path,':'.join([etype, entity, '---']),follow,default)
-        msg="%s is absent" % ':'.join([etype, entity, '---'])
+            run_acl(module, command, False)
+        msg = "%s is absent" % entry
+
     else:
-        msg="current acl"
+        msg = "current acl"
 
-    if changed:
-        currentacls = get_acls(module,path,follow)
+    acl = run_acl(
+        module,
+        build_command(module, 'get', path, follow, default, recursive)
+    )
 
-    module.exit_json(changed=changed, msg=msg, acl=currentacls)
+    module.exit_json(changed=changed, msg=msg, acl=acl)
 
 # import module snippets
 from ansible.module_utils.basic import *
