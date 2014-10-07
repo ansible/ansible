@@ -29,13 +29,31 @@ class ProxmoxNodeList(list):
     def get_names(self):
         return [node['node'] for node in self]
 
+class ProxmoxQemu(dict):
+    def get_variables(self):
+        variables = {}
+        for key, value in self.iteritems():
+            variables['proxmox_' + key] = value
+        return variables
+
 class ProxmoxQemuList(list):
+    def __init__(self, data=[]):
+        for item in data:
+            self.append(ProxmoxQemu(item))
+
     def get_names(self):
         return [qemu['name'] for qemu in self if qemu['template'] != 1]
 
     def get_by_name(self, name):
         results = [qemu for qemu in self if qemu['name'] == name]
         return results[0] if len(results) > 0 else None
+
+    def get_variables(self):
+        variables = {}
+        for qemu in self:
+            variables[qemu['name']] = qemu.get_variables()
+
+        return variables
 
 class ProxmoxPoolList(list):
     def get_names(self):
@@ -95,40 +113,42 @@ class ProxmoxAPI(object):
         return ProxmoxPool(self.get('api2/json/pools/{}'.format(poolid)))
 
 def main_list(options):
-    result = {}
+    results = {
+        'all': {
+            'hosts': [],
+        },
+        '_meta': {
+            'hostvars': {},
+        }
+    }
 
     proxmox_api = ProxmoxAPI(options)
     proxmox_api.auth()
 
-    # all
-    result['all'] = []
     for node in proxmox_api.nodes().get_names():
-        result['all'] += proxmox_api.node_qemu(node).get_names()
+        qemu_list = proxmox_api.node_qemu(node)
+        results['all']['hosts'] += qemu_list.get_names()
+        results['_meta']['hostvars'].update(qemu_list.get_variables())
 
     # pools
     for pool in proxmox_api.pools().get_names():
-        result[pool] = proxmox_api.pool(pool).get_members_name()
+        results[pool] = {
+            'hosts': proxmox_api.pool(pool).get_members_name(),
+        }
 
-    print json.dumps(result)
+    return json.dumps(results)
 
 def main_host(options):
-    results = {}
-
     proxmox_api = ProxmoxAPI(options)
     proxmox_api.auth()
 
-    host = None
     for node in proxmox_api.nodes().get_names():
         qemu_list = proxmox_api.node_qemu(node)
         qemu = qemu_list.get_by_name(options.host)
         if qemu:
-            break
+            return json.dumps(qemu.get_variables())
 
-    if qemu:
-        for key, value in qemu.iteritems():
-            results['proxmox_' + key] = value
-
-    print json.dumps(results)
+    print json.dumps({})
 
 def main():
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
@@ -140,12 +160,14 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.list:
-        main_list(options)
+        json = main_list(options)
     elif options.host:
-        main_host(options)
+        json = main_host(options)
     else:
         parser.print_help()
         sys.exit(1)
+
+    print json
 
 if __name__ == '__main__':
     main()
