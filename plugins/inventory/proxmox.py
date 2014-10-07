@@ -136,7 +136,7 @@ def main_list(options):
             'hosts': proxmox_api.pool(pool).get_members_name(),
         }
 
-    return json.dumps(results)
+    return results
 
 def main_host(options):
     proxmox_api = ProxmoxAPI(options)
@@ -146,9 +146,9 @@ def main_host(options):
         qemu_list = proxmox_api.node_qemu(node)
         qemu = qemu_list.get_by_name(options.host)
         if qemu:
-            return json.dumps(qemu.get_variables())
+            return qemu.get_variables()
 
-    print json.dumps({})
+    return {}
 
 def main():
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
@@ -157,17 +157,22 @@ def main():
     parser.add_option('--url', default=os.environ.get('PROXMOX_URL'), dest='url')
     parser.add_option('--username', default=os.environ.get('PROXMOX_USERNAME'), dest='username')
     parser.add_option('--password', default=os.environ.get('PROXMOX_PASSWORD'), dest='password')
+    parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
     (options, args) = parser.parse_args()
 
     if options.list:
-        json = main_list(options)
+        data = main_list(options)
     elif options.host:
-        json = main_host(options)
+        data = main_host(options)
     else:
         parser.print_help()
         sys.exit(1)
 
-    print json
+    indent = None
+    if options.pretty:
+        indent = 2
+
+    print json.dumps(data, indent=indent)
 
 if __name__ == '__main__':
     main()
