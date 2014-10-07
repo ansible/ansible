@@ -33,6 +33,10 @@ class ProxmoxQemuList(list):
     def get_names(self):
         return [qemu['name'] for qemu in self if qemu['template'] != 1]
 
+    def get_by_name(self, name):
+        results = [qemu for qemu in self if qemu['name'] == name]
+        return results[0] if len(results) > 0 else None
+
 class ProxmoxPoolList(list):
     def get_names(self):
         return [pool['poolid'] for pool in self]
@@ -107,8 +111,24 @@ def main_list(options):
 
     print json.dumps(result)
 
-def main_host():
-    print json.dumps({})
+def main_host(options):
+    results = {}
+
+    proxmox_api = ProxmoxAPI(options)
+    proxmox_api.auth()
+
+    host = None
+    for node in proxmox_api.nodes().get_names():
+        qemu_list = proxmox_api.node_qemu(node)
+        qemu = qemu_list.get_by_name(options.host)
+        if qemu:
+            break
+
+    if qemu:
+        for key, value in qemu.iteritems():
+            results['proxmox_' + key] = value
+
+    print json.dumps(results)
 
 def main():
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
@@ -122,7 +142,7 @@ def main():
     if options.list:
         main_list(options)
     elif options.host:
-        main_host()
+        main_host(options)
     else:
         parser.print_help()
         sys.exit(1)
