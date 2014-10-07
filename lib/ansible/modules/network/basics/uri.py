@@ -23,7 +23,6 @@
 import cgi
 import shutil
 import tempfile
-import base64
 import datetime
 try:
     import json
@@ -368,7 +367,6 @@ def main():
             body_format = dict(required=False, default='raw', choices=['raw', 'json']),
             method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH']),
             return_content = dict(required=False, default='no', type='bool'),
-            force_basic_auth = dict(required=False, default='no', type='bool'),
             follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
@@ -393,7 +391,6 @@ def main():
     method = module.params['method']
     dest = module.params['dest']
     return_content = module.params['return_content']
-    force_basic_auth = module.params['force_basic_auth']
     redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
@@ -431,13 +428,6 @@ def main():
         v = os.path.expanduser(removes)
         if not os.path.exists(removes):
             module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, stderr=False, rc=0)
-
-
-    # httplib2 only sends authentication after the server asks for it with a 401.
-    # Some 'basic auth' servies fail to send a 401 and require the authentication
-    # up front. This creates the Basic authentication header and sends it immediately. 
-    if force_basic_auth:
-        dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password))) 
 
 
     # Make the request
