@@ -24,6 +24,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 # TODO: it would be fantastic (if possible) if a task new where in the YAML it was defined for describing
 # it in error conditions
 
+from ansible.parsing.splitter import parse_kv
 from ansible.plugins import module_finder, lookup_finder
 
 class Task(Base):
@@ -103,9 +104,6 @@ class Task(Base):
        else:
            return "%s %s" % (self.action, self._merge_kv(self.args))
 
-    def _parse_kv(self, str):
-        return ansible.utils.parse_kv(str)
-
     def _merge_kv(self, ds):
         if ds is None:
             return ""
@@ -146,7 +144,7 @@ class Task(Base):
     def _munge_action2(self, ds, new_ds, k, v, local=False):
         ''' take an old school action/local_action and reformat it '''
         if isinstance(v, basestring):
-            (module, args) = self._parse_kv(v)
+            (module, args) = parse_kv(v)
             new_ds['action'] = module
             if 'args' in ds:
                 raise AnsibleError("unexpected and redundant 'args'")
@@ -199,7 +197,7 @@ LEGACY = """
         if module_name not in module_finder:
             raise AnsibleError("the specified module '%s' could not be found, check your module path" % module_name)
         results['_module_name'] = module_name
-        results['_parameters'] = self._parse_kv(params)
+        results['_parameters'] = parse_kv(params)
 
         if k == 'local_action':
             if 'delegate_to' in ds:
