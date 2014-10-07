@@ -229,6 +229,7 @@ import sys
 import socket
 import platform
 import tempfile
+import base64
 
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
@@ -523,6 +524,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         force=False, last_mod_time=None, timeout=10, validate_certs=True,
         url_username=None, url_password=None, http_agent=None):
+        force_basic_auth = dict(required=False, type='bool')
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
@@ -554,6 +556,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     if parsed[0] != 'ftp':
         username = url_username
+        force_basic_auth = module.params.get('force_basic_auth', False)
 
         if username:
             password = url_password
@@ -572,7 +575,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # reconstruct url without credentials
             url = urlparse.urlunparse(parsed)
 
-        if username:
+        if username and not force_basic_auth:
             passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
@@ -585,6 +588,12 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
             # create the AuthHandler
             handlers.append(authhandler)
+
+        elif username and force_basic_auth:
+            if headers is None:
+                headers = {}
+
+            headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(username, password)))
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})
