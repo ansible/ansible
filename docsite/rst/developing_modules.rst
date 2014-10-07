@@ -18,7 +18,7 @@ The directory "./library", alongside your top level playbooks, is also automatic
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
-`moudule-extras project <http://github.com/ansible/ansible-module-extras>`_.  There's also a core
+`moudules-extras project <http://github.com/ansible/ansible-modules-extras>`_.  There's also a core
 repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
 but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
 of how you acquire ansible.
