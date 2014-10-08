@@ -100,6 +100,7 @@ EXAMPLES = '''
     creates: /path/to/database
 '''
 
+# Dict of options and their defaults
 OPTIONS = {'chdir': None,
            'creates': None,
            'executable': None,
