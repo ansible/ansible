@@ -223,6 +223,26 @@ def load_platform_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
+
+def json_dict_unicode_to_bytes(d):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, unicode):
+        return d.encode('utf-8')
+    elif isinstance(d, dict):
+        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+    elif isinstance(d, list):
+        return list(map(json_dict_unicode_to_bytes, d))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_unicode_to_bytes, d))
+    else:
+        return d
+
+
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
@@ -968,7 +988,7 @@ class AnsibleModule(object):
             if k in params:
                 self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
-        params2 = json.loads(MODULE_COMPLEX_ARGS)
+        params2 = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
         params2.update(params)
         return (params2, args)
 
