@@ -16,13 +16,13 @@ class TestTask(unittest.TestCase):
 
     def setUp(self):
         pass
-   
+
     def tearDown(self):
         pass
 
     def test_construct_empty_task(self):
         t = Task()
-    
+
     def test_construct_task_with_role(self):
         pass
 
@@ -57,15 +57,13 @@ class TestTask(unittest.TestCase):
         pass
 
     def test_can_load_module_complex_form(self):
-        pass 
+        pass
 
     def test_local_action_implies_delegate(self):
-        pass 
- 
+        pass
+
     def test_local_action_conflicts_with_delegate(self):
-        pass 
+        pass
 
     def test_delegate_to_parses(self):
         pass
-
- 

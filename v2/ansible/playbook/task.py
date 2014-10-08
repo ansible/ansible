@@ -27,7 +27,7 @@ from ansible.plugins import module_finder, lookup_finder
 class Task(Base):
 
     """
-    A task is a language feature that represents a call to a module, with given arguments and other parameters. 
+    A task is a language feature that represents a call to a module, with given arguments and other parameters.
     A handler is a subclass of a task.
 
     Usage:
@@ -41,14 +41,14 @@ class Task(Base):
     # load_<attribute_name> and
     # validate_<attribute_name>
     # will be used if defined
-    # might be possible to define others 
-  
+    # might be possible to define others
+
     _args                 = FieldAttribute(isa='dict')
     _action               = FieldAttribute(isa='string')
-    
+
     _always_run           = FieldAttribute(isa='bool')
     _any_errors_fatal     = FieldAttribute(isa='bool')
-    _async                = FieldAttribute(isa='int') 
+    _async                = FieldAttribute(isa='int')
     _connection           = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int')
     _delegate_to          = FieldAttribute(isa='string')
@@ -59,9 +59,9 @@ class Task(Base):
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
     _local_action         = FieldAttribute(isa='string')
-  
+
     # FIXME: this should not be a Task
-    _meta                 = FieldAttribute(isa='string')    
+    _meta                 = FieldAttribute(isa='string')
 
     _name                 = FieldAttribute(isa='string')
 
@@ -120,7 +120,7 @@ class Task(Base):
     def __repr__(self):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
-                
+
     def _munge_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
@@ -128,9 +128,9 @@ class Task(Base):
             raise AnsibleError("duplicate loop in task: %s" % k)
         new_ds['loop'] = k
         new_ds['loop_args'] = v
-                
+
     def munge(self, ds):
-        ''' 
+        '''
         tasks are especially complex arguments so need pre-processing.
         keep it short.
         '''
@@ -202,7 +202,7 @@ LEGACY = """
         results['_module_name'] = k
         if isinstance(v, dict) and 'args' in ds:
             raise AnsibleError("can't combine args: and a dict for %s: in task %s" % (k, ds.get('name', "%s: %s" % (k, v))))
-        results['_parameters'] = self._load_parameters(v) 
+        results['_parameters'] = self._load_parameters(v)
         return results
 
     def _load_loop(self, ds, k, v):
@@ -264,7 +264,7 @@ LEGACY = """
 
     def _load_invalid_key(self, ds, k, v):
         ''' handle any key we do not recognize '''
-          
+
         raise AnsibleError("%s is not a legal parameter in an Ansible task or handler" % k)
 
     def _load_other_valid_key(self, ds, k, v):
@@ -296,7 +296,7 @@ LEGACY = """
             return self._load_invalid_key
         else:
             return self._load_other_valid_key
- 
+
     # ==================================================================================
     # PRE-VALIDATION - expected to be uncommonly used, this checks for arguments that
     # are aliases of each other.  Most everything else should be in the LOAD block
@@ -311,7 +311,7 @@ LEGACY = """
     # =================================================================================
     # POST-VALIDATION: checks for internal inconsistency between fields
     # validation can result in an error but also corrections
-    
+
     def _post_validate(self):
         ''' is the loaded datastructure sane? '''
 
@@ -321,13 +321,13 @@ LEGACY = """
         # incompatible items
         self._validate_conflicting_su_and_sudo()
         self._validate_conflicting_first_available_file_and_loookup()
-    
+
     def _post_validate_fixed_name(self):
         '' construct a name for the task if no name was specified '''
 
         flat_params = " ".join(["%s=%s" % (k,v) for k,v in self._parameters.iteritems()])
         return = "%s %s" % (self._module_name, flat_params)
-        
+
     def _post_validate_conflicting_su_and_sudo(self):
         ''' make sure su/sudo usage doesn't conflict '''
 
@@ -342,4 +342,3 @@ LEGACY = """
             raise AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
 
 """
-

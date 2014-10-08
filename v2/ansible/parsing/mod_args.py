@@ -55,15 +55,16 @@ class ModuleArgsParser(object):
     will tell you about the modules in a predictable way.
     """
 
-    def __init__(self):
+    def __init__(self, task=None):
         self._ds = None
+        self._task = task
 
     def _get_delegate_to(self):
         '''
         Returns the value of the delegate_to key from the task datastructure,
         or None if the value was not directly specified
         '''
-        return self._ds.get('delegate_to')
+        return self._ds.get('delegate_to', None)
 
     def _get_old_style_action(self):
         '''
@@ -108,29 +109,24 @@ class ModuleArgsParser(object):
             if 'module' in other_args:
                 del other_args['module']
             args.update(other_args)
+            
         elif isinstance(action_data, basestring):
             action_data = action_data.strip()
             if not action_data:
-                # TODO: change to an AnsibleParsingError so that the
-                #       filename/line number can be reported in the error
-                raise AnsibleError("when using 'action:' or 'local_action:', the module name must be specified")
+                raise AnsibleError("when using 'action:' or 'local_action:', the module name must be specified", object=self._task)
             else:
                 # split up the string based on spaces, where the first
                 # item specified must be a valid module name
                 parts = action_data.split(' ', 1)
                 action = parts[0]
                 if action not in module_finder:
-                    # TODO: change to an AnsibleParsingError so that the
-                    #       filename/line number can be reported in the error
-                    raise AnsibleError("the module '%s' was not found in the list of loaded modules")
+                    raise AnsibleError("the module '%s' was not found in the list of loaded modules" % action, object=self._task)
                 if len(parts) > 1:
                     args = self._get_args_from_action(action, ' '.join(parts[1:]))
                 else:
                     args = {}
         else:
-            # TODO: change to an AnsibleParsingError so that the
-            #       filename/line number can be reported in the error
-            raise AnsibleError('module args must be specified as a dictionary or string')
+            raise AnsibleError('module args must be specified as a dictionary or string', object=self._task)
 
         return dict(action=action, args=args, delegate_to=delegate_to)
 
@@ -277,7 +273,7 @@ class ModuleArgsParser(object):
         assert type(ds) == dict
 
         self._ds = ds
- 
+
         # first we try to get the module action/args based on the
         # new-style format, where the module name is the key
         result = self._get_new_style_action()
@@ -286,9 +282,7 @@ class ModuleArgsParser(object):
             # where 'action' or 'local_action' is the key
             result = self._get_old_style_action()
             if result is None:
-                # TODO: change to an AnsibleParsingError so that the
-                #       filename/line number can be reported in the error
-                raise AnsibleError('no action specified for this task')
+                raise AnsibleError('no action specified for this task', object=self._task)
 
         # if the action is set to 'shell', we switch that to 'command' and
         # set the special parameter '_uses_shell' to true in the args dict
@@ -302,11 +296,8 @@ class ModuleArgsParser(object):
         specified_delegate_to = self._get_delegate_to()
         if specified_delegate_to is not None:
             if result['delegate_to'] is not None:
-                # TODO: change to an AnsibleParsingError so that the
-                #       filename/line number can be reported in the error
                 raise AnsibleError('delegate_to cannot be used with local_action')
             else:
                result['delegate_to'] = specified_delegate_to
 
         return (result['action'], result['args'], result['delegate_to'])
-
