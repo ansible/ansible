@@ -50,254 +50,192 @@ class ModuleArgsParser(object):
           src: a
           dest: b
 
-    This class exists so other things don't have to remember how this
-    all works.  Pass it "part1" and "part2", and the parse function
-    will tell you about the modules in a predictable way.
+    This class has some of the logic to canonicalize these into the form
+
+    - module: <module_name>
+      delegate_to: <optional>
+      args: <args>
+
+    Args may also be munged for certain shell command parameters.
     """
 
     def __init__(self, task=None):
-        self._ds = None
         self._task = task
 
-    def _get_delegate_to(self):
-        '''
-        Returns the value of the delegate_to key from the task datastructure,
-        or None if the value was not directly specified
-        '''
-        return self._ds.get('delegate_to', None)
 
-    def _get_old_style_action(self):
+    def _split_module_string(self, str):
         '''
-        Searches the datastructure for 'action:' or 'local_action:' keywords.
-        When local_action is found, the delegate_to value is set to the localhost
-        IP, otherwise delegate_to is left as None.
-
-        Inputs:
-        - None
-
-        Outputs:
-        - None (if neither keyword is found), or a dictionary containing:
-          action:
-            the module name to be executed
-          args:
-            a dictionary containing the arguments to the module
-          delegate_to:
-            None or 'localhost'
+        when module names are expressed like:
+        action: copy src=a dest=b
+        the first part of the string is the name of the module
+        and the rest are strings pertaining to the arguments.
         '''
-
-        # determine if this is an 'action' or 'local_action'
-        if 'action' in self._ds:
-            action_data = self._ds.get('action', '')
-            delegate_to = None
-        elif 'local_action' in self._ds:
-            action_data = self._ds.get('local_action', '')
-            delegate_to = 'localhost'
+        
+        tokens = str.split()
+        if len(tokens) > 1:
+            return (tokens[0], " ".join(tokens[1:]))
         else:
-            return None
+            return (tokens[0], "")
 
-        # now we get the arguments for the module, which may be a
-        # string of key=value pairs, a dictionary of values, or a
-        # dictionary with a special 'args:' value in it
-        if isinstance(action_data, dict):
-            action = self._get_specified_module(action_data)
-            args = dict()
-            if 'args' in action_data:
-                args = self._get_args_from_ds(action, action_data)
-                del action_data['args']
-            other_args = action_data.copy()
-            # remove things we don't want in the args
-            if 'module' in other_args:
-                del other_args['module']
-            args.update(other_args)
-            
-        elif isinstance(action_data, basestring):
-            action_data = action_data.strip()
-            if not action_data:
-                raise AnsibleError("when using 'action:' or 'local_action:', the module name must be specified", object=self._task)
-            else:
-                # split up the string based on spaces, where the first
-                # item specified must be a valid module name
-                parts = action_data.split(' ', 1)
-                action = parts[0]
-                if action not in module_finder:
-                    raise AnsibleError("the module '%s' was not found in the list of loaded modules" % action, object=self._task)
-                if len(parts) > 1:
-                    args = self._get_args_from_action(action, ' '.join(parts[1:]))
-                else:
-                    args = {}
+
+    def _handle_shell_weirdness(self, action, args):
+        '''
+        given an action name and an args dictionary, return the
+        proper action name and args dictionary.  This mostly is due
+        to shell/command being treated special and nothing else
+        '''
+
+        # don't handle non shell/command modules in this function
+        # TODO: in terms of the whole app, should 'raw' also fit here?
+        if action not in ['shell', 'command']:
+            return (action, args)
+
+        new_args = {}
+
+        # the shell module really is the command module with an additional
+        # parameter
+        if action == 'shell':
+            action = 'command'
+            new_args['_uses_shell'] = True
+
+        # make sure the non-key-value params hop in the data
+        new_args['_raw_params'] = args['_raw_params']
+
+        return (action, new_args)
+
+    def _normalize_parameters(self, thing, action=None):
+        '''
+        arguments can be fuzzy.  Deal with all the forms.
+        '''
+
+        args = dict()
+
+        # how we normalize depends if we figured out what the module name is
+        # yet.  If we have already figured it out, it's an 'old style' invocation.
+        # otherwise, it's not
+
+        if action is not None:
+            args = self._normalize_old_style_args(thing)
         else:
-            raise AnsibleError('module args must be specified as a dictionary or string', object=self._task)
+            (action, args) = self._normalize_new_style_args(thing)
 
-        return dict(action=action, args=args, delegate_to=delegate_to)
+        # this can occasionally happen, simplify
+        if 'args' in args:
+            args = args['args']
 
-    def _get_new_style_action(self):
+        return (action, args)
+
+    def _normalize_old_style_args(self, thing):
         '''
-        Searches the datastructure for 'module_name:', where the module_name is a
-        valid module loaded by the module_finder plugin.
+        deals with fuzziness in old-style (action/local_action) module invocations
+        returns tuple of (module_name, dictionary_args)
 
-        Inputs:
-        - None
-
-        Outputs:
-        - None (if no valid module is found), or a dictionary containing:
-          action:
-            the module name to be executed
-          args:
-            a dictionary containing the arguments to the module
-          delegate_to:
-            None
+        possible example inputs:
+            { 'local_action' : 'shell echo hi' }
+            { 'action'       : 'shell echo hi' }
+            { 'local_action' : { 'module' : 'ec2', 'x' : 1, 'y': 2 }}
+        standardized outputs like:
+            ( 'command', { _raw_params: 'echo hi', _uses_shell: True }
         '''
 
-        # for all keys in the datastructure, check to see if the value
-        # corresponds to a module found by the module_finder plugin
-        action = None
-        for item in self._ds:
-            if item in module_finder:
-                action = item
-                break
+        if isinstance(thing, dict):
+            # form is like: local_action: { module: 'xyz', x: 2, y: 3 } ... uncommon!
+            args = thing
+        elif isinstance(thing, basestring):
+            # form is like: local_action: copy src=a dest=b ... pretty common
+            args = parse_kv(thing)
         else:
-            # none of the keys matched a known module name
-            return None
-
-        # now we get the arguments for the module, which may be a
-        # string of key=value pairs, a dictionary of values, or a
-        # dictionary with a special 'args:' value in it
-        action_data = self._ds.get(action, '')
-        if isinstance(action_data, dict):
-            args = dict()
-            if 'args' in action_data:
-                args = self._get_args_from_ds(action, action_data)
-                del action_data['args']
-            other_args = action_data.copy()
-            # remove things we don't want in the args
-            if 'module' in other_args:
-                del other_args['module']
-            args.update(other_args)
-        else:
-            args = self._get_args_from_action(action, action_data.strip())
-
-        return dict(action=action, args=args, delegate_to=None)
-
-    def _get_args_from_ds(self, action, action_data):
-        '''
-        Gets the module arguments from the 'args' value of the
-        action_data, when action_data is a dict. The value of
-        'args' can be either a string or a dictionary itself, so
-        we use parse_kv() to split up the key=value pairs when
-        a string is found.
-
-        Inputs:
-        - action_data:
-            a dictionary of values, which may or may not contain a
-            key named 'args'
-
-        Outputs:
-        - a dictionary of values, representing the arguments to the
-          module action specified
-        '''
-        args = action_data.get('args', {}).copy()
-        if isinstance(args, basestring):
-            if action in ('command', 'shell'):
-                args = parse_kv(args, check_raw=True)
-            else:
-                args = parse_kv(args)
+            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task)
         return args
 
-    def _get_args_from_action(self, action, action_data):
+    def _normalize_new_style_args(self, thing):
         '''
-        Gets the module arguments from the action data when it is
-        specified as a string of key=value pairs. Special handling
-        is used for the command/shell modules, which allow free-
-        form syntax for the options.
+        deals with fuzziness in new style module invocations
+        accepting key=value pairs and dictionaries, and always returning dictionaries
+        returns tuple of (module_name, dictionary_args)
 
-        Inputs:
-        - action:
-            the module to be executed
-        - action_data:
-            a string of key=value pairs (and possibly free-form arguments)
-
-        Outputs:
-        - A dictionary of values, representing the arguments to the
-          module action specified OR a string of key=value pairs (when
-          the module action is command or shell)
+        possible example inputs:
+           { 'shell' : 'echo hi' }
+           { 'ec2'   : { 'region' : 'xyz' }
+           { 'ec2'   : 'region=xyz' }
+        standardized outputs like:
+           ('ec2', { region: 'xyz'} )
         '''
-        tokens = action_data.split()
-        if len(tokens) == 0:
-            return {}
+
+        action = None
+        args = None
+
+        if isinstance(thing, dict):
+            # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
+            thing = thing.copy()
+            if 'module' in thing:
+                action = thing['module']
+                args = thing.copy()
+                del args['module']
+
+        elif isinstance(thing, basestring):
+            # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
+            (action, args) = self._split_module_string(thing)
+            args = parse_kv(args)
+
         else:
-            joined = " ".join(tokens)
-            if action in ('command', 'shell'):
-                return parse_kv(joined, check_raw=True)
-            else:
-                return parse_kv(joined)
+            # need a dict or a string, so giving up
+            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task)
 
-    def _get_specified_module(self, action_data):
-        '''
-        gets the module if specified directly in the arguments, ie:
-        - action:
-            module: foo
-
-        Inputs:
-        - action_data:
-            a dictionary of values, which may or may not contain the
-            key 'module'
-
-        Outputs:
-        - a string representing the module specified in the data, or
-          None if that key was not found
-        '''
-        return action_data.get('module')
+        return (action, args)
 
     def parse(self, ds):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
-        task.
-
-        Inputs:
-        - ds:
-            a dictionary datastructure representing the task as parsed
-            from a YAML file
-
-        Outputs:
-        - A tuple containing 3 values:
-          action:
-            the action (module name) to be executed
-          args:
-            the args for the action
-          delegate_to:
-            the delegate_to option (which may be None, if no delegate_to
-            option was specified and this is not a local_action)
+        task, dealing with all sorts of levels of fuzziness.
         '''
 
         assert type(ds) == dict
 
-        self._ds = ds
+        thing      = None
 
-        # first we try to get the module action/args based on the
-        # new-style format, where the module name is the key
-        result = self._get_new_style_action()
-        if result is None:
-            # failing that, we resort to checking for the old-style syntax,
-            # where 'action' or 'local_action' is the key
-            result = self._get_old_style_action()
-            if result is None:
-                raise AnsibleError('no action specified for this task', object=self._task)
+        action      = None
+        delegate_to = None
+        args        = dict()
 
-        # if the action is set to 'shell', we switch that to 'command' and
-        # set the special parameter '_uses_shell' to true in the args dict
-        if result['action'] == 'shell':
-            result['action'] = 'command'
-            result['args']['_uses_shell'] = True
+        if 'action' in ds:
 
-        # finally, we check to see if a delegate_to value was specified
-        # in the task datastructure (and raise an error for local_action,
-        # which essentially means we're delegating to localhost)
-        specified_delegate_to = self._get_delegate_to()
-        if specified_delegate_to is not None:
-            if result['delegate_to'] is not None:
-                raise AnsibleError('delegate_to cannot be used with local_action')
-            else:
-               result['delegate_to'] = specified_delegate_to
+            # an old school 'action' statement
+            thing = ds['action']
+            delegate_to = None
+            action, args = self._normalize_parameters(thing)
 
-        return (result['action'], result['args'], result['delegate_to'])
+        elif 'local_action' in ds:
+
+            # local_action is similar but also implies a delegate_to
+            if action is not None:
+                raise AnsibleError("action and local_action are mutually exclusive")
+            thing = ds.get('local_action', '')
+            delegate_to = 'localhost'
+            action, args = self._normalize_parameters(thing)
+
+        else:
+
+            # module: <stuff> is the more new-style invocation
+            if action is not None:
+                raise AnsibleError("conflicting action statements")
+
+            # walk the input dictionary to see we recognize a module name
+            for (item, value) in ds.iteritems():
+                if item in module_finder:
+                    # finding more than one module name is a problem
+                    if action is not None:
+                        raise AnsibleError("conflicting action statements")
+                    action = item
+                    thing = value
+                    action, args = self._normalize_parameters(value, action=action)
+
+        # if we didn't see any module in the task at all, it's not a task really
+        if action is None:
+            raise AnsibleParserError("no action detected in task", obj=self._task)
+
+        # shell modules require special handling
+        (action, args) = self._handle_shell_weirdness(action, args)
+
+        return (action, args, delegate_to)
