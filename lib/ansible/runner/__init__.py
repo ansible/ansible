@@ -1224,7 +1224,7 @@ class Runner(object):
 
         # Search module path(s) for named module.
         module_suffixes = getattr(conn, 'default_suffixes', None)
-        module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes, transport=self.transport)
+        module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes)
         if module_path is None:
             module_path2 = utils.plugins.module_finder.find_plugin('ping', module_suffixes)
             if module_path2 is not None:
