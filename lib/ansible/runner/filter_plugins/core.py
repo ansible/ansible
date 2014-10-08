@@ -236,7 +236,10 @@ def rand(environment, end, start=None, step=None):
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 def randomize_list(mylist):
-    shuffle(mylist)
+    try:
+        shuffle(list(mylist))
+    except:
+        pass
     return mylist
 
 class FilterModule(object):
