@@ -17,7 +17,7 @@
 
 import exceptions
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleParserError
 from ansible.plugins import module_finder
 from ansible.parsing.splitter import parse_kv
 
@@ -70,7 +70,7 @@ class ModuleArgsParser(object):
         the first part of the string is the name of the module
         and the rest are strings pertaining to the arguments.
         '''
-        
+
         tokens = str.split()
         if len(tokens) > 1:
             return (tokens[0], " ".join(tokens[1:]))
@@ -210,7 +210,7 @@ class ModuleArgsParser(object):
 
             # local_action is similar but also implies a delegate_to
             if action is not None:
-                raise AnsibleError("action and local_action are mutually exclusive")
+                raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task)
             thing = ds.get('local_action', '')
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing)
@@ -219,14 +219,14 @@ class ModuleArgsParser(object):
 
             # module: <stuff> is the more new-style invocation
             if action is not None:
-                raise AnsibleError("conflicting action statements")
+                raise AnsibleParserError("conflicting action statements", obj=self._task)
 
             # walk the input dictionary to see we recognize a module name
             for (item, value) in ds.iteritems():
                 if item in module_finder:
                     # finding more than one module name is a problem
                     if action is not None:
-                        raise AnsibleError("conflicting action statements")
+                        raise AnsibleParserError("conflicting action statements", obj=self._task)
                     action = item
                     thing = value
                     action, args = self._normalize_parameters(value, action=action)
