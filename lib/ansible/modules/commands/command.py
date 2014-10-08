@@ -250,12 +250,7 @@ class CommandModule(AnsibleModule):
             if '=' in x and not quoted:
                 # check to see if this is a special parameter for the command
                 k, v = x.split('=', 1)
-                v = unquote(v)
-                # because we're not breaking out quotes in the shlex split
-                # above, the value of the k=v pair may still be quoted. If
-                # so, remove them.
-                if len(v) > 1 and (v.startswith('"') and v.endswith('"') or v.startswith("'") and v.endswith("'")):
-                    v = v[1:-1]
+                v = unquote(v.strip())
                 if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
                     if k == "chdir":
                         v = os.path.abspath(os.path.expanduser(v))
