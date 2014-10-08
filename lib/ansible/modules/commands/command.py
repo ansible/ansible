@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import sys
 import datetime
 import traceback
@@ -99,12 +100,21 @@ EXAMPLES = '''
     creates: /path/to/database
 '''
 
+OPTIONS = {'chdir': None,
+           'creates': None,
+           'executable': None,
+           'NO_LOG': None,
+           'removes': None,
+           'warn': True,
+           }
+
 # This is a pretty complex regex, which functions as follows:
 #
 # 1. (^|\s)
 # ^ look for a space or the beginning of the line
-# 2. (creates|removes|chdir|executable|NO_LOG)=
-# ^ look for a valid param, followed by an '='
+# 2. ({options_list})=
+# ^ expanded to (chdir|creates|executable...)=
+#   look for a valid param, followed by an '='
 # 3. (?P<quote>[\'"])?
 # ^ look for an optional quote character, which can either be
 #   a single or double quote character, and store it for later
@@ -114,8 +124,12 @@ EXAMPLES = '''
 # ^ a non-escaped space or a non-escaped quote of the same kind
 #   that was matched in the first 'quote' is found, or the end of
 #   the line is reached
-
-PARAM_REGEX = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG|warn)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+OPTIONS_REGEX = '|'.join(OPTIONS.keys())
+PARAM_REGEX = re.compile(
+    r'(^|\s)({options_list})=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)'.format(
+        options_regex=OPTIONS_REGEX
+    )
+)
 
 
 def check_command(commandline):
@@ -232,13 +246,8 @@ class CommandModule(AnsibleModule):
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
         args = MODULE_ARGS
-        params = {}
-        params['chdir']      = None
-        params['creates']    = None
-        params['removes']    = None
-        params['shell']      = False
-        params['executable'] = None
-        params['warn'] = True
+        params = copy.copy(OPTIONS)
+        params['shell'] = False
         if "#USE_SHELL" in args:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
@@ -251,7 +260,7 @@ class CommandModule(AnsibleModule):
                 # check to see if this is a special parameter for the command
                 k, v = x.split('=', 1)
                 v = unquote(v.strip())
-                if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
+                if k in OPTIONS.keys():
                     if k == "chdir":
                         v = os.path.abspath(os.path.expanduser(v))
                         if not (os.path.exists(v) and os.path.isdir(v)):
