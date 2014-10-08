@@ -155,17 +155,14 @@ class PluginLoader(object):
                 self._extra_dirs.append(directory)
                 self._paths = None
 
-    def find_plugin(self, name, suffixes=None, transport=''):
+    def find_plugin(self, name, suffixes=None):
         ''' Find a plugin named name '''
 
         if not suffixes:
             if self.class_name:
                 suffixes = ['.py']
             else:
-                if transport == 'winrm':
-                    suffixes = ['.ps1', '']
-                else:
-                    suffixes = ['.py', '']
+                suffixes = ['.py', '']
 
         for suffix in suffixes:
             full_name = '%s%s' % (name, suffix)
