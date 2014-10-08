@@ -36,13 +36,14 @@ class TestTask(unittest.TestCase):
         t = Task.load(basic_shell_task)
         assert t is not None
         assert t.name == basic_shell_task['name']
-        assert t.action == 'shell'
-        assert t.args == 'echo hi'
+        assert t.action == 'command'
+        assert t.args == dict(_raw_params='echo hi', _uses_shell=True)
 
     def test_load_task_kv_form(self):
         t = Task.load(kv_shell_task)
-        assert t.action == 'shell'
-        #assert t.args == 'echo hi'
+        print "task action is %s" % t.action
+        assert t.action == 'command'
+        assert t.args == dict(_raw_params='echo hi', _uses_shell=True)
 
     def test_task_auto_name(self):
         assert 'name' not in kv_shell_task

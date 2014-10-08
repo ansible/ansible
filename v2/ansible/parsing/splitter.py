@@ -15,8 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-def parse_kv(args):
-    ''' convert a string of key/value items to a dict '''
+def parse_kv(args, check_raw=False):
+    '''
+    Convert a string of key/value items to a dict. If any free-form params
+    are found and the check_raw option is set to True, they will be added
+    to a new parameter called '_raw_params'. If check_raw is not enabled,
+    they will simply be ignored.
+    '''
+
     options = {}
     if args is not None:
         try:
@@ -26,10 +32,31 @@ def parse_kv(args):
                 raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
                 raise
+
+        raw_params = []
         for x in vargs:
             if "=" in x:
-                k, v = x.split("=",1)
-                options[k.strip()] = unquote(v.strip())
+                k, v = x.split("=", 1)
+
+                # only internal variables can start with an underscore, so
+                # we don't allow users to set them directy in arguments
+                if k.startswith('_'):
+                    raise AnsibleError("invalid parameter specified: '%s'" % k)
+
+                # FIXME: make the retrieval of this list of shell/command
+                #        options a function, so the list is centralized
+                if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
+                    raw_params.append(x)
+                else:
+                    options[k.strip()] = unquote(v.strip())
+            else:
+                raw_params.append(x)
+
+        # recombine the free-form params, if any were found, and assign
+        # them to a special option for use later by the shell/command module
+        if len(raw_params) > 0:
+            options['_raw_params'] = ' '.join(raw_params)
+                
     return options
 
 def _get_quote_state(token, quote_char):
