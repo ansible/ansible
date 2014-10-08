@@ -16,4 +16,31 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 class AnsibleError(Exception):
-     pass
+    def __init__(self, message, object=None):
+         self.message = message
+         self.object = object
+
+    # TODO: nice __repr__ message that includes the line number if the object
+    # it was constructed with had the line number
+
+    # TODO: tests for the line number functionality
+
+class AnsibleParserError(AnsibleError):
+    ''' something was detected early that is wrong about a playbook or data file '''
+    pass
+
+class AnsibleInternalError(AnsibleError):
+    ''' internal safeguards tripped, something happened in the code that should never happen '''
+    pass
+
+class AnsibleRuntimeError(AnsibleError):
+    ''' ansible had a problem while running a playbook '''
+    pass
+
+class AnsibleModuleError(AnsibleRuntimeError):
+    ''' a module failed somehow '''
+    pass
+
+class AnsibleConnectionFailure(AnsibleRuntimeError):
+    ''' the transport / connection_plugin had a fatal error '''
+    pass

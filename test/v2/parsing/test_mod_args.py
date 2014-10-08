@@ -5,10 +5,14 @@ import unittest
 
 class TestModArgsDwim(unittest.TestCase):
 
+    # TODO: add tests that construct ModuleArgsParser with a task reference
+    # TODO: verify the AnsibleError raised on failure knows the task
+    #       and the task knows the line numbers
+
     def setUp(self):
         self.m = ModuleArgsParser()
         pass
-   
+
     def tearDown(self):
         pass
 
@@ -77,5 +81,4 @@ class TestModArgsDwim(unittest.TestCase):
         mod, args, to = self.m.parse(dict(local_action='copy src=a dest=b'))
         assert mod == 'copy'
         assert args == dict(src='a', dest='b')
-        assert to is 'localhost' 
-
+        assert to is 'localhost'

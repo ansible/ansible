@@ -31,4 +31,3 @@ class Attribute(object):
 
 class FieldAttribute(Attribute):
     pass
-

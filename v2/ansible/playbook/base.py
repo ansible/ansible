@@ -16,12 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.parsing import load as ds_load
 
 class Base(object):
 
     def __init__(self):
-     
-        # each class knows attributes set upon it, see Task.py for example 
+
+        # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()
 
         for (name, value) in self.__class__.__dict__.iteritems():
@@ -38,6 +39,9 @@ class Base(object):
         ''' walk the input datastructure and assign any values '''
 
         assert ds is not None
+
+        if isinstance(ds, basestring) or isinstance(ds, file):
+            ds = ds_load(ds)
 
         # we currently don't do anything with private attributes but may
         # later decide to filter them out of 'ds' here.
@@ -59,14 +63,14 @@ class Base(object):
                 else:
                     if aname in ds:
                         self._attributes[aname] = ds[aname]
- 
+
         # return the constructed object
         self.validate()
         return self
 
 
     def validate(self):
-        ''' validation that is done at parse time, not load time ''' 
+        ''' validation that is done at parse time, not load time '''
 
         # walk all fields in the object
         for (name, attribute) in self.__dict__.iteritems():
@@ -76,9 +80,9 @@ class Base(object):
 
                 if not name.startswith("_"):
                     raise AnsibleError("FieldAttribute %s must start with _" % name)
-                
+
                 aname = name[1:]
-                
+
                 # run validator only if present
                 method = getattr(self, '_validate_%s' % (prefix, aname), None)
                 if method:
@@ -87,9 +91,9 @@ class Base(object):
     def post_validate(self, runner_context):
         '''
         we can't tell that everything is of the right type until we have
-        all the variables.  Run basic types (from isa) as well as 
+        all the variables.  Run basic types (from isa) as well as
         any _post_validate_<foo> functions.
-        ''' 
+        '''
 
         raise exception.NotImplementedError
 
@@ -107,4 +111,3 @@ class Base(object):
             return self._attributes[needle]
 
         raise AttributeError("attribute not found: %s" % needle)
-
