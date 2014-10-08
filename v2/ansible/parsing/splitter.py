@@ -56,7 +56,7 @@ def parse_kv(args, check_raw=False):
         # them to a special option for use later by the shell/command module
         if len(raw_params) > 0:
             options['_raw_params'] = ' '.join(raw_params)
-                
+
     return options
 
 def _get_quote_state(token, quote_char):
@@ -239,4 +239,3 @@ def unquote(data):
     if is_quoted(data):
         return data[1:-1]
     return data
-
