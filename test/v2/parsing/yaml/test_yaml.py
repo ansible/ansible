@@ -1,6 +1,9 @@
 # TODO: header
 
 import unittest
+
+from yaml.scanner import ScannerError
+
 from ansible.parsing.yaml import safe_load
 from ansible.parsing.yaml.objects import AnsibleMapping
 
@@ -36,6 +39,11 @@ data3 = '''---
     list1key3: list1value3
 '''
 
+bad_data1 = '''---
+foo: bar
+  bam: baz
+'''
+
 class TestSafeLoad(unittest.TestCase):
 
     def setUp(self):
@@ -43,6 +51,10 @@ class TestSafeLoad(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_safe_load_bad(self):
+        # test the loading of bad yaml data
+        self.assertRaises(ScannerError, safe_load, bad_data1)
 
     def test_safe_load(self):
         # test basic dictionary
