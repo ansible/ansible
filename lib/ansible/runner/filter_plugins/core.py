@@ -237,7 +237,8 @@ def rand(environment, end, start=None, step=None):
 
 def randomize_list(mylist):
     try:
-        shuffle(list(mylist))
+        mylist = list(mylist)
+        shuffle(mylist)
     except:
         pass
     return mylist
