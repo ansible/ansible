@@ -18,13 +18,10 @@
 from ansible.playbook.base import Base
 from ansible.playbook.attribute import Attribute, FieldAttribute
 
-# from ansible.playbook.conditional import Conditional
 from ansible.errors import AnsibleError
 
-# TODO: it would be fantastic (if possible) if a task new where in the YAML it was defined for describing
-# it in error conditions
-
 from ansible.parsing.splitter import parse_kv
+from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.plugins import module_finder, lookup_finder
 
 class Task(Base):
@@ -45,7 +42,6 @@ class Task(Base):
     # validate_<attribute_name>
     # will be used if defined
     # might be possible to define others 
-
   
     _args                 = FieldAttribute(isa='dict')
     _action               = FieldAttribute(isa='string')
@@ -59,9 +55,6 @@ class Task(Base):
     _environment          = FieldAttribute(isa='dict')
     _first_available_file = FieldAttribute(isa='list')
     _ignore_errors        = FieldAttribute(isa='bool')
-
-    # FIXME: this should not be a Task
-    # include             = FieldAttribute(isa='string')
 
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
@@ -102,16 +95,19 @@ class Task(Base):
        elif self.name:
            return self.name
        else:
-           return "%s %s" % (self.action, self._merge_kv(self.args))
+           flattened_args = self._merge_kv(self.args)
+           return "%s %s" % (self.action, flattened_args)
 
     def _merge_kv(self, ds):
         if ds is None:
             return ""
         elif isinstance(ds, basestring):
             return ds
-        elif instance(ds, dict):
+        elif isinstance(ds, dict):
             buf = ""
             for (k,v) in ds.iteritems():
+                if k.startswith('_'):
+                    continue
                 buf = buf + "%s=%s " % (k,v)
             buf = buf.strip()
             return buf
@@ -125,27 +121,6 @@ class Task(Base):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
                 
-    def _parse_old_school_action(self, v):
-        ''' given a action/local_action line, return the module and args ''' 
-        tokens = v.split()
-        if len(tokens) < 2:
-            return [v,{}]
-        else:
-            if v not in [ 'command', 'shell' ]:
-                joined = " ".join(tokens[1:])
-                return [tokens[0], parse_kv(joined)]
-            else:
-                return [tokens[0], joined] 
-
-    def _munge_action(self, ds, new_ds, k, v):
-        ''' take a module name and split into action and args '''
-
-        if self._action.value is not None or 'action' in ds or 'local_action' in ds:
-            raise AnsibleError("duplicate action in task: %s" % k)
-        new_ds['action'] = k
-        new_ds['args'] = v
-                
-
     def _munge_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
@@ -154,22 +129,6 @@ class Task(Base):
         new_ds['loop'] = k
         new_ds['loop_args'] = v
                 
-    def _munge_action2(self, ds, new_ds, k, v, local=False):
-        ''' take an old school action/local_action and reformat it '''
-
-        if isinstance(v, basestring):
-            tokens = self._parse_old_school_action(v)
-            new_ds['action'] = tokens[0]
-            if 'args' in ds:
-                raise AnsibleError("unexpected and redundant 'args'")
-                new_ds['args'] = args
-                if local:
-                    if 'delegate_to' in ds:
-                       raise AnsbileError("local_action and action conflict")
-                    new_ds['delegate_to'] = 'localhost'
-        else:
-            raise AnsibleError("unexpected use of 'action'")
-
     def munge(self, ds):
         ''' 
         tasks are especially complex arguments so need pre-processing.
@@ -178,18 +137,31 @@ class Task(Base):
 
         assert isinstance(ds, dict)
 
+        # the new, cleaned datastructure, which will have legacy
+        # items reduced to a standard structure suitable for the
+        # attributes of the task class
         new_ds = dict()
+
+        # use the args parsing class to determine the action, args,
+        # and the delegate_to value from the various possible forms
+        # supported as legacy
+        args_parser = ModuleArgsParser()
+        (action, args, delegate_to) = args_parser.parse(ds)
+
+        new_ds['action']      = action
+        new_ds['args']        = args
+        new_ds['delegate_to'] = delegate_to
+
         for (k,v) in ds.iteritems():
-            if k in module_finder:
-                self._munge_action(ds, new_ds, k, v)
+            if k in ('action', 'local_action', 'args', 'delegate_to') or k == action:
+                # we don't want to re-assign these values, which were
+                # determined by the ModuleArgsParser() above
+                continue
             elif "with_%s" % k in lookup_finder:
                 self._munge_loop(ds, new_ds, k, v)
-            elif k == 'action':
-                self._munge_action2(ds, new_ds, k, v) 
-            elif k == 'local_action':
-                self._munge_action2(ds, new_ds, k, v, local=True)
             else:
                 new_ds[k] = v
+
         return new_ds
 
 
