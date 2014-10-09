@@ -76,7 +76,7 @@ def split_args(args):
         do_decode = True
     except UnicodeDecodeError:
         do_decode = False
-    items = args.strip().split('\n')
+    items = args.split('\n')
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -138,7 +138,10 @@ def split_args(args):
                         spacer = ' '
                     params[-1] = "%s%s%s" % (params[-1], spacer, token)
                 else:
-                    params[-1] = "%s\n%s" % (params[-1], token)
+                    spacer = ''
+                    if not params[-1].endswith('\n') and idx == 0:
+                        spacer = '\n'
+                    params[-1] = "%s%s%s" % (params[-1], spacer, token)
                 appended = True
 
             # if the number of paired block tags is not the same, the depth has changed, so we calculate that here
@@ -170,7 +173,7 @@ def split_args(args):
         # one item (meaning we split on newlines), add a newline back here
         # to preserve the original structure
         if len(items) > 1 and itemidx != len(items) - 1 and not line_continuation:
-            if not params[-1].endswith('\n'):
+            if not params[-1].endswith('\n') or item == '':
                 params[-1] += '\n'
 
         # always clear the line continuation flag
