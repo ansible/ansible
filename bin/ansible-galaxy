@@ -755,7 +755,7 @@ def execute_install(args, options, parser):
                     continue
 
                 role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
-                if "version" not in role:
+                if "version" not in role or role['version'] == '':
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
                     # are no versions in the list, we'll grab the head 
