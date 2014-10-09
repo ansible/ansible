@@ -101,7 +101,10 @@ def parse_out(string):
     return re.sub("\s+", " ", string).strip()
 
 def has_changed(string):
-    return (re.match("Nothing to install or update", string) != None)
+    if "Nothing to install or update" in string:
+        return False
+    else:
+        return True
 
 def composer_install(module, command, options):
     php_path      = module.get_bin_path("php", True, ["/usr/local/bin"])
