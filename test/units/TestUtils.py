@@ -841,3 +841,67 @@ class TestUtils(unittest.TestCase):
         for (spec, result) in tests:
             self.assertEqual(ansible.utils.role_spec_parse(spec), result)
 
+    def test_role_yaml_parse(self):
+        tests = (
+                (
+                    # Old style
+                    {
+                        'role': 'debops.elasticsearch',
+                        'name': 'elks'
+                    },
+                    {
+                        'role': 'debops.elasticsearch',
+                        'name': 'elks',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '',
+                    }
+                ),
+                (
+                    {
+                        'role': 'debops.elasticsearch,1.0,elks',
+                        'my_param': 'foo'
+                    },
+                    {
+                        'role': 'debops.elasticsearch,1.0,elks',
+                        'name': 'elks',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '1.0',
+                        'my_param': 'foo',
+                    }
+                ),
+                (
+                    {
+                        'role': 'debops.elasticsearch,1.0',
+                        'my_param': 'foo'
+                    },
+                    {
+                        'role': 'debops.elasticsearch,1.0',
+                        'name': 'debops.elasticsearch',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '1.0',
+                        'my_param': 'foo',
+                    }
+                ),
+                # New style
+                (
+                    {
+                        'src': 'debops.elasticsearch',
+                        'name': 'elks',
+                        'my_param': 'foo'
+                    },
+                    {
+                        'name': 'elks',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '',
+                        'my_param': 'foo'
+                    }
+                ),
+            )
+
+        for (role, result) in tests:
+            self.assertEqual(ansible.utils.role_yaml_parse(role), result)
+
