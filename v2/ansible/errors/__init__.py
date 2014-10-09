@@ -15,15 +15,46 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+
 class AnsibleError(Exception):
-    def __init__(self, message, object=None):
-         self.message = message
-         self.object = object
+    def __init__(self, message, obj=None):
+        self._obj     = obj
+        if isinstance(self._obj, AnsibleBaseYAMLObject):
+            extended_error = self._get_extended_error()
+            if extended_error:
+                self.message = '%s\n%s' % (message, extended_error)
+        else:
+            self.message = message
 
-    # TODO: nice __repr__ message that includes the line number if the object
-    # it was constructed with had the line number
+    def __repr__(self):
+        return self.message
 
-    # TODO: tests for the line number functionality
+    def _get_line_from_file(self, filename, line_number):
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            if line_number < len(lines):
+                return lines[line_number]
+        return None
+
+    def _get_extended_error(self):
+        error_message = ''
+
+        try:
+            (src_file, line_number, col_number) = self._obj.get_position_info()
+            error_message += 'The error occurred on line %d of the file %s:\n' % (line_number, src_file)
+            if src_file not in ('<string>', '<unicode>'):
+                responsible_line = self._get_line_from_file(src_file, line_number - 1)
+                if responsible_line:
+                    error_message += responsible_line
+                    error_message += (' ' * (col_number-1)) + '^'
+        except IOError:
+            error_message += '\n(could not open file to display line)'
+        except IndexError:
+            error_message += '\n(specified line no longer in file, maybe it changed?)'
+
+        return error_message
 
 class AnsibleParserError(AnsibleError):
     ''' something was detected early that is wrong about a playbook or data file '''
