@@ -663,9 +663,24 @@ class Runner(object):
                 if os.path.exists(filesdir):
                     basedir = filesdir
 
-            items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = template.template(basedir, items_terms, inject)
-            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+            try:
+                items_terms = self.module_vars.get('items_lookup_terms', '')
+                items_terms = template.template(basedir, items_terms, inject)
+                items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+            except errors.AnsibleUndefinedVariable, e:
+                if 'has no attribute' in str(e):
+                    # the undefined variable was an attribute of a variable that does
+                    # exist, so try and run this through the conditional check to see
+                    # if the user wanted to skip something on being undefined
+                    if utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=True):
+                        # the conditional check passed, so we have to fail here
+                        raise
+                    else:
+                        # the conditional failed, so we skip this task
+                        result = utils.jsonify(dict(changed=False, skipped=True))
+                        self.callbacks.on_skipped(host, None)
+                        return ReturnData(host=host, result=result)
+
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
             items = utils._clean_data_struct(items, from_remote=True)
