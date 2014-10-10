@@ -437,7 +437,10 @@ class Inventory(object):
 
     def get_variables(self, hostname, update_cached=False, vault_password=None):
 
-        return self.get_host(hostname).get_variables()
+        host = self.get_host(hostname)
+        if not host:
+            raise Exception("host not found: %s" % hostname)
+        return host.get_variables()
 
     def get_host_variables(self, hostname, update_cached=False, vault_password=None):
 

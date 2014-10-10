@@ -367,6 +367,16 @@ class Runner(object):
             if inject['hostvars'][host].get('ansible_ssh_user'):
                 # user for delegate host in inventory
                 thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+        else:
+            # look up the variables for the host directly from inventory
+            try:
+                host_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+                if 'ansible_ssh_user' in host_vars:
+                    thisuser = host_vars['ansible_ssh_user']
+            except Exception, e:
+                # the hostname was not found in the inventory, so
+                # we just ignore this and try the next method
+                pass
 
         if thisuser is None and self.remote_user:
             # user defined by play/runner
