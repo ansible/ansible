@@ -435,7 +435,7 @@ class Ec2Inventory(object):
         ''' monkey patch for boto issue boto/boto#2100 '''
         profile = 'profile ' + self.boto_profile
         if boto.config.has_option(profile, 'aws_security_token'):
-            connect_args['secuirty_token'] = boto.config.get(profile, 'aws_security_token')
+            connect_args['security_token'] = boto.config.get(profile, 'aws_security_token')
         return connect_args
 
 
