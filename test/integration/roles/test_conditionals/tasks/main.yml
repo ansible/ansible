@@ -269,8 +269,8 @@
 
 - name: test a with_items loop using a variable with a missing attribute
   debug: var=item
-  with_items: foo.results
-  when: foo is defined and 'results' in foo
+  with_items: cond_bad_attribute.results
+  when: cond_bad_attribute is defined and 'results' in cond_bad_attribute
   register: result
 
 - name: assert the task was skipped
@@ -281,7 +281,7 @@
 
 - name: test a with_items loop skipping a single item
   debug: var=item
-  with_items: items.results
+  with_items: cond_list_of_items.results
   when: item != 'b'
   register: result
 
