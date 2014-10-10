@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+import sys
 
 from ansible import utils
 from ansible.runner.return_data import ReturnData
@@ -205,8 +206,10 @@ class ActionModule(object):
 
         # run the module and store the result
         result = self.runner._execute_module(conn, tmp, 'synchronize', module_args, complex_args=options, inject=inject)
+        if result.result['failed'] and result.result['rc'] == 2:
+            sys.stderr.write("File not found. Is rsync installed?\n")
 
-        # reset the sudo property                 
+        # reset.the sudo property
         self.runner.sudo = self.original_sudo
 
         return result
