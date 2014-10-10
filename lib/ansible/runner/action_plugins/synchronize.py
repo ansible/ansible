@@ -209,7 +209,7 @@ class ActionModule(object):
         if result.result['failed'] and result.result['rc'] == 2:
             sys.stderr.write("File not found. Is rsync installed?\n")
 
-        # reset.the sudo property
+        # reset the sudo property
         self.runner.sudo = self.original_sudo
 
         return result
