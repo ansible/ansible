@@ -84,6 +84,16 @@ EXAMPLES = '''
 - zypper: name=nmap state=absent
 '''
 
+# Function used for getting zypper version
+def zypper_version(module):
+    """Return (rc, message) tuple"""
+    cmd = ['/usr/bin/zypper', '-V']
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    if rc == 0:
+        return rc, stdout
+    else:
+        return rc, stderr
+
 # Function used for getting versions of currently installed packages.
 def get_current_version(m, name):
     cmd = ['/bin/rpm', '-q', '--qf', '%{NAME} %{VERSION}-%{RELEASE}\n']
@@ -130,7 +140,7 @@ def get_package_state(m, packages):
     return installed_state
 
 # Function used to make sure a package is present.
-def package_present(m, name, installed_state, disable_gpg_check, disable_recommends):
+def package_present(m, name, installed_state, disable_gpg_check, disable_recommends, old_zypper):
     packages = []
     for package in name:
         if installed_state[package] is False:
@@ -138,12 +148,14 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
     if len(packages) != 0:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
-        if disable_gpg_check:
+        if disable_gpg_check and not old_zypper:
             cmd.append('--no-gpg-check')
+        else:
+            cmd.append('--no-gpg-checks')
 
         cmd.extend(['install', '--auto-agree-with-licenses'])
         # add install parameter
-        if disable_recommends:
+        if disable_recommends and not old_zypper:
             cmd.append('--no-recommends')
         cmd.extend(packages)
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
@@ -161,16 +173,19 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
     return (rc, stdout, stderr, changed)
 
 # Function used to make sure a package is the latest available version.
-def package_latest(m, name, installed_state, disable_gpg_check, disable_recommends):
+def package_latest(m, name, installed_state, disable_gpg_check, disable_recommends, old_zypper):
 
     # first of all, make sure all the packages are installed
-    (rc, stdout, stderr, changed) = package_present(m, name, installed_state, disable_gpg_check)
+    (rc, stdout, stderr, changed) = package_present(m, name, installed_state, disable_gpg_check, disable_recommends, old_zypper)
 
     # if we've already made a change, we don't have to check whether a version changed
     if not changed:
         pre_upgrade_versions = get_current_version(m, name)
 
-    cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses']
+    if old_zypper:
+        cmd = ['/usr/bin/zypper', '--non-interactive', 'install', '--auto-agree-with-licenses']
+    else:
+        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses']
     cmd.extend(name)
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
@@ -183,7 +198,7 @@ def package_latest(m, name, installed_state, disable_gpg_check, disable_recommen
     return (rc, stdout, stderr, changed)
 
 # Function used to make sure a package is not installed.
-def package_absent(m, name, installed_state):
+def package_absent(m, name, installed_state, old_zypper):
     packages = []
     for package in name:
         if installed_state[package] is True:
@@ -234,16 +249,23 @@ def main():
     result['name'] = name
     result['state'] = state
 
+    rc, out = zypper_version(module)
+    match = re.match(r'zypper\s+(\d+)\.(\d+)\.(\d+)', out)
+    if not match or  int(match.group(1)) > 0:
+        old_zypper = False
+    else:
+        old_zypper = True
+
     # Get package state
     installed_state = get_package_state(module, name)
 
     # Perform requested action
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check, disable_recommends)
+        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check, disable_recommends, old_zypper)
     elif state in ['absent', 'removed']:
-        (rc, stdout, stderr, changed) = package_absent(module, name, installed_state)
+        (rc, stdout, stderr, changed) = package_absent(module, name, installed_state, old_zypper)
     elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check, disable_recommends)
+        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check, disable_recommends, old_zypper)
 
     if rc != 0:
         if stderr:
