@@ -3,8 +3,6 @@
 
 # (c) 2014, GeekChimp - Franck Nijhof <franck@geekchimp.com>
 #
-# Originally developed for Macable: https://github.com/GeekChimp/macable
-#
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,11 +18,11 @@
 
 DOCUMENTATION = '''
 ---
-module: mac_defaults
+module: osx_defaults
 author: Franck Nijhof
-short_description: mac_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible
+short_description: osx_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible
 description:
-  - mac_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible scripts.
+  - osx_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible scripts.
     Mac OS X applications and other programs use the defaults system to record user preferences and other
     information that must be maintained when the applications aren't running (such as default font for new
     documents, or the position of an Info panel).
@@ -67,25 +65,25 @@ notes:
 '''
 
 EXAMPLES = '''
-- mac_defaults: domain=com.apple.Safari key=IncludeInternalDebugMenu type=bool value=true state=present
-- mac_defaults: domain=NSGlobalDomain key=AppleMeasurementUnits type=string value=Centimeters state=present
-- mac_defaults: key=AppleMeasurementUnits type=string value=Centimeters
-- mac_defaults:
+- osx_defaults: domain=com.apple.Safari key=IncludeInternalDebugMenu type=bool value=true state=present
+- osx_defaults: domain=NSGlobalDomain key=AppleMeasurementUnits type=string value=Centimeters state=present
+- osx_defaults: key=AppleMeasurementUnits type=string value=Centimeters
+- osx_defaults:
     key: AppleLanguages
     type: array
     value: ["en", "nl"]
-- mac_defaults: domain=com.geekchimp.macable key=ExampleKeyToRemove state=absent
+- osx_defaults: domain=com.geekchimp.macable key=ExampleKeyToRemove state=absent
 '''
 
 from datetime import datetime
 
 # exceptions --------------------------------------------------------------- {{{
-class MacDefaultsException(Exception):
+class OSXDefaultsException(Exception):
     pass
 # /exceptions -------------------------------------------------------------- }}}
 
 # class MacDefaults -------------------------------------------------------- {{{
-class MacDefaults(object):
+class OSXDefaults(object):
 
     """ Class to manage Mac OS user defaults """
 
@@ -108,11 +106,11 @@ class MacDefaults(object):
         )
 
         if not self.executable:
-            raise MacDefaultsException("Unable to locate defaults executable.")
+            raise OSXDefaultsException("Unable to locate defaults executable.")
 
         # When state is present, we require a parameter
         if self.state == "present" and self.value is None:
-            raise MacDefaultsException("Missing value parameter")
+            raise OSXDefaultsException("Missing value parameter")
 
         # Ensure the value is the correct type
         self.value = self._convert_type(self.type, self.value)
@@ -130,30 +128,30 @@ class MacDefaults(object):
                 return True
             elif value in [False, 0, "false", "0", "no"]:
                 return False
-            raise MacDefaultsException("Invalid boolean value: {0}".format(repr(value)))
+            raise OSXDefaultsException("Invalid boolean value: {0}".format(repr(value)))
         elif type == "date":
             try:
                 return datetime.strptime(value.split("+")[0].strip(), "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                raise MacDefaultsException(
+                raise OSXDefaultsException(
                     "Invalid date value: {0}. Required format yyy-mm-dd hh:mm:ss.".format(repr(value))
                 )
         elif type in ["int", "integer"]:
             if not str(value).isdigit():
-                raise MacDefaultsException("Invalid integer value: {0}".format(repr(value)))
+                raise OSXDefaultsException("Invalid integer value: {0}".format(repr(value)))
             return int(value)
         elif type == "float":
             try:
                 value = float(value)
             except ValueError:
-                raise MacDefaultsException("Invalid float value: {0}".format(repr(value)))
+                raise OSXDefaultsException("Invalid float value: {0}".format(repr(value)))
             return value
         elif type == "array":
             if not isinstance(value, list):
-                raise MacDefaultsException("Invalid value. Expected value to be an array")
+                raise OSXDefaultsException("Invalid value. Expected value to be an array")
             return value
 
-        raise MacDefaultsException('Type is not supported: {0}'.format(type))
+        raise OSXDefaultsException('Type is not supported: {0}'.format(type))
 
     """ Converts array output from defaults to an list """
     @staticmethod
@@ -184,7 +182,7 @@ class MacDefaults(object):
 
         # If the RC is not 0, then terrible happened! Ooooh nooo!
         if rc != 0:
-            raise MacDefaultsException("An error occurred while reading key type from defaults: " + out)
+            raise OSXDefaultsException("An error occurred while reading key type from defaults: " + out)
 
         # Ok, lets parse the type from output
         type = out.strip().replace('Type is ', '')
@@ -197,7 +195,7 @@ class MacDefaults(object):
 
         # An non zero RC at this point is kinda strange...
         if rc != 0:
-            raise MacDefaultsException("An error occurred while reading key value from defaults: " + out)
+            raise OSXDefaultsException("An error occurred while reading key value from defaults: " + out)
 
         # Convert string to list when type is array
         if type == "array":
@@ -232,13 +230,13 @@ class MacDefaults(object):
         rc, out, err = self.module.run_command([self.executable, 'write', self.domain, self.key, '-' + self.type] + value)
 
         if rc != 0:
-            raise MacDefaultsException('An error occurred while writing value to defaults: ' + out)
+            raise OSXDefaultsException('An error occurred while writing value to defaults: ' + out)
 
     """ Deletes defaults key from domain """
     def delete(self):
         rc, out, err = self.module.run_command([self.executable, 'delete', self.domain, self.key])
         if rc != 0:
-            raise MacDefaultsException("An error occurred while deleting key from defaults: " + out)
+            raise OSXDefaultsException("An error occurred while deleting key from defaults: " + out)
 
     # /commands ----------------------------------------------------------- }}}
 
@@ -259,7 +257,7 @@ class MacDefaults(object):
 
         # There is a type mismatch! Given type does not match the type in defaults
         if self.current_value is not None and type(self.current_value) is not type(self.value):
-            raise MacDefaultsException("Type mismatch. Type in defaults: " + type(self.current_value).__name__)
+            raise OSXDefaultsException("Type mismatch. Type in defaults: " + type(self.current_value).__name__)
 
         # Current value matches the given value. Nothing need to be done. Arrays need extra care
         if self.type == "array" and self.current_value is not None and not self.array_add and \
@@ -338,11 +336,11 @@ def main():
     path = module.params['path']
 
     try:
-        defaults = MacDefaults(module=module, domain=domain, key=key, type=type,
+        defaults = OSXDefaults(module=module, domain=domain, key=key, type=type,
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
-    except MacDefaultsException as e:
+    except OSXDefaultsException as e:
         module.fail_json(msg=e.message)
 
 # /main ------------------------------------------------------------------- }}}
