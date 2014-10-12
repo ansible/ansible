@@ -50,20 +50,20 @@ class TestTask(unittest.TestCase):
     def test_load_task_simple(self):
         t = Task.load(basic_shell_task)
         assert t is not None
-        assert t.name == basic_shell_task['name']
-        assert t.action == 'command'
-        assert t.args == dict(_raw_params='echo hi', _uses_shell=True)
+        self.assertEqual(t.name, basic_shell_task['name'])
+        self.assertEqual(t.action, 'command')
+        self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
 
     def test_load_task_kv_form(self):
         t = Task.load(kv_shell_task)
-        print "task action is %s" % t.action
-        assert t.action == 'command'
-        assert t.args == dict(_raw_params='echo hi', _uses_shell=True)
+        print("task action is %s" % t.action)
+        self.assertEqual(t.action, 'command')
+        self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
 
     def test_task_auto_name(self):
         assert 'name' not in kv_shell_task
         t = Task.load(kv_shell_task)
-        #assert t.name == 'shell echo hi'
+        #self.assertEqual(t.name, 'shell echo hi')
 
     def test_task_auto_name_with_role(self):
         pass
