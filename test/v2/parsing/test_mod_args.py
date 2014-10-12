@@ -29,9 +29,9 @@ class TestModArgsDwim(unittest.TestCase):
         pass
 
     def _debug(self, mod, args, to):
-        print "RETURNED module = %s" % mod
-        print "           args = %s" % args
-        print "             to = %s" % to
+        print("RETURNED module = {0}".format(mod))
+        print("           args = {0}".format(args))
+        print("             to = {0}".format(to))
 
     def tearDown(self):
         pass
