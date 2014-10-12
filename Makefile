@@ -86,16 +86,20 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
+NOSETESTS3 ?= nosetests-3.3
+
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v # Could do: --with-coverage --cover-package=ansible
 
 newtests:
-	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w test/v2 -v
+	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w test/v2 -v --with-coverage --cover-package=ansible
 
+newtests-py3:
+	PYTHONPATH=./v2:./lib $(NOSETESTS3) -d -w test/v2 -v --with-coverage --cover-package=ansible
 
 authors:
 	sh hacking/authors.sh
