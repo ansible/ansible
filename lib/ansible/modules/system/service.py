@@ -989,23 +989,51 @@ class OpenBsdService(Service):
         if not self.enable_cmd:
             return super(OpenBsdService, self).service_enable()
 
+        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'default', self.name))
+
+        if stderr:
+            self.module.fail_json(msg=stderr)
+
+        default_flags = stdout.rstrip()
+
         rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'status', self.name))
 
         if stderr:
             self.module.fail_json(msg=stderr)
 
-        current_flags = stdout.rstrip()
+        status_string = stdout.rstrip()
+
+        # Depending on the service the string returned from 'status' may be
+        # either a set of flags or the boolean YES/NO
+        if status_string == "YES" or status_string == "N0":
+            current_flags = ''
+        else:
+            current_flags = status_string
+
+        # If there are arguments from the user we use these as flags unless
+        # they are already set.
+        if self.arguments and self.arguments != current_flags:
+            changed_flags = self.arguments
+        # If the user has not supplied any arguments and the current flags
+        # differ from the default we reset them.
+        elif not self.arguments and current_flags != default_flags:
+            changed_flags = ' '
+        # Otherwise there is no need to modify flags.
+        else:
+            changed_flags = ''
 
         if self.enable:
-            action = "enable %s" % (self.name)
-            if self.arguments or current_flags:
-                action = action + " flags %s" % (self.arguments)
-            if rc == 0 and self.arguments == current_flags:
+            if rc == 0 and not changed_flags:
                 return
+
+            action = "enable %s" % (self.name)
+            if changed_flags:
+                action = action + " flags %s" % (changed_flags)
         else:
-            action = "disable %s" % self.name
             if rc == 1:
                 return
+
+            action = "disable %s" % self.name
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, msg="changing service enablement")
