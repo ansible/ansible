@@ -32,7 +32,7 @@ class TestErrors(unittest.TestCase):
 
     def test_basic_error(self):
         e = AnsibleError(self.message)
-        assert e.message == self.message
+        self.assertEqual(e.message, self.message)
 
     def test_error_with_object(self):
         obj = AnsibleBaseYAMLObject()
@@ -45,4 +45,4 @@ class TestErrors(unittest.TestCase):
         with patch('__builtin__.open', m):
             e = AnsibleError(self.message, obj)
 
-        assert e.message == 'this is the error message\nThe error occurred on line 1 of the file foo.yml:\nthis is line 1\n^'
+        self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 1 of the file foo.yml:\nthis is line 1\n^')
