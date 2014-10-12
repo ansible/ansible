@@ -21,7 +21,9 @@ from ansible.errors import AnsibleParserError
 
 import json
 
-class MockFile(file):
+from io import FileIO
+
+class MockFile(FileIO):
 
     def __init__(self, ds, method='json'):
         self.ds = ds
