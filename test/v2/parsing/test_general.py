@@ -63,12 +63,12 @@ class TestGeneralParsing(unittest.TestCase):
         }
         """
         output = load(input)
-        assert output['asdf'] == '1234'
-        assert output['jkl'] == 5678
+        self.assertEqual(output['asdf'], '1234')
+        self.assertEqual(output['jkl'], 5678)
 
     def parse_json_from_file(self):
         output = load(MockFile(dict(a=1,b=2,c=3)),'json')
-        assert ouput == dict(a=1,b=2,c=3)
+        self.assertEqual(ouput, dict(a=1,b=2,c=3))
 
     def parse_yaml_from_dict(self):
         input = """
@@ -76,12 +76,12 @@ class TestGeneralParsing(unittest.TestCase):
         jkl: 5678
         """
         output = load(input)
-        assert output['asdf'] == '1234'
-        assert output['jkl'] == 5678
+        self.assertEqual(output['asdf'], '1234')
+        self.assertEqual(output['jkl'], 5678)
 
     def parse_yaml_from_file(self):
         output = load(MockFile(dict(a=1,b=2,c=3),'yaml'))
-        assert output == dict(a=1,b=2,c=3)
+        self.assertEqual(output, dict(a=1,b=2,c=3))
 
     def parse_fail(self):
         input = """
@@ -89,12 +89,12 @@ class TestGeneralParsing(unittest.TestCase):
             ***
                NOT VALID
         """
-        self.failUnlessRaises(load(input), AnsibleParserError)
+        self.assertRaises(load(input), AnsibleParserError)
 
     def parse_fail_from_file(self):
-        self.failUnlessRaises(load(MockFile(None,'fail')), AnsibleParserError)
+        self.assertRaises(load(MockFile(None,'fail')), AnsibleParserError)
 
     def parse_fail_invalid_type(self):
-        self.failUnlessRaises(3000, AnsibleParsingError)
-        self.failUnlessRaises(dict(a=1,b=2,c=3), AnsibleParserError)
-        
+        self.assertRaises(3000, AnsibleParsingError)
+        self.assertRaises(dict(a=1,b=2,c=3), AnsibleParserError)
+
