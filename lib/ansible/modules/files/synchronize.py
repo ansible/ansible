@@ -39,7 +39,7 @@ options:
     version_added: "1.5"
   mode:
     description:
-      - Specify the direction of the synchroniztion. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
+      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
