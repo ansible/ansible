@@ -328,10 +328,11 @@ class Facts(object):
                                     break
                             elif path == '/etc/SuSE-release':
                                 data = data.splitlines()
-                                release = re.search('CODENAME *= *([^\n]+)\n', data)
-                                if release:
-                                    self.facts['distribution_release'] = release.groups()[0].strip()
-                                    break
+                                for line in data:
+                                    release = re.search('CODENAME *= *([^\n]+)', line)
+                                    if release:
+                                        self.facts['distribution_release'] = release.groups()[0].strip()
+                                        break
                     elif name == 'Debian':
                         data = get_file_content(path)
                         if 'Debian' in data:
