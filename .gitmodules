@@ -1,9 +1,9 @@
 [submodule "lib/ansible/modules/core"]
 	path = lib/ansible/modules/core
-	url = git://github.com/ansible/ansible-modules-core.git
+	url = https://github.com/ansible/ansible-modules-core.git
 [submodule "lib/ansible/modules/extras"]
 	path = lib/ansible/modules/extras
-	url = git://github.com/ansible/ansible-modules-extras.git
+	url = https://github.com/ansible/ansible-modules-extras.git
 [submodule "v2/ansible/modules/core"]
 	path = v2/ansible/modules/core
 	url = https://github.com/ansible/ansible-modules-core.git
