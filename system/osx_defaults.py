@@ -124,9 +124,9 @@ class OSXDefaults(object):
         if type == "string":
             return str(value)
         elif type in ["bool", "boolean"]:
-            if value in [True, 1, "true", "1", "yes"]:
+            if value.lower() in [True, 1, "true", "1", "yes"]:
                 return True
-            elif value in [False, 0, "false", "0", "no"]:
+            elif value.lower() in [False, 0, "false", "0", "no"]:
                 return False
             raise OSXDefaultsException("Invalid boolean value: {0}".format(repr(value)))
         elif type == "date":
@@ -191,7 +191,7 @@ class OSXDefaults(object):
         rc, out, err = self.module.run_command([self.executable, "read", self.domain, self.key])
 
         # Strip output
-        # out = out.strip()
+        out = out.strip()
 
         # An non zero RC at this point is kinda strange...
         if rc != 0:
