@@ -53,6 +53,11 @@ options:
       - Specifies the base URL for the CPAN mirror to use
     required: false
     default: false
+  mirror_only:
+    description:
+      - Use the mirror's index file instead of the CPAN Meta DB
+    required: false
+    default: false
 examples:
    - code: "cpanm: name=Dancer"
      description: Install I(Dancer) perl package.
@@ -82,7 +87,7 @@ def _is_package_installed(module, name, locallib, cpanm):
     else: 
        return False
 
-def _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm):
+def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, cpanm):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
     if from_path:
@@ -99,6 +104,9 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm):
     if mirror is not None:
         cmd = "{cmd} --mirror {mirror}".format(cmd=cmd, mirror=mirror)
 
+    if mirror_only is True:
+        cmd = "{cmd} --mirror-only".format(cmd=cmd)
+
     return cmd
 
 
@@ -109,6 +117,7 @@ def main():
         notest=dict(default=False, type='bool'),
         locallib=dict(default=None, required=False),
         mirror=dict(default=None, required=False)
+        mirror_only=dict(default=False, type='bool'),
     )
 
     module = AnsibleModule(
@@ -116,12 +125,13 @@ def main():
         required_one_of=[['name', 'from_path']],
     )
 
-    cpanm     = module.get_bin_path('cpanm', True)
-    name      = module.params['name']
-    from_path = module.params['from_path']
-    notest    = module.boolean(module.params.get('notest', False))
-    locallib  = module.params['locallib']
-    mirror    = module.params['mirror']
+    cpanm       = module.get_bin_path('cpanm', True)
+    name        = module.params['name']
+    from_path   = module.params['from_path']
+    notest      = module.boolean(module.params.get('notest', False))
+    locallib    = module.params['locallib']
+    mirror      = module.params['mirror']
+    mirror_only = module.params['mirror_only']
 
     changed   = False
 
@@ -129,7 +139,7 @@ def main():
 
     if not installed:
         out_cpanm = err_cpanm = ''
-        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm)
+        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, cpanm)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 
