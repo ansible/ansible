@@ -104,6 +104,7 @@ import os
 import re
 import sys
 import argparse
+import warnings
 import collections
 
 from types import NoneType
@@ -164,6 +165,12 @@ def _list(regions):
     for region in regions:
         # Connect to the region
         cs = pyrax.connect_to_cloudservers(region=region)
+        if isinstance(cs, NoneType):
+            warnings.warn(
+                'Connecting to Rackspace region "%s" has caused Pyrax to '
+                'return a NoneType. Is this a valid region?' % region,
+                RuntimeWarning)
+            continue
         for server in cs.servers.list():
             # Create a group on region
             groups[region].append(server.name)
