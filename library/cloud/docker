@@ -590,8 +590,8 @@ class DockerManager:
         try:
             containers = do_create(count, params)
         except:
-            image, tag = self.get_split_full_image_tag(params['image'])
-            self.client.pull(image, tag = tag)
+            image, tag = self.get_split_image_tag(params['image'])
+            self.client.pull(https://github.com/ansible/ansible/issues/9339, tag = tag, insecure_registry=True)
             self.increment_counter('pull')
             containers = do_create(count, params)
 
