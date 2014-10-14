@@ -591,7 +591,7 @@ def main():
             module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
-    changed = False
+    changed = create_changed = replace_changed = False
     if replace_all_instances and replace_instances:
         module.fail_json(msg="You can't use replace_instances and replace_all_instances in the same task.")
     if state == 'present':
