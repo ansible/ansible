@@ -52,7 +52,7 @@ options:
     description:
       - Select direction for a rule or default policy command.
     required: false
-    choices: ['in', 'out', 'incoming', 'outgoing']
+    choices: ['in', 'out', 'incoming', 'outgoing', 'routed']
   logging:
     description:
       - Toggles logging. Logged packets use the LOG_KERN syslog facility.
@@ -173,7 +173,7 @@ def main():
             state     = dict(default=None,  choices=['enabled', 'disabled', 'reloaded', 'reset']),
             default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
             logging   = dict(default=None,  choices=['on', 'off', 'low', 'medium', 'high', 'full']),
-            direction = dict(default=None,  choices=['in', 'incoming', 'out', 'outgoing']),
+            direction = dict(default=None,  choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
             delete    = dict(default=False, type='bool'),
             insert    = dict(default=None),
             rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
