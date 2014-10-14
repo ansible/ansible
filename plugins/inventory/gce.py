@@ -103,11 +103,13 @@ class GceInventory(object):
         # Just display data for specific host
         if self.args.host:
             print self.json_format_dict(self.node_to_dict(
-                    self.get_instance(self.args.host)))
+                    self.get_instance(self.args.host)),
+                    pretty=self.args.pretty)
             sys.exit(0)
 
         # Otherwise, assume user wants all instances grouped
-        print(self.json_format_dict(self.group_instances()))
+        print(self.json_format_dict(self.group_instances(),
+            pretty=self.args.pretty))
         sys.exit(0)
 
     def get_gce_driver(self):
@@ -187,6 +189,8 @@ class GceInventory(object):
                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
                            help='Get all information about an instance')
+        parser.add_argument('--pretty', action='store_true', default=False,
+                           help='Pretty format (default: False)')
         self.args = parser.parse_args()
 
 
