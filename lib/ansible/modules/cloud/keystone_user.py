@@ -291,6 +291,9 @@ def main():
     argument_spec.update(dict(
             tenant_description=dict(required=False),
             email=dict(required=False),
+            user=dict(required=False),
+            tenant=dict(required=False),
+            password=dict(required=False),
             role=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
             endpoint=dict(required=False,
