@@ -308,6 +308,8 @@ def command_generic_msg(hostname, result, oneline, caption):
             buf += msg
         return buf + "\n"
     else:
+        stderr = stderr.replace('\n', '\\n')
+        stdout = stdout.replace('\n', '\\n')
         if stderr:
             return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, rc, stdout, stderr)
         else:
