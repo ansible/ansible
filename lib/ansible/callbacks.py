@@ -144,13 +144,17 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
         if not stderr:
             try:
                 print msg2
+                sys.stdout.flush()
             except UnicodeEncodeError:
                 print msg2.encode('utf-8')
+                sys.stdout.flush()
         else:
             try:
                 print >>sys.stderr, msg2
+                sys.stderr.flush()
             except UnicodeEncodeError:
                 print >>sys.stderr, msg2.encode('utf-8')
+                sys.stderr.flush()
     if constants.DEFAULT_LOG_PATH != '':
         while msg.startswith("\n"):
             msg = msg.replace("\n","")
