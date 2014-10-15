@@ -117,7 +117,12 @@ class Task(object):
                 ds['when'] = "%s %s" % (when_name, ds[x])
                 ds.pop(x)
             elif not x in Task.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
+                raise errors.AnsibleError(
+                    "Ansible does not recognise %(key)s as an available "
+                    "module or legal parameter. Current module search paths: "
+                    "%(paths)s"
+                    % dict(key=x,
+                           paths=utils.plugins.module_finder.print_paths()))
 
         self.module_vars  = module_vars
         self.default_vars = default_vars
