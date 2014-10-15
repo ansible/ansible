@@ -17,12 +17,17 @@
 
 #############################################
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 class Inventory(object):
     def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
         pass
     def get_hosts(self, pattern="all"):
         pass
     def clear_pattern_cache(self):
+        # Possibly not needed?
         pass
     def groups_for_host(self, host):
         pass
@@ -55,8 +60,10 @@ class Inventory(object):
     def subset(self, subset_pattern):
         pass
     def lift_restriction(self):
+        # HACK -- 
         pass
     def lift_also_restriction(self):
+        # HACK -- dead host skipping
         pass
     def is_file(self):
         pass
