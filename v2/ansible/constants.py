@@ -18,7 +18,12 @@
 import os
 import pwd
 import sys
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    # Python 2.7
+    import ConfigParser as configparser
+
 from string import ascii_letters, digits
 
 # copied from utils, avoid circular reference fun :)
@@ -60,7 +65,7 @@ def _get_config(p, section, key, env_var, default):
 def load_config_file():
     ''' Load Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
 
-    p = ConfigParser.ConfigParser()
+    p = configparser.ConfigParser()
 
     path0 = os.getenv("ANSIBLE_CONFIG", None)
     if path0 is not None:
@@ -73,8 +78,8 @@ def load_config_file():
         if path is not None and os.path.exists(path):
             try:
                 p.read(path)
-            except ConfigParser.Error as e:
-                print "Error reading config file: \n%s" % e
+            except configparser.Error as e:
+                print("Error reading config file: \n{0}".format(e))
                 sys.exit(1)
             return p
     return None

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import exceptions
+from six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins import module_finder
@@ -141,7 +141,7 @@ class ModuleArgsParser(object):
         if isinstance(thing, dict):
             # form is like: local_action: { module: 'xyz', x: 2, y: 3 } ... uncommon!
             args = thing
-        elif isinstance(thing, basestring):
+        elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
             args = parse_kv(thing)
         else:
@@ -173,7 +173,7 @@ class ModuleArgsParser(object):
                 args = thing.copy()
                 del args['module']
 
-        elif isinstance(thing, basestring):
+        elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
             args = parse_kv(args)
@@ -222,7 +222,7 @@ class ModuleArgsParser(object):
                 raise AnsibleParserError("conflicting action statements", obj=self._task)
 
             # walk the input dictionary to see we recognize a module name
-            for (item, value) in ds.iteritems():
+            for (item, value) in iteritems(ds):
                 if item in module_finder:
                     # finding more than one module name is a problem
                     if action is not None:
