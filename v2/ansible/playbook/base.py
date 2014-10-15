@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from io import FileIO
+
+from six import iteritems, string_types
+
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing import load as ds_load
 
@@ -25,7 +29,7 @@ class Base(object):
         # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()
 
-        for (name, value) in self.__class__.__dict__.iteritems():
+        for (name, value) in iteritems(self.__class__.__dict__):
             aname = name[1:]
             if isinstance(value, Attribute):
                 self._attributes[aname] = value.default
@@ -40,7 +44,7 @@ class Base(object):
 
         assert ds is not None
 
-        if isinstance(ds, basestring) or isinstance(ds, file):
+        if isinstance(ds, string_types) or isinstance(ds, FileIO):
             ds = ds_load(ds)
 
         # we currently don't do anything with private attributes but may
@@ -49,7 +53,7 @@ class Base(object):
         ds = self.munge(ds)
 
         # walk all attributes in the class
-        for (name, attribute) in self.__class__.__dict__.iteritems():
+        for (name, attribute) in iteritems(self.__class__.__dict__):
             aname = name[1:]
 
             # process Field attributes which get loaded from the YAML
