@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.playbook.task import Task
-from ..compat import unittest
+from .. compat import unittest
 
 basic_shell_task = dict(
    name  = 'Test Task',
