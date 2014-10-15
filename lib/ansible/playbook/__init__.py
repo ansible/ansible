@@ -467,7 +467,13 @@ class PlayBook(object):
         else:
             name = task.name
 
-        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        def get_module_vars():
+            task_vars = task.module_vars.copy()
+            [task_vars.update(x) for x in self.VARS_CACHE.values()]
+            return task_vars
+
+        self.callbacks.on_task_start(template(play.basedir, name, get_module_vars(), lookup_fatal=False, filter_fatal=False), is_handler)
+
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
