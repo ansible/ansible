@@ -244,6 +244,7 @@ def json_dict_unicode_to_bytes(d):
 
 
 class AnsibleModule(object):
+    backup_ext = None
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
@@ -299,6 +300,11 @@ class AnsibleModule(object):
         self._set_defaults(pre=False)
         if not self.no_log:
             self._log_invocation()
+
+        # the extension is the same for each backup of a single run
+        if self.backup_ext is None:
+            # backups named basename-YYYY-MM-DD@HH:MM~
+            self.backup_ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
@@ -1244,14 +1250,14 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
-        backupdest = '%s.%s' % (fn, ext)
+        backupdest = '%s.%s' % (fn, self.backup_ext)
 
-        try:
-            shutil.copy2(fn, backupdest)
-        except shutil.Error, e:
-            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+        # do not overwrite a backup already taken
+        if not os.path.exists(backupdest):
+            try:
+                shutil.copy2(fn, backupdest)
+            except shutil.Error, e:
+                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
     def cleanup(self, tmpfile):
