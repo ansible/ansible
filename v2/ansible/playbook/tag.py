@@ -22,7 +22,7 @@ __metaclass__ = type
 from errors import AnsibleError
 from ansible.utils import list_union
 
-class Tag(object):
+class Tag:
     def __init__(self, tags=[]):
         assert isinstance(tags, list)
         self._tags = tags

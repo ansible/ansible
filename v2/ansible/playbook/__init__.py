@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class Playbook(object):
+class Playbook:
     def __init__(self, filename):
         self.ds = v2.utils.load_yaml_from_file(filename)
         self.plays = []

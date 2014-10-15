@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class HostPlaybookIterator(object):
+class HostPlaybookIterator:
 
    def __init__(self, host, playbook):
        pass

@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class PlaybookExecutor(object):
+class PlaybookExecutor:
 
    def __init__(self, list_of_plays=[]):
        # self.tqm = TaskQueueManager(forks)
