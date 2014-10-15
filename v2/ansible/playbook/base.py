@@ -26,7 +26,7 @@ from six import iteritems, string_types
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing import load as ds_load
 
-class Base(object):
+class Base:
 
     def __init__(self):
 

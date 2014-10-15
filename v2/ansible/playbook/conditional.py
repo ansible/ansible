@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class Conditional(object):
+class Conditional:
 
     def __init__(self, task):
         self._task = task

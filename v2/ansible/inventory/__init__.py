@@ -21,7 +21,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class Inventory(object):
+class Inventory:
     def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
         pass
     def get_hosts(self, pattern="all"):

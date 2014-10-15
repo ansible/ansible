@@ -25,7 +25,7 @@ from ansible.errors import AnsibleParserError
 from ansible.plugins import module_finder
 from ansible.parsing.splitter import parse_kv
 
-class ModuleArgsParser(object):
+class ModuleArgsParser:
 
     """
     There are several ways a module and argument set can be expressed:

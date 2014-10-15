@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class HostLog(object):
+class HostLog:
 
    def __init__(self, host):
        self.host = host

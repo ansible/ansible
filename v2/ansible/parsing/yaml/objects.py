@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class AnsibleBaseYAMLObject(object):
+class AnsibleBaseYAMLObject:
     '''
     the base class used to sub-class python built-in objects
     so that we can add attributes to them during yaml parsing

@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class TaskExecutor(object):
+class TaskExecutor:
 
    def __init__(self, task, host):
        pass
