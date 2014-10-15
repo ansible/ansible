@@ -17,9 +17,9 @@
 
 from ansible.parsing.mod_args import ModuleArgsParser
 
-from .. compat import CompatTestCase
+from .. compat import unittest
 
-class TestModArgsDwim(CompatTestCase):
+class TestModArgsDwim(unittest.TestCase):
 
     # TODO: add tests that construct ModuleArgsParser with a task reference
     # TODO: verify the AnsibleError raised on failure knows the task
