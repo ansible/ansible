@@ -14,3 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+class TaskQueueManagerHostPlaybookIterator(object):
+
+   def __init__(self, host, playbook):
+       pass
+
+   def get_next_task(self):
+       assert False
+
+   def is_blocked(self):
+       # depending on strategy, either 
+       # ‘linear’ -- all prev tasks must be completed for all hosts
+       # ‘free’ -- this host doesn’t have any more work to do
+       assert False
+
+

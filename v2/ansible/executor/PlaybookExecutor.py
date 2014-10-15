@@ -14,3 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+class PlaybookExecutor(object):
+
+   def __init__(self, list_of_plays=[]):
+       # self.tqm = TaskQueueManager(forks)
+       assert False
+
+   def run(self):
+       # for play in list_of_plays:
+       #    for block in play.blocks:
+       #        # block must know it’s playbook class and context
+       #        tqm.enqueue(block)
+       #        tqm.go()...	
+       assert False
+

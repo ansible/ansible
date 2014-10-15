@@ -14,3 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+class HostLog(object):
+
+   def __init__(self, host):
+       self.host = host
+
+   def add_task_result(self, task_result):
+       pass
+
+   def has_failures(self):
+       assert False
+
+   def has_changes(self):
+       assert False
+
+   def get_tasks(self, are_executed=None, are_changed=None, are_successful=None):
+       assert False
+
+   def get_current_running_task(self)
+       # atomic decorator likely required?
+       assert False
+
+

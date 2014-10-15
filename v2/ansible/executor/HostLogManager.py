@@ -14,3 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+class HostLogManager(object):
+
+   def __init__(self):
+       pass
+
+   def get_log_for_host(self, host):
+       assert False
+
