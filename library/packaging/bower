@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Austin O'Neil <austin.m.oneil@gmail.com>
+# (c) 2014, Austin O'Neil <austin.oneil@beardon.com>, Beardon Services
 #
 # This file is part of Ansible
 #
@@ -23,19 +23,19 @@
 DOCUMENTATION = '''
 ---
 module: bower
-short_description: Manage node.js packages with Bower
+short_description: Manage packages with Bower
 description:
-  - Manage node.js packages with Bower
+  - Manage packages with Bower
 version_added: 1.2
 author: Austin O'Neil
 options:
   name:
     description:
-      - The name of a node.js library to install
+      - The name of a library to install
     required: false
   path:
     description:
-      - The base path where to install the node.js libraries
+      - The base path where to install the libraries
     required: false
   version:
     description:
@@ -43,14 +43,13 @@ options:
     required: false
   global:
     description:
-      - Install the node.js library globally
+      - Install the library globally
     required: false
     default: no
     choices: [ "yes", "no" ]
   executable:
     description:
       - The executable location for Bower.
-      - This is useful if you are using a version manager, such as nvm
     required: false
   production:
     description:
@@ -65,27 +64,27 @@ options:
     version_added: "1.6"
   state:
     description:
-      - The state of the node.js library
+      - The state of the library
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
 '''
 
 EXAMPLES = '''
-description: Install "coffee-script" node.js package.
-- bower: name=coffee-script path=/app/location
+description: Install "moment" package.
+- bower: name=moment path=/app/location
 
-description: Install "coffee-script" node.js package on version 1.6.1.
-- bower: name=coffee-script version=1.6.1 path=/app/location
+description: Install "moment" package on version 1.6.1.
+- bower: name=moment version=1.6.1 path=/app/location
 
-description: Install "coffee-script" node.js package globally.
-- bower: name=coffee-script global=yes
+description: Install "moment" package globally.
+- bower: name=moment global=yes
 
-description: Remove the globally package "coffee-script".
-- bower: name=coffee-script global=yes state=absent
+description: Remove the globally package "moment".
+- bower: name=moment global=yes state=absent
 
-description: Install "coffee-script" node.js package from custom registry.
-- bower: name=coffee-script registry=http://registry.mysite.com
+description: Install "moment" package from custom registry.
+- bower: name=moment registry=http://registry.mysite.com
 
 description: Install packages based on package.json.
 - bower: path=/app/location
@@ -187,8 +186,6 @@ class Bower(object):#delta
         data = self._exec(['outdated'], True, False)
         for dep in data.splitlines():
             if dep:
-                # node.js v0.10.22 changed the `npm outdated` module separator
-                # from "@" to " ". Split on both for backwards compatibility.
                 pkg, other = re.split('\s|@', dep, 1)
                 outdated.append(pkg)
 
