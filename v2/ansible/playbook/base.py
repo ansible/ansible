@@ -65,11 +65,11 @@ class Base:
             if isinstance(attribute, FieldAttribute):
 
                 # copy the value over unless a _load_field method is defined
-                method = getattr(self, '_load_%s' % aname, None)
-                if method:
-                    self._attributes[aname] = method(self, attribute)
-                else:
-                    if aname in ds:
+                if aname in ds:
+                    method = getattr(self, '_load_%s' % aname, None)
+                    if method:
+                        self._attributes[aname] = method(aname, ds[aname])
+                    else:
                         self._attributes[aname] = ds[aname]
 
         # return the constructed object
