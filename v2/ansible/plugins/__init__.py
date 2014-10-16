@@ -112,7 +112,6 @@ class PluginLoader:
         for basedir in _basedirs:
             fullpath = os.path.realpath(os.path.join(basedir, self.subdir))
             if os.path.isdir(fullpath):
-
                 files = glob.glob("%s/*" % fullpath)
 
                 # allow directories to be two levels deep
