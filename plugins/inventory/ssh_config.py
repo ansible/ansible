@@ -76,6 +76,15 @@ def print_list():
         for ssh_opt, ans_opt in _ssh_to_ansible:
             if ssh_opt in attributes:
                 tmp_dict[ans_opt] = attributes[ssh_opt]
+
+        # Paramiko returns a list for 'identityfile',
+        # presumably to support multiple keys.
+        # Ansible only supports one key, so we take the
+        # first one
+        k = 'ansible_ssh_private_key_file'
+        if k in tmp_dict:
+            tmp_dict[k] = tmp_dict[k][0]
+
         if tmp_dict:
             meta['hostvars'][alias] = tmp_dict
 
