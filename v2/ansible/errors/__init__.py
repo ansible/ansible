@@ -38,9 +38,7 @@ class AnsibleError(Exception):
     def _get_line_from_file(self, filename, line_number):
         with open(filename, 'r') as f:
             lines = f.readlines()
-            if line_number < len(lines):
-                return lines[line_number]
-        return None
+            return lines[line_number]
 
     def _get_extended_error(self):
         error_message = ''

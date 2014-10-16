@@ -31,22 +31,43 @@ class TestErrors(unittest.TestCase):
     def setUp(self):
         self.message = 'this is the error message'
 
+        self.obj = AnsibleBaseYAMLObject()
+
     def tearDown(self):
         pass
 
     def test_basic_error(self):
         e = AnsibleError(self.message)
         self.assertEqual(e.message, self.message)
+        self.assertEqual(e.__repr__(), self.message)
 
-    def test_error_with_object(self):
-        obj = AnsibleBaseYAMLObject()
-        obj._data_source   = 'foo.yml'
-        obj._line_number   = 1
-        obj._column_number = 1
+    @patch.object(AnsibleError, '_get_line_from_file')
+    def test_error_with_object(self, mock_method):
+        self.obj._data_source   = 'foo.yml'
+        self.obj._line_number   = 1
+        self.obj._column_number = 1
 
-        m = mock_open()
-        m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n']
-        with patch('{0}.open'.format(BUILTINS), m):
-            e = AnsibleError(self.message, obj)
+        mock_method.return_value = 'this is line 1\n'
+        e = AnsibleError(self.message, self.obj)
 
         self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 1 of the file foo.yml:\nthis is line 1\n^')
+
+    def test_error_get_line_from_file(self):
+        m = mock_open()
+        m.return_value.readlines.return_value = ['this is line 1\n']
+
+        with patch('__builtin__.open', m):
+            # this line will be found in the file
+            self.obj._data_source   = 'foo.yml'
+            self.obj._line_number   = 1
+            self.obj._column_number = 1
+            e = AnsibleError(self.message, self.obj)
+            self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 1 of the file foo.yml:\nthis is line 1\n^')
+
+            # this line will not be found, as it is out of the index range
+            self.obj._data_source   = 'foo.yml'
+            self.obj._line_number   = 2
+            self.obj._column_number = 1
+            e = AnsibleError(self.message, self.obj)
+            self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 2 of the file foo.yml:\n\n(specified line no longer in file, maybe it changed?)')
+        
