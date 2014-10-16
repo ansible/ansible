@@ -5,6 +5,7 @@
 # Written by Trond Hindenes <trond@hindenes.com>
 #
 # Version 1.0 - July 6th, 2014
+# Version 1.1 - October 13th, 2014
 
 
 Param (
@@ -173,9 +174,13 @@ if ($PSVersionTable.PSVersion.Major -lt 3)
     Write-verbose "basic auth already enabled"
  }
  
-#FIrewall
-netsh advfirewall firewall add rule Profile=public name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
+#Firewall
 
+$fwtest = netsh advfirewall firewall show rule name="Allow WinRM HTTPS"
+#Very rudymentary text parsing, but should work. Better than relying on a specific OS language.
+if ($fwtest.count -lt 5)
+{
+    netsh advfirewall firewall add rule Profile=any name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
+}
 
-
- Write-Verbose "PS Remoting successfully setup for Ansible"
+Write-Verbose "PS Remoting successfully setup for Ansible"
