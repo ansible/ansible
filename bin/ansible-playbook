@@ -241,25 +241,24 @@ def main(args):
                 if options.listtasks:
                     print '  play #%d (%s):' % (playnum, label)
 
+                    taskslist = []
+                    for task in play.tasks():
+                        if (set(task.tags).intersection(pb.only_tags) and not
+                            set(task.tags).intersection(pb.skip_tags)):
+                            if getattr(task, 'name', None) is not None:
+                                # meta tasks have no names
+                                taskslist.append(task)
+
                     if play.roles:
                         for rol in play.roles:
                             print '    role: %s' % (rol)
-                        
-                            for task in play.tasks():
-                                if (set(task.tags).intersection(pb.only_tags) and not
-                                    set(task.tags).intersection(pb.skip_tags)):
-                                    if getattr(task, 'name', None) is not None:
-                                        # meta tasks have no names
-                                        #print '    %s' % task.name
-                                        if task.role_name is rol:
-                                            print '        %s ' % task.name
+                            for task in taskslist:
+                                if task.role_name is rol:
+                                    print '        %s ' % task.name
                     else:    
-                        for task in play.tasks():
-                            if (set(task.tags).intersection(pb.only_tags) and not
-                                set(task.tags).intersection(pb.skip_tags)):
-                                if getattr(task, 'name', None) is not None:
-                                    # meta tasks have no names
-                                    print '    %s' % task.name
+                        for task in taskslist:
+                            print '    %s' % task.name
+
                 if options.listhosts or options.listtasks:
                     print ''
             continue
