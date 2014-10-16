@@ -89,6 +89,16 @@ options:
     choices:
       - 'yes'
       - 'no'
+  color:
+    description:
+      - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
+    required: false
+    default: 'normal'
+    choices:
+      - 'normal'
+      - 'good'
+      - 'warning'
+      - 'danger'
 """
 
 EXAMPLES = """
@@ -111,14 +121,24 @@ EXAMPLES = """
     link_names: 0
     parse: 'none'
 
+- name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in Slack
+  slack:
+    domain: future500.slack.com
+    token: thetokengeneratedbyslack
+    msg: "{{ inventory_hostname }} is alive!"
+    color: good
+    username: ""
+    icon_url: ""
 """
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
-def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse):
-    payload = dict(text=text)
-
+def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color):
+    if color == 'normal':
+        payload = dict(text=text)
+    else:
+        payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
         payload['channel'] = channel if (channel[0] == '#') else '#'+channel
     if username is not None:
@@ -161,8 +181,8 @@ def main():
             icon_emoji  = dict(type='str', default=None),
             link_names  = dict(type='int', default=1, choices=[0,1]),
             parse       = dict(type='str', default=None, choices=['none', 'full']),
-
             validate_certs = dict(default='yes', type='bool'),
+            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger'])
         )
     )
 
@@ -175,8 +195,9 @@ def main():
     icon_emoji = module.params['icon_emoji']
     link_names = module.params['link_names']
     parse = module.params['parse']
+    color = module.params['color']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse)
+    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")
