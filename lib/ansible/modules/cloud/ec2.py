@@ -501,7 +501,7 @@ def _set_none_to_blank(dictionary):
     result = dictionary
     for k in result.iterkeys():
         if type(result[k]) == dict:
-            result[k] = _set_non_to_blank(result[k])
+            result[k] = _set_none_to_blank(result[k])
         elif not result[k]:
             result[k] = ""
     return result                        
