@@ -269,6 +269,63 @@ be used.  The default is ``False``, and if set as ``True`` will use more strict 
 
     {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
+.. _ipaddr_filter:
+
+IP Address Filter
+-----------------
+
+.. versionadded:: 1.8
+
+IP addresses in different formats are frequently used in various configuration
+files. ``ipaddr`` filter, with corresponding ``ipv4`` and ``ipv6`` filters can
+be used to test and manipulate IP address and CIDR strings into various forms.
+
+You can for example check if a given string is some form of IP address, by
+using ``ipaddr`` filter::
+
+    {{ '192.0.2.0/24' | ipaddr }}
+
+You can also specifically filter for IPv4 and IPv6 addresses, using ``ipv4``
+and ``ipv6`` filters::
+
+    {{ '2001:db8::1' | ipv6 }}
+
+IP address filters support a set of parameters which can be used to either test
+strings for a specific attribute (for example check if given IP address or CIDR
+is accessible over public or private network)::
+
+    {{ '192.0.2.32' | ipaddr('private') }}
+    {{ '192.0.2.0/24' | ipv4('public') }}
+
+Other parameters allow you to transform given string and get a specific
+attribute out of it (for example, given a CIDR, you can filter for its network
+address, broadcast address, netmask and other parameters)::
+
+    {{ '192.0.2.0/24' | ipaddr('network') }}
+    {{ '192.0.2.0/24' | ipaddr('broadcast') }}
+    {{ '192.0.2.0/24' | ipaddr('netmask') }}
+    {{ '192.0.2.0/24' | ipaddr('size') }}
+
+``ipaddr`` filter and its aliases provide special parameters useful in certain
+situations. You can very easily create RevDNS records for IPv4 and IPv6
+addresses::
+
+    {{ '2001:db8::1' | ipaddr('revdns') }}
+
+Some applications like webservers and TCPwrappers require specially formatted
+IPv6 addresses in brackets to prevent conflicts with port numbers. ``ipaddr``
+filter can automatically wrap these addresses (or CIDR ranges) leaving IPv4
+addresses unmodified::
+
+    {{ item | ipaddr('wrap') }}
+
+If you need to include other strings than IP addresses (for example domain
+names), you can use special ``ipwrap`` filter, which is an alias to ``ipaddr``
+which automatically will add brackets to all IPv6 addresses or CIDR ranges and
+pass anything else unmodified::
+
+    {{ item | ipwrap }}
+
 .. _random_filter:
 
 Random Number Filter
