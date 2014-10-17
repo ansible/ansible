@@ -622,8 +622,8 @@ class Ec2Inventory(object):
                 for group in value:
                     group_ids.append(group.id)
                     group_names.append(group.name)
-                instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
-                instance_vars["ec2_security_group_names"] = ','.join(group_names)
+                instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
+                instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
             else:
                 pass
                 # TODO Product codes if someone finds them useful
