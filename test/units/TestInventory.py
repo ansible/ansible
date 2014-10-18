@@ -85,6 +85,12 @@ class TestInventory(unittest.TestCase):
         hosts_all = inventory.get_hosts('all')
         self.assertEqual(sorted(hosts), sorted(hosts_all))
 
+    def test_list_hosts_dont_apply_subset(self):
+        inventory = self.simple_inventory()
+        inventory.subset('odin;thor,loki')
+        hosts = inventory.list_hosts(apply_subset=False)
+        self.assertEqual(sorted(hosts), sorted(self.all_simple_hosts))
+
     def test_no_src(self):
         inventory = Inventory('127.0.0.1,')
         self.assertEqual(inventory.src(), None)

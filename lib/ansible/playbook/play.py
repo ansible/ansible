@@ -36,7 +36,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
+       'tags', 'gather_facts', 'gather_facts_force', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user',
        'vault_password', 'no_log',
     ]
@@ -46,7 +46,7 @@ class Play(object):
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
+       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'gather_facts_force', 'serial',
        'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
        'su', 'su_user', 'vault_password', 'no_log',
     ]
@@ -127,25 +127,26 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        self.serial           = str(ds.get('serial', 0))
-        self.hosts            = hosts
-        self.name             = ds.get('name', self.hosts)
-        self._tasks           = ds.get('tasks', [])
-        self._handlers        = ds.get('handlers', [])
-        self.remote_user      = ds.get('remote_user', ds.get('user', self.playbook.remote_user))
-        self.remote_port      = ds.get('port', self.playbook.remote_port)
-        self.sudo             = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
-        self.transport        = ds.get('connection', self.playbook.transport)
-        self.remote_port      = self.remote_port
-        self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
-        self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
-        self.accelerate_port  = ds.get('accelerate_port', None)
-        self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
-        self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
-        self.su               = ds.get('su', self.playbook.su)
-        self.su_user          = ds.get('su_user', self.playbook.su_user)
-        self.no_log           = utils.boolean(ds.get('no_log', 'false'))
+        self.serial             = str(ds.get('serial', 0))
+        self.hosts              = hosts
+        self.name               = ds.get('name', self.hosts)
+        self._tasks             = ds.get('tasks', [])
+        self._handlers          = ds.get('handlers', [])
+        self.remote_user        = ds.get('remote_user', ds.get('user', self.playbook.remote_user))
+        self.remote_port        = ds.get('port', self.playbook.remote_port)
+        self.sudo               = ds.get('sudo', self.playbook.sudo)
+        self.sudo_user          = ds.get('sudo_user', self.playbook.sudo_user)
+        self.transport          = ds.get('connection', self.playbook.transport)
+        self.remote_port        = self.remote_port
+        self.any_errors_fatal   = utils.boolean(ds.get('any_errors_fatal', 'false'))
+        self.accelerate         = utils.boolean(ds.get('accelerate', 'false'))
+        self.accelerate_port    = ds.get('accelerate_port', None)
+        self.accelerate_ipv6    = ds.get('accelerate_ipv6', False)
+        self.max_fail_pct       = int(ds.get('max_fail_percentage', 100))
+        self.su                 = ds.get('su', self.playbook.su)
+        self.su_user            = ds.get('su_user', self.playbook.su_user)
+        self.no_log             = utils.boolean(ds.get('no_log', 'false'))
+        self.gather_facts_force = utils.boolean(ds.get('gather_facts_force', 'false'))
 
         # gather_facts is not a simple boolean, as None means  that a 'smart'
         # fact gathering mode will be used, so we need to be careful here as
@@ -770,7 +771,7 @@ class Play(object):
             """ Render the raw filename into 3 forms """
 
             # filename2 is the templated version of the filename, which will
-            # be fully rendered if any variables contained within it are 
+            # be fully rendered if any variables contained within it are
             # non-inventory related
             filename2 = template(self.basedir, filename, self.vars)
 
