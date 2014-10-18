@@ -92,7 +92,7 @@ Gather Facts (Boolean)
 ++++++++++++++++++++++
 
 Facts are mentioned above.  Sometimes when running a multi-play playbook, it is desirable to have some plays that don't bother with fact
-computation if they aren't going to need to utilize any of these values.  Setting `gather_facts: False` on a playbook allows this implicit
+computation if they aren't going to need to utilize any of these values.  Setting `gather_facts: no` on a playbook allows this implicit
 fact gathering to be skipped.
 
 Globbing

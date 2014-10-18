@@ -148,14 +148,14 @@ by configuring "run_once" on a task::
         # ...
 
         - command: /opt/application/upgrade_db.py
-          run_once: true
+          run_once: yes
 
         # ...
 
 This can be optionally paired with "delegate_to" to specify an individual host to execute on::
 
         - command: /opt/application/upgrade_db.py
-          run_once: true
+          run_once: yes
           delegate_to: web01.example.org
 
 When "run_once" is not used with "delegate_to" it will execute on the first host, as defined by inventory,

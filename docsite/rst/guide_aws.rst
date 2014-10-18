@@ -30,7 +30,7 @@ And in your playbook steps we'll typically be using the following pattern for pr
 
     - hosts: localhost
       connection: local
-      gather_facts: False
+      gather_facts: no
 
 .. _aws_provisioning:
 
@@ -83,7 +83,7 @@ With the host group now created, a second play in your provision playbook might 
     - name: Configuration play
       hosts: ec2hosts
       user: ec2-user
-      gather_facts: true
+      gather_facts: yes
 
       tasks:
       - name: Check NTP service
@@ -208,7 +208,7 @@ Example 4
 
     - hosts: localhost
       connection: local
-      gather_facts: False
+      gather_facts: no
       vars:
         ec2_access_key: "--REMOVED--"
         ec2_secret_key: "--REMOVED--"
@@ -254,9 +254,9 @@ Example 4
     # this playbook.
 
     - hosts: ec2hosts
-      gather_facts: True    
+      gather_facts: yes    
       user: ec2-user
-      sudo: True
+      sudo: yes
       tasks:
 
         # fetch instance data from the metadata servers in ec2
@@ -274,7 +274,7 @@ Example 4
     # its state is "absent"
 
     - hosts: ec2hosts
-      gather_facts: True    
+      gather_facts: yes    
       connection: local
       vars:
         ec2_access_key: "--REMOVED--"

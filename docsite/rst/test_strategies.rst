@@ -48,7 +48,7 @@ want certain steps to always execute in check mode, such as calls to the script 
 
    tasks:
      - script: verify.sh
-       always_run: True
+       always_run: yes
 
 Modules That Are Useful for Testing
 ```````````````````````````````````

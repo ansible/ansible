@@ -137,7 +137,7 @@ The following tasks are illustrative of how filters can be used with conditional
 
       - shell: /usr/bin/foo
         register: result
-        ignore_errors: True
+        ignore_errors: yes
 
       - debug: msg="it failed"
         when: result|failed
@@ -776,7 +776,7 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 
         - shell: /usr/bin/foo
           register: foo_result
-          ignore_errors: True
+          ignore_errors: yes
 
         - shell: /usr/bin/bar
           when: foo_result.rc == 5

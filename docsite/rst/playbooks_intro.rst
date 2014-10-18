@@ -223,7 +223,7 @@ Or this::
    tasks:
      - name: run this command and ignore the result
        shell: /usr/bin/somecommand
-       ignore_errors: True
+       ignore_errors: yes
 
 
 If the action line is getting too long for comfort you can break it on

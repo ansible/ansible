@@ -33,7 +33,7 @@ decide to do something conditionally based on success or failure::
     tasks:
       - command: /bin/false
         register: result
-        ignore_errors: True
+        ignore_errors: yes
       - command: /bin/something
         when: result|failed
       - command: /bin/something_else

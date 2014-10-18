@@ -254,14 +254,14 @@ In Ansible 1.8 and later, if you have a task that you don't want to show the res
 
     - name: secret task
       shell: /usr/bin/do_something --value={{ secret_value }}
-      no_log: True
+      no_log: yes
 
 This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
 
 The no_log attribute can also apply to an entire play::
 
     - hosts: all
-      no_log: True
+      no_log: yes
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed.   
