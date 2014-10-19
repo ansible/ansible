@@ -210,6 +210,20 @@ options:
     default: ''
     aliases: []
     version_added: "1.8"
+  restart_policy:
+    description:
+      - Set the container restart policy
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.9"
+  restart_policy_retry:
+    description:
+      - Set the retry limit for container restart policy
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.9"
 
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
@@ -665,6 +679,12 @@ class DockerManager:
             params['dns'] = self.module.params.get('dns')
             params['volumes_from'] = self.module.params.get('volumes_from')
 
+        if docker.utils.compare_version('1.14', self.client.version()['ApiVersion']) >= 0 and hasattr(docker, '__version__') and docker.__version__ >= '0.5.0':
+            if self.module.params.get('restart_policy') is not None:
+                params['restart_policy'] = { 'Name': self.module.params.get('restart_policy') }
+                if params['restart_policy']['Name'] == 'on-failure':
+                    params['restart_policy']['MaximumRetryCount'] = self.module.params.get('restart_policy_retry')
+
         for i in containers:
             self.client.start(i['Id'], **params)
             self.increment_counter('started')
@@ -742,6 +762,8 @@ def main():
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='running', choices=['absent', 'present', 'running', 'stopped', 'killed', 'restarted']),
+            restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no']),
+            restart_policy_retry = dict(default=0, type='int'),
             debug           = dict(default=False, type='bool'),
             privileged      = dict(default=False, type='bool'),
             stdin_open      = dict(default=False, type='bool'),
