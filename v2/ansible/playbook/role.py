@@ -19,31 +19,251 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from v2.playbook.base import PlaybookBase
-from v2.utils import list_union
+from six import iteritems, string_types
 
-class Role(PlaybookBase):
+import os
 
-    # TODO: this will be overhauled to match Task.py at some point
+from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.base import Base
+from ansible.playbook.block import Block
+from ansible.parsing import load_data_from_file
 
-    def __init__(self):
-        pass
+#from ansible.utils import list_union, unfrackpath
+
+class Role(Base):
+
+    _role           = FieldAttribute(isa='string')
+    _src            = FieldAttribute(isa='string')
+    _scm            = FieldAttribute(isa='string')
+    _version        = FieldAttribute(isa='string')
+    _params         = FieldAttribute(isa='dict')
+    _metadata       = FieldAttribute(isa='dict')
+    _task_blocks    = FieldAttribute(isa='list')
+    _handler_blocks = FieldAttribute(isa='list')
+    _default_vars   = FieldAttribute(isa='dict')
+    _role_vars      = FieldAttribute(isa='dict')
+
+    def __init__(self, vault_password=None):
+        self._role_path = None
+        self._vault_password = vault_password
+        super(Role, self).__init__()
+
+    def __repr__(self):
+        return self.get_name()
 
     def get_name(self):
-        return "TEMPORARY"
+        return self._attributes['role']
 
-    def load(self, ds):
-        self._ds = ds
-        self._tasks = []
-        self._handlers = []
-        self._blocks = []
-        self._dependencies = []
-        self._metadata = dict()
-        self._defaults = dict()
-        self._vars = dict()
-        self._params = dict()
+    @staticmethod
+    def load(data, vault_password=None):
+        assert isinstance(data, string_types) or isinstance(data, dict)
+        r = Role(vault_password=vault_password)
+        r.load_data(data)
+        return r
 
-    def get_vars(self):
+    #------------------------------------------------------------------------------
+    # munge, and other functions used for loading the ds
+
+    def munge(self, ds):
+        # Role definitions can be strings or dicts, so we fix
+        # things up here. Anything that is not a role name, tag,
+        # or conditional will also be added to the params sub-
+        # dictionary for loading later
+        if isinstance(ds, string_types):
+            new_ds = dict(role=ds)
+        else:
+            ds = self._munge_role(ds)
+
+            params = dict()
+            new_ds = dict()
+
+            for (key, value) in iteritems(ds):
+                if key not in [name for (name, value) in self._get_base_attributes().iteritems()]:
+                    # this key does not match a field attribute,
+                    # so it must be a role param
+                    params[key] = value
+                else:
+                    # this is a field attribute, so copy it over directly
+                    new_ds[key] = value
+
+            # finally, assign the params to a new entry in the revised ds
+            new_ds['params'] = params
+
+        # set the role path, based on the role definition
+        self._role_path = self._get_role_path(new_ds.get('role'))
+
+        # load the role's files, if they exist
+        new_ds['metadata']       = self._load_role_yaml('meta')
+        new_ds['task_blocks']    = self._load_role_yaml('tasks')
+        new_ds['handler_blocks'] = self._load_role_yaml('handlers')
+        new_ds['default_vars']   = self._load_role_yaml('defaults')
+        new_ds['role_vars']      = self._load_role_yaml('vars')
+
+        return new_ds
+
+    def _load_role_yaml(self, subdir):
+        file_path = os.path.join(self._role_path, subdir)
+        if os.path.exists(file_path) and os.path.isdir(file_path):
+            main_file = self._resolve_main(file_path)
+            if os.path.exists(main_file):
+                return load_data_from_file(main_file, self._vault_password)
+        return None
+
+    def _resolve_main(self, basepath):
+        ''' flexibly handle variations in main filenames '''
+        possible_mains = (
+            os.path.join(basepath, 'main'),
+            os.path.join(basepath, 'main.yml'),
+            os.path.join(basepath, 'main.yaml'),
+            os.path.join(basepath, 'main.json'),
+        )
+
+        if sum([os.path.isfile(x) for x in possible_mains]) > 1:
+            raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
+        else:
+            for m in possible_mains:
+                if os.path.isfile(m):
+                    return m # exactly one main file
+            return possible_mains[0] # zero mains (we still need to return something)
+
+    def _get_role_path(self, role):
+        '''
+        the 'role', as specified in the ds (or as a bare string), can either
+        be a simple name or a full path. If it is a full path, we use the
+        basename as the role name, otherwise we take the name as-given and
+        append it to the default role path
+        '''
+
+        # FIXME: this should use unfrackpath once the utils code has been sorted out
+        role_path = os.path.normpath(role)
+        if os.path.exists(role_path):
+            return role_path
+        else:
+            for path in ('./roles', '/etc/ansible/roles'):
+                role_path = os.path.join(path, role)
+                if os.path.exists(role_path):
+                    return role_path
+        # FIXME: raise something here
+        raise
+
+    def _repo_url_to_role_name(self, repo_url):
+        # gets the role name out of a repo like
+        # http://git.example.com/repos/repo.git" => "repo"
+
+        if '://' not in repo_url and '@' not in repo_url:
+            return repo_url
+        trailing_path = repo_url.split('/')[-1]
+        if trailing_path.endswith('.git'):
+            trailing_path = trailing_path[:-4]
+        if trailing_path.endswith('.tar.gz'):
+            trailing_path = trailing_path[:-7]
+        if ',' in trailing_path:
+            trailing_path = trailing_path.split(',')[0]
+        return trailing_path
+
+    def _role_spec_parse(self, role_spec):
+        # takes a repo and a version like
+        # git+http://git.example.com/repos/repo.git,v1.0
+        # and returns a list of properties such as:
+        # {
+        #   'scm': 'git',
+        #   'src': 'http://git.example.com/repos/repo.git',
+        #   'version': 'v1.0',
+        #   'name': 'repo'
+        # }
+
+        default_role_versions = dict(git='master', hg='tip')
+
+        role_spec = role_spec.strip()
+        role_version = ''
+        if role_spec == "" or role_spec.startswith("#"):
+            return (None, None, None, None)
+
+        tokens = [s.strip() for s in role_spec.split(',')]
+
+        # assume https://github.com URLs are git+https:// URLs and not
+        # tarballs unless they end in '.zip'
+        if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
+            tokens[0] = 'git+' + tokens[0]
+
+        if '+' in tokens[0]:
+            (scm, role_url) = tokens[0].split('+')
+        else:
+            scm = None
+            role_url = tokens[0]
+
+        if len(tokens) >= 2:
+            role_version = tokens[1]
+
+        if len(tokens) == 3:
+            role_name = tokens[2]
+        else:
+            role_name = repo_url_to_role_name(tokens[0])
+
+        if scm and not role_version:
+            role_version = default_role_versions.get(scm, '')
+
+        return dict(scm=scm, src=role_url, version=role_version, name=role_name)
+
+    def _munge_role(self, ds):
+        if 'role' in ds:
+            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+            role_info = self._role_spec_parse(ds['role'])
+            if isinstance(role_info, dict):
+                # Warning: Slight change in behaviour here.  name may be being
+                # overloaded.  Previously, name was only a parameter to the role.
+                # Now it is both a parameter to the role and the name that
+                # ansible-galaxy will install under on the local system.
+                if 'name' in ds and 'name' in role_info:
+                    del role_info['name']
+                ds.update(role_info)
+        else:
+            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+            if 'github.com' in ds["src"] and 'http' in ds["src"] and '+' not in ds["src"] and not ds["src"].endswith('.tar.gz'):
+                ds["src"] = "git+" + ds["src"]
+
+            if '+' in ds["src"]:
+                (scm, src) = ds["src"].split('+')
+                ds["scm"] = scm
+                ds["src"] = src
+
+            if 'name' in role:
+                ds["role"] = ds["name"]
+                del ds["name"]
+            else:
+                ds["role"] = self._repo_url_to_role_name(ds["src"])
+
+            # set some values to a default value, if none were specified
+            ds.setdefault('version', '')
+            ds.setdefault('scm', None)
+
+        return ds
+
+    #------------------------------------------------------------------------------
+    # attribute loading defs
+
+    def _load_list_of_blocks(self, ds):
+        assert type(ds) == list
+        block_list = []
+        for block in ds:
+            b = Block(block)
+            block_list.append(b)
+        return block_list
+
+    def _load_task_blocks(self, attr, ds):
+        if ds is None:
+            return []
+        return self._load_list_of_blocks(ds)
+
+    def _load_handler_blocks(self, attr, ds):
+        if ds is None:
+            return []
+        return self._load_list_of_blocks(ds)
+
+    #------------------------------------------------------------------------------
+    # other functions
+
+    def get_variables(self):
         # returns the merged variables for this role, including
         # recursively merging those of all child roles
         return dict()
@@ -59,9 +279,4 @@ class Role(PlaybookBase):
             list_union(all_deps, dep.get_all_dependencies())
         all_deps = list_union(all_deps, self.dependencies)
         return all_deps
-
-    def get_blocks(self):
-        # should return 
-        return self.blocks
-
 

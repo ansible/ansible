@@ -19,24 +19,39 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from inspect import getmembers
 from io import FileIO
 
 from six import iteritems, string_types
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.parsing import load as ds_load
+from ansible.parsing import load_data
 
 class Base:
+
+    _tags = FieldAttribute(isa='list')
+    _when = FieldAttribute(isa='list')
 
     def __init__(self):
 
         # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()
 
-        for (name, value) in iteritems(self.__class__.__dict__):
-            aname = name[1:]
+        for (name, value) in self._get_base_attributes().iteritems():
+            self._attributes[name] = value.default
+
+    def _get_base_attributes(self):
+        '''
+        Returns the list of attributes for this class (or any subclass thereof).
+        If the attribute name starts with an underscore, it is removed
+        '''
+        base_attributes = dict()
+        for (name, value) in getmembers(self.__class__):
             if isinstance(value, Attribute):
-                self._attributes[aname] = value.default
+               if name.startswith('_'):
+                   name = name[1:]
+               base_attributes[name] = value
+        return base_attributes
 
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
@@ -49,7 +64,7 @@ class Base:
         assert ds is not None
 
         if isinstance(ds, string_types) or isinstance(ds, FileIO):
-            ds = ds_load(ds)
+            ds = load_data(ds)
 
         # we currently don't do anything with private attributes but may
         # later decide to filter them out of 'ds' here.
@@ -57,20 +72,15 @@ class Base:
         ds = self.munge(ds)
 
         # walk all attributes in the class
-        for (name, attribute) in iteritems(self.__class__.__dict__):
-            aname = name[1:]
+        for (name, attribute) in self._get_base_attributes().iteritems():
 
-            # process Field attributes which get loaded from the YAML
-
-            if isinstance(attribute, FieldAttribute):
-
-                # copy the value over unless a _load_field method is defined
-                if aname in ds:
-                    method = getattr(self, '_load_%s' % aname, None)
-                    if method:
-                        self._attributes[aname] = method(aname, ds[aname])
-                    else:
-                        self._attributes[aname] = ds[aname]
+            # copy the value over unless a _load_field method is defined
+            if name in ds:
+                method = getattr(self, '_load_%s' % name, None)
+                if method:
+                    self._attributes[name] = method(name, ds[name])
+                else:
+                    self._attributes[name] = ds[name]
 
         # return the constructed object
         self.validate()
@@ -81,20 +91,12 @@ class Base:
         ''' validation that is done at parse time, not load time '''
 
         # walk all fields in the object
-        for (name, attribute) in self.__dict__.iteritems():
+        for (name, attribute) in self._get_base_attributes().iteritems():
 
-            # find any field attributes
-            if isinstance(attribute, FieldAttribute):
-
-                if not name.startswith("_"):
-                    raise AnsibleError("FieldAttribute %s must start with _" % name)
-
-                aname = name[1:]
-
-                # run validator only if present
-                method = getattr(self, '_validate_%s' % (prefix, aname), None)
-                if method:
-                    method(self, attribute)
+            # run validator only if present
+            method = getattr(self, '_validate_%s' % name, None)
+            if method:
+                method(self, attribute)
 
     def post_validate(self, runner_context):
         '''

@@ -25,11 +25,13 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 
 class Block(Base):
 
-    # TODO: FIXME: block/rescue/always should be enough
-    _begin     = FieldAttribute(isa='list')
+    _block     = FieldAttribute(isa='list')
     _rescue    = FieldAttribute(isa='list')
-    _end       = FieldAttribute(isa='list')
-    _otherwise = FieldAttribute(isa='list')
+    _always    = FieldAttribute(isa='list')
+
+    # for future consideration? this would be functionally
+    # similar to the 'else' clause for exceptions
+    #_otherwise = FieldAttribute(isa='list')
 
     def __init__(self, role=None):
         self.role = role
@@ -45,6 +47,20 @@ class Block(Base):
         b = Block(role=role)
         return b.load_data(data)
 
+    def munge(self, ds):
+        '''
+        If a simple task is given, an implicit block for that single task
+        is created, which goes in the main portion of the block
+        '''
+        is_block = False
+        for attr in ('block', 'rescue', 'always'):
+            if attr in ds:
+                is_block = True
+                break
+        if not is_block:
+            return dict(block=ds)
+        return ds
+
     def _load_list_of_tasks(self, ds):
         assert type(ds) == list
         task_list = []
@@ -53,15 +69,16 @@ class Block(Base):
             task_list.append(t)
         return task_list
 
-    def _load_begin(self, attr, ds):
+    def _load_block(self, attr, ds):
         return self._load_list_of_tasks(ds)
 
     def _load_rescue(self, attr, ds):
         return self._load_list_of_tasks(ds)
 
-    def _load_end(self, attr, ds):
+    def _load_always(self, attr, ds):
         return self._load_list_of_tasks(ds)
 
-    def _load_otherwise(self, attr, ds):
-        return self._load_list_of_tasks(ds)
+    # not currently used
+    #def _load_otherwise(self, attr, ds):
+    #    return self._load_list_of_tasks(ds)
 
