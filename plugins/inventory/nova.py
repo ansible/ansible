@@ -22,6 +22,7 @@ import sys
 import re
 import os
 import argparse
+import subprocess
 import yaml
 import time
 import md5
@@ -47,7 +48,9 @@ except ImportError:
 # - it will work with no additional configuration, just handling single tenant
 #   from set OS_* environment variables (just like python-novaclient).
 # - you can choose to heavy-configure it for multiple environments
-# - configured from simple YAML (I dislike ConfigParser). See nova.yml
+# - it's configured from simple YAML (I dislike ConfigParser). See nova.yml
+# - Nodes can be listed in inventory either by DNS name or IP address based
+#   on setting.
 #
 # * I took few ideas and some code from other pull requests
 # - https://github.com/ansible/ansible/pull/8657 by Monty Taylor
@@ -85,6 +88,7 @@ except ImportError:
 #  - auth_system
 #  - prefer_private (connect using private IPs)
 #  - cache_max_age (how long to consider cached data. In seconds)
+#  - resolve_ips (translate IP addresses to domain names)
 #
 # If you have a list in region and/or project, all the combinations of
 # will be listed.
@@ -114,6 +118,7 @@ NOVA_DEFAULTS = {
     'prefer_private': False,
     'version': '2',
     'cache_max_age': 300,
+    'resolve_ips': True,
 }
 
 
@@ -217,6 +222,7 @@ def get_nova_client(combination):
     del kwargs['name']
     del kwargs['prefer_private']
     del kwargs['cache_max_age']
+    del kwargs['resolve_ips']
     return novaclient.client.Client(**kwargs)
 
 
@@ -239,6 +245,25 @@ def merge_update_to_result(result, update):
             result[group] = list(set(update[group]) | set(result[group]))
 
 
+def get_name(ip):
+    ''' Gets the shortest domain name for IP address'''
+    # I first did this with gethostbyaddr but that did not return all the names
+    # Also, this won't work on Windows. But it can be turned of by setting
+    # resolve_ips to false
+    command = "host %s" % ip
+    p = subprocess.Popen(command.split(), stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    stdout, _ = p.communicate()
+    if p.returncode != 0:
+        return None
+    names = []
+    for l in stdout.split('\n'):
+        if 'domain name pointer' not in l:
+            continue
+        names.append(l.split()[-1])
+    return min(names, key=len)
+
+
 def get_update(call_params):
     '''
     Fetch host dicts and groups from single nova_client.servers.list call.
@@ -250,37 +275,42 @@ def get_update(call_params):
     nova_client = get_nova_client(call_params)
     for server in nova_client.servers.list():
         access_ip = get_access_ip(server, call_params['prefer_private'])
+        access_identifier = access_ip
+        if call_params['resolve_ips']:
+            dns_name = get_name(access_ip)
+            if dns_name:
+                access_identifier = dns_name
 
         # Push to a group for its name. This way we can use the nova name as
         # a target for ansible{-playbook}
-        push(update, server.name, access_ip)
+        push(update, server.name, access_identifier)
 
         # Run through each metadata item and add instance to it
         for key, value in server.metadata.iteritems():
             composed_key = to_safe('tag_{0}_{1}'.format(key, value))
-            push(update, composed_key, access_ip)
+            push(update, composed_key, access_identifier)
 
         # Do special handling of group for backwards compat
         # inventory update
         group = 'undefined'
         if 'group' in server.metadata:
             group = server.metadata['group']
-        push(update, group, access_ip)
+        push(update, group, access_identifier)
 
         # Add vars to _meta key for performance optimization in
         # Ansible 1.3+
-        update['_meta']['hostvars'][access_ip] = get_metadata(server)
+        update['_meta']['hostvars'][access_identifier] = get_metadata(server)
 
         # guess username based on image name
         ssh_user = get_ssh_user(server, nova_client)
         if ssh_user:
-            update['_meta']['hostvars'][access_ip]['ansible_ssh_user'] = (
-                ssh_user)
+            host_record = update['_meta']['hostvars'][access_identifier]
+            host_record['ansible_ssh_user'] = ssh_user
 
-        push(update, call_params['name'], access_ip)
-        push(update, call_params['project_id'], access_ip)
+        push(update, call_params['name'], access_identifier)
+        push(update, call_params['project_id'], access_identifier)
         if call_params['region_name']:
-            push(update, call_params['region_name'], access_ip)
+            push(update, call_params['region_name'], access_identifier)
     return update
 
 
