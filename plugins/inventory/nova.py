@@ -93,9 +93,6 @@ except ImportError:
 # If you have a list in region and/or project, all the combinations of
 # will be listed.
 #
-# After loading the config file, all the fields that are None/False/''/0/{}
-# are then populated from dict NOVA_DEFAULTS.
-#
 # If you don't have configfile, there will be one cloud section created called
 # 'openstack'.
 #
@@ -141,7 +138,7 @@ def load_config():
         CONFIG = {DEFAULT_CONFIG_KEY: {}}
     for section in CONFIG.values():
         for key in NOVA_DEFAULTS:
-            if (key not in section) or (not section[key]):
+            if (key not in section):
                 section[key] = NOVA_DEFAULTS[key]
 
 
