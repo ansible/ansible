@@ -25,6 +25,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 
 class Block(Base):
 
+    # TODO: FIXME: block/rescue/always should be enough
     _begin     = FieldAttribute(isa='list')
     _rescue    = FieldAttribute(isa='list')
     _end       = FieldAttribute(isa='list')
