@@ -357,12 +357,11 @@ def get_cache_filename(call_params):
     cache filename is
     ~/.ansible/tmp/<md5(auth_url,project_id,region_name)>.nova.json
     '''
-    region = ''
-    if call_params['region_name']:
-        region = call_params['region_name']
-    update_id = (call_params['auth_url'] + call_params['project_id'] + region)
+    id_to_hash = ("region_name: %(region_name)s, auth_url:%(auth_url)s,"
+                  "project_id: %(project_id)s, resolve_ips: %(resolve_ips)s"
+                  % call_params)
     return os.path.join(os.path.expanduser(CACHE_DIR),
-                 md5.new(update_id).hexdigest() + ".nova.json")
+                 md5.new(id_to_hash).hexdigest() + ".nova.json")
 
 
 def cache_valid(call_params):
