@@ -2157,6 +2157,11 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
+        if sys_vendor == 'QEMU':
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         if os.path.exists('/proc/self/status'):
             for line in open('/proc/self/status').readlines():
                 if re.match('^VxID: \d+', line):
