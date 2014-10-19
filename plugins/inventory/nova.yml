@@ -1,0 +1,43 @@
+# simple example:
+# ---
+# openstack:
+#   auth_url: https://cloud.example.fi:5001/v2.0
+#   username: tomas.karasek
+#   api_key: TomasK234ppp
+#   project_id: sandbox
+#
+#
+# example with more OpenStacks:
+# ---
+# openstack_prod:
+#   auth_url: https://cloud.example.fi:5001/v2.0
+#   username: tomas.karasek
+#   api_key: TomasK234ppp
+#   project_id: prod_tenant
+# openstack_dev:
+#   auth_url: https://cloud-dev.example.fi:5001/v2.0
+#   username: dev.account
+#   api_key: jisedo234sdf
+#   project_id: sandbox
+#
+#
+# example with more tenants in one OpenStack:
+# ---
+# openstack_prod:
+#   auth_url: https://cloud_prod.example.fi:5001/v2.0
+#   username: tomas.karasek
+#   api_key: TomasK234ppp
+#   project_id:
+#     - prod_tenant
+#     - dev_tenant
+#
+#
+# example with two OpenStacks. Credentials for both from env vars, auth_url and
+# project_ids are different:
+# ---
+# prod:
+#   auth_url: https://cloud.os.fi:5001/v20
+#   project_id: web1
+# local:
+#   auth_url: https://localhost
+#   project_id: localtenant
