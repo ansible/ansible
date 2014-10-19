@@ -20,14 +20,6 @@
 
 ###
 
-
-'''
-License: GPL V2 See LICENSE file
-Author: Jim Richardson
-email: weaselkeeper@gmail.com
-
-'''
-
 DOCUMENTATION = '''
 ---
 module: pushover
