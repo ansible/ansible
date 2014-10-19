@@ -1,0 +1,127 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+# vim: set expandtab:
+###
+# Copyright (c) 2012, Jim Richardson <weaselkeeper@gmail.com>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#   * Redistributions of source code must retain the above copyright notice,
+#     this list of conditions, and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions, and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#   * Neither the name of the author of this software nor the name of
+#     contributors to this software may be used to endorse or promote products
+#     derived from this software without specific prior written consent.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+###
+
+
+'''
+License: GPL V2 See LICENSE file
+Author: Jim Richardson
+email: weaselkeeper@gmail.com
+
+'''
+
+DOCUMENTATION = '''
+---
+module: pushover
+version_added: "1.8"
+short_description: Send notifications via u(https://pushover.net)
+description:
+   - Send notifications via pushover, to subscriber list of devices, and email
+   addresses. Requires pushover app on devices.
+notes:
+   - You will require a pushover.net account to use this module. But no account
+   is required to receive messages.
+options:
+  msg:
+    description:
+      What message you wish to send.
+    required: true
+  app_token:
+    description:
+      Pushover issued token identifying your pushover app.
+    required: true
+  user_key:
+    description:
+      Pushover issued authentication key for your user.
+    required: true
+  pri:
+    description: Message priority (see u(https://pushover.net) for details.)
+    required: false
+
+author: Jim Richardson
+'''
+
+EXAMPLES = '''
+- local_action: pushover msg="{{inventory_hostname}} has exploded in flames,
+  It is now time to panic" app_token=wxfdksl user_key=baa5fe97f2c5ab3ca8f0bb59
+'''
+
+import urllib
+import httplib
+
+
+class pushover(object):
+    ''' Instantiates a pushover object, use it to send notifications '''
+
+    def __init__(self):
+        self.host, self.port = 'api.pushover.net', 443
+
+    def run(self):
+        ''' Do, whatever it is, we do. '''
+        # parse config
+        conn = httplib.HTTPSConnection(self.host, self.port)
+        conn.request("POST", "/1/messages.json",
+                     urllib.urlencode(self.options),
+                     {"Content-type": "application/x-www-form-urlencoded"})
+        conn.getresponse()
+        return
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            msg=dict(required=True),
+            app_token=dict(required=True),
+            user_key=dict(required=True),
+            pri=dict(required=False, default=0),
+        ),
+    )
+
+    msg_object = pushover()
+    msg_object.options = {}
+    msg_object.options['user'] = module.params['user_key']
+    msg_object.options['token'] = module.params['app_token']
+    msg_object.options['priority'] = module.params['pri']
+    msg_object.options['message'] = module.params['msg']
+    try:
+        msg_object.run()
+    except:
+        module.fail_json(msg='Wibble')
+
+    module.exit_json(msg="OK", changed=False)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
