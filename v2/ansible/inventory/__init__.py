@@ -58,6 +58,12 @@ class Inventory:
     def also_restrict_to(self, restriction):
         pass
     def subset(self, subset_pattern):
+        """
+        Limits inventory results to a subset of inventory that matches a given
+        pattern, such as to select a given geographic of numeric slice amongst
+        a previous 'hosts' selection that only select roles, or vice versa...
+        Corresponds to --limit parameter to ansible-playbook
+        """
         pass
     def lift_restriction(self):
         # HACK -- 
