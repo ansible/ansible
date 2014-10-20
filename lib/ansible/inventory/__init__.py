@@ -36,7 +36,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
                   '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
@@ -53,7 +53,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
-        self._groups_list    = {} 
+        self._groups_list    = {}
         self._pattern_cache  = {}
 
         # to be set by calling set_playbook_basedir by playbook code
@@ -173,8 +173,8 @@ class Inventory(object):
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all"):
-        """ 
+    def get_hosts(self, pattern="all", apply_subset=True):
+        """
         find all host names matching a pattern string, taking into account any inventory restrictions or
         applied subsets.
         """
@@ -186,7 +186,7 @@ class Inventory(object):
         hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
-        if self._subset:
+        if apply_subset and self._subset:
             subset = self._get_hosts(self._subset)
             hosts = [ h for h in hosts if h in subset ]
 
@@ -243,7 +243,7 @@ class Inventory(object):
         return hosts
 
     def __get_hosts(self, pattern):
-        """ 
+        """
         finds hosts that positively match a particular pattern.  Does not
         take into account negative matches.
         """
@@ -288,7 +288,7 @@ class Inventory(object):
         """
         given a pattern like foo, that matches hosts, return all of hosts
         given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
-        """ 
+        """
 
         # If there are no hosts to select from, just return the
         # empty set. This prevents trying to do selections on an empty set.
@@ -482,15 +482,15 @@ class Inventory(object):
     def add_group(self, group):
         if group.name not in self.groups_list():
             self.groups.append(group)
-            self._groups_list = None  # invalidate internal cache 
+            self._groups_list = None  # invalidate internal cache
         else:
             raise errors.AnsibleError("group already in inventory: %s" % group.name)
 
-    def list_hosts(self, pattern="all"):
+    def list_hosts(self, pattern="all", apply_subset=True):
 
         """ return a list of hostnames for a pattern """
 
-        result = [ h.name for h in self.get_hosts(pattern) ]
+        result = [ h.name for h in self.get_hosts(pattern, apply_subset) ]
         if len(result) == 0 and pattern in ["localhost", "127.0.0.1"]:
             result = [pattern]
         return result
@@ -503,7 +503,7 @@ class Inventory(object):
         return self._restriction
 
     def restrict_to(self, restriction):
-        """ 
+        """
         Restrict list operations to the hosts given in restriction.  This is used
         to exclude failed hosts in main playbook code, don't use this for other
         reasons.
@@ -520,14 +520,14 @@ class Inventory(object):
         if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._also_restriction = restriction
-    
+
     def subset(self, subset_pattern):
-        """ 
+        """
         Limits inventory results to a subset of inventory that matches a given
         pattern, such as to select a given geographic of numeric slice amongst
-        a previous 'hosts' selection that only select roles, or vice versa.  
+        a previous 'hosts' selection that only select roles, or vice versa.
         Corresponds to --limit parameter to ansible-playbook
-        """        
+        """
         if subset_pattern is None:
             self._subset = None
         else:
@@ -547,7 +547,7 @@ class Inventory(object):
     def lift_restriction(self):
         """ Do not restrict list operations """
         self._restriction = None
-    
+
     def lift_also_restriction(self):
         """ Clears the also restriction """
         self._also_restriction = None
@@ -565,7 +565,7 @@ class Inventory(object):
         dname = os.path.dirname(self.host_list)
         if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
-            return os.path.abspath(cwd) 
+            return os.path.abspath(cwd)
         return os.path.abspath(dname)
 
     def src(self):

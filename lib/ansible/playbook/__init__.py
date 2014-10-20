@@ -563,9 +563,12 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
-        host_list = self._trim_unavailable_hosts(play._play_hosts)
+        hosts = play._play_hosts
+        if play.gather_facts == 'force':
+            hosts = self.inventory.list_hosts(apply_subset=False)
+        host_list = self._trim_unavailable_hosts(hosts)
 
-        if play.gather_facts is None and C.DEFAULT_GATHERING == 'smart':
+        if play.gather_facts in (None, 'force') and C.DEFAULT_GATHERING == 'smart':
             host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
             if len(host_list) == 0:
                 return {}
@@ -580,6 +583,7 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
+            run_hosts=host_list,
             basedir=self.basedir,
             pattern=play.hosts,
             module_name='setup',

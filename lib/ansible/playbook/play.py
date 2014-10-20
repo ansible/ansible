@@ -152,7 +152,9 @@ class Play(object):
         # calling utils.boolean(None) returns False
         self.gather_facts = ds.get('gather_facts', None)
         if self.gather_facts:
-            self.gather_facts = utils.boolean(self.gather_facts)
+            self.gather_facts = self.gather_facts.lower()
+            if not self.gather_facts == 'force':
+                self.gather_facts = utils.boolean(self.gather_facts)
 
         # Fail out if user specifies a sudo param with a su param in a given play
         if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
@@ -770,7 +772,7 @@ class Play(object):
             """ Render the raw filename into 3 forms """
 
             # filename2 is the templated version of the filename, which will
-            # be fully rendered if any variables contained within it are 
+            # be fully rendered if any variables contained within it are
             # non-inventory related
             filename2 = template(self.basedir, filename, self.vars)
 
