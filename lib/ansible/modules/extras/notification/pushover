@@ -97,9 +97,9 @@ def main():
     try:
         msg_object.run()
     except:
-        module.fail_json(msg='Wibble')
+        module.fail_json(msg='Unable to send msg via pushover')
 
-    module.exit_json(msg="OK", changed=False)
+    module.exit_json(msg=msg, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
