@@ -2159,6 +2159,10 @@ class LinuxVirtual(Virtual):
 
         if os.path.exists('/proc/1/cgroup'):
             for line in open('/proc/1/cgroup').readlines():
+                if re.search('/docker/', line):
+                    self.facts['virtualization_type'] = 'docker'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
                 if re.search('/lxc/', line):
                     self.facts['virtualization_type'] = 'lxc'
                     self.facts['virtualization_role'] = 'guest'
