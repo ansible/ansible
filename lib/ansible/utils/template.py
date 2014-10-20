@@ -340,6 +340,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         try:
             t = environment.from_string(data)
+        except TemplateSyntaxError, e:
+            raise errors.AnsibleError("template error while templating string: %s" % str(e))
         except Exception, e:
             if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
