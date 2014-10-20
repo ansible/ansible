@@ -233,8 +233,13 @@ class GceInventory(object):
     def group_instances(self):
         '''Group all instances'''
         groups = {}
+        meta = {}
+        meta["hostvars"] = {}
+
         for node in self.driver.list_nodes():
             name = node.name
+
+            meta["hostvars"][name] = self.node_to_dict(node)
 
             zone = node.extra['zone'].name
             if groups.has_key(zone): groups[zone].append(name)
@@ -263,6 +268,9 @@ class GceInventory(object):
             stat = 'status_%s' % status.lower()
             if groups.has_key(stat): groups[stat].append(name)
             else: groups[stat] = [name]
+
+        groups["_meta"] = meta
+
         return groups
 
     def json_format_dict(self, data, pretty=False):
