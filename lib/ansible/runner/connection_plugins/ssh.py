@@ -87,10 +87,14 @@ class Connection(object):
             self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
         elif self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.private_key_file)]
-        if self.password:
-            self.common_args += ["-o", "GSSAPIAuthentication=no",
-                                 "-o", "PubkeyAuthentication=no"]
-        else:
+
+        #
+        # In a previous version when using password GSSAPI and Pubkey
+        # authentication were forbidden, but this prevent to the
+        # openssh multiple required authentication to work (available
+        # since v.6.2) so this constraint has been removed.
+        #
+        if not self.password:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
