@@ -205,6 +205,8 @@ action: ovirt >
 
 
 '''
+import sys
+
 try:
     from ovirtsdk.api import API
     from ovirtsdk.xml import params
