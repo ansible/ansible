@@ -101,10 +101,13 @@ def get_args(args_list):
 def main(args_list):
 
     args = get_args(args_list)
-    if args.list:
-        print_list()
-    if args.host:
-        print_host(args.host)
+    try:
+        if args.list:
+            print_list()
+        if args.host:
+            print_host(args.host)
+    except IOError:
+        print json.dumps({})
 
 
 if __name__ == '__main__':
