@@ -25,7 +25,7 @@ from io import FileIO
 from six import iteritems, string_types
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.parsing import load_data
+from ansible.parsing import load
 
 class Base:
 
@@ -64,7 +64,7 @@ class Base:
         assert ds is not None
 
         if isinstance(ds, string_types) or isinstance(ds, FileIO):
-            ds = load_data(ds)
+            ds = load(ds)
 
         # we currently don't do anything with private attributes but may
         # later decide to filter them out of 'ds' here.

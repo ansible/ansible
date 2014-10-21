@@ -94,18 +94,13 @@ class ModuleArgsParser:
         if action not in ['shell', 'command']:
             return (action, args)
 
-        new_args = {}
-
         # the shell module really is the command module with an additional
         # parameter
         if action == 'shell':
             action = 'command'
-            new_args['_uses_shell'] = True
+            args['_uses_shell'] = True
 
-        # make sure the non-key-value params hop in the data
-        new_args['_raw_params'] = args['_raw_params']
-
-        return (action, new_args)
+        return (action, args)
 
     def _normalize_parameters(self, thing, action=None):
         '''

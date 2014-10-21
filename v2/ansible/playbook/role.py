@@ -26,8 +26,11 @@ import os
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
-from ansible.parsing import load_data_from_file
 from ansible.errors import AnsibleError
+
+# FIXME: this def was cruft from the old utils code, so we'll need
+#        to relocate it somewhere before we can use it
+#from ansible.parsing import load_data_from_file
 
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 

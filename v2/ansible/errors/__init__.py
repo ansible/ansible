@@ -20,10 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
 class AnsibleError(Exception):
     def __init__(self, message, obj=None):
+        # we import this here to prevent an import loop with errors
+        from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
         self._obj     = obj
         if isinstance(self._obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
