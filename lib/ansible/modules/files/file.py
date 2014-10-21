@@ -168,14 +168,6 @@ def main():
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is not None:
         src = os.path.expanduser(src)
-
-        # original_basename is used by other modules that depend on file.
-        if os.path.isdir(path) and state not in ["link", "absent"]:
-            if params['original_basename']:
-                basename = params['original_basename']
-            else:
-                basename = os.path.basename(src)
-            params['path'] = path = os.path.join(path, basename)
     else:
         if state in ['link','hard']:
             if follow:
@@ -183,6 +175,16 @@ def main():
                 src = os.readlink(path)
             else:
                 module.fail_json(msg='src and dest are required for creating links')
+
+    # original_basename is used by other modules that depend on file.
+    if os.path.isdir(path) and state not in ["link", "absent"]:
+        basename = None
+        if params['original_basename']:
+            basename = params['original_basename']
+        elif src is not None:
+            basename = os.path.basename(src)
+        if basename:
+            params['path'] = path = os.path.join(path, basename)
 
     # make sure the target path is a directory when we're doing a recursive operation
     recurse = params['recurse']
