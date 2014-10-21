@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.parsing import load_data
 from ansible.errors import AnsibleParserError
+from ansible.parsing import load
 
 import json
 
