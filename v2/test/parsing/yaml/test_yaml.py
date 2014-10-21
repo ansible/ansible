@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ... compat import unittest
+from ansible.compat.tests import unittest
 
 from yaml.scanner import ScannerError
 
