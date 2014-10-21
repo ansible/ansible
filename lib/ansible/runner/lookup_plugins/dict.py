@@ -19,11 +19,10 @@ from ansible.utils import safe_eval
 import ansible.utils as utils
 import ansible.errors as errors
 
+
 def flatten_hash_to_list(terms):
-    ret = []
-    for key in terms:
-        ret.append({'key': key, 'value': terms[key]})
-    return ret
+    return [{'key': key, 'value': value} for key, value in terms.items()]
+
 
 class LookupModule(object):
 
