@@ -20,10 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleInternalError, AnsibleParserError
 from ansible.parsing import load
 
 import json
+import yaml
 
 from io import FileIO
 
@@ -34,13 +35,14 @@ class MockFile(FileIO):
         self.method = method
 
     def read(self):
-        if method == 'json':
-            return json.dumps(ds)
-        elif method == 'yaml':
-            return yaml.dumps(ds)
-        elif method == 'fail':
+        if self.method == 'json':
+            return json.dumps(self.ds)
+        elif self.method == 'yaml':
+            return yaml.dump(self.ds)
+        elif self.method == 'fail':
             return """
-            AAARGGGGH
+            AAARGGGGH:
+                *****
                THIS WON'T PARSE !!!
                   NOOOOOOOOOOOOOOOOOO
             """
@@ -51,56 +53,52 @@ class MockFile(FileIO):
         pass
 
 class TestGeneralParsing(unittest.TestCase):
-
-    def __init__(self):
-        pass
-
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    def parse_json_from_string(self):
-        input = """
+    def test_parse_json_from_string(self):
+        data = """
         {
             "asdf" : "1234",
             "jkl" : 5678
         }
         """
-        output = load_data(input)
+        output = load(data)
         self.assertEqual(output['asdf'], '1234')
         self.assertEqual(output['jkl'], 5678)
 
-    def parse_json_from_file(self):
-        output = load_data(MockFile(dict(a=1,b=2,c=3)),'json')
-        self.assertEqual(ouput, dict(a=1,b=2,c=3))
+    def test_parse_json_from_file(self):
+        output = load(MockFile(dict(a=1,b=2,c=3), 'json'))
+        self.assertEqual(output, dict(a=1,b=2,c=3))
 
-    def parse_yaml_from_dict(self):
-        input = """
+    def test_parse_yaml_from_dict(self):
+        data = """
         asdf: '1234'
         jkl: 5678
         """
-        output = load_data(input)
+        output = load(data)
         self.assertEqual(output['asdf'], '1234')
         self.assertEqual(output['jkl'], 5678)
 
-    def parse_yaml_from_file(self):
-        output = load_data(MockFile(dict(a=1,b=2,c=3),'yaml'))
+    def test_parse_yaml_from_file(self):
+        output = load(MockFile(dict(a=1,b=2,c=3),'yaml'))
         self.assertEqual(output, dict(a=1,b=2,c=3))
 
-    def parse_fail(self):
-        input = """
-        TEXT
+    def test_parse_fail(self):
+        data = """
+        TEXT:
             ***
                NOT VALID
         """
-        self.assertRaises(load_data(input), AnsibleParserError)
+        self.assertRaises(AnsibleParserError, load, data)
 
-    def parse_fail_from_file(self):
-        self.assertRaises(load_data(MockFile(None,'fail')), AnsibleParserError)
+    def test_parse_fail_from_file(self):
+        self.assertRaises(AnsibleParserError, load, MockFile(None,'fail'))
 
-    def parse_fail_invalid_type(self):
-        self.assertRaises(3000, AnsibleParsingError)
-        self.assertRaises(dict(a=1,b=2,c=3), AnsibleParserError)
+    def test_parse_fail_invalid_type(self):
+        self.assertRaises(AnsibleInternalError, load, 3000)
+        self.assertRaises(AnsibleInternalError, load, dict(a=1,b=2,c=3))
 
