@@ -67,7 +67,7 @@
 # VERIFY dest as a directory does not break file attributes
 # Note: expanduser is needed to go down the particular codepath that was broken before
 - name: setup directory for test
-  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group=nobody
+  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group=root
 
 - name: set file mode when the destination is a directory
   template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
@@ -82,7 +82,6 @@
 
 - assert:
     that:
-      - "file_attrs.stat.gid == 0"
       - "file_attrs.stat.uid == 0"
       - "file_attrs.stat.pw_name == 'root'"
       - "file_attrs.stat.mode == '0600'"
@@ -93,7 +92,6 @@
 
 - assert:
     that:
-      - "dir_attrs.stat.gid != 0"
       - "dir_attrs.stat.uid != 0"
       - "dir_attrs.stat.pw_name == 'nobody'"
       - "dir_attrs.stat.mode == '0755'"
