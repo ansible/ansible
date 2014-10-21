@@ -37,7 +37,7 @@ class Base:
         # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()
 
-        for (name, value) in self._get_base_attributes().iteritems():
+        for (name, value) in iteritems(self._get_base_attributes()):
             self._attributes[name] = value.default
 
     def _get_base_attributes(self):
@@ -72,7 +72,7 @@ class Base:
         ds = self.munge(ds)
 
         # walk all attributes in the class
-        for (name, attribute) in self._get_base_attributes().iteritems():
+        for (name, attribute) in iteritems(self._get_base_attributes()):
 
             # copy the value over unless a _load_field method is defined
             if name in ds:
@@ -91,7 +91,7 @@ class Base:
         ''' validation that is done at parse time, not load time '''
 
         # walk all fields in the object
-        for (name, attribute) in self._get_base_attributes().iteritems():
+        for (name, attribute) in iteritems(self._get_base_attributes()):
 
             # run validator only if present
             method = getattr(self, '_validate_%s' % name, None)
