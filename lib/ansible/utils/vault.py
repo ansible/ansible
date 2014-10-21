@@ -183,7 +183,7 @@ class VaultEditor(object):
 
     def _edit_file_helper(self, existing_data=None, cipher=None):
         # make sure the umask is set to a sane value
-        old_umask = os.umask(0077)
+        old_umask = os.umask(0o077)
 
         # Create a tempfile
         _, tmp_path = tempfile.mkstemp()
