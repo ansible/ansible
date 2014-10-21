@@ -198,6 +198,12 @@ class ModuleArgsParser:
         delegate_to = None
         args        = dict()
 
+
+        #
+        # We can have one of action, local_action, or module specified
+        #
+
+        # action
         if 'action' in ds:
 
             # an old school 'action' statement
@@ -205,7 +211,8 @@ class ModuleArgsParser:
             delegate_to = None
             action, args = self._normalize_parameters(thing)
 
-        elif 'local_action' in ds:
+        # local_action
+        if 'local_action' in ds:
 
             # local_action is similar but also implies a delegate_to
             if action is not None:
@@ -214,21 +221,17 @@ class ModuleArgsParser:
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing)
 
-        else:
+        # module: <stuff> is the more new-style invocation
 
-            # module: <stuff> is the more new-style invocation
-            if action is not None:
-                raise AnsibleParserError("conflicting action statements", obj=self._task)
-
-            # walk the input dictionary to see we recognize a module name
-            for (item, value) in iteritems(ds):
-                if item in module_finder:
-                    # finding more than one module name is a problem
-                    if action is not None:
-                        raise AnsibleParserError("conflicting action statements", obj=self._task)
-                    action = item
-                    thing = value
-                    action, args = self._normalize_parameters(value, action=action)
+        # walk the input dictionary to see we recognize a module name
+        for (item, value) in iteritems(ds):
+            if item in module_finder:
+                # finding more than one module name is a problem
+                if action is not None:
+                    raise AnsibleParserError("conflicting action statements", obj=self._task)
+                action = item
+                thing = value
+                action, args = self._normalize_parameters(value, action=action)
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
