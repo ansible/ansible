@@ -27,21 +27,23 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.parsing import load_data_from_file
+from ansible.errors import AnsibleError
 
-#from ansible.utils import list_union, unfrackpath
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 
 class Role(Base):
 
-    _role           = FieldAttribute(isa='string')
+    _role_name      = FieldAttribute(isa='string')
+    _role_path      = FieldAttribute(isa='string')
     _src            = FieldAttribute(isa='string')
     _scm            = FieldAttribute(isa='string')
     _version        = FieldAttribute(isa='string')
-    _params         = FieldAttribute(isa='dict')
-    _metadata       = FieldAttribute(isa='dict')
-    _task_blocks    = FieldAttribute(isa='list')
-    _handler_blocks = FieldAttribute(isa='list')
-    _default_vars   = FieldAttribute(isa='dict')
-    _role_vars      = FieldAttribute(isa='dict')
+    _params         = FieldAttribute(isa='dict', default=dict())
+    _metadata       = FieldAttribute(isa='dict', default=dict())
+    _task_blocks    = FieldAttribute(isa='list', default=[])
+    _handler_blocks = FieldAttribute(isa='list', default=[])
+    _default_vars   = FieldAttribute(isa='dict', default=dict())
+    _role_vars      = FieldAttribute(isa='dict', default=dict())
 
     def __init__(self, vault_password=None):
         self._role_path = None
@@ -52,7 +54,7 @@ class Role(Base):
         return self.get_name()
 
     def get_name(self):
-        return self._attributes['role']
+        return self._attributes['role_name']
 
     @staticmethod
     def load(data, vault_password=None):
@@ -65,44 +67,52 @@ class Role(Base):
     # munge, and other functions used for loading the ds
 
     def munge(self, ds):
-        # Role definitions can be strings or dicts, so we fix
-        # things up here. Anything that is not a role name, tag,
-        # or conditional will also be added to the params sub-
-        # dictionary for loading later
+        # create the new ds as an AnsibleMapping, so we can preserve any line/column
+        # data from the parser, and copy that info from the old ds (if applicable)
+        new_ds = AnsibleMapping()
+        if isinstance(ds, AnsibleBaseYAMLObject):
+            new_ds.copy_position_info(ds)
+
+        # Role definitions can be strings or dicts, so we fix things up here.
+        # Anything that is not a role name, tag, or conditional will also be
+        # added to the params sub-dictionary for loading later
         if isinstance(ds, string_types):
-            new_ds = dict(role=ds)
+            new_ds['role_name'] = ds
         else:
+            # munge the role ds here to correctly fill in the various fields which
+            # may be used to define the role, like: role, src, scm, etc.
             ds = self._munge_role(ds)
 
+            # now we split any random role params off from the role spec and store
+            # them in a dictionary of params for parsing later
             params = dict()
-            new_ds = dict()
-
+            attr_names = [attr_name for (attr_name, attr_value) in self._get_base_attributes().iteritems()]
             for (key, value) in iteritems(ds):
-                if key not in [name for (name, value) in self._get_base_attributes().iteritems()]:
-                    # this key does not match a field attribute,
-                    # so it must be a role param
+                if key not in attr_names and key != 'role':
+                    # this key does not match a field attribute, so it must be a role param
                     params[key] = value
                 else:
                     # this is a field attribute, so copy it over directly
                     new_ds[key] = value
-
-            # finally, assign the params to a new entry in the revised ds
             new_ds['params'] = params
 
-        # set the role path, based on the role definition
-        self._role_path = self._get_role_path(new_ds.get('role'))
+        # Set the role name and path, based on the role definition
+        (role_name, role_path) = self._get_role_path(new_ds.get('role_name'))
+        new_ds['role_name'] = role_name
+        new_ds['role_path'] = role_path
 
         # load the role's files, if they exist
-        new_ds['metadata']       = self._load_role_yaml('meta')
-        new_ds['task_blocks']    = self._load_role_yaml('tasks')
-        new_ds['handler_blocks'] = self._load_role_yaml('handlers')
-        new_ds['default_vars']   = self._load_role_yaml('defaults')
-        new_ds['role_vars']      = self._load_role_yaml('vars')
+        new_ds['metadata']       = self._load_role_yaml(role_path, 'meta')
+        new_ds['task_blocks']    = self._load_role_yaml(role_path, 'tasks')
+        new_ds['handler_blocks'] = self._load_role_yaml(role_path, 'handlers')
+        new_ds['default_vars']   = self._load_role_yaml(role_path, 'defaults')
+        new_ds['role_vars']      = self._load_role_yaml(role_path, 'vars')
 
+        # and return the newly munged ds
         return new_ds
 
-    def _load_role_yaml(self, subdir):
-        file_path = os.path.join(self._role_path, subdir)
+    def _load_role_yaml(self, role_path, subdir):
+        file_path = os.path.join(role_path, subdir)
         if os.path.exists(file_path) and os.path.isdir(file_path):
             main_file = self._resolve_main(file_path)
             if os.path.exists(main_file):
@@ -119,7 +129,7 @@ class Role(Base):
         )
 
         if sum([os.path.isfile(x) for x in possible_mains]) > 1:
-            raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
+            raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
         else:
             for m in possible_mains:
                 if os.path.isfile(m):
@@ -136,15 +146,23 @@ class Role(Base):
 
         # FIXME: this should use unfrackpath once the utils code has been sorted out
         role_path = os.path.normpath(role)
+        print("first role path is %s" % role_path)
         if os.path.exists(role_path):
-            return role_path
+            role_name = os.path.basename(role)
+            print('returning role path %s' % role_path)
+            return (role_name, role_path)
         else:
             for path in ('./roles', '/etc/ansible/roles'):
                 role_path = os.path.join(path, role)
+		print("current role path is %s" % role_path)
                 if os.path.exists(role_path):
-                    return role_path
-        # FIXME: raise something here
-        raise
+                    print('returning role path %s' % role_path)
+                    return (role, role_path)
+
+        # FIXME: make the parser smart about list/string entries
+        #        in the yaml so the error line/file can be reported
+        #        here 
+        raise AnsibleError("the role '%s' was not found" % role, obj=role)
 
     def _repo_url_to_role_name(self, repo_url):
         # gets the role name out of a repo like
@@ -198,12 +216,12 @@ class Role(Base):
         if len(tokens) == 3:
             role_name = tokens[2]
         else:
-            role_name = repo_url_to_role_name(tokens[0])
+            role_name = self._repo_url_to_role_name(tokens[0])
 
         if scm and not role_version:
             role_version = default_role_versions.get(scm, '')
 
-        return dict(scm=scm, src=role_url, version=role_version, name=role_name)
+        return dict(scm=scm, src=role_url, version=role_version, role_name=role_name)
 
     def _munge_role(self, ds):
         if 'role' in ds:
