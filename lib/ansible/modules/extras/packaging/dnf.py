@@ -152,10 +152,10 @@ def dnf_base(conf_file=None, cachedir=False):
      if cachedir or os.geteuid() != 0:
          if hasattr(my, 'setCacheDir'):
              my.setCacheDir()
-#         else:
-#             cachedir = dnf.misc.getCacheDir()
-#             my.repos.setCacheDir(cachedir)
-#             my.conf.cache = 0
+         else:
+             cachedir = cachedir.dnf.Conf()
+             my.repos.setCacheDir(cachedir)
+             my.conf.cache = 0
 
     return my
 
