@@ -219,5 +219,5 @@ def load_data_from_file(path, vault_password=None):
 
     try:
         return load_data(data)
-    except YAMLError, exc:
+    except YAMLError as exc:
         process_yaml_error(exc, data, path, show_content)

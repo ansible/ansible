@@ -191,7 +191,7 @@ class VaultEditor(object):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
         # drop the user into vim on file
-        old_umask = os.umask(0077)
+        old_umask = os.umask(0o077)
         call(self._editor_shell_command(self.filename))
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
@@ -225,7 +225,7 @@ class VaultEditor(object):
             raise errors.AnsibleError(CRYPTO_UPGRADE)
 
         # make sure the umask is set to a sane value
-        old_mask = os.umask(0077)
+        old_mask = os.umask(0o077)
 
         # decrypt to tmpfile
         tmpdata = self.read_data(self.filename)

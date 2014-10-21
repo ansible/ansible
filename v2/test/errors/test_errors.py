@@ -57,7 +57,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n']
 
-        with patch('__builtin__.open', m):
+        with patch('{0}.open'.format(BUILTINS), m):
             # this line will be found in the file
             self.obj._data_source   = 'foo.yml'
             self.obj._line_number   = 1
