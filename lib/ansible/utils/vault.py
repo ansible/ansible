@@ -61,6 +61,7 @@ except ImportError:
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 HEADER='$ANSIBLE_VAULT'
+CIPHER_DEFAULT = 'AES256'
 CIPHER_WHITELIST=['AES', 'AES256']
 
 class VaultLib(object):
@@ -82,7 +83,7 @@ class VaultLib(object):
             raise errors.AnsibleError("data is already encrypted")
 
         if not self.cipher_name:
-            self.cipher_name = "AES256"
+            self.cipher_name = CIPHER_DEFAULT
             #raise errors.AnsibleError("the cipher must be set before encrypting data")
 
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
@@ -228,9 +229,12 @@ class VaultEditor(object):
         old_mask = os.umask(0077)
 
         # decrypt to tmpfile
-        tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        if os.path.exists(self.filename):
+            tmpdata = self.read_data(self.filename)
+            dec_data = this_vault.decrypt(tmpdata)
+        else:
+            dec_data = ''
         _, tmp_path = tempfile.mkstemp()
         self.write_data(dec_data, tmp_path)
 
@@ -238,18 +242,19 @@ class VaultEditor(object):
         call(self._editor_shell_command(tmp_path))
         new_data = self.read_data(tmp_path)
 
-        # create new vault
-        new_vault = VaultLib(self.password)
-
         # we want the cipher to default to AES256
-        #new_vault.cipher_name = this_vault.cipher_name
+        if dec_data != new_data or this_vault.cipher_name != CIPHER_DEFAULT:
+            # create new vault
+            new_vault = VaultLib(self.password)
 
-        # encrypt new data a write out to tmp
-        enc_data = new_vault.encrypt(new_data)
-        self.write_data(enc_data, tmp_path)
+            # encrypt new data a write out to tmp
+            enc_data = new_vault.encrypt(new_data)
+            self.write_data(enc_data, tmp_path)
 
-        # shuffle tmp file into place
-        self.shuffle_files(tmp_path, self.filename)
+            # shuffle tmp file into place
+            self.shuffle_files(tmp_path, self.filename)
+        else:
+            os.remove(tmp_path)
 
         # and restore the old umask
         os.umask(old_mask)
