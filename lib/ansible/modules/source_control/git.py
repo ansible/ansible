@@ -33,7 +33,7 @@ options:
         description:
             - git, SSH, or HTTP protocol address of the git repository.
     dest:
-        required: false
+        required: true
         description:
             - Absolute path of where the repository should be checked out to.
               This parameter is required, unless C(update) is set to C(no)
