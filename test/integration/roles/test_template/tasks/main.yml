@@ -60,7 +60,40 @@
   register: file_result
 
 - name: ensure file mode did not change
-  assert: 
-    that: 
+  assert:
+    that:
       - "file_result.changed != True"
-        
+
+# VERIFY dest as a directory does not break file attributes
+# Note: expanduser is needed to go down the particular codepath that was broken before
+- name: setup directory for test
+  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group=nobody
+
+- name: set file mode when the destination is a directory
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
+
+- name: set file mode when the destination is a directory
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
+  register: file_result
+
+- name: check that the file has the correct attributes
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
+  register: file_attrs
+
+- assert:
+    that:
+      - "file_attrs.stat.gid == 0"
+      - "file_attrs.stat.uid == 0"
+      - "file_attrs.stat.pw_name == 'root'"
+      - "file_attrs.stat.mode == '0600'"
+
+- name: check that the containing directory did not change attributes
+  stat: path={{output_dir | expanduser}}/template-dir/
+  register: dir_attrs
+
+- assert:
+    that:
+      - "dir_attrs.stat.gid != 0"
+      - "dir_attrs.stat.uid != 0"
+      - "dir_attrs.stat.pw_name == 'nobody'"
+      - "dir_attrs.stat.mode == '0755'"

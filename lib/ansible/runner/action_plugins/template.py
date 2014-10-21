@@ -133,9 +133,12 @@ class ActionModule(object):
             # when running the file module based on the template data, we do
             # not want the source filename (the name of the template) to be used,
             # since this would mess up links, so we clear the src param and tell
-            # the module to follow links
+            # the module to follow links.  When doing that, we have to set
+            # original_basename to the template just in case the dest is
+            # a directory.
             new_module_args = dict(
                 src=None,
+                original_basename=os.path.basename(source),
                 follow=True,
             )
             # be sure to inject the check mode param into the module args and
