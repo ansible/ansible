@@ -238,6 +238,11 @@ class VaultEditor(object):
         call(self._editor_shell_command(tmp_path))
         new_data = self.read_data(tmp_path)
 
+        # if the file was not modified,
+        # let the encrypted version as it was
+        if new_data == dec_data:
+            return
+
         # create new vault
         new_vault = VaultLib(self.password)
 
