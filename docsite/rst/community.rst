@@ -115,7 +115,7 @@ github about any errors you spot or sections you would like to see added. For mo
 on creating pull requests, please refer to the
 `github help guide <https://help.github.com/articles/using-pull-requests>`_.
 
-For Current and Propspective Developers
+For Current and Prospective Developers
 =======================================
 
 I'd Like To Learn How To Develop on Ansible
