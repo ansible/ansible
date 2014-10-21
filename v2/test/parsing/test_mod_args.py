@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from ansible.parsing.mod_args import ModuleArgsParser
 
-from .. compat import unittest
+from ansible.compat.tests import unittest
 
 class TestModArgsDwim(unittest.TestCase):
 

@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.playbook.task import Task
-from .. compat import unittest
+from ansible.compat.tests import unittest
 
 basic_shell_task = dict(
    name  = 'Test Task',

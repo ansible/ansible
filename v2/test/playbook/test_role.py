@@ -22,7 +22,7 @@ __metaclass__ = type
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
-from .. compat import unittest
+from ansible.compat.tests import unittest
 
 class TestRole(unittest.TestCase):
 

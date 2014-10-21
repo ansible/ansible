@@ -19,12 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from .. compat import unittest
+from ansible.compat.tests import unittest
 
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.errors import AnsibleError
 
-from .. compat import BUILTINS, mock_open, patch
+from ansible.compat.tests import BUILTINS
+from ansible.compat.tests.mock import mock_open, patch
 
 class TestErrors(unittest.TestCase):
 
