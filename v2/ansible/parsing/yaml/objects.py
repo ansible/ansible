@@ -32,6 +32,15 @@ class AnsibleBaseYAMLObject:
     def get_position_info(self):
         return (self._data_source, self._line_number, self._column_number)
 
+    def copy_position_info(obj):
+        ''' copies the position info from another object '''
+        assert isinstance(obj, AnsibleBaseYAMLObject)
+
+        (src, line, col) = obj.get_position_info()
+        self._data_source   = src
+        self._line_number   = line
+        self._column_number = col
+
 class AnsibleMapping(AnsibleBaseYAMLObject, dict):
     ''' sub class for dictionaries '''
     pass
