@@ -23,23 +23,23 @@ import json
 
 from yaml import YAMLError
 
-from ansible.errors import AnsibleError, AnsibleInternalError
+from ansible.errors import AnsibleParserError, AnsibleInternalError
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml import safe_load
 
-
 def load(data):
 
-    if isinstance(data, file):
-        fd = open(f)
-        data = fd.read()
-        fd.close()
+    if hasattr(data, 'read') and hasattr(data.read, '__call__'):
+        data = data.read()
 
     if isinstance(data, basestring):
         try:
-            return json.loads(data)
+            try:
+                return json.loads(data)
+            except:
+                return safe_load(data)
         except:
-            return safe_load(data)
+            raise AnsibleParserError("data was not valid yaml")
 
     raise AnsibleInternalError("expected file or string, got %s" % type(data))
 
