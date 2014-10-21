@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.errors import AnsibleParserError
 
 from ansible.compat.tests import unittest
 
@@ -106,3 +107,9 @@ class TestModArgsDwim(unittest.TestCase):
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
         self.assertIs(to, 'localhost')
+
+    def test_multiple_actions(self):
+        self.assertRaises(AnsibleParserError, self.m.parse, dict(action='shell echo hi', local_action='shell echo hi'))
+        self.assertRaises(AnsibleParserError, self.m.parse, dict(action='shell echo hi', shell='echo hi'))
+        self.assertRaises(AnsibleParserError, self.m.parse, dict(local_action='shell echo hi', shell='echo hi'))
+        self.assertRaises(AnsibleParserError, self.m.parse, dict(ping='data=hi', shell='echo hi'))
