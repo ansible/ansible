@@ -426,7 +426,7 @@ def replace(connection, module):
 
     batch_size = module.params.get('replace_batch_size')
     wait_timeout = module.params.get('wait_timeout')
-    group_name = module.params.get('group_name')
+    group_name = module.params.get('name')
     max_size =  module.params.get('max_size')
     min_size =  module.params.get('min_size')
     desired_capacity =  module.params.get('desired_capacity')
@@ -444,7 +444,7 @@ def replace(connection, module):
         time.sleep(10)
     if instance_wait <= time.time():
         # waiting took too long
-        module.fail_json(msg = "Waited too for instances to appear. %s" % time.asctime())
+        module.fail_json(msg = "Waited too long for instances to appear. %s" % time.asctime())
     # determine if we need to continue
     replaceable = 0
     if replace_instances:
@@ -470,7 +470,7 @@ def replace(connection, module):
         props = get_properties(as_group)
     if wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "Waited too for instances to appear. %s" % time.asctime())
+        module.fail_json(msg = "Waited too long for instances to appear. %s" % time.asctime())
     instances = props['instances']
     if replace_instances:
         instances = replace_instances
@@ -490,7 +490,7 @@ def replace(connection, module):
 def replace_batch(connection, module, replace_instances):
     
     
-    group_name = module.params.get('group_name')
+    group_name = module.params.get('name')
     wait_timeout = int(module.params.get('wait_timeout'))
     lc_check = module.params.get('lc_check')
 
