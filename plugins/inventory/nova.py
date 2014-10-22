@@ -43,7 +43,7 @@ except ImportError:
 #   in "nova boot"
 # - it caches the state of the cloud
 # - it tries to guess ansible_ssh_user based on name of image
-#   ('\cubuntu' -> 'ubuntu', '\ccentos' -> 'cloud-user', ...)
+#   ('\cubuntu' -> 'ubuntu', '\ccentos' -> 'centos', ...)
 # - allows to access machines by their private ip *
 # - it will work with no additional configuration, just handling single tenant
 #   from set OS_* environment variables (just like python-novaclient).
@@ -201,7 +201,7 @@ def get_ssh_user(server, nova_client):
         if 'ubuntu' in image_name.lower():
             return 'ubuntu'
         if 'centos' in  image_name.lower():
-            return 'cloud-user'
+            return 'centos'
         if 'debian' in  image_name.lower():
             return 'debian'
         if 'coreos' in  image_name.lower():
