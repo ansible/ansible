@@ -21,8 +21,6 @@ __metaclass__ = type
 
 import json
 
-from yaml import YAMLError
-
 from ansible.errors import AnsibleParserError, AnsibleInternalError
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml import safe_load
