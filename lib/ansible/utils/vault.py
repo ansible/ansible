@@ -189,7 +189,7 @@ class VaultEditor(object):
         _, tmp_path = tempfile.mkstemp()
 
         if existing_data:
-            self.write_data(data, tmp_path)
+            self.write_data(existing_data, tmp_path)
 
         # drop the user into an editor on the tmp file
         call(self._editor_shell_command(tmp_path))
