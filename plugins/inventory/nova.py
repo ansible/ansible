@@ -258,7 +258,10 @@ def get_name(ip):
         if 'domain name pointer' not in l:
             continue
         names.append(l.split()[-1])
-    return min(names, key=len)
+    hostname = min(names, key=len)
+    if hostname[-1] == '.':
+        hostname = hostname[:-1]
+    return hostname
 
 
 def get_update(call_params):
