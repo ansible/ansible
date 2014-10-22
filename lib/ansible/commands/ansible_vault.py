@@ -20,6 +20,7 @@
 
 #__requires__ = ['ansible']
 #import pkg_resources
+from __future__ import absolute_import
 
 import os
 import sys
@@ -228,6 +229,3 @@ def main():
             print traceback.format_exc()
         print "ERROR:",err
         sys.exit(1)
-
-if __name__ == "__main__":
-    main()

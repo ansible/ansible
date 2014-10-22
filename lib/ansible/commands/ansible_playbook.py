@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 #######################################################
+from __future__ import absolute_import
 
 #__requires__ = ['ansible']
 #import pkg_resources
@@ -60,7 +61,7 @@ def hostcolor(host, stats, color=True):
     return "%-26s" % host
 
 
-def main(args):
+def _main(args):
     ''' run ansible-playbook operations '''
 
     # create parser for CLI options
@@ -316,12 +317,12 @@ def main(args):
     return 0
 
 
-if __name__ == "__main__":
+def main():
     display(" ", log_only=True)
     display(" ".join(sys.argv), log_only=True)
     display(" ", log_only=True)
     try:
-        sys.exit(main(sys.argv[1:]))
+        sys.exit(_main(sys.argv[1:]))
     except errors.AnsibleError, e:
         display("ERROR: %s" % e, color='red', stderr=True)
         sys.exit(1)
