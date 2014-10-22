@@ -51,7 +51,7 @@ class ActionModule(object):
             else:
                 result = dict(msg=args['msg'])
         elif 'var' in args and not utils.LOOKUP_REGEX.search(args['var']):
-            results = template.template(self.basedir, "{{ %s }}" % args['var'], inject)
+            results = template.template(self.basedir, args['var'], inject, convert_bare=True)
             result[args['var']] = results
 
         # force flag to make debug output module always verbose
