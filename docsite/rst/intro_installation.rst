@@ -117,7 +117,7 @@ If you don't have pip installed in your version of Python, install pip::
 
 Ansible also uses the following Python modules that need to be installed::
 
-    $ sudo pip install paramiko PyYAML jinja2 httplib2
+    $ sudo pip install paramiko PyYAML Jinja2 httplib2
 
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
 which point at Ansible's own modules (not the same kind of modules, alas).
