@@ -88,6 +88,9 @@ class Cli(object):
         if (options.ask_vault_pass and options.vault_password_file):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
+        if (options.ask_pass and options.ask_otp_code):
+            parser.error("--ask-pass and --ask-otpcode are mutually exclusive")
+
         return (options, args)
 
     # ----------------------------------------------
@@ -97,7 +100,7 @@ class Cli(object):
 
         pattern = args[0]
 
-        sshpass = becomepass = vault_pass = become_method = None
+        sshpass = becomepass = vault_pass = otp_code = become_method = None
 
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
@@ -106,11 +109,12 @@ class Cli(object):
             options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
 
         options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
+        options.ask_otp_code = options.ask_otp_code or C.DEFAULT_ASK_OTP_CODE
 
         # become
         utils.normalize_become_options(options)
         prompt_method = utils.choose_pass_prompt(options)
-        (sshpass, becomepass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, become_ask_pass=options.become_ask_pass, ask_vault_pass=options.ask_vault_pass, become_method=prompt_method)
+        (sshpass, becomepass, vault_pass, otp_code) = utils.ask_passwords(ask_pass=options.ask_pass, become_ask_pass=options.become_ask_pass, ask_vault_pass=options.ask_vault_pass, ask_otp_code=options.ask_otp_code, become_method=prompt_method)
 
         # read vault_pass from a file
         if not options.ask_vault_pass and options.vault_password_file:
@@ -145,6 +149,7 @@ class Cli(object):
             module_args=options.module_args,
             remote_user=options.remote_user,
             remote_pass=sshpass,
+            otp_code=otp_code,
             inventory=inventory_manager,
             timeout=options.timeout,
             private_key_file=options.private_key_file,

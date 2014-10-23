@@ -121,6 +121,7 @@ class Runner(object):
         pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
+        otp_code=None,                      # one time password code
         remote_port=None,                   # if SSH on different ports
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
         background=0,                       # async poll every X seconds, else 0 for non-async
@@ -196,6 +197,7 @@ class Runner(object):
         self.timeout          = timeout
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
+        self.otp_code         = otp_code
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
         self.background       = background
@@ -362,6 +364,7 @@ class Runner(object):
         delegate['port'] = this_info.get('ansible_ssh_port', port)
         delegate['user'] = self._compute_delegate_user(self.delegate_to, delegate['inject'])
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
+        delegate['otp_code'] = this_info.get('ansible_otp_code', self.otp_code)
         delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', self.private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['become_pass'] = this_info.get('ansible_become_pass', this_info.get('ansible_ssh_pass', self.become_pass))
@@ -880,6 +883,7 @@ class Runner(object):
         actual_port = port
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
+        actual_otp  = inject.get('ansible_otp_code', self.otp_code)
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
@@ -926,6 +930,7 @@ class Runner(object):
             actual_port = delegate['port']
             actual_user = delegate['user']
             actual_pass = delegate['pass']
+            actual_otp  = delegate['otp_code']
             actual_private_key_file = delegate['private_key_file']
             self.become_pass = delegate.get('become_pass',delegate.get('sudo_pass'))
             inject = delegate['inject']
@@ -957,7 +962,7 @@ class Runner(object):
                 delegate_host = host
             else:
                 delegate_host = None
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, delegate_host)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_otp, actual_transport, actual_private_key_file, delegate_host)
 
             default_shell = getattr(conn, 'default_shell', '')
             shell_type = inject.get('ansible_shell_type')
