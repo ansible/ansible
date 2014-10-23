@@ -25,14 +25,17 @@ from io import FileIO
 from six import iteritems, string_types
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.parsing import load
+from ansible.parsing.yaml import DataLoader
 
 class Base:
 
     _tags = FieldAttribute(isa='list')
     _when = FieldAttribute(isa='list')
 
-    def __init__(self):
+    def __init__(self, loader=DataLoader):
+
+        # the data loader class is used to parse data from strings and files
+        self._loader = loader
 
         # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()
@@ -64,7 +67,7 @@ class Base:
         assert ds is not None
 
         if isinstance(ds, string_types) or isinstance(ds, FileIO):
-            ds = load(ds)
+            ds = self._loader.load(ds)
 
         # we currently don't do anything with private attributes but may
         # later decide to filter them out of 'ds' here.

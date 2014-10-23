@@ -23,14 +23,11 @@ from six import iteritems, string_types
 
 import os
 
+from ansible.errors import AnsibleError
+from ansible.parsing.yaml import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
-from ansible.errors import AnsibleError
-
-# FIXME: this def was cruft from the old utils code, so we'll need
-#        to relocate it somewhere before we can use it
-#from ansible.parsing import load_data_from_file
 
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 
@@ -48,10 +45,10 @@ class Role(Base):
     _default_vars   = FieldAttribute(isa='dict', default=dict())
     _role_vars      = FieldAttribute(isa='dict', default=dict())
 
-    def __init__(self, vault_password=None):
+    def __init__(self, vault_password=None, loader=DataLoader):
         self._role_path = None
         self._vault_password = vault_password
-        super(Role, self).__init__()
+        super(Role, self).__init__(loader=loader)
 
     def __repr__(self):
         return self.get_name()
