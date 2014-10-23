@@ -19,25 +19,3 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.errors import AnsibleParserError, AnsibleInternalError
-from ansible.parsing.vault import VaultLib
-from ansible.parsing.yaml import safe_load
-
-def load(data):
-
-    if hasattr(data, 'read') and hasattr(data.read, '__call__'):
-        data = data.read()
-
-    if isinstance(data, basestring):
-        try:
-            try:
-                return json.loads(data)
-            except:
-                return safe_load(data)
-        except:
-            raise AnsibleParserError("data was not valid yaml")
-
-    raise AnsibleInternalError("expected file or string, got %s" % type(data))
-
