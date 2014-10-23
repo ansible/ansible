@@ -102,6 +102,7 @@ EXAMPLES = '''
       - proto: tcp
         from_port: 80
         to_port: 80
+        cidr_ip: 0.0.0.0/0
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
@@ -339,7 +340,7 @@ def main():
                                 cidr_ip=ip)
                     changed = True
         elif vpc_id and not module.check_mode:
-            # when using a vpc, but no egress rules are specified, 
+            # when using a vpc, but no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
