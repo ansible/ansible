@@ -97,7 +97,7 @@ EXAMPLES = '''
 # Basic task example
 tasks:
 - name: launch ansible cloudformation example
-  action: cloudformation >
+  cloudformation:
     stack_name="ansible-cloudformation" state=present
     region=us-east-1 disable_rollback=true
     template=files/cloudformation-example.json
