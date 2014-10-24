@@ -162,7 +162,11 @@ class RabbitMqUser(object):
         return dict()
 
     def add(self):
-        self._exec(['add_user', self.username, self.password])
+        if self.password is not None:
+            self._exec(['add_user', self.username, self.password])
+        else
+            self._exec(['add_user', self.username, ''])
+            self._exec(['clear_password', self.username])
 
     def delete(self):
         self._exec(['delete_user', self.username])
