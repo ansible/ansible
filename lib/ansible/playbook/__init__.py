@@ -330,7 +330,7 @@ class PlayBook(object):
         # if the playbook is invoked with --tags or --skip-tags that don't
         # exist at all in the playbooks then we need to raise an error so that
         # the user can correct the arguments.
-        unknown_tags = ((set(self.only_tags) | set(self.skip_tags)) -
+        unknown_tags = (set(self.only_tags) -
                         (matched_tags_all | unmatched_tags_all))
         unknown_tags.discard('all')
 
