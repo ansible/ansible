@@ -20,7 +20,7 @@ module: cloudtrail
 short_description: manage CloudTrail creation and deletion
 description:
   - Creates or deletes CloudTrail configuration. Ensures logging is also enabled. This module has a dependency on python-boto >= 2.21.
-version_added: "1.7.3"
+version_added: "2.0"
 author: Ted Timmons
 requirements: ["boto"]
 options:
@@ -28,7 +28,7 @@ options:
     description:
       - add or remove CloudTrail configuration.
     required: true
-    choices: ['enabled', 'absent']
+    choices: ['enabled', 'disabled']
   name:
     description:
       - name for given CloudTrail configuration.
@@ -76,12 +76,12 @@ extends_documentation_fragment: aws
 
 EXAMPLES = """
   - name: enable cloudtrail
-    local_action: cloudtrail >
+    local_action: cloudtrail
       state=enabled name=main s3_bucket_name=ourbucket
       s3_key_prefix=cloudtrail region=us-east-1
 
   - name: enable cloudtrail with different configuration
-    local_action: cloudtrail >
+    local_action: cloudtrail
       state=enabled name=main s3_bucket_name=ourbucket2
       s3_key_prefix='' region=us-east-1
 
@@ -94,13 +94,13 @@ import sys
 import os
 from collections import Counter
 
+boto_import_failed = False
 try:
     import boto
     import boto.cloudtrail
     from boto.regioninfo import RegionInfo
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    boto_import_failed = True
 
 class CloudTrailManager:
     """Handles cloudtrail configuration"""
@@ -150,22 +150,24 @@ class CloudTrailManager:
 
 
 def main():
+
+    if not has_libcloud:
+      module.fail_json(msg='boto is required.')
+
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True, 'choices': ['enabled', 'absent'] },
+        state={'required': True, 'choices': ['enabled', 'disabled'] },
         name={'required': True, 'type': 'str' },
         s3_bucket_name={'required': False, 'type': 'str' },
         s3_key_prefix={'default':'', 'required': False, 'type': 'str' },
         include_global_events={'default':True, 'required': False, 'type': 'bool' },
     ))
+    required_together = ( ['state', 's3_bucket_name'] )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
     ec2_url, access_key, secret_key, region = get_ec2_creds(module)
     aws_connect_params = dict(aws_access_key_id=access_key,
                               aws_secret_access_key=secret_key)
-
-    if module.params['state'] == 'enabled' and not module.params['s3_bucket_name']:
-        module.fail_json(msg="s3_bucket_name must be specified as a parameter when creating a cloudtrail")
 
     if not region:
         module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
@@ -209,7 +211,7 @@ def main():
             results['changed'] = True
 
     # delete the cloudtrai
-    elif module.params['state'] == 'absent':
+    elif module.params['state'] == 'disabled':
         # check to see if it exists before deleting.
         results['exists'] = cf_man.exists(name=ct_name)
         if results['exists']:
