@@ -6,7 +6,18 @@
 # Built using https://github.com/hamnis/useful-scripts/blob/master/python/download-maven-artifact
 # as a reference and starting point.
 #
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 __author__ = 'cschmidt'
 
@@ -97,7 +108,6 @@ EXAMPLES = '''
 # Download a WAR File to the Tomcat webapps directory to be deployed
 - download_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven target=/var/lib/tomcat7/webapps/web-app.war
 '''
-
 
 class Artifact(object):
     def __init__(self, group_id, artifact_id, version, classifier=None, extension=jar):
@@ -311,7 +321,7 @@ def main():
             repository_url = dict(default=None),
             username = dict(default=None),
             password = dict(default=None),
-            state = dict(default="latest", choices=["present","absent"]),
+            state = dict(default="latest", choices=["present","absent"]), # TODO - Implement a "latest" state 
             target = dict(default=None),
         )
     )
@@ -346,12 +356,8 @@ def main():
             os.makedirs(path)
 
     if prev_state == "present":
-        if state == "latest":
-            artifact_uri = downloader.find_uri_for_artifact(artifact)
-            if downloader.verify_md5(target, artifact_uri + ".md5"):
-                module.exit_json(target=target, state=state, changed=False)
-        else:
-            module.exit_json(target=target, state=state, changed=False)
+        module.exit_json(target=target, state=state, changed=False)
+
     try:
         if downloader.download(artifact, target):
             module.exit_json(state=state, target=target, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
