@@ -228,7 +228,7 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
         active_connections = 0
         f = open(self.source_file[self.family])
         for tcp_connection in f.readlines():
-            tcp_connection = tcp_connection.strip().split(' ')
+            tcp_connection = tcp_connection.strip().split()
             if tcp_connection[self.local_address_field] == 'local_address':
                 continue
             if tcp_connection[self.connection_state_field] not in self.connection_states:
