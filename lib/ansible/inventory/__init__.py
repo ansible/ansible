@@ -38,7 +38,8 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
+                  '_groups_cache_hash', '_pattern_cache', '_vault_password', '_vars_plugins',
+                  '_playbook_basedir']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
 
@@ -55,6 +56,7 @@ class Inventory(object):
         self._hosts_cache    = {}
         self._groups_list    = {} 
         self._pattern_cache  = {}
+        self._groups_cache_hash = {}
 
         # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
@@ -382,6 +384,7 @@ class Inventory(object):
                     if a.name not in groups:
                         groups[a.name] = [h.name for h in a.get_hosts()]
             self._groups_list = groups
+            self._groups_cache_hash = {}
         return self._groups_list
 
     def get_groups(self):
@@ -406,10 +409,11 @@ class Inventory(object):
         return None
 
     def get_group(self, groupname):
-        for group in self.groups:
-            if group.name == groupname:
-                return group
-        return None
+        if not self._groups_cache_hash:
+            for group in self.groups:
+                self._groups_cache_hash[group.name] = group
+
+        return self._groups_cache_hash.get(groupname)
 
     def get_group_variables(self, groupname, update_cached=False, vault_password=None):
         if groupname not in self._vars_per_group or update_cached:
@@ -483,6 +487,7 @@ class Inventory(object):
         if group.name not in self.groups_list():
             self.groups.append(group)
             self._groups_list = None  # invalidate internal cache 
+            self._groups_cache_hash = {}
         else:
             raise errors.AnsibleError("group already in inventory: %s" % group.name)
 
