@@ -11,9 +11,17 @@ See :doc:`modules` for a list of various ones developed in core.
 Modules can be written in any language and are found in the path specified
 by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
+By default, everything that ships with ansible is pulled from its source tree, but
+additional paths can be added.
+
+The directory "./library", alongside your top level playbooks, is also automatically
+added as a search directory.
+
 Should you develop an interesting Ansible module, consider sending a pull request to the
-`github project <http://github.com/ansible/ansible>`_ to see about getting your module
-included in the core project.
+`modules-extras project <http://github.com/ansible/ansible-modules-extras>`_.  There's also a core
+repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
+but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
+of how you acquire ansible.
 
 .. _module_dev_tutorial:
 
@@ -40,7 +48,7 @@ modules.   Keep in mind, though, that some modules in ansible's source tree are 
 so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
 you'll turn to stone.  Nobody ever executes async_wrapper directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time.py`::
 
     #!/usr/bin/python
 
@@ -59,13 +67,13 @@ Testing Modules
 
 There's a useful test script in the source checkout for ansible::
 
-    git clone git@github.com:ansible/ansible.git
+    git clone git@github.com:ansible/ansible.git --recursive
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
 Let's run the script you just wrote with that::
 
-    ansible/hacking/test-module -m ./time
+    ansible/hacking/test-module -m ./time.py
 
 You should see output that looks something like this::
 
@@ -77,6 +85,7 @@ If you did not, you might have a typo in your module, so recheck it and try agai
 
 Reading Input
 `````````````
+
 
 Let's modify the module to allow setting the current time.  We'll do this by seeing
 if a key value pair in the form `time=<string>` is passed in to the module.
@@ -222,7 +231,7 @@ As mentioned, if you are writing a module in Python, there are some very powerfu
 Modules are still transferred as one file, but an arguments file is no longer needed, so these are not
 only shorter in terms of code, they are actually FASTER in terms of execution time.
 
-Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible/tree/devel/library>`_ that come with Ansible.
+Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible-modules-core>`_ that come with Ansible.
 
 The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 
@@ -423,20 +432,38 @@ built and appear in the 'docsite/' directory.
 
 .. tip::
 
-    You can use ANSIBLE_KEEP_REMOTE_FILES=1 to prevent ansible from
+    You can set the environment variable ANSIBLE_KEEP_REMOTE_FILES=1 on the controlling host to prevent ansible from
     deleting the remote files so you can debug your module.
 
 .. _module_contribution:
 
-Getting Your Module Into Core
-`````````````````````````````
+Module Paths
+````````````
+
+If you are having trouble getting your module "found" by ansible, be sure it is in the ANSIBLE_LIBRARY_PATH.
+
+If you have a fork of one of the ansible module projects, do something like this::
+
+    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras 
+
+And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
+to make sure you're not reporting bugs on versions from your fork!
+
+To be safe, if you're working on a variant on something in Ansible's normal distribution, it's not
+a bad idea to give it a new name while you are working on it, to be sure you know you're pulling
+your version.
+
+Getting Your Module Into Ansible
+````````````````````````````````
 
 High-quality modules with minimal dependencies
-can be included in the core, but core modules (just due to the programming
+can be included in the ansible, but modules (just due to the programming
 preferences of the developers) will need to be implemented in Python and use
 the AnsibleModule common code, and should generally use consistent arguments with the rest of
 the program.   Stop by the mailing list to inquire about requirements if you like, and submit
-a github pull request to the main project.
+a github pull request to the `extras <https://github.com/ansible/ansible-modules-extras>`_ project.
+Included modules will ship with ansible, and also have a change to be promoted to 'core' status, which
+gives them slightly higher development priority (though they'll work in exactly the same way).
 
 .. seealso::
 

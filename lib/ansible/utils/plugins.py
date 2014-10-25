@@ -75,6 +75,15 @@ class PluginLoader(object):
                 ret.append(i)
         return os.pathsep.join(ret)
 
+    def _all_directories(self, dir):
+        results = []
+        results.append(dir)
+        for root, subdirs, files in os.walk(dir):
+           if '__init__.py' in files:
+               for x in subdirs:
+                   results.append(os.path.join(root,x))
+        return results
+
     def _get_package_paths(self):
         ''' Gets the path of a Python package '''
 
@@ -85,10 +94,8 @@ class PluginLoader(object):
             m = __import__(self.package)
             parts = self.package.split('.')[1:]
             self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
-            paths.append(self.package_path)
-            return paths
-        else:
-            return [ self.package_path ]
+        paths.extend(self._all_directories(self.package_path))
+        return paths
 
     def _get_paths(self):
         ''' Return a list of paths to search for plugins in '''
@@ -96,12 +103,19 @@ class PluginLoader(object):
         if self._paths is not None:
             return self._paths
 
-        ret = []
-        ret += self._extra_dirs
+        ret = self._extra_dirs[:]
         for basedir in _basedirs:
             fullpath = os.path.realpath(os.path.join(basedir, self.subdir))
             if os.path.isdir(fullpath):
+
                 files = glob.glob("%s/*" % fullpath)
+
+                # allow directories to be two levels deep
+                files2 = glob.glob("%s/*/*" % fullpath)
+
+                if files2 is not None:
+                    files.extend(files2)
+
                 for file in files:
                     if os.path.isdir(file) and file not in ret:
                         ret.append(file)
@@ -109,44 +123,49 @@ class PluginLoader(object):
                     ret.append(fullpath)
 
         # look in any configured plugin paths, allow one level deep for subcategories
-        configured_paths = self.config.split(os.pathsep)
-        for path in configured_paths:
-            path = os.path.realpath(os.path.expanduser(path))
-            contents = glob.glob("%s/*" % path)
-            for c in contents:
-                if os.path.isdir(c) and c not in ret:
-                    ret.append(c)
-            if path not in ret:
-                ret.append(path)
+        if self.config is not None:
+            configured_paths = self.config.split(os.pathsep)
+            for path in configured_paths:
+                path = os.path.realpath(os.path.expanduser(path))
+                contents = glob.glob("%s/*" % path)
+                for c in contents:
+                    if os.path.isdir(c) and c not in ret:
+                        ret.append(c)
+                if path not in ret:
+                    ret.append(path)
 
         # look for any plugins installed in the package subtree
         ret.extend(self._get_package_paths())
 
+        # cache and return the result
         self._paths = ret
-
         return ret
 
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
 
-        self._paths = None
         directory = os.path.realpath(directory)
 
         if directory is not None:
             if with_subdir:
                 directory = os.path.join(directory, self.subdir)
             if directory not in self._extra_dirs:
+                # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
+                self._paths = None
 
-    def find_plugin(self, name, suffixes=None):
+    def find_plugin(self, name, suffixes=None, transport=''):
         ''' Find a plugin named name '''
 
         if not suffixes:
             if self.class_name:
                 suffixes = ['.py']
             else:
-                suffixes = ['', '.ps1']
+                if transport == 'winrm':
+                    suffixes = ['.ps1', '']
+                else:
+                    suffixes = ['.py', '']
 
         for suffix in suffixes:
             full_name = '%s%s' % (name, suffix)
@@ -232,7 +251,7 @@ shell_loader = PluginLoader(
 
 module_finder = PluginLoader(
     '',
-    '',
+    'ansible.modules',
     C.DEFAULT_MODULE_PATH,
     'library'
 )

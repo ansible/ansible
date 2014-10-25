@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 ## 1.8 "You Really Got Me" - Active Development
 
-New core features:
+Major changes:
 
 * fact caching support, pluggable, initially supports Redis (DOCS pending)
 * 'serial' size in a rolling update can be specified as a percentage
@@ -15,6 +15,8 @@ New core features:
 * ansible-galaxy install -f requirements.yml allows advanced options and installs from non-galaxy SCM sources and tarballs.
 * command_warnings feature will warn about when usage of the shell/command module can be simplified to use core modules - this can be enabled in ansible.cfg
 * new omit value can be used to leave off a parameter when not set, like so module_name: a=1 b={{ c | default(omit) }}, would not pass value for b (not even an empty value) if c was not set.
+* developers: 'baby JSON' in module responses, originally intended for writing modules in bash, is removed as a feature to simplify logic, script module remains available for running bash scripts.
+* async jobs started in "fire & forget" mode can now be checked on at a later time.
 
 New Modules:
 
@@ -30,6 +32,9 @@ New Modules:
 
 Some other notable changes:
 
+* added the ability to set "instance filters" in the ec2.ini to limit results from the inventory plugin.
+* added a new "follow" parameter to the file and copy modules, which allows actions to be taken on the target of a symlink rather than the symlink itself.
+* if a module should ever traceback, it will return a standard error, catchable by ignore_errors, versus an 'unreachable'
 * ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
 * ec2_elb_lb: added support for the connection_draining_timeout and cross_az_load_balancing options.
 * support for symbolic representations (ie. u+rw) for file permission modes (file/copy/template modules etc.).
@@ -51,9 +56,29 @@ Some other notable changes:
 * various parser improvements
 * produce a friendly error message if the SSH key is too permissive
 * ec2_ami_search: support for SSD and IOPS provisioned EBS images
+* can set ansible_sudo_exe as an inventory variable which allows specifying
+  a different sudo (or equivalent) command
 
 And various other bug fixes and improvements ...
 
+
+## 1.7.2 "Summer Nights" - Sep 24, 2014
+
+- Fixes a bug in accelerate mode which caused a traceback when trying to use that connection method.
+- Fixes a bug in vault where the password file option was not being used correctly internally.
+- Improved multi-line parsing when using YAML literal blocks (using > or |).
+- Fixed a bug with the file module and the creation of relative symlinks.
+- Fixed a bug where checkmode was not being honored during the templating of files.
+- Other various bug fixes.
+
+## 1.7.1 "Summer Nights" - Aug 14, 2014
+
+- Security fix to disallow specifying 'args:' as a string, which could allow the insertion of extra module parameters through variables.
+- Performance enhancements related to previous security fixes, which could cause slowness when modules returned very large JSON results. This specifically impacted the unarchive module frequently, which returns the details of all unarchived files in the result.
+- Docker module bug fixes:
+  * Fixed support for specifying rw/ro bind modes for volumes
+  * Fixed support for allowing the tag in the image parameter
+- Various other bug fixes
 
 ## 1.7 "Summer Nights" - Aug 06, 2014
 

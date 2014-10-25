@@ -48,6 +48,7 @@ import sys
 import json
 import subprocess
 import contextlib
+import jinja2.exceptions
 
 from vault import VaultLib
 
@@ -362,7 +363,7 @@ def repo_url_to_role_name(repo_url):
     # gets the role name out of a repo like 
     # http://git.example.com/repos/repo.git" => "repo"
 
-    if '://' not in repo_url:
+    if '://' not in repo_url and '@' not in repo_url:
         return repo_url
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
@@ -387,15 +388,12 @@ def role_spec_parse(role_spec):
   
     role_spec = role_spec.strip()
     role_version = ''
+    default_role_versions = dict(git='master', hg='tip')
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
     tokens = [s.strip() for s in role_spec.split(',')]
     
-    if not tokens[0].endswith('.tar.gz'): 
-        # pick a reasonable default branch
-        role_version = 'master'
-
     # assume https://github.com URLs are git+https:// URLs and not
     # tarballs unless they end in '.zip'
     if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
@@ -412,18 +410,42 @@ def role_spec_parse(role_spec):
         role_name = tokens[2]
     else:
         role_name = repo_url_to_role_name(tokens[0])
+    if scm and not role_version:
+        role_version = default_role_versions.get(scm, '')
     return dict(scm=scm, src=role_url, version=role_version, name=role_name)
 
 
 def role_yaml_parse(role):
-    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-        role["src"] = "git+" + role["src"]
-    if '+' in role["src"]:
-        (scm, src) = role["src"].split('+')
-        role["scm"] = scm
-        role["src"] = src
-    if 'name' not in role:
-        role["name"] = repo_url_to_role_name(role["src"])
+    if 'role' in role:
+        # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+        role_info = role_spec_parse(role['role'])
+        if isinstance(role_info, dict):
+            # Warning: Slight change in behaviour here.  name may be being
+            # overloaded.  Previously, name was only a parameter to the role.
+            # Now it is both a parameter to the role and the name that
+            # ansible-galaxy will install under on the local system.
+            if 'name' in role and 'name' in role_info:
+                del role_info['name']
+            role.update(role_info)
+    else:
+        # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+        if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+            role["src"] = "git+" + role["src"]
+
+        if '+' in role["src"]:
+            (scm, src) = role["src"].split('+')
+            role["scm"] = scm
+            role["src"] = src
+
+        if 'name' not in role:
+            role["name"] = repo_url_to_role_name(role["src"])
+
+        if 'version' not in role:
+            role['version'] = ''
+
+        if 'scm' not in role:
+            role['scm'] = None
+
     return role
 
 
@@ -506,7 +528,7 @@ def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
         data = orig_data
     return data
 
-def parse_json(raw_data, from_remote=False, from_inventory=False):
+def parse_json(raw_data, from_remote=False, from_inventory=False, no_exceptions=False):
     ''' this version for module return data only '''
 
     orig_data = raw_data
@@ -517,28 +539,10 @@ def parse_json(raw_data, from_remote=False, from_inventory=False):
     try:
         results = json.loads(data)
     except:
-        # not JSON, but try "Baby JSON" which allows many of our modules to not
-        # require JSON and makes writing modules in bash much simpler
-        results = {}
-        try:
-            tokens = shlex.split(data)
-        except:
-            print "failed to parse json: "+ data
+        if no_exceptions:
+            return dict(failed=True, parsed=False, msg=raw_data)
+        else:
             raise
-        for t in tokens:
-            if "=" not in t:
-                raise errors.AnsibleError("failed to parse: %s" % orig_data)
-            (key,value) = t.split("=", 1)
-            if key == 'changed' or 'failed':
-                if value.lower() in [ 'true', '1' ]:
-                    value = True
-                elif value.lower() in [ 'false', '0' ]:
-                    value = False
-            if key == 'rc':
-                value = int(value)
-            results[key] = value
-        if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : orig_data }
 
     if from_remote:
         results = _clean_data_struct(results, from_remote, from_inventory)
@@ -756,6 +760,11 @@ def parse_yaml_from_file(path, vault_password=None):
 
     vault = VaultLib(password=vault_password)
     if vault.is_encrypted(data):
+        # if the file is encrypted and no password was specified,
+        # the decrypt call would throw an error, but we check first
+        # since the decrypt function doesn't know the file name
+        if vault_password is None:
+            raise errors.AnsibleError("A vault password must be specified to decrypt %s" % path)
         data = vault.decrypt(data)
         show_content = False
 
@@ -846,11 +855,10 @@ def default(value, function):
         return function()
     return value
 
-def _gitinfo():
+
+def _git_repo_info(repo_path):
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
-
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -860,7 +868,7 @@ def _gitinfo():
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
                 else:
-                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+                    repo_path = os.path.join(repo_path[:-4], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
@@ -871,22 +879,50 @@ def _gitinfo():
             f = open(branch_path)
             commit = f.readline()[:10]
             f.close()
-            date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:
-                offset = time.timezone
-            else:
-                offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+        else:
+            # detached HEAD
+            commit = branch[:10]
+            branch = 'detached HEAD'
+            branch_path = os.path.join(repo_path, "HEAD")
+
+        date = time.localtime(os.stat(branch_path).st_mtime)
+        if time.daylight == 0:
+            offset = time.timezone
+        else:
+            offset = time.altzone
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+            time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
     return result
+
+
+def _gitinfo():
+    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    repo_path = os.path.join(basedir, '.git')
+    result = _git_repo_info(repo_path)
+    submodules = os.path.join(basedir, '.gitmodules')
+    if not os.path.exists(submodules):
+       return result
+    f = open(submodules)
+    for line in f:
+        tokens = line.strip().split(' ')
+        if tokens[0] == 'path':
+            submodule_path = tokens[2]
+            submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
+            if not submodule_info:
+                submodule_info = ' not found - use git submodule update --init ' + submodule_path
+            result += "\n  {0}: {1}".format(submodule_path, submodule_info)
+    f.close()
+    return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
     gitinfo = _gitinfo()
     if gitinfo:
         result = result + " {0}".format(gitinfo)
+    result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
     return result
 
 def version_info(gitinfo=False):
@@ -1147,11 +1183,10 @@ def filter_leading_non_json_lines(buf):
     filter only leading lines since multiline JSON is valid.
     '''
 
-    kv_regex = re.compile(r'\w=\w')
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or line.startswith('{') or line.startswith('[') or kv_regex.search(line):
+        if stop_filtering or line.startswith('{') or line.startswith('['):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
@@ -1163,7 +1198,7 @@ def boolean(value):
     else:
         return False
 
-def make_sudo_cmd(sudo_user, executable, cmd):
+def make_sudo_cmd(sudo_exe, sudo_user, executable, cmd):
     """
     helper function for connection plugins to create sudo commands
     """
@@ -1178,7 +1213,7 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
+        sudo_exe, sudo_exe, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
@@ -1202,6 +1237,7 @@ def to_unicode(value):
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
+
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
@@ -1267,6 +1303,12 @@ def list_difference(a, b):
         if x not in a and x not in result:
             result.append(x)
     return result
+
+def contains_vars(data):
+    '''
+    returns True if the data contains a variable pattern
+    '''
+    return "$" in data or "{{" in data
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
@@ -1382,11 +1424,13 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
+                new_terms = template.template(basedir, terms, inject, convert_bare=True, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
                 if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass
                 else:
                     terms = new_terms
+            except jinja2.exceptions.UndefinedError, e:
+                raise errors.AnsibleUndefinedVariable('undefined variable in items: %s' % e)
             except:
                 pass
 
@@ -1488,7 +1532,7 @@ def _load_vars_from_path(path, results, vault_password=None):
                 % (path, err2.strerror, ))
         # follow symbolic link chains by recursing, so we repeat the same
         # permissions checks above and provide useful errors.
-        return _load_vars_from_path(target, results)
+        return _load_vars_from_path(target, results, vault_password)
 
     # directory
     if stat.S_ISDIR(pathstat.st_mode):

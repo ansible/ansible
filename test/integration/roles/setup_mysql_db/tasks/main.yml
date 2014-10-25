@@ -17,15 +17,20 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ============================================================
-- include_vars: '{{ ansible_os_family }}.yml' 
+- include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_os_family }}.yml'
+      paths: '../vars'
 
 - name: install mysqldb_test rpm dependencies
-  yum: name={{ item }} state=latest 
+  yum: name={{ item }} state=latest
   with_items: mysql_packages
   when: ansible_pkg_mgr  ==  'yum'
 
-- name: install mysqldb_test debian dependencies 
-  apt: name={{ item }} state=latest 
+- name: install mysqldb_test debian dependencies
+  apt: name={{ item }} state=latest
   with_items:  mysql_packages
   when: ansible_pkg_mgr  ==  'apt'
 

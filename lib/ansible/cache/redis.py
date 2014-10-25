@@ -93,3 +93,10 @@ class CacheModule(BaseCacheModule):
     def flush(self):
         for key in self.keys():
             self.delete(key)
+
+    def copy(self):
+        # FIXME: there is probably a better way to do this in redis
+        ret = dict()
+        for key in self.keys():
+            ret[key] = self.get(key)
+        return ret

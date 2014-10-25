@@ -71,7 +71,11 @@ def load_config_file():
 
     for path in [path0, path1, path2, path3]:
         if path is not None and os.path.exists(path):
-            p.read(path)
+            try:
+                p.read(path)
+            except ConfigParser.Error as e:
+                print "Error reading config file: \n%s" % e
+                sys.exit(1)
             return p
     return None
 
@@ -86,22 +90,6 @@ p = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
-# Needed so the RPM can call setup.py and have modules land in the
-# correct location. See #1277 for discussion
-if getattr(sys, "real_prefix", None):
-    # in a virtualenv
-    DIST_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/')
-else:
-    DIST_MODULE_PATH = '/usr/share/ansible/'
-
-# Look for modules relative to this file path
-# This is so that we can find the modules when running from a local checkout
-# installed as editable with `pip install -e ...` or `python setup.py develop`
-local_module_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', '..', 'library')
-)
-DIST_MODULE_PATH = os.pathsep.join([DIST_MODULE_PATH, local_module_path])
-
 # check all of these extensions when looking for yaml files for things like
 # group variables -- really anything we can load
 YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
@@ -111,7 +99,7 @@ DEFAULTS='defaults'
 
 # configurable things
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts'))
-DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
+DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
 DEFAULT_ROLES_PATH        = shell_expand_path(get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles'))
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
@@ -171,6 +159,7 @@ SYSTEM_WARNINGS                = get_config(p, DEFAULTS, 'system_warnings', 'ANS
 DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings', 'ANSIBLE_DEPRECATION_WARNINGS', True, boolean=True)
 DEFAULT_CALLABLE_WHITELIST     = get_config(p, DEFAULTS, 'callable_whitelist', 'ANSIBLE_CALLABLE_WHITELIST', [], islist=True)
 COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'ANSIBLE_COMMAND_WARNINGS', False, boolean=True)
+DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, boolean=True)
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)

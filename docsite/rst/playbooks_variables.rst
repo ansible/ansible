@@ -5,19 +5,17 @@ Variables
 
 While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
 
-All of your systems are likely not the same.  On some systems you may want to set some behavior
-or configuration that is slightly different from others. 
+On some systems you may want to set some behavior or configuration that is slightly different from others. 
 
 Also, some of the observed behavior or state 
 of remote systems might need to influence how you configure those systems.  (Such as you might need to find out the IP
 address of a system and even use it as a configuration value on another system).
 
-You might have some templates for configuration files that are mostly the same, but slightly different
-based on those variables.  
+You might have some templates for configuration files that are mostly the same, but slightly different based on those variables.  
 
 Variables in Ansible are how we deal with differences between systems.  
 
-Once understanding variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
+To understand variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
@@ -319,6 +317,10 @@ To get the directory from a path::
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
+    
+To get the real path of a link (new in version 1.8)::
+
+   {{ path | readlink }}
 
 To work with Base64 encoded strings::
 
@@ -669,7 +671,7 @@ For instance, what if you want users to be able to control some aspect about how
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
 If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
-ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+ending in ".fact", can be YAML, JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
 
 For instance assume a /etc/ansible/facts.d/preferences.fact::
 

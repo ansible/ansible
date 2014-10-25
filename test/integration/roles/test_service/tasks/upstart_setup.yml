@@ -2,6 +2,10 @@
   copy: src=ansible.upstart dest=/etc/init/ansible_test.conf mode=0644
   register: install_upstart_result
 
+- name: install an upstart init file that will fail (manual in .conf)
+  copy: src=ansible-broken.upstart dest=/etc/init/ansible_broken_test.conf mode=0644
+  register: install_upstart_broken_result
+
 - name: assert that the upstart init file was installed
   assert:
     that:
@@ -9,4 +13,7 @@
     - "install_upstart_result.state == 'file'"
     - "install_upstart_result.mode == '0644'"
     - "install_upstart_result.md5sum == 'ab3900ea4de8423add764c12aeb90c01'"
-
+    - "install_upstart_broken_result.dest == '/etc/init/ansible_broken_test.conf'"
+    - "install_upstart_broken_result.state == 'file'"
+    - "install_upstart_broken_result.mode == '0644'"
+    - "install_upstart_broken_result.md5sum == '015e183d10c311276c3e269cbeb309b7'"

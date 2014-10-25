@@ -21,6 +21,7 @@ import ansible.runner
 from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.callbacks
 import ansible.cache
 import os
@@ -209,12 +210,15 @@ class PlayBook(object):
         name and returns the merged vars along with the path
         '''
         new_vars = existing_vars.copy()
-        tokens = shlex.split(play_ds.get('include', ''))
+        tokens = split_args(play_ds.get('include', ''))
         for t in tokens[1:]:
-            (k,v) = t.split("=", 1)
-            new_vars[k] = template(basedir, v, new_vars)
+            try:
+                (k,v) = unquote(t).split("=", 1)
+                new_vars[k] = template(basedir, v, new_vars)
+            except ValueError, e:
+                raise errors.AnsibleError('included playbook variables must be in the form k=v, got: %s' % t)
 
-        return (new_vars, tokens[0])
+        return (new_vars, unquote(tokens[0]))
 
     # *****************************************************
 
@@ -487,10 +491,19 @@ class PlayBook(object):
 
         def _register_play_vars(host, result):
             # when 'register' is used, persist the result in the vars cache
-            # rather than the setup cache - vars should be transient between playbook executions
+            # rather than the setup cache - vars should be transient between
+            # playbook executions
             if 'stdout' in result and 'stdout_lines' not in result:
                 result['stdout_lines'] = result['stdout'].splitlines()
             utils.update_hash(self.VARS_CACHE, host, {task.register: result})
+
+        def _save_play_facts(host, facts):
+            # saves play facts in SETUP_CACHE, unless the module executed was
+            # set_fact, in which case we add them to the VARS_CACHE
+            if task.module_name == 'set_fact':
+                utils.update_hash(self.VARS_CACHE, host, facts)
+            else:
+                utils.update_hash(self.SETUP_CACHE, host, facts)
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
@@ -500,11 +513,13 @@ class PlayBook(object):
                 for res in result['results']:
                     if type(res) == dict:
                         facts = res.get('ansible_facts', {})
-                        utils.update_hash(self.SETUP_CACHE, host, facts)
+                        _save_play_facts(host, facts)
             else:
                 # when facts are returned, persist them in the setup cache
                 facts = result.get('ansible_facts', {})
-                utils.update_hash(self.SETUP_CACHE, host, facts)
+                _save_play_facts(host, facts)
+
+            # if requested, save the result into the registered variable name
             if task.register:
                 _register_play_vars(host, result)
 

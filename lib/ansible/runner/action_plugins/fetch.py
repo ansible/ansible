@@ -56,27 +56,7 @@ class ActionModule(object):
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
 
-        source = os.path.expanduser(source)
         source = conn.shell.join_path(source)
-        if os.path.sep not in conn.shell.join_path('a', ''):
-            source_local = source.replace('\\', '/')
-        else:
-            source_local = source
-
-        if flat:
-            if dest.endswith("/"):
-                # if the path ends with "/", we'll use the source filename as the
-                # destination filename
-                base = os.path.basename(source_local)
-                dest = os.path.join(dest, base)
-            if not dest.startswith("/"):
-                # if dest does not start with "/", we'll assume a relative path
-                dest = utils.path_dwim(self.runner.basedir, dest)
-        else:
-            # files are saved in dest dir, with a subdir for each host, then the filename
-            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source_local)
-
-        dest = os.path.expanduser(dest.replace("//","/"))
 
         # calculate md5 sum for the remote file
         remote_md5 = self.runner._remote_md5(conn, tmp, source)
@@ -90,6 +70,34 @@ class ActionModule(object):
                     remote_data = base64.b64decode(slurpres.result['content'])
                 if remote_data is not None:
                     remote_md5 = utils.md5s(remote_data)
+                # the source path may have been expanded on the
+                # target system, so we compare it here and use the
+                # expanded version if it's different
+                remote_source = slurpres.result.get('source')
+                if remote_source and remote_source != source:
+                    source = remote_source
+
+        # calculate the destination name
+        if os.path.sep not in conn.shell.join_path('a', ''):
+            source_local = source.replace('\\', '/')
+        else:
+            source_local = source
+
+        dest = os.path.expanduser(dest)
+        if flat:
+            if dest.endswith("/"):
+                # if the path ends with "/", we'll use the source filename as the
+                # destination filename
+                base = os.path.basename(source_local)
+                dest = os.path.join(dest, base)
+            if not dest.startswith("/"):
+                # if dest does not start with "/", we'll assume a relative path
+                dest = utils.path_dwim(self.runner.basedir, dest)
+        else:
+            # files are saved in dest dir, with a subdir for each host, then the filename
+            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source_local)
+
+        dest = dest.replace("//","/")
 
         # these don't fail because you may want to transfer a log file that possibly MAY exist
         # but keep going to fetch other log files

@@ -181,8 +181,8 @@
   args:
     executable: /bin/bash
   shell: |
-    echo this is a
-    "multiline echo"
+    echo this is a \
+    "multiline echo" \
     "with a new line
     in quotes" \
     | md5sum \
@@ -198,3 +198,19 @@
     that:
       - "shell_result6.changed"
       - "shell_result6.stdout == '32f3cc201b69ed8afa3902b80f554ca8\nthis is a second line'"
+
+- name: execute a shell command using a literal multiline block with arguments in it
+  shell: |
+    executable=/bin/bash
+    creates={{output_dir_test | expanduser}}/afile.txt
+    echo "test"
+  register: shell_result7
+
+- name: assert the multiline shell command with arguments in it run as expected
+  assert:
+    that:
+      - "shell_result7.changed"
+      - "shell_result7.stdout == 'test'"
+
+- name: remove the previously created file
+  file: path={{output_dir_test}}/afile.txt state=absent

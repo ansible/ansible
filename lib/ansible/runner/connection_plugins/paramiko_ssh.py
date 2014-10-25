@@ -204,6 +204,8 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
+        no_prompt_out = ''
+        no_prompt_err = ''
         if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
 
             if executable:
@@ -223,7 +225,7 @@ class Connection(object):
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
             if self.runner.sudo or sudoable:
-                shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+                shcmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
             elif self.runner.su or su:
                 shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
 
@@ -259,6 +261,9 @@ class Connection(object):
                             chan.sendall(self.runner.sudo_pass + '\n')
                         elif su:
                             chan.sendall(self.runner.su_pass + '\n')
+                    else:
+                        no_prompt_out += sudo_output
+                        no_prompt_err += sudo_output
 
             except socket.timeout:
 
@@ -267,7 +272,7 @@ class Connection(object):
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
 
-        return (chan.recv_exit_status(), '', stdout, stderr)
+        return (chan.recv_exit_status(), '', no_prompt_out + stdout, no_prompt_out + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

@@ -1,5 +1,5 @@
 Ansible Galaxy
-``````````````
+++++++++++++++
 
 "Ansible Galaxy" can either refer to a website for sharing and downloading Ansible roles, or a command line tool that helps work with roles.
 
@@ -20,21 +20,21 @@ The ansible-galaxy command line tool
 The command line ansible-galaxy has many different subcommands.
 
 Installing Roles
-++++++++++++++++
+----------------
 
 The most obvious is downloading roles from the Ansible Galaxy website::
 
    ansible-galaxy install username.rolename
 
 Building out Role Scaffolding
-+++++++++++++++++++++++++++++
+-----------------------------
 
 It can also be used to initialize the base structure of a new role, saving time on creating the various directories and main.yml files a role requires::
 
    ansible-galaxy init rolename
 
 Installing Multiple Roles From A File
-+++++++++++++++++++++++++++++++++++++
+-------------------------------------
 
 To install multiple roles, the ansible-galaxy CLI can be fed a requirements file.  All versions of ansible allow the following syntax for installing roles from the Ansible Galaxy website::
 
@@ -53,7 +53,7 @@ To request specific versions (tags) of a role, use this syntax in the roles file
 Available versions will be listed on the Ansible Galaxy webpage for that role.
 
 Advanced Control over Role Requirements Files
-+++++++++++++++++++++++++++++++++++++++++++++
+---------------------------------------------
 
 For more advanced control over where to download roles from, including support for remote repositories, Ansible 1.8 and later support a new YAML format for the role requirements file, which must end in a 'yml' extension.  It works like this::
 
@@ -69,8 +69,13 @@ And here's an example showing some specific version downloads from multiple sour
     # from github
     - src: https://github.com/bennojoy/nginx
 
+    # from github installing to a relative path
+    - src: https://github.com/bennojoy/nginx
+      path: vagrant/roles/
+
     # from github, overriding the name and specifying a specific tag
     - src: https://github.com/bennojoy/nginx
+      version: master
       name: nginx_role
     
     # from a webserver, where the role is packaged in a tar.gz
@@ -88,7 +93,7 @@ And here's an example showing some specific version downloads from multiple sour
 As you can see in the above, there are a large amount of controls available
 to customize where roles can be pulled from, and what to save roles as.     
 
-Roles pulled from galaxy work as with othe SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
+Roles pulled from galaxy work as with other SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
 
 .. seealso::
 
