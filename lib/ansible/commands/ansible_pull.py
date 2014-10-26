@@ -37,6 +37,7 @@
 # 4. $workdir/local.yml
 #
 # the source repo must contain at least one of these playbooks.
+from __future__ import absolute_import
 
 import os
 import shutil
@@ -97,7 +98,7 @@ def select_playbook(path, args):
         return playbook
 
 
-def main(args):
+def _main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options] [playbook.yml]"
     parser = utils.SortedOptParser(usage=usage)
@@ -228,9 +229,9 @@ def main(args):
 
     return rc
 
-if __name__ == '__main__':
+def main():
     try:
-        sys.exit(main(sys.argv[1:]))
+        sys.exit(_main(sys.argv[1:]))
     except KeyboardInterrupt, e:
         print >>sys.stderr, "Exit on user request.\n"
         sys.exit(1)

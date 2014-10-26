@@ -18,6 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
+from __future__ import absolute_import
 
 import os
 import sys
@@ -183,7 +184,7 @@ class Cli(object):
 
 ########################################################
 
-if __name__ == '__main__':
+def main():
     callbacks.display("", log_only=True)
     callbacks.display(" ".join(sys.argv), log_only=True)
     callbacks.display("", log_only=True)
