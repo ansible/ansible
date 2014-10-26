@@ -247,7 +247,8 @@ class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False):
+        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+        required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -295,6 +296,7 @@ class AnsibleModule(object):
             self._check_argument_types()
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
+            self._check_required_if(required_if)
 
         self._set_defaults(pre=False)
         if not self.no_log:
@@ -851,6 +853,20 @@ class AnsibleModule(object):
                 missing.append(k)
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
+
+    def _check_required_if(self, spec):
+        ''' ensure that parameters which conditionally required are present '''
+        if spec is None:
+            return
+        for (key, val, requirements) in spec:
+            missing = []
+            if key in self.params and self.params[key] == val:
+                for check in requirements:
+                    count = self._count_terms(check)
+                    if count == 0:
+                        missing.append(check)
+            if len(missing) > 0:
+                self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing))
 
     def _check_argument_values(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
