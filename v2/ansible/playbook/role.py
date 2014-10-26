@@ -38,16 +38,15 @@ class Role(Base):
     _src            = FieldAttribute(isa='string')
     _scm            = FieldAttribute(isa='string')
     _version        = FieldAttribute(isa='string')
-    _params         = FieldAttribute(isa='dict', default=dict())
-    _metadata       = FieldAttribute(isa='dict', default=dict())
     _task_blocks    = FieldAttribute(isa='list', default=[])
     _handler_blocks = FieldAttribute(isa='list', default=[])
+    _params         = FieldAttribute(isa='dict', default=dict())
+    _metadata       = FieldAttribute(isa='dict', default=dict())
     _default_vars   = FieldAttribute(isa='dict', default=dict())
     _role_vars      = FieldAttribute(isa='dict', default=dict())
 
-    def __init__(self, vault_password=None, loader=DataLoader):
+    def __init__(self, loader=DataLoader):
         self._role_path = None
-        self._vault_password = vault_password
         super(Role, self).__init__(loader=loader)
 
     def __repr__(self):
@@ -57,9 +56,9 @@ class Role(Base):
         return self._attributes['role_name']
 
     @staticmethod
-    def load(data, vault_password=None):
+    def load(data):
         assert isinstance(data, string_types) or isinstance(data, dict)
-        r = Role(vault_password=vault_password)
+        r = Role()
         r.load_data(data)
         return r
 
@@ -116,7 +115,7 @@ class Role(Base):
         if os.path.exists(file_path) and os.path.isdir(file_path):
             main_file = self._resolve_main(file_path)
             if os.path.exists(main_file):
-                return load_data_from_file(main_file, self._vault_password)
+                return self._loader.load_from_file(main_file)
         return None
 
     def _resolve_main(self, basepath):

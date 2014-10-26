@@ -35,7 +35,7 @@ class Base:
     def __init__(self, loader=DataLoader):
 
         # the data loader class is used to parse data from strings and files
-        self._loader = loader
+        self._loader = loader()
 
         # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()

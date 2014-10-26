@@ -19,10 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch, MagicMock
+
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
-from ansible.compat.tests import unittest
+
+from ansible.parsing.yaml import DataLoader
 
 class TestRole(unittest.TestCase):
 
@@ -35,6 +39,15 @@ class TestRole(unittest.TestCase):
     def test_construct_empty_block(self):
         r = Role()
 
+    @patch.object(DataLoader, 'load_from_file')
+    def test__load_role_yaml(self, _load_from_file):
+        _load_from_file.return_value = dict(foo='bar')
+        r = Role()
+        with patch('os.path.exists', return_value=True):
+            with patch('os.path.isdir', return_value=True):
+                res = r._load_role_yaml('/fake/path', 'some_subdir')
+                self.assertEqual(res, dict(foo='bar'))
+
     def test_role__load_list_of_blocks(self):
         task = dict(action='test')
         r = Role()
@@ -45,8 +58,93 @@ class TestRole(unittest.TestCase):
         res = r._load_list_of_blocks([task,task,task])
         self.assertEqual(len(res), 3)
 
-    def test_load_role_simple(self):
-        pass
+    @patch.object(Role, '_get_role_path')
+    @patch.object(Role, '_load_role_yaml')
+    def test_load_role_with_tasks(self, _load_role_yaml, _get_role_path):
 
-    def test_load_role_complex(self):
-        pass
+        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+
+        def fake_load_role_yaml(role_path, subdir):
+            if role_path == '/etc/ansible/roles/foo':
+                if subdir == 'tasks':
+                    return [dict(shell='echo "hello world"')]
+            return None
+
+        _load_role_yaml.side_effect = fake_load_role_yaml
+
+        r = Role.load('foo')
+        self.assertEqual(len(r.task_blocks), 1)
+        assert isinstance(r.task_blocks[0], Block)
+
+    @patch.object(Role, '_get_role_path')
+    @patch.object(Role, '_load_role_yaml')
+    def test_load_role_with_handlers(self, _load_role_yaml, _get_role_path):
+
+        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+
+        def fake_load_role_yaml(role_path, subdir):
+            if role_path == '/etc/ansible/roles/foo':
+                if subdir == 'handlers':
+                    return [dict(name='test handler', shell='echo "hello world"')]
+            return None
+
+        _load_role_yaml.side_effect = fake_load_role_yaml
+
+        r = Role.load('foo')
+        self.assertEqual(len(r.handler_blocks), 1)
+        assert isinstance(r.handler_blocks[0], Block)
+
+    @patch.object(Role, '_get_role_path')
+    @patch.object(Role, '_load_role_yaml')
+    def test_load_role_with_vars(self, _load_role_yaml, _get_role_path):
+
+        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+
+        def fake_load_role_yaml(role_path, subdir):
+            if role_path == '/etc/ansible/roles/foo':
+                if subdir == 'defaults':
+                    return dict(foo='bar')
+                elif subdir == 'vars':
+                    return dict(foo='bam')
+            return None
+
+        _load_role_yaml.side_effect = fake_load_role_yaml
+
+        r = Role.load('foo')
+        self.assertEqual(r.default_vars, dict(foo='bar'))
+        self.assertEqual(r.role_vars, dict(foo='bam'))
+
+    @patch.object(Role, '_get_role_path')
+    @patch.object(Role, '_load_role_yaml')
+    def test_load_role_with_metadata(self, _load_role_yaml, _get_role_path):
+
+        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+
+        def fake_load_role_yaml(role_path, subdir):
+            if role_path == '/etc/ansible/roles/foo':
+                if subdir == 'meta':
+                    return dict(dependencies=[], allow_duplicates=False)
+            return None
+
+        _load_role_yaml.side_effect = fake_load_role_yaml
+
+        r = Role.load('foo')
+        self.assertEqual(r.metadata, dict(dependencies=[], allow_duplicates=False))
+
+    @patch.object(Role, '_get_role_path')
+    @patch.object(Role, '_load_role_yaml')
+    def test_load_role_complex(self, _load_role_yaml, _get_role_path):
+
+        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+
+        def fake_load_role_yaml(role_path, subdir):
+            if role_path == '/etc/ansible/roles/foo':
+                if subdir == 'tasks':
+                    return [dict(shell='echo "hello world"')]
+            return None
+
+        _load_role_yaml.side_effect = fake_load_role_yaml
+
+        r = Role.load(dict(role='foo'))
+
+
