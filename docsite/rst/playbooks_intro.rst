@@ -196,7 +196,7 @@ it is recommended that you use the more conventional "module: options" format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
 
-Here is what a basic task looks like, as with most modules,
+Here is what a basic task looks like. As with most modules,
 the service module takes key=value arguments::
 
    tasks:
