@@ -48,7 +48,20 @@ options:
       - a hash/dictionary of tags to add to the snapshot
     required: false
     version_added: "1.6"
-
+  wait:
+    description:
+      - wait for the snapshot to be ready
+    choices: ['yes', 'no']
+    required: false
+    default: yes
+    version_added: "1.5.1"
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+      - specify 0 to wait forever
+    required: false
+    default: 0
+    version_added: "1.5.1"
 author: Will Thames
 extends_documentation_fragment: aws
 '''
