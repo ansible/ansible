@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
+from ansible.errors import AnsibleParserError
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
@@ -118,18 +119,32 @@ class TestRole(unittest.TestCase):
     @patch.object(Role, '_load_role_yaml')
     def test_load_role_with_metadata(self, _load_role_yaml, _get_role_path):
 
-        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
-
         def fake_load_role_yaml(role_path, subdir):
             if role_path == '/etc/ansible/roles/foo':
                 if subdir == 'meta':
-                    return dict(dependencies=[], allow_duplicates=False)
+                    return dict(dependencies=['bar'], allow_duplicates=True, galaxy_info=dict(a='1', b='2', c='3'))
+            elif role_path == '/etc/ansible/roles/bad1':
+                if subdir == 'meta':
+                    return 1
+            elif role_path == '/etc/ansible/roles/bad2':
+                if subdir == 'meta':
+                    return dict(foo='bar')
             return None
 
         _load_role_yaml.side_effect = fake_load_role_yaml
 
+        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+
         r = Role.load('foo')
-        self.assertEqual(r.metadata, dict(dependencies=[], allow_duplicates=False))
+        self.assertEqual(r.dependencies, ['bar'])
+        self.assertEqual(r.allow_duplicates, True)
+        self.assertEqual(r.galaxy_info, dict(a='1', b='2', c='3'))
+
+        _get_role_path.return_value = ('bad1', '/etc/ansible/roles/bad1')
+        self.assertRaises(AnsibleParserError, Role.load, 'bad1')
+
+        _get_role_path.return_value = ('bad2', '/etc/ansible/roles/bad2')
+        self.assertRaises(AnsibleParserError, Role.load, 'bad2')
 
     @patch.object(Role, '_get_role_path')
     @patch.object(Role, '_load_role_yaml')

@@ -23,13 +23,29 @@ from six import iteritems, string_types
 
 import os
 
-from ansible.errors import AnsibleError
+from hashlib import md5
+
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing.yaml import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
+
+__all__ = ['Role']
+
+# The role cache is used to prevent re-loading roles, which
+# may already exist. Keys into this cache are the MD5 hash
+# of the role definition (for dictionary definitions, this
+# will be based on the repr() of the dictionary object)
+_ROLE_CACHE = dict()
+
+_VALID_METADATA_KEYS = [
+    'dependencies',
+    'allow_duplicates',
+    'galaxy_info',
+]
 
 class Role(Base):
 
@@ -41,12 +57,19 @@ class Role(Base):
     _task_blocks    = FieldAttribute(isa='list', default=[])
     _handler_blocks = FieldAttribute(isa='list', default=[])
     _params         = FieldAttribute(isa='dict', default=dict())
-    _metadata       = FieldAttribute(isa='dict', default=dict())
     _default_vars   = FieldAttribute(isa='dict', default=dict())
     _role_vars      = FieldAttribute(isa='dict', default=dict())
 
+    # Attributes based on values in metadata. These MUST line up
+    # with the values stored in _VALID_METADATA_KEYS
+    _dependencies     = FieldAttribute(isa='list', default=[])
+    _allow_duplicates = FieldAttribute(isa='bool', default=False)
+    _galaxy_info      = FieldAttribute(isa='dict', default=dict())
+
     def __init__(self, loader=DataLoader):
         self._role_path = None
+        self._parents   = []
+        
         super(Role, self).__init__(loader=loader)
 
     def __repr__(self):
@@ -56,10 +79,30 @@ class Role(Base):
         return self._attributes['role_name']
 
     @staticmethod
-    def load(data):
+    def load(data, parent_role=None):
         assert isinstance(data, string_types) or isinstance(data, dict)
-        r = Role()
-        r.load_data(data)
+
+        # Check to see if this role has been loaded already, based on the
+        # role definition, partially to save loading time and also to make
+        # sure that roles are run a single time unless specifically allowed
+        # to run more than once
+
+        # FIXME: the tags and conditionals, if specified in the role def,
+        #        should not figure into the resulting hash
+        cache_key = md5(repr(data))
+        if cache_key in _ROLE_CACHE:
+            r = _ROLE_CACHE[cache_key]
+        else:
+            # load the role
+            r = Role()
+            r.load_data(data)
+            # and cache it for next time
+            _ROLE_CACHE[cache_key] = r
+
+        # now add the parent to the (new) role
+        if parent_role:
+            r.add_parent(parent_role)
+
         return r
 
     #------------------------------------------------------------------------------
@@ -101,11 +144,15 @@ class Role(Base):
         new_ds['role_path'] = role_path
 
         # load the role's files, if they exist
-        new_ds['metadata']       = self._load_role_yaml(role_path, 'meta')
         new_ds['task_blocks']    = self._load_role_yaml(role_path, 'tasks')
         new_ds['handler_blocks'] = self._load_role_yaml(role_path, 'handlers')
         new_ds['default_vars']   = self._load_role_yaml(role_path, 'defaults')
         new_ds['role_vars']      = self._load_role_yaml(role_path, 'vars')
+
+        # we treat metadata slightly differently: we instead pull out the
+        # valid metadata keys and munge them directly into new_ds
+        metadata_ds = self._munge_metadata(role_name, role_path)
+        new_ds.update(metadata_ds)
 
         # and return the newly munged ds
         return new_ds
@@ -256,6 +303,32 @@ class Role(Base):
 
         return ds
 
+    def _munge_metadata(self, role_name, role_path):
+        '''
+        loads the metadata main.yml (if it exists) and creates a clean
+        datastructure we can merge into the newly munged ds
+        '''
+
+        meta_ds = dict()
+
+        metadata = self._load_role_yaml(role_path, 'meta')
+        if metadata:
+            if not isinstance(metadata, dict):
+                raise AnsibleParserError("The metadata for role '%s' should be a dictionary, instead it is a %s" % (role_name, type(metadata)), obj=metadata)
+
+            for key in metadata:
+                if key in _VALID_METADATA_KEYS:
+                    if isinstance(metadata[key], dict):
+                        meta_ds[key] = metadata[key].copy()
+                    elif isinstance(metadata[key], list):
+                        meta_ds[key] = metadata[key][:]
+                    else:
+                        meta_ds[key] = metadata[key]
+                else:
+                    raise AnsibleParserError("%s is not a valid metadata key for role '%s'" % (key, role_name), obj=metadata)
+
+        return meta_ds
+
     #------------------------------------------------------------------------------
     # attribute loading defs
 
@@ -279,6 +352,13 @@ class Role(Base):
 
     #------------------------------------------------------------------------------
     # other functions
+
+    def add_parent(self, parent_role):
+        ''' adds a role to the list of this roles parents '''
+        assert isinstance(role, Role)
+
+        if parent_role not in self._parents:
+            self._parents.append(parent_role)
 
     def get_variables(self):
         # returns the merged variables for this role, including
