@@ -926,6 +926,7 @@ class OpenBSDHardware(Hardware):
         self.get_memory_facts()
         self.get_processor_facts()
         self.get_device_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_sysctl(self):
@@ -937,6 +938,17 @@ class OpenBSDHardware(Hardware):
             (key, value) = line.split('=')
             sysctl[key] = value.strip()
         return sysctl
+
+    @timeout(10)
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        fstab = get_file_content('/etc/fstab')
+        if fstab:
+            for line in fstab.split('\n'):
+                if line.startswith('#') or line.strip() == '':
+                    continue
+                fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
     def get_memory_facts(self):
         # Get free memory. vmstat output looks like:
