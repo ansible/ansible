@@ -178,6 +178,9 @@ class PluginLoader(object):
                     self._plugin_path_cache[full_name] = path
                     return path
 
+        if not name.startswith('_'):
+            return self.find_plugin('_' + name, suffixes, transport)
+
         return None
 
     def has_plugin(self, name):
