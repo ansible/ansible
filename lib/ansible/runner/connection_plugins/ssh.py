@@ -147,15 +147,18 @@ class Connection(object):
         stdout = ''
         stderr = ''
         rpipes = [p.stdout, p.stderr]
-        if indata:
+        wpipes = []
+        if isinstance(indata, basestring) and indata:
             try:
                 stdin.write(indata)
                 stdin.close()
             except:
                 raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        elif isinstance(indata, object) and hasattr(indata, 'read'):
+            wpipes = [stdin]
         # Read stdout/stderr from process
         while True:
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+            rfd, wfd, efd = select.select(rpipes, wpipes, rpipes+wpipes, 1)
 
             # fail early if the sudo/su password is wrong
             if self.runner.sudo and sudoable:
@@ -185,6 +188,14 @@ class Connection(object):
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
+            if stdin in wfd:
+                dat = indata.read(select.PIPE_BUF)
+                if dat != '':
+                    wrote = os.write(stdin.fileno(), dat)
+                    assert len(dat) == wrote # XXX
+                else:
+                    wpipes.remove(stdin)
+                    stdin.close()
             # only break out if no pipes are left to read or
             # the pipes are completely read and
             # the process is terminated
