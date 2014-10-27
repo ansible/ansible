@@ -402,7 +402,7 @@ support formatting with some special macros.
 These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
-parameters; module names should be specifies as ``M(module)``.
+parameters; module names should be specified as ``M(module)``.
 
 Examples (which typically contain colons, quotes, etc.) are difficult
 to format with YAML, so these must be
