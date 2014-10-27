@@ -225,11 +225,13 @@ def main():
         # list all modules
         paths = utils.plugins.module_finder._get_paths()
         module_list = []
+        deprecated_list = []
+        module_aliases = {}
         for path in paths:
             # os.system("ls -C %s" % (path))
             if os.path.isdir(path):
                 for module in os.listdir(path):
-                    if any(module.endswith(x) for x in BLACKLIST_EXTS):
+                    if module.startswith('_') or any(module.endswith(x) for x in BLACKLIST_EXTS):
                         continue
                     module_list.append(module)
 
