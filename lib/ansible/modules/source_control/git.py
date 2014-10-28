@@ -129,15 +129,18 @@ options:
             - if C(no), repository will be cloned without the --recursive
               option, skipping sub-modules.
 
-    track_submodule_branches:
+    track_submodules:
         required: false
-        default: "yes"
+        default: "no"
         choices: ["yes", "no"]
-        version_added: "1.7"
+        version_added: "1.8"
         description:
-            - if C(no), submodules will be updated without the --remote
-              option, allowing submodules to be tracked by commit hash
-              instead of branch name.
+            - if C(yes), submodules will track the latest commit on their
+              master branch (or other branch specified in .gitmodules).  If
+              C(no), submodules will be kept at the revision specified by the
+              main project. This is equivalent to specifying the --remote flag
+              to git submodule update.
+
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -409,7 +412,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote, bare, track_submodule_branches):
+def fetch(git_path, module, repo, dest, version, remote, bare, track_submodules):
     ''' updates repo from remote sources '''
     (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
     if rc != 0:
@@ -427,10 +430,10 @@ def fetch(git_path, module, repo, dest, version, remote, bare, track_submodule_b
         (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
-    (rc, out3, err3) = submodule_update(git_path, module, dest, track_submodule_branches )
+    (rc, out3, err3) = submodule_update(git_path, module, dest, track_submodules )
     return (rc, out1 + out2 + out3, err1 + err2 + err3)
 
-def submodule_update(git_path, module, dest, track_submodule_branches):
+def submodule_update(git_path, module, dest, track_submodules):
     ''' init and update any submodules '''
 
     # get the valid submodule params
@@ -441,7 +444,7 @@ def submodule_update(git_path, module, dest, track_submodule_branches):
         return (0, '', '')
     cmd = [ git_path, 'submodule', 'sync' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if 'remote' in params and track_submodule_branches:
+    if 'remote' in params and track_submodules:
         cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ,'--remote' ]
     else:
         cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
@@ -451,7 +454,7 @@ def submodule_update(git_path, module, dest, track_submodule_branches):
     return (rc, out, err)
 
 
-def switch_version(git_path, module, dest, remote, version, recursive, track_submodule_branches):
+def switch_version(git_path, module, dest, remote, version, recursive, track_submodules):
     cmd = ''
     if version != 'HEAD':
         if is_remote_branch(git_path, module, dest, remote, version):
@@ -477,7 +480,7 @@ def switch_version(git_path, module, dest, remote, version, recursive, track_sub
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
     if recursive:
-        (rc, out2, err2) = submodule_update(git_path, module, dest, track_submodule_branches)
+        (rc, out2, err2) = submodule_update(git_path, module, dest, track_submodules)
         out1 += out2
         err1 += err1
     return (rc, out1, err1)
@@ -501,7 +504,7 @@ def main():
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
-            track_submodule_branches=dict(default='yes', type='bool'),
+            track_submodules=dict(default='no', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -546,7 +549,7 @@ def main():
         add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
 
     recursive = module.params['recursive']
-    track_submodule_branches = module.params['track_submodule_branches']
+    track_submodules = module.params['track_submodules']
 
     rc, out, err, status = (0, None, None, None)
 
@@ -592,12 +595,12 @@ def main():
                 module.exit_json(changed=False, before=before, after=remote_head)
         if module.check_mode:
             module.exit_json(changed=True, before=before, after=remote_head)
-        fetch(git_path, module, repo, dest, version, remote, bare, track_submodule_branches)
+        fetch(git_path, module, repo, dest, version, remote, bare, track_submodules)
 
     # switch to version specified regardless of whether
     # we cloned or pulled
     if not bare:
-        switch_version(git_path, module, dest, remote, version, recursive, track_submodule_branches)
+        switch_version(git_path, module, dest, remote, version, recursive, track_submodules)
 
     # determine if we changed anything
     after = get_version(module, git_path, dest)
