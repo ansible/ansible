@@ -83,14 +83,16 @@ class Task(Base):
     _sudo                 = FieldAttribute(isa='bool')
     _sudo_user            = FieldAttribute(isa='string')
     _sudo_pass            = FieldAttribute(isa='string')
+    _tags                 = FieldAttribute(isa='list', default=[])
     _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
+    _when                 = FieldAttribute(isa='list', default=[])
 
-    def __init__(self, block=None, role=None, loader=DataLoader):
+    def __init__(self, block=None, role=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
         self._block = block
         self._role  = role
-        super(Task, self).__init__(loader)
+        super(Task, self).__init__()
 
     def get_name(self):
        ''' return the name of the task '''
@@ -118,9 +120,9 @@ class Task(Base):
             return buf
 
     @staticmethod
-    def load(data, block=None, role=None):
+    def load(data, block=None, role=None, loader=None):
         t = Task(block=block, role=role)
-        return t.load_data(data)
+        return t.load_data(data, loader=loader)
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
