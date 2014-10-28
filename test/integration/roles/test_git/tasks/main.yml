@@ -188,7 +188,6 @@
   file: state=absent path={{ checkout_dir }}
 
 
-
 - name: Test that clone with recursive retrieves submodules
   git:
     repo: '{{ repo_submodules }}'
@@ -205,32 +204,6 @@
   command: 'cp -pr {{ checkout_dir }} {{ checkout_dir }}.bak'
 
 
-
-- name: Check that modules will be updated if main repo is not
-  command: git config --replace-all remote.origin.url {{ repo_submodule1_newer }}
-  args:
-    chdir: "{{ checkout_dir }}/submodule1"
-
-- git:
-    repo: '{{ repo_submodules }}'
-    dest: '{{ checkout_dir }}'
-    update: yes
-    recursive: yes
-    track_submodules: yes
-
-- command: 'ls -1a {{ checkout_dir }}/submodule1'
-  register: submodule1
-
-- debug: var=submodule1
-- assert:
-    that: '{{ submodule1.stdout_lines|length }} == 5'
-  ignore_errors: true
-
-
-
-- name: Restore checkout to prior state
-  file: state=absent path={{ checkout_dir }}
-- command: 'cp -pr {{ checkout_dir }}.bak {{ checkout_dir }}'
 
 - name: Test that update without recursive does not change submodules
   command: 'git config --replace-all remote.origin.url {{ repo_submodules_newer }}'
