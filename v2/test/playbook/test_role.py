@@ -25,9 +25,10 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
+from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.task import Task
 
-from ansible.parsing.yaml import DataLoader
+from test.mock.loader import DictDataLoader
 
 class TestRole(unittest.TestCase):
 
@@ -37,172 +38,130 @@ class TestRole(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_construct_empty_block(self):
-        r = Role()
+    def test_load_role_with_tasks(self):
 
-    @patch.object(DataLoader, 'load_from_file')
-    def test__load_role_yaml(self, _load_from_file):
-        _load_from_file.return_value = dict(foo='bar')
-        r = Role()
-        with patch('os.path.exists', return_value=True):
-            with patch('os.path.isdir', return_value=True):
-                res = r._load_role_yaml('/fake/path', 'some_subdir')
-                self.assertEqual(res, dict(foo='bar'))
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo/tasks/main.yml": """
+            - shell: echo 'hello world'
+            """,
+        })
 
-    def test_role__load_list_of_blocks(self):
-        task = dict(action='test')
-        r = Role()
-        self.assertEqual(r._load_list_of_blocks([]), [])
-        res = r._load_list_of_blocks([task])
-        self.assertEqual(len(res), 1)
-        assert isinstance(res[0], Block)
-        res = r._load_list_of_blocks([task,task,task])
-        self.assertEqual(len(res), 3)
+        i = RoleInclude.load('foo', loader=fake_loader)
+        r = Role.load(i)
 
-    @patch.object(Role, '_get_role_path')
-    @patch.object(Role, '_load_role_yaml')
-    def test_load_role_with_tasks(self, _load_role_yaml, _get_role_path):
+        self.assertEqual(str(r), 'foo')
+        self.assertEqual(len(r._task_blocks), 1)
+        assert isinstance(r._task_blocks[0], Block)
 
-        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+    def test_load_role_with_handlers(self):
 
-        def fake_load_role_yaml(role_path, subdir):
-            if role_path == '/etc/ansible/roles/foo':
-                if subdir == 'tasks':
-                    return [dict(shell='echo "hello world"')]
-            return None
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo/handlers/main.yml": """
+            - name: test handler
+              shell: echo 'hello world'
+            """,
+        })
 
-        _load_role_yaml.side_effect = fake_load_role_yaml
+        i = RoleInclude.load('foo', loader=fake_loader)
+        r = Role.load(i)
 
-        r = Role.load('foo')
-        self.assertEqual(len(r.task_blocks), 1)
-        assert isinstance(r.task_blocks[0], Block)
+        self.assertEqual(len(r._handler_blocks), 1)
+        assert isinstance(r._handler_blocks[0], Block)
 
-    @patch.object(Role, '_get_role_path')
-    @patch.object(Role, '_load_role_yaml')
-    def test_load_role_with_handlers(self, _load_role_yaml, _get_role_path):
+    def test_load_role_with_vars(self):
 
-        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo/defaults/main.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo/vars/main.yml": """
+            foo: bam
+            """,
+        })
 
-        def fake_load_role_yaml(role_path, subdir):
-            if role_path == '/etc/ansible/roles/foo':
-                if subdir == 'handlers':
-                    return [dict(name='test handler', shell='echo "hello world"')]
-            return None
+        i = RoleInclude.load('foo', loader=fake_loader)
+        r = Role.load(i)
 
-        _load_role_yaml.side_effect = fake_load_role_yaml
+        self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
 
-        r = Role.load('foo')
-        self.assertEqual(len(r.handler_blocks), 1)
-        assert isinstance(r.handler_blocks[0], Block)
+    def test_load_role_with_metadata(self):
 
-    @patch.object(Role, '_get_role_path')
-    @patch.object(Role, '_load_role_yaml')
-    def test_load_role_with_vars(self, _load_role_yaml, _get_role_path):
+        fake_loader = DictDataLoader({
+            '/etc/ansible/roles/foo/meta/main.yml': """
+                allow_duplicates: true
+                dependencies:
+                  - bar
+                galaxy_info:
+                  a: 1
+                  b: 2
+                  c: 3
+            """,
+            '/etc/ansible/roles/bar/meta/main.yml': """
+                dependencies:
+                  - baz
+            """,
+            '/etc/ansible/roles/baz/meta/main.yml': """
+                dependencies:
+                  - bam
+            """,
+            '/etc/ansible/roles/bam/meta/main.yml': """
+                dependencies: []
+            """,
+            '/etc/ansible/roles/bad1/meta/main.yml': """
+                1
+            """,
+            '/etc/ansible/roles/bad2/meta/main.yml': """
+                foo: bar
+            """,
+            '/etc/ansible/roles/recursive1/meta/main.yml': """
+                dependencies: ['recursive2']
+            """,
+            '/etc/ansible/roles/recursive2/meta/main.yml': """
+                dependencies: ['recursive1']
+            """,
+        })
 
-        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+        i = RoleInclude.load('foo', loader=fake_loader)
+        r = Role.load(i)
 
-        def fake_load_role_yaml(role_path, subdir):
-            if role_path == '/etc/ansible/roles/foo':
-                if subdir == 'defaults':
-                    return dict(foo='bar')
-                elif subdir == 'vars':
-                    return dict(foo='bam')
-            return None
-
-        _load_role_yaml.side_effect = fake_load_role_yaml
-
-        r = Role.load('foo')
-        self.assertEqual(r.default_vars, dict(foo='bar'))
-        self.assertEqual(r.role_vars, dict(foo='bam'))
-
-    @patch.object(Role, '_get_role_path')
-    @patch.object(Role, '_load_role_yaml')
-    def test_load_role_with_metadata(self, _load_role_yaml, _get_role_path):
-
-        def fake_get_role_path(role):
-            if role == 'foo':
-                return ('foo', '/etc/ansible/roles/foo')
-            elif role == 'bar':
-                return ('bar', '/etc/ansible/roles/bar')
-            elif role == 'baz':
-                return ('baz', '/etc/ansible/roles/baz')
-            elif role == 'bam':
-                return ('bam', '/etc/ansible/roles/bam')
-            elif role == 'bad1':
-                return ('bad1', '/etc/ansible/roles/bad1')
-            elif role == 'bad2':
-                return ('bad2', '/etc/ansible/roles/bad2')
-            elif role == 'recursive1':
-                return ('recursive1', '/etc/ansible/roles/recursive1')
-            elif role == 'recursive2':
-                return ('recursive2', '/etc/ansible/roles/recursive2')
-
-        def fake_load_role_yaml(role_path, subdir):
-            if role_path == '/etc/ansible/roles/foo':
-                if subdir == 'meta':
-                    return dict(dependencies=['bar'], allow_duplicates=True, galaxy_info=dict(a='1', b='2', c='3'))
-            elif role_path == '/etc/ansible/roles/bar':
-                if subdir == 'meta':
-                    return dict(dependencies=['baz'])
-            elif role_path == '/etc/ansible/roles/baz':
-                if subdir == 'meta':
-                    return dict(dependencies=['bam'])
-            elif role_path == '/etc/ansible/roles/bam':
-                if subdir == 'meta':
-                    return dict()
-            elif role_path == '/etc/ansible/roles/bad1':
-                if subdir == 'meta':
-                    return 1
-            elif role_path == '/etc/ansible/roles/bad2':
-                if subdir == 'meta':
-                    return dict(foo='bar')
-            elif role_path == '/etc/ansible/roles/recursive1':
-                if subdir == 'meta':
-                    return dict(dependencies=['recursive2'])
-            elif role_path == '/etc/ansible/roles/recursive2':
-                if subdir == 'meta':
-                    return dict(dependencies=['recursive1'])
-            return None
-
-        _get_role_path.side_effect  = fake_get_role_path
-        _load_role_yaml.side_effect = fake_load_role_yaml
-
-        r = Role.load('foo')
         role_deps = r.get_direct_dependencies()
 
         self.assertEqual(len(role_deps), 1)
         self.assertEqual(type(role_deps[0]), Role)
         self.assertEqual(len(role_deps[0].get_parents()), 1)
         self.assertEqual(role_deps[0].get_parents()[0], r)
-        self.assertEqual(r.allow_duplicates, True)
-        self.assertEqual(r.galaxy_info, dict(a='1', b='2', c='3'))
+        self.assertEqual(r._metadata.allow_duplicates, True)
+        self.assertEqual(r._metadata.galaxy_info, dict(a=1, b=2, c=3))
 
         all_deps = r.get_all_dependencies()
         self.assertEqual(len(all_deps), 3)
-        self.assertEqual(all_deps[0].role_name, 'bar')
-        self.assertEqual(all_deps[1].role_name, 'baz')
-        self.assertEqual(all_deps[2].role_name, 'bam')
+        self.assertEqual(all_deps[0].get_name(), 'bar')
+        self.assertEqual(all_deps[1].get_name(), 'baz')
+        self.assertEqual(all_deps[2].get_name(), 'bam')
 
-        self.assertRaises(AnsibleParserError, Role.load, 'bad1')
-        self.assertRaises(AnsibleParserError, Role.load, 'bad2')
-        self.assertRaises(AnsibleError, Role.load, 'recursive1')
+        i = RoleInclude.load('bad1', loader=fake_loader)
+        self.assertRaises(AnsibleParserError, Role.load, i)
 
-    @patch.object(Role, '_get_role_path')
-    @patch.object(Role, '_load_role_yaml')
-    def test_load_role_complex(self, _load_role_yaml, _get_role_path):
+        i = RoleInclude.load('bad2', loader=fake_loader)
+        self.assertRaises(AnsibleParserError, Role.load, i)
 
-        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
+        i = RoleInclude.load('recursive1', loader=fake_loader)
+        self.assertRaises(AnsibleError, Role.load, i)
 
-        def fake_load_role_yaml(role_path, subdir):
-            if role_path == '/etc/ansible/roles/foo':
-                if subdir == 'tasks':
-                    return [dict(shell='echo "hello world"')]
-            return None
+    def test_load_role_complex(self):
 
-        _load_role_yaml.side_effect = fake_load_role_yaml
+        # FIXME: add tests for the more complex uses of
+        #        params and tags/when statements
 
-        r = Role.load(dict(role='foo'))
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo/tasks/main.yml": """
+            - shell: echo 'hello world'
+            """,
+        })
 
-        # FIXME: add tests for the more complex url-type
-        #        constructions and tags/when statements
+        i = RoleInclude.load(dict(role='foo'), loader=fake_loader)
+        r = Role.load(i)
+
+        self.assertEqual(r.get_name(), "foo")
 

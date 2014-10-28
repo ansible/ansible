@@ -28,6 +28,8 @@ class Block(Base):
     _block     = FieldAttribute(isa='list')
     _rescue    = FieldAttribute(isa='list')
     _always    = FieldAttribute(isa='list')
+    _tags      = FieldAttribute(isa='list', default=[])
+    _when      = FieldAttribute(isa='list', default=[])
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -43,9 +45,9 @@ class Block(Base):
         return dict()
 
     @staticmethod
-    def load(data, role=None):
+    def load(data, role=None, loader=None):
         b = Block(role=role)
-        return b.load_data(data)
+        return b.load_data(data, loader=loader)
 
     def munge(self, ds):
         '''

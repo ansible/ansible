@@ -91,6 +91,15 @@ class DataLoader():
 
         return parsed_data
 
+    def path_exists(self, path):
+        return os.path.exists(path)
+
+    def is_directory(self, path):
+        return os.path.isdir(path)
+
+    def is_file(self, path):
+        return os.path.isfile(path)
+
     def _safe_load(self, stream):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
         return load(stream, AnsibleLoader)
@@ -100,7 +109,7 @@ class DataLoader():
         Reads the file contents from the given file name, and will decrypt them
         if they are found to be vault-encrypted.
         '''
-        if not os.path.exists(file_name) or not os.path.isfile(file_name):
+        if not self.path_exists(file_name) or not self.is_file(file_name):
             raise AnsibleParserError("the file_name '%s' does not exist, or is not readable" % file_name)
 
         show_content = True

@@ -29,13 +29,11 @@ from ansible.parsing.yaml import DataLoader
 
 class Base:
 
-    _tags = FieldAttribute(isa='list')
-    _when = FieldAttribute(isa='list')
+    def __init__(self):
 
-    def __init__(self, loader=DataLoader):
-
-        # the data loader class is used to parse data from strings and files
-        self._loader = loader()
+        # initialize the data loader, this will be provided later
+        # when the object is actually loaded
+        self._loader = None
 
         # each class knows attributes set upon it, see Task.py for example
         self._attributes = dict()
@@ -61,10 +59,16 @@ class Base:
 
         return ds
 
-    def load_data(self, ds):
+    def load_data(self, ds, loader=None):
         ''' walk the input datastructure and assign any values '''
 
         assert ds is not None
+
+        # the data loader class is used to parse data from strings and files
+        if loader is not None:
+            self._loader = loader
+        else:
+            self._loader = DataLoader()
 
         if isinstance(ds, string_types) or isinstance(ds, FileIO):
             ds = self._loader.load(ds)
@@ -89,6 +93,8 @@ class Base:
         self.validate()
         return self
 
+    def get_loader(self):
+        return self._loader
 
     def validate(self):
         ''' validation that is done at parse time, not load time '''
