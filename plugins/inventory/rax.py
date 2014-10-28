@@ -344,7 +344,8 @@ def _list_into_cache(regions):
 
 
 def get_cache_file_path():
-    return os.path.join(gettempdir(), 'ansible-rax.cache')
+    return os.path.join(gettempdir(),
+                        'ansible-rax-{}.cache'.format(pyrax.identity.username))
 
 
 def _list(regions, refresh_cache=True):
