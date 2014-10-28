@@ -41,6 +41,7 @@ __all__ = ['Role']
 # will be based on the repr() of the dictionary object)
 _ROLE_CACHE = dict()
 
+# The valid metadata keys for meta/main.yml files
 _VALID_METADATA_KEYS = [
     'dependencies',
     'allow_duplicates',
@@ -369,20 +370,30 @@ class Role(Base):
         if parent_role not in self._parents:
             self._parents.append(parent_role)
 
-    def get_variables(self):
-        # returns the merged variables for this role, including
-        # recursively merging those of all child roles
-        return dict()
+    def get_parents(self):
+        return self._parents
 
-    def get_immediate_dependencies(self):
-        return self._dependencies
+    # FIXME: not yet used
+    #def get_variables(self):
+    #    # returns the merged variables for this role, including
+    #    # recursively merging those of all child roles
+    #    return dict()
+
+    def get_direct_dependencies(self):
+        return self._attributes['dependencies'][:]
 
     def get_all_dependencies(self):
         # returns a list built recursively, of all deps from
         # all child dependencies
-        all_deps = []
-        for dep in self._dependencies:
-            list_union(all_deps, dep.get_all_dependencies())
-        all_deps = list_union(all_deps, self.dependencies)
-        return all_deps
+
+        child_deps  = []
+        direct_deps = self.get_direct_dependencies()
+
+        for dep in direct_deps:
+            dep_deps = dep.get_all_dependencies()
+            for dep_dep in dep_deps:
+                if dep_dep not in child_deps:
+                    child_deps.append(dep_dep)
+
+        return direct_deps + child_deps
 
