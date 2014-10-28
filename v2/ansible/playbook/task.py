@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError
 
 from ansible.parsing.splitter import parse_kv
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.parsing.yaml import DataLoader
 from ansible.plugins import module_finder, lookup_finder
 
 class Task(Base):
@@ -85,11 +86,11 @@ class Task(Base):
     _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
 
-    def __init__(self, block=None, role=None):
+    def __init__(self, block=None, role=None, loader=DataLoader):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
         self._block = block
         self._role  = role
-        super(Task, self).__init__()
+        super(Task, self).__init__(loader)
 
     def get_name(self):
        ''' return the name of the task '''

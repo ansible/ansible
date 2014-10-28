@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -19,13 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class Attribute:
+'''
+Compat module for Python2.7's unittest module
+'''
 
-    def __init__(self, isa=None, private=False, default=None):
+import sys
 
-       self.isa = isa
-       self.private = private
-       self.default = default
-
-class FieldAttribute(Attribute):
-    pass
+# Python 2.6
+if sys.version_info < (2, 7):
+    try:
+        # Need unittest2 on python2.6
+        from unittest2 import *
+    except ImportError:
+        print('You need unittest2 installed on python2.6.x to run tests')
+else:
+    from unittest import *

@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -14,3 +14,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+'''
+Compat module for Python3.x's unittest.mock module
+'''
+
+# Python 2.7
+
+# Note: Could use the pypi mock library on python3.x as well as python2.x.  It
+# is the same as the python3 stdlib mock library
+
+try:
+    from unittest.mock import *
+except ImportError:
+    # Python 2
+    try:
+        from mock import *
+    except ImportError:
+        print('You need the mock library installed on python2.x to run tests')

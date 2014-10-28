@@ -23,11 +23,7 @@ import os
 import pwd
 import sys
 
-try:
-    import configparser
-except ImportError:
-    # Python 2.7
-    import ConfigParser as configparser
+from . compat import configparser
 
 from string import ascii_letters, digits
 

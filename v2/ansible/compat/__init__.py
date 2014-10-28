@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -19,13 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class Attribute:
+'''
+Compat library for ansible.  This contains compatiblity definitions for older python
+When we need to import a module differently depending on python version, do it
+here.  Then in the code we can simply import from compat in order to get what we want.
+'''
 
-    def __init__(self, isa=None, private=False, default=None):
-
-       self.isa = isa
-       self.private = private
-       self.default = default
-
-class FieldAttribute(Attribute):
-    pass

@@ -19,10 +19,66 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from v2.playbook.base import PlaybookBase
+from ansible.playbook.base import Base
+from ansible.playbook.task import Task
+from ansible.playbook.attribute import Attribute, FieldAttribute
 
-class Block(PlaybookBase):
+class Block(Base):
 
-    def __init__(self):
-        pass
+    _block     = FieldAttribute(isa='list')
+    _rescue    = FieldAttribute(isa='list')
+    _always    = FieldAttribute(isa='list')
+
+    # for future consideration? this would be functionally
+    # similar to the 'else' clause for exceptions
+    #_otherwise = FieldAttribute(isa='list')
+
+    def __init__(self, role=None):
+        self.role = role
+        super(Block, self).__init__()
+
+    def get_variables(self):
+        # blocks do not (currently) store any variables directly,
+        # so we just return an empty dict here
+        return dict()
+
+    @staticmethod
+    def load(data, role=None):
+        b = Block(role=role)
+        return b.load_data(data)
+
+    def munge(self, ds):
+        '''
+        If a simple task is given, an implicit block for that single task
+        is created, which goes in the main portion of the block
+        '''
+        is_block = False
+        for attr in ('block', 'rescue', 'always'):
+            if attr in ds:
+                is_block = True
+                break
+        if not is_block:
+            return dict(block=ds)
+        return ds
+
+    def _load_list_of_tasks(self, ds):
+        assert type(ds) == list
+        task_list = []
+        for task in ds:
+            t = Task.load(task)
+            task_list.append(t)
+        return task_list
+
+    def _load_block(self, attr, ds):
+        return self._load_list_of_tasks(ds)
+
+    def _load_rescue(self, attr, ds):
+        return self._load_list_of_tasks(ds)
+
+    def _load_always(self, attr, ds):
+        return self._load_list_of_tasks(ds)
+
+    # not currently used
+    #def _load_otherwise(self, attr, ds):
+    #    return self._load_list_of_tasks(ds)
 

@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -19,13 +19,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class Attribute:
+'''
+This module contains things that are only needed for compat in the testsuites,
+not in ansible itself.  If you are not installing the test suite, you can
+safely remove this subdirectory.
+'''
 
-    def __init__(self, isa=None, private=False, default=None):
+#
+# Compat for python2.7
+#
 
-       self.isa = isa
-       self.private = private
-       self.default = default
+# One unittest needs to import builtins via __import__() so we need to have
+# the string that represents it
+try:
+    import __builtin__
+except ImportError:
+    BUILTINS = 'builtins'
+else:
+    BUILTINS = '__builtin__'
 
-class FieldAttribute(Attribute):
-    pass

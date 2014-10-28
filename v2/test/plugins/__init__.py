@@ -19,38 +19,3 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
-import unittest
-
-#
-# Compat for python2.6
-#
-
-if sys.version_info < (2, 7):
-    try:
-        # Need unittest2 on python2.6
-        import unittest2 as unittest
-    except ImportError:
-        print('You need unittest2 installed on python2.x')
-else:
-    import unittest
-
-
-#
-# Compat for python2.7
-#
-
-# Could use the pypi mock library on py3 as well as py2.  They are the same
-try:
-    from unittest.mock import mock_open, patch
-except ImportError:
-    # Python2
-    from mock import mock_open, patch
-
-try:
-    import __builtin__
-except ImportError:
-    BUILTINS = 'builtins'
-else:
-    BUILTINS = '__builtin__'
-
