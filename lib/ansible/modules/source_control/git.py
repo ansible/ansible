@@ -249,6 +249,28 @@ def get_version(module, git_path, dest, ref="HEAD"):
     sha = stdout.rstrip('\n')
     return sha
 
+def get_submodule_versions(git_path, module, dest, version='HEAD'):
+    cmd = [git_path, 'submodule', 'foreach', git_path, 'rev-parse', version]
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg='Unable to determine hashes of submodules')
+    submodules = {}
+    subm_name = None
+    for line in out.splitlines():
+        if line.startswith("Entering '"):
+            subm_name = line[10:-1]
+        elif len(line.strip()) == 40:
+            if subm_name is None:
+                module.fail_json()
+            submodules[subm_name] = line.strip()
+            subm_name = None
+        else:
+            module.fail_json(msg='Unable to parse submodule hash line: %s' % line.strip())
+    if subm_name is not None:
+        module.fail_json(msg='Unable to find hash for submodule: %s' % subm_name)
+
+    return submodules
+
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, recursive):
     ''' makes a new git repo if it does not already exist '''
@@ -412,8 +434,10 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote, bare, track_submodules):
+def fetch(git_path, module, repo, dest, version, remote, bare, track_submodules, recursive):
     ''' updates repo from remote sources '''
+    out_acc = []
+    err_acc = []
     (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to set a new url %s for %s: %s" % (repo, remote, out0 + err0))
@@ -423,6 +447,8 @@ def fetch(git_path, module, repo, dest, version, remote, bare, track_submodules)
         (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote), cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
+    out_acc.append(out1)
+    err_acc.append(err1)
 
     if bare:
         (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'], cwd=dest)
@@ -430,8 +456,63 @@ def fetch(git_path, module, repo, dest, version, remote, bare, track_submodules)
         (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
-    (rc, out3, err3) = submodule_update(git_path, module, dest, track_submodules )
-    return (rc, out1 + out2 + out3, err1 + err2 + err3)
+    out_acc.append(out2)
+    err_acc.append(err2)
+
+    if recursive:
+        (rc, out3, err3) = submodule_update(git_path, module, dest, track_submodules)
+        if rc != 0:
+            module.fail_json(msg="Failed to update submodules: %s" % "".join(out3, err3))
+        out_acc.append(out3)
+        err_acc.append(err3)
+    return (rc, ''.join(out_acc), ''.join(err_acc))
+
+
+def submodules_fetch(git_path, module, remote, track_submodules, dest):
+    changed = False
+
+    if not os.path.exists(os.path.join(dest, '.gitmodules')):
+        # no submodules
+        return changed
+
+    # Check for new submodules
+    gitmodules_file = open(os.path.join(dest, '.gitmodules'), 'r')
+    for line in gitmodules_file:
+        if line.strip().startswith('path'):
+            path = line.split('=', 1)[1].strip()
+            # Check that dest/path/.git exists
+            if not os.path.exists(os.path.join(dest, path, '.git')):
+                changed = True
+                break
+
+    # Check for updates to existing modules
+    if not changed:
+        # Fetch updates
+        begin = get_submodule_versions(git_path, module, dest)
+        cmd = [git_path, 'submodule', 'foreach', git_path, 'fetch']
+        (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to fetch submodules: %s" % out + err)
+
+        if track_submodules:
+            # Compare against submodule HEAD
+            ### FIXME: determine this from .gitmodules
+            version = 'master'
+            after = get_submodule_versions(git_path, module, dest, '%s/%s'
+                    % (remote, version))
+            if begin != after:
+                changed = True
+        else:
+            # Compare against the superproject's expectation
+            cmd = [git_path, 'submodule', 'status']
+            (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+            if rc != 0:
+                module.fail_json(msg='Failed to retrieve submodule status: %s' % out + err)
+            for line in out.splitlines():
+                if line[0] != ' ':
+                    changed = True
+                    break
+    return changed
 
 def submodule_update(git_path, module, dest, track_submodules):
     ''' init and update any submodules '''
@@ -555,6 +636,7 @@ def main():
 
     before = None
     local_mods = False
+    repo_updated = None
     if gitconfig and not os.path.exists(gitconfig) or not gitconfig and not update:
         # if there is no git configuration, do a clone operation  unless the
         # user requested no updates or we're doing a check mode test (in
@@ -590,24 +672,42 @@ def main():
             elif is_remote_tag(git_path, module, dest, repo, version):
                 # if the remote is a tag and we have the tag locally, exit early
                 if version in get_tags(git_path, module, dest):
-                    module.exit_json(changed=False, before=before, after=remote_head)
+                    repo_updated = False
             else:
-                module.exit_json(changed=False, before=before, after=remote_head)
-        if module.check_mode:
-            module.exit_json(changed=True, before=before, after=remote_head)
-        fetch(git_path, module, repo, dest, version, remote, bare, track_submodules)
+                repo_updated = False
+        if repo_updated is not False:
+            if module.check_mode:
+                module.exit_json(changed=True, before=before, after=remote_head)
+            fetch(git_path, module, repo, dest, version, remote, bare, track_submodules, recursive)
+            repo_updated = True
 
     # switch to version specified regardless of whether
     # we cloned or pulled
-    if not bare:
+    if repo_updated and not bare:
         switch_version(git_path, module, dest, remote, version, recursive, track_submodules)
+
+    # Deal with submodules
+    if recursive and not bare:
+        submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
+
+        if module.check_mode:
+            if submodules_updated:
+                module.exit_json(changed=True, before=before, after=remote_head, submodules_changed=True)
+            else:
+                module.exit_json(changed=False, before=before, after=remote_head)
+
+        if submodules_updated:
+            # Switch to version specified
+            submodule_update(git_path, module, dest, track_submodules)
 
     # determine if we changed anything
     after = get_version(module, git_path, dest)
-    changed = False
 
+    changed = False
     if before != after or local_mods:
         changed = True
+    elif recursive and submodules_updated:
+        changed =True
 
     # cleanup the wrapper script
     if ssh_wrapper:
