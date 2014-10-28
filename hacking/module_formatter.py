@@ -128,6 +128,9 @@ def list_modules(module_dir):
             files2 = glob.glob("%s/*" % d)
             for f in files2:
 
+                if os.path.basename(f).startswith("_"): # skip deprecated/aliases for now
+                    continue
+
                 if not f.endswith(".py") or f.endswith('__init__.py'):
                     # windows powershell modules have documentation stubs in python docstring
                     # format (they are not executed) so skip the ps1 format files
