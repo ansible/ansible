@@ -80,7 +80,7 @@ class DataLoader():
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
         if file_name in self._FILE_CACHE:
-            return self._FILE_CACHE
+            return self._FILE_CACHE[file_name]
 
         # read the file contents and load the data structure from them
         (file_data, show_content) = self._get_file_contents(file_name)
