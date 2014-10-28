@@ -231,6 +231,7 @@ def main():
                 for module in os.listdir(path):
                     if any(module.endswith(x) for x in BLACKLIST_EXTS):
                         continue
+                    module = os.path.splitext(module)[0] # removes the extension
                     module_list.append(module)
 
         pager(get_module_list_text(module_list))
