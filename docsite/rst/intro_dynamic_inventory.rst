@@ -113,7 +113,7 @@ If you use boto profiles to manage multiple AWS accounts, you can pass ``--profi
 
 You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, or run playbooks with: ``ansible-playbook -i 'ec2.py --profile prod' myplaybook.yml``.
 
-Alternatively, use the ``EC2_PROFILE`` variable - e.g. ``EC2_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
+Alternatively, use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
 
 Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.
 
