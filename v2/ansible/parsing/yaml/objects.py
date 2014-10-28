@@ -37,7 +37,7 @@ class AnsibleBaseYAMLObject:
         self._line_number   = line
         self._column_number = col
 
-    def copy_position_info(obj):
+    def copy_position_info(self, obj):
         ''' copies the position info from another object '''
         assert isinstance(obj, AnsibleBaseYAMLObject)
 

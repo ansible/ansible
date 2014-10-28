@@ -93,11 +93,14 @@ class Role(Base):
         if cache_key in _ROLE_CACHE:
             r = _ROLE_CACHE[cache_key]
         else:
-            # load the role
-            r = Role()
-            r.load_data(data)
-            # and cache it for next time
-            _ROLE_CACHE[cache_key] = r
+            try:
+                # load the role
+                r = Role()
+                r.load_data(data)
+                # and cache it for next time
+                _ROLE_CACHE[cache_key] = r
+            except RuntimeError:
+                raise AnsibleError("A recursive loop was detected while loading your roles", obj=data)
 
         # now add the parent to the (new) role
         if parent_role:
@@ -192,17 +195,13 @@ class Role(Base):
 
         # FIXME: this should use unfrackpath once the utils code has been sorted out
         role_path = os.path.normpath(role)
-        print("first role path is %s" % role_path)
         if os.path.exists(role_path):
             role_name = os.path.basename(role)
-            print('returning role path %s' % role_path)
             return (role_name, role_path)
         else:
             for path in ('./roles', '/etc/ansible/roles'):
                 role_path = os.path.join(path, role)
-		print("current role path is %s" % role_path)
                 if os.path.exists(role_path):
-                    print('returning role path %s' % role_path)
                     return (role, role_path)
 
         # FIXME: make the parser smart about list/string entries
@@ -350,12 +349,22 @@ class Role(Base):
             return []
         return self._load_list_of_blocks(ds)
 
+    def _load_dependencies(self, attr, ds):
+        assert type(ds) in (list, type(None))
+
+        deps = []
+        if ds:
+            for role_def in ds:
+                r = Role.load(role_def, parent_role=self)
+                deps.append(r)
+        return deps
+
     #------------------------------------------------------------------------------
     # other functions
 
     def add_parent(self, parent_role):
         ''' adds a role to the list of this roles parents '''
-        assert isinstance(role, Role)
+        assert isinstance(parent_role, Role)
 
         if parent_role not in self._parents:
             self._parents.append(parent_role)

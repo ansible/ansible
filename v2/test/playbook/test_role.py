@@ -119,10 +119,23 @@ class TestRole(unittest.TestCase):
     @patch.object(Role, '_load_role_yaml')
     def test_load_role_with_metadata(self, _load_role_yaml, _get_role_path):
 
+        def fake_get_role_path(role):
+            if role == 'foo':
+                return ('foo', '/etc/ansible/roles/foo')
+            elif role == 'bar':
+                return ('bar', '/etc/ansible/roles/bar')
+            elif role == 'bad1':
+                return ('bad1', '/etc/ansible/roles/bad1')
+            elif role == 'bad2':
+                return ('bad2', '/etc/ansible/roles/bad2')
+
         def fake_load_role_yaml(role_path, subdir):
             if role_path == '/etc/ansible/roles/foo':
                 if subdir == 'meta':
                     return dict(dependencies=['bar'], allow_duplicates=True, galaxy_info=dict(a='1', b='2', c='3'))
+            elif role_path == '/etc/ansible/roles/bar':
+                if subdir == 'meta':
+                    return dict()
             elif role_path == '/etc/ansible/roles/bad1':
                 if subdir == 'meta':
                     return 1
@@ -131,19 +144,18 @@ class TestRole(unittest.TestCase):
                     return dict(foo='bar')
             return None
 
+        _get_role_path.side_effect  = fake_get_role_path
         _load_role_yaml.side_effect = fake_load_role_yaml
 
-        _get_role_path.return_value = ('foo', '/etc/ansible/roles/foo')
-
         r = Role.load('foo')
-        self.assertEqual(r.dependencies, ['bar'])
+        self.assertEqual(len(r.dependencies), 1)
+        self.assertEqual(type(r.dependencies[0]), Role)
+        self.assertEqual(len(r.dependencies[0]._parents), 1)
+        self.assertEqual(r.dependencies[0]._parents[0], r)
         self.assertEqual(r.allow_duplicates, True)
         self.assertEqual(r.galaxy_info, dict(a='1', b='2', c='3'))
 
-        _get_role_path.return_value = ('bad1', '/etc/ansible/roles/bad1')
         self.assertRaises(AnsibleParserError, Role.load, 'bad1')
-
-        _get_role_path.return_value = ('bad2', '/etc/ansible/roles/bad2')
         self.assertRaises(AnsibleParserError, Role.load, 'bad2')
 
     @patch.object(Role, '_get_role_path')
