@@ -507,7 +507,7 @@ class VaultAES256(object):
         # 1) nbits (integer) - Length of the counter, in bits.
         # 2) initial_value (integer) - initial value of the counter. "iv" from gen_key_initctr
 
-        ctr = Counter.new(128, initial_value=long(iv, 16))
+        ctr = Counter.new(128, initial_value=int(iv, 16))
 
         # AES.new PARAMETERS
         # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from gen_key_initctr
@@ -542,7 +542,7 @@ class VaultAES256(object):
             return None
 
         # SET THE COUNTER AND THE CIPHER
-        ctr = Counter.new(128, initial_value=long(iv, 16))
+        ctr = Counter.new(128, initial_value=int(iv, 16))
         cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
 
         # DECRYPT PADDED DATA

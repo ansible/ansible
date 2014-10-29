@@ -71,7 +71,7 @@ class DataLoader():
                 # if loading JSON failed for any reason, we go ahead
                 # and try to parse it as YAML instead
                 return self._safe_load(data)
-            except YAMLError, yaml_exc:
+            except YAMLError as yaml_exc:
                 self._handle_error(yaml_exc, file_name, show_content)
 
     def load_from_file(self, file_name):

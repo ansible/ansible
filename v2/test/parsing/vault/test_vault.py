@@ -125,7 +125,7 @@ class TestVaultLib(unittest.TestCase):
         error_hit = False
         try:
             enc_data = v.encrypt(data)
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
         assert error_hit, "No error was thrown when trying to encrypt data with a header"    
 
@@ -137,7 +137,7 @@ class TestVaultLib(unittest.TestCase):
         error_hit = False
         try:
             dec_data = v.decrypt(data)
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
         assert error_hit, "No error was thrown when trying to decrypt data without a header"    
 
@@ -150,7 +150,7 @@ class TestVaultLib(unittest.TestCase):
         error_hit = False
         try:
             enc_data = v.encrypt(data)
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
         assert not error_hit, "An error was thrown when trying to encrypt data without the cipher set"    
         assert v.cipher_name == "AES256", "cipher name is not set to AES256: %s" % v.cipher_name               
