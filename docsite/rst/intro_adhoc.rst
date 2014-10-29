@@ -154,11 +154,11 @@ with yum.
 
 Ensure a package is installed, but don't update it::
 
-    $ ansible webservers -m yum -a "name=acme state=installed"
+    $ ansible webservers -m yum -a "name=acme state=present"
 
 Ensure a package is installed to a specific version::
 
-    $ ansible webservers -m yum -a "name=acme-1.5 state=installed"
+    $ ansible webservers -m yum -a "name=acme-1.5 state=present"
 
 Ensure a package is at the latest version::
 
@@ -166,7 +166,7 @@ Ensure a package is at the latest version::
 
 Ensure a package is not installed::
 
-    $ ansible webservers -m yum -a "name=acme state=removed"
+    $ ansible webservers -m yum -a "name=acme state=absent"
 
 Ansible has modules for managing packages under many platforms.  If your package manager
 does not have a module available for it, you can install
