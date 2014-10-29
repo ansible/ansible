@@ -230,10 +230,10 @@ def expand_dpkg_options(dpkg_options_compressed):
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     for name_or_fnmatch_or_version in pkgspec:
-        pkgname_or_fnmatch_pattern = name_or_fnmatch_or_version.split("=")[0]
+        pkgname_or_fnmatch_pattern, version = package_split(name_or_fnmatch_or_version)
         # note that any of these chars is not allowed in a (debian) pkgname
         if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
-            if "=" in pkgname_or_fnmatch_pattern:
+            if version:
                 m.fail_json(msg="pkgname wildcard and version can not be mixed")
             # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
@@ -568,4 +568,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+# FIXME: if __name__ == "__main__": ?
+if "ANSIBLE_IN_HAPPY_UNITTEST_LAND" not in os.environ:
+    main()
