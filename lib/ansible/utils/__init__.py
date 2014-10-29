@@ -812,9 +812,13 @@ def merge_hash(a, b):
         for k, v in dicts.iteritems():
             # if there's already such key in a
             # and that key contains dict
-            if k in result and isinstance(result[k], dict):
+            if k in result:
+                if isinstance(result[k], dict):
                 # merge those dicts recursively
-                result[k] = merge_hash(a[k], v)
+                    result[k] = merge_hash(a[k], v)
+                elif isinstance(result[k], list) and C.DEFAULT_LIST_BEHAVIOUR == 'merge':
+                    # merge unique list items
+                    result[k].extend([i for i in v if i not in result[k]])
             else:
                 # otherwise, just copy a value from b to a
                 result[k] = v
