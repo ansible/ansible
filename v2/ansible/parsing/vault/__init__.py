@@ -18,6 +18,10 @@
 # example playbook to bootstrap this script in the examples/ dir which
 # installs ansible and sets it up to run on cron.
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import shlex
 import shutil
