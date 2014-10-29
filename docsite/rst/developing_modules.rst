@@ -466,7 +466,7 @@ Included modules will ship with ansible, and also have a change to be promoted t
 gives them slightly higher development priority (though they'll work in exactly the same way).
 
 
-Deprecating and makingm module aliases
+Deprecating and making module aliases
 ``````````````````````````````````````
 
 Starting in 1.8 you can deprecate modules by renaming them with a preceeding _, i.e. old_cloud.py to 
