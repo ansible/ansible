@@ -97,9 +97,9 @@ class TestVaultEditor(unittest.TestCase):
 
         # make sure the password functions for the cipher
         error_hit = False
-        try:        
+        try:
             ve.decrypt_file()
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
 
         # verify decrypted content
@@ -125,9 +125,9 @@ class TestVaultEditor(unittest.TestCase):
 
         # make sure the password functions for the cipher
         error_hit = False
-        try:        
+        try:
             ve.decrypt_file()
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
 
         # verify decrypted content
@@ -155,7 +155,7 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:        
             ve.rekey_file('ansible2')
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
 
         # verify decrypted content
@@ -171,7 +171,7 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:
             dec_data = vl.decrypt(fdata)
-        except errors.AnsibleError, e:
+        except errors.AnsibleError as e:
             error_hit = True
 
         os.unlink(v10_file.name)
