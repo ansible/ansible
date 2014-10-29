@@ -133,7 +133,17 @@ except ImportError:
 
 class Ec2Inventory(object):
     def _empty_inventory(self):
-        return {"_meta" : {"hostvars" : {}}}
+        return {
+            "_meta": {
+                "hostvars": {}
+            },
+            "local": [
+                "localhost"
+            ],
+            "localhost": [
+                "localhost"
+            ]
+        }
 
     def __init__(self):
         ''' Main execution path '''
