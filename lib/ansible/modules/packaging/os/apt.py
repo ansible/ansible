@@ -229,7 +229,8 @@ def expand_dpkg_options(dpkg_options_compressed):
 
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
-    for pkgname_or_fnmatch_pattern in pkgspec:
+    for name_or_fnmatch_or_version in pkgspec:
+        pkgname_or_fnmatch_pattern = name_or_fnmatch_or_version.split("=")[0]
         # note that any of these chars is not allowed in a (debian) pkgname
         if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
             if "=" in pkgname_or_fnmatch_pattern:
@@ -249,7 +250,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
             else:
                 new_pkgspec.extend(matches)
         else:
-            new_pkgspec.append(pkgname_or_fnmatch_pattern)
+            new_pkgspec.append(name_or_fnmatch_or_version)
     return new_pkgspec
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
