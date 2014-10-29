@@ -79,7 +79,8 @@ class Connection(object):
             self.common_args += ["-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         if not C.HOST_KEY_CHECKING:
-            self.common_args += ["-o", "StrictHostKeyChecking=no"]
+            self.common_args += ["-o", "StrictHostKeyChecking=no",
+                                 "-o", "UserKnownHostsFile=/dev/null"]
 
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
