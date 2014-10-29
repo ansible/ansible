@@ -32,7 +32,7 @@ import pprint
 USER_AGENT_PRODUCT="Ansible-gce"
 USER_AGENT_VERSION="v1"
 
-def gce_connect(module):
+def gce_connect(module, provider=None):
     """Return a Google Cloud Engine connection."""
     service_account_email = module.params.get('service_account_email', None)
     pem_file = module.params.get('pem_file', None)
@@ -71,8 +71,14 @@ def gce_connect(module):
                              'secrets file.')
         return None
 
+    # Allow for passing in libcloud Google DNS (e.g, Provider.GOOGLE)
+    if provider is None:
+        provider = Provider.GCE
+
     try:
-        gce = get_driver(Provider.GCE)(service_account_email, pem_file, datacenter=module.params.get('zone'), project=project_id)
+        gce = get_driver(provider)(service_account_email, pem_file,
+                datacenter=module.params.get('zone', None),
+                project=project_id)
         gce.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
     except (RuntimeError, ValueError), e:
