@@ -157,6 +157,11 @@ class Runner(object):
         become_user=C.DEFAULT_BECOME_USER,      # ex: 'root'
         become_pass=C.DEFAULT_BECOME_PASS,      # ex: 'password123' or None
         become_exe=C.DEFAULT_BECOME_EXE,        # ex: /usr/local/bin/sudo
+        ssh_args=C.ANSIBLE_SSH_ARGS,        # ex: -o ForwardAgent=yes
+        proxy_host=C.ANSIBLE_SSH_PROXY_HOST,    # bastion host to proxy SSH through for private hosts
+        proxy_port=C.ANSIBLE_SSH_PROXY_PORT,    # if proxy SSH is on a non-standard port
+        proxy_user=C.ANSIBLE_SSH_PROXY_USER,    # ex: 'username'
+        proxy_private_key_file=C.ANSIBLE_SSH_PROXY_PRIVATE_KEY_FILE, # for direct keyfile usage against proxy host
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -217,6 +222,11 @@ class Runner(object):
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
+        self.ssh_args         = ssh_args
+        self.proxy_host       = proxy_host
+        self.proxy_port       = proxy_port
+        self.proxy_user       = proxy_user
+        self.proxy_private_key_file = proxy_private_key_file
 
         if self.transport == 'smart':
             # If the transport is 'smart', check to see if certain conditions
@@ -363,6 +373,15 @@ class Runner(object):
         delegate['user'] = self._compute_delegate_user(self.delegate_to, delegate['inject'])
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
         delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', self.private_key_file)
+        delegate['proxy_host'] = template.template(
+            self.basedir,
+            this_info.get('ansible_ssh_proxy_host', self.delegate_to),
+            this_info,
+            fail_on_undefined=False
+        )
+        delegate['proxy_port'] = this_info.get('ansible_ssh_proxy_port', self.proxy_port)
+        delegate['proxy_user'] = this_info.get('ansible_ssh_proxy_user', self.proxy_user)
+        delegate['proxy_private_key_file'] = this_info.get('ansible_ssh_proxy_private_key_file', self.proxy_private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['become_pass'] = this_info.get('ansible_become_pass', this_info.get('ansible_ssh_pass', self.become_pass))
 
@@ -883,6 +902,12 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
+        actual_ssh_args = inject.get('ansible_ssh_args', self.ssh_args)
+        actual_proxy_host = inject.get('ansible_ssh_proxy_host', self.proxy_host)
+        actual_proxy_port = inject.get('ansible_ssh_proxy_port', self.proxy_port)
+        actual_proxy_user = inject.get('ansible_ssh_proxy_user', self.proxy_user)
+        actual_proxy_private_key_file = inject.get('ansible_ssh_proxy_private_key_file', self.proxy_private_key_file)
+        actual_proxy_private_key_file = template.template(self.basedir, actual_proxy_private_key_file, inject, fail_on_undefined=True)
 
         self.become = utils.boolean(inject.get('ansible_become', inject.get('ansible_sudo', inject.get('ansible_su', self.become))))
         self.become_user = inject.get('ansible_become_user', inject.get('ansible_sudo_user', inject.get('ansible_su_user',self.become_user)))
@@ -898,6 +923,9 @@ class Runner(object):
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
+
+        if actual_proxy_private_key_file is not None:
+            actual_proxy_private_key_file = os.path.expanduser(actual_proxy_private_key_file)
 
         if self.accelerate and actual_transport != 'local':
             #Fix to get the inventory name of the host to accelerate plugin
@@ -928,12 +956,17 @@ class Runner(object):
             actual_pass = delegate['pass']
             actual_private_key_file = delegate['private_key_file']
             self.become_pass = delegate.get('become_pass',delegate.get('sudo_pass'))
+            actual_proxy_host = delegate['proxy_host']
+            actual_proxy_port = delegate['proxy_port']
+            actual_proxy_user = delegate['proxy_user']
+            actual_proxy_private_key_file = delegate['proxy_private_key_file']
             inject = delegate['inject']
             # set resolved delegate_to into inject so modules can call _remote_checksum
             inject['delegate_to'] = self.delegate_to
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
+        actual_proxy_user = template.template(self.basedir, actual_proxy_user, inject)
         try:
             actual_pass = template.template(self.basedir, actual_pass, inject)
             self.become_pass = template.template(self.basedir, self.become_pass, inject)
@@ -961,7 +994,8 @@ class Runner(object):
                 delegate_host = host
             else:
                 delegate_host = None
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, delegate_host)
+                
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, delegate_host, actual_ssh_args, actual_proxy_host, actual_proxy_port, actual_proxy_user, actual_proxy_private_key_file)
 
             default_shell = getattr(conn, 'default_shell', '')
             shell_type = inject.get('ansible_shell_type')

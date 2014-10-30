@@ -215,6 +215,16 @@ mentioned::
       Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+    ansible_ssh_proxy_host
+      The hostname of a bastion host/jump box to proxy ssh connections through (not supported on paramiko, uses OpenSSH ProxyCommand with -W).
+    ansible_ssh_proxy_port
+      The ssh port number for the proxy host, if not 22.
+    ansible_ssh_proxy_user
+      The ssh user name for the proxy host.
+    ansible_ssh_proxy_private_key_file
+      Private key file used by ssh for the proxy host.  Useful if using multiple keys and you don't want to use SSH agent.
+    ansible_ssh_args
+      Additional OpenSSH command-line args for more exotic usage (multiple bastion hosts, custom config files, etc).
     ansible_shell_type
       The shell type of the target system. By default commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
@@ -232,6 +242,7 @@ Examples from a host file::
   some_host         ansible_ssh_port=2222     ansible_ssh_user=manager
   aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
   freebsd_host      ansible_python_interpreter=/usr/local/bin/python
+  firewalled_host   ansible_ssh_proxy_host=bastion_public_host ansible_ssh_proxy_user=proxyuser
   ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
 
 

@@ -661,6 +661,26 @@ to managing the switch.  Most environments support SFTP by default and this does
 
 .. _pipelining:
 
+proxy_host
+==========
+
+When accessing firewalled hosts via a bastion host/jump box, a default SSH proxy host can be configured.
+
+proxy_port
+==========
+
+The default ssh port to connect to on a proxy_host
+
+proxy_user
+==========
+
+The default ssh username ansible will use when connecting to a proxy. Defaults to the current user if not specified.
+
+proxy_private_key_file
+======================
+
+The default private key to use when connecting to a proxy (eg, if not using ssh-agent).
+
 pipelining
 ==========
 
