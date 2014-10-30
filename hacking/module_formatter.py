@@ -121,28 +121,33 @@ def write_data(text, options, outputname, module):
 def list_modules(module_dir):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
-    categories = dict(all=dict())
+    categories = dict(all=dict(),deprecated=dict())
     files = glob.glob("%s/*/*" % module_dir)
     for d in files:
         if os.path.isdir(d):
             files2 = glob.glob("%s/*" % d)
             for f in files2:
 
-                if os.path.basename(f).startswith("_"): # skip deprecated/aliases for now
-                    continue
+                module = os.path.splitext(os.path.basename(f))[0]
+                category = os.path.dirname(f).split("/")[-1]
 
                 if not f.endswith(".py") or f.endswith('__init__.py'):
                     # windows powershell modules have documentation stubs in python docstring
                     # format (they are not executed) so skip the ps1 format files
                     continue
+                elif module.startswith("_"): # Handle deprecated modules
+                    if not os.path.islink(f): # ignores aliases
+                        categories['deprecated'][module] = f
+                    continue
+                elif module in categories['deprecated']: # Removes dupes
+                    categories['deprecated'].pop(module, None)
 
-                tokens = f.split("/")
-                module = tokens[-1].replace(".py","")
-                category = tokens[-2]
                 if not category in categories:
                     categories[category] = {}
                 categories[category][module] = f
                 categories['all'][module] = f
+    if not len(categories['deprecated']) > 0:
+        categories.pop('deprecated', None)
     return categories
 
 #####################################################################################
