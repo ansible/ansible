@@ -30,8 +30,8 @@ class Connector(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port, user, password, transport, private_key_file):
-        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file)
+    def connect(self, host, port, user, password, transport, private_key_file, ssh_args, proxy_host, proxy_port, proxy_user, proxy_private_key_file):
+        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file, ssh_args=ssh_args, proxy_host=proxy_host, proxy_port=proxy_port, proxy_user=proxy_user, proxy_private_key_file=proxy_private_key_file)
         if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
         if private_key_file:

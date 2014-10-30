@@ -113,7 +113,7 @@ SFTP_CONNECTION_CACHE = {}
 class Connection(object):
     ''' SSH based connections with Paramiko '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
+    def __init__(self, runner, host, port, user, password, private_key_file, ssh_args, proxy_host, proxy_port, proxy_user, proxy_private_key_file, *args, **kwargs):
 
         self.ssh = None
         self.sftp = None
@@ -124,6 +124,12 @@ class Connection(object):
         self.password = password
         self.private_key_file = private_key_file
         self.has_pipelining = False
+
+        # unsupported args, warn if any are in use
+        if ssh_args:
+            utils.warning("ansible_ssh_args is not supported by paramiko")
+        if proxy_host or proxy_port or proxy_user or proxy_private_key_file:
+            utils.warning("ansible_ssh_proxy is not supported by paramiko")
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
