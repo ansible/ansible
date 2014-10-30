@@ -202,17 +202,23 @@ def process_module(module, options, env, template, outputname, module_map):
 
 
     fname = module_map[module]
+    basename = os.path.basename(fname)
+    deprecated = False
 
     # ignore files with extensions
-    if not os.path.basename(fname).endswith(".py"):
+    if not basename.endswith(".py"):
         return
+    elif basename.startswith("_"):
+        if os.path.islink(fname): # alias
+            return
+        deprecated = True
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
     doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
-        sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
 
     if doc is None:
@@ -254,6 +260,8 @@ def process_module(module, options, env, template, outputname, module_map):
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
+    if deprecated and 'deprecated' not in doc:
+        doc['deprecated'] = "This module is deprecated, as such it's use is discouraged."
 
     # here is where we build the table of contents...
 

@@ -21,6 +21,13 @@
  #
  --------------------------------------------#}
 
+{% if deprecated is defined -%}
+DEPRECATED
+----------
+
+@{ deprecated }@
+{% endif %}
+
 Synopsis
 --------
 
