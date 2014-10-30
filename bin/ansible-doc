@@ -190,8 +190,7 @@ def get_module_list_text(module_list):
                 desc = desc[:linelimit] + '...'
 
             if module.startswith('_'): # Handle deprecated
-                module = module[1:]
-                deprecated.append("%-*s %-*.*s" % (displace, module, linelimit, len(desc), desc))
+                deprecated.append("%-*s %-*.*s" % (displace, module[1:], linelimit, len(desc), desc))
             else:
                 text.append("%-*s %-*.*s" % (displace, module, linelimit, len(desc), desc))
         except:
