@@ -167,7 +167,6 @@ except ImportError:
     print('pyrax is required for this module')
     sys.exit(1)
 
-from tempfile import gettempdir
 from time import time
 
 
@@ -345,7 +344,10 @@ def _list_into_cache(regions):
 
 def get_cache_file_path(regions):
     regions_str = '.'.join([reg.strip().lower() for reg in regions])
-    return os.path.join(gettempdir(),
+    ansible_tmp_path = os.path.join(os.path.expanduser("~"), '.ansible', 'tmp')
+    if not os.path.exists(ansible_tmp_path):
+        os.makedirs(ansible_tmp_path)
+    return os.path.join(ansible_tmp_path,
                         'ansible-rax-%s-%s.cache' % (
                             pyrax.identity.username, regions_str))
 
