@@ -234,7 +234,7 @@ def main():
         for i in options.module_path.split(os.pathsep):
             utils.plugins.module_finder.add_directory(i)
 
-    if options.list_dir or options.list_deprecated:
+    if options.list_dir:
         # list modules
         paths = utils.plugins.module_finder._get_paths()
         module_list = []
