@@ -339,23 +339,25 @@ def _list_into_cache(regions):
     if hostvars:
         groups['_meta'] = {'hostvars': hostvars}
 
-    with open(get_cache_file_path(), 'w') as cache_file:
+    with open(get_cache_file_path(regions), 'w') as cache_file:
         json.dump(groups, cache_file)
 
 
-def get_cache_file_path():
+def get_cache_file_path(regions):
+    regions_str = '.'.join([reg.strip().lower() for reg in regions])
     return os.path.join(gettempdir(),
-                        'ansible-rax-{}.cache'.format(pyrax.identity.username))
+                        'ansible-rax-%s-%s.cache' % (
+                            pyrax.identity.username, regions_str))
 
 
 def _list(regions, refresh_cache=True):
-    if (not os.path.exists(get_cache_file_path()) or
+    if (not os.path.exists(get_cache_file_path(regions)) or
         refresh_cache or
-        (time() - os.stat(get_cache_file_path())[-1]) > 600):
+        (time() - os.stat(get_cache_file_path(regions))[-1]) > 600):
         # Cache file doesn't exist or older than 10m or refresh cache requested
         _list_into_cache(regions)
 
-    with open(get_cache_file_path(), 'r') as cache_file:
+    with open(get_cache_file_path(regions), 'r') as cache_file:
         groups = json.load(cache_file)
         print(json.dumps(groups, sort_keys=True, indent=4))
 
