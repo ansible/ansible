@@ -164,7 +164,11 @@ def get_snippet_text(doc):
     return "\n".join(text)
 
 def get_module_list_text(module_list):
+    columns = max(60, int(os.popen('stty size', 'r').read().split()[1]))
+    displace = max(len(x) for x in module_list)
+    linelimit = columns - displace - 5
     text = []
+    deprecated = []
     for module in sorted(set(module_list)):
 
         if module in module_docs.BLACKLIST_MODULES:
@@ -181,13 +185,22 @@ def get_module_list_text(module_list):
 
         try:
             doc, plainexamples = module_docs.get_docstring(filename)
-            desc = tty_ify(doc.get('short_description', '?'))
-            if len(desc) > 55:
-                desc = desc + '...'
-            text.append("%-20s %-60.60s" % (module, desc))
+            desc = tty_ify(doc.get('short_description', '?')).strip()
+            if len(desc) > linelimit:
+                desc = desc[:linelimit] + '...'
+
+            if module.startswith('_'): # Handle replecated
+                module = module[1:]
+                deprecated.append("%-*s %-*.*s" % (displace, module, linelimit, len(desc), desc))
+            else:
+                text.append("%-*s %-*.*s" % (displace, module, linelimit, len(desc), desc))
         except:
             traceback.print_exc()
             sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
+
+    if len(deprecated) > 0:
+        text.append("\nDEPRECATED:")
+        text.extend(deprecated)
     return "\n".join(text)
 
 def main():
@@ -208,6 +221,11 @@ def main():
             default=False,
             dest='list_dir',
             help='List available modules')
+    p.add_option("-c", "--list-columns",
+            action="store_true",
+            default=False,
+            dest='list_columns',
+            help='List modules in columns')
     p.add_option("-s", "--snippet",
             action="store_true",
             default=False,
@@ -221,20 +239,25 @@ def main():
         for i in options.module_path.split(os.pathsep):
             utils.plugins.module_finder.add_directory(i)
 
-    if options.list_dir:
-        # list all modules
+    if options.list_dir or options.list_deprecated:
+        # list modules
         paths = utils.plugins.module_finder._get_paths()
         module_list = []
-        deprecated_list = []
-        module_aliases = {}
         for path in paths:
-            # os.system("ls -C %s" % (path))
             if os.path.isdir(path):
                 for module in os.listdir(path):
-                    if module.startswith('_') or any(module.endswith(x) for x in BLACKLIST_EXTS):
+                    if any(module.endswith(x) for x in BLACKLIST_EXTS):
                         continue
-                    module_list.append(module)
+                    elif module.startswith('__'):
+                        continue
+                    elif module.startswith('_'):
+                        fullpath = '/'.join([path,module])
+                        if os.path.islink(fullpath): # avoids aliases
+                            continue
 
+                    module = os.path.splitext(module)[0] # removes the extension
+                    module_list.append(module)
+        
         pager(get_module_list_text(module_list))
         sys.exit()
 
