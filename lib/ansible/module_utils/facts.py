@@ -168,6 +168,8 @@ class Facts(object):
             rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
             data = out.split('\n')
             self.facts['architecture'] = data[0]
+        elif self.facts['system'] == 'OpenBSD':
+            self.facts['architecture'] = platform.uname()[5]
 
 
     def get_local_facts(self):
