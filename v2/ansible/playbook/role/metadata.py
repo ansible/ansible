@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from six import iteritems, string_types
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.role.include import RoleInclude
@@ -55,16 +55,6 @@ class RoleMetadata(Base):
 
         m = RoleMetadata().load_data(data, loader=loader)
         return m
-
-    def munge(self, ds):
-        # make sure there are no keys in the datastructure which
-        # do not map to attributes for this object
-        valid_attrs = [name for (name, attribute) in iteritems(self._get_base_attributes())]
-        for name in ds:
-            if name not in valid_attrs:
-                print("'%s' is not a valid attribute" % name)
-                raise AnsibleParserError("'%s' is not a valid attribute" % name, obj=ds)
-        return ds
 
     def _load_dependencies(self, attr, ds):
         '''
