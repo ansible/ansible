@@ -98,7 +98,7 @@ def main():
 
     pam_types = [ 'soft', 'hard' ]
 
-    limits_conf = '/home/slyce/limits.conf'
+    limits_conf = '/etc/security/limits.conf'
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
