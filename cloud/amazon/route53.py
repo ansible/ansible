@@ -142,6 +142,7 @@ import time
 
 try:
     import boto
+    import boto.ec2
     from boto import route53
     from boto.route53.record import ResourceRecordSets
 except ImportError:
@@ -185,7 +186,7 @@ def main():
     value_in              = module.params.get('value')
     retry_interval_in     = module.params.get('retry_interval')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
     value_list = ()
 
@@ -207,7 +208,7 @@ def main():
 
     # connect to the route53 endpoint 
     try:
-        conn = boto.route53.connection.Route53Connection(aws_access_key, aws_secret_key)
+        conn = boto.route53.Route53Connection(**aws_connect_params)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
