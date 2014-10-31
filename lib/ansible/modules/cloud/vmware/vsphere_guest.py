@@ -38,7 +38,7 @@ options:
     description:
       - The virtual server name you wish to manage.
     required: true
-  user:
+  username:
     description:
       - Username to connect to vcenter as.
     required: true
