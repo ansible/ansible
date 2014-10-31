@@ -59,6 +59,8 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
+DEPRECATED = " (D)"
+NOTCORE    = " (E)"
 #####################################################################################
 
 def rst_ify(text):
@@ -121,7 +123,7 @@ def write_data(text, options, outputname, module):
 def list_modules(module_dir):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
-    categories = dict(all=dict(),deprecated=dict())
+    categories = dict(all=dict())
     files = glob.glob("%s/*/*" % module_dir)
     for d in files:
         if os.path.isdir(d):
@@ -135,19 +137,14 @@ def list_modules(module_dir):
                     # windows powershell modules have documentation stubs in python docstring
                     # format (they are not executed) so skip the ps1 format files
                     continue
-                elif module.startswith("_"): # Handle deprecated modules
-                    if not os.path.islink(f): # ignores aliases
-                        categories['deprecated'][module] = f
+                elif module.startswith("_") and os.path.islink(f):   # ignores aliases
                     continue
-                elif module in categories['deprecated']: # Removes dupes
-                    categories['deprecated'].pop(module, None)
 
                 if not category in categories:
                     categories[category] = {}
                 categories[category][module] = f
                 categories['all'][module] = f
-    if not len(categories['deprecated']) > 0:
-        categories.pop('deprecated', None)
+
     return categories
 
 #####################################################################################
@@ -198,9 +195,6 @@ def jinja2_environment(template_dir, typ):
 
 def process_module(module, options, env, template, outputname, module_map):
 
-    print "rendering: %s" % module
-
-
     fname = module_map[module]
     basename = os.path.basename(fname)
     deprecated = False
@@ -208,21 +202,28 @@ def process_module(module, options, env, template, outputname, module_map):
     # ignore files with extensions
     if not basename.endswith(".py"):
         return
-    elif basename.startswith("_"):
-        if os.path.islink(fname): # alias
-            return
+    elif module.startswith("_"):
+        if os.path.islink(fname):
+            return  # ignore, its an alias
         deprecated = True
+        module = module.replace("_","",1)
+
+    print "rendering: %s" % module
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
     doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
-    if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
-        sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
-        sys.exit(1)
-
     if doc is None:
-        return "SKIPPED"
+        if module in ansible.utils.module_docs.BLACKLIST_MODULES:
+            return "SKIPPED"
+        else:
+            sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            sys.exit(1)
+
+    if deprecated and 'deprecated' not in doc:
+        sys.stderr.write("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        sys.exit(1)
 
     if "/core/" in fname:
         doc['core'] = True
@@ -252,21 +253,21 @@ def process_module(module, options, env, template, outputname, module_map):
 
     for (k,v) in doc['options'].iteritems():
         all_keys.append(k)
-    all_keys = sorted(all_keys)
-    doc['option_keys'] = all_keys
 
+    all_keys = sorted(all_keys)
+
+    doc['option_keys']      = all_keys
     doc['filename']         = fname
     doc['docuri']           = doc['module'].replace('_', '-')
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
-    if deprecated and 'deprecated' not in doc:
-        doc['deprecated'] = "This module is deprecated, as such it's use is discouraged."
 
     # here is where we build the table of contents...
 
     text = template.render(doc)
     write_data(text, options, outputname, module)
+    return doc['short_description']
 
 #####################################################################################
 
@@ -283,7 +284,19 @@ def process_category(category, categories, options, env, template, outputname):
     category = category.replace("_"," ")
     category = category.title()
 
-    modules = module_map.keys()
+    modules = []
+    deprecated = []
+    core = []
+    for module in module_map.keys():
+
+        if module.startswith("_"):
+            module = module.replace("_","",1)
+            deprecated.append(module)
+        elif '/core/' in module_map[module]:
+            core.append(module)
+
+        modules.append(module)
+
     modules.sort()
 
     category_header = "%s Modules" % (category.title())
@@ -293,16 +306,24 @@ def process_category(category, categories, options, env, template, outputname):
 %s
 %s
 
-.. toctree::
-   :maxdepth: 1
+.. toctree:: :maxdepth: 1
 
 """ % (category_header, underscores))
 
     for module in modules:
-        result = process_module(module, options, env, template, outputname, module_map)
-        if result != "SKIPPED":
-            category_file.write("   %s_module\n" % module)
 
+        modstring = module
+        modname = module
+        if module in deprecated:
+            modstring = modstring + DEPRECATED
+            modname = "_" + module
+        elif module not in core:
+            modstring = modstring + NOTCORE
+
+        result = process_module(modname, options, env, template, outputname, module_map)
+
+        if result != "SKIPPED":
+            category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
 
     category_file.close()
 
