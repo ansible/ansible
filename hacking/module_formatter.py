@@ -325,6 +325,11 @@ def process_category(category, categories, options, env, template, outputname):
         if result != "SKIPPED":
             category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
 
+    category_file.write("""\n\n
+.. note::
+    - %s: Denotes that this module is not part of core, it can be found in the extras repo
+    - %s: This marks a module as deprecated, kept for backwards compatibility but use is discouraged
+""" % (DEPRECATED, NOTCORE))
     category_file.close()
 
     # TODO: end a new category file
