@@ -327,8 +327,8 @@ def process_category(category, categories, options, env, template, outputname):
 
     category_file.write("""\n\n
 .. note::
-    - %s: Denotes that this module is not part of core, it can be found in the extras repo
     - %s: This marks a module as deprecated, kept for backwards compatibility but use is discouraged
+    - %s: Denotes that this module is not part of core, it can be found in the extras or some other external repo
 """ % (DEPRECATED, NOTCORE))
     category_file.close()
 
