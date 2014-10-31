@@ -599,20 +599,7 @@ def main():
 
     state = module.params.get('state')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            vpc_conn = boto.vpc.connect_to_region(
-                region,
-                aws_access_key_id=aws_access_key,
-                aws_secret_access_key=aws_secret_key
-            )
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    else:
-        module.fail_json(msg="region must be specified")
+    vpc_conn = ec2_connect(module)
 
     if module.params.get('state') == 'absent':
         vpc_id = module.params.get('vpc_id')
