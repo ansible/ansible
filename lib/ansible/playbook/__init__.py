@@ -473,10 +473,6 @@ class PlayBook(object):
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
 
-        # template ignore_errors
-        cond = template(play.basedir, task.ignore_errors, task.module_vars, expand_lists=False)
-        task.ignore_errors =  utils.check_conditional(cond, play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
-
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
 
@@ -487,7 +483,7 @@ class PlayBook(object):
             results = {}
 
         contacted = results.get('contacted', {})
-        self.stats.compute(results, ignore_errors=task.ignore_errors)
+        self.stats.compute(results)
 
         def _register_play_vars(host, result):
             # when 'register' is used, persist the result in the vars cache
@@ -524,10 +520,11 @@ class PlayBook(object):
                 _register_play_vars(host, result)
 
         # also have to register some failed, but ignored, tasks
-        if task.ignore_errors and task.register:
+        if task.register:
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
-                _register_play_vars(host, result)
+                if result.get('ignore_errors', False):
+                    _register_play_vars(host, result)
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
