@@ -40,10 +40,10 @@ from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
 from ansible import constants as C
-            
+
 AUTHENTICITY_MSG="""
-paramiko: The authenticity of host '%s' can't be established. 
-The %s key fingerprint is %s. 
+paramiko: The authenticity of host '%s' can't be established.
+The %s key fingerprint is %s.
 Are you sure you want to continue connecting (yes/no)?
 """
 
@@ -67,7 +67,7 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, runner): 
+    def __init__(self, runner):
         self.runner = runner
 
     def missing_host_key(self, client, hostname, key):
@@ -81,7 +81,7 @@ class MyAddPolicy(object):
             sys.stdin = self.runner._new_stdin
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
-            
+
             # clear out any premature input on sys.stdin
             tcflush(sys.stdin, TCIFLUSH)
 
@@ -103,7 +103,7 @@ class MyAddPolicy(object):
 
         # host keys are actually saved in close() function below
         # in order to control ordering.
-        
+
 
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
 
@@ -145,7 +145,7 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
-     
+
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
@@ -194,8 +194,8 @@ class Connection(object):
 
         try:
 
-            chan = self.ssh.get_transport().open_session()
             self.ssh.get_transport().set_keepalive(5)
+            chan = self.ssh.get_transport().open_session()
 
         except Exception, e:
 
@@ -318,7 +318,7 @@ class Connection(object):
 
     def _any_keys_added(self):
 
-        added_any = False        
+        added_any = False
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
@@ -327,9 +327,9 @@ class Connection(object):
         return False
 
     def _save_ssh_host_keys(self, filename):
-        ''' 
-        not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks 
-        don't complain about it :) 
+        '''
+        not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks
+        don't complain about it :)
         '''
 
         if not self._any_keys_added():
@@ -372,7 +372,7 @@ class Connection(object):
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
-            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
+            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
@@ -414,4 +414,4 @@ class Connection(object):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
-        
+
