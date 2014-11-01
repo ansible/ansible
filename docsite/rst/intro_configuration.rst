@@ -662,8 +662,8 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
 .. _accelerate_settings:
 
-Accelerate Mode Settings
-------------------------
+Accelerated Mode Settings
+-------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
@@ -676,7 +676,7 @@ accelerate_port
 
 .. versionadded:: 1.3
 
-This is the port to use for accelerate mode::
+This is the port to use for accelerated mode::
 
     accelerate_port = 5099
 
