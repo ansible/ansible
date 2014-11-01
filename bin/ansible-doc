@@ -34,6 +34,7 @@ import traceback
 MODULEDIR = C.DEFAULT_MODULE_PATH
 
 BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
+IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README" ]
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD   = re.compile(r"B\(([^)]+)\)")
@@ -94,7 +95,7 @@ def get_man_text(doc):
     desc = " ".join(doc['description'])
 
     text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
-    
+
     if 'option_keys' in doc and len(doc['option_keys']) > 0:
         text.append("Options (= is mandatory):\n")
 
@@ -202,6 +203,28 @@ def get_module_list_text(module_list):
         text.extend(deprecated)
     return "\n".join(text)
 
+def find_modules(path, module_list):
+
+    if os.path.isdir(path):
+        for module in os.listdir(path):
+            if module.startswith('.'):
+                continue
+            elif os.path.isdir(module):
+                find_modules(module, module_list)
+            elif any(module.endswith(x) for x in BLACKLIST_EXTS):
+                continue
+            elif module.startswith('__'):
+                continue
+            elif module in IGNORE_FILES:
+                continue
+            elif module.startswith('_'):
+                fullpath = '/'.join([path,module])
+                if os.path.islink(fullpath): # avoids aliases
+                    continue
+
+            module = os.path.splitext(module)[0] # removes the extension
+            module_list.append(module)
+
 def main():
 
     p = optparse.OptionParser(
@@ -238,26 +261,14 @@ def main():
         paths = utils.plugins.module_finder._get_paths()
         module_list = []
         for path in paths:
-            if os.path.isdir(path):
-                for module in os.listdir(path):
-                    if any(module.endswith(x) for x in BLACKLIST_EXTS):
-                        continue
-                    elif module.startswith('__'):
-                        continue
-                    elif module.startswith('_'):
-                        fullpath = '/'.join([path,module])
-                        if os.path.islink(fullpath): # avoids aliases
-                            continue
+            find_modules(path, module_list)
 
-                    module = os.path.splitext(module)[0] # removes the extension
-                    module_list.append(module)
-        
         pager(get_module_list_text(module_list))
         sys.exit()
 
     if len(args) == 0:
         p.print_help()
-   
+
     def print_paths(finder):
         ''' Returns a string suitable for printing of the search path '''
 
@@ -267,14 +278,13 @@ def main():
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
- 
+
     text = ''
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)
         if filename is None:
-            sys.stderr.write("module %s not found in %s\n" % (module,
-                    print_paths(utils.plugins.module_finder)))
+            sys.stderr.write("module %s not found in %s\n" % (module, print_paths(utils.plugins.module_finder)))
             continue
 
         if any(filename.endswith(x) for x in BLACKLIST_EXTS):
