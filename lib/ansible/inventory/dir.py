@@ -30,7 +30,7 @@ from ansible import errors
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, filename=C.DEFAULT_HOST_LIST, force_read=False):
         self.names = os.listdir(filename)
         self.names.sort()
         self.directory = filename
@@ -51,8 +51,8 @@ class InventoryDirectory(object):
                 continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
-                parser = InventoryDirectory(filename=fullpath)
-            elif utils.is_executable(fullpath):
+                parser = InventoryDirectory(filename=fullpath, force_read=force_read)
+            elif (not force_read) and utils.is_executable(fullpath):
                 parser = InventoryScript(filename=fullpath)
             else:
                 parser = InventoryParser(filename=fullpath)

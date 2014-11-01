@@ -40,7 +40,7 @@ class Inventory(object):
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
                   '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
+    def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None, force_read=False):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
@@ -97,7 +97,7 @@ class Inventory(object):
             if os.path.isdir(host_list):
                 # Ensure basedir is inside the directory
                 self.host_list = os.path.join(self.host_list, "")
-                self.parser = InventoryDirectory(filename=host_list)
+                self.parser = InventoryDirectory(filename=host_list, force_read=force_read)
                 self.groups = self.parser.groups.values()
             else:
                 # check to see if the specified file starts with a
@@ -113,7 +113,7 @@ class Inventory(object):
                 except:
                     pass
 
-                if utils.is_executable(host_list):
+                if (not force_read) and utils.is_executable(host_list):
                     try:
                         self.parser = InventoryScript(filename=host_list)
                         self.groups = self.parser.groups.values()
