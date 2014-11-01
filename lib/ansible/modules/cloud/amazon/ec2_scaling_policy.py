@@ -163,9 +163,7 @@ def main():
 
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
-        if not connection:
-            module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
-    except boto.exception.NoAuthHandlerFound, e:
+    except (boto.exception.NoAuthHandlerFound, StandardError), e:
         module.fail_json(msg = str(e))
 
     if state == 'present':

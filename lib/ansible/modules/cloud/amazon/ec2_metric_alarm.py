@@ -271,7 +271,7 @@ def main():
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     try:
         connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-    except boto.exception.NoAuthHandlerFound, e:
+    except (boto.exception.NoAuthHandlerFound, StandardError), e:
         module.fail_json(msg=str(e))
 
     if state == 'present':
