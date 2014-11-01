@@ -272,7 +272,7 @@ def create_autoscaling_group(connection, module):
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
         try:
             ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             module.fail_json(msg=str(e))
 
     asg_tags = []
