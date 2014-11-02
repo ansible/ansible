@@ -127,11 +127,12 @@ def list_modules(module_dir):
     files = glob.glob("%s/*/*" % module_dir)
     for d in files:
         if os.path.isdir(d):
-            files2 = glob.glob("%s/*" % d)
+            files2 = glob.glob("%s/*" % d) + glob.glob("%s/*/*" % d)
             for f in files2:
-
                 module = os.path.splitext(os.path.basename(f))[0]
-                category = os.path.dirname(f).split("/")[-1]
+                category = "cloud"
+                if os.path.dirname(f).split("/")[-2] != "cloud":
+                    category = os.path.dirname(f).split("/")[-1]
 
                 if not f.endswith(".py") or f.endswith('__init__.py'):
                     # windows powershell modules have documentation stubs in python docstring
