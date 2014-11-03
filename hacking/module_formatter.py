@@ -129,9 +129,11 @@ def list_modules(module_dir):
         if os.path.isdir(d):
             files2 = glob.glob("%s/*" % d) + glob.glob("%s/*/*" % d)
             for f in files2:
+
                 module = os.path.splitext(os.path.basename(f))[0]
-                category = "cloud"
-                if os.path.dirname(f).split("/")[-2] != "cloud":
+                if os.path.dirname(f).split("/")[-2] == "cloud":
+                    category = "cloud"
+                else:
                     category = os.path.dirname(f).split("/")[-1]
 
                 if not f.endswith(".py") or f.endswith('__init__.py'):
