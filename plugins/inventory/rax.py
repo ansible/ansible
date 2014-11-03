@@ -56,37 +56,75 @@ Description:
         rax_tenant_id
         rax_loaded
 
-Notes:
-    RAX_CREDS_FILE is an optional environment variable that points to a
-    pyrax-compatible credentials file.
+Configuration:
+    rax.py can be configured using a rax.ini file or via environment
+    variables. The rax.ini file should live in the same directory along side
+    this script.
 
-    If RAX_CREDS_FILE is not supplied, rax.py will look for a credentials file
-    at ~/.rackspace_cloud_credentials.  It uses the Rackspace Python SDK, and
-    therefore requires a file formatted per the SDK's specifications. See
-    https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md
-    #authenticating
+    The section header for configuration values related to this
+    inventory plugin is [rax]
 
-    RAX_REGION is an optional environment variable to narrow inventory search
-    scope.  RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace
-    datacenter) and optionally accepts a comma-separated list.
+    [rax]
+    creds_file = ~/.rackspace_cloud_credentials
+    regions = IAD,ORD,DFW
+    env = prod
+    meta_prefix = meta
+    access_network = public
+    access_ip_version = 4
 
-    RAX_ENV is an environment variable that will use an environment as
-    configured in ~/.pyrax.cfg, see
-    https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md
+    Each of these configurations also has a corresponding environment variable.
+    An environment variable will override a configuration file value.
 
-    RAX_META_PREFIX is an environment variable that changes the prefix used
-    for meta key/value groups. For compatibility with ec2.py set to
-    RAX_META_PREFIX=tag
+    creds_file:
+        Environment Variable: RAX_CREDS_FILE
 
-    RAX_ACCESS_NETWORK is an environment variable that will tell the inventory
-    script to use a specific server network to determine the ansible_ssh_host
-    value. If no address is found, ansible_ssh_host will not be set.
+        An optional configuration that points to a pyrax-compatible credentials
+        file.
 
-    RAX_ACCESS_IP_VERSION is an environment variable related to
-    RAX_ACCESS_NETWORK that will attempt to determine the ansible_ssh_host
-    value for either IPv4 or IPv6. If no address is found, ansible_ssh_host
-    will not be set. Acceptable values are: 4 or 6. Values other than 4 or 6
-    will be ignored, and 4 will be used.
+        If not supplied, rax.py will look for a credentials file
+        at ~/.rackspace_cloud_credentials.  It uses the Rackspace Python SDK,
+        and therefore requires a file formatted per the SDK's specifications.
+
+        https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md
+
+    regions:
+        Environment Variable: RAX_REGION
+
+        An optional environment variable to narrow inventory search
+        scope. If used, needs a value like ORD, DFW, SYD (a Rackspace
+        datacenter) and optionally accepts a comma-separated list.
+
+    environment:
+        Environment Variable: RAX_ENV
+
+        A configuration that will use an environment as configured in
+        ~/.pyrax.cfg, see
+        https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md
+
+    meta_prefix:
+        Environment Variable: RAX_META_PREFIX
+        Default: meta
+
+        A configuration that changes the prefix used for meta key/value groups.
+        For compatibility with ec2.py set to "tag"
+
+    access_network:
+        Environment Variable: RAX_ACCESS_NETWORK
+        Default: public
+
+        A configuration that will tell the inventory script to use a specific
+        server network to determine the ansible_ssh_host value. If no address
+        is found, ansible_ssh_host will not be set.
+
+    access_ip_version:
+        Environment Variable: RAX_ACCESS_IP_VERSION
+        Default: 4
+
+        A configuration related to "access_network" that will attempt to
+        determine the ansible_ssh_host value for either IPv4 or IPv6. If no
+        address is found, ansible_ssh_host will not be set.
+        Acceptable values are: 4 or 6. Values other than 4 or 6
+        will be ignored, and 4 will be used.
 
 Examples:
     List server instances
@@ -102,7 +140,7 @@ Examples:
     $ RAX_CREDS_FILE=~/.raxpub rax.py --host server.example.com
 
     Use the instance private IP to connect (instead of public IP)
-    $ RAX_CREDS_FILE=~/.raxpub RAX_PRIVATE_IP=yes rax.py --list
+    $ RAX_CREDS_FILE=~/.raxpub RAX_ACCESS_NETWORK=private rax.py --list
 """
 
 import os
@@ -111,8 +149,9 @@ import sys
 import argparse
 import warnings
 import collections
+import ConfigParser
 
-from types import NoneType
+from ansible.constants import get_config, mk_boolean
 
 try:
     import json
@@ -125,7 +164,20 @@ except ImportError:
     print('pyrax is required for this module')
     sys.exit(1)
 
-NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
+NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+
+
+def load_config_file():
+    p = ConfigParser.ConfigParser()
+    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'rax.ini')
+    try:
+        p.read(config_file)
+    except ConfigParser.Error:
+        return None
+    else:
+        return p
+p = load_config_file()
 
 
 def rax_slugify(value):
@@ -163,10 +215,13 @@ def _list(regions):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
     images = {}
+    prefix = get_config(p, 'rax', 'meta_prefix', 'RAX_META_PREFIX', 'meta')
 
-    network = os.getenv('RAX_ACCESS_NETWORK', 'public')
+    network = get_config(p, 'rax', 'access_network', 'RAX_ACCESS_NETWORK',
+                         'public')
     try:
-        ip_version = int(os.getenv('RAX_ACCESS_IP_VERSION', 4))
+        ip_version = get_config(p, 'rax', 'access_ip_version',
+                                'RAX_ACCESS_IP_VERSION', 4, integer=True)
     except:
         ip_version = 4
     else:
@@ -177,7 +232,7 @@ def _list(regions):
     for region in regions:
         # Connect to the region
         cs = pyrax.connect_to_cloudservers(region=region)
-        if isinstance(cs, NoneType):
+        if cs is None:
             warnings.warn(
                 'Connecting to Rackspace region "%s" has caused Pyrax to '
                 'return a NoneType. Is this a valid region?' % region,
@@ -257,16 +312,18 @@ def parse_args():
 def setup():
     default_creds_file = os.path.expanduser('~/.rackspace_cloud_credentials')
 
-    env = os.getenv('RAX_ENV', None)
+    env = get_config(p, 'rax', 'environment', 'RAX_ENV', None)
     if env:
         pyrax.set_environment(env)
 
     keyring_username = pyrax.get_setting('keyring_username')
 
     # Attempt to grab credentials from environment first
-    try:
-        creds_file = os.path.expanduser(os.environ['RAX_CREDS_FILE'])
-    except KeyError, e:
+    creds_file = get_config(p, 'rax', 'creds_file',
+                            'RAX_CREDS_FILE', None)
+    if creds_file is not None:
+        creds_file = os.path.expanduser(creds_file)
+    else:
         # But if that fails, use the default location of
         # ~/.rackspace_cloud_credentials
         if os.path.isfile(default_creds_file):
@@ -274,7 +331,7 @@ def setup():
         elif not keyring_username:
             sys.stderr.write('No value in environment variable %s and/or no '
                              'credentials file at %s\n'
-                             % (e.message, default_creds_file))
+                             % ('RAX_CREDS_FILE', default_creds_file))
             sys.exit(1)
 
     identity_type = pyrax.get_setting('identity_type')
@@ -295,7 +352,9 @@ def setup():
     if region:
         regions.append(region)
     else:
-        for region in os.getenv('RAX_REGION', 'all').split(','):
+        region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
+                                 islist=True)
+        for region in region_list:
             region = region.strip().upper()
             if region == 'ALL':
                 regions = pyrax.regions
