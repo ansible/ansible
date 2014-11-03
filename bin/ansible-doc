@@ -33,7 +33,7 @@ import traceback
 
 MODULEDIR = C.DEFAULT_MODULE_PATH
 
-BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
+BLACKLIST_EXTS = ('.git', '.pyc', '.swp', '.bak', '~', '.rpm')
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD   = re.compile(r"B\(([^)]+)\)")
