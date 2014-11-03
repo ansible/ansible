@@ -219,6 +219,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
         # Write the dummy ca cert if we are running on Mac OS X
         if platform == 'Darwin':
             os.write(tmp_fd, DUMMY_CA_CERT)
+            # Default Homebrew path for OpenSSL certs 
+            paths_checked.append('/usr/local/etc/openssl')
 
         # for all of the paths, find any  .crt or .pem files
         # and compile them into single temp file for use
