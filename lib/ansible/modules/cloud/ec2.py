@@ -660,6 +660,11 @@ def enforce_count(module, ec2):
     count_tag = module.params.get('count_tag')
     zone = module.params.get('zone')
 
+    # fail here if the exact count was specified without filtering
+    # on a tag, as this may lead to a undesired removal of instances
+    if exact_count and count_tag is None:
+        module.fail_json(msg="you must use the 'count_tag' option with exact_count")
+
     reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
 
     changed = None
