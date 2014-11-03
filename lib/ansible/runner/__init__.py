@@ -220,7 +220,10 @@ class Runner(object):
             # would prevent us from using ssh, and fallback to paramiko.
             # 'smart' is the default since 1.2.1/1.3
             self.transport = "ssh"
-            if sys.platform.startswith('darwin'):
+            if sys.platform.startswith('darwin') and self.remote_pass:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
                 self.transport = "paramiko"
             else:
                 # see if SSH can support ControlPersist if not use paramiko
