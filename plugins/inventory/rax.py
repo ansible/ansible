@@ -160,6 +160,7 @@ except ImportError:
 
 try:
     import pyrax
+    from pyrax.utils import slugify
 except ImportError:
     print('pyrax is required for this module')
     sys.exit(1)
@@ -215,6 +216,8 @@ def _list(regions):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
     images = {}
+    cbs_attachments = collections.defaultdict(dict)
+
     prefix = get_config(p, 'rax', 'meta_prefix', 'RAX_META_PREFIX', 'meta')
 
     network = get_config(p, 'rax', 'access_network', 'RAX_ACCESS_NETWORK',
@@ -258,11 +261,33 @@ def _list(regions):
             hostvars[server.name]['rax_region'] = region
 
             for key, value in server.metadata.iteritems():
-                prefix = os.getenv('RAX_META_PREFIX', 'meta')
                 groups['%s_%s_%s' % (prefix, key, value)].append(server.name)
 
             groups['instance-%s' % server.id].append(server.name)
             groups['flavor-%s' % server.flavor['id']].append(server.name)
+
+            # Handle boot from volume
+            if not server.image:
+                if not cbs_attachments[region]:
+                    cbs = pyrax.connect_to_cloud_blockstorage(region)
+                    for vol in cbs.list():
+                        if mk_boolean(vol.bootable):
+                            for attachment in vol.attachments:
+                                metadata = vol.volume_image_metadata
+                                server_id = attachment['server_id']
+                                cbs_attachments[region][server_id] = {
+                                    'id': metadata['image_id'],
+                                    'name': slugify(metadata['image_name'])
+                                }
+                image = cbs_attachments[region].get(server.id)
+                if image:
+                    server.image = {'id': image['id']}
+                    hostvars[server.name]['rax_image'] = server.image
+                    hostvars[server.name]['rax_boot_source'] = 'volume'
+                    images[image['id']] = image['name']
+            else:
+                hostvars[server.name]['rax_boot_source'] = 'local'
+
             try:
                 imagegroup = 'image-%s' % images[server.image['id']]
                 groups[imagegroup].append(server.name)
