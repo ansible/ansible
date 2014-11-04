@@ -21,6 +21,17 @@
  #
  --------------------------------------------#}
 
+{% if aliases is defined -%}
+Aliases: @{ ','.join(aliases) }@
+{% endif %}
+
+{% if deprecated is defined -%}
+DEPRECATED
+----------
+
+@{ deprecated }@
+{% endif %}
+
 Synopsis
 --------
 
@@ -102,7 +113,8 @@ Examples
 {% endif %}
 
 
-{% if core %}
+{% if not deprecated %}
+    {% if core %}
 
 This is a Core Module
 ---------------------
@@ -117,7 +129,7 @@ Documentation updates for this module can also be edited directly by submitting 
 
 This is a "core" ansible module, which means it will receive slightly higher priority for all requests than those in the "extras" repos.
 
-{% else %}
+    {% else %}
 
 This is an Extras Module
 ------------------------
@@ -133,6 +145,7 @@ Documentation updates for this module can also be edited directly by submitting 
 Note that this module is designated a "extras" module.  Non-core modules are still fully usable, but may receive slightly lower response rates for issues and pull requests.
 Popular "extras" modules may be promoted to core modules over time.
 
+    {% endif %}
 {% endif %}
 
 For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`developing_test_pr` and :doc:`developing_modules`.
