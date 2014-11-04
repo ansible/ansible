@@ -767,15 +767,14 @@ class LinuxHardware(Hardware):
             diskname = os.path.basename(sysdir)
 
             sg_inq = module.get_bin_path('sg_inq') 
-            for key in ['serial']:
-                device = "/dev/%s" % (block)
-                try:
-                    rc, drivedata, err = module.run_command([sg_inq, device])
-                except:
-                    return
-                serial = re.search("Unit serial number:\s+(\w+)", drivedata)
-                if serial:
-                     d[key] = serial.group(1)
+            device = "/dev/%s" % (block)
+            try:
+                rc, drivedata, err = module.run_command([sg_inq, device])
+            except:
+                return
+            serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+            if serial:
+                d[key] = serial.group(1)
 
             for key in ['vendor', 'model']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
