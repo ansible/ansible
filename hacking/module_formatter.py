@@ -120,33 +120,52 @@ def write_data(text, options, outputname, module):
 #####################################################################################
 
 
-def list_modules(module_dir):
+def list_modules(module_dir, depth=0):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
-    categories = dict(all=dict())
-    files = glob.glob("%s/*/*" % module_dir)
-    for d in files:
-        if os.path.isdir(d):
-            files2 = glob.glob("%s/*" % d) + glob.glob("%s/*/*" % d)
-            for f in files2:
+    categories = dict(all=dict(),_aliases=dict())
+    if depth <= 3: # limit # of subdirs
 
-                module = os.path.splitext(os.path.basename(f))[0]
-                if os.path.dirname(f).split("/")[-2] == "cloud":
-                    category = "cloud"
+        files = glob.glob("%s/*" % module_dir)
+        for d in files:
+
+            category = os.path.splitext(os.path.basename(d))[0]
+            if os.path.isdir(d):
+
+                res = list_modules(d, depth + 1)
+                for key in res.keys():
+                    if key in categories:
+                        categories[key].update(res[key])
+                        res.pop(key, None)
+
+                if depth < 2:
+                    categories.update(res)
                 else:
-                    category = os.path.dirname(f).split("/")[-1]
-
-                if not f.endswith(".py") or f.endswith('__init__.py'):
+                    category = module_dir.split("/")[-1]
+                    if not category in categories:
+                        categories[category] = res
+                    else:
+                        categories[category].update(res)
+            else:
+                module = category
+                category = os.path.basename(module_dir)
+                if not d.endswith(".py") or d.endswith('__init__.py'):
                     # windows powershell modules have documentation stubs in python docstring
                     # format (they are not executed) so skip the ps1 format files
                     continue
-                elif module.startswith("_") and os.path.islink(f):   # ignores aliases
+                elif module.startswith("_") and os.path.islink(d):
+                    source = os.path.splitext(os.path.basename(os.path.realpath(d)))[0]
+                    module = module.replace("_","",1)
+                    if not d in categories['_aliases']:
+                        categories['_aliases'][source] = [module]
+                    else:
+                        categories['_aliases'][source].update(module)
                     continue
 
                 if not category in categories:
                     categories[category] = {}
-                categories[category][module] = f
-                categories['all'][module] = f
+                categories[category][module] = d
+                categories['all'][module] = d
 
     return categories
 
@@ -196,9 +215,12 @@ def jinja2_environment(template_dir, typ):
 
 #####################################################################################
 
-def process_module(module, options, env, template, outputname, module_map):
+def process_module(module, options, env, template, outputname, module_map, aliases):
 
     fname = module_map[module]
+    if isinstance(fname, dict):
+        return "SKIPPED"
+
     basename = os.path.basename(fname)
     deprecated = False
 
@@ -233,6 +255,8 @@ def process_module(module, options, env, template, outputname, module_map):
     else:
         doc['core'] = False
 
+    if module in aliases:
+        doc['aliases'] = aliases[module]
 
     all_keys = []
 
@@ -274,9 +298,27 @@ def process_module(module, options, env, template, outputname, module_map):
 
 #####################################################################################
 
+def print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases):
+    modstring = module
+    modname = module
+    if module in deprecated:
+        modstring = modstring + DEPRECATED
+        modname = "_" + module
+    elif module not in core:
+        modstring = modstring + NOTCORE
+
+    result = process_module(modname, options, env, template, outputname, module_map, aliases)
+
+    if result != "SKIPPED":
+        category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
+
 def process_category(category, categories, options, env, template, outputname):
 
     module_map = categories[category]
+
+    aliases = {}
+    if '_aliases' in categories:
+        aliases = categories['_aliases']
 
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
@@ -312,21 +354,20 @@ def process_category(category, categories, options, env, template, outputname):
 .. toctree:: :maxdepth: 1
 
 """ % (category_header, underscores))
-
+    sections = []
     for module in modules:
+        if module in module_map and isinstance(module_map[module], dict):
+            sections.append(module)
+            continue
+        else:
+            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases)
 
-        modstring = module
-        modname = module
-        if module in deprecated:
-            modstring = modstring + DEPRECATED
-            modname = "_" + module
-        elif module not in core:
-            modstring = modstring + NOTCORE
+    for section in sections:
+        category_file.write("%s/\n%s\n\n" % (section,'-' * len(section)))
+        category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
-        result = process_module(modname, options, env, template, outputname, module_map)
-
-        if result != "SKIPPED":
-            category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
+        for module in module_map[section]:
+            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map[section], aliases)
 
     category_file.write("""\n\n
 .. note::
@@ -377,6 +418,8 @@ def main():
     category_list_file.write("   :maxdepth: 1\n\n")
 
     for category in category_names:
+        if category.startswith("_"):
+            continue
         category_list_file.write("   list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)
 
