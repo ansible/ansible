@@ -121,13 +121,13 @@ def main():
                 module.fail_json(msg = str("Parameter %s not allowed for state='absent'" % not_allowed))
 
     # Retrieve any AWS settings from the environment.
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
     if not region:
         module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
 
     try:
-        conn = boto.rds.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        conn = boto.rds.connect_to_region(region, **aws_connect_params)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
