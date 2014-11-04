@@ -334,11 +334,19 @@ def process_category(category, categories, options, env, template, outputname):
     core = []
     for module in module_map.keys():
 
-        if module.startswith("_"):
-            module = module.replace("_","",1)
-            deprecated.append(module)
-        elif '/core/' in module_map[module]:
-            core.append(module)
+        if isinstance(module_map[module], dict):
+            for mod in module_map[module].keys():
+                if mod.startswith("_"):
+                    mod = mod.replace("_","",1)
+                    deprecated.append(mod)
+                elif '/core/' in module_map[module][mod]:
+                    core.append(mod)
+        else:
+            if module.startswith("_"):
+                module = module.replace("_","",1)
+                deprecated.append(module)
+            elif '/core/' in module_map[module]:
+                core.append(module)
 
         modules.append(module)
 
@@ -362,11 +370,15 @@ def process_category(category, categories, options, env, template, outputname):
         else:
             print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases)
 
+    sections.sort()
     for section in sections:
-        category_file.write("%s/\n%s\n\n" % (section,'-' * len(section)))
+        category_file.write("%s\n%s\n\n" % (section,'-' * len(section)))
         category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
-        for module in module_map[section]:
+        section_modules = module_map[section].keys()
+        section_modules.sort()
+        #for module in module_map[section]:
+        for module in section_modules:
             print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map[section], aliases)
 
     category_file.write("""\n\n
