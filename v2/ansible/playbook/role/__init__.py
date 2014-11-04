@@ -30,7 +30,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing.yaml import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.block import Block
+from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 
@@ -95,11 +95,11 @@ class Role:
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = self._load_list_of_blocks(task_data)
+            self._task_blocks = load_list_of_blocks(task_data)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = self._load_list_of_blocks(handler_data)
+            self._handler_blocks = load_list_of_blocks(handler_data)
 
         # vars and default vars are regular dictionaries
         self._role_vars    = self._load_role_yaml('vars')
@@ -134,23 +134,6 @@ class Role:
                 if self._loader.is_file(m):
                     return m # exactly one main file
             return possible_mains[0] # zero mains (we still need to return something)
-
-    def _load_list_of_blocks(self, ds):
-        '''
-        Given a list of mixed task/block data (parsed from YAML),
-        return a list of Block() objects, where implicit blocks
-        are created for each bare Task.
-        '''
-
-        assert type(ds) in (list, NoneType)
-
-        block_list = []
-        if ds:
-            for block in ds:
-                b = Block(block)
-                block_list.append(b)
-
-        return block_list
 
     def _load_dependencies(self):
         '''

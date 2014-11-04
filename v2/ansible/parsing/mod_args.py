@@ -190,7 +190,7 @@ class ModuleArgsParser:
         task, dealing with all sorts of levels of fuzziness.
         '''
 
-        assert type(ds) == dict
+        assert isinstance(ds, dict)
 
         thing      = None
 

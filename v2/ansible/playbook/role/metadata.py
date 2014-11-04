@@ -24,6 +24,7 @@ from six import iteritems, string_types
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.helpers import load_list_of_roles
 from ansible.playbook.role.include import RoleInclude
 
 
@@ -58,18 +59,10 @@ class RoleMetadata(Base):
 
     def _load_dependencies(self, attr, ds):
         '''
-        This is a helper loading function for the dependencis list,
+        This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
         '''
-
-        assert isinstance(ds, list)
-
-        deps = []
-        for role_def in ds:
-            i = RoleInclude.load(role_def, loader=self._loader)
-            deps.append(i)
-
-        return deps
+        return load_list_of_roles(ds, loader=self._loader)
 
     def _load_galaxy_info(self, attr, ds):
         '''

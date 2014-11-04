@@ -19,9 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.playbook.base import Base
-from ansible.playbook.task import Task
 from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.base import Base
+from ansible.playbook.helpers import load_list_of_tasks
 
 class Block(Base):
 
@@ -60,25 +60,20 @@ class Block(Base):
                 is_block = True
                 break
         if not is_block:
-            return dict(block=ds)
+            if isinstance(ds, list):
+                return dict(block=ds)
+            else:
+                return dict(block=[ds])
         return ds
 
-    def _load_list_of_tasks(self, ds):
-        assert type(ds) == list
-        task_list = []
-        for task in ds:
-            t = Task.load(task)
-            task_list.append(t)
-        return task_list
-
     def _load_block(self, attr, ds):
-        return self._load_list_of_tasks(ds)
+        return load_list_of_tasks(ds)
 
     def _load_rescue(self, attr, ds):
-        return self._load_list_of_tasks(ds)
+        return load_list_of_tasks(ds)
 
     def _load_always(self, attr, ds):
-        return self._load_list_of_tasks(ds)
+        return load_list_of_tasks(ds)
 
     # not currently used
     #def _load_otherwise(self, attr, ds):
