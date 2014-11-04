@@ -210,6 +210,8 @@ def main(args):
             print 'playbook: %s' % playbook
             print ''
             playnum = 0
+            matched_tags_all = set()
+            unmatched_tags_all = set()
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir,
@@ -227,11 +229,8 @@ def main(args):
                     matched_tags = matched_tags - set(pb.skip_tags)
 
                     unmatched_tags.discard('all')
-                    unknown_tags = ((set(pb.only_tags) | set(pb.skip_tags)) -
-                                    (matched_tags | unmatched_tags))
-
-                    if unknown_tags:
-                        continue
+                    matched_tags_all = matched_tags_all | matched_tags
+                    unmatched_tags_all = unmatched_tags_all | unmatched_tags
 
                 if options.listhosts:
                     print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
@@ -249,6 +248,27 @@ def main(args):
                                 print '    %s' % task.name
                 if options.listhosts or options.listtasks:
                     print ''
+
+            # We dupliate the Ansible playbook class function of catching unknown
+            # tags here for extra user visibility
+            only_tags = options.tags.split(",")
+            skip_tags = options.skip_tags
+            if only_tags is None:
+                only_tags = [ 'all' ]
+            if options.skip_tags is not None:
+                skip_tags = options.skip_tags.split(",")
+            else:
+                skip_tags = []
+            unknown_tags = ((set(only_tags) | set(skip_tags)) -
+                            (matched_tags_all | unmatched_tags_all))
+            unknown_tags.discard('all')
+
+            if len(unknown_tags) > 0:
+                msg = 'tag(s) not found in playbook: %s.  possible values: %s'
+                unknown = ','.join(sorted(unknown_tags))
+                unmatched = ','.join(sorted(unmatched_tags_all))
+                raise errors.AnsibleError(msg % (unknown, unmatched))
+
             continue
 
         if options.syntax:
