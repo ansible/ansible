@@ -372,7 +372,7 @@ def process_category(category, categories, options, env, template, outputname):
 
     sections.sort()
     for section in sections:
-        category_file.write("%s\n%s\n\n" % (section,'-' * len(section)))
+        category_file.write("%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
         category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
         section_modules = module_map[section].keys()
