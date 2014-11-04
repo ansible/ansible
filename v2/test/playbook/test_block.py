@@ -37,16 +37,6 @@ class TestBlock(unittest.TestCase):
     def test_construct_block_with_role(self):
         pass
 
-    def test_block__load_list_of_tasks(self):
-        task = dict(action='test')
-        b = Block()
-        self.assertEqual(b._load_list_of_tasks([]), [])
-        res = b._load_list_of_tasks([task])
-        self.assertEqual(len(res), 1)
-        assert isinstance(res[0], Task)
-        res = b._load_list_of_tasks([task,task,task])
-        self.assertEqual(len(res), 3)
-
     def test_load_block_simple(self):
         ds = dict(
            block = [],
