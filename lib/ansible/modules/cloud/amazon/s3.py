@@ -249,7 +249,7 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
     if s3_url is not None:
-        return urlparse.urlparse(s3_url).scheme == 'fakes3'
+        return urlparse.urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
     else:
         return False
 
@@ -313,7 +313,7 @@ def main():
         if is_fakes3(s3_url):
             fakes3 = urlparse.urlparse(s3_url)
             s3 = S3Connection(
-                is_secure=False,
+                is_secure=fakes3.scheme == 'fakes3s',
                 host=fakes3.hostname,
                 port=fakes3.port,
                 calling_format=OrdinaryCallingFormat(),
