@@ -21,6 +21,10 @@
  #
  --------------------------------------------#}
 
+{% if aliases is defined -%}
+Aliases: @{ ','.join(aliases) }@
+{% endif %}
+
 {% if deprecated is defined -%}
 DEPRECATED
 ----------
