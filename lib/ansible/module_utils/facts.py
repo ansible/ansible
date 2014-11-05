@@ -774,7 +774,7 @@ class LinuxHardware(Hardware):
                 return
             serial = re.search("Unit serial number:\s+(\w+)", drivedata)
             if serial:
-                d[key] = serial.group(1)
+                d['serial'] = serial.group(1)
 
             for key in ['vendor', 'model']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
