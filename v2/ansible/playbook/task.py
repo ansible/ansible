@@ -27,6 +27,7 @@ from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml import DataLoader
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins import module_finder, lookup_finder
 
 class Task(Base):
@@ -54,6 +55,7 @@ class Task(Base):
     _always_run           = FieldAttribute(isa='bool')
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int')
+    _changed_when         = FieldAttribute(isa='string')
     _connection           = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int')
     _delegate_to          = FieldAttribute(isa='string')
@@ -88,10 +90,13 @@ class Task(Base):
     _until                = FieldAttribute(isa='list') # ?
     _when                 = FieldAttribute(isa='list', default=[])
 
-    def __init__(self, block=None, role=None):
+    def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
-        self._block = block
-        self._role  = role
+
+        self._block        = block
+        self._role         = role
+        self._task_include = task_include
+
         super(Task, self).__init__()
 
     def get_name(self):
@@ -120,8 +125,8 @@ class Task(Base):
             return buf
 
     @staticmethod
-    def load(data, block=None, role=None, loader=None):
-        t = Task(block=block, role=role)
+    def load(data, block=None, role=None, task_include=None, loader=None):
+        t = Task(block=block, role=role, task_include=task_include)
         return t.load_data(data, loader=loader)
 
     def __repr__(self):
@@ -131,9 +136,10 @@ class Task(Base):
     def _munge_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
-        if self._loop.value is not None:
-            raise AnsibleError("duplicate loop in task: %s" % k)
-        new_ds['loop'] = k
+        loop_name = k.replace("with_", "")
+        if new_ds.get('loop') is not None:
+            raise AnsibleError("duplicate loop in task: %s" % loop_name)
+        new_ds['loop'] = loop_name
         new_ds['loop_args'] = v
 
     def munge(self, ds):
@@ -147,13 +153,15 @@ class Task(Base):
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
         # attributes of the task class
-        new_ds = dict()
+        new_ds = AnsibleMapping()
+        if isinstance(ds, AnsibleBaseYAMLObject):
+            new_ds.copy_position_info(ds)
 
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms
         # supported as legacy
-        args_parser = ModuleArgsParser()
-        (action, args, delegate_to) = args_parser.parse(ds)
+        args_parser = ModuleArgsParser(task_ds=ds)
+        (action, args, delegate_to) = args_parser.parse()
 
         new_ds['action']      = action
         new_ds['args']        = args
@@ -164,7 +172,7 @@ class Task(Base):
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
                 continue
-            elif "with_%s" % k in lookup_finder:
+            elif k.replace("with_", "") in lookup_finder:
                 self._munge_loop(ds, new_ds, k, v)
             else:
                 new_ds[k] = v

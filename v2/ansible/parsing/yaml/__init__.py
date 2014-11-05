@@ -27,6 +27,7 @@ from yaml import load, YAMLError
 from ansible.errors import AnsibleParserError
 
 from ansible.parsing.vault import VaultLib
+from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.parsing.yaml.strings import YAML_SYNTAX_ERROR
@@ -55,6 +56,7 @@ class DataLoader():
     _FILE_CACHE = dict()
 
     def __init__(self, vault_password=None):
+        self._basedir = '.'
         self._vault = VaultLib(password=vault_password)
 
     def load(self, data, file_name='<string>', show_content=True):
@@ -70,12 +72,14 @@ class DataLoader():
             try:
                 # if loading JSON failed for any reason, we go ahead
                 # and try to parse it as YAML instead
-                return self._safe_load(data)
+                return self._safe_load(data, file_name=file_name)
             except YAMLError as yaml_exc:
                 self._handle_error(yaml_exc, file_name, show_content)
 
     def load_from_file(self, file_name):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
+
+        file_name = self.path_dwim(file_name)
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
@@ -100,9 +104,14 @@ class DataLoader():
     def is_file(self, path):
         return os.path.isfile(path)
 
-    def _safe_load(self, stream):
+    def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
-        return load(stream, AnsibleLoader)
+
+        loader = AnsibleLoader(stream, file_name)
+        try:
+            return loader.get_single_data()
+        finally:
+            loader.dispose()
 
     def _get_file_contents(self, file_name):
         '''
@@ -138,4 +147,24 @@ class DataLoader():
             err_obj.set_position_info(file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
         raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
+
+    def set_basedir(self, basedir):
+        ''' sets the base directory, used to find files when a relative path is given '''
+
+        if basedir is not None:
+            self._basedir = basedir
+
+    def path_dwim(self, given):
+        '''
+        make relative paths work like folks expect.
+        '''
+
+        given = unquote(given)
+
+        if given.startswith("/"):
+            return os.path.abspath(given)
+        elif given.startswith("~"):
+            return os.path.abspath(os.path.expanduser(given))
+        else:
+            return os.path.abspath(os.path.join(self._basedir, given))
 

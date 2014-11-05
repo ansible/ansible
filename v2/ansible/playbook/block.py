@@ -67,15 +67,15 @@ class Block(Base):
         return ds
 
     def _load_block(self, attr, ds):
-        return load_list_of_tasks(ds)
+        return load_list_of_tasks(ds, block=self, loader=self._loader)
 
     def _load_rescue(self, attr, ds):
-        return load_list_of_tasks(ds)
+        return load_list_of_tasks(ds, block=self, loader=self._loader)
 
     def _load_always(self, attr, ds):
-        return load_list_of_tasks(ds)
+        return load_list_of_tasks(ds, block=self, loader=self._loader)
 
     # not currently used
     #def _load_otherwise(self, attr, ds):
-    #    return self._load_list_of_tasks(ds)
+    #    return self._load_list_of_tasks(ds, block=self, loader=self._loader)
 

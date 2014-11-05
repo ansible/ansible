@@ -110,7 +110,7 @@ class Base:
         valid_attrs = [name for (name, attribute) in iteritems(self._get_base_attributes())]
         for key in ds:
             if key not in valid_attrs:
-                raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__), obj=ds)
+                raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
     def validate(self):
         ''' validation that is done at parse time, not load time '''

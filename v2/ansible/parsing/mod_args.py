@@ -63,8 +63,9 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    def __init__(self, task=None):
-        self._task = task
+    def __init__(self, task_ds=dict()):
+        assert isinstance(task_ds, dict)
+        self._task_ds = task_ds
 
 
     def _split_module_string(self, str):
@@ -144,7 +145,7 @@ class ModuleArgsParser:
             # form is like: local_action: copy src=a dest=b ... pretty common
             args = parse_kv(thing)
         else:
-            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task)
+            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
     def _normalize_new_style_args(self, thing):
@@ -179,18 +180,16 @@ class ModuleArgsParser:
 
         else:
             # need a dict or a string, so giving up
-            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task)
+            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
 
         return (action, args)
 
-    def parse(self, ds):
+    def parse(self):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
         task, dealing with all sorts of levels of fuzziness.
         '''
-
-        assert isinstance(ds, dict)
 
         thing      = None
 
@@ -204,38 +203,38 @@ class ModuleArgsParser:
         #
 
         # action
-        if 'action' in ds:
+        if 'action' in self._task_ds:
 
             # an old school 'action' statement
-            thing = ds['action']
+            thing = self._task_ds['action']
             delegate_to = None
             action, args = self._normalize_parameters(thing)
 
         # local_action
-        if 'local_action' in ds:
+        if 'local_action' in self._task_ds:
 
             # local_action is similar but also implies a delegate_to
             if action is not None:
-                raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task)
-            thing = ds.get('local_action', '')
+                raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
+            thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing)
 
         # module: <stuff> is the more new-style invocation
 
         # walk the input dictionary to see we recognize a module name
-        for (item, value) in iteritems(ds):
+        for (item, value) in iteritems(self._task_ds):
             if item in module_finder:
                 # finding more than one module name is a problem
                 if action is not None:
-                    raise AnsibleParserError("conflicting action statements", obj=self._task)
+                    raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
                 action = item
                 thing = value
                 action, args = self._normalize_parameters(value, action=action)
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            raise AnsibleParserError("no action detected in task", obj=self._task)
+            raise AnsibleParserError("no action detected in task", obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)

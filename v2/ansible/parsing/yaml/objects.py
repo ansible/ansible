@@ -26,8 +26,8 @@ class AnsibleBaseYAMLObject:
 
     '''
     _data_source   = None
-    _line_number   = None
-    _column_number = None
+    _line_number   = 0
+    _column_number = 0
 
     def get_position_info(self):
         return (self._data_source, self._line_number, self._column_number)
