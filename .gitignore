@@ -18,6 +18,8 @@ rpm-build
 *.iml
 # Mac OS X stuff...
 .DS_Store
+# generated man pages
+docs/man/man1/*.1
 # manpage build stuff...
 docs/man/man3/*
 # Sublime stuff
