@@ -135,7 +135,7 @@ def list_modules(module_dir, depth=0):
                 res = list_modules(d, depth + 1)
                 for key in res.keys():
                     if key in categories:
-                        categories[key].update(res[key])
+                        categories[key] = ansible.utils.merge_hash(categories[key], res[key])
                         res.pop(key, None)
 
                 if depth < 2:
