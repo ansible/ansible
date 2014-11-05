@@ -251,6 +251,8 @@ def main(args):
 
                     if play.roles:
                         for rol in play.roles:
+			    if isinstance(rol, dict):
+			        rol = rol.get('role')
                             print '    role: %s' % (rol)
                             for task in taskslist:
                                 if task.role_name is rol:
