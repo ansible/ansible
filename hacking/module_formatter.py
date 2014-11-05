@@ -135,7 +135,7 @@ def list_modules(module_dir, depth=0):
                 res = list_modules(d, depth + 1)
                 for key in res.keys():
                     if key in categories:
-                        categories[key].update(res[key])
+                        categories[key] = ansible.utils.merge_hash(categories[key], res[key])
                         res.pop(key, None)
 
                 if depth < 2:
@@ -372,7 +372,7 @@ def process_category(category, categories, options, env, template, outputname):
 
     sections.sort()
     for section in sections:
-        category_file.write("%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
+        category_file.write("\n%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
         category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
         section_modules = module_map[section].keys()
