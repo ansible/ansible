@@ -17,6 +17,7 @@
 
 from types import NoneType
 
+from ansible.errors import AnsibleParserError
 
 def load_list_of_blocks(ds, role=None, loader=None):
     '''
@@ -38,23 +39,33 @@ def load_list_of_blocks(ds, role=None, loader=None):
 
     return block_list
 
-def load_list_of_tasks(ds, block=None, role=None, loader=None):
+
+def load_list_of_tasks(ds, block=None, role=None, task_include=None, loader=None):
     '''
     Given a list of task datastructures (parsed from YAML),
-    return a list of Task() objects.
+    return a list of Task() or TaskInclude() objects.
     '''
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.task import Task
+    from ansible.playbook.task_include import TaskInclude
 
     assert type(ds) == list
 
     task_list = []
     for task in ds:
-        t = Task.load(task, block=block, role=role, loader=loader)
+        if not isinstance(task, dict):
+            raise AnsibleParserError("task/handler entries must be dictionaries (got a %s)" % type(task), obj=ds)
+
+        if 'include' in task:
+            t = TaskInclude.load(task, block=block, role=role, task_include=task_include, loader=loader)
+        else:
+            t = Task.load(task, block=block, role=role, task_include=task_include, loader=loader)
+
         task_list.append(t)
 
     return task_list
+
 
 def load_list_of_roles(ds, loader=None):
     '''

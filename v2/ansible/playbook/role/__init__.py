@@ -95,11 +95,11 @@ class Role:
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = load_list_of_blocks(task_data)
+            self._task_blocks = load_list_of_blocks(task_data, role=self, loader=self._loader)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data)
+            self._handler_blocks = load_list_of_blocks(handler_data, role=self, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars    = self._load_role_yaml('vars')

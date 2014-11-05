@@ -34,8 +34,8 @@ Syntax Error while loading YAML.
 """
 
 YAML_POSITION_DETAILS = """\
-The error appears to have been in '%s': line %s, column %s,
-but may actually be before there depending on the exact syntax problem.
+The error appears to have been in '%s': line %s, column %s, but may
+be elsewhere in the file depending on the exact syntax problem.
 """
 
 YAML_COMMON_DICT_ERROR = """\

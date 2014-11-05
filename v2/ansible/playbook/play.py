@@ -124,28 +124,28 @@ class Play(Base):
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds)
+        return load_list_of_blocks(ds, loader=self._loader)
 
     def _load_pre_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds)
+        return load_list_of_blocks(ds, loader=self._loader)
 
     def _load_post_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds)
+        return load_list_of_blocks(ds, loader=self._loader)
 
     def _load_handlers(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds)
+        return load_list_of_blocks(ds, loader=self._loader)
 
     def _load_roles(self, attr, ds):
         '''

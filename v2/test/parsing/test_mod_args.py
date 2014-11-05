@@ -31,7 +31,6 @@ class TestModArgsDwim(unittest.TestCase):
     #       and the task knows the line numbers
 
     def setUp(self):
-        self.m = ModuleArgsParser()
         pass
 
     def _debug(self, mod, args, to):
@@ -43,7 +42,8 @@ class TestModArgsDwim(unittest.TestCase):
         pass
 
     def test_basic_shell(self):
-        mod, args, to = self.m.parse(dict(shell='echo hi'))
+        m = ModuleArgsParser(dict(shell='echo hi'))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'command')
         self.assertEqual(args, dict(
@@ -53,7 +53,8 @@ class TestModArgsDwim(unittest.TestCase):
         self.assertIsNone(to)
 
     def test_basic_command(self):
-        mod, args, to = self.m.parse(dict(command='echo hi'))
+        m = ModuleArgsParser(dict(command='echo hi'))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'command')
         self.assertEqual(args, dict(
@@ -62,7 +63,8 @@ class TestModArgsDwim(unittest.TestCase):
         self.assertIsNone(to)
 
     def test_shell_with_modifiers(self):
-        mod, args, to = self.m.parse(dict(shell='/bin/foo creates=/tmp/baz removes=/tmp/bleep'))
+        m = ModuleArgsParser(dict(shell='/bin/foo creates=/tmp/baz removes=/tmp/bleep'))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'command')
         self.assertEqual(args, dict(
@@ -74,42 +76,55 @@ class TestModArgsDwim(unittest.TestCase):
         self.assertIsNone(to)
 
     def test_normal_usage(self):
-        mod, args, to = self.m.parse(dict(copy='src=a dest=b'))
+        m = ModuleArgsParser(dict(copy='src=a dest=b'))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
         self.assertIsNone(to)
 
     def test_complex_args(self):
-        mod, args, to = self.m.parse(dict(copy=dict(src='a', dest='b')))
+        m = ModuleArgsParser(dict(copy=dict(src='a', dest='b')))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
         self.assertIsNone(to)
 
     def test_action_with_complex(self):
-        mod, args, to = self.m.parse(dict(action=dict(module='copy', src='a', dest='b')))
+        m = ModuleArgsParser(dict(action=dict(module='copy', src='a', dest='b')))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
         self.assertIsNone(to)
 
     def test_action_with_complex_and_complex_args(self):
-        mod, args, to = self.m.parse(dict(action=dict(module='copy', args=dict(src='a', dest='b'))))
+        m = ModuleArgsParser(dict(action=dict(module='copy', args=dict(src='a', dest='b'))))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
         self.assertIsNone(to)
 
     def test_local_action_string(self):
-        mod, args, to = self.m.parse(dict(local_action='copy src=a dest=b'))
+        m = ModuleArgsParser(dict(local_action='copy src=a dest=b'))
+        mod, args, to = m.parse()
         self._debug(mod, args, to)
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
         self.assertIs(to, 'localhost')
 
     def test_multiple_actions(self):
-        self.assertRaises(AnsibleParserError, self.m.parse, dict(action='shell echo hi', local_action='shell echo hi'))
-        self.assertRaises(AnsibleParserError, self.m.parse, dict(action='shell echo hi', shell='echo hi'))
-        self.assertRaises(AnsibleParserError, self.m.parse, dict(local_action='shell echo hi', shell='echo hi'))
-        self.assertRaises(AnsibleParserError, self.m.parse, dict(ping='data=hi', shell='echo hi'))
+        m = ModuleArgsParser(dict(action='shell echo hi', local_action='shell echo hi'))
+        self.assertRaises(AnsibleParserError, m.parse)
+
+        m = ModuleArgsParser(dict(action='shell echo hi', shell='echo hi'))
+        self.assertRaises(AnsibleParserError, m.parse)
+
+        m = ModuleArgsParser(dict(local_action='shell echo hi', shell='echo hi'))
+        self.assertRaises(AnsibleParserError, m.parse)
+
+        m = ModuleArgsParser(dict(ping='data=hi', shell='echo hi'))
+        self.assertRaises(AnsibleParserError, m.parse)
+
