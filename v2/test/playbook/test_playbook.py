@@ -45,6 +45,7 @@ class TestPlaybook(unittest.TestCase):
             """,
         })
         p = Playbook.load("test_file.yml", loader=fake_loader)
+        entries = p.get_entries()
 
     def test_bad_playbook_files(self):
         fake_loader = DictDataLoader({

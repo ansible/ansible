@@ -60,6 +60,7 @@ class Task(Base):
     _delay                = FieldAttribute(isa='int')
     _delegate_to          = FieldAttribute(isa='string')
     _environment          = FieldAttribute(isa='dict')
+    _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _ignore_errors        = FieldAttribute(isa='bool')
 
@@ -179,3 +180,11 @@ class Task(Base):
 
         return new_ds
 
+    def compile(self):
+        '''
+        For tasks, this is just a dummy method returning an array
+        with 'self' in it, so we don't have to care about task types
+        further up the chain.
+        '''
+
+        return [self]

@@ -24,7 +24,7 @@ from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.helpers import load_list_of_tasks
+from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.plugins import lookup_finder
 
 
@@ -57,10 +57,11 @@ class TaskInclude(Base):
     _when      = FieldAttribute(isa='list', default=[])
 
     def __init__(self, block=None, role=None, task_include=None):
-        self._tasks        = []
         self._block        = block
         self._role         = role
         self._task_include = task_include
+
+        self._task_blocks  = []
 
         super(TaskInclude, self).__init__()
 
@@ -136,11 +137,27 @@ class TaskInclude(Base):
 
 
     def _load_include(self, attr, ds):
-        ''' loads the file name specified in the ds and returns a list of tasks '''
+        ''' loads the file name specified in the ds and returns a list of blocks '''
 
         data = self._loader.load_from_file(ds)
         if not isinstance(data, list):
             raise AnsibleParsingError("included task files must contain a list of tasks", obj=ds)
 
-        self._tasks = load_list_of_tasks(data, task_include=self, loader=self._loader)
+        self._task_blocks = load_list_of_blocks(
+                                data,
+                                parent_block=self._block,
+                                task_include=self,
+                                role=self._role,
+                                loader=self._loader
+                            )
         return ds
+
+    def compile(self):
+        '''
+        Returns the task list for the included tasks.
+        '''
+
+        task_list = []
+        task_list.extend(compile_block_list(self._task_blocks))
+        return task_list
+

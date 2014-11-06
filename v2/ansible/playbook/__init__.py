@@ -57,6 +57,9 @@ class Playbook:
         basedir = os.path.dirname(file_name)
         self._loader.set_basedir(basedir)
 
+        # also add the basedir to the list of module directories
+        push_basedir(basedir)
+
         ds = self._loader.load_from_file(file_name)
         if not isinstance(ds, list):
             raise AnsibleParserError("playbooks must be a list of plays", obj=ds)
@@ -75,4 +78,5 @@ class Playbook:
 
             self._entries.append(entry_obj)
 
-
+    def get_entries(self):
+        return self._entries[:]

@@ -75,3 +75,9 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(len(b.block), 1)
         assert isinstance(b.block[0], Task)
 
+    def test_block_compile(self):
+        ds = [dict(action='foo')]
+        b = Block.load(ds)
+        tasks = b.compile()
+        self.assertEqual(len(tasks), 1)
+        self.assertIsInstance(tasks[0], Task)
