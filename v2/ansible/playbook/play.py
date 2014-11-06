@@ -25,7 +25,8 @@ from ansible.parsing.yaml import DataLoader
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
+from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles, compile_block_list
+from ansible.playbook.role import Role
 
 
 __all__ = ['Play']
@@ -155,3 +156,41 @@ class Play(Base):
         return load_list_of_roles(ds, loader=self._loader)
 
     # FIXME: post_validation needs to ensure that su/sudo are not both set
+
+    def _compile_roles(self):
+        '''
+        Handles the role compilation step, returning a flat list of tasks
+        with the lowest level dependencies first. For example, if a role R
+        has a dependency D1, which also has a dependency D2, the tasks from
+        D2 are merged first, followed by D1, and lastly by the tasks from
+        the parent role R last. This is done for all roles in the Play.
+        '''
+
+        task_list = []
+
+        if len(self.roles) > 0:
+            for ri in self.roles:
+                # The internal list of roles are actualy RoleInclude objects,
+                # so we load the role from that now
+                role = Role.load(ri)
+
+                # FIXME: evauluate conditional of roles here?
+                task_list.extend(role.compile())
+
+        return task_list
+
+    def compile(self):
+        '''
+        Compiles and returns the task list for this play, compiled from the
+        roles (which are themselves compiled recursively) and/or the list of
+        tasks specified in the play.
+        '''
+
+        task_list = []
+
+        task_list.extend(compile_block_list(self.pre_tasks))
+        task_list.extend(self._compile_roles())
+        task_list.extend(compile_block_list(self.tasks))
+        task_list.extend(compile_block_list(self.post_tasks))
+
+        return task_list

@@ -117,4 +117,16 @@ class TestPlay(unittest.TestCase):
             roles=['foo'],
         ), loader=fake_loader)
 
+        tasks = p.compile()
 
+    def test_play_compile(self):
+        p = Play.load(dict(
+            name="test play",
+            hosts=['foo'],
+            gather_facts=False,
+            tasks=[dict(action='shell echo "hello world"')],
+        ))
+
+        tasks = p.compile()
+        self.assertEqual(len(tasks), 1)
+        self.assertIsInstance(tasks[0], Task)

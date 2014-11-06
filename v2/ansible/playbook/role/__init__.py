@@ -30,7 +30,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing.yaml import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 
@@ -87,6 +87,10 @@ class Role:
         if parent_role:
             self.add_parent(parent_role)
 
+        # save the current base directory for the loader and set it to the current role path
+        cur_basedir = self._loader.get_basedir()
+        self._loader.set_basedir(self._role_path)
+
         # load the role's files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
@@ -109,6 +113,9 @@ class Role:
         self._default_vars = self._load_role_yaml('defaults')
         if not isinstance(self._default_vars, (dict, NoneType)):
             raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
+
+        # and finally restore the previous base directory
+        self._loader.set_basedir(cur_basedir)
 
     def _load_role_yaml(self, subdir):
         file_path = os.path.join(self._role_path, subdir)
@@ -185,4 +192,27 @@ class Role:
                     child_deps.append(dep_dep)
 
         return direct_deps + child_deps
+
+    def get_task_blocks(self):
+        return self._task_blocks[:]
+
+    def get_handler_blocks(self):
+        return self._handler_blocks[:]
+
+    def compile(self):
+        '''
+        Returns the task list for this role, which is created by first
+        recursively compiling the tasks for all direct dependencies, and
+        then adding on the tasks for this role.
+        '''
+
+        task_list = []
+
+        deps = self.get_direct_dependencies()
+        for dep in deps:
+            task_list.extend(dep.compile())
+
+        task_list.extend(compile_block_list(self._task_blocks))
+
+        return task_list
 

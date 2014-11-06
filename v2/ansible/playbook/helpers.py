@@ -15,11 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
+import os
+
 from types import NoneType
 
 from ansible.errors import AnsibleParserError
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
-def load_list_of_blocks(ds, role=None, loader=None):
+
+def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, loader=None):
     '''
     Given a list of mixed task/block data (parsed from YAML),
     return a list of Block() objects, where implicit blocks
@@ -34,7 +39,7 @@ def load_list_of_blocks(ds, role=None, loader=None):
     block_list = []
     if ds:
         for block in ds:
-            b = Block.load(block, role=role, loader=loader)
+            b = Block.load(block, parent_block=parent_block, role=role, task_include=task_include, loader=loader)
             block_list.append(b)
 
     return block_list
@@ -58,7 +63,17 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, loader=None
             raise AnsibleParserError("task/handler entries must be dictionaries (got a %s)" % type(task), obj=ds)
 
         if 'include' in task:
+            cur_basedir = None
+            if isinstance(task, AnsibleBaseYAMLObject) and loader:
+                pos_info = task.get_position_info()
+                new_basedir = os.path.dirname(pos_info[0])
+                cur_basedir = loader.get_basedir()
+                loader.set_basedir(new_basedir)
+
             t = TaskInclude.load(task, block=block, role=role, task_include=task_include, loader=loader)
+
+            if cur_basedir and loader:
+                loader.set_basedir(cur_basedir)
         else:
             t = Task.load(task, block=block, role=role, task_include=task_include, loader=loader)
 
@@ -84,4 +99,16 @@ def load_list_of_roles(ds, loader=None):
         roles.append(i)
 
     return roles
+
+def compile_block_list(block_list):
+    '''
+    Given a list of blocks, compile them into a flat list of tasks
+    '''
+
+    task_list = []
+
+    for block in block_list:
+        task_list.extend(block.compile())
+
+    return task_list
 

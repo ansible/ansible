@@ -45,6 +45,7 @@ class TestTaskInclude(unittest.TestCase):
 
     def test_basic_task_include(self):
         ti = TaskInclude.load(AnsibleMapping(include='foo.yml'), loader=self._fake_loader)
+        tasks = ti.compile()
 
     def test_task_include_with_loop(self):
         ti = TaskInclude.load(AnsibleMapping(include='foo.yml', with_items=['a', 'b', 'c']), loader=self._fake_loader)

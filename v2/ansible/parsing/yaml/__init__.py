@@ -148,6 +148,10 @@ class DataLoader():
 
         raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
 
+    def get_basedir(self):
+        ''' returns the current basedir '''
+        return self._basedir
+
     def set_basedir(self, basedir):
         ''' sets the base directory, used to find files when a relative path is given '''
 
