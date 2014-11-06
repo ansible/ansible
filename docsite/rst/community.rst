@@ -146,7 +146,7 @@ to modify a pull request later.
 
 When submitting patches, be sure to run the unit tests first “make tests” and always use 
 “git rebase” vs “git merge” (aliasing git pull to git pull --rebase is a great idea) to 
-avoid merge commits in your submissions.  There are also integration tests that can be run in the "tests/integration" directory.  
+avoid merge commits in your submissions.  There are also integration tests that can be run in the "test/integration" directory.  
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that contain merge commits.  Use "git pull --rebase" vs "git pull" and "git rebase" vs "git merge". Also be sure to use topic branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
