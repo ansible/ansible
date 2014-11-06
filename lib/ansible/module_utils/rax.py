@@ -173,9 +173,9 @@ def rax_find_server(module, rax_module, server):
 def rax_find_loadbalancer(module, rax_module, loadbalancer):
     clb = rax_module.cloud_loadbalancers
     try:
-        UUID(loadbalancer)
         found = clb.get(loadbalancer)
     except:
+        found = []
         for lb in clb.list():
             if loadbalancer == lb.name:
                 found.append(lb)
