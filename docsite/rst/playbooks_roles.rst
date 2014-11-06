@@ -85,7 +85,7 @@ which also supports structured variables::
 
       - include: wordpress.yml
         vars:
-            remote_user: timmy
+            user: timmy
             some_list_variable:
               - alpha
               - beta
