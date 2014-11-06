@@ -36,7 +36,14 @@ class Connector(object):
             raise AnsibleError("unsupported connection type: %s" % transport)
         if private_key_file:
             # If private key is readable by user other than owner, flag an error
-            st = os.stat(private_key_file)
+            try:
+                st = os.stat(private_key_file)
+            except IOError, e:
+                if e.errno == errno.ENOENT: # file is missing, might be agent
+                    st = { 'st_mode': False }
+                else:
+                    raise(e)
+
             if st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
                 raise AnsibleError("private_key_file (%s) is group-readable or world-readable and thus insecure - "
                                    "you will probably get an SSH failure"
