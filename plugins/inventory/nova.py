@@ -43,7 +43,7 @@ except ImportError:
 #   in "nova boot"
 # - it caches the state of the cloud
 # - it tries to guess ansible_ssh_user based on name of image
-#   ('\cubuntu' -> 'ubuntu', '\ccentos' -> 'centos', ...)
+#   ('\cubuntu' -> 'ubuntu', '\ccentos' -> 'cloud-user', ...)
 # - allows to access machines by their private ip *
 # - it will work with no additional configuration, just handling single tenant
 #   from set OS_* environment variables (just like python-novaclient).
@@ -201,7 +201,7 @@ def get_ssh_user(server, nova_client):
         if 'ubuntu' in image_name.lower():
             return 'ubuntu'
         if 'centos' in  image_name.lower():
-            return 'centos'
+            return 'cloud-user'
         if 'debian' in  image_name.lower():
             return 'debian'
         if 'coreos' in  image_name.lower():
@@ -258,10 +258,11 @@ def get_name(ip):
         if 'domain name pointer' not in l:
             continue
         names.append(l.split()[-1])
-    hostname = min(names, key=len)
-    if hostname[-1] == '.':
-        hostname = hostname[:-1]
-    return hostname
+    name = min(names, key=len)
+    # the dot is confusing
+    if name.endswith('.'):
+        name = name[:-1]
+    return name
 
 
 def get_update(call_params):
@@ -275,42 +276,40 @@ def get_update(call_params):
     nova_client = get_nova_client(call_params)
     for server in nova_client.servers.list():
         access_ip = get_access_ip(server, call_params['prefer_private'])
-        access_identifier = access_ip
-        if call_params['resolve_ips']:
-            dns_name = get_name(access_ip)
-            if dns_name:
-                access_identifier = dns_name
 
         # Push to a group for its name. This way we can use the nova name as
         # a target for ansible{-playbook}
-        push(update, server.name, access_identifier)
+        push(update, server.name, access_ip)
 
         # Run through each metadata item and add instance to it
         for key, value in server.metadata.iteritems():
             composed_key = to_safe('tag_{0}_{1}'.format(key, value))
-            push(update, composed_key, access_identifier)
+            push(update, composed_key, access_ip)
 
         # Do special handling of group for backwards compat
         # inventory update
         group = 'undefined'
         if 'group' in server.metadata:
             group = server.metadata['group']
-        push(update, group, access_identifier)
+        push(update, group, access_ip)
 
         # Add vars to _meta key for performance optimization in
         # Ansible 1.3+
-        update['_meta']['hostvars'][access_identifier] = get_metadata(server)
+        update['_meta']['hostvars'][access_ip] = get_metadata(server)
 
         # guess username based on image name
         ssh_user = get_ssh_user(server, nova_client)
         if ssh_user:
-            host_record = update['_meta']['hostvars'][access_identifier]
+            host_record = update['_meta']['hostvars'][access_ip]
             host_record['ansible_ssh_user'] = ssh_user
 
-        push(update, call_params['name'], access_identifier)
-        push(update, call_params['project_id'], access_identifier)
+        push(update, call_params['name'], access_ip)
+        push(update, call_params['project_id'], access_ip)
         if call_params['region_name']:
-            push(update, call_params['region_name'], access_identifier)
+            push(update, call_params['region_name'], access_ip)
+        if call_params['resolve_ips']:
+            dns_name = get_name(access_ip)
+            push(update, dns_name, access_ip)
     return update
 
 
