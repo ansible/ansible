@@ -851,6 +851,8 @@ period, without the rest of the domain.
 
 *play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
+*delegate_to* is the inventory hostname of the host that the current task has been delegated to using 'delegate_to'.
+
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
