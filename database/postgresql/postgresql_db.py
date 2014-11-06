@@ -281,14 +281,13 @@ def main():
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding,
                                          lc_collate, lc_ctype)
-            module.exit_json(changed=changed,db=db)
+        else:
+            if state == "absent":
+                changed = db_delete(cursor, db)
 
-        if state == "absent":
-            changed = db_delete(cursor, db)
-
-        elif state == "present":
-            changed = db_create(cursor, db, owner, template, encoding,
-                                lc_collate, lc_ctype)
+            elif state == "present":
+                changed = db_create(cursor, db, owner, template, encoding,
+                                    lc_collate, lc_ctype)
     except NotSupportedError, e:
         module.fail_json(msg=str(e))
     except Exception, e:
