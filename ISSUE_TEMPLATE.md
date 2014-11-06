@@ -1,28 +1,120 @@
 ##### Issue Type:
 
-Can you help us out in labelling this by telling us what kind of ticket this this?  You can say “Bug Report”, “Feature Idea”, “Feature Pull Request”, “New Module Pull Request”, “Bugfix Pull Request”, “Documentation Report”, or “Docs Pull Request”.
+"Group managment bug in FreeBSD"
 
 ##### Ansible Version:
 
-Let us know what version of Ansible you are using.  Please supply the verbatim output from running “ansible --version”.  If you're filing a ticket on a version of Ansible which is not the latest, we'd greatly appreciate it if you could retest on the latest version first.  We don't expect you to test against the development branch most of the time, but we may ask for that if you have cycles.  Thanks!
+ansible 1.7.2
+Python 2.7.8
 
 ##### Environment:
 
-What OS are you running Ansible from and what OS are you managing?  Examples include RHEL 5/6, Centos 5/6, Ubuntu 12.04/13.10, *BSD, Solaris.  If this is a generic feature request or it doesn’t apply, just say “N/A”.  Not all tickets may be about operating system related things and we understand that.
+--server
+FreeBSD  9.3-RELEASE FreeBSD 9.3-RELEASE #0 r268512: Thu Jul 10 23:44:39 UTC 2014     root@snap.freebsd.org:/usr/obj/usr/src/sys/GENERIC  amd64
+
+--target_client 
+FreeBSD  10.0-RELEASE FreeBSD 10.0-RELEASE #0 r260789: Thu Jan 16 22:34:59 UTC 2014     root@snap.freebsd.org:/usr/obj/usr/src/sys/GENERIC  amd64
+
+
 
 ##### Summary:
 
-Please summarize your request in this space.  You will earn bonus points for being succinct, but please add enough detail so we can understand the request.  Thanks!
+I try to change groups for user "test1" in FreeBSD host.
+If I am adding a new groups to user (using module "user")- all is working fine , but when I try to "delete" some group for user "test1", I see status " : ok=2    changed=1 ", but realy nothing happens. And every time I see such status.
+In Linux host all i working fine.
+Please fix it.
+
+
+--- First time (all is fine) ---
+<code>
+
+- hosts: my_servers
+  remote_user: root
+  tasks:
+     - name: Create FreeBSD users
+       user: name={{ item.name  }}
+             password={{ item.password }}
+             groups={{ item.groups }}
+             comment={{ item.comment }}
+             append=no
+       with_items:
+             -  { name: 'test1' , groups: 'mysql\,cyrus', password: '11111', comment: 'Vasja' }
+             -  { name: 'test2' , groups: 'mysql', password: '22222', comment: 'Kolja' }
+       when: ansible_os_family == "FreeBSD"
+<code>
+
+
+--- Second time (bug) ----
+<code>
+
+- hosts: my_servers
+  remote_user: root
+  tasks:
+     - name: Create FreeBSD users
+       user: name={{ item.name  }}
+             password={{ item.password }}
+             groups={{ item.groups }}
+             comment={{ item.comment }}
+             append=no
+       with_items:
+             -  { name: 'test1' , groups: 'mysql', password: '11111', comment: 'Vasja' }
+             -  { name: 'test2' , groups: 'mysql', password: '22222', comment: 'Kolja' }
+       when: ansible_os_family == "FreeBSD"
+
+
+<code>
+
+
+
+
+<output>
+
+root@kris:/home/serg/ansible # ansible-playbook -vvvv run.yml
+
+PLAY [my_servers] ************************************************************* 
+
+GATHERING FACTS *************************************************************** 
+<172.29.251.106> ESTABLISH CONNECTION FOR USER: root
+<172.29.251.106> REMOTE_MODULE setup
+<172.29.251.106> EXEC ['ssh', '-C', '-tt', '-vvv', '-o', 'ControlMaster=auto', '-o', 'ControlPersist=60s', '-o', 'ControlPath=/root/.ansible/cp/ansible-ssh-%h-%p-%r', '-o', 'KbdInteractiveAuthentication=no', '-o', 'PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey', '-o', 'PasswordAuthentication=no', '-o', 'ConnectTimeout=10', '172.29.251.106', "/bin/sh -c 'mkdir -p $HOME/.ansible/tmp/ansible-tmp-1415297453.89-59397932578099 && echo $HOME/.ansible/tmp/ansible-tmp-1415297453.89-59397932578099'"]
+<172.29.251.106> PUT /tmp/tmpyPFA5r TO /root/.ansible/tmp/ansible-tmp-1415297453.89-59397932578099/setup
+<172.29.251.106> EXEC ['ssh', '-C', '-tt', '-vvv', '-o', 'ControlMaster=auto', '-o', 'ControlPersist=60s', '-o', 'ControlPath=/root/.ansible/cp/ansible-ssh-%h-%p-%r', '-o', 'KbdInteractiveAuthentication=no', '-o', 'PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey', '-o', 'PasswordAuthentication=no', '-o', 'ConnectTimeout=10', '172.29.251.106', u"/bin/sh -c 'LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 /usr/local/bin/python /root/.ansible/tmp/ansible-tmp-1415297453.89-59397932578099/setup; rm -rf /root/.ansible/tmp/ansible-tmp-1415297453.89-59397932578099/ >/dev/null 2>&1'"]
+ok: [freebsd]
+
+TASK: [Create FreeBSD users] ************************************************** 
+<172.29.251.106> ESTABLISH CONNECTION FOR USER: root
+<172.29.251.106> REMOTE_MODULE user name=test1 password=VALUE_HIDDEN groups=mysql comment=Vasja append=no
+<172.29.251.106> EXEC ['ssh', '-C', '-tt', '-vvv', '-o', 'ControlMaster=auto', '-o', 'ControlPersist=60s', '-o', 'ControlPath=/root/.ansible/cp/ansible-ssh-%h-%p-%r', '-o', 'KbdInteractiveAuthentication=no', '-o', 'PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey', '-o', 'PasswordAuthentication=no', '-o', 'ConnectTimeout=10', '172.29.251.106', "/bin/sh -c 'mkdir -p $HOME/.ansible/tmp/ansible-tmp-1415297454.25-201202690342400 && echo $HOME/.ansible/tmp/ansible-tmp-1415297454.25-201202690342400'"]
+<172.29.251.106> PUT /tmp/tmpDSK0ET TO /root/.ansible/tmp/ansible-tmp-1415297454.25-201202690342400/user
+<172.29.251.106> EXEC ['ssh', '-C', '-tt', '-vvv', '-o', 'ControlMaster=auto', '-o', 'ControlPersist=60s', '-o', 'ControlPath=/root/.ansible/cp/ansible-ssh-%h-%p-%r', '-o', 'KbdInteractiveAuthentication=no', '-o', 'PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey', '-o', 'PasswordAuthentication=no', '-o', 'ConnectTimeout=10', '172.29.251.106', u"/bin/sh -c 'LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 /usr/local/bin/python /root/.ansible/tmp/ansible-tmp-1415297454.25-201202690342400/user; rm -rf /root/.ansible/tmp/ansible-tmp-1415297454.25-201202690342400/ >/dev/null 2>&1'"]
+changed: [freebsd] => (item={'comment': 'Vasja', 'password': '11111', 'name': 'test1', 'groups': 'mysql'}) => {"append": false, "changed": true, "comment": "Vasja", "group": 1002, "groups": "mysql", "home": "/home/test1", "item": {"comment": "Vasja", "groups": "mysql", "name": "test1", "password": "11111"}, "move_home": false, "name": "test1", "password": "NOT_LOGGING_PASSWORD", "shell": "/bin/sh", "state": "present", "uid": 1002}
+<172.29.251.106> ESTABLISH CONNECTION FOR USER: root
+<172.29.251.106> REMOTE_MODULE user name=test2 password=VALUE_HIDDEN groups=mysql comment=Kolja append=no
+<172.29.251.106> EXEC ['ssh', '-C', '-tt', '-vvv', '-o', 'ControlMaster=auto', '-o', 'ControlPersist=60s', '-o', 'ControlPath=/root/.ansible/cp/ansible-ssh-%h-%p-%r', '-o', 'KbdInteractiveAuthentication=no', '-o', 'PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey', '-o', 'PasswordAuthentication=no', '-o', 'ConnectTimeout=10', '172.29.251.106', "/bin/sh -c 'mkdir -p $HOME/.ansible/tmp/ansible-tmp-1415297454.45-101295486595285 && echo $HOME/.ansible/tmp/ansible-tmp-1415297454.45-101295486595285'"]
+<172.29.251.106> PUT /tmp/tmpSb6Sfc TO /root/.ansible/tmp/ansible-tmp-1415297454.45-101295486595285/user
+<172.29.251.106> EXEC ['ssh', '-C', '-tt', '-vvv', '-o', 'ControlMaster=auto', '-o', 'ControlPersist=60s', '-o', 'ControlPath=/root/.ansible/cp/ansible-ssh-%h-%p-%r', '-o', 'KbdInteractiveAuthentication=no', '-o', 'PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey', '-o', 'PasswordAuthentication=no', '-o', 'ConnectTimeout=10', '172.29.251.106', u"/bin/sh -c 'LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 /usr/local/bin/python /root/.ansible/tmp/ansible-tmp-1415297454.45-101295486595285/user; rm -rf /root/.ansible/tmp/ansible-tmp-1415297454.45-101295486595285/ >/dev/null 2>&1'"]
+ok: [freebsd] => (item={'comment': 'Kolja', 'password': '22222', 'name': 'test2', 'groups': 'mysql'}) => {"append": false, "changed": false, "comment": "Kolja", "group": 1003, "groups": "mysql", "home": "/home/test2", "item": {"comment": "Kolja", "groups": "mysql", "name": "test2", "password": "22222"}, "move_home": false, "name": "test2", "password": "NOT_LOGGING_PASSWORD", "shell": "/bin/sh", "state": "present", "uid": 1003}
+
+PLAY RECAP ******************************************************************** 
+freebsd                    : ok=2    changed=1    unreachable=0    failed=0   
+
+
+<output>
+
+
 
 ##### Steps To Reproduce:
 
-If this is a bug ticket, please enter the steps you use to reproduce the problem in the space below.  If this is a feature request, please enter the steps you would use to use the feature.  If an example playbook is useful, please include a short reproducer inline, indented by four spaces.  If a longer one is necessary, linking to one uploaded to gist.github.com would be great.  Much appreciated!
+ Just run my playbook
+# ansible-playbook run.yml
 
 ##### Expected Results:
 
-Please enter your expected results in this space.  When running the steps supplied above in the previous section, what did you expect to happen?  If showing example output, please indent your output by four spaces so it will render correctly in GitHub's viewer thingy.
+Change user group for user "test1" from groups=1002(test1),88(mysql),60(cyrus) to  groups=1002(test1),88(mysql)
 
 ##### Actual Results:
 
-Please enter your actual results in this space.  When running the steps supplied above, what actually happened?  If you are showing example output, please indent your output by four spaces so it will render correctly in GitHub.  Thanks again!
+Still all old groups for user "test1"  
+uid=1002(test1) gid=1002(test1) groups=1002(test1),88(mysql),60(cyrus)
+
 
