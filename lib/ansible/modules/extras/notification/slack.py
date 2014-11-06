@@ -105,8 +105,7 @@ EXAMPLES = """
 
 """
 
-
-SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
+SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
 def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse):
     payload = dict(text=text)
@@ -128,11 +127,11 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     return payload
 
 def do_notify_slack(module, domain, token, payload):
-    slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (domain, token)
+    slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (token)
 
     response, info = fetch_url(module, slack_incoming_webhook, data=payload)
     if info['status'] != 200:
-        obscured_incoming_webhook = SLACK_INCOMING_WEBHOOK % (domain, '[obscured]')
+        obscured_incoming_webhook = SLACK_INCOMING_WEBHOOK % ('[obscured]')
         module.fail_json(msg=" failed to send %s to %s: %s" % (payload, obscured_incoming_webhook, info['msg']))
 
 def main():
