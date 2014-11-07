@@ -154,7 +154,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10):
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
 
-    # create a temporary file and copy content to do md5-based replacement
+    # create a temporary file and copy content to do checksum-based replacement
     if info['status'] != 200:
         module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
 
@@ -241,8 +241,8 @@ def main():
             filename = url_filename(info['url'])
         dest = os.path.join(dest, filename)
 
-    md5sum_src   = None
-    md5sum_dest  = None
+    checksum_src   = None
+    checksum_dest  = None
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
@@ -251,7 +251,7 @@ def main():
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
         module.fail_json( msg="Source %s not readable" % (tmpsrc))
-    md5sum_src = module.md5(tmpsrc)
+    checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
     if os.path.exists(dest):
@@ -262,13 +262,13 @@ def main():
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination %s not readable" % (dest))
-        md5sum_dest = module.md5(dest)
+        checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
 
-    if md5sum_src != md5sum_dest:
+    if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
@@ -303,8 +303,15 @@ def main():
     file_args['path'] = dest
     changed = module.set_fs_attributes_if_different(file_args, changed)
 
+    # Backwards compat only.  We'll return None on FIPS enabled systems
+    try:
+        md5sum = module.md5(dest)
+    except ValueError:
+        md5sum = None
+
     # Mission complete
-    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
+
+    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum, checksum=checksum_src,
         sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
 
 # import module snippets
