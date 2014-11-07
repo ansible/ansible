@@ -71,6 +71,10 @@ options:
     aliases: [ "service" ]
     required: true
     default: null
+  servicegroup:
+    description:
+      - the Servicegroup we want to set downtimes/alerts for.
+      B(Required) option when using the C(servicegroup_service_downtime) amd C(servicegroup_host_downtime).
   command:
     description:
       - The raw command to send to nagios, which
