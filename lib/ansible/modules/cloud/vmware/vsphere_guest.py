@@ -207,7 +207,7 @@ EXAMPLES = '''
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
 
 # Remove a vm from vSphere
-# The VM must be powered_off of you need to use force to force a shutdown
+# The VM must be powered_off or you need to use force to force a shutdown
 
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
