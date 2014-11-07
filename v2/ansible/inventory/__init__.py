@@ -25,16 +25,23 @@ from . group import Group
 from . host import Host
 
 ### List of things to change in Inventory
+
 ### Replace some lists with sets/frozensets.
 ###    Check where this makes sense to reveal externally
+
 ### Rename all caches to *_cache
+
 ### Standardize how caches are flushed for all caches if possible
+
 ### Think about whether retrieving variables should be methods of the
 ###     Groups/Hosts being queried with caches at that level
+
 ### Store things into a VarManager instead of inventory
+
 ### Merge list_hosts() and get_hosts()
 ### Merge list_groups() and groups_list()
 ### Merge get_variables() and get_host_variables()
+
 ### Restrictions:
 ###   Remove get_restriction()
 ###   Prefix restrict_to and lift_restriction with _ and note in docstring that
@@ -43,7 +50,10 @@ from . host import Host
 ###   Can we get rid of restrictions altogether?
 ###   If we must keep restrictions, reimplement as a stack of sets.  Then
 ###       calling code will push and pop restrictions onto the inventory
+###   (mpdehaan +1'd stack idea)
+
 ### is_file() and basedir() => Change to properties
+
 ### Can we move the playbook variable resolving to someplace else?  Seems that:
 ###     1) It can change within a single session
 ###     2) Inventory shouldn't know about playbook.
@@ -55,10 +65,20 @@ from . host import Host
 ###         the value of a variable is
 ###     Either of these results in getting rid of/moving to another class
 ###         Inventory.playbook_basedir() and Inventory.set_playbook_basedir()
+### mpdehaan: evaluate caching and make sure we're just caching once.  (Toshio: tie
+###    this in with storing and retrieving variables via Host and Group objects
+### mpdehaan: If it's possible, move templating entirely out of inventory
+###    (Toshio: If it's possible, implement this by storing inside of
+###    VariableManager which will handle resolving templated variables)
 
 
 ### Questiony things:
 ### Do we want patterns to apply to both groups and hosts or only to hosts?
+###     jimi-c: Current code should do both as we're parsing things you can
+###     give to the -i commandline switch which can mix hosts and groups.
+###     like:  `hosts: group1:group2&host3`
+###     toshio: should we move parsing the commandline out and then have that
+###     cli parser pass in a distinct list of hosts to add?
 ### Think about whether we could and want to go through the pattern_cache for
 ###    standard lookups
 ### Is this the current architecture:
@@ -73,8 +93,16 @@ from . host import Host
 ###         group_vars/*
 ###    Do we want to change this so that multiple sources are allowed?
 ###    ansible -i /etc/ansible,./inventory,/opt/ansible/inventory_plugins/ec2.py,localhost
+###    jimi-c: We don't currently have multiple inventory sources explicitly
+###       allowed but you can specify an inventory directory and then have multiple
+###       sources inside of that.
+###    toshio: So do we want to make that available to people since we have to do it anyway?
+###    jimi-c: Also, what calls Inventory? TaskExecutor probably makes sense in v2
 ### What are vars_loaders?  What's their scope?  Why aren't the parsing of
 ###    inventory files and scripts implemented as a vars_loader?
+###    jimi-c: vars_loaders are plugins to do additional variable loading.
+###        svg has some inhouse.
+###        Could theoretically rewrite the current loading to be handled by a plugin
 ### If we have add_group(), why no merge_group()?
 ### group = inven.get_group(name)
 ### if not group:
