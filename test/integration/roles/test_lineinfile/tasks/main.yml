@@ -38,14 +38,22 @@
     - "result.msg == 'line added'"
     - "result.backup != ''"
 
+- name: save the backup_name
+  set_fact: backup_name={{result.backup}}
+
 - name: stat the backup file
-  stat: path={{result.backup}}
+  stat: path={{backup_name}}
   register: result
+
+- name: save the backup md5
+  set_fact: backup_md5={{result.stat.md5}}
 
 - name: assert the backup file matches the previous md5
   assert:
     that:
     - "result.stat.md5 == '6be7fb7fa7fb758c80a6dc0722979c40'"
+  register: result
+
 
 - name: stat the test after the insert at the head
   stat: path={{output_dir}}/test.txt
@@ -354,5 +362,31 @@
   assert:
     that:
     - "result.stat.md5 == 'fbe9c4ba2490f70eb1974ce31ec4a39f'"
+
+#
+# The backup extension is time based with a resolution of one minute.
+#
+# The following sleep help testing that a file modified multiple times
+# in the same run has only one backup file.
+#
+- name: wait 61 secs
+  command: /bin/sleep 61
+
+- name: add one more line
+  lineinfile: dest={{output_dir}}/test.txt state=present line="one more line" backup=yes
+  register: result
+
+- name: assert backup name
+  assert:
+    that:
+      - "result.backup == backup_name"
+
+- name: stat backup
+  stat: path={{result.backup}}
+  register: result
+
+- name: assert backup md5
+  assert:
+    that: 'result.stat.md5 == backup_md5'
 
 ###################################################################
