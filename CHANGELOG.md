@@ -58,7 +58,14 @@ Some other notable changes:
 * ec2_ami_search: support for SSD and IOPS provisioned EBS images
 * can set ansible_sudo_exe as an inventory variable which allows specifying
   a different sudo (or equivalent) command
-* git module: Submodule handling has changed.  Previously if you used the ``recursive`` parameter to handle submodules, ansible would track the submodule upstream's head revision.  This has been changed to checkout the version of the submodule specified in the superproject's git repository.  This is inline with what git submodule update does.  If you want the old behaviour use the new module parameter track_submodules=yes
+* git module: Submodule handling has changed.  Previously if you used the
+  ``recursive`` parameter to handle submodules, ansible would track the
+  submodule upstream's head revision.  This has been changed to checkout the
+  version of the submodule specified in the superproject's git repository.
+  This is inline with what git submodule update does.  If you want the old
+  behaviour use the new module parameter track_submodules=yes
+* Checksumming of transferred files has been made more portable and now uses
+  the sha1 algorithm instead of md5 to be compatible with FIPS-140.
 
 And various other bug fixes and improvements ...
 

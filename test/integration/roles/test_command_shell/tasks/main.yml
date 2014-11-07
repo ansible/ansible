@@ -185,7 +185,7 @@
     "multiline echo" \
     "with a new line
     in quotes" \
-    | md5sum \
+    | sha1sum \
     | tr -s ' ' \
     | cut -f1 -d ' '
     echo "this is a second line"
@@ -197,7 +197,7 @@
   assert:
     that:
       - "shell_result6.changed"
-      - "shell_result6.stdout == '32f3cc201b69ed8afa3902b80f554ca8\nthis is a second line'"
+      - "shell_result6.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'"
 
 - name: execute a shell command using a literal multiline block with arguments in it
   shell: |

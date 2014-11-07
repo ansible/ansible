@@ -53,9 +53,9 @@ from ansible.utils import update_hash
 module_replacer = ModuleReplacer(strip_comments=False)
 
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1
 except ImportError:
-    from md5 import md5 as _md5
+    from sha import sha as sha1
 
 HAS_ATFORK=True
 try:
@@ -209,7 +209,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
-        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+        self.omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
@@ -1159,26 +1159,29 @@ class Runner(object):
 
     # *****************************************************
 
-    def _remote_md5(self, conn, tmp, path):
-        ''' takes a remote md5sum without requiring python, and returns 1 if no file '''
-        cmd = conn.shell.md5(path)
+    def _remote_checksum(self, conn, tmp, path):
+        ''' takes a remote checksum and returns 1 if no file '''
+        inject = self.get_inject_vars(conn.host)
+        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+        python_interp = hostvars[conn.host].get('ansible_python_interpreter', 'python')
+        cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
             if data2 == '':
                 # this may happen if the connection to the remote server
-                # failed, so just return "INVALIDMD5SUM" to avoid errors
-                return "INVALIDMD5SUM"
+                # failed, so just return "INVALIDCHECKSUM" to avoid errors
+                return "INVALIDCHECKSUM"
             else:
                 return data2.split()[0]
         except IndexError:
-            sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
-            sys.stderr.write("command: %s\n" % md5s)
+            sys.stderr.write("warning: Calculating checksum failed unusually, please report this to the list so it can be fixed\n")
+            sys.stderr.write("command: %s\n" % cmd)
             sys.stderr.write("----\n")
             sys.stderr.write("output: %s\n" % data)
             sys.stderr.write("----\n")
             # this will signal that it changed and allow things to keep going
-            return "INVALIDMD5SUM"
+            return "INVALIDCHECKSUM"
 
     # *****************************************************
 

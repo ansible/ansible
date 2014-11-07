@@ -12,7 +12,7 @@
     - "install_systemd_result.dest == '/usr/lib/systemd/system/ansible_test.service'"
     - "install_systemd_result.state == 'file'"
     - "install_systemd_result.mode == '0644'"
-    - "install_systemd_result.md5sum == '6be64a1e44e9e72a467e70a0b562444f'"
+    - "install_systemd_result.checksum == 'ca4b413fdf3cb2002f51893b9e42d2e449ec5afb'"
     - "install_broken_systemd_result.dest == '/usr/lib/systemd/system/ansible_test_broken.service'"
     - "install_broken_systemd_result.state == 'link'"
 

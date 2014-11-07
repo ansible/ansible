@@ -59,23 +59,17 @@ class ShellModule(object):
         cmd += ' && echo %s' % basetmp
         return cmd
 
-    def md5(self, path):
+    def checksum(self, path, python_interp):
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
         test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && echo 3 && exit 0" % ((path,) * 3)
-        md5s = [
-            "(/usr/bin/md5sum %s 2>/dev/null)" % path,          # Linux
-            "(/sbin/md5sum -q %s 2>/dev/null)" % path,          # ?
-            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
-            "(/sbin/md5 -q %s 2>/dev/null)" % path,             # Freebsd
-            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,          # Netbsd
-            "(/bin/md5 -q %s 2>/dev/null)" % path,              # Openbsd
-            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path,     # AIX
-            "(/bin/csum -h MD5 %s 2>/dev/null)" % path          # AIX also
+        csums = [
+            "(%s -c 'import hashlib; print(hashlib.sha1(open(\"%s\", \"rb\").read()).hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python > 2.4 (including python3)
+            "(%s -c 'import sha; print(sha.sha(open(\"%s\", \"rb\").read()).hexdigest())' 2>/dev/null)" % (python_interp, path),        # Python == 2.4
         ]
 
-        cmd = " || ".join(md5s)
+        cmd = " || ".join(csums)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
         return cmd
 

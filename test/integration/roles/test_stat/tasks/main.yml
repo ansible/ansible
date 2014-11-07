@@ -46,6 +46,8 @@
         - "'isuid' in stat_result.stat" 
         - "'md5' in stat_result.stat"
         - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'" 
+        - "'checksum' in stat_result.stat"
+        - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat" # why is this 420?
         - "'mtime' in stat_result.stat" 
         - "'nlink' in stat_result.stat" 

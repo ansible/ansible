@@ -7,7 +7,7 @@ from nose.tools import timed
 
 from ansible import errors
 from ansible.module_common import ModuleReplacer
-from ansible.utils import md5 as utils_md5
+from ansible.utils import checksum as utils_checksum
 
 TEST_MODULE_DATA = """
 from ansible.module_utils.basic import *
@@ -113,8 +113,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             (rc, out, err) = self.module.run_command('echo "foo bar" > %s' % tmp_path, use_unsafe_shell=True)
             self.assertEqual(rc, 0)
             self.assertTrue(os.path.exists(tmp_path))
-            md5sum = utils_md5(tmp_path)
-            self.assertEqual(md5sum, '5ceaa7ed396ccb8e959c02753cb4bd18')
+            checksum = utils_checksum(tmp_path)
+            self.assertEqual(checksum, 'd53a205a336e07cf9eac45471b3870f9489288ec')
         except:
             raise
         finally:
@@ -127,8 +127,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             (rc, out, err) = self.module.run_command('echo "foo bar" >> %s' % tmp_path, use_unsafe_shell=True)
             self.assertEqual(rc, 0)
             self.assertTrue(os.path.exists(tmp_path))
-            md5sum = utils_md5(tmp_path)
-            self.assertEqual(md5sum, '5ceaa7ed396ccb8e959c02753cb4bd18')
+            checksum = utils_checksum(tmp_path)
+            self.assertEqual(checksum, 'd53a205a336e07cf9eac45471b3870f9489288ec')
         except:
             raise
         finally:

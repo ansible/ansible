@@ -62,8 +62,8 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
-        if remote_md5 != '3':
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest)
+        if remote_checksum != '3':
             result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
