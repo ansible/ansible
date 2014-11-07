@@ -34,13 +34,14 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
-  validate_md5:
+  validate_checksum:
     version_added: "1.4"
     description:
-      - Verify that the source and destination md5sums match after the files are fetched.
+      - Verify that the source and destination checksums match after the files are fetched.
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
+    aliases: [ "validate_md5" ]
   flat:
     version_added: "1.2"
     description:

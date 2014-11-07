@@ -36,10 +36,17 @@ options:
     aliases: []
   get_md5:
     description:
-      - Whether to return the md5 sum of the file
+      - Whether to return the md5 sum of the file.  Will return None if we're unable to use md5 (Common for FIPS-140 compliant systems)
     required: false
     default: yes
     aliases: []
+  get_checksum:
+    description:
+      - Whether to return a checksum of the file (currently sha1)
+    required: false
+    default: yes
+    aliases: []
+    version_added: "1.8"
 author: Bruce Pennypacker
 '''
 
@@ -73,7 +80,8 @@ def main():
         argument_spec = dict(
             path = dict(required=True),
             follow = dict(default='no', type='bool'),
-            get_md5 = dict(default='yes', type='bool')
+            get_md5 = dict(default='yes', type='bool'),
+            get_checksum = dict(default='yes', type='bool')
         ),
         supports_check_mode = True
     )
@@ -82,6 +90,7 @@ def main():
     path = os.path.expanduser(path)
     follow = module.params.get('follow')
     get_md5 = module.params.get('get_md5')
+    get_checksum = module.params.get('get_checksum')
 
     try:
         if follow:
@@ -135,7 +144,14 @@ def main():
         d['lnk_source'] = os.path.realpath(path)
 
     if S_ISREG(mode) and get_md5 and os.access(path,os.R_OK):
-        d['md5']       = module.md5(path)
+        # Will fail on FIPS-140 compliant systems
+        try:
+            d['md5']       = module.md5(path)
+        except ValueError:
+            d['md5']       = None
+
+    if S_ISREG(mode) and get_checksum and os.access(path,os.R_OK):
+        d['checksum']       = module.sha1(path)
 
 
     try:

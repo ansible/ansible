@@ -153,8 +153,9 @@ def main():
     )
 
     changed   = False
-    pathmd5   = None
-    destmd5   = None
+    path_md5    = None   # Deprecated
+    path_hash   = None
+    dest_hash   = None
     src       = os.path.expanduser(module.params['src'])
     dest      = os.path.expanduser(module.params['dest'])
     backup    = module.params['backup']
@@ -175,23 +176,29 @@ def main():
             module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (e, regexp))
 
     path = assemble_from_fragments(src, delimiter, compiled_regexp)
-    pathmd5 = module.md5(path)
+    path_hash = module.sha1(path)
 
     if os.path.exists(dest):
-        destmd5 = module.md5(dest)
+        dest_hash = module.sha1(dest)
 
-    if pathmd5 != destmd5:
-        if backup and destmd5 is not None:
+    if path_hash != dest_hash:
+        if backup and dest_hash is not None:
             module.backup_local(dest)
         shutil.copy(path, dest)
         changed = True
+
+    # Backwards compat.  This won't return data if FIPS mode is active
+    try:
+        pathmd5 = module.md5(path)
+    except ValueError:
+        pathmd5 = None
 
     os.remove(path)
 
     file_args = module.load_file_common_arguments(module.params)
     changed = module.set_fs_attributes_if_different(file_args, changed)
     # Mission complete
-    module.exit_json(src=src, dest=dest, md5sum=pathmd5, changed=changed, msg="OK")
+    module.exit_json(src=src, dest=dest, md5sum=pathmd5, checksum=path_hash, changed=changed, msg="OK")
 
 # import module snippets
 from ansible.module_utils.basic import *

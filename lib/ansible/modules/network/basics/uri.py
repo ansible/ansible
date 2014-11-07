@@ -194,8 +194,8 @@ def write_file(module, url, dest, content):
         module.fail_json(msg="failed to create temporary content file: %s" % str(err))
     f.close()
  
-    md5sum_src   = None
-    md5sum_dest  = None
+    checksum_src   = None
+    checksum_dest  = None
  
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
@@ -204,7 +204,7 @@ def write_file(module, url, dest, content):
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
         module.fail_json( msg="Source %s not readable" % (tmpsrc))
-    md5sum_src = module.md5(tmpsrc)
+    checksum_src = module.sha1(tmpsrc)
  
     # check if there is no dest file
     if os.path.exists(dest):
@@ -215,19 +215,19 @@ def write_file(module, url, dest, content):
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination %s not readable" % (dest))
-        md5sum_dest = module.md5(dest)
+        checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json( msg="Destination dir %s not writable" % (os.path.dirname(dest)))
-     
-    if md5sum_src != md5sum_dest:
+
+    if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
- 
+
     os.remove(tmpsrc)
 
 
