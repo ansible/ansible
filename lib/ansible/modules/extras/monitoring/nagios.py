@@ -33,7 +33,8 @@ options:
     required: true
     default: null
     choices: [ "downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
-               "silence_nagios", "unsilence_nagios", "command" ]
+               "silence_nagios", "unsilence_nagios", "command", "servicegroup_service_downtime",
+               "servicegroup_host_downtime" ]
   host:
     description:
       - Host to operate on in Nagios.
@@ -98,6 +99,12 @@ EXAMPLES = '''
 
 # schedule downtime for a few services
 - nagios: action=downtime services=frob,foobar,qeuz host={{ inventory_hostname }}
+
+# set 30 minutes downtime for all services in servicegroup foo
+- nagios: action=servicegroup_service_downtime minutes=30 servicegroup=foo host={{ inventory_hostname }}
+
+# set 30 minutes downtime for all host in servicegroup foo
+- nagios: action=servicegroup_host_downtime minutes=30 servicegroup=foo host={{ inventory_hostname }}
 
 # enable SMART disk alerts
 - nagios: action=enable_alerts service=smart host={{ inventory_hostname }}
@@ -178,8 +185,10 @@ def main():
         'silence_nagios',
         'unsilence_nagios',
         'command',
-        'servicegroup_downtime'
+        'servicegroup_host_downtime',
+        'servicegroup_service_downtime',
         ]
+
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -232,8 +241,8 @@ def main():
 
     ######################################################################
 
-    if action == 'servicegroup_downtime':
-        # Make sure there's an actual service selected
+    if action in ['servicegroup_service_downtime', 'servicegroup_host_downtime']:
+        # Make sure there's an actual servicegroup selected
         if not servicegroup:
             module.fail_json(msg='no servicegroup selected to set downtime for')
         # Make sure minutes is a number
@@ -879,7 +888,10 @@ class Nagios(object):
                 self.schedule_svc_downtime(self.host,
                                            services=self.services,
                                            minutes=self.minutes)
-        if self.action == "servicegroup_downtime":
+        elif self.action == "servicegroup_host_downtime":
+            if self.services  == 'servicegroup':
+                self.schedule_servicegroup_host_downtime(self, self.servicegroup, minutes=30)
+        elif self.action == "servicegroup_service_downtime":
             if self.services  == 'servicegroup':
                 self.schedule_servicegroup_host_downtime(self, self.servicegroup, minutes=30)
 
