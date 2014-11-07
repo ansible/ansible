@@ -217,7 +217,7 @@ def main():
     # 'minutes' and 'service' manually.
 
     ##################################################################
-    if action not in ['command', 'silence_nagios', 'unsilence_nagios', 'servicegroup_downtime']:
+    if action not in ['command', 'silence_nagios', 'unsilence_nagios']:
         if not host:
             module.fail_json(msg='no host specified for action requiring one')
     ######################################################################
@@ -289,7 +289,7 @@ class Nagios(object):
         self.action = kwargs['action']
         self.author = kwargs['author']
         self.host = kwargs['host']
-        self.service_group = kwargs['servicegroup']
+        self.servicegroup = kwargs['servicegroup']
         self.minutes = int(kwargs['minutes'])
         self.cmdfile = kwargs['cmdfile']
         self.command = kwargs['command']
@@ -879,11 +879,11 @@ class Nagios(object):
                                            services=self.services,
                                            minutes=self.minutes)
         elif self.action == "servicegroup_host_downtime":
-            if self.services  == 'servicegroup':
-                self.schedule_servicegroup_host_downtime(self, self.servicegroup, minutes=30)
+            if self.servicegroup:
+                self.schedule_servicegroup_host_downtime(servicegroup = self.servicegroup, minutes = self.minutes)
         elif self.action == "servicegroup_service_downtime":
-            if self.services  == 'servicegroup':
-                self.schedule_servicegroup_host_downtime(self, self.servicegroup, minutes=30)
+            if self.servicegroup:
+                self.schedule_servicegroup_svc_downtime(servicegroup = self.servicegroup, minutes = self.minutes)
 
         # toggle the host AND service alerts
         elif self.action == 'silence':
