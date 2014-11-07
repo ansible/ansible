@@ -113,7 +113,7 @@ def main():
         changed = True
 
     if state == 'present' and deployed:
-        if module.md5(src) != module.md5(os.path.join(deploy_path, deployment)):
+        if module.sha1(src) != module.sha1(os.path.join(deploy_path, deployment)):
             os.remove(os.path.join(deploy_path, "%s.deployed"%(deployment)))
             shutil.copyfile(src, os.path.join(deploy_path, deployment))
             deployed = False
