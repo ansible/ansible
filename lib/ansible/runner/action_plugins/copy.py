@@ -27,6 +27,8 @@ import json
 import stat
 import tempfile
 import pipes
+import time
+from ansible.module_utils.basic import TOUCH_DATETIME_FORMAT
 
 ## fixes https://github.com/ansible/ansible/issues/3518
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
@@ -193,6 +195,20 @@ class ActionModule(object):
                 # remote_file does not exist so continue to next iteration.
                 continue
 
+            # check if we need to retain exact permissions and ownership of the source file
+            module_args_tmp = module_args
+            archive = options.get('archive', None)
+            if (archive is not None and utils.boolean(archive) is True):
+                source_stat = os.stat(source_full)
+                new_module_args = dict(
+                    mode=oct(source_stat.st_mode & 0777),
+                    owner=str(source_stat.st_uid),
+                    group=str(source_stat.st_gid),
+                    mtime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_mtime)),
+                    atime=time.strftime(TOUCH_DATETIME_FORMAT, time.localtime(source_stat.st_atime))
+                )
+                module_args_tmp = utils.merge_module_args(module_args_tmp, new_module_args)
+
             if local_md5 != remote_md5:
                 # The MD5 hashes don't match and we will change or error out.
                 changed = True
@@ -248,7 +264,7 @@ class ActionModule(object):
                 if self.runner.no_log:
                     new_module_args['NO_LOG'] = True
 
-                module_args_tmp = utils.merge_module_args(module_args, new_module_args)
+                module_args_tmp = utils.merge_module_args(module_args_tmp, new_module_args)
 
                 module_return = self.runner._execute_module(conn, tmp_path, 'copy', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
@@ -276,7 +292,7 @@ class ActionModule(object):
                 if self.runner.no_log:
                     new_module_args['NO_LOG'] = True
 
-                module_args_tmp = utils.merge_module_args(module_args, new_module_args)
+                module_args_tmp = utils.merge_module_args(module_args_tmp, new_module_args)
 
                 # Execute the file module.
                 module_return = self.runner._execute_module(conn, tmp_path, 'file', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
