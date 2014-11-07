@@ -87,8 +87,13 @@ except ImportError:
 
 HAVE_HASHLIB=False
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1 as _sha1
     HAVE_HASHLIB=True
+except ImportError:
+    from sha import sha as _sha1
+
+try:
+    from hashlib import md5 as _md5
 except ImportError:
     from md5 import md5 as _md5
 
@@ -1235,6 +1240,10 @@ class AnsibleModule(object):
     def md5(self, filename):
         ''' Return MD5 hex digest of local file using digest_from_file(). '''
         return self.digest_from_file(filename, _md5())
+
+    def sha1(self, filename):
+        ''' Return SHA1 hex digest of local file using digest_from_file(). '''
+        return self.digest_from_file(filename, _sha1())
 
     def sha256(self, filename):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''

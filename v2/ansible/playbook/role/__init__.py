@@ -23,7 +23,7 @@ from six import iteritems, string_types
 
 import os
 
-from hashlib import md5
+from hashlib import sha1
 from types import NoneType
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -39,7 +39,7 @@ __all__ = ['Role', 'ROLE_CACHE']
 
 
 # The role cache is used to prevent re-loading roles, which
-# may already exist. Keys into this cache are the MD5 hash
+# may already exist. Keys into this cache are the SHA1 hash
 # of the role definition (for dictionary definitions, this
 # will be based on the repr() of the dictionary object)
 ROLE_CACHE = dict()
@@ -60,7 +60,7 @@ class Role:
         self._handler_blocks   = []
         self._default_vars     = dict()
         self._role_vars        = dict()
-        
+
     def __repr__(self):
         return self.get_name()
 

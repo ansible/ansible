@@ -327,9 +327,9 @@ To work with Base64 encoded strings::
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
 
-To take an md5sum of a filename::
+To take a sha1sum of a filename::
 
-    {{ filename | md5 }}
+    {{ filename | sha1 }}
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::

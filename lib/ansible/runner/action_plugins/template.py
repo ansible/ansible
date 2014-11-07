@@ -87,10 +87,10 @@ class ActionModule(object):
             result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        local_md5 = utils.md5s(resultant)
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+        local_checksum = utils.checksum_s(resultant)
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest)
 
-        if local_md5 != remote_md5:
+        if local_checksum != remote_checksum:
 
             # template is different from the remote value
 

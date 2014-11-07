@@ -27,6 +27,7 @@
         - "'group' in template_result" 
         - "'gid' in template_result" 
         - "'md5sum' in template_result" 
+        - "'checksum' in template_result"
         - "'owner' in template_result" 
         - "'size' in template_result" 
         - "'src' in template_result" 
