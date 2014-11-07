@@ -30,19 +30,19 @@ class VarsModule(object):
         self.inventory_basedir = inventory.basedir()
 
 
-    def run(self, host, vault_password=None):
+    def run(self, host):
         """ For backwards compatibility, when only vars per host were retrieved
             This method should return both host specific vars as well as vars
             calculated from groups it is a member of """
         return {}
 
 
-    def get_host_vars(self, host, vault_password=None):
+    def get_host_vars(self, host):
         """ Get host specific variables. """
         return {}
 
 
-    def get_group_vars(self, group, vault_password=None):
+    def get_group_vars(self, group):
         """ Get group specific variables. """
         return {}
 

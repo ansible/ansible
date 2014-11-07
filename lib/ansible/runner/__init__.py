@@ -91,16 +91,15 @@ def _executor_hook(job_queue, result_queue, new_stdin):
 class HostVars(dict):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, vars_cache, inventory, vault_password=None):
+    def __init__(self, vars_cache, inventory):
         self.vars_cache = vars_cache
         self.inventory = inventory
         self.lookup = {}
         self.update(vars_cache)
-        self.vault_password = vault_password
 
     def __getitem__(self, host):
         if host not in self.lookup:
-            result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
+            result = self.inventory.get_variables(host).copy()
             result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = template.template('.', result, self.vars_cache)
         return self.lookup[host]
@@ -150,7 +149,6 @@ class Runner(object):
         su=False,                           # Are we running our command via su?
         su_user=None,                       # User to su to when running command, ex: 'root'
         su_pass=C.DEFAULT_SU_PASS,
-        vault_pass=None,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         run_once=False,                     # option to enable/disable host bypass loop for a given task
@@ -209,8 +207,8 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.vault_pass       = self.inventory.vault_pass
         self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
-        self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
         self.sudo_exe         = sudo_exe
@@ -603,7 +601,7 @@ class Runner(object):
         return utils.merge_hash(combined_cache, self.vars_cache)
 
     def get_inject_vars(self, host):
-        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        host_variables = self.inventory.get_variables(host)
         combined_cache = self.get_combined_cache()
 
         # use combined_cache and host_variables to template the module_vars
@@ -652,7 +650,7 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+        hostvars = HostVars(inject['combined_cache'], self.inventory)
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)

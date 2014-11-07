@@ -22,11 +22,12 @@ class FakeCallBacks(object):
 class FakeInventory(object):
     def __init__(self):
         self.hosts = {}
+        self.vault_password = None
     def basedir(self):
         return "."        
     def src(self):
         return "fakeinventory"
-    def get_variables(self, host, vault_password=None):
+    def get_variables(self, host):
         if host in self.hosts:
             return self.hosts[host]        
         else:
@@ -59,7 +60,7 @@ class TestMe(unittest.TestCase):
     ########################################
 
     def test_play_constructor(self):
-        # __init__(self, playbook, ds, basedir, vault_password=None)
+        # __init__(self, playbook, ds, basedir)
         playbook = FakePlayBook()
         ds = { "hosts": "localhost"}
         basedir = "."

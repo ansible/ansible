@@ -94,7 +94,7 @@ class ActionModule(object):
                 inv_group = ansible.inventory.Group(name=group)
                 inventory.add_group(inv_group)
                 inventory.get_group('all').add_child_group(inv_group)
-                inv_group.vars = inventory.get_group_variables(group, update_cached=False, vault_password=inventory._vault_password)
+                inv_group.vars = inventory.get_group_variables(group, update_cached=False)
             for host in hosts:
                 if host in self.runner.inventory._vars_per_host:
                     del self.runner.inventory._vars_per_host[host]
