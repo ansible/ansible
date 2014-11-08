@@ -298,31 +298,35 @@ class OpenRCStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         try:
-            with open(self.HOSTNAME_FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('hostname='):
-                        return line[10:].strip('"')
-            return None
+            f = open(self.HOSTNAME_FILE, 'r')
+            for line in f:
+                line = line.strip()
+                if line.startswith('hostname='):
+                    return line[10:].strip('"')
         except Exception, err:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+            self.module.fail_json(msg="failed to read hostname: %s" % str(err))
+        finally:
+            f.close()
+
+        return None
 
     def set_permanent_hostname(self, name):
         try:
-            with open(self.HOSTNAME_FILE, 'r') as f:
-                lines = [x.strip() for x in f]
+            f = open(self.HOSTNAME_FILE, 'r')
+            lines = [x.strip() for x in f]
 
             for i, line in enumerate(lines):
                 if line.startswith('hostname='):
                     lines[i] = 'hostname="%s"' % name
                     break
+            f.close()
 
-            with open(self.HOSTNAME_FILE, 'w') as f:
-                f.write('\n'.join(lines) + '\n')
+            f = open(self.HOSTNAME_FILE, 'w')
+            f.write('\n'.join(lines) + '\n')
         except Exception, err:
-            self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+            self.module.fail_json(msg="failed to update hostname: %s" % str(err))
+        finally:
+            f.close()
 
 # ===========================================
 
