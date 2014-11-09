@@ -19,14 +19,64 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.parsing.yaml import DataLoader
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.play import Play
+from ansible.plugins import push_basedir
+
+
+__all__ = ['Playbook']
+
+
 class Playbook:
-    def __init__(self, filename):
-        self.ds = v2.utils.load_yaml_from_file(filename)
-        self.plays = []
 
-    def load(self):
-        # loads a list of plays from the parsed ds
-        self.plays = []
+    def __init__(self, loader=None):
+        # Entries in the datastructure of a playbook may
+        # be either a play or an include statement
+        self._entries = []
+        self._basedir = '.'
 
-    def get_plays(self):
-        return self.plays
+        if loader:
+            self._loader = loader
+        else:
+            self._loader = DataLoader()
+
+    @staticmethod
+    def load(file_name, loader=None):
+        pb = Playbook(loader=loader)
+        pb._load_playbook_data(file_name)
+        return pb
+
+    def _load_playbook_data(self, file_name):
+
+        # add the base directory of the file to the data loader,
+        # so that it knows where to find relatively pathed files
+        basedir = os.path.dirname(file_name)
+        self._loader.set_basedir(basedir)
+
+        # also add the basedir to the list of module directories
+        push_basedir(basedir)
+
+        ds = self._loader.load_from_file(file_name)
+        if not isinstance(ds, list):
+            raise AnsibleParserError("playbooks must be a list of plays", obj=ds)
+
+        # Parse the playbook entries. For plays, we simply parse them
+        # using the Play() object, and includes are parsed using the
+        # PlaybookInclude() object
+        for entry in ds:
+            if not isinstance(entry, dict):
+                raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
+
+            if 'include' in entry:
+                entry_obj = PlaybookInclude.load(entry, loader=self._loader)
+            else:
+                entry_obj = Play.load(entry, loader=self._loader)
+
+            self._entries.append(entry_obj)
+
+    def get_entries(self):
+        return self._entries[:]

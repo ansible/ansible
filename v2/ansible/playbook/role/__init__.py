@@ -23,14 +23,14 @@ from six import iteritems, string_types
 
 import os
 
-from hashlib import md5
+from hashlib import sha1
 from types import NoneType
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing.yaml import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.block import Block
+from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 
@@ -39,7 +39,7 @@ __all__ = ['Role', 'ROLE_CACHE']
 
 
 # The role cache is used to prevent re-loading roles, which
-# may already exist. Keys into this cache are the MD5 hash
+# may already exist. Keys into this cache are the SHA1 hash
 # of the role definition (for dictionary definitions, this
 # will be based on the repr() of the dictionary object)
 ROLE_CACHE = dict()
@@ -60,7 +60,7 @@ class Role:
         self._handler_blocks   = []
         self._default_vars     = dict()
         self._role_vars        = dict()
-        
+
     def __repr__(self):
         return self.get_name()
 
@@ -87,6 +87,10 @@ class Role:
         if parent_role:
             self.add_parent(parent_role)
 
+        # save the current base directory for the loader and set it to the current role path
+        cur_basedir = self._loader.get_basedir()
+        self._loader.set_basedir(self._role_path)
+
         # load the role's files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
@@ -95,11 +99,11 @@ class Role:
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = self._load_list_of_blocks(task_data)
+            self._task_blocks = load_list_of_blocks(task_data, role=self, loader=self._loader)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = self._load_list_of_blocks(handler_data)
+            self._handler_blocks = load_list_of_blocks(handler_data, role=self, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars    = self._load_role_yaml('vars')
@@ -109,6 +113,9 @@ class Role:
         self._default_vars = self._load_role_yaml('defaults')
         if not isinstance(self._default_vars, (dict, NoneType)):
             raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
+
+        # and finally restore the previous base directory
+        self._loader.set_basedir(cur_basedir)
 
     def _load_role_yaml(self, subdir):
         file_path = os.path.join(self._role_path, subdir)
@@ -134,23 +141,6 @@ class Role:
                 if self._loader.is_file(m):
                     return m # exactly one main file
             return possible_mains[0] # zero mains (we still need to return something)
-
-    def _load_list_of_blocks(self, ds):
-        '''
-        Given a list of mixed task/block data (parsed from YAML),
-        return a list of Block() objects, where implicit blocks
-        are created for each bare Task.
-        '''
-
-        assert type(ds) in (list, NoneType)
-
-        block_list = []
-        if ds:
-            for block in ds:
-                b = Block(block)
-                block_list.append(b)
-
-        return block_list
 
     def _load_dependencies(self):
         '''
@@ -202,4 +192,27 @@ class Role:
                     child_deps.append(dep_dep)
 
         return direct_deps + child_deps
+
+    def get_task_blocks(self):
+        return self._task_blocks[:]
+
+    def get_handler_blocks(self):
+        return self._handler_blocks[:]
+
+    def compile(self):
+        '''
+        Returns the task list for this role, which is created by first
+        recursively compiling the tasks for all direct dependencies, and
+        then adding on the tasks for this role.
+        '''
+
+        task_list = []
+
+        deps = self.get_direct_dependencies()
+        for dep in deps:
+            task_list.extend(dep.compile())
+
+        task_list.extend(compile_block_list(self._task_blocks))
+
+        return task_list
 

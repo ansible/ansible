@@ -51,7 +51,7 @@ class TestErrors(unittest.TestCase):
         mock_method.return_value = ('this is line 1\n', '')
         e = AnsibleError(self.message, self.obj)
 
-        self.assertEqual(e.message, "This is the error message\nThe error appears to have been in 'foo.yml': line 1, column 1,\nbut may actually be before there depending on the exact syntax problem.\n\nthis is line 1\n^\n")
+        self.assertEqual(e.message, "This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nthis is line 1\n^\n")
 
     def test_get_error_lines_from_file(self):
         m = mock_open()
@@ -63,12 +63,12 @@ class TestErrors(unittest.TestCase):
             self.obj._line_number   = 1
             self.obj._column_number = 1
             e = AnsibleError(self.message, self.obj)
-            self.assertEqual(e.message, "This is the error message\nThe error appears to have been in 'foo.yml': line 1, column 1,\nbut may actually be before there depending on the exact syntax problem.\n\nthis is line 1\n^\n")
+            self.assertEqual(e.message, "This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nthis is line 1\n^\n")
 
             # this line will not be found, as it is out of the index range
             self.obj._data_source   = 'foo.yml'
             self.obj._line_number   = 2
             self.obj._column_number = 1
             e = AnsibleError(self.message, self.obj)
-            self.assertEqual(e.message, "This is the error message\nThe error appears to have been in 'foo.yml': line 2, column 1,\nbut may actually be before there depending on the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
+            self.assertEqual(e.message, "This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
         

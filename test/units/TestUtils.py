@@ -366,6 +366,16 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.md5(os.path.join(os.path.dirname(__file__), 'ansible.cf')),
                          None)
 
+    def test_checksum_s(self):
+        self.assertEqual(ansible.utils.checksum_s('ansible'), 'bef45157a43c9e5f469d188810814a4a8ab9f2ed')
+        # Need a test that causes UnicodeEncodeError See 4221
+
+    def test_checksum(self):
+        self.assertEqual(ansible.utils.checksum(os.path.join(os.path.dirname(__file__), 'ansible.cfg')),
+                         '658b67c8ac7595adde7048425ff1f9aba270721a')
+        self.assertEqual(ansible.utils.md5(os.path.join(os.path.dirname(__file__), 'ansible.cf')),
+                         None)
+
     def test_default(self):
         self.assertEqual(ansible.utils.default(None, lambda: {}), {})
         self.assertEqual(ansible.utils.default(dict(foo='bar'), lambda: {}), dict(foo='bar'))

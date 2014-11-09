@@ -48,9 +48,12 @@ class AnsibleError(Exception):
         if isinstance(self._obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error:
-                self.message = '%s\n%s' % (message, extended_error)
+                self.message = '%s\n\n%s' % (message, extended_error)
         else:
             self.message = message
+
+    def __str__(self):
+        return self.message
 
     def __repr__(self):
         return self.message
@@ -129,7 +132,7 @@ class AnsibleError(Exception):
                             if unbalanced:
                                 error_message += YAML_COMMON_UNBALANCED_QUOTES_ERROR
 
-        except IOError:
+        except (IOError, TypeError):
             error_message += '\n(could not open file to display line)'
         except IndexError:
             error_message += '\n(specified line no longer in file, maybe it changed?)'

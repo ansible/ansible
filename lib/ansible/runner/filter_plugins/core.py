@@ -26,7 +26,7 @@ import re
 import collections
 import operator as py_operator
 from ansible import errors
-from ansible.utils import md5s
+from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom
 from jinja2.filters import environmentfilter
@@ -281,8 +281,13 @@ class FilterModule(object):
             # quote string for shell usage
             'quote': quote,
 
+            # hash filters
             # md5 hex digest of string
             'md5': md5s,
+            # sha1 hex digeset of string
+            'sha1': checksum_s,
+            # checksum of string as used by ansible for checksuming files
+            'checksum': checksum_s,
 
             # file glob
             'fileglob': fileglob,

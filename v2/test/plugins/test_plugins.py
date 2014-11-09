@@ -36,10 +36,6 @@ class TestErrors(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_push_basedir(self):
-        push_basedir('/root/foo/bar')
-        self.assertEqual(_basedirs, ['/root/foo/bar'])
-
     @patch.object(PluginLoader, '_get_paths')
     def test_print_paths(self, mock_method):
         mock_method.return_value = ['/path/one', '/path/two', '/path/three']

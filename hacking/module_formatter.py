@@ -59,6 +59,8 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
+DEPRECATED = " (D)"
+NOTCORE    = " (E)"
 #####################################################################################
 
 def rst_ify(text):
@@ -118,28 +120,53 @@ def write_data(text, options, outputname, module):
 #####################################################################################
 
 
-def list_modules(module_dir):
+def list_modules(module_dir, depth=0):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
-    categories = dict(all=dict())
-    files = glob.glob("%s/*/*" % module_dir)
-    for d in files:
-        if os.path.isdir(d):
-            files2 = glob.glob("%s/*" % d)
-            for f in files2:
+    categories = dict(all=dict(),_aliases=dict())
+    if depth <= 3: # limit # of subdirs
 
-                if not f.endswith(".py") or f.endswith('__init__.py'):
+        files = glob.glob("%s/*" % module_dir)
+        for d in files:
+
+            category = os.path.splitext(os.path.basename(d))[0]
+            if os.path.isdir(d):
+
+                res = list_modules(d, depth + 1)
+                for key in res.keys():
+                    if key in categories:
+                        categories[key] = ansible.utils.merge_hash(categories[key], res[key])
+                        res.pop(key, None)
+
+                if depth < 2:
+                    categories.update(res)
+                else:
+                    category = module_dir.split("/")[-1]
+                    if not category in categories:
+                        categories[category] = res
+                    else:
+                        categories[category].update(res)
+            else:
+                module = category
+                category = os.path.basename(module_dir)
+                if not d.endswith(".py") or d.endswith('__init__.py'):
                     # windows powershell modules have documentation stubs in python docstring
                     # format (they are not executed) so skip the ps1 format files
                     continue
+                elif module.startswith("_") and os.path.islink(d):
+                    source = os.path.splitext(os.path.basename(os.path.realpath(d)))[0]
+                    module = module.replace("_","",1)
+                    if not d in categories['_aliases']:
+                        categories['_aliases'][source] = [module]
+                    else:
+                        categories['_aliases'][source].update(module)
+                    continue
 
-                tokens = f.split("/")
-                module = tokens[-1].replace(".py","")
-                category = tokens[-2]
                 if not category in categories:
                     categories[category] = {}
-                categories[category][module] = f
-                categories['all'][module] = f
+                categories[category][module] = d
+                categories['all'][module] = d
+
     return categories
 
 #####################################################################################
@@ -188,33 +215,48 @@ def jinja2_environment(template_dir, typ):
 
 #####################################################################################
 
-def process_module(module, options, env, template, outputname, module_map):
-
-    print "rendering: %s" % module
-
+def process_module(module, options, env, template, outputname, module_map, aliases):
 
     fname = module_map[module]
+    if isinstance(fname, dict):
+        return "SKIPPED"
+
+    basename = os.path.basename(fname)
+    deprecated = False
 
     # ignore files with extensions
-    if not os.path.basename(fname).endswith(".py"):
+    if not basename.endswith(".py"):
         return
+    elif module.startswith("_"):
+        if os.path.islink(fname):
+            return  # ignore, its an alias
+        deprecated = True
+        module = module.replace("_","",1)
+
+    print "rendering: %s" % module
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
     doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
-    if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
-        sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
-        sys.exit(1)
-
     if doc is None:
-        return "SKIPPED"
+        if module in ansible.utils.module_docs.BLACKLIST_MODULES:
+            return "SKIPPED"
+        else:
+            sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            sys.exit(1)
+
+    if deprecated and 'deprecated' not in doc:
+        sys.stderr.write("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        sys.exit(1)
 
     if "/core/" in fname:
         doc['core'] = True
     else:
         doc['core'] = False
 
+    if module in aliases:
+        doc['aliases'] = aliases[module]
 
     all_keys = []
 
@@ -238,9 +280,10 @@ def process_module(module, options, env, template, outputname, module_map):
 
     for (k,v) in doc['options'].iteritems():
         all_keys.append(k)
-    all_keys = sorted(all_keys)
-    doc['option_keys'] = all_keys
 
+    all_keys = sorted(all_keys)
+
+    doc['option_keys']      = all_keys
     doc['filename']         = fname
     doc['docuri']           = doc['module'].replace('_', '-')
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
@@ -251,12 +294,31 @@ def process_module(module, options, env, template, outputname, module_map):
 
     text = template.render(doc)
     write_data(text, options, outputname, module)
+    return doc['short_description']
 
 #####################################################################################
+
+def print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases):
+    modstring = module
+    modname = module
+    if module in deprecated:
+        modstring = modstring + DEPRECATED
+        modname = "_" + module
+    elif module not in core:
+        modstring = modstring + NOTCORE
+
+    result = process_module(modname, options, env, template, outputname, module_map, aliases)
+
+    if result != "SKIPPED":
+        category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
 
 def process_category(category, categories, options, env, template, outputname):
 
     module_map = categories[category]
+
+    aliases = {}
+    if '_aliases' in categories:
+        aliases = categories['_aliases']
 
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
@@ -267,7 +329,27 @@ def process_category(category, categories, options, env, template, outputname):
     category = category.replace("_"," ")
     category = category.title()
 
-    modules = module_map.keys()
+    modules = []
+    deprecated = []
+    core = []
+    for module in module_map.keys():
+
+        if isinstance(module_map[module], dict):
+            for mod in module_map[module].keys():
+                if mod.startswith("_"):
+                    mod = mod.replace("_","",1)
+                    deprecated.append(mod)
+                elif '/core/' in module_map[module][mod]:
+                    core.append(mod)
+        else:
+            if module.startswith("_"):
+                module = module.replace("_","",1)
+                deprecated.append(module)
+            elif '/core/' in module_map[module]:
+                core.append(module)
+
+        modules.append(module)
+
     modules.sort()
 
     category_header = "%s Modules" % (category.title())
@@ -277,17 +359,34 @@ def process_category(category, categories, options, env, template, outputname):
 %s
 %s
 
-.. toctree::
-   :maxdepth: 1
+.. toctree:: :maxdepth: 1
 
 """ % (category_header, underscores))
-
+    sections = []
     for module in modules:
-        result = process_module(module, options, env, template, outputname, module_map)
-        if result != "SKIPPED":
-            category_file.write("   %s_module\n" % module)
+        if module in module_map and isinstance(module_map[module], dict):
+            sections.append(module)
+            continue
+        else:
+            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases)
 
+    sections.sort()
+    for section in sections:
+        category_file.write("\n%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
+        category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
+        section_modules = module_map[section].keys()
+        section_modules.sort()
+        #for module in module_map[section]:
+        for module in section_modules:
+            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map[section], aliases)
+
+    category_file.write("""\n\n
+.. note::
+    - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.  The module documentation details page may explain more about this rationale.
+    - %s: This marks a module as 'extras', which means it ships with ansible but may be a newer module and possibly (but not neccessarily) less activity maintained than 'core' modules.
+    - Tickets filed on modules are filed to different repos than those on the main open source project. Core module tickets should be filed at `ansible/ansible-modules-core on GitHub <http://github.com/ansible/ansible-modules-core>`_, extras tickets to `ansible/ansible-modules-extras on GitHub <http://github.com/ansible/ansible-modules-extras>`_
+""" % (DEPRECATED, NOTCORE))
     category_file.close()
 
     # TODO: end a new category file
@@ -332,6 +431,8 @@ def main():
     category_list_file.write("   :maxdepth: 1\n\n")
 
     for category in category_names:
+        if category.startswith("_"):
+            continue
         category_list_file.write("   list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)
 

@@ -68,6 +68,14 @@ try:
 except ImportError:
     import simplejson as json
 
+# Note, sha1 is the only hash algorithm compatible with python2.4 and with
+# FIPS-140 mode (as of 11-2014)
+try:
+    from hashlib import sha1 as sha1
+except ImportError:
+    from sha import sha as sha1
+
+# Backwards compat only
 try:
     from hashlib import md5 as _md5
 except ImportError:
@@ -821,22 +829,22 @@ def merge_hash(a, b):
 
     return result
 
-def md5s(data):
-    ''' Return MD5 hex digest of data. '''
+def secure_hash_s(data, hash_func=sha1):
+    ''' Return a secure hash hex digest of data. '''
 
-    digest = _md5()
+    digest = hash_func()
     try:
         digest.update(data)
     except UnicodeEncodeError:
         digest.update(data.encode('utf-8'))
     return digest.hexdigest()
 
-def md5(filename):
-    ''' Return MD5 hex digest of local file, None if file is not present or a directory. '''
+def secure_hash(filename, hash_func=sha1):
+    ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
 
     if not os.path.exists(filename) or os.path.isdir(filename):
         return None
-    digest = _md5()
+    digest = hash_func()
     blocksize = 64 * 1024
     try:
         infile = open(filename, 'rb')
@@ -848,6 +856,19 @@ def md5(filename):
     except IOError, e:
         raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
+
+# The checksum algorithm must match with the algorithm in ShellModule.checksum() method
+checksum = secure_hash
+checksum_s = secure_hash_s
+
+# Backwards compat.  Some modules include md5s in their return values
+# Continue to support that for now.  As of ansible-1.8, all of those modules
+# should also return "checksum" (sha1 for now)
+def md5s(data):
+    return secure_hash_s(data, _md5)
+
+def md5(filename):
+    return secure_hash(filename, _md5)
 
 def default(value, function):
     ''' syntactic sugar around lazy evaluation of defaults '''

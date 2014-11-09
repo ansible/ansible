@@ -30,6 +30,8 @@ from io import BytesIO
 from subprocess import call
 from ansible import errors
 from hashlib import sha256
+# Note: Only used for loading obsolete VaultAES files.  All files are written
+# using the newer VaultAES256 which does not require md5
 from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify

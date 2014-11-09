@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Brian Coca, Josh Drake, et al
 #
 # This file is part of Ansible
 #
@@ -15,22 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from ansible.plugins.cache.base import BaseCacheModule
 
-class HostPlaybookIterator:
+class CacheModule(BaseCacheModule):
 
-   def __init__(self, host, playbook):
-       pass
+    def __init__(self, *args, **kwargs):
+        self._cache = {}
 
-   def get_next_task(self):
-       assert False
+    def get(self, key):
+        return self._cache.get(key)
 
-   def is_blocked(self):
-       # depending on strategy, either 
-       # ‘linear’ -- all prev tasks must be completed for all hosts
-       # ‘free’ -- this host doesn’t have any more work to do
-       assert False
+    def set(self, key, value):
+        self._cache[key] = value
 
+    def keys(self):
+        return self._cache.keys()
 
+    def contains(self, key):
+        return key in self._cache
+
+    def delete(self, key):
+        del self._cache[key]
+
+    def flush(self):
+        self._cache = {}
+
+    def copy(self):
+        return self._cache.copy()
