@@ -197,60 +197,45 @@ def setup():
                 sys.exit(1)
 
     # Environment Variables
-    env_base_url = os.environ.get('DOCKER_HOST')
-    env_version = os.environ.get('DOCKER_VERSION')
-    env_timeout = os.environ.get('DOCKER_TIMEOUT')
-    env_ssh_port = os.environ.get('DOCKER_PRIVATE_SSH_PORT', '22')
-    env_default_ip = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
+    env_vars = dict()
+    env_vars['server'] = docker.utils.kwargs_from_env(assert_hostname=False)
+    env_vars['ssh_port'] = os.environ.get('DOCKER_PRIVATE_SSH_PORT', '22')
+    env_vars['default_ip'] = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
     # Config file defaults
     defaults = config.get('defaults', dict())
-    def_host = defaults.get('host')
-    def_version = defaults.get('version')
-    def_timeout = defaults.get('timeout')
-    def_default_ip = defaults.get('default_ip')
-    def_ssh_port = defaults.get('private_ssh_port')
 
     hosts = list()
 
     if config:
+        env_server = env_vars.pop('server', dict())
+        default_server = defaults.pop('server', dict())
         hosts_list = config.get('hosts', list())
         # Look to the config file's defined hosts
         if hosts_list:
             for host in hosts_list:
-                baseurl = host.get('host') or def_host or env_base_url
-                version = host.get('version') or def_version or env_version
-                timeout = host.get('timeout') or def_timeout or env_timeout
-                default_ip = host.get('default_ip') or def_default_ip or env_default_ip
-                ssh_port = host.get('private_ssh_port') or def_ssh_port or env_ssh_port
-
-                hostdict = HostDict(
-                    base_url=baseurl,
-                    version=version,
-                    timeout=timeout,
-                    default_ip=default_ip,
-                    private_ssh_port=ssh_port,
-                )
-                hosts.append(hostdict)
+                
+                # Host configuration
+                host_config = dict()
+                host_config.update(env_vars)
+                host_config.update(defaults)
+                host_config.update(host)
+                # Per-host server connection configuration
+                host_config_server = dict()
+                host_config_server.update(env_server)
+                host_config_server.update(default_server)
+                host_config_server.update(host_server)
+                host_config['server'] = host_config_server
+                hosts.append(host_config)
         # Look to the defaults
         else:
-            hostdict = HostDict(
-                base_url=def_host,
-                version=def_version,
-                timeout=def_timeout,
-                default_ip=def_default_ip,
-                private_ssh_port=def_ssh_port,
-            )
-            hosts.append(hostdict)
+            host_config = dict()
+            host_config.update(defaults)
+            hosts.append(host_config)
     # Look to the environment
     else:
-        hostdict = HostDict(
-            base_url=env_base_url,
-            version=env_version,
-            timeout=env_timeout,
-            default_ip=env_default_ip,
-            private_ssh_port=env_ssh_port,
-        )
-        hosts.append(hostdict)
+        host_config = dict()
+        host_config.update(env_vars)
+        hosts.append(host_config)
 
     return hosts
 
@@ -261,12 +246,13 @@ def list_groups():
     hostvars = defaultdict(dict)
 
     for host in hosts:
-        ssh_port = host.pop('private_ssh_port', None)
-        default_ip = host.pop('default_ip', None)
-        hostname = host.get('base_url')
+        server = host.get('server', None)
+        ssh_port = host.get('private_ssh_port', None)
+        default_ip = host.get('default_ip', None)
+        hostname = server.get('base_url')
 
         try:
-            client = docker.Client(**host)
+            client = docker.Client(**server)
             containers = client.containers(all=True)
         except (HTTPError, ConnectionError) as e:
             write_stderr(e)
