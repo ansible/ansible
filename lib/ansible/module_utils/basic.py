@@ -1238,7 +1238,16 @@ class AnsibleModule(object):
         return digest.hexdigest()
 
     def md5(self, filename):
-        ''' Return MD5 hex digest of local file using digest_from_file(). '''
+        ''' Return MD5 hex digest of local file using digest_from_file().
+
+        Do not use this function unless you have no other choice for:
+            1) Optional backwards compatibility
+            2) Compatibility with a third party protocol
+
+        This function will not work on systems complying with FIPS-140-2.
+
+        Most uses of this function can use the module.sha1 function instead.
+        '''
         return self.digest_from_file(filename, _md5())
 
     def sha1(self, filename):
