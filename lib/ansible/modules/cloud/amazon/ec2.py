@@ -403,7 +403,7 @@ local_action:
       - 'i-xxxxxx'
     region: us-east-1
   tasks:
-    - name: Stop the sanbox instances
+    - name: Stop the sandbox instances
       local_action:
       module: ec2
       instance_ids: '{{ instance_ids }}'
