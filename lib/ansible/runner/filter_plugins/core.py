@@ -219,6 +219,10 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
+def netmask_to_cidr(netmask):
+    return sum([bin(int(x)).count('1') for x in netmask.split('.')])
+
+
 @environmentfilter
 def rand(environment, end, start=None, step=None):
     r = SystemRandom()
@@ -312,4 +316,8 @@ class FilterModule(object):
 
             # random numbers
             'random': rand,
+
+            # network math
+            'netmask_to_cidr': netmask_to_cidr,
+
         }
