@@ -278,10 +278,10 @@ class SysctlModule(object):
                 checked.append(k)
                 if k == self.args['name']:
                     if self.args['state'] == "present":
-                        new_line = "%s = %s\n" % (k, self.args['value'])
+                        new_line = "%s=%s\n" % (k, self.args['value'])
                         self.fixed_lines.append(new_line)                    
                 else:
-                    new_line = "%s = %s\n" % (k, v)
+                    new_line = "%s=%s\n" % (k, v)
                     self.fixed_lines.append(new_line)                    
 
         if self.args['name'] not in checked and self.args['state'] == "present":
