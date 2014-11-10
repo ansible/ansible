@@ -20,7 +20,7 @@
 ######################################################################
 
 """
-Zabbix Server external inventory script. 
+Zabbix Server external inventory script.
 ========================================
 
 Returns hosts and hostgroups from Zabbix Server.
@@ -31,7 +31,6 @@ Tested with Zabbix Server 2.0.6.
 """
 
 import os, sys
-import json
 import argparse
 import ConfigParser
 
@@ -55,7 +54,7 @@ class ZabbixInventory(object):
         if config.has_option('zabbix', 'server'):
             self.zabbix_server = config.get('zabbix', 'server')
 
-        # login   
+        # login
         if config.has_option('zabbix', 'username'):
             self.zabbix_username = config.get('zabbix', 'username')
         if config.has_option('zabbix', 'password'):
@@ -84,7 +83,7 @@ class ZabbixInventory(object):
 
         for host in hostsData:
             hostname = host['name']
-            data[self.defaultgroup]['hosts'].append(hostname)   
+            data[self.defaultgroup]['hosts'].append(hostname)
 
             for group in host['groups']:
                 groupname = group['name']
