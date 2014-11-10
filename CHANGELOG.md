@@ -66,6 +66,9 @@ Some other notable changes:
   behaviour use the new module parameter track_submodules=yes
 * Checksumming of transferred files has been made more portable and now uses
   the sha1 algorithm instead of md5 to be compatible with FIPS-140.
+  - As a small side effect, the fetch module no longer returns a useful value
+    in remote_md5.  If you need a replacement, switch to using remote_checksum
+    which returns the sha1sum of the remote file.
 
 And various other bug fixes and improvements ...
 
