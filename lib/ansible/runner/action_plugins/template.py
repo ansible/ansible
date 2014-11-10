@@ -88,7 +88,7 @@ class ActionModule(object):
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
         local_checksum = utils.checksum_s(resultant)
-        remote_checksum = self.runner._remote_checksum(conn, tmp, dest)
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
 
         if local_checksum != remote_checksum:
 
