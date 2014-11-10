@@ -864,6 +864,11 @@ checksum_s = secure_hash_s
 # Backwards compat.  Some modules include md5s in their return values
 # Continue to support that for now.  As of ansible-1.8, all of those modules
 # should also return "checksum" (sha1 for now)
+# Do not use m5 unless it is needed for:
+# 1) Optional backwards compatibility
+# 2) Compliance with a third party protocol
+#
+# MD5 will not work on systems which are FIPS-140-2 compliant.
 def md5s(data):
     return secure_hash_s(data, _md5)
 
