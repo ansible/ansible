@@ -114,7 +114,8 @@ Configuration:
 
         A configuration that will tell the inventory script to use a specific
         server network to determine the ansible_ssh_host value. If no address
-        is found, ansible_ssh_host will not be set.
+        is found, ansible_ssh_host will not be set. Accepts a comma-separated
+        list of network names, the first found wins.
 
     access_ip_version:
         Environment Variable: RAX_ACCESS_IP_VERSION
@@ -124,7 +125,8 @@ Configuration:
         determine the ansible_ssh_host value for either IPv4 or IPv6. If no
         address is found, ansible_ssh_host will not be set.
         Acceptable values are: 4 or 6. Values other than 4 or 6
-        will be ignored, and 4 will be used.
+        will be ignored, and 4 will be used. Accepts a comma-separated list,
+        the first found wins.
 
 Examples:
     List server instances
@@ -220,16 +222,18 @@ def _list(regions):
 
     prefix = get_config(p, 'rax', 'meta_prefix', 'RAX_META_PREFIX', 'meta')
 
-    network = get_config(p, 'rax', 'access_network', 'RAX_ACCESS_NETWORK',
-                         'public')
+    networks = get_config(p, 'rax', 'access_network', 'RAX_ACCESS_NETWORK',
+                          'public', islist=True)
     try:
-        ip_version = get_config(p, 'rax', 'access_ip_version',
-                                'RAX_ACCESS_IP_VERSION', 4, integer=True)
+        ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
+                                          'RAX_ACCESS_IP_VERSION', 4,
+                                          islist=True))
     except:
-        ip_version = 4
+        ip_versions = [4]
     else:
-        if ip_version not in [4, 6]:
-            ip_version = 4
+        ip_versions = [v for v in ip_versions if v in [4, 6]]
+        if not ip_versions:
+            ip_versions = [4]
 
     # Go through all the regions looking for servers
     for region in regions:
@@ -305,17 +309,26 @@ def _list(regions):
             # And finally, add an IP address
             ansible_ssh_host = None
             # use accessIPv[46] instead of looping address for 'public'
-            if network == 'public':
-                if ip_version == 6 and server.accessIPv6:
-                    ansible_ssh_host = server.accessIPv6
-                elif server.accessIPv4:
-                    ansible_ssh_host = server.accessIPv4
-            else:
-                addresses = server.addresses.get(network, [])
-                for address in addresses:
-                    if address.get('version') == ip_version:
-                        ansible_ssh_host = address.get('addr')
-                        break
+            for network_name in networks:
+                if ansible_ssh_host:
+                    break
+                if network_name == 'public':
+                    for version_name in ip_versions:
+                        if ansible_ssh_host:
+                            break
+                        if version_name == 6 and server.accessIPv6:
+                            ansible_ssh_host = server.accessIPv6
+                        elif server.accessIPv4:
+                            ansible_ssh_host = server.accessIPv4
+                if not ansible_ssh_host:
+                    addresses = server.addresses.get(network_name, [])
+                    for address in addresses:
+                        for version_name in ip_versions:
+                            if ansible_ssh_host:
+                                break
+                            if address.get('version') == version_name:
+                                ansible_ssh_host = address.get('addr')
+                                break
             if ansible_ssh_host:
                 hostvars[server.name]['ansible_ssh_host'] = ansible_ssh_host
 
