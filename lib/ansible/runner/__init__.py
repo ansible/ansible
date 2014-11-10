@@ -1159,11 +1159,9 @@ class Runner(object):
 
     # *****************************************************
 
-    def _remote_checksum(self, conn, tmp, path):
+    def _remote_checksum(self, conn, tmp, path, inject):
         ''' takes a remote checksum and returns 1 if no file '''
-        inject = self.get_inject_vars(conn.host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
-        python_interp = hostvars[conn.host].get('ansible_python_interpreter', 'python')
+        python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
         cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])

@@ -175,7 +175,7 @@ class ActionModule(object):
                 dest_file = conn.shell.join_path(dest)
 
             # Attempt to get the remote checksum
-            remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file)
+            remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file, inject)
 
             if remote_checksum == '3':
                 # The remote_checksum was executed on a directory.
@@ -187,7 +187,7 @@ class ActionModule(object):
                 else:
                     # Append the relative source location to the destination and retry remote_checksum
                     dest_file = conn.shell.join_path(dest, source_rel)
-                    remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file)
+                    remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file, inject)
 
             if remote_checksum != '1' and not force:
                 # remote_file does not exist so continue to next iteration.

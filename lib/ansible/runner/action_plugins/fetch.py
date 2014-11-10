@@ -73,7 +73,7 @@ class ActionModule(object):
         source = conn.shell.join_path(source)
 
         # calculate checksum for the remote file
-        remote_checksum = self.runner._remote_checksum(conn, tmp, source)
+        remote_checksum = self.runner._remote_checksum(conn, tmp, source, inject)
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
@@ -116,7 +116,7 @@ class ActionModule(object):
         # these don't fail because you may want to transfer a log file that possibly MAY exist
         # but keep going to fetch other log files
         if remote_checksum == '0':
-            result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
+            result = dict(msg="unable to calculate the checksum of the remote file", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
         if remote_checksum == '1':
             if fail_on_missing:
