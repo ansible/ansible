@@ -52,6 +52,12 @@ options:
     version_added: "0.8"
     required: no
     default: null
+  updates:
+    description:
+      - a filename, when it is not updated by the command, assume no change was performed.
+    version_added: "2.3"
+    required: no
+    default: null
   chdir:
     description:
       - cd into this directory before running the command
@@ -127,6 +133,14 @@ def check_command(commandline):
     return warnings
 
 
+def check_md5(m, f, when, warnings):
+    try:
+        return m.md5(f)
+    except:
+        warnings.append('failed to stat %s %s command' % (f, when))
+        return None
+
+
 def main():
 
     # the command module is the one ansible module that does not take key=value args
@@ -139,6 +153,7 @@ def main():
           executable = dict(),
           creates = dict(type='path'),
           removes = dict(type='path'),
+          updates = dict(type='path'),
           warn = dict(type='bool', default=True),
         )
     )
@@ -149,6 +164,7 @@ def main():
     args = module.params['_raw_params']
     creates = module.params['creates']
     removes = module.params['removes']
+    updates = module.params['updates']
     warn = module.params['warn']
 
     if args.strip() == '':
@@ -186,11 +202,22 @@ def main():
     if warn:
         warnings = check_command(args)
 
+    if updates:
+        updates_file = os.path.expanduser(updates)
+        updates_md5 = check_md5(module, updates_file, 'before', warnings)
+
     if not shell:
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
     rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None)
+
+    if updates and updates_md5 is not None:
+        changed = (updates_md5 != check_md5(module, updates_file, 'after', warnings))
+    else:
+        # We didn't get a "updates" parameter, or we couldn't check the MD5, so assume
+        # something has changed.
+        changed = True
 
     endd = datetime.datetime.now()
     delta = endd - startd
@@ -208,7 +235,7 @@ def main():
         start    = str(startd),
         end      = str(endd),
         delta    = str(delta),
-        changed  = True,
+        changed  = changed,
         warnings = warnings
     )
 
