@@ -272,6 +272,17 @@ def list_groups():
         default_ip = host.get('default_ip', None)
         hostname = server.get('base_url')
 
+        # Setup tls_config
+        if server.get('tls_config'):
+            try:
+                tls_config = server.pop('tls_config')
+                tls = docker.tls.TLSConfig(**tls_config)
+                server['tls'] = tls
+            except TypeError as e:
+                write_stderr("Error parsing host tls_config.")
+                write_stderr(e)
+                sys.exit(1)
+
         try:
             client = docker.Client(**server)
             containers = client.containers(all=True)
