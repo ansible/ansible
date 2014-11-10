@@ -203,6 +203,16 @@ def setup():
     env_vars['default_ip'] = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
     # Config file defaults
     defaults = config.get('defaults', dict())
+    # Compatibility with old server configuration
+    if defaults:
+        if not defaults.get('server'):
+            defaults['server'] = dict()
+            if defaults.get('host'):
+                defaults['server']['base_url'] = defaults.pop('host')
+            if defaults.get('version'):
+                defaults['server']['version'] = defaults.pop('version')
+            if defaults.get('timeout'):
+                defaults['server']['timeout'] = defaults.pop('timeout')
 
     hosts = list()
 
@@ -213,7 +223,18 @@ def setup():
         # Look to the config file's defined hosts
         if hosts_list:
             for host in hosts_list:
-                
+                # Compatibility with old server configuration
+                if not host.get('server'):
+                    host_server = dict()
+                    if host.get('host'):
+                        host['server']['base_url'] = host.pop('host')
+                    if host.get('version'):
+                        host['server']['version'] = host.pop('version')
+                    if host.get('timeout'):
+                        host['server']['timeout'] = host.pop('timeout')
+                else:
+                    host_server = host.pop('server')
+
                 # Host configuration
                 host_config = dict()
                 host_config.update(env_vars)
