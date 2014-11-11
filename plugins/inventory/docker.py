@@ -222,15 +222,15 @@ def setup():
             for host in hosts_list:
                 # Compatibility with old server configuration
                 if not host.get('server'):
-                    host_server = dict()
+                    host['server'] = dict()
                     if host.get('host'):
                         host['server']['base_url'] = host.pop('host')
                     if host.get('version'):
                         host['server']['version'] = host.pop('version')
                     if host.get('timeout'):
                         host['server']['timeout'] = host.pop('timeout')
-                else:
-                    host_server = host.pop('server')
+                
+                host_server = host.pop('server')
 
                 # Host configuration
                 host_config = dict()
