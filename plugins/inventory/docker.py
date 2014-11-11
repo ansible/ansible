@@ -58,6 +58,8 @@
 #    DOCKER_HOST
 #    DOCKER_VERSION
 #    DOCKER_TIMEOUT
+#    DOCKER_TLS_VERIFY
+#    DOCKER_CERT_PATH
 #    DOCKER_PRIVATE_SSH_PORT
 #    DOCKER_DEFAULT_IP
 #
@@ -83,6 +85,19 @@
 #     description:
 #         - Timeout in seconds for connections to Docker daemon API
 #     default: Uses docker.docker.Client constructor defaults
+#     required: false
+# environment variable: DOCKER_TLS_VERIFY
+#     description:
+#         - Sets client-side TLS certificate verification.
+#     default: Uses docker.utils.kwargs_from_env function defaults
+#     required: false
+# environment variable: DOCKER_CERT_PATH
+#     description: 
+#         - File system path to the directory holding:
+#             - ca.pem (CA certificate)
+#             - cert.pem (client certificate)
+#             - key.pem (client certificate key)
+#     default: Uses docker.utils.kwargs_from_env function defaults
 #     required: false
 # environment variable: DOCKER_PRIVATE_SSH_PORT
 #     description:
