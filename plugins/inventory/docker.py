@@ -133,7 +133,6 @@ import sys
 import json
 import argparse
 
-from UserDict import UserDict
 from collections import defaultdict
 
 import yaml
@@ -154,25 +153,6 @@ try:
 except ImportError:
     print('docker-py is required for this module')
     sys.exit(1)
-
-
-class HostDict(UserDict):
-    def __setitem__(self, key, value):
-        if value is not None:
-            self.data[key] = value
-
-    def update(self, dict=None, **kwargs):
-        if dict is None:
-            pass
-        elif isinstance(dict, UserDict):
-            for k, v in dict.data.items():
-                self[k] = v
-        else:
-            for k, v in dict.items():
-                self[k] = v
-        if len(kwargs):
-            for k, v in kwargs.items():
-                self[k] = v
 
 
 def write_stderr(string):
