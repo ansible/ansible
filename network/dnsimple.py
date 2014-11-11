@@ -97,7 +97,7 @@ author: Alex Coomans
 '''
 
 EXAMPLES = '''
-# authenicate using email and API token
+# authenticate using email and API token
 - local_action: dnsimple account_email=test@example.com account_api_token=dummyapitoken
 
 # fetch all domains
