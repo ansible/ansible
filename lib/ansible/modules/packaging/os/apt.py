@@ -387,6 +387,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         check_arg = ''
 
     apt_cmd = None
+    prompt_regex = None
     if mode == "dist":
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
@@ -399,12 +400,13 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         # aptitude safe-upgrade # mode=yes # default
         apt_cmd = APTITUDE_CMD
         upgrade_command = "safe-upgrade"
+        prompt_regex = r"(^Do you want to ignore this warning and proceed anyway\?|^\*\*\*.*\[default=.*\])"
 
     if force:
         if apt_cmd == APT_GET_CMD:
             force_yes = '--force-yes'
         else:
-            force_yes = ''
+            force_yes = '--assume-yes --allow-untrusted'
     else:
         force_yes = ''
 
@@ -419,7 +421,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if default_release:
         cmd += " -t '%s'" % (default_release,)
 
-    rc, out, err = m.run_command(cmd)
+    rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
