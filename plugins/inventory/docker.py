@@ -202,7 +202,9 @@ def setup():
     env_vars['ssh_port'] = os.environ.get('DOCKER_PRIVATE_SSH_PORT', '22')
     env_vars['default_ip'] = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
     # Config file defaults
-    defaults = config.get('defaults', dict())
+    defaults = dict()
+    if config:
+        defaults = config.get('defaults', dict())
     # Compatibility with old server configuration
     if defaults:
         if not defaults.get('server'):
