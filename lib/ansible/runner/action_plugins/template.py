@@ -75,6 +75,8 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
+        # Expand any user home dir specification
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
 
         if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
             base = os.path.basename(source)

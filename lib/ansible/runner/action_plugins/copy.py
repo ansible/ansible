@@ -157,6 +157,9 @@ class ActionModule(object):
             if "-tmp-" not in tmp_path:
                 tmp_path = self.runner._make_tmp_path(conn)
 
+        # expand any user home dir specifier
+        dest = self.runner._remote_expand_user(conn, dest, tmp_path)
+
         for source_full, source_rel in source_files:
             # Generate a hash of the local file.
             local_checksum = utils.checksum(source_full)

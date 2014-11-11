@@ -71,6 +71,7 @@ class ActionModule(object):
             return ReturnData(conn=conn, result=results)
 
         source = conn.shell.join_path(source)
+        source = self.runner._remote_expand_user(conn, source, tmp)
 
         # calculate checksum for the remote file
         remote_checksum = self.runner._remote_checksum(conn, tmp, source, inject)
