@@ -48,7 +48,7 @@
 #    docker_volumes_rw
 #
 # Requirements:
-# The docker-py module: https://github.com/dotcloud/docker-py
+# The docker-py module version >= 0.6.0: https://github.com/dotcloud/docker-py
 #
 # Notes:
 # A config file can be used to configure this inventory module, and there
