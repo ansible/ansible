@@ -1370,7 +1370,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1378,12 +1378,17 @@ class AnsibleModule(object):
         If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
         If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
-        - check_rc (boolean)  Whether to call fail_json in case of
-                              non zero RC.  Default is False.
-        - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is True.
-        - executable (string) See documentation for subprocess.Popen().
-                              Default is None.
+        - check_rc (boolean)    Whether to call fail_json in case of
+                                non zero RC.  Default is False.
+        - close_fds (boolean)   See documentation for subprocess.Popen().
+                                Default is True.
+        - executable (string)   See documentation for subprocess.Popen().
+                                Default is None.
+        - prompt_regex (string) A regex string (not a compiled regex) which
+                                can be used to detect prompts in the stdout
+                                which would otherwise cause the execution
+                                to hang (especially if no input data is
+                                specified)
         '''
 
         shell = False
@@ -1398,6 +1403,13 @@ class AnsibleModule(object):
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        prompt_re = None
+        if prompt_regex:
+            try:
+                prompt_re = re.compile(prompt_regex, re.MULTILINE)
+            except re.error:
+                self.fail_json(msg="invalid prompt regular expression given to run_command")
 
         # expand things like $HOME and ~
         if not shell:
@@ -1492,6 +1504,10 @@ class AnsibleModule(object):
                     stderr += dat
                     if dat == '':
                         rpipes.remove(cmd.stderr)
+                # if we're checking for prompts, do it now
+                if prompt_re:
+                    if prompt_re.search(stdout) and not data:
+                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated
