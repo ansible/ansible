@@ -202,14 +202,21 @@ class J2Template(jinja2.environment.Template):
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
-def template_from_file(basedir, path, vars, vault_password=None):
+def template_from_file(basedir, path, vars, vault_password=None, extra_search_paths=None):
     ''' run a file through the templating engine '''
 
     fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
     from ansible import utils
     realpath = utils.path_dwim(basedir, path)
-    loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
+    search_paths = [basedir, os.path.dirname(realpath)]
+
+    if extra_search_paths:
+        for p in extra_search_paths:
+            if p not in search_paths:
+                search_paths.append(p)
+
+    loader=jinja2.FileSystemLoader(search_paths)
 
     def my_lookup(*args, **kwargs):
         kwargs['vars'] = vars
