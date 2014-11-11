@@ -7,7 +7,7 @@
 # inventory information.
 #
 # This plugin does not support targeting of specific hosts using the --host
-# flag. Instead, it it queries the Docker API for each container, running
+# flag. Instead, it queries the Docker API for each container, running
 # or not, and returns this data all once.
 #
 # The plugin returns the following custom attributes on Docker containers:
@@ -30,7 +30,7 @@
 #    docker_volumes_rw
 #
 # Requirements:
-# The docker-py module: https://github.com/dotcloud/docker-py
+# The docker-py module version >= 0.6.0: https://github.com/dotcloud/docker-py
 #
 # Notes:
 # A config file can be used to configure this inventory module, and there
@@ -40,6 +40,8 @@
 #    DOCKER_HOST
 #    DOCKER_VERSION
 #    DOCKER_TIMEOUT
+#    DOCKER_TLS_VERIFY
+#    DOCKER_CERT_PATH
 #    DOCKER_PRIVATE_SSH_PORT
 #    DOCKER_DEFAULT_IP
 #
@@ -65,6 +67,19 @@
 #     description:
 #         - Timeout in seconds for connections to Docker daemon API
 #     default: Uses docker.docker.Client constructor defaults
+#     required: false
+# environment variable: DOCKER_TLS_VERIFY
+#     description:
+#         - Sets client-side TLS certificate verification.
+#     default: Uses docker.utils.kwargs_from_env function defaults
+#     required: false
+# environment variable: DOCKER_CERT_PATH
+#     description: 
+#         - File system path to the directory holding:
+#             - ca.pem (CA certificate)
+#             - cert.pem (client certificate)
+#             - key.pem (client certificate key)
+#     default: Uses docker.utils.kwargs_from_env function defaults
 #     required: false
 # environment variable: DOCKER_PRIVATE_SSH_PORT
 #     description:
