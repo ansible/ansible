@@ -170,7 +170,7 @@ class TCPConnectionInfo(object):
     def _get_exclude_ips(self):
         if self.module.params['exclude_hosts'] is None:
             return []
-        exclude_hosts = self.module.params['exclude_hosts'].split(',')
+        exclude_hosts = self.module.params['exclude_hosts']
         return [ _convert_host_to_hex(h)[1] for h in exclude_hosts ]
 
     def get_active_connections_count(self):
@@ -221,7 +221,7 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
     def _get_exclude_ips(self):
         if self.module.params['exclude_hosts'] is None:
             return []
-        exclude_hosts = self.module.params['exclude_hosts'].split(',')
+        exclude_hosts = self.module.params['exclude_hosts']
         return [ _convert_host_to_hex(h) for h in exclude_hosts ]
 
     def get_active_connections_count(self):
@@ -305,7 +305,7 @@ def main():
             path=dict(default=None),
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
-            exclude_hosts=dict(default=None, type='list')
+            exclude_hosts=dict(default=None)
         ),
     )
 
@@ -322,20 +322,18 @@ def main():
     state = params['state']
     path = params['path']
     search_regex = params['search_regex']
-    if params['exclude_hosts']:
-        exclude_hosts = params['exclude_hosts'].split(',')
-    else:
-        exclude_hosts = []
-    
+    if isinstance(params['exclude_hosts'], basestring):
+        params['exclude_hosts'] = params['exclude_hosts'].split(',')
+
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for")
     if path and state == 'stopped':
         module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
     if path and state == 'drained':
         module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
-    if exclude_hosts and state != 'drained':
+    if params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
-        
+
     start = datetime.datetime.now()
 
     if delay:
