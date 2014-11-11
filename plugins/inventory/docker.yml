@@ -155,7 +155,9 @@
 #    private_ssh_port: 22
 #    # Simple host configuration without tls
 #  - server:
-#      base_url: https://192.168.59.102:2376
+#      base_url: tcp://192.168.59.102:2375
+#      # Setting 'tls_config: None' explicitly disallows tls
+#      tls_config: None
 #    default_ip: 172.16.3.45
 #    private_ssh_port: 22
 #    # Old-style host configuration example

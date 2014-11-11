@@ -270,15 +270,19 @@ def list_groups():
         hostname = server.get('base_url')
 
         # Setup tls_config
-        if server.get('tls_config'):
-            try:
-                tls_config = server.pop('tls_config')
-                tls = docker.tls.TLSConfig(**tls_config)
-                server['tls'] = tls
-            except TypeError as e:
-                write_stderr("Error parsing host tls_config.")
-                write_stderr(e)
-                sys.exit(1)
+        if server.has_key('tls_config'):
+            tls_config = server.pop('tls_config')
+            if isinstance(tls_config,dict):
+                try:
+                    tls = docker.tls.TLSConfig(**tls_config)
+                    server['tls'] = tls
+                except TypeError as e:
+                    write_stderr("Error parsing host tls_config.")
+                    write_stderr(tls_config)
+                    write_stderr(e)
+                    sys.exit(1)
+            else:
+                server.pop('tls', None)
 
         try:
             client = docker.Client(**server)
