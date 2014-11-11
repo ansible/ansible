@@ -16,8 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import pipes
 import ansible.constants as C
+
+_USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 class ShellModule(object):
 
@@ -59,9 +62,21 @@ class ShellModule(object):
         cmd += ' && echo %s' % basetmp
         return cmd
 
-    def expand_user(self, user_path):
-        # Quote the user portion but leave the tilde to be expanded
-        return 'echo ~%s' % pipes.quote(user_path[1:])
+    def expand_user(self, user_home_path):
+        ''' Return a command to expand tildes in a path
+
+        It can be either "~" or "~username".  We use the POSIX definition of
+        a username:
+            http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_426
+            http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
+        '''
+
+        # Check that the user_path to expand is safe
+        if user_home_path != '~':
+            if not _USER_HOME_PATH_RE.match(user_home_path):
+                # pipes.quote will make the shell return the string verbatim
+                user_home_path = pipes.quote(user_home_path)
+        return 'echo %s' % user_home_path
 
     def checksum(self, path, python_interp):
         path = pipes.quote(path)
