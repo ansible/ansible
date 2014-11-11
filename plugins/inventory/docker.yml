@@ -132,18 +132,35 @@
 # over environment variables.
 #
 # Variable precedence is: hosts > defaults > environment
-
----
-defaults:
-  host: unix:///var/run/docker.sock
-  version: 1.9
-  timeout: 60
-  private_ssh_port: 22
-  default_ip: 127.0.0.1
-hosts:
+#
+#---
+#defaults:
+#  server:
+#    base_url: tcp://192.168.59.104:2375
+#hosts:
+#  # Full host configuration example with tls encryption 
+#  - server:
+#      base_url: https://192.168.59.103:2376
+#      tls_config:
+#        client_cert:
+#          - /home/me/.boot2docker/certs/boot2docker-vm-docker-dev/cert.pem
+#          - /home/me/.boot2docker/certs/boot2docker-vm-docker-dev/key.pem
+#        ca_cert: /home/me/.boot2docker/certs/boot2docker-vm-docker-dev/ca.pem
+#        verify: true
+#        assert_hostname: false
+#        ssl_version: TLSv1
+#      version: 1.9
+#      timeout: 60
+#    default_ip: 172.16.3.45
+#    private_ssh_port: 22
+#    # Simple host configuration without tls
+#  - server:
+#      base_url: https://192.168.59.102:2376
+#    default_ip: 172.16.3.45
+#    private_ssh_port: 22
+#    # Old-style host configuration example
 #  - host: tcp://10.45.5.16:4243
 #    version: 1.9
 #    timeout: 60
 #    private_ssh_port: 2022
 #    default_ip: 172.16.3.45
-#  - host: tcp://localhost:4243
