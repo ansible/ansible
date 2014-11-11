@@ -331,7 +331,8 @@ def list_groups():
 
             hostvars[name].update(container_info)
 
-    groups['docker_hosts'] = [host.get('base_url') for host in hosts]
+    groups['docker_hosts'] = list(set(
+        [host.get('server', {}).get('base_url') for host in hosts]))
     groups['_meta'] = dict()
     groups['_meta']['hostvars'] = hostvars
     print json.dumps(groups, sort_keys=True, indent=4)
