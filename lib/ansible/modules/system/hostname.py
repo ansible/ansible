@@ -313,7 +313,7 @@ class OpenRCStrategy(GenericStrategy):
     def set_permanent_hostname(self, name):
         try:
             f = open(self.HOSTNAME_FILE, 'r')
-            lines = [x.strip() for x in f]
+            lines = (x.strip() for x in f)
 
             for i, line in enumerate(lines):
                 if line.startswith('hostname='):
