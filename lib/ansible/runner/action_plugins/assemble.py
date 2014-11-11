@@ -109,6 +109,7 @@ class ActionModule(object):
         path = self._assemble_from_fragments(src, delimiter, _re)
 
         path_checksum = utils.checksum_s(path)
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
         remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
 
         if path_checksum != remote_checksum:

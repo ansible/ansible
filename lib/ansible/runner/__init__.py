@@ -1159,6 +1159,27 @@ class Runner(object):
 
     # *****************************************************
 
+    def _remote_expand_user(self, conn, path, tmp):
+        ''' takes a remote path and performs tilde expansion on the remote host '''
+        if not path.startswith('~'):
+            return path
+        split_path = path.split(os.path.sep, 1)
+        cmd = conn.shell.expand_user(split_path[0])
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, su=False)
+        initial_fragment = utils.last_non_blank_line(data['stdout'])
+
+        if not initial_fragment:
+            # Something went wrong trying to expand the path remotely.  Return
+            # the original string
+            return path
+
+        if len(split_path) > 1:
+            return os.path.join(initial_fragment, *split_path[1:])
+        else:
+            return initial_fragment
+
+    # *****************************************************
+
     def _remote_checksum(self, conn, tmp, path, inject):
         ''' takes a remote checksum and returns 1 if no file '''
         python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')

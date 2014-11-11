@@ -37,12 +37,10 @@ class ShellModule(object):
         return path.endswith('/')
 
     def chmod(self, mode, path):
-        #path = os.path.expanduser(path)
         path = pipes.quote(path)
         return 'chmod %s %s' % (mode, path)
 
     def remove(self, path, recurse=False):
-        #path = os.path.expanduser(path)
         path = pipes.quote(path)
         if recurse:
             return "rm -rf %s >/dev/null 2>&1" % path
@@ -61,8 +59,11 @@ class ShellModule(object):
         cmd += ' && echo %s' % basetmp
         return cmd
 
+    def expand_user(self, user_path):
+        # Quote the user portion but leave the tilde to be expanded
+        return 'echo ~%s' % pipes.quote(user_path[1:])
+
     def checksum(self, path, python_interp):
-        #path = os.path.expanduser(path)
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
