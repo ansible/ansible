@@ -210,6 +210,7 @@ def setup():
                 defaults['server']['version'] = defaults.pop('version')
             if defaults.get('timeout'):
                 defaults['server']['timeout'] = defaults.pop('timeout')
+            defaults['server']['tls_config'] = 'None'
 
     hosts = list()
 
@@ -229,6 +230,7 @@ def setup():
                         host['server']['version'] = host.pop('version')
                     if host.get('timeout'):
                         host['server']['timeout'] = host.pop('timeout')
+                    host['server']['tls_config'] = 'None'
                 
                 host_server = host.pop('server')
 
