@@ -305,7 +305,7 @@ def main():
             path=dict(default=None),
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
-            exclude_hosts=dict(default=None)
+            exclude_hosts=dict(default=None, type='list')
         ),
     )
 
@@ -322,8 +322,6 @@ def main():
     state = params['state']
     path = params['path']
     search_regex = params['search_regex']
-    if isinstance(params['exclude_hosts'], basestring):
-        params['exclude_hosts'] = params['exclude_hosts'].split(',')
 
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for")
