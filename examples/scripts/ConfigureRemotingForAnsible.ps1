@@ -174,7 +174,7 @@ if ($PSVersionTable.PSVersion.Major -lt 3)
  }
  
 #FIrewall
-netsh advfirewall firewall add rule Profile=public name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
+netsh advfirewall firewall add rule Profile=any name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
 
 
 
