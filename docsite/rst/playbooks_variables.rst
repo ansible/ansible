@@ -671,7 +671,7 @@ For instance, what if you want users to be able to control some aspect about how
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
 If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
-ending in ".fact", can be YAML, JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
 
 For instance assume a /etc/ansible/facts.d/preferences.fact::
 
@@ -689,7 +689,7 @@ And you will see the following fact added::
     "ansible_local": {
             "preferences": {
                 "general": {
-                    "asdf" : "1", 
+                    "asdf" : "1",
                     "bar"  : "2"
                 }
             }
@@ -707,7 +707,7 @@ can allow that fact to be used during that particular play.  Otherwise, it will 
 Here is an example of what that might look like::
 
   - hosts: webservers
-    tasks: 
+    tasks:
       - name: create directory for ansible custom facts
         file: state=directory recurse=yes path=/etc/ansible/facts.d
       - name: install custom impi fact
