@@ -373,26 +373,6 @@ def create_autoscaling_group(connection, module):
             module.fail_json(msg=str(e))
 
 
-    result = as_groups[0]
-    module.exit_json(changed=changed, name=result.name,
-        autoscaling_group_arn=result.autoscaling_group_arn,
-        availability_zones=result.availability_zones,
-        created_time=str(result.created_time),
-        default_cooldown=result.default_cooldown,
-        health_check_period=result.health_check_period,
-        health_check_type=result.health_check_type,
-        instance_id=result.instance_id,
-        instances=[instance.instance_id for instance in result.instances],
-        launch_config_name=result.launch_config_name,
-        load_balancers=result.load_balancers,
-        min_size=result.min_size, max_size=result.max_size,
-        placement_group=result.placement_group,
-        wait_timeout = dict(default=300),
-        tags=result.tags,
-        termination_policies=result.termination_policies,
-        vpc_zone_identifier=result.vpc_zone_identifier)
-
-
 def delete_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     groups = connection.get_all_groups(names=[group_name])
