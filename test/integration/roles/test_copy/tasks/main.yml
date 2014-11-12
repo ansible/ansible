@@ -55,8 +55,13 @@
 - name: verify that the file checksums are correct
   assert:
     that:
-      - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
       - "copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+
+- name: verify that the legacy md5sum is correct
+  assert:
+    that:
+      - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+  ignore_errors: True
 
 - name: check the stat results of the file
   stat: path={{output_file}}
@@ -72,8 +77,13 @@
       - "stat_results.stat.isfifo == false"
       - "stat_results.stat.isreg == true"
       - "stat_results.stat.issock == false"
-      - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
       - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+
+- name: verify that the legacy md5sum is correct
+  assert:
+    that:
+      - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+  ignore_errors: True
 
 - name: overwrite the file via same means
   copy: src=foo.txt dest={{output_file}}
