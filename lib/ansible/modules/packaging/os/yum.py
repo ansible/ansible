@@ -48,6 +48,12 @@ options:
     required: true
     default: null
     aliases: []
+  exclude:
+    description:
+      - "Package name(s) to exlude when state=present, or latest
+    required: false
+    version_added: "2.0"
+    default: null
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
@@ -716,7 +722,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     module.exit_json(**res)
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check):
+           disable_gpg_check, exclude):
 
     # need debug level 2 to get 'Nothing to do' for groupinstall.
     yum_basecmd = [yumbin, '-d', '2', '-y']
@@ -742,7 +748,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         r_cmd = ['--enablerepo=%s' % enablerepo]
         yum_basecmd.extend(r_cmd)
 
-
+    if exclude:
+        e_cmd = ['--exclude=%s' % exclude]
+        yum_basecmd.extend(e_cmd)
+           
     if state in ['installed', 'present', 'latest']:
 
         if module.params.get('update_cache'):
@@ -796,6 +805,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(aliases=['pkg'], type="list"),
+            exclude=dict(required=False, default=None),
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             enablerepo=dict(),
@@ -825,12 +835,13 @@ def main():
 
     else:
         pkg = [ p.strip() for p in params['name']]
+        exclude = params['exclude']
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
         res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check)
+                     disablerepo, disable_gpg_check, exclude)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
 # import module snippets
