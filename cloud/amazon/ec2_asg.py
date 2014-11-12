@@ -199,7 +199,7 @@ except ImportError:
 ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
     'health_check_period', 'health_check_type', 'launch_config_name',
     'load_balancers', 'max_size', 'min_size', 'name', 'placement_group',
-    'tags', 'termination_policies', 'vpc_zone_identifier')
+    'termination_policies', 'vpc_zone_identifier')
 
 INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
 
