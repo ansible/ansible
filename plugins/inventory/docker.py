@@ -59,6 +59,8 @@
 #    DOCKER_VERSION
 #    DOCKER_TIMEOUT
 #    DOCKER_TLS_VERIFY
+#    DOCKER_SSL_VERSION
+#    DOCKER_ASSERT_HOSTNAME
 #    DOCKER_CERT_PATH
 #    DOCKER_PRIVATE_SSH_PORT
 #    DOCKER_DEFAULT_IP
@@ -90,6 +92,21 @@
 #     description:
 #         - Sets client-side TLS certificate verification.
 #     default: Uses docker.utils.kwargs_from_env function defaults
+#     required: false
+# environment variable: DOCKER_SSL_VERSION
+#     description:
+#         - Sets TLS version used.
+#           See: https://docs.python.org/3.4/library/ssl.html#ssl.PROTOCOL_TLSv1
+#     default: TLSv1 
+#     required: false
+# environment variable: DOCKER_ASSERT_HOSTNAME
+#     description:
+#         - Sets the TLS library server certificate CN assertion behaviour
+#         - If True: asserts that the CN equals the hostname in the url 
+#           (default value)
+#         - If False: no CN assertion takes place
+#         - Some string: asserts that the CN matches the given string
+#     default: True
 #     required: false
 # environment variable: DOCKER_CERT_PATH
 #     description: 
@@ -193,7 +210,15 @@ def setup():
 
     # Environment Variables
     env_vars = dict()
-    env_vars['server'] = docker.utils.kwargs_from_env(assert_hostname=False)
+    env_ssl_version =  os.environ.get('DOCKER_SSL_VERSION', 'TLSv1')
+    env_assert_hostname =  os.environ.get('DOCKER_ASSERT_HOSTNAME', None)
+    if isinstance(env_assert_hostname, str):
+        if env_assert_hostname.lower() == 'false':
+            env_assert_hostname = False
+        elif env_assert_hostname.lower() == 'true':
+            env_assert_hostname = None
+    env_vars['server'] = docker.utils.kwargs_from_env(
+        ssl_version=env_ssl_version, assert_hostname=env_assert_hostname)
     env_vars['ssh_port'] = os.environ.get('DOCKER_PRIVATE_SSH_PORT', '22')
     env_vars['default_ip'] = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
     # Config file defaults

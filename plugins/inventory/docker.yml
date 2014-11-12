@@ -41,6 +41,8 @@
 #    DOCKER_VERSION
 #    DOCKER_TIMEOUT
 #    DOCKER_TLS_VERIFY
+#    DOCKER_SSL_VERSION
+#    DOCKER_ASSERT_HOSTNAME
 #    DOCKER_CERT_PATH
 #    DOCKER_PRIVATE_SSH_PORT
 #    DOCKER_DEFAULT_IP
@@ -72,6 +74,21 @@
 #     description:
 #         - Sets client-side TLS certificate verification.
 #     default: Uses docker.utils.kwargs_from_env function defaults
+#     required: false
+# environment variable: DOCKER_SSL_VERSION
+#     description:
+#         - Sets TLS version used.
+#           See: https://docs.python.org/3.4/library/ssl.html#ssl.PROTOCOL_TLSv1
+#     default: TLSv1 
+#     required: false
+# environment variable: DOCKER_ASSERT_HOSTNAME
+#     description:
+#         - Sets the TLS library server certificate CN assertion behaviour
+#         - If True: asserts that the CN equals the hostname in the url 
+#           (default value)
+#         - If False: no CN assertion takes place
+#         - Some string: asserts that the CN matches the given string
+#     default: True
 #     required: false
 # environment variable: DOCKER_CERT_PATH
 #     description: 
