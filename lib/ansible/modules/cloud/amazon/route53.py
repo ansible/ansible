@@ -279,7 +279,7 @@ def main():
         decoded_name = rset.name.replace(r'\052', '*')
         decoded_name = decoded_name.replace(r'\100', '@')
 
-        if rset.type == type_in and decoded_name == record_in:
+        if rset.type == type_in and decoded_name.lower() == record_in.lower():
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
