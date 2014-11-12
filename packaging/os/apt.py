@@ -431,7 +431,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
+            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
@@ -519,8 +519,8 @@ def main():
                     p['default_release'], dpkg_options)
 
         if p['deb']:
-            if p['state'] != "installed":
-                module.fail_json(msg="deb only supports state=installed")
+            if p['state'] not in ["installed", "present"]:
+                module.fail_json(msg="deb only supports state=present")
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         force=force_yes, dpkg_options=p['dpkg_options'])
