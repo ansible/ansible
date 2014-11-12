@@ -19,7 +19,7 @@ import traceback
 import os
 import pipes
 import shutil
-import subprocess
+import subprocess32
 import select
 import fcntl
 from ansible import errors
@@ -33,7 +33,7 @@ class Connection(object):
         self.runner = runner
         self.host = host
         # port is unused, since this is local
-        self.port = port 
+        self.port = port
         self.has_pipelining = False
 
     def connect(self, port=None):
@@ -61,10 +61,10 @@ class Connection(object):
         executable = executable.split()[0] if executable else None
 
         vvv("EXEC %s" % (local_cmd), host=self.host)
-        p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
-                             cwd=self.runner.basedir, executable=executable,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess32.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
+                               cwd=self.runner.basedir, executable=executable,
+                               stdin=subprocess32.PIPE,
+                               stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
 
         if self.runner.sudo and sudoable and self.runner.sudo_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
@@ -80,10 +80,10 @@ class Connection(object):
                 elif p.stderr in rfd:
                     chunk = p.stderr.read()
                 else:
-                    stdout, stderr = p.communicate()
+                    stdout, stderr = p.communicate(timeout=self.runner.timeout)
                     raise errors.AnsibleError('timeout waiting for sudo password prompt:\n' + sudo_output)
                 if not chunk:
-                    stdout, stderr = p.communicate()
+                    stdout, stderr = p.communicate(timeout=self.runner.timeout)
                     raise errors.AnsibleError('sudo output closed while waiting for password prompt:\n' + sudo_output)
                 sudo_output += chunk
             if success_key not in sudo_output:

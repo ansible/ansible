@@ -18,7 +18,7 @@
 
 import os
 import re
-import subprocess
+import subprocess32
 import shlex
 import pipes
 import random
@@ -103,21 +103,21 @@ class Connection(object):
     def _run(self, cmd, indata):
         if indata:
             # do not use pseudo-pty
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess32.Popen(cmd, stdin=subprocess32.PIPE,
+                                   stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
             stdin = p.stdin
         else:
             # try to use upseudo-pty
             try:
                 # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
                 master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess32.Popen(cmd, stdin=slave,
+                                       stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
                 stdin = os.fdopen(master, 'w', 0)
                 os.close(slave)
             except:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess32.Popen(cmd, stdin=subprocess32.PIPE,
+                                       stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
                 stdin = p.stdin
 
         return (p, stdin)
@@ -125,9 +125,9 @@ class Connection(object):
     def _password_cmd(self):
         if self.password:
             try:
-                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                p.communicate()
+                p = subprocess32.Popen(["sshpass"], stdin=subprocess32.PIPE,
+                                       stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
+                p.communicate(timeout=self.runner.timeout)
             except OSError:
                 raise errors.AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
@@ -209,12 +209,12 @@ class Connection(object):
         else:
             user_host_file = "~/.ssh/known_hosts"
         user_host_file = os.path.expanduser(user_host_file)
-        
+
         host_file_list = []
         host_file_list.append(user_host_file)
         host_file_list.append("/etc/ssh/ssh_known_hosts")
         host_file_list.append("/etc/ssh/ssh_known_hosts2")
-        
+
         hfiles_not_found = 0
         for hf in host_file_list:
             if not os.path.exists(hf):
@@ -228,7 +228,7 @@ class Connection(object):
             else:
                 data = host_fh.read()
                 host_fh.close()
-                
+
             for line in data.split("\n"):
                 if line is None or " " not in line:
                     continue
@@ -291,7 +291,7 @@ class Connection(object):
         not_in_host_file = self.not_in_host_file(self.host)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
@@ -345,7 +345,7 @@ class Connection(object):
 
                 if not rfd:
                     # timeout. wrap up process communication
-                    stdout = p.communicate()
+                    stdout = p.communicate(timeout=self.runner.timeout)
                     raise errors.AnsibleError('ssh connection error waiting for sudo or su password prompt')
 
             if success_key not in sudo_output:
@@ -360,7 +360,7 @@ class Connection(object):
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
@@ -423,8 +423,8 @@ class Connection(object):
             cmd += ["sftp"] + self.common_args + [host]
             indata = "get %s %s\n" % (in_path, out_path)
 
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess32.Popen(cmd, stdin=subprocess32.PIPE,
+                               stdout=subprocess32.PIPE, stderr=subprocess32.PIPE)
         self._send_password()
         stdout, stderr = p.communicate(indata)
 
