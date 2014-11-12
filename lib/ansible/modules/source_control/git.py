@@ -453,33 +453,20 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
-    out_acc = []
-    err_acc = []
-    (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
-    if rc != 0:
-        module.fail_json(msg="Failed to set a new url %s for %s: %s" % (repo, remote, out0 + err0))
-    if bare:
-        (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
-    else:
-        (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote), cwd=dest)
-    out_acc.append(out1)
-    err_acc.append(err1)
-    if rc != 0:
-        module.fail_json(msg="Failed to download remote objects and refs: %s %s" %
-                (''.join(out_acc), ''.join(err_acc)))
+    commands = [["set a new url %s for %s" % (repo, remote)], [git_path, 'remote', 'set-url', remote, repo]]
+
+    fetch_str = 'download remote objects and refs'
 
     if bare:
-        (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'], cwd=dest)
+        refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
+        commands.append([fetch_str, [git_path, 'fetch', remote] + refspecs])
     else:
-        (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
-    out_acc.append(out2)
-    err_acc.append(err2)
-    if rc != 0:
-        module.fail_json(msg="Failed to download remote objects and refs: %s %s" %
-                (''.join(out_acc), ''.join(err_acc)))
+        commands.append([fetch_str, [git_path, 'fetch', '--tags']])
 
-    return (rc, ''.join(out_acc), ''.join(err_acc))
-
+    for (label,command) in commands:
+        (rc,out,err) = module.run_command(command, cwd=dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
 
 def submodules_fetch(git_path, module, remote, track_submodules, dest):
     changed = False
