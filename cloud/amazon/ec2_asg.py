@@ -562,9 +562,13 @@ def main():
             tags=dict(type='list', default=[]),
             health_check_period=dict(type='int', default=300),
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
-        )
+        ),
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    
+    module = AnsibleModule(
+        argument_spec=argument_spec, 
+        mutually_exclusive = [['replace_all_instances', 'replace_instances']]
+    )
 
     state = module.params.get('state')
     replace_instances = module.params.get('replace_instances')
@@ -577,15 +581,15 @@ def main():
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
     changed = create_changed = replace_changed = False
-    if replace_all_instances and replace_instances:
-        module.fail_json(msg="You can't use replace_instances and replace_all_instances in the same task.")
+    
+
     if state == 'present':
         create_changed, asg_properties=create_autoscaling_group(connection, module)
-    if replace_all_instances or replace_instances:
-        replace_changed, asg_properties=replace(connection, module)
     elif state == 'absent':
        changed = delete_autoscaling_group(connection, module)
        module.exit_json( changed = changed )
+    if replace_all_instances or replace_instances:
+        replace_changed, asg_properties=replace(connection, module)
     if create_changed or replace_changed:
         changed = True
     module.exit_json( changed = changed, **asg_properties )
