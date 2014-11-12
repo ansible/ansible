@@ -469,6 +469,12 @@ def main():
     install_recommends = p['install_recommends']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
 
+    # Deal with deprecated aliases
+    if p['state'] == 'installed':
+        p['state'] = 'present'
+    if p['state'] == 'removed':
+        p['state'] = 'absent'
+
     try:
         cache = apt.Cache()
         if p['default_release']:
@@ -519,7 +525,7 @@ def main():
                     p['default_release'], dpkg_options)
 
         if p['deb']:
-            if p['state'] not in ["installed", "present"]:
+            if p['state'] == 'present':
                 module.fail_json(msg="deb only supports state=present")
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
@@ -543,7 +549,7 @@ def main():
                 module.exit_json(**retvals)
             else:
                 module.fail_json(**retvals)
-        elif p['state'] in [ 'installed', 'present' ]:
+        elif p['state'] ==  'present':
             result = install(module, packages, cache, default_release=p['default_release'],
                       install_recommends=install_recommends,force=force_yes,
                       dpkg_options=dpkg_options)
@@ -552,7 +558,7 @@ def main():
                 module.exit_json(**retvals)
             else:
                 module.fail_json(**retvals)
-        elif p['state'] in [ 'removed', 'absent' ]:
+        elif p['state'] == 'absent':
             remove(module, packages, cache, p['purge'], dpkg_options)
 
     except apt.cache.LockFailedException:
