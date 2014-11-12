@@ -127,7 +127,7 @@ class PluginLoader(object):
             configured_paths = self.config.split(os.pathsep)
             for path in configured_paths:
                 path = os.path.realpath(os.path.expanduser(path))
-                contents = glob.glob("%s/*" % path)
+                contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                 for c in contents:
                     if os.path.isdir(c) and c not in ret:
                         ret.append(c)
