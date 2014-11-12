@@ -114,19 +114,22 @@ class ActionModule(object):
 
         dest = dest.replace("//","/")
 
-        # these don't fail because you may want to transfer a log file that possibly MAY exist
-        # but keep going to fetch other log files
-        if remote_checksum == '0':
-            result = dict(msg="unable to calculate the checksum of the remote file", file=source, changed=False)
-            return ReturnData(conn=conn, result=result)
-        if remote_checksum == '1':
-            if fail_on_missing:
-                result = dict(failed=True, msg="the remote file does not exist", file=source)
-            else:
-                result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
-            return ReturnData(conn=conn, result=result)
-        if remote_checksum == '2':
-            result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
+        if remote_checksum in ('0', '1', '2', '3', '4'):
+            # these don't fail because you may want to transfer a log file that possibly MAY exist
+            # but keep going to fetch other log files
+            if remote_checksum == '0':
+                result = dict(msg="unable to calculate the checksum of the remote file", file=source, changed=False)
+            elif remote_checksum == '1':
+                if fail_on_missing:
+                    result = dict(failed=True, msg="the remote file does not exist", file=source)
+                else:
+                    result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+            elif remote_checksum == '2':
+                result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
+            elif remote_checksum == '3':
+                result = dict(msg="remote file is a directory, fetch cannot work on directories", file=source, changed=False)
+            elif remote_checksum == '4':
+                result = dict(msg="python isn't present on the remote system.  Unable to fetch file", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
 
         # calculate checksum for the local file
