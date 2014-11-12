@@ -124,7 +124,7 @@ options:
      default: 'yes'
      version_added: "1.8"
    floating_ips:
-     decription:
+     description:
         - list of valid floating IPs that pre-exist to assign to this node
      required: false
      default: None
