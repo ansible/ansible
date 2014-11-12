@@ -66,4 +66,4 @@
 - assert:
     that:
       - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  ignore_errors: True
+  when: ansible_fips != True

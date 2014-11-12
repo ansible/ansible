@@ -61,7 +61,7 @@
   assert:
     that:
       - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
-  ignore_errors: True
+  when: ansible_fips != True
 
 - name: check the stat results of the file
   stat: path={{output_file}}
@@ -83,7 +83,7 @@
   assert:
     that:
       - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
-  ignore_errors: True
+  when: ansible_fips != True
 
 - name: overwrite the file via same means
   copy: src=foo.txt dest={{output_file}}
@@ -242,7 +242,7 @@
     that:
     - stat_link_result.stat.islnk
 
-- name: get the md5 of the link target
+- name: get the checksum of the link target
   shell: sha1sum {{output_dir}}/follow_test | cut -f1 -sd ' '
   register: target_file_result
 

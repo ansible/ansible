@@ -125,6 +125,7 @@ class Facts(object):
         self.get_cmdline()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
+        self.get_fips_facts()
         self.get_pkg_mgr_facts()
         self.get_lsb_facts()
         self.get_date_time_facts()
@@ -484,6 +485,13 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except OSError, e:
                 self.facts['selinux']['type'] = 'unknown'
+
+
+    def get_fips_facts(self):
+        self.facts['fips'] = False
+        data = get_file_content('/proc/sys/crypto/fips_enabled')
+        if data and data == '1':
+            self.facts['fips'] = True
 
 
     def get_date_time_facts(self):
