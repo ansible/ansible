@@ -79,7 +79,11 @@ except ImportError:
 try:
     from hashlib import md5 as _md5
 except ImportError:
-    from md5 import md5 as _md5
+    try:
+        from md5 import md5 as _md5
+    except ImportError:
+        # Assume we're running in FIPS mode here
+        _md5 = None
 
 PASSLIB_AVAILABLE = False
 try:
@@ -870,9 +874,13 @@ checksum_s = secure_hash_s
 #
 # MD5 will not work on systems which are FIPS-140-2 compliant.
 def md5s(data):
+    if not _md5:
+        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
     return secure_hash_s(data, _md5)
 
 def md5(filename):
+    if not _md5:
+        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
     return secure_hash(filename, _md5)
 
 def default(value, function):

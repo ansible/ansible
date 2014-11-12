@@ -95,7 +95,11 @@ except ImportError:
 try:
     from hashlib import md5 as _md5
 except ImportError:
-    from md5 import md5 as _md5
+    try:
+        from md5 import md5 as _md5
+    except ImportError:
+        # MD5 unavailable.  Possibly FIPS mode
+        _md5 = None
 
 try:
     from hashlib import sha256 as _sha256
@@ -1248,6 +1252,8 @@ class AnsibleModule(object):
 
         Most uses of this function can use the module.sha1 function instead.
         '''
+        if not _md5:
+            raise ValueError('MD5 not available.  Possibly running in FIPS mode')
         return self.digest_from_file(filename, _md5())
 
     def sha1(self, filename):
