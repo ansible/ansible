@@ -525,7 +525,7 @@ def main():
                     p['default_release'], dpkg_options)
 
         if p['deb']:
-            if p['state'] == 'present':
+            if p['state'] != 'present':
                 module.fail_json(msg="deb only supports state=present")
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
