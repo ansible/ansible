@@ -82,14 +82,29 @@ class ShellModule(object):
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && echo 3 && exit 0" % ((path,) * 3)
+        #
+        # In the following test, each condition is a check and logical
+        # comparison (|| or &&) that sets the rc value.  Every check is run so
+        # the last check in the series to fail will be the rc that is
+        # returned.
+        #
+        # If a check fails we error before invoking the hash functions because
+        # hash functions may successfully take the hash of a directory on BSDs
+        # (UFS filesystem?) which is not what the rest of the ansible code
+        # expects
+        #
+        # If all of the available hashing methods fail we fail with an rc of
+        # 0.  This logic is added to the end of the cmd at the bottom of this
+        # function.
+
+        test = "rc=flag; [ -r \"%(p)s\" ] || rc=2; [ -f \"%(p)s\" ] || rc=1; [ -d \"%(p)s\" ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}  %(p)s\" && exit 0" % dict(p=path, i=python_interp)
         csums = [
             "(%s -c 'import hashlib; print(hashlib.sha1(open(\"%s\", \"rb\").read()).hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python > 2.4 (including python3)
             "(%s -c 'import sha; print(sha.sha(open(\"%s\", \"rb\").read()).hexdigest())' 2>/dev/null)" % (python_interp, path),        # Python == 2.4
         ]
 
         cmd = " || ".join(csums)
-        cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
+        cmd = "%s; %s || (echo \"0  %s\")" % (test, cmd, path)
         return cmd
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
