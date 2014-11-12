@@ -209,12 +209,12 @@ class Connection(object):
         else:
             user_host_file = "~/.ssh/known_hosts"
         user_host_file = os.path.expanduser(user_host_file)
-        
+
         host_file_list = []
         host_file_list.append(user_host_file)
         host_file_list.append("/etc/ssh/ssh_known_hosts")
         host_file_list.append("/etc/ssh/ssh_known_hosts2")
-        
+
         hfiles_not_found = 0
         for hf in host_file_list:
             if not os.path.exists(hf):
@@ -228,7 +228,7 @@ class Connection(object):
             else:
                 data = host_fh.read()
                 host_fh.close()
-                
+
             for line in data.split("\n"):
                 if line is None or " " not in line:
                     continue
@@ -291,7 +291,7 @@ class Connection(object):
         not_in_host_file = self.not_in_host_file(self.host)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
@@ -360,7 +360,7 @@ class Connection(object):
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
