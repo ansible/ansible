@@ -245,6 +245,10 @@ def get_properties(autoscaling_group):
                 properties['pending_instances'] += 1
         properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
+
+    if hasattr(autoscaling_group, "tags"):
+        properties['tags'] = dict((t.key, t.value) for t in autoscaling_group.tags)
+
     return properties
 
 
@@ -357,6 +361,7 @@ def create_autoscaling_group(connection, module):
                                 continue
             if changed:
                 connection.create_or_update_tags(asg_tags)
+                as_group.tags = asg_tags
 
         # handle loadbalancers separately because None != []
         load_balancers = module.params.get('load_balancers') or []
