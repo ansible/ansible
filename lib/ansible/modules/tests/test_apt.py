@@ -16,7 +16,7 @@ class AptExpandPkgspecTestCase(unittest.TestCase):
                             FakePackage("apt-utils"),
         ]
 
-    def test_trivil(self):
+    def test_trivial(self):
         foo = ["apt"]
         self.assertEqual(
             expand_pkgspec_from_fnmatches(None, foo, self.fake_cache), foo)
