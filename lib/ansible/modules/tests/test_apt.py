@@ -3,8 +3,6 @@ import mock
 import os
 import unittest
 
-# FIXME: this is not super elegant
-os.environ["ANSIBLE_IN_HAPPY_UNITTEST_LAND"] = "1"
 from packaging.apt import (
     expand_pkgspec_from_fnmatches,
 )
