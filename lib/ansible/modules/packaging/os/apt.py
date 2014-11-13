@@ -568,6 +568,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-# FIXME: if __name__ == "__main__": ?
-if "ANSIBLE_IN_HAPPY_UNITTEST_LAND" not in os.environ:
+if __name__ == "__main__":
     main()
