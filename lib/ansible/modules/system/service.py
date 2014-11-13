@@ -1005,7 +1005,7 @@ class OpenBsdService(Service):
 
         # Depending on the service the string returned from 'status' may be
         # either a set of flags or the boolean YES/NO
-        if status_string == "YES" or status_string == "N0":
+        if status_string == "YES" or status_string == "NO":
             current_flags = ''
         else:
             current_flags = status_string
