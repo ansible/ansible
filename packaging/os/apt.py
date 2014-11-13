@@ -431,7 +431,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
+            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
@@ -468,6 +468,12 @@ def main():
 
     install_recommends = p['install_recommends']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
+
+    # Deal with deprecated aliases
+    if p['state'] == 'installed':
+        p['state'] = 'present'
+    if p['state'] == 'removed':
+        p['state'] = 'absent'
 
     try:
         cache = apt.Cache()
@@ -519,8 +525,8 @@ def main():
                     p['default_release'], dpkg_options)
 
         if p['deb']:
-            if p['state'] != "installed":
-                module.fail_json(msg="deb only supports state=installed")
+            if p['state'] != 'present':
+                module.fail_json(msg="deb only supports state=present")
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         force=force_yes, dpkg_options=p['dpkg_options'])
@@ -543,7 +549,7 @@ def main():
                 module.exit_json(**retvals)
             else:
                 module.fail_json(**retvals)
-        elif p['state'] in [ 'installed', 'present' ]:
+        elif p['state'] ==  'present':
             result = install(module, packages, cache, default_release=p['default_release'],
                       install_recommends=install_recommends,force=force_yes,
                       dpkg_options=dpkg_options)
@@ -552,7 +558,7 @@ def main():
                 module.exit_json(**retvals)
             else:
                 module.fail_json(**retvals)
-        elif p['state'] in [ 'removed', 'absent' ]:
+        elif p['state'] == 'absent':
             remove(module, packages, cache, p['purge'], dpkg_options)
 
     except apt.cache.LockFailedException:
