@@ -24,11 +24,15 @@ options:
     required: false
   rules:
     description:
-      - List of firewall inbound rules to enforce in this group (see example).
+      - List of firewall inbound rules to enforce in this group (see'''
+''' example). If none are supplied, a default all-out rule is assumed.'''
+''' If an empty list is supplied, no inbound rules will be enabled.
     required: false
   rules_egress:
     description:
-      - List of firewall outbound rules to enforce in this group (see example).
+      - List of firewall outbound rules to enforce in this group (see'''
+''' example). If none are supplied, a default all-out rule is assumed.'''
+''' If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
   region:
@@ -277,7 +281,7 @@ def main():
         addRulesToLookup(group.rules, 'in', groupRules)
 
         # Now, go through all provided rules and ensure they are there.
-        if rules:
+        if rules is not None:
             for rule in rules:
                 group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
                 if target_group_created:
@@ -317,7 +321,7 @@ def main():
         addRulesToLookup(group.rules_egress, 'out', groupRules)
 
         # Now, go through all provided rules and ensure they are there.
-        if rules_egress:
+        if rules_egress is not None:
             for rule in rules_egress:
                 group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
                 if target_group_created:
