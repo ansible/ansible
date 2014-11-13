@@ -35,7 +35,7 @@ options:
     description:
       - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800')
     required: false
-    default: null 
+    default: null
     aliases: []
   ipv4_range:
     description:
@@ -101,15 +101,16 @@ author: Eric Johnson <erjohnso@google.com>
 
 EXAMPLES = '''
 # Simple example of creating a new network
-- local_action: 
+- local_action:
     module: gce_net
     name: privatenet
     ipv4_range: '10.240.16.0/24'
-   
+
 # Simple example of creating a new firewall rule
-- local_action: 
+- local_action:
     module: gce_net
     name: privatenet
+    fwname: all-web-webproxy
     allowed: tcp:80,8080
     src_tags: ["web", "proxy"]
 
