@@ -67,7 +67,7 @@ options:
     description:
      - Indicate desired state of the vm.
     default: present
-    choices: ['present', 'powered_on', 'absent', 'powered_on', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
     description:
      - Specifies if the VM should be deployed from a template (cannot be ran with state)
