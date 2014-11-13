@@ -231,11 +231,9 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     for pkgspec_pattern in pkgspec:
         pkgname_pattern, version = package_split(pkgspec_pattern)
-        # note that any of these chars is not allowed in a (debian) pkgname
-        if frozenset('*?[]!').intersection(pkgname_pattern):
-            if version:
-                m.fail_json(msg="pkgname wildcard and version can not be mixed")
 
+        # note that none of these chars is allowed in a (debian) pkgname
+        if frozenset('*?[]!').intersection(pkgname_pattern):
             # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
             if not ":" in pkgname_pattern:
