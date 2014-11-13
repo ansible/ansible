@@ -167,7 +167,7 @@ except ImportError:
     HAS_PYTHON_APT = False
 
 def package_split(pkgspec):
-    parts = pkgspec.split('=')
+    parts = pkgspec.split('=', 1)
     if len(parts) > 1:
         return parts[0], parts[1]
     else:
@@ -229,28 +229,28 @@ def expand_dpkg_options(dpkg_options_compressed):
 
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
-    for name_or_fnmatch_or_version in pkgspec:
-        pkgname_or_fnmatch_pattern, version = package_split(name_or_fnmatch_or_version)
+    for pkgspec_pattern in pkgspec:
+        pkgname_pattern, version = package_split(pkgspec_pattern)
         # note that any of these chars is not allowed in a (debian) pkgname
-        if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
+        if frozenset('*?[]!').intersection(pkgname_pattern):
             if version:
                 m.fail_json(msg="pkgname wildcard and version can not be mixed")
             # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
-            if not ":" in pkgname_or_fnmatch_pattern:
+            if not ":" in pkgname_pattern:
                 matches = fnmatch.filter(
                     [pkg.name for pkg in cache
-                     if not ":" in pkg.name], pkgname_or_fnmatch_pattern)
+                     if not ":" in pkg.name], pkgname_pattern)
             else:
                 matches = fnmatch.filter(
-                    [pkg.name for pkg in cache], pkgname_or_fnmatch_pattern)
+                    [pkg.name for pkg in cache], pkgname_pattern)
 
             if len(matches) == 0:
-                m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_or_fnmatch_pattern))
+                m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
             else:
                 new_pkgspec.extend(matches)
         else:
-            new_pkgspec.append(name_or_fnmatch_or_version)
+            new_pkgspec.append(pkgspec_pattern)
     return new_pkgspec
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
