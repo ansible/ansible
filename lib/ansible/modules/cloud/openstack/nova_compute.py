@@ -405,7 +405,7 @@ def _get_flavor_id(module, nova):
             if (flavor.ram >= module.params['flavor_ram'] and
                     (not module.params['flavor_include'] or module.params['flavor_include'] in flavor.name)):
                 return flavor.id
-            module.fail_json(msg = "Error finding flavor with %sMB of RAM" % module.params['flavor_ram'])
+        module.fail_json(msg = "Error finding flavor with %sMB of RAM" % module.params['flavor_ram'])
     return module.params['flavor_id']
 
 
