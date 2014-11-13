@@ -235,21 +235,27 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
         if frozenset('*?[]!').intersection(pkgname_pattern):
             if version:
                 m.fail_json(msg="pkgname wildcard and version can not be mixed")
+
             # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
             if not ":" in pkgname_pattern:
-                matches = fnmatch.filter(
-                    [pkg.name for pkg in cache
-                     if not ":" in pkg.name], pkgname_pattern)
+                try:
+                    pkg_name_cache = _non_multiarch
+                except NameError:
+                    pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if not ':' in pkg.name]
             else:
-                matches = fnmatch.filter(
-                    [pkg.name for pkg in cache], pkgname_pattern)
+                try:
+                    pkg_name_cache = _all_pkg_names
+                except NameError:
+                    pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]
+            matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
             if len(matches) == 0:
                 m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
             else:
                 new_pkgspec.extend(matches)
         else:
+            # No wildcards in name
             new_pkgspec.append(pkgspec_pattern)
     return new_pkgspec
 
