@@ -87,6 +87,7 @@
   assert:
     that:
       - "unarchive02c.changed == false"
+      - "unarchive02c.skipped == true"
 
 - name: remove our tar.gz unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=absent
