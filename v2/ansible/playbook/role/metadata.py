@@ -46,7 +46,7 @@ class RoleMetadata(Base):
         super(RoleMetadata, self).__init__()
 
     @staticmethod
-    def load(data, owner, loader=None):
+    def load(data, owner, variable_manager=None, loader=None):
         '''
         Returns a new RoleMetadata object based on the datastructure passed in.
         '''
@@ -54,7 +54,7 @@ class RoleMetadata(Base):
         if not isinstance(data, dict):
             raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
 
-        m = RoleMetadata().load_data(data, loader=loader)
+        m = RoleMetadata().load_data(data, variable_manager=variable_manager, loader=loader)
         return m
 
     def _load_dependencies(self, attr, ds):
@@ -62,7 +62,7 @@ class RoleMetadata(Base):
         This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
         '''
-        return load_list_of_roles(ds, loader=self._loader)
+        return load_list_of_roles(ds, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_galaxy_info(self, attr, ds):
         '''
@@ -72,3 +72,13 @@ class RoleMetadata(Base):
         '''
 
         return ds
+
+    def serialize(self):
+        return dict(
+            allow_duplicates = self.allow_duplicates,
+            dependencies     = self.dependencies,
+        )
+
+    def deserialize(self, data):
+        setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
+        setattr(self, 'dependencies', data.get('dependencies', []))

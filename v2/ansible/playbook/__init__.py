@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.parsing.yaml import DataLoader
+from ansible.parsing import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.play import Play
 from ansible.plugins import push_basedir
@@ -33,34 +33,33 @@ __all__ = ['Playbook']
 
 class Playbook:
 
-    def __init__(self, loader=None):
+    def __init__(self, loader):
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
-        self._basedir = '.'
-
-        if loader:
-            self._loader = loader
-        else:
-            self._loader = DataLoader()
+        self._basedir = os.getcwd()
+        self._loader  = loader
 
     @staticmethod
-    def load(file_name, loader=None):
+    def load(file_name, variable_manager=None, loader=None):
         pb = Playbook(loader=loader)
-        pb._load_playbook_data(file_name)
+        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
         return pb
 
-    def _load_playbook_data(self, file_name):
+    def _load_playbook_data(self, file_name, variable_manager):
 
-        # add the base directory of the file to the data loader,
-        # so that it knows where to find relatively pathed files
-        basedir = os.path.dirname(file_name)
-        self._loader.set_basedir(basedir)
+        if os.path.isabs(file_name):
+            self._basedir = os.path.dirname(file_name)
+        else:
+            self._basedir = os.path.normpath(os.path.join(self._basedir, os.path.dirname(file_name)))
+
+        # set the loaders basedir
+        self._loader.set_basedir(self._basedir)
 
         # also add the basedir to the list of module directories
-        push_basedir(basedir)
+        push_basedir(self._basedir)
 
-        ds = self._loader.load_from_file(file_name)
+        ds = self._loader.load_from_file(os.path.basename(file_name))
         if not isinstance(ds, list):
             raise AnsibleParserError("playbooks must be a list of plays", obj=ds)
 
@@ -72,11 +71,14 @@ class Playbook:
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
             if 'include' in entry:
-                entry_obj = PlaybookInclude.load(entry, loader=self._loader)
+                entry_obj = PlaybookInclude.load(entry, variable_manager=variable_manager, loader=self._loader)
             else:
-                entry_obj = Play.load(entry, loader=self._loader)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
 
             self._entries.append(entry_obj)
+
+    def get_loader(self):
+        return self._loader
 
     def get_entries(self):
         return self._entries[:]

@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.parsing.yaml.strings import *
+from ansible.errors.yaml_strings import *
 
 class AnsibleError(Exception):
     '''
@@ -45,12 +45,12 @@ class AnsibleError(Exception):
 
         self._obj = obj
         self._show_content = show_content
-        if isinstance(self._obj, AnsibleBaseYAMLObject):
+        if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error:
-                self.message = '%s\n\n%s' % (message, extended_error)
+                self.message = 'ERROR! %s\n\n%s' % (message, extended_error)
         else:
-            self.message = message
+            self.message = 'ERROR! %s' % message
 
     def __str__(self):
         return self.message
@@ -98,8 +98,9 @@ class AnsibleError(Exception):
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
                 if target_line:
                     stripped_line = target_line.replace(" ","")
-                    arrow_line    = (" " * (col_number-1)) + "^"
-                    error_message += "%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
+                    arrow_line    = (" " * (col_number-1)) + "^ here"
+                    #header_line   = ("=" * 73)
+                    error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
 
                     # common error/remediation checking here:
                     # check for unquoted vars starting lines
@@ -157,4 +158,12 @@ class AnsibleModuleError(AnsibleRuntimeError):
 
 class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
+    pass
+
+class AnsibleFilterError(AnsibleRuntimeError):
+    ''' a templating failure '''
+    pass
+
+class AnsibleUndefinedVariable(AnsibleRuntimeError):
+    ''' a templating failure '''
     pass

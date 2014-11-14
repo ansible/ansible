@@ -20,9 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six import iteritems, string_types
+from types import NoneType
 
 from ansible.errors import AnsibleParserError
-from ansible.plugins import module_finder
+from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv
 
 class ModuleArgsParser:
@@ -120,7 +121,7 @@ class ModuleArgsParser:
             (action, args) = self._normalize_new_style_args(thing)
 
         # this can occasionally happen, simplify
-        if 'args' in args:
+        if args and 'args' in args:
             args = args['args']
 
         return (action, args)
@@ -144,8 +145,11 @@ class ModuleArgsParser:
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
             args = parse_kv(thing)
+        elif isinstance(thing, NoneType):
+            # this can happen with modules which take no params, like ping:
+            args = None
         else:
-            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
+            raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
     def _normalize_new_style_args(self, thing):
@@ -180,7 +184,7 @@ class ModuleArgsParser:
 
         else:
             # need a dict or a string, so giving up
-            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
+            raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
 
         return (action, args)
 
@@ -224,7 +228,7 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_finder:
+            if item in module_loader:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements", obj=self._task_ds)

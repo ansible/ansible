@@ -25,7 +25,7 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
-from ansible.plugins import lookup_finder
+from ansible.plugins import lookup_loader
 
 
 __all__ = ['TaskInclude']
@@ -66,9 +66,9 @@ class TaskInclude(Base):
         super(TaskInclude, self).__init__()
 
     @staticmethod
-    def load(data, block=None, role=None, task_include=None, loader=None):
+    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         ti = TaskInclude(block=block, role=role, task_include=None)
-        return ti.load_data(data, loader=loader)
+        return ti.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def munge(self, ds):
         '''
@@ -87,7 +87,7 @@ class TaskInclude(Base):
         for (k,v) in ds.iteritems():
             if k == 'include':
                 self._munge_include(ds, new_ds, k, v)
-            elif k.replace("with_", "") in lookup_finder:
+            elif k.replace("with_", "") in lookup_loader:
                 self._munge_loop(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
@@ -148,6 +148,7 @@ class TaskInclude(Base):
                                 parent_block=self._block,
                                 task_include=self,
                                 role=self._role,
+                                variable_manager=self._variable_manager,
                                 loader=self._loader
                             )
         return ds
