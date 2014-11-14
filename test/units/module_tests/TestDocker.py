@@ -1,5 +1,4 @@
 import collections
-import mock
 import os
 import unittest
 
