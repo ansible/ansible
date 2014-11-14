@@ -127,7 +127,7 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
         proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
-        #fix for 11177 
+        #fix for 11177
         if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
             from_port = 'none'
             to_port   = 'none'
@@ -143,6 +143,22 @@ def addRulesToLookup(rules, prefix, dict):
     for rule in rules:
         for grant in rule.grants:
             dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
+
+
+def validate_rule(module, rule):
+    VALID_PARAMS = ('cidr_ip',
+                    'group_id', 'group_name', 'group_desc',
+                    'proto', 'from_port', 'to_port')
+    for k in rule:
+        if k not in VALID_PARAMS:
+            module.fail_json(msg='Invalid rule parameter \'{}\''.format(k))
+
+    if 'group_id' in rule and 'cidr_ip' in rule:
+        module.fail_json(msg='Specify group_id OR cidr_ip, not both')
+    elif 'group_name' in rule and 'cidr_ip' in rule:
+        module.fail_json(msg='Specify group_name OR cidr_ip, not both')
+    elif 'group_id' in rule and 'group_name' in rule:
+        module.fail_json(msg='Specify group_id OR group_name, not both')
 
 
 def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
@@ -308,6 +324,8 @@ def main():
         # Now, go through all provided rules and ensure they are there.
         if rules is not None:
             for rule in rules:
+                validate_rule(module, rule)
+
                 group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
                 if target_group_created:
                     changed = True
@@ -358,6 +376,8 @@ def main():
         # Now, go through all provided rules and ensure they are there.
         if rules_egress is not None:
             for rule in rules_egress:
+                validate_rule(module, rule)
+
                 group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
                 if target_group_created:
                     changed = True
