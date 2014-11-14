@@ -169,24 +169,6 @@ def get_resource_tags(vpc_conn, resource_id):
             vpc_conn.get_all_tags(filters={'resource-id': resource_id})}
 
 
-def dict_diff(old, new):
-    x = {}
-    old_keys = set(old.keys())
-    new_keys = set(new.keys())
-
-    for k in old_keys.difference(new_keys):
-        x[k] = {'old': old[k]}
-
-    for k in new_keys.difference(old_keys):
-        x[k] = {'new': new[k]}
-
-    for k in new_keys.intersection(old_keys):
-        if new[k] != old[k]:
-            x[k] = {'new': new[k], 'old': old[k]}
-
-    return x
-
-
 def tags_match(match_tags, candidate_tags):
     return all((k in candidate_tags and candidate_tags[k] == v
                 for k, v in match_tags.iteritems()))
@@ -195,15 +177,14 @@ def tags_match(match_tags, candidate_tags):
 def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
-        diff = dict_diff(cur_tags, tags)
-        if not diff:
+        if tags == cur_tags:
             return {'changed': False, 'tags': cur_tags}
 
-        to_delete = {k: diff[k]['old'] for k in diff if 'new' not in diff[k]}
+        to_delete = {k: cur_tags[k] for k in cur_tags if k not in tags}
         if to_delete and not add_only:
             vpc_conn.delete_tags(resource_id, to_delete, dry_run=dry_run)
 
-        to_add = {k: diff[k]['new'] for k in diff if 'old' not in diff[k]}
+        to_add = {k: tags[k] for k in tags if k not in cur_tags}
         if to_add:
             vpc_conn.create_tags(resource_id, to_add, dry_run=dry_run)
 
