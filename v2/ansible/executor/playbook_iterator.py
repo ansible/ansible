@@ -31,37 +31,49 @@ class PlaybookState:
        self._cur_play        = 0
        self._task_list       = None
        self._cur_task_pos    = 0
+       self._done            = False
 
-   def next(self):
+   def next(self, peek=False):
        '''
        Determines and returns the next available task from the playbook,
        advancing through the list of plays as it goes.
        '''
 
+       task = None
+
+       # we save these locally so that we can peek at the next task
+       # without updating the internal state of the iterator
+       cur_play     = self._cur_play
+       task_list    = self._task_list
+       cur_task_pos = self._cur_task_pos
+
        while True:
-           # when we hit the end of the playbook entries list, we return
-           # None to indicate we're there
-           if self._cur_play > len(self._parent_iterator._playbook._entries) - 1:
+           # when we hit the end of the playbook entries list, we set a flag
+           # and return None to indicate we're there
+           # FIXME: accessing the entries and parent iterator playbook members
+           #        should be done through accessor functions
+           if self._done or cur_play > len(self._parent_iterator._playbook._entries) - 1:
+               self._done = True
                return None
 
            # initialize the task list by calling the .compile() method
            # on the play, which will call compile() for all child objects
-           if self._task_list is None:
-               self._task_list = self._parent_iterator._playbook._entries[self._cur_play].compile()
+           if task_list is None:
+               task_list = self._parent_iterator._playbook._entries[cur_play].compile()
 
            # if we've hit the end of this plays task list, move on to the next
            # and reset the position values for the next iteration
-           if self._cur_task_pos > len(self._task_list) - 1:
-               self._cur_play += 1
-               self._task_list = None
-               self._cur_task_pos = 0
+           if cur_task_pos > len(task_list) - 1:
+               cur_play += 1
+               task_list = None
+               cur_task_pos = 0
                continue
            else:
                # FIXME: do tag/conditional evaluation here and advance
                #        the task position if it should be skipped without
                #        returning a task
-               task = self._task_list[self._cur_task_pos]
-               self._cur_task_pos += 1
+               task = task_list[cur_task_pos]
+               cur_task_pos += 1
 
                # Skip the task if it is the member of a role which has already
                # been run, unless the role allows multiple executions
@@ -71,7 +83,16 @@ class PlaybookState:
                    if task._role.has_run() and not task._role._metadata._allow_duplicates:
                        continue
 
-               return task
+               # Break out of the while loop now that we have our task
+               break
+
+       # If we're not just peeking at the next task, save the internal state 
+       if not peek:
+           self._cur_play     = cur_play
+           self._task_list    = task_list
+           self._cur_task_pos = cur_task_pos
+
+       return task
 
 class PlaybookIterator:
 
@@ -84,14 +105,21 @@ class PlaybookIterator:
        self._playbook     = playbook
        self._log_manager  = log_manager
        self._host_entries = dict()
+       self._first_host   = None
 
        # build the per-host dictionary of playbook states
        for host in inventory.get_hosts():
+           if self._first_host is None:
+               self._first_host = host
            self._host_entries[host.get_name()] = PlaybookState(parent_iterator=self)
 
-   def get_next_task_for_host(self, host):
+   def get_next_task(self, peek=False):
+       ''' returns the next task for host[0] '''
+       return self._host_entries[self._first_host.get_name()].next(peek=peek)
+
+   def get_next_task_for_host(self, host, peek=False):
        ''' fetch the next task for the given host '''
        if host.get_name() not in self._host_entries:
            raise AnsibleError("invalid host specified for playbook iteration")
 
-       return self._host_entries[host.get_name()].next()
+       return self._host_entries[host.get_name()].next(peek=peek)
