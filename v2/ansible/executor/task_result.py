@@ -19,3 +19,39 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.parsing import DataLoader
+
+class TaskResult:
+    '''
+    This class is responsible for interpretting the resulting data
+    from an executed task, and provides helper methods for determining
+    the result of a given task.
+    '''
+
+    def __init__(self, host, task, return_data):
+        self._host = host
+        self._task = task
+        if isinstance(return_data, dict):
+            self._result = return_data.copy()
+        else:
+            self._result = DataLoader().load(return_data)
+
+    def is_changed(self):
+        return self._check_key('changed')
+
+    def is_skipped(self):
+        return self._check_key('skipped')
+
+    def is_failed(self):
+        return self._check_key('failed') or self._result.get('rc', 0) != 0
+
+    def is_unreachable(self):
+        return self._check_key('unreachable')
+
+    def _check_key(self, key):
+        if 'results' in self._result:
+            flag = False
+            for res in self._result.get('results', []):
+                flag |= res.get(key, False)
+        else:
+            return self._result.get(key, False)

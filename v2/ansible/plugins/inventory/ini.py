@@ -51,3 +51,10 @@ class InventoryIniParser(InventoryAggregateParser):
     def parse(self):
         return super(InventoryDirectoryParser, self).parse()
 
+    def _before_comment(self, msg):
+        ''' what's the part of a string before a comment? '''
+        msg = msg.replace("\#","**NOT_A_COMMENT**")
+        msg = msg.split("#")[0]
+        msg = msg.replace("**NOT_A_COMMENT**","#")
+        return msg
+

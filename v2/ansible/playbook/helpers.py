@@ -24,7 +24,7 @@ from ansible.errors import AnsibleParserError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
 
-def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, loader=None):
+def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
     '''
     Given a list of mixed task/block data (parsed from YAML),
     return a list of Block() objects, where implicit blocks
@@ -39,19 +39,28 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, loa
     block_list = []
     if ds:
         for block in ds:
-            b = Block.load(block, parent_block=parent_block, role=role, task_include=task_include, loader=loader)
+            b = Block.load(
+                block,
+                parent_block=parent_block,
+                role=role,
+                task_include=task_include,
+                use_handlers=use_handlers,
+                variable_manager=variable_manager,
+                loader=loader
+            )
             block_list.append(b)
 
     return block_list
 
 
-def load_list_of_tasks(ds, block=None, role=None, task_include=None, loader=None):
+def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
     '''
     Given a list of task datastructures (parsed from YAML),
     return a list of Task() or TaskInclude() objects.
     '''
 
     # we import here to prevent a circular dependency with imports
+    from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
     from ansible.playbook.task_include import TaskInclude
 
@@ -70,19 +79,29 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, loader=None
                 cur_basedir = loader.get_basedir()
                 loader.set_basedir(new_basedir)
 
-            t = TaskInclude.load(task, block=block, role=role, task_include=task_include, loader=loader)
+            t = TaskInclude.load(
+                task,
+                block=block,
+                role=role,
+                task_include=task_include,
+                use_handlers=use_handlers,
+                loader=loader
+            )
 
             if cur_basedir and loader:
                 loader.set_basedir(cur_basedir)
         else:
-            t = Task.load(task, block=block, role=role, task_include=task_include, loader=loader)
+            if use_handlers:
+                t = Handler.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+            else:
+                t = Task.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
 
         task_list.append(t)
 
     return task_list
 
 
-def load_list_of_roles(ds, loader=None):
+def load_list_of_roles(ds, variable_manager=None, loader=None):
     '''
     Loads and returns a list of RoleInclude objects from the datastructure
     list of role definitions
@@ -95,7 +114,7 @@ def load_list_of_roles(ds, loader=None):
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, loader=loader)
+        i = RoleInclude.load(role_def, variable_manager=variable_manager, loader=loader)
         roles.append(i)
 
     return roles

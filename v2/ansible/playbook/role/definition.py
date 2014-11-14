@@ -27,12 +27,14 @@ from ansible.errors import AnsibleError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.conditional import Conditional
+from ansible.playbook.taggable import Taggable
 
 
 __all__ = ['RoleDefinition']
 
 
-class RoleDefinition(Base):
+class RoleDefinition(Base, Conditional, Taggable):
 
     _role = FieldAttribute(isa='string')
 
@@ -45,7 +47,7 @@ class RoleDefinition(Base):
         return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
 
     @staticmethod
-    def load(data, loader=None):
+    def load(data, variable_manager=None, loader=None):
         raise AnsibleError("not implemented")
 
     def munge(self, ds):
@@ -116,7 +118,7 @@ class RoleDefinition(Base):
             return (role_name, role_path)
         else:
             # FIXME: this should search in the configured roles path
-            for path in ('./roles', '/etc/ansible/roles'):
+            for path in (os.path.join(self._loader.get_basedir(), 'roles'), './roles', '/etc/ansible/roles'):
                 role_path = os.path.join(path, role_name)
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)

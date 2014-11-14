@@ -27,12 +27,15 @@ from hashlib import sha1
 from types import NoneType
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.parsing.yaml import DataLoader
+from ansible.parsing import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
+from ansible.playbook.taggable import Taggable
+from ansible.utils.vars import combine_vars
 
 
 __all__ = ['Role', 'ROLE_CACHE']
@@ -45,7 +48,7 @@ __all__ = ['Role', 'ROLE_CACHE']
 ROLE_CACHE = dict()
 
 
-class Role:
+class Role(Base, Conditional, Taggable):
 
     def __init__(self):
         self._role_name        = None
@@ -60,6 +63,10 @@ class Role:
         self._handler_blocks   = []
         self._default_vars     = dict()
         self._role_vars        = dict()
+        self._had_task_run     = False
+        self._completed        = False
+
+        super(Role, self).__init__()
 
     def __repr__(self):
         return self.get_name()
@@ -71,25 +78,53 @@ class Role:
     def load(role_include, parent_role=None):
         # FIXME: add back in the role caching support
         try:
+            # The ROLE_CACHE is a dictionary of role names, with each entry
+            # containing another dictionary corresponding to a set of parameters
+            # specified for a role as the key and the Role() object itself.
+            # We use frozenset to make the dictionary hashable.
+
+            hashed_params = frozenset(role_include.get_role_params().iteritems())
+            if role_include.role in ROLE_CACHE:
+                for (entry, role_obj) in ROLE_CACHE[role_include.role].iteritems():
+                    if hashed_params == entry:
+                        if parent_role:
+                            role_obj.add_parent(parent_role)
+                        return role_obj
+
             r = Role()
             r._load_role_data(role_include, parent_role=parent_role)
+
+            if role_include.role not in ROLE_CACHE:
+                ROLE_CACHE[role_include.role] = dict()
+
+            ROLE_CACHE[role_include.role][hashed_params] = r
+            return r
+
         except RuntimeError:
             # FIXME: needs a better way to access the ds in the role include
             raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles", obj=role_include._ds)
-        return r
 
     def _load_role_data(self, role_include, parent_role=None):
-        self._role_name   = role_include.role
-        self._role_path   = role_include.get_role_path()
-        self._role_params = role_include.get_role_params()
-        self._loader      = role_include.get_loader()
+        self._role_name        = role_include.role
+        self._role_path        = role_include.get_role_path()
+        self._role_params      = role_include.get_role_params()
+        self._variable_manager = role_include.get_variable_manager()
+        self._loader           = role_include.get_loader()
 
         if parent_role:
             self.add_parent(parent_role)
 
+        current_when = getattr(self, 'when')[:]
+        current_when.extend(role_include.when)
+        setattr(self, 'when', current_when)
+        
+        current_tags = getattr(self, 'tags')[:]
+        current_tags.extend(role_include.tags)
+        setattr(self, 'tags', current_tags)
+
         # save the current base directory for the loader and set it to the current role path
-        cur_basedir = self._loader.get_basedir()
-        self._loader.set_basedir(self._role_path)
+        #cur_basedir = self._loader.get_basedir()
+        #self._loader.set_basedir(self._role_path)
 
         # load the role's files, if they exist
         metadata = self._load_role_yaml('meta')
@@ -106,16 +141,20 @@ class Role:
             self._handler_blocks = load_list_of_blocks(handler_data, role=self, loader=self._loader)
 
         # vars and default vars are regular dictionaries
-        self._role_vars    = self._load_role_yaml('vars')
+        self._role_vars  = self._load_role_yaml('vars')
         if not isinstance(self._role_vars, (dict, NoneType)):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
+        elif self._role_vars is None:
+            self._role_vars = dict()
 
         self._default_vars = self._load_role_yaml('defaults')
         if not isinstance(self._default_vars, (dict, NoneType)):
             raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
+        elif self._default_vars is None:
+            self._default_vars = dict()
 
         # and finally restore the previous base directory
-        self._loader.set_basedir(cur_basedir)
+        #self._loader.set_basedir(cur_basedir)
 
     def _load_role_yaml(self, subdir):
         file_path = os.path.join(self._role_path, subdir)
@@ -169,35 +208,76 @@ class Role:
     def get_parents(self):
         return self._parents
 
-    # FIXME: not yet used
-    #def get_variables(self):
-    #    # returns the merged variables for this role, including
-    #    # recursively merging those of all child roles
-    #    return dict()
+    def get_default_vars(self):
+        # FIXME: get these from dependent roles too
+        default_vars = dict()
+        for dep in self.get_all_dependencies():
+            default_vars = combine_vars(default_vars, dep.get_default_vars())
+        default_vars = combine_vars(default_vars, self._default_vars)
+        return default_vars
+
+    def get_inherited_vars(self):
+        inherited_vars = dict()
+        for parent in self._parents:
+            inherited_vars = combine_vars(inherited_vars, parent.get_inherited_vars())
+            inherited_vars = combine_vars(inherited_vars, parent._role_vars)
+            inherited_vars = combine_vars(inherited_vars, parent._role_params)
+        return inherited_vars
+
+    def get_vars(self):
+        all_vars = self.get_inherited_vars()
+
+        for dep in self.get_all_dependencies():
+            all_vars = combine_vars(all_vars, dep.get_vars())
+
+        all_vars = combine_vars(all_vars, self._role_vars)
+        all_vars = combine_vars(all_vars, self._role_params)
+
+        return all_vars
+
+    def get_tags(self):
+        tags = set(self.tags[:])
+        for parent in self._parents:
+            tags.update(parent.get_tags())
+        return tags
+
+    #def get_conditionals(self):
+    #    conditionals = set(self.when[:])
+    #    for parent in self._parents:
+    #        conditionals.update(parent.get_conditionals())
+    #    return conditionals
 
     def get_direct_dependencies(self):
         return self._dependencies[:]
 
     def get_all_dependencies(self):
-        # returns a list built recursively, of all deps from
-        # all child dependencies
+        '''
+        Returns a list of all deps, built recursively from all child dependencies,
+        in the proper order in which they should be executed or evaluated.
+        '''
 
         child_deps  = []
-        direct_deps = self.get_direct_dependencies()
 
-        for dep in direct_deps:
-            dep_deps = dep.get_all_dependencies()
-            for dep_dep in dep_deps:
-                if dep_dep not in child_deps:
-                    child_deps.append(dep_dep)
+        for dep in self.get_direct_dependencies():
+            for child_dep in dep.get_all_dependencies():
+                child_deps.append(child_dep)
+            child_deps.append(dep)
 
-        return direct_deps + child_deps
+        return child_deps
 
     def get_task_blocks(self):
         return self._task_blocks[:]
 
     def get_handler_blocks(self):
         return self._handler_blocks[:]
+
+    def has_run(self):
+        '''
+        Returns true if this role has been iterated over completely and
+        at least one task was run
+        '''
+
+        return self._had_task_run and self._completed
 
     def compile(self):
         '''
@@ -216,3 +296,75 @@ class Role:
 
         return task_list
 
+    def serialize(self, include_deps=True):
+        res = super(Role, self).serialize()
+
+        res['_role_name']    = self._role_name
+        res['_role_path']    = self._role_path
+        res['_role_vars']    = self._role_vars
+        res['_role_params']  = self._role_params
+        res['_default_vars'] = self._default_vars
+        res['_had_task_run'] = self._had_task_run
+        res['_completed']    = self._completed
+
+        if self._metadata:
+            res['_metadata'] = self._metadata.serialize()
+
+        if include_deps:
+            deps = []
+            for role in self.get_direct_dependencies():
+                deps.append(role.serialize())
+            res['_dependencies'] = deps
+
+        parents = []
+        for parent in self._parents:
+            parents.append(parent.serialize(include_deps=False))
+        res['_parents'] = parents
+
+        return res
+
+    def deserialize(self, data, include_deps=True):
+        self._role_name    = data.get('_role_name', '')
+        self._role_path    = data.get('_role_path', '')
+	self._role_vars    = data.get('_role_vars', dict())
+        self._role_params  = data.get('_role_params', dict())
+        self._default_vars = data.get('_default_vars', dict())
+        self._had_task_run = data.get('_had_task_run', False)
+        self._completed    = data.get('_completed', False)
+
+        if include_deps:
+            deps = []
+            for dep in data.get('_dependencies', []):
+                r = Role()
+                r.deserialize(dep)
+                deps.append(r)
+            setattr(self, '_dependencies', deps)
+
+        parent_data = data.get('_parents', [])
+        parents = []
+        for parent in parent_data:
+            r = Role()
+            r.deserialize(parent, include_deps=False)
+            parents.append(r)
+        setattr(self, '_parents', parents)
+
+        metadata_data = data.get('_metadata')
+        if metadata_data:
+            m = RoleMetadata()
+            m.deserialize(metadata_data)
+            self._metadata = m
+
+        super(Role, self).deserialize(data)
+
+    def evaluate_conditional(self, all_vars):
+        parent_conditionals = True
+        if len(self._parents) > 0:
+            parent_conditionals = False
+            for parent in self._parents:
+                parent_conditionals |= parent.evaluate_conditional(all_vars)
+
+        if not parent_conditionals:
+            return False
+        else:
+            return super(Role, self).evaluate_conditional(all_vars)
+ 

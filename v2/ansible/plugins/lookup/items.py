@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
-import ansible.utils as utils
-import ansible.errors as errors
+#from ansible.utils import safe_eval
+#import ansible.utils as utils
+#import ansible.errors as errors
 
 def flatten(terms):
     ret = []
@@ -34,10 +34,10 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
-
-        if not isinstance(terms, list) and not isinstance(terms,set):
-            raise errors.AnsibleError("with_items expects a list or a set")
+        # FIXME: this function needs to be ported still, or something like it
+        #        where really the intention is just to template a bare variable
+        #        with the result being a list of terms
+        #terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
         return flatten(terms)
 

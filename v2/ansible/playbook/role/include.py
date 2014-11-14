@@ -37,16 +37,13 @@ class RoleInclude(RoleDefinition):
     FIXME: docstring
     """
 
-    _tags = FieldAttribute(isa='list', default=[])
-    _when = FieldAttribute(isa='list', default=[])
-
     def __init__(self):
         super(RoleInclude, self).__init__()
 
     @staticmethod
-    def load(data, parent_role=None, loader=None):
+    def load(data, parent_role=None, variable_manager=None, loader=None):
         assert isinstance(data, string_types) or isinstance(data, dict)
 
         ri = RoleInclude()
-        return ri.load_data(data, loader=loader)
+        return ri.load_data(data, variable_manager=variable_manager, loader=loader)
 

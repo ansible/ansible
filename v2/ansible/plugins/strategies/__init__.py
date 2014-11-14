@@ -1,0 +1,282 @@
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import Queue
+import time
+
+from ansible.errors import *
+from ansible.playbook.helpers import compile_block_list
+from ansible.playbook.role import ROLE_CACHE
+from ansible.utils.debug import debug
+
+
+__all__ = ['StrategyBase']
+
+
+class StrategyBase:
+
+    '''
+    This is the base class for strategy plugins, which contains some common
+    code useful to all strategies like running handlers, cleanup actions, etc.
+    '''
+
+    def __init__(self, tqm):
+        self._tqm               = tqm
+        self._inventory         = tqm.get_inventory()
+        self._workers           = tqm.get_workers()
+        self._notified_handlers = tqm.get_notified_handlers()
+        self._callback          = tqm.get_callback()
+        self._variable_manager  = tqm.get_variable_manager()
+        self._loader            = tqm.get_loader()
+        self._final_q           = tqm._final_q
+
+        # internal counters
+        self._pending_results   = 0
+        self._cur_worker        = 0
+
+        # this dictionary is used to keep track of hosts that have
+        # outstanding tasks still in queue
+        self._blocked_hosts     = dict()
+
+    def run(self, iterator, connection_info):
+        debug("running the cleanup portion of the play")
+        result = self.cleanup(iterator, connection_info)
+        debug("running handlers")
+        result &= self.run_handlers(iterator, connection_info)
+        return result
+
+    def get_hosts_remaining(self, play):
+        return [host for host in self._inventory.get_hosts(play.hosts) if host.name not in self._tqm._failed_hosts and host.get_name() not in self._tqm._unreachable_hosts]
+
+    def get_failed_hosts(self):
+        return [host for host in self._inventory.get_hosts() if host.name in self._tqm._failed_hosts]
+
+    def _queue_task(self, play, host, task, connection_info):
+        ''' handles queueing the task up to be sent to a worker '''
+
+        debug("entering _queue_task() for %s/%s/%s" % (play, host, task))
+        # copy the task, to make sure we have a clean version, since the
+        # post-validation step will alter attribute values but this Task object
+        # is shared across all hosts in the play
+        debug("copying task")
+        new_task = task.copy()
+        debug("done copying task")
+
+        # squash variables down to a single dictionary using the variable manager and
+        # call post_validate() on the task, which will finalize the attribute values
+        debug("getting variables")
+        try:
+            task_vars = self._variable_manager.get_vars(loader=self._loader, play=play, host=host, task=new_task)
+        except EOFError:
+            # usually happens if the program is aborted, and the proxied object
+            # queue is cut off from the call, so we just ignore this and exit
+            return
+        debug("done getting variables")
+
+        debug("running post_validate() on the task")
+        new_task.post_validate(task_vars)
+        debug("done running post_validate() on the task")
+
+        # and then queue the new task
+        debug("%s - putting task (%s) in queue" % (host, task))
+        try:
+            debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
+
+            (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
+            self._cur_worker += 1
+            if self._cur_worker >= len(self._workers):
+                self._cur_worker = 0
+
+            self._pending_results += 1
+            main_q.put((host, new_task, task_vars, connection_info), block=False)
+        except (EOFError, IOError, AssertionError), e:
+            # most likely an abort
+            debug("got an error while queuing: %s" % e)
+            return
+        debug("exiting _queue_task() for %s/%s/%s" % (play, host, task))
+
+    def _process_pending_results(self):
+        '''
+        Reads results off the final queue and takes appropriate action
+        based on the result (executing callbacks, updating state, etc.).
+        '''
+
+        while not self._final_q.empty() and not self._tqm._terminated:
+            try:
+                result = self._final_q.get(block=False)
+                debug("got result from result worker: %s" % (result,))
+
+                # all host status messages contain 2 entries: (msg, task_result)
+                if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
+                    task_result = result[1]
+                    host = task_result._host
+                    task = task_result._task
+                    if result[0] == 'host_task_failed':
+                        self._tqm._failed_hosts[host.get_name()] = True
+                        self._callback.runner_on_failed(task, task_result)
+                    elif result[0] == 'host_unreachable':
+                        self._tqm._unreachable_hosts[host.get_name()] = True
+                        self._callback.runner_on_unreachable(task, task_result)
+                    elif result[0] == 'host_task_skipped':
+                        self._callback.runner_on_skipped(task, task_result)
+                    elif result[0] == 'host_task_ok':
+                        self._callback.runner_on_ok(task, task_result)
+
+                    self._pending_results -= 1
+                    if host.name in self._blocked_hosts:
+                        del self._blocked_hosts[host.name]
+
+                    # If this is a role task, mark the parent role as being run (if
+                    # the task was ok or failed, but not skipped or unreachable)
+                    if task_result._task._role is not None and result[0] in ('host_task_ok', 'host_task_failed'):
+                        # lookup the role in the ROLE_CACHE to make sure we're dealing
+                        # with the correct object and mark it as executed
+                        for (entry, role_obj) in ROLE_CACHE[task_result._task._role._role_name].iteritems():
+                            hashed_entry = frozenset(task_result._task._role._role_params.iteritems())
+                            if entry == hashed_entry :
+                                role_obj._had_task_run = True
+
+                elif result[0] == 'notify_handler':
+                    handler_name = result[1]
+                    host         = result[2]
+                    if host not in self._notified_handlers[handler_name]:
+                        self._notified_handlers[handler_name].append(host)
+
+                elif result[0] == 'set_host_var':
+                    host      = result[1]
+                    var_name  = result[2]
+                    var_value = result[3]
+                    self._variable_manager.set_host_variable(host, var_name, var_value)
+
+                elif result[0] == 'set_host_facts':
+                    host  = result[1]
+                    facts = result[2]
+                    self._variable_manager.set_host_facts(host, facts)
+
+                else:
+                    raise AnsibleError("unknown result message received: %s" % result[0])
+            except Queue.Empty:
+                pass
+
+    def _wait_on_pending_results(self):
+        '''
+        Wait for the shared counter to drop to zero, using a short sleep
+        between checks to ensure we don't spin lock
+        '''
+
+        while self._pending_results > 0 and not self._tqm._terminated:
+            debug("waiting for pending results (%d left)" % self._pending_results)
+            self._process_pending_results()
+            if self._tqm._terminated:
+                break
+            time.sleep(0.01)
+
+    def cleanup(self, iterator, connection_info):
+        '''
+        Iterates through failed hosts and runs any outstanding rescue/always blocks
+        and handlers which may still need to be run after a failure.
+        '''
+
+        debug("in cleanup")
+        result = True
+
+        debug("getting failed hosts")
+        failed_hosts = self.get_failed_hosts()
+        if len(failed_hosts) == 0:
+            debug("there are no failed hosts")
+            return result
+
+        debug("marking hosts failed in the iterator")
+        # mark the host as failed in the iterator so it will take
+        # any required rescue paths which may be outstanding
+        for host in failed_hosts:
+            iterator.mark_host_failed(host)
+
+        debug("clearing the failed hosts list")
+        # clear the failed hosts dictionary now while also
+        for entry in self._tqm._failed_hosts.keys():
+            del self._tqm._failed_hosts[entry]
+
+        work_to_do = True
+        while work_to_do:
+            work_to_do = False
+            for host in failed_hosts:
+                host_name = host.get_name()
+
+                if host_name in self._tqm._failed_hosts:
+                    iterator.mark_host_failed(host)
+                    del self._tqm._failed_hosts[host_name]
+
+                if host_name not in self._tqm._unreachable_hosts and iterator.get_next_task_for_host(host, peek=True):
+                    work_to_do = True
+                    # check to see if this host is blocked (still executing a previous task)
+                    if not host_name in self._blocked_hosts:
+                        # pop the task, mark the host blocked, and queue it
+                        self._blocked_hosts[host_name] = True
+                        task = iterator.get_next_task_for_host(host)
+                        self._callback.playbook_on_cleanup_task_start(task.get_name())
+                        self._queue_task(iterator._play, host, task, connection_info)
+
+            self._process_pending_results()
+
+        # no more work, wait until the queue is drained
+        self._wait_on_pending_results()
+
+        return result
+
+    def run_handlers(self, iterator, connection_info):
+        '''
+        Runs handlers on those hosts which have been notified.
+        '''
+
+        result = True
+
+        # FIXME: getting the handlers from the iterators play should be
+        #        a method on the iterator, which may also filter the list
+        #        of handlers based on the notified list
+        handlers = compile_block_list(iterator._play.handlers)
+
+        debug("handlers are: %s" % handlers)
+        for handler in handlers:
+            handler_name = handler.get_name()
+
+            if handler_name in self._notified_handlers and len(self._notified_handlers[handler_name]):
+                if not len(self.get_hosts_remaining()):
+                    self._callback.playbook_on_no_hosts_remaining()
+                    result = False
+                    break
+
+                self._callback.playbook_on_handler_task_start(handler_name)
+                for host in self._notified_handlers[handler_name]:
+                    if not handler.has_triggered(host):
+                        temp_data = handler.serialize()
+                        self._queue_task(iterator._play, host, handler, connection_info)
+                        handler.flag_for_host(host)
+
+                    self._process_pending_results()
+
+                self._wait_on_pending_results()
+
+                # wipe the notification list
+                self._notified_handlers[handler_name] = []
+
+        debug("done running handlers, result is: %s" % result)
+        return result
