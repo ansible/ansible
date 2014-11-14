@@ -206,14 +206,14 @@ def package_status(m, pkgname, version, cache, state):
             package_is_installed = pkg.isInstalled
 
     if version:
-        try:
-            installed_version = pkg.installed.version
-        except AttributeError:
-            installed_version = pkg.installedVersion
-
         avail_upgrades = fnmatch.filter((p.version for p in pkg.versions), version)
 
         if package_is_installed:
+            try:
+                installed_version = pkg.installed.version
+            except AttributeError:
+                installed_version = pkg.installedVersion
+
             # Only claim the package is installed if the version is matched as well
             package_is_installed = fnmatch.fnmatch(installed_version, version)
 
