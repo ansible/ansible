@@ -336,10 +336,11 @@ try:
 except ImportError, e:
     HAS_DOCKER_PY = False
 
-try:
-    from docker.errors import APIError as DockerAPIError
-except ImportError:
-    from docker.client import APIError as DockerAPIError
+if HAS_DOCKER_PY:
+    try:
+        from docker.errors import APIError as DockerAPIError
+    except ImportError:
+        from docker.client import APIError as DockerAPIError
 
 
 def _human_to_bytes(number):
@@ -368,6 +369,25 @@ def _docker_id_quirk(inspect):
         inspect['Id'] = inspect['ID']
         del inspect['ID']
     return inspect
+
+
+def get_split_image_tag(image):
+    # If image contains a host or org name, omit that from our check
+    if '/' in image:
+        registry, resource = image.rsplit('/', 1)
+    else:
+        registry, resource = None, image
+
+    # now we can determine if image has a tag
+    if ':' in resource:
+        resource, tag = resource.split(':', 1)
+        if registry:
+            resource = '/'.join((registry, resource))
+    else:
+        tag = "latest"
+        resource = image
+
+    return resource, tag
 
 class DockerManager:
 
@@ -505,24 +525,6 @@ class DockerManager:
         return binds
 
 
-    def get_split_image_tag(self, image):
-        # If image contains a host or org name, omit that from our check
-        if '/' in image:
-            registry, resource = image.rsplit('/', 1)
-        else:
-            registry, resource = None, image
-
-        # now we can determine if image has a tag
-        if ':' in resource:
-            resource, tag = resource.split(':', 1)
-            if registry:
-                resource = '/'.join((registry, resource))
-        else:
-            tag = "latest"
-            resource = image
-
-        return resource, tag
-
     def get_summary_counters_msg(self):
         msg = ""
         for k, v in self.counters.iteritems():
@@ -562,10 +564,10 @@ class DockerManager:
 
         # if we weren't given a tag with the image, we need to only compare on the image name, as that
         # docker will give us back the full image name including a tag in the container list if one exists.
-        image, tag = self.get_split_image_tag(image)
+        image, tag = get_split_image_tag(image)
 
         for i in self.client.containers(all=True):
-            running_image, running_tag = self.get_split_image_tag(i['Image'])
+            running_image, running_tag = get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
             name_matches = False
@@ -623,7 +625,7 @@ class DockerManager:
             containers = do_create(count, params)
         except:
             resource = self.module.params.get('image')
-            image, tag = self.get_split_image_tag(resource)
+            image, tag = get_split_image_tag(resource)
             if self.module.params.get('username'):
                 try:
                     self.client.login(
@@ -851,4 +853,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
