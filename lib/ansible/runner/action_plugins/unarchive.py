@@ -69,6 +69,7 @@ class ActionModule(object):
                     comm_ok=True,
                     result=dict(
                         skipped=True,
+                        changed=False,
                         msg=("skipped, since %s exists" % creates)
                     )
                 )
