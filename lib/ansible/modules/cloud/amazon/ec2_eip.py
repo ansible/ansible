@@ -42,12 +42,6 @@ options:
     required: false
     default: false
     version_added: "1.6"
-  wait_timeout:
-    description:
-      - how long to wait in seconds for newly provisioned EIPs to become'''
-''' available
-    default: 300
-    version_added: "1.7"
 
 extends_documentation_fragment: aws
 author: Lorin Hochstein <lorin@nimbisservices.com>
@@ -141,20 +135,26 @@ def disassociate_ip_and_instance(ec2, address, instance_id, check_mode):
     return {'changed': True}
 
 
-def find_address(ec2, public_ip, wait_timeout):
-    """ Find an existing Elastic IP address """
-    deadline = time.time() + wait_timeout
-    while True:
-        try:
-            return ec2.get_all_addresses([public_ip])[0]
-        except boto.exception.EC2ResponseError as e:
-            if "Address '{}' not found.".format(public_ip) not in e.message:
-                raise
+def _find_address_by_ip(ec2, public_ip):
+    try:
+        return ec2.get_all_addresses([public_ip])[0]
+    except boto.exception.EC2ResponseError as e:
+        if "Address '{}' not found.".format(public_ip) not in e.message:
+            raise
 
-        if time.time() >= deadline:
-            raise EIPException('wait for EIPs timeout on {}'
-                               .format(time.asctime()))
-        time.sleep(5)
+
+def _find_address_by_instance_id(ec2, instance_id):
+    addresses = ec2.get_all_addresses(None, {'instance-id': instance_id})
+    if addresses:
+        return addresses[0]
+
+
+def find_address(ec2, public_ip, instance_id):
+    """ Find an existing Elastic IP address """
+    if public_ip:
+        return _find_address_by_ip(ec2, public_ip)
+    elif instance_id:
+        return _find_address_by_instance_id(ec2, instance_id)
 
 
 def address_is_associated_with_instance(ec2, address, instance_id):
@@ -270,11 +270,9 @@ def main():
     in_vpc = module.params.get('in_vpc')
     domain = 'vpc' if in_vpc else None
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
-    wait_timeout = int(module.params.get('wait_timeout'))
 
     try:
-        if public_ip:
-            address = find_address(ec2, public_ip, wait_timeout)
+        address = find_address(ec2, public_ip, instance_id)
 
         if state == 'present':
             result = ensure_present(ec2, domain, address, instance_id,
