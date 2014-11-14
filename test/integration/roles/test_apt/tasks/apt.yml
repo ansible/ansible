@@ -84,7 +84,7 @@
 
 # INSTALL WITH VERSION WILDCARD
 - name: install hello with apt
-  apt: name=hello=2.7* state=present
+  apt: name=hello=2.* state=present
   register: apt_result
 
 - name: check hello with wildcard with  dpkg
