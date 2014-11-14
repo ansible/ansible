@@ -116,6 +116,11 @@ options:
       - Specify interface for rule.
     required: false
     aliases: ['if']
+  route:
+    description:
+      - Apply the rule to routed/forwarded packets.
+    required: false
+    choices: ['yes', 'no']
 '''
 
 EXAMPLES = '''
@@ -165,6 +170,10 @@ ufw: rule=allow interface=eth0 direction=in proto=udp src=1.2.3.5 from_port=5469
 # Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
 # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
 ufw: rule=deny proto=tcp src=2001:db8::/32 port=25
+
+# Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24.
+# Can be used to further restrict a global FORWARD policy set to allow
+ufw: rule=deny route=yes src=1.2.3.0/24 dest=4.5.6.0/24
 '''
 
 from operator import itemgetter
@@ -178,6 +187,7 @@ def main():
             logging   = dict(default=None,  choices=['on', 'off', 'low', 'medium', 'high', 'full']),
             direction = dict(default=None,  choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
             delete    = dict(default=False, type='bool'),
+            route     = dict(default=False, type='bool'),
             insert    = dict(default=None),
             rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
             interface = dict(default=None,  aliases=['if']),
@@ -241,10 +251,11 @@ def main():
         elif command == 'rule':
             # Rules are constructed according to the long format
             #
-            # ufw [--dry-run] [delete] [insert NUM] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
+            # ufw [--dry-run] [delete] [insert NUM] [route] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
             #     [proto protocol] [app application]
             cmd.append([module.boolean(params['delete']), 'delete'])
+            cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
             cmd.append([value])
             cmd.append([module.boolean(params['log']), 'log'])
