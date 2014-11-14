@@ -205,19 +205,34 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
-    if version and package_is_installed:
+    if version:
         try:
             installed_version = pkg.installed.version
         except AttributeError:
             installed_version = pkg.installedVersion
-        return package_is_installed and fnmatch.fnmatch(installed_version, version), False, has_files
+
+        avail_upgrades = fnmatch.filter((p.version for p in pkg.versions), version)
+
+        if package_is_installed:
+            # Only claim the package is installed if the version is matched as well
+            package_is_installed = fnmatch.fnmatch(installed_version, version)
+
+            # Only claim the package is upgradable if a candidate matches the version
+            package_is_upgradable = False
+            for candidate in avail_upgrades:
+                if pkg.versions[candidate] > p.installed:
+                    package_is_upgradable = True
+                    break
+        else:
+            package_is_upgradable = bool(avail_upgrades)
     else:
         try:
             package_is_upgradable = pkg.is_upgradable
         except AttributeError:
             # assume older version of python-apt is installed
             package_is_upgradable = pkg.isUpgradable
-        return package_is_installed, package_is_upgradable, has_files
+
+    return package_is_installed, package_is_upgradable, has_files
 
 def expand_dpkg_options(dpkg_options_compressed):
     options_list = dpkg_options_compressed.split(',')
@@ -260,13 +275,23 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=True, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+    pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
         if not installed or (upgrade and upgradable):
-            packages += "'%s' " % package
+            pkg_list.append("'%s'" % package)
+        if installed and upgradable and version:
+            # This happens when the package is installed, a newer version is
+            # available, and the version is a wildcard that matches both
+            #
+            # We do not apply the upgrade flag because we cannot specify both
+            # a version and state=latest.  (This behaviour mirrors how apt
+            # treats a version with wildcard in the package)
+            pkg_list.append("'%s'" % package)
+    packages = ' '.join(pkg_list)
 
     if len(packages) != 0:
         if force:
@@ -355,13 +380,14 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
 
 def remove(m, pkgspec, cache, purge=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
-    packages = ""
+    pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='remove')
         if installed or (has_files and purge):
-            packages += "'%s' " % package
+            pkg_list.append("'%s'" % package)
+    packages = ' '.join(pkg_list)
 
     if len(packages) == 0:
         m.exit_json(changed=False)
