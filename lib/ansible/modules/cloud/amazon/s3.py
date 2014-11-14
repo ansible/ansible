@@ -175,7 +175,7 @@ EXAMPLES = '''
 
 import os
 import urlparse
-import hashlib
+from ssl import SSLError
 
 try:
     import boto
@@ -355,13 +355,6 @@ def is_walrus(s3_url):
     else:
         return False
 
-def get_md5_digest(local_file):
-    md5 = hashlib.md5()
-    with open(local_file, 'rb') as f:
-        for data in f.read(1024 ** 2):
-            md5.update(data)
-    return md5.hexdigest()
-
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -487,8 +480,7 @@ def main():
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
             md5_remote = keysum(module, s3, bucket, obj, version=version)
-            md5_local = get_md5_digest(dest)
-
+            md5_local = module.md5(dest)
             if md5_local == md5_remote:
                 sum_matches = True
                 if overwrite == 'always':
@@ -531,7 +523,7 @@ def main():
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn is True and keyrtn is True:
                 md5_remote = keysum(module, s3, bucket, obj)
-                md5_local = get_md5_digest(src)
+                md5_local = module.md5(src)
 
                 if md5_local == md5_remote:
                     sum_matches = True

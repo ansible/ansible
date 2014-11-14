@@ -291,7 +291,7 @@ def get_download_url(module, gs, bucket, obj, expiry):
 
 def handle_get(module, gs, bucket, obj, overwrite, dest):
     md5_remote = keysum(module, gs, bucket, obj)
-    md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
+    md5_local = module.md5(dest)
     if md5_local == md5_remote:
         module.exit_json(changed=False)
     if md5_local != md5_remote and not overwrite:
@@ -307,7 +307,7 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     # Lets check key state. Does it exist and if it does, compute the etag md5sum.
     if bucket_rc and key_rc:
         md5_remote = keysum(module, gs, bucket, obj)
-        md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
+        md5_local = module.md5(src)
         if md5_local == md5_remote:
             module.exit_json(msg="Local and remote object are identical", changed=False)
         if md5_local != md5_remote and not overwrite:
