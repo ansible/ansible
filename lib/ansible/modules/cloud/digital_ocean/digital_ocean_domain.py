@@ -27,7 +27,7 @@ options:
     description:
      - Indicate desired state of the target.
     default: present
-    choices: ['present', 'active', 'absent', 'deleted']
+    choices: ['present', 'absent']
   client_id:
      description:
      - DigitalOcean manager id.
@@ -181,7 +181,7 @@ def core(module):
 
         if not domain:
             domain = Domain.find(name=getkeyordie("name"))
-            
+
         if not domain:
             domain = Domain.add(getkeyordie("name"),
                                 getkeyordie("ip"))
@@ -217,7 +217,7 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
+            state = dict(choices=['present', 'absent'], default='present'),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(type='str'),
