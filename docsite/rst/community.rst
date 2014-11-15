@@ -68,7 +68,7 @@ to see if the issue has already been reported.
 
 MODULE related bugs however should go to `ansible-modules-core <github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
 
-When filing a bug, please use the `issue template <https://raw2.github.com/ansible/ansible/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
+When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
 
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
