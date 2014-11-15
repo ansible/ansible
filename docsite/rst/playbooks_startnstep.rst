@@ -1,11 +1,12 @@
 Start and Step
 ======================
-.. versionadded:: 1.8
 
 .. contents:: Topics
 
 This shows a few special ways to run playbooks, very useful for testing and debugging.
 
+
+.. _start_at_task
 
 Start-at-task
 `````````````
@@ -18,6 +19,8 @@ with the ``--start-at`` option::
 
 The above will start executing your playbook at a task named "install packages".
 
+
+.. _step
 
 Step
 ````
