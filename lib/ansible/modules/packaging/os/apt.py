@@ -333,7 +333,7 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
         if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
             continue
         # Check if package is installable
-        if not pkg.check():
+        if not pkg.check() and not force:
             m.fail_json(msg=pkg._failure_string)
 
         # add any missing deps to the list of deps we need
