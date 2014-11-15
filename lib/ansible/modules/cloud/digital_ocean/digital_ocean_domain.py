@@ -145,7 +145,7 @@ class Domain(JsonfyMixIn):
             return False
 
         domains = Domain.list_all()
-        
+
         if id is not None:
             for domain in domains:
                 if domain.id == id:
@@ -203,10 +203,10 @@ def core(module):
         domain = None
         if "id" in module.params:
             domain = Domain.find(id=module.params["id"])
-                
+
         if not domain and "name" in module.params:
             domain = Domain.find(name=module.params["name"])
-                
+
         if not domain:
             module.exit_json(changed=False, msg="Domain not found.")
 
