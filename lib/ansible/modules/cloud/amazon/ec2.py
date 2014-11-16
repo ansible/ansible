@@ -1183,7 +1183,7 @@ def main():
             assign_public_ip = dict(type='bool', default=False),
             private_ip = dict(),
             instance_profile_name = dict(),
-            instance_ids = dict(type='list', alias='instance_id'),
+            instance_ids = dict(type='list', aliases=['instance_id']),
             source_dest_check = dict(type='bool', default=True),
             state = dict(default='present'),
             exact_count = dict(type='int', default=None),
