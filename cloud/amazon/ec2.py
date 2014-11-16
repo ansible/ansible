@@ -179,7 +179,7 @@ options:
       - "list of instance ids, currently used for states: absent, running, stopped"
     required: false
     default: null
-    aliases: []
+    aliases: ['instance_id']
   source_dest_check:
     version_added: "1.6"
     description:
@@ -1183,7 +1183,7 @@ def main():
             assign_public_ip = dict(type='bool', default=False),
             private_ip = dict(),
             instance_profile_name = dict(),
-            instance_ids = dict(type='list'),
+            instance_ids = dict(type='list', alias='instance_id'),
             source_dest_check = dict(type='bool', default=True),
             state = dict(default='present'),
             exact_count = dict(type='int', default=None),
