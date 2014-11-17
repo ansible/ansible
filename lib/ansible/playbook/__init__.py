@@ -495,6 +495,18 @@ class PlayBook(object):
             # playbook executions
             if 'stdout' in result and 'stdout_lines' not in result:
                 result['stdout_lines'] = result['stdout'].splitlines()
+            if task.append_to_list:
+                if task.register not in self.VARS_CACHE[host]:
+                    self.VARS_CACHE[host][task.register] = []
+                result_list = self.VARS_CACHE[host][task.register]
+                result_list.append(result)
+                result = result_list
+            elif task.insert_into_hash:
+                if task.register not in self.VARS_CACHE[host]:
+                    self.VARS_CACHE[host][task.register] = {}
+                result_hash = self.VARS_CACHE[host][task.register]
+                result_hash[task.insert_into_hash] = result
+                result = result_hash
             utils.update_hash(self.VARS_CACHE, host, {task.register: result})
 
         def _save_play_facts(host, facts):
