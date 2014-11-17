@@ -3,9 +3,9 @@
 #    modifies environment for running Ansible from checkout
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
-if [ -n "$BASH_SOURCE" ] ; then
+if [[ "$BASH_SOURCE" ]] ; then
     HACKING_DIR=`dirname $BASH_SOURCE`
-elif [ $(basename $0) = "env-setup" ]; then
+elif [[ $(basename $0) = "env-setup" ]]; then
     HACKING_DIR=`dirname $0`
 else
     HACKING_DIR="$PWD/hacking"
@@ -25,7 +25,7 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
 # Print out values unless -q is set
 
-if [ $# -eq 0 -o "$1" != "-q" ] ; then
+if [[ $# -eq 0 || "$1" != "-q" ]] ; then
     echo ""
     echo "Setting up Ansible to run out of checkout..."
     echo ""
