@@ -38,7 +38,7 @@ class Play(object):
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user',
-       'vault_password', 'no_log',
+       'vault_password', 'no_log', 'environment',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -48,7 +48,7 @@ class Play(object):
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user', 'vault_password', 'no_log',
+       'su', 'su_user', 'vault_password', 'no_log', 'environment',
     ]
 
     # *************************************************
@@ -69,6 +69,10 @@ class Play(object):
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
         self.vault_password   = vault_password
+        self.environment      = ds.get('environment', {})
+
+        if not isinstance(self.environment, dict):
+            raise errors.AnsibleError('environment must be a dictionary')
 
         if self.tags is None:
             self.tags = []
@@ -368,6 +372,7 @@ class Play(object):
         new_handlers = []
         new_vars_files = []
         defaults_files = []
+        new_environment = {}
 
         pre_tasks = ds.get('pre_tasks', None)
         if type(pre_tasks) != list:
@@ -397,23 +402,25 @@ class Play(object):
                 if k in role_vars:
                     special_vars[k] = role_vars[k]
 
-            task_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
-            handler_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
-            vars_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
-            meta_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
-            defaults_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
+            task_basepath        = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
+            handler_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
+            vars_basepath        = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            meta_basepath        = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
+            defaults_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
+            environment_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'environment'))
 
-            task      = self._resolve_main(task_basepath)
-            handler   = self._resolve_main(handler_basepath)
-            vars_file = self._resolve_main(vars_basepath)
-            meta_file = self._resolve_main(meta_basepath)
-            defaults_file = self._resolve_main(defaults_basepath)
+            task             = self._resolve_main(task_basepath)
+            handler          = self._resolve_main(handler_basepath)
+            vars_file        = self._resolve_main(vars_basepath)
+            meta_file        = self._resolve_main(meta_basepath)
+            defaults_file    = self._resolve_main(defaults_basepath)
+            environment_file = self._resolve_main(environment_basepath)
 
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             missing = lambda f: not os.path.isfile(f)
-            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and not os.path.isdir(library):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, library))
+            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(environment_file) and not os.path.isdir(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, environment_file, library))
 
             if isinstance(role, dict):
                 role_name = role['role']
@@ -437,6 +444,10 @@ class Play(object):
                 new_vars_files.append(vars_file)
             if os.path.isfile(defaults_file):
                 defaults_files.append(defaults_file)
+            if os.path.isfile(environment_file):
+                environment = utils.parse_yaml_from_file(environment_file, vault_password=self.vault_password)
+                if type(environment) == dict:
+                    new_environment.update(environment)
             if os.path.isdir(library):
                 utils.plugins.module_finder.add_directory(library)
 
@@ -470,6 +481,10 @@ class Play(object):
         ds['role_names'] = role_names
 
         self.default_vars = self._load_role_defaults(defaults_files)
+
+        # play environment overrides roles
+        new_environment.update(self.environment)
+        self.environment = new_environment
 
         return ds
 

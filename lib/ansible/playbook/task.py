@@ -129,10 +129,16 @@ class Task(object):
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.su           = utils.boolean(ds.get('su', play.su))
-        self.environment  = ds.get('environment', {})
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false")) or self.play.no_log
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
+
+        # combine play and task environments (task updates/overrides play)
+        if not isinstance(ds.get('environment', {}), dict):
+            raise errors.AnsibleError('environment specified for task %s has invalid type %s' % (ds.get('name', 'environment: %s' % ds.get('environment')), type(ds.get('environment'))))
+        else:
+            self.environment = play.environment.copy()
+            self.environment.update(ds.get('environment', {}))
 
         #Code to allow do until feature in a Task 
         if 'until' in ds:
