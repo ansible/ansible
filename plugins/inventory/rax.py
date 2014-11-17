@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-# (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
+# (c) 2013, Jesse Keating <jesse.keating@rackspace.com,
+#           Paul Durivage <paul.durivage@rackspace.com>,
+#           Matt Martz <matt.martz@rackspace.com>
 #
-# This file is part of Ansible,
+# This file is part of Ansible.
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,14 +19,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION = '''
----
-inventory: rax
-short_description: Rackspace Public Cloud external inventory script
-description:
-  - Generates inventory that Ansible can understand by making API request to
+"""
+Rackspace Cloud Inventory
+
+Authors:
+    Jesse Keating <jesse.keating@rackspace.com,
+    Paul Durivage <paul.durivage@rackspace.com>,
+    Matt Martz <matt.martz@rackspace.com>
+
+
+Description:
+    Generates inventory that Ansible can understand by making API request to
     Rackspace Public Cloud API
-  - |
+
     When run against a specific host, this script returns the following
     variables:
         rax_os-ext-sts_task_state
@@ -50,56 +57,54 @@ description:
         rax_tenant_id
         rax_loaded
 
-    where some item can have nested structure.
-  - credentials are set in a credentials file
-version_added: None
-options:
-  creds_file:
-    description:
-     - File to find the Rackspace Public Cloud credentials in
-    required: true
-    default: null
-  region:
-    description:
-     - An optional value to narrow inventory scope, i.e. DFW, ORD, IAD, LON
-     required: false
-     default: null
-authors:
-  - Jesse Keating <jesse.keating@rackspace.com>
-  - Paul Durivage <paul.durivage@rackspace.com>
-  - Matt Martz <matt@sivel.net>
-notes:
-  - RAX_CREDS_FILE is an optional environment variable that points to a
+Notes:
+    RAX_CREDS_FILE is an optional environment variable that points to a
     pyrax-compatible credentials file.
-  - If RAX_CREDS_FILE is not supplied, rax.py will look for a credentials file
-    at ~/.rackspace_cloud_credentials.
-  - See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
-  - RAX_REGION is an optional environment variable to narrow inventory search
-    scope
-  - RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace
-    datacenter) and optionally accepts a comma-separated list
-  - RAX_ENV is an environment variable that will use an environment as
+
+    If RAX_CREDS_FILE is not supplied, rax.py will look for a credentials file
+    at ~/.rackspace_cloud_credentials.  It uses the Rackspace Python SDK, and
+    therefore requires a file formatted per the SDK's specifications. See
+    https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md
+    #authenticating
+
+    RAX_REGION is an optional environment variable to narrow inventory search
+    scope.  RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace
+    datacenter) and optionally accepts a comma-separated list.
+
+    RAX_ENV is an environment variable that will use an environment as
     configured in ~/.pyrax.cfg, see
-    https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration
-  - RAX_META_PREFIX is an environment variable that changes the prefix used
+    https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md
+    #pyrax-configuration
+
+    RAX_META_PREFIX is an environment variable that changes the prefix used
     for meta key/value groups. For compatibility with ec2.py set to
     RAX_META_PREFIX=tag
-requirements: [ "pyrax" ]
-examples:
-    - description: List server instances
-      code: RAX_CREDS_FILE=~/.raxpub rax.py --list
-    - description: List servers in ORD datacenter only
-      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --list
-    - description: List servers in ORD and DFW datacenters
-      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD,DFW rax.py --list
-    - description: Get server details for server named "server.example.com"
-      code: RAX_CREDS_FILE=~/.raxpub rax.py --host server.example.com
-'''
+
+    RAX_PRIVATE_IP is an environment variable that will tell the inventory
+    script to use the instance's private ip as the ansible_ssh_host value.
+
+Examples:
+    List server instances
+    $ RAX_CREDS_FILE=~/.raxpub rax.py --list
+
+    List servers in ORD datacenter only
+    $ RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --list
+
+    List servers in ORD and DFW datacenters
+    $ RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD,DFW rax.py --list
+
+    Get server details for server named "server.example.com"
+    $ RAX_CREDS_FILE=~/.raxpub rax.py --host server.example.com
+
+    Use the instance private IP to connect (instead of public IP)
+    $ RAX_CREDS_FILE=~/.raxpub RAX_PRIVATE_IP=yes rax.py --list
+"""
 
 import os
 import re
 import sys
 import argparse
+import warnings
 import collections
 
 from types import NoneType
@@ -126,7 +131,7 @@ def to_dict(obj):
     instance = {}
     for key in dir(obj):
         value = getattr(obj, key)
-        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
+        if isinstance(value, NON_CALLABLES) and not key.startswith('_'):
             key = rax_slugify(key)
             instance[key] = value
 
@@ -154,10 +159,18 @@ def _list(regions):
     hostvars = collections.defaultdict(dict)
     images = {}
 
+    use_private_ip = True if os.environ.get('RAX_PRIVATE_IP') else False
+
     # Go through all the regions looking for servers
     for region in regions:
         # Connect to the region
         cs = pyrax.connect_to_cloudservers(region=region)
+        if isinstance(cs, NoneType):
+            warnings.warn(
+                'Connecting to Rackspace region "%s" has caused Pyrax to '
+                'return a NoneType. Is this a valid region?' % region,
+                RuntimeWarning)
+            continue
         for server in cs.servers.list():
             # Create a group on region
             groups[region].append(server.name)
@@ -198,7 +211,12 @@ def _list(regions):
                     groups['image-%s' % server.image['id']].append(server.name)
 
             # And finally, add an IP address
-            hostvars[server.name]['ansible_ssh_host'] = server.accessIPv4
+            if use_private_ip:
+                hostvars[server.name]['ansible_ssh_host'] = (
+                    server.networks.get('private', [''])[0]
+                )
+            else:
+                hostvars[server.name]['ansible_ssh_host'] = server.accessIPv4
 
     if hostvars:
         groups['_meta'] = {'hostvars': hostvars}
