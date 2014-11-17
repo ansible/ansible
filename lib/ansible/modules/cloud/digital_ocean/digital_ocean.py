@@ -96,6 +96,7 @@ options:
 
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
+  - Version 1 of DigitalOcean API is used.
 requirements: [ dopy ]
 '''
 
