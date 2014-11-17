@@ -299,7 +299,15 @@ class User(object):
             # exists with the same name as the user to prevent 
             # errors from useradd trying to create a group when 
             # USERGROUPS_ENAB is set in /etc/login.defs.
-            cmd.append('-N')
+            if os.path.exists('/etc/redhat-release'):
+                dist = platform.dist()
+                major_release = int(dist[1].split('.')[0])
+                if major_release <= 5:
+                    cmd.append('-n')
+                else:
+                    cmd.append('-N')
+            else:
+                cmd.append('-N')
 
         if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
