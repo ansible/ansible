@@ -133,7 +133,7 @@ For the following use case, let's use this small shell script as a wrapper.
 
 .. code-block:: bash
 
-  #!/bin/bash
+  #!/usr/bin/env bash
   PLAYBOOK="$1"
 
   if [[ -z $PLAYBOOK ]]; then
