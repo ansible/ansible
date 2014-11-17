@@ -33,7 +33,7 @@ import uuid
 class Play(object):
 
     __slots__ = [
-       'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
+       'hosts', 'name', 'vars', 'vars_file_vars', 'role_vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
@@ -65,6 +65,8 @@ class Play(object):
         self.vars_prompt      = ds.get('vars_prompt', {})
         self.playbook         = playbook
         self.vars             = self._get_vars()
+        self.vars_file_vars   = dict() # these are vars read in from vars_files:
+        self.role_vars        = dict() # these are vars read in from vars/main.yml files in roles
         self.basedir          = basedir
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
@@ -107,10 +109,6 @@ class Play(object):
             raise errors.AnsibleError('vars_files must be a list')
 
         self._update_vars_files_for_host(None)
-
-        # apply any extra_vars specified on the command line now
-        if type(self.playbook.extra_vars) == dict:
-            self.vars = utils.combine_vars(self.vars, self.playbook.extra_vars)
 
         # template everything to be efficient, but do not pre-mature template
         # tasks/handlers as they may have inventory scope overrides
@@ -224,6 +222,7 @@ class Play(object):
         for role in roles:
             role_path,role_vars = self._get_role_path(role)
             role_vars = utils.combine_vars(passed_vars, role_vars)
+
             vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
             vars_data = {}
             if os.path.isfile(vars):
@@ -232,10 +231,12 @@ class Play(object):
                     if not isinstance(vars_data, dict):
                         raise errors.AnsibleError("vars from '%s' are not a dict" % vars)
                     role_vars = utils.combine_vars(vars_data, role_vars)
+
             defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
             defaults_data = {}
             if os.path.isfile(defaults):
                 defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
+
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
@@ -287,13 +288,15 @@ class Play(object):
 
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
+
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
                         vars_data = {}
                         if os.path.isfile(vars):
                             vars_data = utils.parse_yaml_from_file(vars, vault_password=self.vault_password)
                             if vars_data:
-                                #dep_vars = utils.combine_vars(vars_data, dep_vars)
                                 dep_vars = utils.combine_vars(dep_vars, vars_data)
+                                pass
+
                         defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
                         dep_defaults_data = {}
                         if os.path.isfile(defaults):
@@ -338,6 +341,19 @@ class Play(object):
                 dep_stack.append([role,role_path,role_vars,defaults_data])
         return dep_stack
 
+    def _load_role_vars_files(self, vars_files):
+        # process variables stored in vars/main.yml files
+        role_vars = {}
+        for filename in vars_files:
+            if os.path.exists(filename):
+                new_vars = utils.parse_yaml_from_file(filename, vault_password=self.vault_password)
+                if new_vars:
+                    if type(new_vars) != dict:
+                        raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_vars)))
+                    role_vars = utils.combine_vars(role_vars, new_vars)
+
+        return role_vars
+
     def _load_role_defaults(self, defaults_files):
         # process default variables
         default_vars = {}
@@ -364,10 +380,10 @@ class Play(object):
         if type(roles) != list:
             raise errors.AnsibleError("value of 'roles:' must be a list")
 
-        new_tasks = []
-        new_handlers = []
-        new_vars_files = []
-        defaults_files = []
+        new_tasks       = []
+        new_handlers    = []
+        role_vars_files = []
+        defaults_files  = []
 
         pre_tasks = ds.get('pre_tasks', None)
         if type(pre_tasks) != list:
@@ -434,7 +450,7 @@ class Play(object):
                         nt[k] = special_vars[k]
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
-                new_vars_files.append(vars_file)
+                role_vars_files.append(vars_file)
             if os.path.isfile(defaults_file):
                 defaults_files.append(defaults_file)
             if os.path.isdir(library):
@@ -462,13 +478,12 @@ class Play(object):
         new_tasks.append(dict(meta='flush_handlers'))
 
         new_handlers.extend(handlers)
-        new_vars_files.extend(vars_files)
 
         ds['tasks'] = new_tasks
         ds['handlers'] = new_handlers
-        ds['vars_files'] = new_vars_files
         ds['role_names'] = role_names
 
+        self.role_vars = self._load_role_vars_files(role_vars_files)
         self.default_vars = self._load_role_defaults(defaults_files)
 
         return ds
@@ -535,8 +550,7 @@ class Play(object):
                     results.append(Task(self, x))
                     continue
 
-            task_vars = self.vars.copy()
-            task_vars.update(vars)
+            task_vars = vars.copy()
             if original_file:
                 task_vars['_original_file'] = original_file
 
@@ -601,6 +615,9 @@ class Play(object):
                 task = Task(
                     self, x,
                     module_vars=task_vars,
+                    play_vars=self.vars,
+                    play_file_vars=self.vars_file_vars,
+                    role_vars=self.role_vars,
                     default_vars=default_vars,
                     additional_conditions=list(additional_conditions),
                     role_name=role_name
@@ -818,7 +835,7 @@ class Play(object):
                             target_filename = filename4
                     update_vars_cache(host, data, target_filename=target_filename)
                 else:
-                    self.vars = utils.combine_vars(self.vars, data)
+                    self.vars_file_vars = utils.combine_vars(self.vars_file_vars, data)
                 # we did process this file
                 return True
             # we did not process this file

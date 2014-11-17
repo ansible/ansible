@@ -399,6 +399,9 @@ class PlayBook(object):
             remote_user=task.remote_user,
             remote_port=task.play.remote_port,
             module_vars=task.module_vars,
+            play_vars=task.play_vars,
+            play_file_vars=task.play_file_vars,
+            role_vars=task.role_vars,
             default_vars=task.default_vars,
             extra_vars=self.extra_vars,
             private_key_file=self.private_key_file,
@@ -500,7 +503,7 @@ class PlayBook(object):
         def _save_play_facts(host, facts):
             # saves play facts in SETUP_CACHE, unless the module executed was
             # set_fact, in which case we add them to the VARS_CACHE
-            if task.module_name == 'set_fact':
+            if task.module_name in ('set_fact', 'include_vars'):
                 utils.update_hash(self.VARS_CACHE, host, facts)
             else:
                 utils.update_hash(self.SETUP_CACHE, host, facts)
@@ -605,6 +608,9 @@ class PlayBook(object):
             transport=play.transport,
             is_playbook=True,
             module_vars=play.vars,
+            play_vars=play.vars,
+            play_file_vars=play.vars_file_vars,
+            role_vars=play.role_vars,
             default_vars=play.default_vars,
             check=self.check,
             diff=self.diff,
