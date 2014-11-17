@@ -335,25 +335,6 @@ Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
 
-Playbooks can also be executed interactively with ``--step``::
-
-    ansible-playbook playbook.yml --step
-
-This will cause ansible to stop on each task, and ask if it should execute that task.
-Say you had a task called "configure ssh", the playbook run will stop and ask::
-
-    Perform task: configure ssh (y/n/c):
-
-Answering "y" will execute the task, answering "n" will skip the task, and answering "c"
-will continue executing all the remaining tasks without asking.
-
-If you want to start executing your playbook at a particular task, you can do so
-with the ``--start-at`` option::
-
-    ansible-playbook playbook.yml --start-at="install packages"
-
-The above will start executing your playbook at a task named "install packages".
-
 .. _ansible-pull:
 
 Ansible-Pull
