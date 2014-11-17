@@ -464,7 +464,7 @@ class TestUtils(unittest.TestCase):
             raise AssertionError('Incorrect exception, expected AnsibleError')
 
     def test_do_encrypt_md5(self):
-        if self._is_fips:
+        if self._is_fips():
             raise SkipTest('MD5 unavailable on FIPS systems')
         hash = ansible.utils.do_encrypt('ansible', 'md5_crypt', salt_size=4)
         self.assertTrue(passlib.hash.md5_crypt.verify('ansible', hash))
