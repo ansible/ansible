@@ -394,8 +394,24 @@ class LinuxService(Service):
             location[binary] = self.module.get_bin_path(binary)
 
         def check_systemd(name):
-            # verify service is managed by systemd
-            if not location.get('systemctl', None):
+            # verify systemd is installed (by finding systemctl)
+            if not location.get('systemctl', False):
+                return False
+
+            systemd_enabled = False
+            # Check if init is the systemd command, using comm as cmdline could be symlink
+            try:
+                f = open('/proc/1/comm', 'r')
+            except IOError, err:
+                # If comm doesn't exist, old kernel, no systemd
+                return False
+
+            for line in f:
+                if 'systemd' in line:
+                    systemd_enabled = True
+                    break
+
+            if not systemd_enabled:
                 return False
 
             # default to .service if the unit type is not specified
