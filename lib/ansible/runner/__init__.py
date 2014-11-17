@@ -134,7 +134,10 @@ class Runner(object):
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
-        default_vars=None,                  # ditto
+        play_vars=None,                     #
+        play_file_vars=None,                #
+        role_vars=None,                     #
+        default_vars=None,                  #
         extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
@@ -176,6 +179,9 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.play_vars        = utils.default(play_vars, lambda: {})
+        self.play_file_vars   = utils.default(play_file_vars, lambda: {})
+        self.role_vars        = utils.default(role_vars, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
         self.extra_vars       = utils.default(extra_vars, lambda: {})
 
@@ -629,10 +635,16 @@ class Runner(object):
         inject = utils.combine_vars(inject, host_variables)
         # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
-        # followed by vars (vars, vars_files, vars/main.yml)
-        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # next come variables from vars and vars files
+        inject = utils.combine_vars(inject, self.play_vars)
+        inject = utils.combine_vars(inject, self.play_file_vars)
+        # next come variables from role vars/main.yml files
+        inject = utils.combine_vars(inject, self.role_vars)
         # then come the module variables
         inject = utils.combine_vars(inject, module_vars)
+        # followed by vars_cache things (set_fact, include_vars, and
+        # vars_files which had host-specific templating done)
+        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars
