@@ -141,6 +141,10 @@ class VariableManager:
 
         return vars
 
+    ### Note:
+    ### Planning to move this into the inventory.
+    ### So when you query the host for the variables in its context, it
+    ### loads the vars_files and then returns those to the VariableManager.
     def _get_inventory_basename(self, path):
         '''
         Returns the bsaename minus the extension of the given path, so the
