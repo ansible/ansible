@@ -21,9 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from . group import Group
-from . host import Host
-
 ### List of things to change in Inventory
 
 ### Replace some lists with sets/frozensets.
@@ -120,18 +117,36 @@ from . host import Host
 ### group = Group(name)
 ### inven.add_or_merge(group)
 
+from .. plugins.inventory.aggregate import InventoryAggregateParser
+from . group import Group
+from . host import Host
+
 class Inventory:
         '''
-        Collect variables for hosts and groups from inventory
+        Create hosts and groups from inventory
+
+        Retrieve the hosts and groups that ansible knows about from this
+        class.
+
+        Retrieve raw variables (non-expanded) from the Group and Host classes
+        returned from here.
         '''
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
+    def __init__(self, inventory_list=C.DEFAULT_HOST_LIST, vault_password=None):
         '''
-        :kwarg host_list: A filename for an inventory file or script or a list
-            of hosts
+        :kwarg inventory_list: A list of inventory sources.  This may be file
+            names which will be parsed as ini-like files, executable scripts
+            which return inventory data as json, directories of both of the above,
+            or hostnames.  Files and directories are 
         :kwarg vault_password: Password to use if any of the inventory sources
             are in an ansible vault
         '''
-        pass
+        self.vault_password = vault_password
+
+        self.parser = InventoryAggregateParser(inventory_list)
+        self.parser.parse()
+        self.hosts = self.parser.hosts
+        self.groups = self.parser.groups
+
 
     def get_hosts(self, pattern="all"):
         '''
@@ -158,6 +173,8 @@ class Inventory:
         pass
 
     def groups_for_host(self, host):
+        ### Remove in favour of
+        ### inventory.hosts[host].groups.keys()
         '''
         Return the groupnames to which a host belongs
 
@@ -175,6 +192,7 @@ class Inventory:
         pass
 
     def get_groups(self):
+        ### Remove in favour of inventory.groups.values()
         '''
         Retrieve the Group objects known to the Inventory
 
@@ -183,6 +201,7 @@ class Inventory:
         pass
 
     def get_host(self, hostname):
+        ### Remove in favour of inventory.hosts.values()
         '''
         Retrieve the Host object for a hostname
 
@@ -192,6 +211,7 @@ class Inventory:
         pass
 
     def get_group(self, groupname):
+        ### Revmoe in favour of inventory.groups.groupname
         '''
         Retrieve the Group object for a groupname
 
@@ -201,6 +221,7 @@ class Inventory:
         pass
 
     def get_group_variables(self, groupname, update_cached=False, vault_password=None):
+        ### Remove in favour of inventory.groups[groupname].get_vars()
         '''
         Retrieve the variables set on a group
 
@@ -214,6 +235,7 @@ class Inventory:
         pass
 
     def get_variables(self, hostname, update_cached=False, vault_password=None):
+        ### Remove in favour of inventory.hosts[hostname].get_vars()
         '''
         Retrieve the variables set on a host
 
@@ -228,6 +250,7 @@ class Inventory:
         pass
 
     def get_host_variables(self, hostname, update_cached=False, vault_password=None):
+        ### Remove in favour of inventory.hosts[hostname].get_vars()
         '''
         Retrieve the variables set on a host
 
@@ -241,6 +264,7 @@ class Inventory:
         pass
 
     def add_group(self, group):
+        ### Possibly remove in favour of inventory.groups[groupname] = group
         '''
         Add a new group to the inventory
 
@@ -249,6 +273,7 @@ class Inventory:
         pass
 
     def list_hosts(self, pattern="all"):
+        ### Remove in favour of: inventory.hosts.keys()?  Maybe not as pattern is here
         '''
         Retrieve a list of hostnames for a pattern
 
@@ -263,6 +288,7 @@ class Inventory:
         pass
 
     def list_groups(self):
+        ### Remove in favour of: inventory.groups.keys()
         '''
         Retrieve list of groupnames
         :returns: list of groupnames
