@@ -26,9 +26,18 @@ from io import BytesIO
 from subprocess import call
 from ansible import errors
 from hashlib import sha256
+
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
-from hashlib import md5
+try:
+    from hashlib import md5
+except ImportError:
+    try:
+        from md5 import md5
+    except ImportError:
+        # MD5 unavailable.  Possibly FIPS mode
+        md5 = None
+
 from binascii import hexlify
 from binascii import unhexlify
 from ansible import constants as C
@@ -358,6 +367,8 @@ class VaultAES(object):
     # http://stackoverflow.com/a/16761459
 
     def __init__(self):
+        if not md5:
+            raise errors.AnsibleError('md5 hash is unavailable (Could be due to FIPS mode).  Legacy VaultAES format is unavailable.')
         if not HAS_AES:
             raise errors.AnsibleError(CRYPTO_UPGRADE)
 
