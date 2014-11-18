@@ -220,7 +220,7 @@ def package_status(m, pkgname, version, cache, state):
             # Only claim the package is upgradable if a candidate matches the version
             package_is_upgradable = False
             for candidate in avail_upgrades:
-                if pkg.versions[candidate] > p.installed:
+                if pkg.versions[candidate] > pkg.installed:
                     package_is_upgradable = True
                     break
         else:
