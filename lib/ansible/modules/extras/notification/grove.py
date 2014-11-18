@@ -94,6 +94,8 @@ def main():
     # Mission complete
     module.exit_json(msg="OK")
 
+#make sure urllib is available for do_notify_grove
+import urllib
 # import module snippets
 from ansible.module_utils.basic import *
 main()
