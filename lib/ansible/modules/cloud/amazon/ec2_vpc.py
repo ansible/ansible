@@ -72,7 +72,7 @@ options:
     aliases: []
   route_tables:
     description:
-      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},] }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids in addition igw. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
+      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids in addition igw. resource_tags is optional and uses dictionary form: { "Name": "public", ... }. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
     required: false
     default: null
     aliases: []
@@ -399,6 +399,9 @@ def create_vpc(module, vpc_conn):
         for rt in route_tables:
             try:
                 new_rt = vpc_conn.create_route_table(vpc.id)
+                new_rt_tags = rt.get('resource_tags', None)
+                if new_rt_tags:
+                    vpc_conn.create_tags(new_rt.id, new_rt_tags)
                 for route in rt['routes']:
                     route_kwargs = {}
                     if route['gw'] == 'igw':
