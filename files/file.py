@@ -170,7 +170,7 @@ def main():
         src = os.path.expanduser(src)
     else:
         if state in ['link','hard']:
-            if follow:
+            if follow and state == 'link':
                 # use the current target of the link as the source
                 src = os.readlink(path)
             else:
