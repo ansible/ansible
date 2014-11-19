@@ -646,6 +646,7 @@ def main():
             module.exit_json(changed=True, before=before, after=remote_head)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference, recursive)
+        repo_updated = True
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
