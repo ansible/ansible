@@ -1265,13 +1265,24 @@ def make_su_cmd(su_user, executable, cmd):
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
 
+# For v2, consider either using kitchen or copying my code from there for
+# to_unicode and to_bytes handling (TEK)
 _TO_UNICODE_TYPES = (unicode, type(None))
 
 def to_unicode(value):
+    # Use with caution -- this function is not encoding safe (non-utf-8 values
+    # will cause tracebacks if they contain bytes from 0x80-0xff inclusive)
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
 
+def to_bytes(value):
+    # Note: value is assumed to be a basestring to mirror to_unicode.  Better
+    # implementations (like kitchen.text.converters.to_bytes) bring that check
+    # into the function
+    if isinstance(value, str):
+        return value
+    return value.encode('utf-8')
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
