@@ -2193,6 +2193,11 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
+        if product_name == 'BHYVE':
+            self.facts['virtualization_type'] = 'bhyve'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         bios_vendor = get_file_content('/sys/devices/virtual/dmi/id/bios_vendor')
 
         if bios_vendor == 'Xen':
@@ -2377,6 +2382,59 @@ class SunOSVirtual(Virtual):
                 if 'VirtualBox' in line:
                     self.facts['virtualization_type'] = 'virtualbox'
                     self.facts['virtualization_role'] = 'guest'
+
+class FreeBSDVirtual(Virtual):
+    """
+    This is a FreeBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'FreeBSD'
+    DMESG_BOOT = '/var/run/dmesg.boot'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        if os.path.isdir('/dev/vmm'):
+            self.facts['virtualization_type'] = 'bhyve'
+            self.facts['virtualization_role'] = 'host'
+            return
+
+        dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
+        if not dmesg_boot:
+            rc, dmesg_boot, err = module.run_command("/sbin/dmesg")
+        for line in dmesg_boot.split('\n'):
+            if 'ACPI APIC Table:' in line and 'BHYVE' in line:
+                self.facts['virtualization_type'] = 'bhyve'
+                self.facts['virtualization_role'] = 'guest'
+                return
+
+class OpenBSDVirtual(Virtual):
+    """
+    This is a OpenBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'OpenBSD'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        rc, out, err = module.run_command("/sbin/sysctl -n hw.product")
+        if out.strip() == 'BHYVE':
+            self.facts['virtualization_type'] = 'bhyve'
+            self.facts['virtualization_role'] = 'guest'
+            return
 
 def get_file_content(path, default=None):
     data = default
