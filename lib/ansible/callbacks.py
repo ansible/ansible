@@ -603,11 +603,13 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_no_hosts_remaining')
 
     def on_task_start(self, name, is_conditional):
+        name = utils.to_bytes(name)
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
 
         if hasattr(self, 'start_at'):
+            self.start_at = utils.to_bytes(self.start_at)
             if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
                 # we found out match, we can get rid of this now
                 del self.start_at
