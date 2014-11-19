@@ -200,11 +200,14 @@ def get_ssh_user(server, nova_client):
         image_name = nova_client.images.get(server.image['id']).name
         if 'ubuntu' in image_name.lower():
             return 'ubuntu'
-        if 'centos' in  image_name.lower():
-            return 'cloud-user'
-        if 'debian' in  image_name.lower():
+        elif 'centos' in  image_name.lower():
+            if '7' in image_name.lower():
+                return 'centos'
+            else:
+                return 'cloud-user'
+        elif 'debian' in  image_name.lower():
             return 'debian'
-        if 'coreos' in  image_name.lower():
+        elif 'coreos' in  image_name.lower():
             return 'coreos'
     except:
         pass
