@@ -955,9 +955,10 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they win in a certain order, which is::
 
-    * -e variables always win
-    * then comes "most everything else"
-    * then comes variables defined in inventory
+    * extra vars (-e in the command line) always win
+    * then comes connection variables defined in inventory (ansible_ssh_user, etc)
+    * then comes "most everything else" (command line switches, vars in play, included vars, etc)
+    * then comes the rest of the variables defined in inventory
     * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
 
