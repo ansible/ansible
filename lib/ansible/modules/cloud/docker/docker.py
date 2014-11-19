@@ -165,6 +165,13 @@ options:
         specified by docker-py.
     default: docker-py default remote API version
     version_added: "1.8"
+  docker_user:
+    description:
+      - Username or UID to use within the container
+    required: false
+    default:
+    aliases: []
+    version_added: "2.0"
   username:
     description:
       - Remote API username.
@@ -1312,6 +1319,7 @@ class DockerManager(object):
                   'volumes_from': self.module.params.get('volumes_from'),
                   'dns':          self.module.params.get('dns'),
                   'host_config':  self.create_host_config(),
+                  'user':         self.module.params.get('docker_user'),
                   }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
             params['volumes_from'] = ""
@@ -1521,6 +1529,7 @@ def main():
             tls_ca_cert     = dict(required=False, default=None, type='str'),
             tls_hostname    = dict(required=False, type='str', default=None),
             docker_api_version = dict(required=False, default=DEFAULT_DOCKER_API_VERSION, type='str'),
+            docker_user     = dict(default=None),
             username        = dict(default=None),
             password        = dict(),
             email           = dict(),
