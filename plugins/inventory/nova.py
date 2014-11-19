@@ -114,7 +114,7 @@ NOVA_DEFAULTS = {
     'region_name': os.environ.get('OS_REGION_NAME'),
     'prefer_private': False,
     'version': '2',
-    'cache_max_age': 300,
+    'cache_max_age': 0,
     'resolve_ips': True,
 }
 
