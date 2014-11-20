@@ -50,7 +50,7 @@ options:
     aliases: []
   template:
     description:
-      - The path of the cloudformation template, required if state is "present".
+      - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
     required: false
     default: null
     aliases: []
@@ -76,6 +76,11 @@ options:
     default: null
     aliases: ['aws_region', 'ec2_region']
     version_added: "1.5"
+  template_url:
+    description:
+      - Location of file containing the template body. The URL must point to a template (max size: 307,200 bytes) located in an S3 bucket in the same region as the stack. This parameter is mutually exclusive with 'template'. Either one of them is required if "state" parameter is "present"
+    required: false
+    version_added: "2.0"
 
 author: James S. Martin
 extends_documentation_fragment: aws
@@ -105,6 +110,21 @@ tasks:
   cloudformation:
     stack_name: "ansible-cloudformation-old"
     state: "absent"
+# Use a template from a URL
+tasks:
+- name: launch ansible cloudformation example
+  cloudformation:
+    stack_name="ansible-cloudformation" state=present
+    region=us-east-1 disable_rollback=true
+    template_url=https://s3.amazonaws.com/my-bucket/cloudformation.template
+  args:
+    template_parameters:
+      KeyName: jmartin
+      DiskType: ephemeral
+      InstanceType: m1.small
+      ClusterSize: 3
+    tags:
+      Stack: ansible-cloudformation
 '''
 
 import json
@@ -200,33 +220,42 @@ def main():
             template=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
+            template_url=dict(default=None, required=False),
             tags=dict(default=None)
         )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=[['template_url', 'template']],
     )
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
+    if module.params['template'] is None and module.params['template_url'] is None:
+        module.fail_json(msg='Either template or template_url expected')
+
     state = module.params['state']
     stack_name = module.params['stack_name']
+
+    if module.params['template'] is None and module.params['template_url'] is None:
+        if state == 'present':
+            module.fail_json('Module parameter "template" or "template_url" is required if "state" is "present"')
 
     if module.params['template'] is not None:
         template_body = open(module.params['template'], 'r').read()
     else:
         template_body = None
-        if state == 'present':
-            module.fail_json('Module parameter "template" is required if "state" is "present"')
 
     if module.params['stack_policy'] is not None:
         stack_policy_body = open(module.params['stack_policy'], 'r').read()
     else:
         stack_policy_body = None
+
     disable_rollback = module.params['disable_rollback']
     template_parameters = module.params['template_parameters']
     tags = module.params['tags']
+    template_url = module.params['template_url']
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -259,6 +288,7 @@ def main():
             cfn.create_stack(stack_name, parameters=template_parameters_tup,
                              template_body=template_body,
                              stack_policy_body=stack_policy_body,
+                             template_url=template_url,
                              disable_rollback=disable_rollback,
                              capabilities=['CAPABILITY_IAM'],
                              **kwargs)
@@ -281,6 +311,7 @@ def main():
                              template_body=template_body,
                              stack_policy_body=stack_policy_body,
                              disable_rollback=disable_rollback,
+                             template_url=template_url,
                              capabilities=['CAPABILITY_IAM'])
             operation = 'UPDATE'
         except Exception, err:
