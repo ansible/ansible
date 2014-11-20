@@ -205,6 +205,8 @@ mentioned::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+    ansible_sudo
+      The boolean to decide if sudo should be used for this host. Defaults to false.
     ansible_sudo_pass
       The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
     ansible_sudo_exe (new in version 1.8)
