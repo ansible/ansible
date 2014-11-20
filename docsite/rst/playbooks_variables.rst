@@ -302,7 +302,7 @@ Shuffle Filter
 
 .. versionadded:: 1.8
 
-This filter will randomize an existing list, giving a differnt order every invocation.
+This filter will randomize an existing list, giving a different order every invocation.
 
 To get a random list from an existing  list::
 
@@ -317,12 +317,12 @@ Other Useful Filters
 --------------------
 
 To concatenate a list into a string::
-   
+
    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
-    {{ path | basename }} 
+    {{ path | basename }}
 
 To get the directory from a path::
 
@@ -331,7 +331,7 @@ To get the directory from a path::
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
-    
+
 To get the real path of a link (new in version 1.8)::
 
    {{ path | readlink }}
