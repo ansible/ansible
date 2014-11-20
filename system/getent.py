@@ -26,7 +26,7 @@ module: getent
 short_description: a wrapper to the unix getent utility
 description:
      - Runs getent against one of it's various databases and returns information into
-       the host's facts
+       the host's facts, in a getent_<database> prefixed variable
 version_added: "1.8"
 options:
     database:
@@ -51,7 +51,7 @@ options:
         description:
             - If a supplied key is missing this will make the task fail if True
 
-notes: 
+notes:
    - "Not all databases support enumeration, check system documentation for details"
 requirements: [ ]
 author: Brian Coca
@@ -60,23 +60,23 @@ author: Brian Coca
 EXAMPLES = '''
 # get root user info
 - getent: database=passwd key=root
-  register: root_info
+- debug: var=getent_passwd
 
 # get all groups
 - getent: database=group split=':'
-  register: groups
+- debug: var=getent_group
 
 # get all hosts, split by tab
 - getent: database=hosts
-  register: hosts
+- debug: var=getent_hosts
 
 # get http service info, no error if missing
 - getent: database=services key=http fail_key=False
-  register: http_info
+- debug: var=getent_services
 
 # get user password hash (requires sudo/root)
 - getent: database=shadow key=www-data split=:
-  register: pw_hash
+- debug: var=getent_shadow
 
 '''
 
