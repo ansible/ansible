@@ -23,22 +23,22 @@ DOCUMENTATION = '''
 module: firewalld
 short_description: Manage arbitrary ports/services with firewalld
 description:
-  - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules
+  - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules.
 version_added: "1.4"
 options:
   service:
     description:
-      - "Name of a service to add/remove to/from firewalld - service must be listed in /etc/services"
+      - "Name of a service to add/remove to/from firewalld - service must be listed in /etc/services."
     required: false
     default: null
   port:
     description:
-      - "Name of a port to add/remove to/from firewalld must be in the form PORT/PROTOCOL"
+      - "Name of a port or port range to add/remove to/from firewalld. Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges."
     required: false
     default: null
   rich_rule:
     description:
-      - "Rich rule to add/remove to/from firewalld"
+      - "Rich rule to add/remove to/from firewalld."
     required: false
     default: null
   zone:
@@ -49,7 +49,7 @@ options:
     choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block"]
   permanent:
     description:
-      - "Should this configuration be in the running firewalld configuration or persist across reboots"
+      - "Should this configuration be in the running firewalld configuration or persist across reboots."
     required: true
   immediate:
     description:
@@ -59,15 +59,15 @@ options:
     version_added: "1.9"
   state:
     description:
-      - "Should this port accept(enabled) or reject(disabled) connections"
+      - "Should this port accept(enabled) or reject(disabled) connections."
     required: true
   timeout:
     description:
-      - "The amount of time the rule should be in effect for when non-permanent"
+      - "The amount of time the rule should be in effect for when non-permanent."
     required: false
     default: 0
 notes:
-   - Not tested on any debian based system
+   - Not tested on any debian based system.
 requirements: [ firewalld >= 0.2.11 ]
 author: Adam Miller <maxamillion@fedoraproject.org>
 '''
@@ -75,6 +75,7 @@ author: Adam Miller <maxamillion@fedoraproject.org>
 EXAMPLES = '''
 - firewalld: service=https permanent=true state=enabled
 - firewalld: port=8081/tcp permanent=true state=disabled
+- firewalld: port=161-162/udp permanent=true state=enabled
 - firewalld: zone=dmz service=http permanent=true state=enabled
 - firewalld: rich_rule='rule service name="ftp" audit limit value="1/m" accept' permanent=true state=enabled
 '''
