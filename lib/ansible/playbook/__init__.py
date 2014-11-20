@@ -402,6 +402,7 @@ class PlayBook(object):
             play_vars=task.play_vars,
             play_file_vars=task.play_file_vars,
             role_vars=task.role_vars,
+            role_params=task.role_params,
             default_vars=task.default_vars,
             extra_vars=self.extra_vars,
             private_key_file=self.private_key_file,

@@ -221,6 +221,14 @@ class Play(object):
             raise errors.AnsibleError("too many levels of recursion while resolving role dependencies")
         for role in roles:
             role_path,role_vars = self._get_role_path(role)
+
+            # save just the role params for this role, which exclude the special
+            # keywords 'role', 'tags', and 'when'.
+            role_params = role_vars.copy()
+            for item in ('role', 'tags', 'when'):
+                if item in role_params:
+                    del role_params[item]
+
             role_vars = utils.combine_vars(passed_vars, role_vars)
 
             vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
@@ -249,6 +257,13 @@ class Play(object):
                     for dep in dependencies:
                         allow_dupes = False
                         (dep_path,dep_vars) = self._get_role_path(dep)
+
+                        # save the dep params, just as we did above
+                        dep_params = dep_vars.copy()
+                        for item in ('role', 'tags', 'when'):
+                            if item in dep_params:
+                                del dep_params[item]
+
                         meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'meta')))
                         if os.path.isfile(meta):
                             meta_data = utils.parse_yaml_from_file(meta, vault_password=self.vault_password)
@@ -332,13 +347,13 @@ class Play(object):
                             dep_vars['when'] = tmpcond
 
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
-                        dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
+                        dep_stack.append([dep, dep_path, dep_vars, dep_params, dep_defaults_data])
 
             # only add the current role when we're at the top level,
             # otherwise we'll end up in a recursive loop
             if level == 0:
                 self.included_roles.append(role)
-                dep_stack.append([role,role_path,role_vars,defaults_data])
+                dep_stack.append([role, role_path, role_vars, role_params, defaults_data])
         return dep_stack
 
     def _load_role_vars_files(self, vars_files):
@@ -400,12 +415,12 @@ class Play(object):
         # make role_path available as variable to the task
         for idx, val in enumerate(roles):
             this_uuid = str(uuid.uuid4())
-            roles[idx][-2]['role_uuid'] = this_uuid
-            roles[idx][-2]['role_path'] = roles[idx][1]
+            roles[idx][-3]['role_uuid'] = this_uuid
+            roles[idx][-3]['role_path'] = roles[idx][1]
 
         role_names = []
 
-        for (role,role_path,role_vars,default_vars) in roles:
+        for (role, role_path, role_vars, role_params, default_vars) in roles:
             # special vars must be extracted from the dict to the included tasks
             special_keys = [ "sudo", "sudo_user", "when", "with_items" ]
             special_vars = {}
@@ -438,13 +453,13 @@ class Play(object):
 
             role_names.append(role_name)
             if os.path.isfile(task):
-                nt = dict(include=pipes.quote(task), vars=role_vars, default_vars=default_vars, role_name=role_name)
+                nt = dict(include=pipes.quote(task), vars=role_vars, role_params=role_params, default_vars=default_vars, role_name=role_name)
                 for k in special_keys:
                     if k in special_vars:
                         nt[k] = special_vars[k]
                 new_tasks.append(nt)
             if os.path.isfile(handler):
-                nt = dict(include=pipes.quote(handler), vars=role_vars, role_name=role_name)
+                nt = dict(include=pipes.quote(handler), vars=role_vars, role_params=role_params, role_name=role_name)
                 for k in special_keys:
                     if k in special_vars:
                         nt[k] = special_vars[k]
@@ -509,7 +524,7 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None,
+    def _load_tasks(self, tasks, vars=None, role_params=None, default_vars=None, sudo_vars=None,
                     additional_conditions=None, original_file=None, role_name=None):
         ''' handle task and handler include statements '''
 
@@ -521,6 +536,8 @@ class Play(object):
             additional_conditions = []
         if vars is None:
             vars = {}
+        if role_params is None:
+            role_params = {}
         if default_vars is None:
             default_vars = {}
         if sudo_vars is None:
@@ -572,11 +589,15 @@ class Play(object):
                             included_additional_conditions.append(x[k])
                         elif type(x[k]) is list:
                             included_additional_conditions.extend(x[k])
-                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
+                    elif k in ("include", "vars", "role_params", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
                         continue
                     else:
                         include_vars[k] = x[k]
 
+                # get any role parameters specified
+                role_params = x.get('role_params', {})
+
+                # get any role default variables specified
                 default_vars = x.get('default_vars', {})
                 if not default_vars:
                     default_vars = self.default_vars
@@ -609,7 +630,7 @@ class Play(object):
                     for y in data:
                         if isinstance(y, dict) and 'include' in y:
                             y['role_name'] = new_role
-                loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
+                loaded = self._load_tasks(data, mv, role_params, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                 results += loaded
             elif type(x) == dict:
                 task = Task(
@@ -618,6 +639,7 @@ class Play(object):
                     play_vars=self.vars,
                     play_file_vars=self.vars_file_vars,
                     role_vars=self.role_vars,
+                    role_params=role_params,
                     default_vars=default_vars,
                     additional_conditions=list(additional_conditions),
                     role_name=role_name

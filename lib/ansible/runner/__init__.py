@@ -137,6 +137,7 @@ class Runner(object):
         play_vars=None,                     #
         play_file_vars=None,                #
         role_vars=None,                     #
+        role_params=None,                   #
         default_vars=None,                  #
         extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
@@ -182,6 +183,7 @@ class Runner(object):
         self.play_vars        = utils.default(play_vars, lambda: {})
         self.play_file_vars   = utils.default(play_file_vars, lambda: {})
         self.role_vars        = utils.default(role_vars, lambda: {})
+        self.role_params      = utils.default(role_params, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
         self.extra_vars       = utils.default(extra_vars, lambda: {})
 
@@ -645,6 +647,8 @@ class Runner(object):
         # followed by vars_cache things (set_fact, include_vars, and
         # vars_files which had host-specific templating done)
         inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # role parameters next
+        inject = utils.combine_vars(inject, self.role_params)
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars
