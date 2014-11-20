@@ -11,7 +11,7 @@ If you wish to verify output from the markup
 such as link references, you may install sphinx and build the documentation by running
 `make viewdocs` from the `ansible/docsite` directory.  
 
-To include module documentation you'll need to run `make webdocs` at the top level of the repository.  The generated
+To include module documentation you'll need to run `make htmldocs` at the top level of the repository.  The generated
 html files are in docsite/htmlout/.
 
 If you do not want to learn the reStructuredText format, you can also [file issues] about
