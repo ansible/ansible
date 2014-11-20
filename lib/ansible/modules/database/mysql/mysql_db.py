@@ -56,6 +56,13 @@ options:
       - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci)
     required: false
     default: null
+  master_data:
+    description:
+      - Produce a dump from a master for seeding a slave. (1 to generate a 'CHANGE MASTER TO' statement;
+        2 to generate a commented 'CHANGE MASTER TO'; 0 or null to not include master data)
+    required: false
+    default: null
+    version_added: "2.4"
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
@@ -141,7 +148,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None):
+            single_transaction=None, quick=None, master_data=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -168,6 +175,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --single-transaction=true"
     if quick:
         cmd += " --quick"
+    if master_data:
+        cmd += " --master-data=%s" % pipes.quote(master_data)
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -267,6 +276,7 @@ def main():
             encoding=dict(default=""),
             collation=dict(default=""),
             target=dict(default=None, type='path'),
+            master_data=dict(default=None, choices=["0", "1", "2"]),
             state=dict(default="present", choices=["absent", "present", "dump", "import"]),
             ssl_cert=dict(default=None, type='path'),
             ssl_key=dict(default=None, type='path'),
@@ -296,6 +306,7 @@ def main():
     ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
+    master_data = module.params["master_data"]
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     login_host = module.params["login_host"]
@@ -346,7 +357,7 @@ def main():
                 rc, stdout, stderr = db_dump(module, login_host, login_user,
                                              login_password, db, target, all_databases,
                                              login_port, config_file, socket, ssl_cert, ssl_key,
-                                             ssl_ca, single_transaction, quick)
+                                             ssl_ca, single_transaction, quick, master_data)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
