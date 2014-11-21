@@ -206,6 +206,41 @@
     that:
       - 'git_result.failed'
 
+# Same as the previous test, but this time we specify which ref
+# contains the SHA1
+- name: update to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD chdir="{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: clone to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD chdir="{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
 #
 # Submodule tests
 #
