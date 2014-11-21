@@ -1268,8 +1268,16 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
+        # backups named basename-YYYY-MM-DD@HH:MM:SS.ssssssTZ~
+        now = time.time()
+        us = int((now % 1) * 1e6)
+        localtime = time.localtime(now)
+        if localtime.tm_isdst:
+            tzoffset = -time.altzone / 36
+        else:
+            tzoffset = -time.timezone / 36
+        ext_format = "%%Y-%%m-%%d@%%H:%%M:%%S.%06d%+05d~" % (us, tzoffset)
+        ext = time.strftime(ext_format, localtime)
         backupdest = '%s.%s' % (fn, ext)
 
         try:
