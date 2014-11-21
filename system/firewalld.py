@@ -154,13 +154,11 @@ def add_source(zone, source):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     fw_settings.addSource(source)
-    fw_zone.update(fw_settings)
 
 def remove_source(zone, source):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     fw_settings.removeSource(source)
-    fw_zone.update(fw_settings)
 
 ####################
 # service handling
@@ -354,7 +352,6 @@ def main():
                 msgs.append("Added %s to zone %s" % (source, zone))
         elif desired_state == "disabled":
             if is_enabled == True:
-                msgs.append("source is present")
                 if module.check_mode:
                     module.exit_json(changed=True)
 
