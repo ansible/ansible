@@ -155,11 +155,14 @@
 
 # Test that a specific revision can be checked out
 
-- name: clean out the checkout_dir
-  shell: rm -rf {{ checkout_dir }}/*
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
 
 - name: clone to specific revision
-  git: repo={{ repo_format1 }} dest={{ checkout_dir }} version=df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+    version: df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
 
 - name: check HEAD after clone to revision
   command: git rev-parse HEAD chdir="{{ checkout_dir }}"
@@ -170,7 +173,10 @@
       - 'git_result.stdout == "df4612ba925fbc1b3c51cbb006f51a0443bd2ce9"'
 
 - name: update to specific revision
-  git: repo={{ repo_format1 }} dest={{ checkout_dir }} version=4e739a34719654db7b04896966e2354e1256ea5d
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
+    version: 4e739a34719654db7b04896966e2354e1256ea5d
   register: git_result
 
 - assert:
@@ -189,8 +195,8 @@
 
 - name: attempt to get unavailable revision
   git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: '{{ checkout_dir }}'
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"
     version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
   ignore_errors: true
   register: git_result
