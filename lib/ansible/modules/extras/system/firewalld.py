@@ -127,7 +127,27 @@ def set_port_disabled_permanent(zone, port, protocol):
     fw_settings = fw_zone.getSettings()
     fw_settings.removePort(port, protocol)
     fw_zone.update(fw_settings)
-    
+
+####################
+# source handling
+#    
+def get_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    if source in fw_settings.getSources():
+       return True
+    else:
+        return False
+
+def add_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.addSource(source)
+
+def remove_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.removeSource(source)
 
 ####################
 # service handling
@@ -308,6 +328,24 @@ def main():
         if changed == True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
 
+    if source != None:
+        is_enabled = get_source(zone, source)
+        if desired_state == "enabled":
+            if is_enabled == False:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                add_source(zone, source)
+                changed=True
+                msgs.append("Added %s to zone %s" % (source, zone))
+        elif desired_state == "disabled":
+            if is_enabled == True:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                remove_source(zone, source)
+                changed=True
+                msgs.append("Removed %s from zone %s" % (source, zone))
     if port != None:
         if permanent:
             is_enabled = get_port_enabled_permanent(zone, [port, protocol])
