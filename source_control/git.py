@@ -80,6 +80,17 @@ options:
         default: "origin"
         description:
             - Name of the remote.
+    refspec:
+        required: false
+        default: null
+        version_added: "1.9"
+        description:
+            - Add an additional refspec to be fetched.
+              If version is set to a I(SHA-1) not reachable from any branch
+              or tag, this option may be necessary to specify the ref containing
+              the I(SHA-1).
+              Uses the same syntax as the 'git fetch' command.
+              An example value could be "refs/meta/config".
     force:
         required: false
         default: "yes"
@@ -166,6 +177,9 @@ EXAMPLES = '''
 
 # Example just ensuring the repo checkout exists
 - git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout clone=no update=no
+
+# Example checkout a github repo and use refspec to fetch all pull requests
+- git: repo=https://github.com/ansible/ansible-examples.git dest=/src/ansible-examples refspec=+refs/pull/*:refs/heads/*
 '''
 
 import re
@@ -279,7 +293,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference):
+          reference, refspec):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -303,6 +317,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     if bare:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+
+    if refspec:
+        module.run_command([git_path, 'fetch', remote, refspec], check_rc=True, cwd=dest)
 
 def has_local_mods(module, git_path, dest, bare):
     if bare:
@@ -451,7 +468,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote, bare):
+def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
     ''' updates repo from remote sources '''
     commands = [["set a new url %s for %s" % (repo, remote)], [git_path, 'remote', 'set-url', remote, repo]]
 
@@ -459,9 +476,16 @@ def fetch(git_path, module, repo, dest, version, remote, bare):
 
     if bare:
         refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
+        if refspec:
+            refspecs.append(refspec)
         commands.append([fetch_str, [git_path, 'fetch', remote] + refspecs])
     else:
         commands.append([fetch_str, [git_path, 'fetch', '--tags']])
+        if refspec:
+            # unlike in bare mode, there's no way to combine the
+            # additional refspec with the default git fetch behavior,
+            # so use two commands
+            commands.append([fetch_str, [git_path, 'fetch', remote, refspec]])
 
     for (label,command) in commands:
         (rc,out,err) = module.run_command(command, cwd=dest)
@@ -579,6 +603,7 @@ def main():
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
+            refspec=dict(default=None),
             reference=dict(default=None),
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
@@ -599,6 +624,7 @@ def main():
     repo      = module.params['repo']
     version   = module.params['version']
     remote    = module.params['remote']
+    refspec   = module.params['refspec']
     force     = module.params['force']
     depth     = module.params['depth']
     update    = module.params['update']
@@ -656,7 +682,7 @@ def main():
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec)
         repo_updated = True
     elif not update:
         # Just return having found a repo already in the dest path
@@ -690,7 +716,7 @@ def main():
         if repo_updated is None:
             if module.check_mode:
                 module.exit_json(changed=True, before=before, after=remote_head)
-            fetch(git_path, module, repo, dest, version, remote, bare)
+            fetch(git_path, module, repo, dest, version, remote, bare, refspec)
             repo_updated = True
 
     # switch to version specified regardless of whether
