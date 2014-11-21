@@ -27,15 +27,25 @@
     repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
     repo_submodule1_newer: 'https://github.com/abadger/test_submodules_subm1_newer.git'
     repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
+    git_ssh: '{{ output_dir }}/git-ssh'
     known_host_files:
-      - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
-      - '/etc/ssh/ssh_known_hosts'
+      - '{{ global_known_hosts }}'
+      - '{{ user_known_hosts }}'
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
 
 - name: verify that git is installed so this test can continue
   shell: which git
+
+# Certain tests want to run against an empty known_hosts file.  Rather
+# than deleting the user's known_hosts file, use a custom ssh
+# configuration for those tests.
+- name: prepare git-ssh script for overridden ssh options
+  copy:
+    dest: '{{ git_ssh }}'
+    mode: 0755
+    content: '#!/bin/sh\nexec ssh -oUserKnownHostsFile={{ user_known_hosts }} -oGlobalKnownHostsFile={{ global_known_hosts }} "$@"\n'
 
 #
 # Test repo=https://github.com/...
@@ -95,6 +105,8 @@
 
 - name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
   git: repo={{ repo_format2 }} dest={{ checkout_dir }}
+  environment:
+    GIT_SSH: '{{ git_ssh }}'
   register: git_result
   ignore_errors: true
 
@@ -109,6 +121,8 @@
     dest: '{{ checkout_dir }}'
     accept_hostkey: true
     key_file: '{{ github_ssh_private_key }}'
+  environment:
+    GIT_SSH: '{{ git_ssh }}'
   register: git_result
   when: github_ssh_private_key is defined
 
@@ -132,6 +146,8 @@
     version: 'master'
     accept_hostkey: false # should already have been accepted
     key_file: '{{ github_ssh_private_key }}'
+  environment:
+    GIT_SSH: '{{ git_ssh }}'
   register: git_result
   when: github_ssh_private_key is defined
 
