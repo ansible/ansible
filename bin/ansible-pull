@@ -160,7 +160,7 @@ def main(args):
     else:
         inv_opts = options.inventory
     limit_opts = 'localhost:%s:127.0.0.1' % hostname
-    repo_opts = "name=%s dest=%s" % (options.url, options.dest)
+    repo_opts = "name=%s dest=%s accept_hostkey=yes" % (options.url, options.dest)
 
     if VERBOSITY == 0:
         base_opts = '-c local --limit "%s"' % limit_opts
