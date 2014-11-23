@@ -266,7 +266,10 @@ class ActionModule(object):
                     # self.runner._remove_tmp_path(conn, tmp_path)
                     continue
 
-                tmp_src = tmp_path + source_rel
+                if tmp_path:
+                    tmp_src = tmp_path + source_rel
+                else:
+                    tmp_src = source_full
 
                 # Build temporary module_args.
                 new_module_args = dict(
