@@ -218,7 +218,7 @@ def main():
     )
 
     command = module.params['command']
-    app_path = module.params['app_path']
+    app_path = os.path.expanduser(module.params['app_path'])
     virtualenv = module.params['virtualenv']
 
     for param in specific_params:
