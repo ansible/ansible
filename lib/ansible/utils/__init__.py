@@ -30,6 +30,7 @@ from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
 from ansible.callbacks import display
+from ansible.config import get_config_file, load_config_file
 from ansible.module_utils.splitter import split_args, unquote
 import ansible.constants as C
 import ast
@@ -957,6 +958,8 @@ def version(prog):
     if gitinfo:
         result = result + " {0}".format(gitinfo)
     result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
+    load_config_file()
+    result += "\n  config file = %s" % get_config_file()
     return result
 
 def version_info(gitinfo=False):
