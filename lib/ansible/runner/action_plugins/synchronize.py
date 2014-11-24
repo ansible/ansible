@@ -108,6 +108,11 @@ class ActionModule(object):
         src = template.template(self.runner.basedir, src, inject)
         dest = template.template(self.runner.basedir, dest, inject)
 
+        if '_original_file' in inject:
+            src = utils.path_dwim_relative(inject['_original_file'], 'files', src, self.runner.basedir)
+        else:
+            src = utils.path_dwim(self.runner.basedir, src)
+
         try:
             options['local_rsync_path'] = inject['ansible_rsync_path']
         except KeyError:
