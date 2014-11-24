@@ -51,7 +51,7 @@
       - "win_user_missing_query_result.state == 'absent'"
 
 - name: test create user
-  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password }}"
+  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password }}" groups="Guests"
   register: win_user_create_result
 
 - name: check user creation result
@@ -64,7 +64,7 @@
       - "win_user_create_result.state == 'present'"
 
 - name: update user full name and description
-  win_user: name="{{ test_win_user_name }}" fullname="Test Ansible User" description="Test user account created by Ansible"
+  win_user: name="{{ test_win_user_name }}" fullname="Test Ansible User" description="Test user account created by Ansible" groups=""
   register: win_user_update_result
 
 - name: check full name and description update result
