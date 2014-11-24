@@ -150,8 +150,9 @@ If ($state -eq 'present') {
         }
         ElseIf (($password -ne $null) -and ($update_password -eq 'always')) {
             [void][system.reflection.assembly]::LoadWithPartialName('System.DirectoryServices.AccountManagement')
-            $pc = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext 'Machine', $env:COMPUTERNAME
-            # FIXME: ValidateCredentials fails if PasswordExpired == 1
+            $host_name = [System.Net.Dns]::GetHostName()
+            $pc = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext 'Machine', $host_name
+            # ValidateCredentials fails if PasswordExpired == 1
             If (!$pc.ValidateCredentials($username, $password)) {
                 $user_obj.SetPassword($password)
                 $result.changed = $true
@@ -195,6 +196,9 @@ If ($state -eq 'present') {
             $user_obj.IsAccountLocked = $account_locked
             $result.changed = $true
         }
+        If ($result.changed) {
+            $user_obj.SetInfo()
+        }
         If ($groups.GetType) {
             [string[]]$current_groups = $user_obj.Groups() | ForEach { $_.GetType().InvokeMember("Name", "GetProperty", $null, $_, $null) }
             If (($groups_action -eq "remove") -or ($groups_action -eq "replace")) {
@@ -225,9 +229,6 @@ If ($state -eq 'present') {
                     }
                 }
             }
-        }
-        If ($result.changed) {
-            $user_obj.SetInfo()
         }
     }
     catch {
