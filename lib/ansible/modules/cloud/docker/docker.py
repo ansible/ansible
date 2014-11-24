@@ -285,8 +285,14 @@ options:
         docker-py >= 0.5.0.
     default: false
     version_added: "1.9"
+  cpuset:
+    description:
+      - CPUs in which to allow execution. Requires docker-py >= 0.6.0.
+    required: false
+    default: null
+    version_added: "1.8"
 
-author: 
+author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
     - "Pavel Antonov (@softzilla)"
@@ -1610,6 +1616,7 @@ def main():
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
             log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
+            cpuset          = dict(default=None),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
