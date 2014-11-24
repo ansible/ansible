@@ -931,9 +931,11 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
             if self.delegate_to or host != actual_host:
-                conn.delegate = host
+                delegate_host = host
+            else:
+                delegate_host = None
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, delegate_host)
 
             default_shell = getattr(conn, 'default_shell', '')
             shell_type = inject.get('ansible_shell_type')

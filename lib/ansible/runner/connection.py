@@ -31,10 +31,11 @@ class Connector(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port, user, password, transport, private_key_file):
+    def connect(self, host, port, user, password, transport, private_key_file, delegate_host):
         conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file)
         if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
+        conn.delegate = delegate_host
         if private_key_file:
             # If private key is readable by user other than owner, flag an error
             st = None
