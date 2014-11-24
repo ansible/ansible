@@ -498,7 +498,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(cmd), 3)
         self.assertTrue('-u root' in cmd[0])
         self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
-        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('echo BECOME-SUCCESS-' in cmd[0] and cmd[2].startswith('BECOME-SUCCESS-'))
         self.assertTrue('sudo -k' in cmd[0])
 
     def test_make_su_cmd(self):
@@ -506,7 +506,7 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('root -c "/bin/sh' in cmd[0] or ' root -c /bin/sh' in cmd[0])
-        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('echo BECOME-SUCCESS-' in cmd[0] and cmd[2].startswith('BECOME-SUCCESS-'))
 
     def test_to_unicode(self):
         uni = ansible.utils.unicode.to_unicode(u'ansible')

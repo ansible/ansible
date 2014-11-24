@@ -53,6 +53,8 @@ class Connection(object):
         else:
             self.port = port
 
+        self.become_methods_supported=[]
+
     def connect(self):
         ''' activates the connection object '''
 
@@ -64,11 +66,11 @@ class Connection(object):
         socket = self.context.socket(zmq.REQ)
         addr = "tcp://%s:%s" % (self.host, self.port)
         socket.connect(addr)
-        self.socket = socket    
+        self.socket = socket
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=None):
+    def exec_command(self, cmd, tmp_path, become_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         if in_data:
@@ -76,7 +78,7 @@ class Connection(object):
 
         vvv("EXEC COMMAND %s" % cmd)
 
-        if (self.runner.sudo and sudoable) or (self.runner.su and su):
+        if self.runner.become and sudoable:
             raise errors.AnsibleError(
                 "When using fireball, do not specify sudo or su to run your tasks. " +
                 "Instead sudo the fireball action with sudo. " +
