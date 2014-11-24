@@ -99,7 +99,7 @@ class ActionModule(object):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self.runner.sudo and self.runner.sudo_user != 'root' or self.runner.su and self.runner.su_user != 'root':
+            if self.runner.become and self.runner.become_user != 'root':
                 if not self.runner.noop_on_check(inject):
                     self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
             # Build temporary module_args.

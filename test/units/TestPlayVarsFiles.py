@@ -41,6 +41,9 @@ class FakePlayBook(object):
         self.sudo_user = None
         self.su = None
         self.su_user = None
+        self.become  = None
+        self.become_method  = None
+        self.become_user = None
         self.transport = None
         self.only_tags = None
         self.skip_tags = None

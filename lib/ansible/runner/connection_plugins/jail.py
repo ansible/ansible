@@ -24,6 +24,7 @@ import shutil
 import subprocess
 from ansible import errors
 from ansible.callbacks import vvv
+import ansible.constants as C
 
 class Connection(object):
     ''' Local chroot based connections '''
@@ -61,6 +62,7 @@ class Connection(object):
         self.runner = runner
         self.host = host
         self.has_pipelining = False
+        self.become_methods_supported=C.BECOME_METHODS
 
         if os.geteuid() != 0:
             raise errors.AnsibleError("jail connection requires running as root")
@@ -91,16 +93,16 @@ class Connection(object):
             local_cmd = '%s "%s" %s' % (self.jexec_cmd, self.jail, cmd)
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the chroot '''
 
-        if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We enter chroot as root so sudo stuff can be ignored
+        # Ignores privilege escalation
         local_cmd = self._generate_cmd(executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.jail)

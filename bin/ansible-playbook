@@ -108,19 +108,14 @@ def main(args):
         parser.print_help(file=sys.stderr)
         return 1
 
-    # su and sudo command line arguments need to be mutually exclusive
-    if (options.su or options.su_user or options.ask_su_pass) and \
-                (options.sudo or options.sudo_user or options.ask_sudo_pass):
-            parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                         "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
-                         "mutually exclusive")
+    # privlege escalation command line arguments need to be mutually exclusive
+    utils.check_mutually_exclusive_privilege(options, parser)
 
     if (options.ask_vault_pass and options.vault_password_file):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
     sshpass = None
-    sudopass = None
-    su_pass = None
+    becomepass = None
     vault_pass = None
 
     options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
@@ -132,11 +127,14 @@ def main(args):
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
-        options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
-        options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-        options.su_user = options.su_user or C.DEFAULT_SU_USER
+
+        # set pe options
+        utils.normalize_become_options(options)
+        prompt_method = utils.choose_pass_prompt(options)
+        (sshpass, becomepass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass,
+                                                    become_ask_pass=options.become_ask_pass,
+                                                    ask_vault_pass=options.ask_vault_pass,
+                                                    become_method=prompt_method)
 
     # read vault_pass from a file
     if not options.ask_vault_pass and options.vault_password_file:
@@ -197,20 +195,18 @@ def main(args):
             stats=stats,
             timeout=options.timeout,
             transport=options.connection,
-            sudo=options.sudo,
-            sudo_user=options.sudo_user,
-            sudo_pass=sudopass,
+            become=options.become,
+            become_method=options.become_method,
+            become_user=options.become_user,
+            become_pass=becomepass,
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
             skip_tags=skip_tags,
             check=options.check,
             diff=options.diff,
-            su=options.su,
-            su_pass=su_pass,
-            su_user=options.su_user,
             vault_password=vault_pass,
-            force_handlers=options.force_handlers
+            force_handlers=options.force_handlers,
         )
 
         if options.flush_cache:
