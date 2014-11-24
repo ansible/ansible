@@ -119,11 +119,10 @@ def split_args(args):
     # here we encode the args, so we have a uniform charset to
     # work with, and split on white space
     args = args.strip()
-    try:
+    do_decode = False
+    if isinstance(args, unicode):
         args = args.encode('utf-8')
         do_decode = True
-    except UnicodeDecodeError:
-        do_decode = False
     items = args.strip().split('\n')
 
     # iterate over the tokens, and reassemble any that may have been
