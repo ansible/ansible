@@ -113,8 +113,7 @@ class ActionModule(object):
 
         sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if ((self.runner.sudo and self.runner.sudo_user != 'root') or
-                (self.runner.su and self.runner.su_user != 'root')):
+        if self.runner.become and self.runner.become_user != 'root':
             chmod_mode = 'a+rx'
             sudoable = False
         else:

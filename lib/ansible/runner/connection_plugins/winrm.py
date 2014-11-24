@@ -72,6 +72,10 @@ class Connection(object):
         self.shell_id = None
         self.delegate = None
 
+        # Add runas support
+        #self.become_methods_supported=['runas']
+        self.become_methods_supported=[]
+
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
@@ -143,7 +147,11 @@ class Connection(object):
             self.protocol = self._winrm_connect()
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
+
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+
         cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if '-EncodedCommand' in cmd_parts:
