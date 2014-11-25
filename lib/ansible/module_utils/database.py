@@ -79,7 +79,6 @@ def _identifier_parse(identifier):
                     further_identifiers = _identifier_parse(next_identifier)
                     further_identifiers.insert(0, first_identifier)
                 else:
-                    import q ; q.q(identifier)
                     raise SQLParseError('User escaped identifiers must escape extra double quotes')
             else:
                 further_identifiers = [identifier]
