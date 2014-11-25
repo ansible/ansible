@@ -133,6 +133,7 @@ class Connection(object):
         return self
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
+        cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
