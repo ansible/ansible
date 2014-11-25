@@ -563,7 +563,7 @@ def main():
     try:
         # privs
         if p.privs:
-            privs = frozenset(p.privs.split(','))
+            privs = frozenset(pr.upper() for pr in p.privs.split(','))
             if not privs.issubset(VALID_PRIVS):
                 module.fail_json(msg='Invalid privileges specified: %s' % privs.difference(VALID_PRIVS))
         else:
