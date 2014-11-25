@@ -191,7 +191,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
         query.append("PASSWORD %(password)s")
     if expires is not None:
         query.append("VALID UNTIL %(expires)s")
-    query = query.append(role_attr_flags)
+    query.append(role_attr_flags)
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
     return True
