@@ -118,7 +118,7 @@ def db_exists(cursor, db):
     return bool(res)
 
 def db_delete(cursor, db):
-    query = "DROP DATABASE `%s`" % db
+    query = "DROP DATABASE %s" % mysql_quote_identifier(db, 'database')
     cursor.execute(query)
     return True
 
@@ -190,12 +190,14 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
     return rc, stdout, stderr
 
 def db_create(cursor, db, encoding, collation):
+    query_params = dict(enc=encoding, collate=collation)
+    query = ['CREATE DATABASE %s' % mysql_quote_identifier(db, 'database')]
     if encoding:
-        encoding = " CHARACTER SET %s" % encoding
+        query.append("CHARACTER SET %(enc)s")
     if collation:
-        collation = " COLLATE %s" % collation
-    query = "CREATE DATABASE `%s`%s%s" % (db, encoding, collation)
-    res = cursor.execute(query)
+        query.append("COLLATE %(collate)s")
+    query = ' '.join(query)
+    res = cursor.execute(query, query_params)
     return True
 
 def strip_quotes(s):
@@ -360,4 +362,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.database import *
+if __name__ == '__main__':
+    main()
