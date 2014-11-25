@@ -159,9 +159,10 @@ def start_slave(cursor):
     return started
 
 
-def changemaster(cursor, chm):
-    SQLPARAM = ",".join(chm)
-    cursor.execute("CHANGE MASTER TO " + SQLPARAM)
+def changemaster(cursor, chm, chm_params):
+    sql_param = ",".join(chm)
+    query = 'CHANGE MASTER TO %s' % sql_param
+    cursor.execute(query, chm_params)
 
 
 def strip_quotes(s):
@@ -318,37 +319,52 @@ def main():
     elif mode in "changemaster":
         print "Change master"
         chm=[]
+        chm_params = {}
         if master_host:
-            chm.append("MASTER_HOST='" + master_host + "'")
+            chm.append("MASTER_HOST=%(master_host)s")
+            chm_params['master_host'] = master_host
         if master_user:
-            chm.append("MASTER_USER='" + master_user + "'")
+            chm.append("MASTER_USER=%(master_user)s")
+            chm_params['master_user'] = master_user
         if master_password:
-            chm.append("MASTER_PASSWORD='" + master_password + "'")
+            chm.append("MASTER_PASSWORD=%(master_password)s")
+            chm_params['master_password'] = master_password
         if master_port:
-            chm.append("MASTER_PORT=" + master_port)
+            chm.append("MASTER_PORT=%(master_port)s")
+            chm_params['master_port'] = master_port
         if master_connect_retry:
-            chm.append("MASTER_CONNECT_RETRY='" + master_connect_retry + "'")
+            chm.append("MASTER_CONNECT_RETRY=%(master_connect_retry)s")
+            chm_params['master_connect_retry'] = master_connect_retry
         if master_log_file:
-            chm.append("MASTER_LOG_FILE='" + master_log_file + "'")
+            chm.append("MASTER_LOG_FILE=%(master_log_file)s")
+            chm_params['master_log_file'] = master_log_file
         if master_log_pos:
-            chm.append("MASTER_LOG_POS=" + master_log_pos)
+            chm.append("MASTER_LOG_POS=%(master_log_pos)s")
+            chm_params['master_log_pos'] = master_log_pos
         if relay_log_file:
-            chm.append("RELAY_LOG_FILE='" + relay_log_file + "'")
+            chm.append("RELAY_LOG_FILE=%(relay_log_file)s")
+            chm_params['relay_log_file'] = relay_log_file
         if relay_log_pos:
-            chm.append("RELAY_LOG_POS=" + relay_log_pos)
+            chm.append("RELAY_LOG_POS=%(relay_log_pos)s")
+            chm_params['relay_log_pos'] = relay_log_pos
         if master_ssl:
             chm.append("MASTER_SSL=1")
         if master_ssl_ca:
-            chm.append("MASTER_SSL_CA='" + master_ssl_ca + "'")
+            chm.append("MASTER_SSL_CA=%(master_ssl_ca)s")
+            chm_params['master_ssl_ca'] = master_ssl_ca
         if master_ssl_capath:
-            chm.append("MASTER_SSL_CAPATH='" + master_ssl_capath + "'")
+            chm.append("MASTER_SSL_CAPATH=%(master_ssl_capath)s")
+            chm_params['master_ssl_capath'] = master_ssl_capath
         if master_ssl_cert:
-            chm.append("MASTER_SSL_CERT='" + master_ssl_cert + "'")
+            chm.append("MASTER_SSL_CERT=%(master_ssl_cert)s")
+            chm_params['master_ssl_cert'] = master_ssl_cert
         if master_ssl_key:
-            chm.append("MASTER_SSL_KEY='" + master_ssl_key + "'")
+            chm.append("MASTER_SSL_KEY=%(master_ssl_key)s")
+            chm_params['master_ssl_key'] = master_ssl_key
         if master_ssl_cipher:
-            chm.append("MASTER_SSL_CIPHER='" + master_ssl_cipher + "'")
-        changemaster(cursor,chm)
+            chm.append("MASTER_SSL_CIPHER=%(master_ssl_cipher)s")
+            chm_params['master_ssl_cipher'] = master_ssl_cipher
+        changemaster(cursor, chm, chm_params)
         module.exit_json(changed=True)
     elif mode in "startslave":
         started = start_slave(cursor)
