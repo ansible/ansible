@@ -576,8 +576,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff), runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
+        diff_result = utils.get_diff(diff)
+        if diff_result:
+            display(diff_result, runner=self.runner)
+            super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
 
