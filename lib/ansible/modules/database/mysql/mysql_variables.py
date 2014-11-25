@@ -103,7 +103,7 @@ def typedvalue(value):
 
 
 def getvariable(cursor, mysqlvar):
-    cursor.execute("SHOW VARIABLES LIKE '" + mysqlvar + "'")
+    cursor.execute("SHOW VARIABLES LIKE %s", (mysqlvar,))
     mysqlvar_val = cursor.fetchall()
     return mysqlvar_val
 
@@ -116,8 +116,11 @@ def setvariable(cursor, mysqlvar, value):
     should be passed as numeric literals.
 
     """
+    query = ["SET GLOBAL %s" % mysql_quote_identifier(mysqlvar, 'vars') ]
+    query.append(" = %s")
+    query = ' '.join(query)
     try:
-        cursor.execute("SET GLOBAL " + mysqlvar + " = %s", (value,))
+        cursor.execute(query, (value,))
         cursor.fetchall()
         result = True
     except Exception, e:
@@ -242,7 +245,10 @@ def main():
         value_actual = typedvalue(mysqlvar_val[0][1])
         if value_wanted == value_actual:
             module.exit_json(msg="Variable already set to requested value", changed=False)
-        result = setvariable(cursor, mysqlvar, value_wanted)
+        try:
+            result = setvariable(cursor, mysqlvar, value_wanted)
+        except SQLParseError, e:
+            result = str(e)
         if result is True:
             module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
         else:
@@ -250,4 +256,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.database import *
 main()
