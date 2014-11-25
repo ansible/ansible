@@ -19,6 +19,7 @@ local
 [local:vars]
 parent_var=6000
 groups_tree_var=5000
+inv_overrides_group_vars=from_inventory
 
 [arbitrary_parent:vars]
 groups_tree_var=4000
