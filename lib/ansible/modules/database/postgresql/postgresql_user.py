@@ -155,7 +155,7 @@ else:
     postgresqldb_found = True
 
 _flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
-VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' %f for f in _flags)))
+VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' % f for f in _flags)))
 
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
         database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),
@@ -399,9 +399,9 @@ def parse_role_attrs(role_attr_flags):
 
     """
     if ',' in role_attr_flags:
-        flag_set = frozenset(role_attr_flags.split(","))
+        flag_set = frozenset(r.upper() for r in role_attr_flags.split(","))
     else:
-        flag_set = frozenset(role_attr_flags)
+        flag_set = frozenset(role_attr_flags.upper())
     if not flag_set.is_subset(VALID_FLAGS):
         raise InvalidFlagsError('Invalid role_attr_flags specified: %s' %
                 ' '.join(flag_set.difference(VALID_FLAGS)))
@@ -431,11 +431,11 @@ def parse_privs(privs, db):
         if ':' not in token:
             type_ = 'database'
             name = db
-            priv_set = frozenset(x.strip() for x in token.split(','))
+            priv_set = frozenset(x.strip().upper() for x in token.split(','))
         else:
             type_ = 'table'
             name, privileges = token.split(':', 1)
-            priv_set = frozenset(x.strip() for x in privileges.split(','))
+            priv_set = frozenset(x.strip().upper() for x in privileges.split(','))
 
         if not priv_set.issubset(VALID_PRIVS[type_]):
             raise InvalidPrivsError('Invalid privs specified for %s: %s' %
