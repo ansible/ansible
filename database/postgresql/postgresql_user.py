@@ -191,7 +191,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
         query.append("PASSWORD %(password)s")
     if expires is not None:
         query.append("VALID UNTIL %(expires)s")
-    query = query.append(role_attr_flags)
+    query.append(role_attr_flags)
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
     return True
@@ -218,7 +218,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         # Grab current role attributes.
         current_role_attrs = cursor.fetchone()
 
-        alter = ['ALTER USER "%(user)s"' % {"user": pg_quote_identifier(user, 'role')}]
+        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
         if password is not None:
             alter.append("WITH %(crypt)s" % {"crypt": encrypted})
             alter.append("PASSWORD %(password)s")
@@ -229,7 +229,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             alter.append("VALID UNTIL %(expires)s")
 
         try:
-            cursor.execute(alter, query_password_data)
+            cursor.execute(' '.join(alter), query_password_data)
         except psycopg2.InternalError, e:
             if e.pgcode == '25006':
                 # Handle errors due to read-only transactions indicated by pgcode 25006
@@ -402,7 +402,7 @@ def parse_role_attrs(role_attr_flags):
         flag_set = frozenset(r.upper() for r in role_attr_flags.split(","))
     else:
         flag_set = frozenset(role_attr_flags.upper())
-    if not flag_set.is_subset(VALID_FLAGS):
+    if not flag_set.issubset(VALID_FLAGS):
         raise InvalidFlagsError('Invalid role_attr_flags specified: %s' %
                 ' '.join(flag_set.difference(VALID_FLAGS)))
     o_flags = ' '.join(flag_set)
