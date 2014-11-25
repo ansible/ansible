@@ -100,33 +100,33 @@ def lookup(name, *args, **kwargs):
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def template(basedir, varname, templatevars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
     from ansible import utils
 
     try:
         if convert_bare and isinstance(varname, basestring):
             first_part = varname.split(".")[0].split("[")[0]
-            if first_part in vars and '{{' not in varname and '$' not in varname:
+            if first_part in templatevars and '{{' not in varname and '$' not in varname:
                 varname = "{{%s}}" % varname
-    
+
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
-                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+                varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
 
                 if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
-                    eval_results = utils.safe_eval(varname, locals=vars, include_exceptions=True)
+                    eval_results = utils.safe_eval(varname, locals=templatevars, include_exceptions=True)
                     if eval_results[1] is None:
                         varname = eval_results[0]
 
             return varname
-    
+
         elif isinstance(varname, (list, tuple)):
-            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
+            return [template(basedir, v, templatevars, lookup_fatal, depth, expand_lists, convert_bare, fail_on_undefined, filter_fatal) for v in varname]
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
-                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
+                d[k] = template(basedir, v, templatevars, lookup_fatal, depth, expand_lists, convert_bare, fail_on_undefined, filter_fatal)
             return d
         else:
             return varname

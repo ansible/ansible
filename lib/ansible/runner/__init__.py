@@ -723,18 +723,21 @@ class Runner(object):
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
             items = utils._clean_data_struct(items, from_remote=True)
-            if type(items) != list:
-                raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
+            if items is None:
+                items = []
+            else:
+                if type(items) != list:
+                    raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
-                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
-                use_these_items = []
-                for x in items:
-                    inject['item'] = x
-                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        use_these_items.append(x)
-                inject['item'] = ",".join(use_these_items)
-                items = None
+                if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
+                    # hack for apt, yum, and pkgng so that with_items maps back into a single module call
+                    use_these_items = []
+                    for x in items:
+                        inject['item'] = x
+                        if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                            use_these_items.append(x)
+                    inject['item'] = ",".join(use_these_items)
+                    items = None
 
         def _safe_template_complex_args(args, inject):
             # Ensure the complex args here are a dictionary, but
