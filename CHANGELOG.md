@@ -17,6 +17,9 @@ Major changes:
 * new omit value can be used to leave off a parameter when not set, like so module_name: a=1 b={{ c | default(omit) }}, would not pass value for b (not even an empty value) if c was not set.
 * developers: 'baby JSON' in module responses, originally intended for writing modules in bash, is removed as a feature to simplify logic, script module remains available for running bash scripts.
 * async jobs started in "fire & forget" mode can now be checked on at a later time.
+* added ability to subcategorize modules for docs.ansible.com
+* added ability for shipped modules to have aliases with symlinks
+* added ability to deprecate older modules by starting with "_" and including "deprecated: message why" in module docs
 
 New Modules:
 
@@ -33,6 +36,7 @@ New Modules:
 Some other notable changes:
 
 * added the ability to set "instance filters" in the ec2.ini to limit results from the inventory plugin.
+* upgrades for various variable precedence items and parsing related items
 * added a new "follow" parameter to the file and copy modules, which allows actions to be taken on the target of a symlink rather than the symlink itself.
 * if a module should ever traceback, it will return a standard error, catchable by ignore_errors, versus an 'unreachable'
 * ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
@@ -69,6 +73,7 @@ Some other notable changes:
   - As a small side effect, the fetch module no longer returns a useful value
     in remote_md5.  If you need a replacement, switch to using remote_checksum
     which returns the sha1sum of the remote file.
+* ansible-doc CLI tool contains various improvements for working with different terminals
 
 And various other bug fixes and improvements ...
 
