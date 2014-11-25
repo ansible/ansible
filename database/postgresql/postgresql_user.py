@@ -402,7 +402,7 @@ def parse_role_attrs(role_attr_flags):
         flag_set = frozenset(r.upper() for r in role_attr_flags.split(","))
     else:
         flag_set = frozenset(role_attr_flags.upper())
-    if not flag_set.is_subset(VALID_FLAGS):
+    if not flag_set.issubset(VALID_FLAGS):
         raise InvalidFlagsError('Invalid role_attr_flags specified: %s' %
                 ' '.join(flag_set.difference(VALID_FLAGS)))
     o_flags = ' '.join(flag_set)
