@@ -79,17 +79,21 @@ class Play(object):
         elif type(self.tags) != list:
             self.tags = []
 
-        # make sure we have some special internal variables set
-        self.vars['playbook_dir'] = os.path.abspath(self.basedir)
+        # make sure we have some special internal variables set, which
+        # we use later when loading tasks and handlers
+        load_vars = dict()
+        load_vars['playbook_dir'] = os.path.abspath(self.basedir)
         if self.playbook.inventory.basedir() is not None:
-            self.vars['inventory_dir'] = self.playbook.inventory.basedir()
+            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
         if self.playbook.inventory.src() is not None:
-            self.vars['inventory_file'] = self.playbook.inventory.src()
+            load_vars['inventory_file'] = self.playbook.inventory.src()
 
         # template the play vars with themselves and the extra vars
         # from the playbook, to make sure they're correct
         all_vars = utils.combine_vars(self.vars, self.playbook.extra_vars)
+        all_vars = utils.combine_vars(all_vars, load_vars)
         self.vars = template(basedir, self.vars, all_vars)
+        self.vars = utils.combine_vars(self.vars, load_vars)
 
         # We first load the vars files from the datastructure
         # so we have the default variables to pass into the roles
@@ -157,8 +161,7 @@ class Play(object):
             raise errors.AnsibleError('sudo params ("sudo", "sudo_user") and su params '
                                       '("su", "su_user") cannot be used together')
 
-        load_vars = {}
-        load_vars['role_names'] = ds.get('role_names',[])
+        load_vars['role_names'] = ds.get('role_names', [])
 
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
