@@ -568,10 +568,8 @@ class TestUtils(unittest.TestCase):
         basedir = os.path.dirname(__file__)
 
         # Straight lookups
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict()),
-                         ['things'])
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['one', 'two'])),
-                         ['one', 'two'])
+        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=[])), [])
+        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['one', 'two'])), ['one', 'two'])
 
         # Variable interpolation
         self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['{{ foo }}', '{{ bar }}'], foo="hello", bar="world")),
