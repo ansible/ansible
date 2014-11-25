@@ -50,7 +50,7 @@ class LookupModule(object):
 
             if isinstance(term, basestring):
                 # convert a variable to a list
-                term2 = utils.listify_lookup_plugin_terms(term, self.basedir, inject)
+                term2 = utils.listify_lookup_plugin_terms(term, self.basedir, inject, fail_on_undefined=False)
                 # but avoid converting a plain string to a list of one string
                 if term2 != [ term ]:
                     term = term2
