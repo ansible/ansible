@@ -19,7 +19,7 @@ TMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 
 VAULT_PASSWORD_FILE = vault-password
 
-all: parsing test_var_precedence unicode non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault
+all: parsing test_var_precedence unicode non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_inv_overrides_group_vars
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario1; [ $$? -eq 3 ]
@@ -64,6 +64,9 @@ test_vault:
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-hosts
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE)
+
+test_inv_overrides_group_vars:
+	ansible-playbook test_inv_overrides_group_vars.yml -i inventory -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep from_inventory
 
 test_winrm:
 	ansible-playbook test_winrm.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
