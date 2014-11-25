@@ -1451,7 +1451,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         return expr
 
 
-def listify_lookup_plugin_terms(terms, basedir, inject):
+def listify_lookup_plugin_terms(terms, basedir, inject, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
 
     from ansible.utils import template
 
@@ -1469,7 +1469,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                new_terms = template.template(basedir, "{{%s}}" % terms, inject, convert_bare=True)
+                new_terms = template.template(basedir, "{{%s}}" % terms, inject, convert_bare=True, fail_on_undefined=fail_on_undefined)
                 if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass
                 else:
