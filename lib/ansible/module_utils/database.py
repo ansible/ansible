@@ -38,7 +38,7 @@ class UnclosedQuoteError(SQLParseError):
 _PG_IDENTIFIER_TO_DOT_LEVEL = dict(database=1, schema=2, table=3, column=4, role=1)
 _MYSQL_IDENTIFIER_TO_DOT_LEVEL = dict(database=1, table=2, column=3, role=1, vars=1)
 
-def _find_end_quote(identifier, quote_char='"'):
+def _find_end_quote(identifier, quote_char):
     accumulate = 0
     while True:
         try:
@@ -60,7 +60,7 @@ def _find_end_quote(identifier, quote_char='"'):
             return accumulate
 
 
-def _identifier_parse(identifier, quote_char='"'):
+def _identifier_parse(identifier, quote_char):
     if not identifier:
         raise SQLParseError('Identifier name unspecified or unquoted trailing dot')
 
@@ -77,10 +77,10 @@ def _identifier_parse(identifier, quote_char='"'):
                     dot = end_quote + 1
                     first_identifier = identifier[:dot]
                     next_identifier = identifier[dot+1:]
-                    further_identifiers = _identifier_parse(next_identifier)
+                    further_identifiers = _identifier_parse(next_identifier, quote_char)
                     further_identifiers.insert(0, first_identifier)
                 else:
-                    raise SQLParseError('User escaped identifiers must escape extra double quotes')
+                    raise SQLParseError('User escaped identifiers must escape extra quotes')
             else:
                 further_identifiers = [identifier]
 
@@ -99,7 +99,7 @@ def _identifier_parse(identifier, quote_char='"'):
             else:
                 first_identifier = identifier[:dot]
                 next_identifier = identifier[dot+1:]
-                further_identifiers = _identifier_parse(next_identifier)
+                further_identifiers = _identifier_parse(next_identifier, quote_char)
                 first_identifier = first_identifier.replace(quote_char, quote_char*2)
                 first_identifier = ''.join((quote_char, first_identifier, quote_char))
                 further_identifiers.insert(0, first_identifier)
