@@ -1,8 +1,14 @@
-ansible (1.8) unstable; urgency=low
+ansible (1.9) unstable; urgency=low
 
-  * 1.8 release (PENDING)
+  * 1.9 release (PENDING)
 
  -- Michael DeHaan <michael@ansible.com>  Wed, 21 Oct 2015 04:29:00 -0500
+
+ansible (1.8) unstable; urgency=low
+
+  * 1.8 release
+
+ -- Michael DeHaan <michael@ansible.com>  Tue, 25 Nov 2014 17:00:00 -0500
 
 ansible (1.7.2) unstable; urgency=low
 
