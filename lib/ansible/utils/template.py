@@ -126,6 +126,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
+                k = template(basedir, k, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
                 d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
             return d
         else:
