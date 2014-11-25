@@ -63,9 +63,9 @@ class TestQuotePgIdentifier(object):
         ('"test"."too"."many"."dots"', 'schema'): "PostgreSQL does not support schema with more than 2 dots",
         ('"test"."too"."many"."dots"', 'table'): "PostgreSQL does not support table with more than 3 dots",
         ('"test"."too"."many"."dots"."for"."column"', 'column'): "PostgreSQL does not support column with more than 4 dots",
-        ('"table "invalid" double quote"', 'table'): 'User escaped identifiers must escape extra double quotes',
-        ('"schema "invalid"""."table "invalid"', 'table'): 'User escaped identifiers must escape extra double quotes',
-        ('"schema."table"','table'): 'User escaped identifiers must escape extra double quotes',
+        ('"table "invalid" double quote"', 'table'): 'User escaped identifiers must escape extra quotes',
+        ('"schema "invalid"""."table "invalid"', 'table'): 'User escaped identifiers must escape extra quotes',
+        ('"schema."table"','table'): 'User escaped identifiers must escape extra quotes',
         ('"schema".', 'table'): 'Identifier name unspecified or unquoted trailing dot',
     }
 
