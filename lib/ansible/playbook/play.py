@@ -88,13 +88,6 @@ class Play(object):
         if self.playbook.inventory.src() is not None:
             load_vars['inventory_file'] = self.playbook.inventory.src()
 
-        # template the play vars with themselves and the extra vars
-        # from the playbook, to make sure they're correct
-        all_vars = utils.combine_vars(self.vars, self.playbook.extra_vars)
-        all_vars = utils.combine_vars(all_vars, load_vars)
-        self.vars = template(basedir, self.vars, all_vars)
-        self.vars = utils.combine_vars(self.vars, load_vars)
-
         # We first load the vars files from the datastructure
         # so we have the default variables to pass into the roles
         self.vars_files = ds.get('vars_files', [])
