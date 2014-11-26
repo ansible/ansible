@@ -688,6 +688,7 @@ def main():
         switch_version(git_path, module, dest, remote, version, recursive, track_submodules)
 
     # Deal with submodules
+    submodules_updated = False
     if recursive and not bare:
         submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
 
@@ -707,7 +708,7 @@ def main():
     changed = False
     if before != after or local_mods:
         changed = True
-    elif recursive and submodules_updated:
+    elif submodules_updated:
         changed =True
 
     # cleanup the wrapper script
