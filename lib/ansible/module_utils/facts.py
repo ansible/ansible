@@ -82,7 +82,7 @@ class Facts(object):
     subclass Facts.
     """
 
-    _I386RE = re.compile(r'i[3456]86')
+    _I386RE = re.compile(r'i[3-6]*86')
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
     OSDIST_LIST = ( ('/etc/redhat-release', 'RedHat'),
@@ -96,7 +96,8 @@ class Facts(object):
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
                     ('/etc/os-release', 'Debian'),
-                    ('/etc/lsb-release', 'Mandriva') )
+                    ('/etc/lsb-release', 'Mandriva'),
+                    ('/etc/release', 'OpenIndiana') )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -137,7 +138,7 @@ class Facts(object):
         return self.facts
 
     # Platform
-    # platform.system() can be Linux, Darwin, Java, or Windows
+    # platform.system() can be Linux, Darwin, Java, Windows, or OpenIndiana
     def get_platform_facts(self):
         self.facts['system'] = platform.system()
         self.facts['kernel'] = platform.release()
@@ -318,6 +319,10 @@ class Facts(object):
                             self.facts['distribution'] = data.split()[0]
                             self.facts['distribution_version'] = data.split()[1]
                             self.facts['distribution_release'] = ora_prefix + data
+                        elif 'OpenIndiana' in data:
+                            self.facts['distribution'] = data.split()[0]
+                            self.facts['distribution_version'] = data[2][3:]
+                            self.facts['distribution_release'] = 'OpenIndiana ' + data[2][3:]
                             break
                     elif name == 'SuSE':
                         data = get_file_content(path)
