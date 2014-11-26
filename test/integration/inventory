@@ -9,6 +9,10 @@ testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local
 [inven_overridehosts]
 invenoverride ansible_ssh_host=127.0.0.1 ansible_connection=local
 
+[all:vars]
+extra_var_override=FROM_INVENTORY
+inven_var=inventory_var
+
 [inven_overridehosts:vars]
 foo=foo
 var_dir=vars
