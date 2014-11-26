@@ -117,6 +117,7 @@ import sys
 import os
 import argparse
 import re
+import socket
 from time import time
 import boto
 from boto import ec2
@@ -222,6 +223,11 @@ class Ec2Inventory(object):
         if config.has_option('ec2', 'route53_excluded_zones'):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
+
+        # Perform local reverse DNS lookup
+        self.use_local_dns = False
+        if config.has_option('ec2', 'use_local_dns'):
+            self.use_local_dns = config.getboolean('ec2', 'use_local_dns')
 
         # Include RDS instances?
         self.rds_enabled = True
@@ -388,6 +394,11 @@ class Ec2Inventory(object):
             dest = getattr(instance, self.vpc_destination_variable)
         else:
             dest =  getattr(instance, self.destination_variable)
+
+        if self.use_local_dns:
+            res = socket.gethostbyaddr(socket.gethostbyname(getattr(instance, 'public_dns_name')))
+            if res[0]:
+                dest = res[0]
 
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
