@@ -205,13 +205,18 @@ class GceInventory(object):
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+        if inst.public_ips:
+            public_ip = inst.public_ips[0]
+        else:
+            public_ip = None
+            
         return {
             'gce_uuid': inst.uuid,
             'gce_id': inst.id,
             'gce_image': inst.image,
             'gce_machine_type': inst.size,
             'gce_private_ip': inst.private_ips[0],
-            'gce_public_ip': inst.public_ips[0],
+            'gce_public_ip': public_ip,
             'gce_name': inst.name,
             'gce_description': inst.extra['description'],
             'gce_status': inst.extra['status'],
@@ -220,7 +225,8 @@ class GceInventory(object):
             'gce_metadata': md,
             'gce_network': net,
             # Hosts don't have a public name, so we add an IP
-            'ansible_ssh_host': inst.public_ips[0]
+            # If no public IP assume we have VPN active to internal network.
+            'ansible_ssh_host': public_ip or inst.private_ips[0],
         }
 
     def get_instance(self, instance_name):
