@@ -400,9 +400,11 @@ def parse_role_attrs(role_attr_flags):
     """
     if ',' in role_attr_flags:
         flag_set = frozenset(r.upper() for r in role_attr_flags.split(","))
+    elif role_attr_flags:
+        flag_set = frozenset((role_attr_flags.upper(),))
     else:
-        flag_set = frozenset(role_attr_flags.upper())
-    if not flag_set.is_subset(VALID_FLAGS):
+        flag_set = frozenset()
+    if not flag_set.issubset(VALID_FLAGS):
         raise InvalidFlagsError('Invalid role_attr_flags specified: %s' %
                 ' '.join(flag_set.difference(VALID_FLAGS)))
     o_flags = ' '.join(flag_set)
@@ -431,11 +433,11 @@ def parse_privs(privs, db):
         if ':' not in token:
             type_ = 'database'
             name = db
-            priv_set = frozenset(x.strip().upper() for x in token.split(','))
+            priv_set = frozenset(x.strip().upper() for x in token.split(',') if x.strip())
         else:
             type_ = 'table'
             name, privileges = token.split(':', 1)
-            priv_set = frozenset(x.strip().upper() for x in privileges.split(','))
+            priv_set = frozenset(x.strip().upper() for x in privileges.split(',') if x.strip())
 
         if not priv_set.issubset(VALID_PRIVS[type_]):
             raise InvalidPrivsError('Invalid privs specified for %s: %s' %
