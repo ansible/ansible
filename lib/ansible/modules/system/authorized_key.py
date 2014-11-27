@@ -333,7 +333,7 @@ def enforce_state(module, params):
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
 
-    # extract indivial keys into an array, skipping blank lines and comments
+    # extract individual keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
 
 
