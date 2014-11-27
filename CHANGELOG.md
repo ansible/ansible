@@ -1,7 +1,14 @@
 Ansible Changes By Release
 ==========================
 
-## 1.8 "You Really Got Me" - Active Development
+## 1.8.1 "You Really Got Me" - Nov 26, 2014
+
+* Various bug fixes in postgresql and mysql modules.
+* Fixed a bug related to lookup plugins used within roles not finding files based on the relative paths to the roles files/ directory.
+* Fixed a bug related to vars specified in plays being templated too early, resulting in incorrect variable interpolation.
+* Fixed a bug related to git submodules in bare repos.
+
+## 1.8 "You Really Got Me" - Nov 25, 2014
 
 Major changes:
 
