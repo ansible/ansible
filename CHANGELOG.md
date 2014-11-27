@@ -1,14 +1,9 @@
 Ansible Changes By Release
 ==========================
 
-## 1.9 "Dancin In the Streets" - ACTIVE DEVELOPMENT
+## 1.9 "Dancing In the Street" - ACTIVE DEVELOPMENT
 
-Major Changes:
-
-New Modules:
-
-Some other notable changes:
-
+in progress, details pending
 
 ## 1.8 "You Really Got Me" - Nov 25, 2014
 
