@@ -86,12 +86,14 @@ JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 
 def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
-    vars = kwargs.get('vars', None)
+    tvars = kwargs.get('vars', None)
 
     if instance is not None:
         # safely catch run failures per #5059
         try:
-            ran = instance.run(*args, inject=vars, **kwargs)
+            ran = instance.run(*args, inject=tvars, **kwargs)
+        except errors.AnsibleUndefinedVariable:
+            raise
         except Exception, e:
             ran = None
         if ran:
