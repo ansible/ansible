@@ -67,13 +67,6 @@ def max(a):
     _max = __builtins__.get('max')
     return _max(a);
 
-def isnotanumber(x):
-    try:
-        return math.isnan(x)
-    except TypeError:
-        return False
-
-
 def logarithm(x, base=math.e):
     try:
         if base == 10:
@@ -107,7 +100,6 @@ class FilterModule(object):
     def filters(self):
         return {
             # general math
-            'isnan': isnotanumber,
             'min' : min,
             'max' : max,
 
