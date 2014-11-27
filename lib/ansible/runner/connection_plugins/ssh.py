@@ -394,7 +394,7 @@ class Connection(object):
             cmd += [in_path,host + ":" + pipes.quote(out_path)]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [host]
+            cmd += ["sftp"] + self.common_args + ["-b", "-", host]
             indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
         (p, stdin) = self._run(cmd, indata)
@@ -420,7 +420,7 @@ class Connection(object):
             cmd += [host + ":" + in_path, out_path]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [host]
+            cmd += ["sftp"] + self.common_args + ["-b", "-", host]
             indata = "get %s %s\n" % (in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
