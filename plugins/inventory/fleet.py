@@ -39,7 +39,7 @@ except:
 
 parser = OptionParser(usage="%prog [options] --list | --host <machine>")
 parser.add_option('--list', default=False, dest="list", action="store_true",
-                  help="Produce a JSON consumable grouping of Vagrant servers for Ansible")
+                  help="Produce a JSON consumable grouping of servers in your fleet")
 parser.add_option('--host', default=None, dest="host",
                   help="Generate additional host specific details for given host for Ansible")
 (options, args) = parser.parse_args()
@@ -48,9 +48,9 @@ parser.add_option('--host', default=None, dest="host",
 # helper functions
 #
 
-def get_ssh_config() :
+def get_ssh_config():
     configs = []
-    for box in list_running_boxes() :
+    for box in list_running_boxes():
         config = get_a_ssh_config(box)
         configs.append(config)
     return configs
@@ -58,14 +58,14 @@ def get_ssh_config() :
 #list all the running instances in the fleet
 def list_running_boxes():
     boxes = []
-    for line in subprocess.check_output(["fleetctl", "list-machines"]).split('\n') :
+    for line in subprocess.check_output(["fleetctl", "list-machines"]).split('\n'):
         matcher = re.search("[^\s]+[\s]+([^\s]+).+", line)
         if matcher and matcher.group(1) != "IP":
             boxes.append(matcher.group(1))
 
     return boxes
 
-def get_a_ssh_config(box_name) :
+def get_a_ssh_config(box_name):
     config = {}
     config['Host'] = box_name
     config['ansible_ssh_user'] = 'core'
@@ -78,7 +78,7 @@ if options.list:
     ssh_config = get_ssh_config()
     hosts = { 'coreos': []}
     
-    for data in ssh_config :
+    for data in ssh_config:
         hosts['coreos'].append(data['Host'])
 
     print json.dumps(hosts)
