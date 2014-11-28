@@ -86,6 +86,12 @@ class ActionModule(object):
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass)
         except Exception, e:
+            if 'StrictUndefined' in str(e):
+                raise errors.AnsibleUndefinedVariable(
+                    "Unable to look up a name or access an attribute in template string. Is this variable defined? " + \
+                    "Make sure your variable name does not contain invalid characters like '-'."
+                )
+
             result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
