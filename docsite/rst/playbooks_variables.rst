@@ -759,7 +759,8 @@ To configure fact caching, enable it in ansible.cfg as follows::
 
     [defaults]
     fact_caching = redis
-    fact_caching_timeout = 86400 # seconds
+    fact_caching_timeout = 86400
+    # seconds
 
 At the time of writing, Redis is the only supported fact caching engine.  
 To get redis up and running, perform the equivalent OS commands::

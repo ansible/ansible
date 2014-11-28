@@ -1474,6 +1474,8 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
                     pass
                 else:
                     terms = new_terms
+            except errors.AnsibleUndefinedVariable:
+                raise
             except jinja2.exceptions.UndefinedError, e:
                 raise errors.AnsibleUndefinedVariable('undefined variable in items: %s' % e)
             except:
