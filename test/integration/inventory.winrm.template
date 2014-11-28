@@ -1,0 +1,7 @@
+[windows]
+server ansible_ssh_host=10.10.10.10 ansible_ssh_user=Administrator ansible_ssh_pass=ShhhDontTellAnyone
+
+[windows:vars]
+ansible_connection=winrm
+# HTTPS uses 5986, HTTP uses 5985
+ansible_ssh_port=5985

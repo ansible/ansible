@@ -53,7 +53,7 @@ Loops can be nested as well::
     - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
-        - [ 'alice', 'bob', 'eve' ]
+        - [ 'alice', 'bob' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable's name without templating it with '{{ }}'::

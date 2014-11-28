@@ -65,7 +65,7 @@ class Connection(object):
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+                                 "-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         cp_in_use = False
         cp_path_set = False
@@ -76,7 +76,7 @@ class Connection(object):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
-            self.common_args += ["-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+            self.common_args += ["-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         if not C.HOST_KEY_CHECKING:
             self.common_args += ["-o", "StrictHostKeyChecking=no"]
@@ -84,9 +84,9 @@ class Connection(object):
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
         elif self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.runner.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.private_key_file)]
         if self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
@@ -220,9 +220,15 @@ class Connection(object):
             if not os.path.exists(hf):
                 hfiles_not_found += 1
                 continue
-            host_fh = open(hf)
-            data = host_fh.read()
-            host_fh.close()
+            try:
+                host_fh = open(hf)
+            except IOError, e:
+                hfiles_not_found += 1
+                continue
+            else:
+                data = host_fh.read()
+                host_fh.close()
+                
             for line in data.split("\n"):
                 if line is None or " " not in line:
                     continue
@@ -269,7 +275,6 @@ class Connection(object):
 
         if su and su_user:
             sudocmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
-            prompt_re = re.compile(prompt)
             ssh_cmd.append(sudocmd)
         elif not self.runner.sudo or not sudoable:
             prompt = None
@@ -278,10 +283,10 @@ class Connection(object):
             else:
                 ssh_cmd.append(cmd)
         else:
-            sudocmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            sudocmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
-        vvv("EXEC %s" % ssh_cmd, host=self.host)
+        vvv("EXEC %s" % ' '.join(ssh_cmd), host=self.host)
 
         not_in_host_file = self.not_in_host_file(self.host)
 
@@ -296,6 +301,8 @@ class Connection(object):
 
         self._send_password()
 
+        no_prompt_out = ''
+        no_prompt_err = ''
         if (self.runner.sudo and sudoable and self.runner.sudo_pass) or \
                 (self.runner.su and su and self.runner.su_pass):
             # several cases are handled for sudo privileges with password
@@ -313,7 +320,7 @@ class Connection(object):
             while True:
                 if success_key in sudo_output or \
                     (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
-                    (self.runner.su_pass and prompt_re.match(sudo_output)):
+                    (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
                     break
 
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
@@ -346,6 +353,9 @@ class Connection(object):
                     stdin.write(self.runner.sudo_pass + '\n')
                 elif su:
                     stdin.write(self.runner.su_pass + '\n')
+            else:
+                no_prompt_out += sudo_output
+                no_prompt_err += sudo_errput
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
@@ -366,7 +376,7 @@ class Connection(object):
         if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, '', no_prompt_out + stdout, no_prompt_err + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

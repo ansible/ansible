@@ -73,7 +73,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # create a mysql user with a random password using only ascii letters:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii') }}"
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         # create a mysql user with a random password using only digits:
@@ -83,7 +83,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # create a mysql user with a random password using many different char sets:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii,numbers,digits,hexdigits,punctuation') }}"
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
@@ -124,6 +124,8 @@ Here are some examples::
          - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
+
+         - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or

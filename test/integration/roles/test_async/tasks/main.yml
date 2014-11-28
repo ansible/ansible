@@ -35,7 +35,6 @@
         - "'end' in async_result"
         - "'finished' in async_result"
         - "'invocation' in async_result"
-        - "'item' in async_result"
         - "'rc' in async_result"
         - "'start' in async_result"
         - "'stderr' in async_result"
@@ -57,3 +56,34 @@
         - "'ansible_job_id' in async_result"
         - "'started' in async_result"
         - "'finished' not in async_result"
+
+- name: test skipped task handling
+  command: /bin/true 
+  async: 15
+  poll: 0
+  when: False
+
+# test async "fire and forget, but check later"
+
+- name: 'start a task with "fire-and-forget"'
+  command: sleep 15
+  async: 30
+  poll: 0
+  register: fnf_task
+
+- name: assert task was successfully started
+  assert:
+    that:
+    - fnf_task.started
+    - "'ansible_job_id' in fnf_task"
+
+- name: 'check on task started as a "fire-and-forget"'
+  async_status: jid={{ fnf_task.ansible_job_id }}
+  register: fnf_result
+  until: fnf_result.finished
+  retries: 30
+
+- name: assert task was successfully checked
+  assert:
+    that:
+    - fnf_result.finished

@@ -23,11 +23,14 @@ import types
 import pipes
 import glob
 import re
+import collections
 import operator as py_operator
 from ansible import errors
-from ansible.utils import md5s
+from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
-from random import SystemRandom
+from random import SystemRandom, shuffle
+from jinja2.filters import environmentfilter
+
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -144,19 +147,50 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     return _re.sub(replacement, value)
 
 def unique(a):
-    return set(a)
+    if isinstance(a,collections.Hashable):
+        c = set(a)
+    else:
+        c = []
+        for x in a:
+            if x not in c:
+                c.append(x)
+    return c
 
 def intersect(a, b):
-    return set(a).intersection(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) & set(b)
+    else:
+        c = unique(filter(lambda x: x in b, a))
+    return c
 
 def difference(a, b):
-    return set(a).difference(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) - set(b)
+    else:
+        c = unique(filter(lambda x: x not in b, a))
+    return c
 
 def symmetric_difference(a, b):
-    return set(a).symmetric_difference(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) ^ set(b)
+    else:
+        c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
+    return c
 
 def union(a, b):
-    return set(a).union(b)
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) | set(b)
+    else:
+        c = unique(a + b)
+    return c
+
+def min(a):
+    _min = __builtins__.get('min')
+    return _min(a);
+
+def max(a):
+    _max = __builtins__.get('max')
+    return _max(a);
 
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
@@ -185,7 +219,8 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
-def rand(end, start=None, step=None):
+@environmentfilter
+def rand(environment, end, start=None, step=None):
     r = SystemRandom()
     if isinstance(end, (int, long)):
         if not start:
@@ -199,6 +234,14 @@ def rand(end, start=None, step=None):
         return r.choice(end)
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
+
+def randomize_list(mylist):
+    try:
+        mylist = list(mylist)
+        shuffle(mylist)
+    except:
+        pass
+    return mylist
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -224,6 +267,7 @@ class FilterModule(object):
             'dirname': os.path.dirname,
             'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
+            'relpath': os.path.relpath,
 
             # failure testing
             'failed'  : failed,
@@ -244,8 +288,13 @@ class FilterModule(object):
             # quote string for shell usage
             'quote': quote,
 
+            # hash filters
             # md5 hex digest of string
             'md5': md5s,
+            # sha1 hex digeset of string
+            'sha1': checksum_s,
+            # checksum of string as used by ansible for checksuming files
+            'checksum': checksum_s,
 
             # file glob
             'fileglob': fileglob,
@@ -262,11 +311,13 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+            'min' : min,
+            'max' : max,
 
             # version comparison
             'version_compare': version_compare,
 
-            # random numbers
+            # random stuff
             'random': rand,
+            'shuffle': randomize_list,
         }
-

@@ -24,6 +24,8 @@ class FakeInventory(object):
         self.hosts = {}
     def basedir(self):
         return "."        
+    def src(self):
+        return "fakeinventory"
     def get_variables(self, host, vault_password=None):
         if host in self.hosts:
             return self.hosts[host]        
@@ -80,8 +82,8 @@ class TestMe(unittest.TestCase):
         os.remove(temp_path)
 
         # make sure the variable was loaded
-        assert 'foo' in play.vars, "vars_file was not loaded into play.vars"
-        assert play.vars['foo'] == 'bar', "foo was not set to bar in play.vars"
+        assert 'foo' in play.vars_file_vars, "vars_file was not loaded into play.vars_file_vars"
+        assert play.vars_file_vars['foo'] == 'bar', "foo was not set to bar in play.vars_file_vars"
 
     def test_vars_file_nonlist_error(self):
 
@@ -131,10 +133,10 @@ class TestMe(unittest.TestCase):
         os.remove(temp_path2)
 
         # make sure the variables were loaded
-        assert 'foo' in play.vars, "vars_file was not loaded into play.vars"
-        assert play.vars['foo'] == 'bar', "foo was not set to bar in play.vars"
-        assert 'baz' in play.vars, "vars_file2 was not loaded into play.vars"
-        assert play.vars['baz'] == 'bang', "baz was not set to bang in play.vars"
+        assert 'foo' in play.vars_file_vars, "vars_file was not loaded into play.vars_file_vars"
+        assert play.vars_file_vars['foo'] == 'bar', "foo was not set to bar in play.vars_file_vars"
+        assert 'baz' in play.vars_file_vars, "vars_file2 was not loaded into play.vars_file_vars"
+        assert play.vars_file_vars['baz'] == 'bang', "baz was not set to bang in play.vars_file_vars"
 
     def test_vars_files_first_found(self):
 
@@ -158,8 +160,8 @@ class TestMe(unittest.TestCase):
         os.remove(temp_path)
 
         # make sure the variable was loaded
-        assert 'foo' in play.vars, "vars_file was not loaded into play.vars"
-        assert play.vars['foo'] == 'bar', "foo was not set to bar in play.vars"
+        assert 'foo' in play.vars_file_vars, "vars_file was not loaded into play.vars_file_vars"
+        assert play.vars_file_vars['foo'] == 'bar', "foo was not set to bar in play.vars_file_vars"
 
     def test_vars_files_multiple_found(self):
 
@@ -185,9 +187,9 @@ class TestMe(unittest.TestCase):
         os.remove(temp_path2)
 
         # make sure the variables were loaded
-        assert 'foo' in play.vars, "vars_file was not loaded into play.vars"
-        assert play.vars['foo'] == 'bar', "foo was not set to bar in play.vars"
-        assert 'baz' not in play.vars, "vars_file2 was loaded after vars_file1 was loaded"
+        assert 'foo' in play.vars_file_vars, "vars_file was not loaded into play.vars_file_vars"
+        assert play.vars_file_vars['foo'] == 'bar', "foo was not set to bar in play.vars_file_vars"
+        assert 'baz' not in play.vars_file_vars, "vars_file2 was loaded after vars_file1 was loaded"
 
     def test_vars_files_assert_all_found(self):
 
@@ -225,7 +227,7 @@ class TestMe(unittest.TestCase):
     # VARIABLE PRECEDENCE TESTS
     ########################################
 
-    # On the first run vars_files are loaded into play.vars by host == None
+    # On the first run vars_files are loaded into play.vars_file_vars by host == None
     #   * only files with vars from host==None will work here
     # On the secondary run(s), a host is given and the vars_files are loaded into VARS_CACHE
     #   * this only occurs if host is not None, filename2 has vars in the name, and filename3 does not
@@ -264,37 +266,6 @@ class TestMe(unittest.TestCase):
         assert 'foo' in play.playbook.VARS_CACHE['localhost'], "vars_file vars were not loaded into vars_cache"
         assert play.playbook.VARS_CACHE['localhost']['foo'] == 'bar', "foo does not equal bar"
 
-    def test_vars_files_for_host_with_extra_vars(self):
-
-        # host != None
-        # vars in filename2
-        # no vars in filename3
-
-        # make a vars file
-        fd, temp_path = mkstemp()
-        f = open(temp_path, "wb")
-        f.write("foo: bar\n")
-        f.close()
-
-        # build play attributes
-        playbook = FakePlayBook()
-        ds = { "hosts": "localhost",
-               "vars_files": ["{{ temp_path }}"]}
-        basedir = "."
-        playbook.VARS_CACHE['localhost']['temp_path'] = temp_path
-        playbook.extra_vars = {"foo": "extra"}
-
-        # create play and do first run        
-        play = Play(playbook, ds, basedir)
-
-        # the second run is started by calling update_vars_files        
-        play.update_vars_files(['localhost'])
-        os.remove(temp_path)
-
-        assert 'foo' in play.vars, "extra vars were not set in play.vars"
-        assert 'foo' in play.playbook.VARS_CACHE['localhost'], "vars_file vars were not loaded into vars_cache"
-        assert play.playbook.VARS_CACHE['localhost']['foo'] == 'extra', "extra vars did not overwrite vars_files vars"
-
 
     ########################################
     # COMPLEX FILENAME TEMPLATING TESTS
@@ -302,8 +273,8 @@ class TestMe(unittest.TestCase):
 
     def test_vars_files_two_vars_in_name(self):
 
-        # self.vars = ds['vars']
-        # self.vars += _get_vars() ... aka extra_vars
+        # self.vars_file_vars = ds['vars']
+        # self.vars_file_vars += _get_vars() ... aka extra_vars
 
         # make a temp dir
         temp_dir = mkdtemp()
@@ -328,7 +299,7 @@ class TestMe(unittest.TestCase):
         # cleanup
         shutil.rmtree(temp_dir)
 
-        assert 'foo' in play.vars, "double var templated vars_files filename not loaded"
+        assert 'foo' in play.vars_file_vars, "double var templated vars_files filename not loaded"
     
     def test_vars_files_two_vars_different_scope(self):
 
@@ -366,7 +337,7 @@ class TestMe(unittest.TestCase):
         # cleanup
         shutil.rmtree(temp_dir)
 
-        assert 'foo' not in play.vars, \
+        assert 'foo' not in play.vars_file_vars, \
             "mixed scope vars_file loaded into play vars"
         assert 'foo' in play.playbook.VARS_CACHE['localhost'], \
             "differently scoped templated vars_files filename not loaded"
@@ -405,7 +376,7 @@ class TestMe(unittest.TestCase):
         # cleanup
         shutil.rmtree(temp_dir)
 
-        assert 'foo' not in play.vars, \
+        assert 'foo' not in play.vars_file_vars, \
             "mixed scope vars_file loaded into play vars"
         assert 'foo' in play.playbook.VARS_CACHE['localhost'], \
             "differently scoped templated vars_files filename not loaded"

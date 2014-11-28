@@ -120,7 +120,7 @@ Line up variables
 Don't use line continuations:
 
     # no
-    if (this_is_a_very_long_line and foo and /
+    if (this_is_a_very_long_line and foo and \
        i_am_going_to_continue_it):
           bar()
 

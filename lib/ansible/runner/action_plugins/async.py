@@ -37,7 +37,7 @@ class ActionModule(object):
             tmp = self.runner._make_tmp_path(conn)
 
         (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject, complex_args=complex_args)
-        self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
+        self.runner._remote_chmod(conn, 'a+rx', module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,
            async_module=module_path,

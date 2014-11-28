@@ -5,7 +5,9 @@
 #
 # useful targets:
 #   make sdist ---------------- produce a tarball
+#   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
+#   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests
@@ -45,6 +47,29 @@ else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
 endif
 
+# DEB build parameters
+DEBUILD_BIN ?= debuild
+DEBUILD_OPTS = --source-option="-I"
+DPUT_BIN ?= dput
+DPUT_OPTS ?=
+ifeq ($(OFFICIAL),yes)
+    DEB_RELEASE = 1ppa
+    # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
+    # DEBSIGN_KEYID is required when signing
+    ifneq ($(DEBSIGN_KEYID),)
+        DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
+    endif
+else
+    DEB_RELEASE = 0.git$(DATE)
+    # Do not sign unofficial builds
+    DEBUILD_OPTS += -uc -us
+    DPUT_OPTS += -u
+endif
+DEBUILD = $(DEBUILD_BIN) $(DEBUILD_OPTS)
+DEB_PPA ?= ppa
+# Choose the desired Ubuntu release: lucid precise saucy trusty
+DEB_DIST ?= unstable
+
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
@@ -61,12 +86,20 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
+NOSETESTS3 ?= nosetests-3.3
+
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v # Could do: --with-coverage --cover-package=ansible
+
+newtests:
+	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
+
+newtests-py3:
+	PYTHONPATH=./v2:./lib $(NOSETESTS3) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
 
 authors:
 	sh hacking/authors.sh
@@ -89,7 +122,7 @@ pep8:
 	@echo "# Running PEP8 Compliance Tests"
 	@echo "#############################################"
 	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	# -pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
 
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
@@ -178,12 +211,44 @@ rpm: rpmcommon
 	@echo "#############################################"
 
 debian: sdist
+	@for DIST in $(DEB_DIST) ; do \
+	    mkdir -p deb-build/$${DIST} ; \
+	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
+	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
+	    sed -ie "s#^$(NAME) (\([^)]*\)) \([^;]*\);#ansible (\1-$(DEB_RELEASE)~$${DIST}) $${DIST};#" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
+	done
+
 deb: debian
-	cp -r packaging/debian ./
-	chmod 755 debian/rules
-	fakeroot debian/rules clean
-	fakeroot dh_install
-	fakeroot debian/rules binary
+	@for DIST in $(DEB_DIST) ; do \
+	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
+	done
+	@echo "#############################################"
+	@echo "Ansible DEB artifacts:"
+	@for DIST in $(DEB_DIST) ; do \
+	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	done
+	@echo "#############################################"
+
+deb-src: debian
+	@for DIST in $(DEB_DIST) ; do \
+	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -S) ; \
+	done
+	@echo "#############################################"
+	@echo "Ansible DEB artifacts:"
+	@for DIST in $(DEB_DIST) ; do \
+	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
+	done
+	@echo "#############################################"
+
+deb-upload: deb
+	@for DIST in $(DEB_DIST) ; do \
+	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	done
+
+deb-src-upload: deb-src
+	@for DIST in $(DEB_DIST) ; do \
+	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
+	done
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 

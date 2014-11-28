@@ -1,11 +1,12 @@
 %define name ansible
+%define ansible_version $VERSION
 
 %if 0%{?rhel} == 5
 %define __python /usr/bin/python26
 %endif
 
 Name:      %{name}
-Version:   1.6
+Version:   %{ansible_version}
 Release:   1%{?dist}
 Url:       http://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
@@ -94,7 +95,6 @@ cp examples/ansible.cfg %{buildroot}/etc/ansible/
 mkdir -p %{buildroot}/%{_mandir}/man1/
 cp -v docs/man/man1/*.1 %{buildroot}/%{_mandir}/man1/
 mkdir -p %{buildroot}/%{_datadir}/ansible
-cp -rv library/* %{buildroot}/%{_datadir}/ansible/
 
 %clean
 rm -rf %{buildroot}
@@ -104,15 +104,53 @@ rm -rf %{buildroot}
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
-%dir %{_datadir}/ansible/*
-%{_datadir}/ansible/*/*
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc examples/playbooks
-
 
 %changelog
+
+* Tue Nov 25 2014 Michael DeHaan <michael@ansible.com> - 1.8.0
+- Release 1.8.0
+
+* Wed Sep 24 2014 Michael DeHaan <michael@ansible.com> - 1.7.2
+- Release 1.7.2
+
+* Thu Aug 14 2014 Michael DeHaan <michael@ansible.com> - 1.7.1
+- Release 1.7.1
+
+* Wed Aug 06 2014 Michael DeHaan <michael@ansible.com> - 1.7.0
+- Release 1.7.0
+
+* Fri Jul 25 2014 Michael DeHaan <michael@ansible.com> - 1.6.10
+- Release 1.6.10
+
+* Thu Jul 24 2014 Michael DeHaan <michael@ansible.com> - 1.6.9
+- Release 1.6.9
+
+* Tue Jul 22 2014 Michael DeHaan <michael@ansible.com> - 1.6.8
+- Release 1.6.8
+
+* Mon Jul 21 2014 Michael DeHaan <michael@ansible.com> - 1.6.7
+- Release 1.6.7
+
+* Tue Jul 01 2014 Michael DeHaan <michael@ansible.com> - 1.6.6
+- Release 1.6.6
+
+* Wed Jun 25 2014 Michael DeHaan <michael@ansible.com> - 1.6.5
+- Release 1.6.5
+
+* Wed Jun 25 2014 Michael DeHaan <michael@ansible.com> - 1.6.4
+- Release 1.6.4
+
+* Mon Jun 09 2014 Michael DeHaan <michael@ansible.com> - 1.6.3
+- Release 1.6.3
+
+* Fri May 23 2014 Michael DeHaan <michael@ansible.com> - 1.6.2
+- Release 1.6.2
+
+* Wed May 07 2014 Michael DeHaan <michael@ansible.com> - 1.6.1
+- Release 1.6.1
 
 * Mon May 05 2014 Michael DeHaan <michael@ansible.com> - 1.6.0
 - Release 1.6.0

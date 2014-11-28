@@ -99,7 +99,7 @@ ask_pass
 
 This controls whether an Ansible playbook should prompt for a password by default.  The default behavior is no::
 
-    #ask_pass=True
+    ask_pass=True
 
 If using SSH keys for authentication, it's probably not needed to change this setting.
 
@@ -111,9 +111,24 @@ ask_sudo_pass
 Similar to ask_pass, this controls whether an Ansible playbook should prompt for a sudo password by default when
 sudoing.  The default behavior is also no::
 
-    #ask_sudo_pass=True
+    ask_sudo_pass=True
 
 Users on platforms where sudo passwords are enabled should consider changing this setting.
+
+.. _bin_ansible_callbacks:
+
+bin_ansible_callbacks
+=====================
+
+.. versionadded:: 1.8
+
+Controls whether callback plugins are loaded when running /usr/bin/ansible.  This may be used to log activity from
+the command line, send notifications, and so on.  Callback plugins are always loaded for /usr/bin/ansible-playbook
+if present and cannot be disabled::
+
+    bin_ansible_callbacks=False
+
+Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
 
 .. _callback_plugins:
 
@@ -127,6 +142,30 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _command_warnings:
+
+command_warnings
+================
+
+.. versionadded:: 1.8
+
+By default since Ansible 1.8, Ansible will warn when usage of the shell and
+command module appear to be simplified by using a default Ansible module
+instead.  This can include reminders to use the 'git' module instead of
+shell commands to execute 'git'.  Using modules when possible over arbitrary
+shell commands can lead to more reliable and consistent playbook runs, and
+also easier to maintain playbooks::
+
+    command_warnings = False
+
+These warnings can be silenced by adjusting the following
+setting or adding warn=yes or warn=no to the end of the command line
+parameter string, like so::
+
+
+    - name: usage of git that could be replaced with the git module
+      shell: git update foo warn=yes
+
 .. _connection_plugins:
 
 connection_plugins
@@ -135,7 +174,7 @@ connection_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   connection_plugins = /usr/share/ansible_plugins/connection_plugins
+    connection_plugins = /usr/share/ansible_plugins/connection_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -148,7 +187,7 @@ deprecation_warnings
 
 Allows disabling of deprecating warnings in ansible-playbook output::
 
-   deprecation_warnings = True
+    deprecation_warnings = True
 
 Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
 
@@ -159,7 +198,7 @@ display_skipped_hosts
 
 If set to `False`, ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks::
 
-    #display_skipped_hosts=True
+    display_skipped_hosts=True
 
 Note that Ansible will always show the task header for any task, regardless of whether or not the task is skipped.
 
@@ -171,7 +210,7 @@ error_on_undefined_vars
 On by default since Ansible 1.3, this causes ansible to fail steps that reference variable names that are likely
 typoed::
 
-   #error_on_undefined_vars=True
+    error_on_undefined_vars=True
 
 If set to False, any '{{ template_expression }}' that contains undefined variables will be rendered in a template
 or ansible action line exactly as written.
@@ -184,7 +223,7 @@ executable
 This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this in
 rare instances to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
 
-   #executable = /bin/bash
+    executable = /bin/bash
 
 .. _filter_plugins:
 
@@ -194,9 +233,18 @@ filter_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   filter_plugins = /usr/share/ansible_plugins/filter_plugins
+    filter_plugins = /usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _force_color:
+
+force_color
+===========
+
+This options forces color mode even when running without a TTY::
+
+    force_color = 1
 
 .. _forks:
 
@@ -209,7 +257,7 @@ network and CPU load you think you can handle.  Many users may set this to 50, s
 have a large number of hosts, higher values will make actions across all of those hosts complete faster.  The default
 is very very conservative::
 
-   forks=5
+    forks=5
 
 .. _gathering:
 
@@ -232,7 +280,7 @@ Some users prefer that variables that are hashes (aka 'dictionaries' in Python t
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 
-    #hash_behaviour=replace
+    hash_behaviour=replace
 
 The valid values are either 'replace' (the default) or 'merge'.
 
@@ -266,20 +314,6 @@ This is a developer-specific feature that allows enabling additional Jinja2 exte
     jinja2_extensions = jinja2.ext.do,jinja2.ext.i18n
 
 If you do not know what these do, you probably don't need to change this setting :)
-
-.. _legacy_playbook_variables:
-
-legacy_playbook_variables
-=========================
-
-Ansible prefers to use Jinja2 syntax '{{ like_this }}' to indicate a variable should be substituted in a particular string.  However,
-older versions of playbooks used a more Perl-style syntax.  This syntax was undesirable as it frequently conflicted with bash and
-was hard to explain to new users when referencing complicated variable hierarchies, so we have standardized on the '{{ jinja2 }}' way.
-
-To ensure a string like '$foo' is not inadvertently replaced in a Perl or Bash script template, the old form of templating (which is
-still enabled as of Ansible 1.4) can be disabled like so ::
-
-    legacy_playbook_variables = no
 
 .. _library:
 
@@ -316,7 +350,7 @@ lookup_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
+    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -336,7 +370,7 @@ This is the default module name (-m) value for /usr/bin/ansible.  The default is
 Remember the command module doesn't support shell variables, pipes, or quotes, so you might wish to change
 it to 'shell'::
 
-   module_name = command
+    module_name = command
 
 .. _nocolor:
 
@@ -346,7 +380,7 @@ nocolor
 By default ansible will try to colorize output to give a better indication of failure and status information.
 If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 
-   nocolor=0
+    nocolor=0
 
 .. _nocows:
 
@@ -357,7 +391,7 @@ By default ansible will take advantage of cowsay if installed to make /usr/bin/a
 Why?  We believe systems management should be a happy experience.  If you do not like the cows, you can disable them
 by setting 'nocows' to 1::
 
-   nocows=0
+    nocows=0
 
 .. _pattern:
 
@@ -367,7 +401,7 @@ pattern
 This is the default group of hosts to talk to in a playbook if no "hosts:" stanza is supplied.  The default is to talk
 to all hosts.  You may wish to change this to protect yourself from surprises::
 
-   hosts=*
+    hosts=*
 
 Note that /usr/bin/ansible always requires a host pattern and does not use this setting, only /usr/bin/ansible-playbook.
 
@@ -390,7 +424,7 @@ private_key_file
 If you are using a pem file to authenticate with machines rather than SSH agent or passwords, you can set the default
 value here to avoid re-specifying ``--ansible-private-keyfile`` with every invocation::
 
-  private_key_file=/path/to/file.pem
+    private_key_file=/path/to/file.pem
 
 .. _remote_port:
 
@@ -400,7 +434,7 @@ remote_port
 This sets the default SSH port on all of your systems, for systems that didn't specify an alternative value in inventory.
 The default is the standard 22::
 
-   remote_port = 22
+    remote_port = 22
 
 .. _remote_tmp:
 
@@ -422,7 +456,7 @@ remote_user
 ===========
 
 This is the default username ansible will connect as for /usr/bin/ansible-playbook.  Note that /usr/bin/ansible will
-always default to the current user::
+always default to the current user if this is not defined::
 
     remote_user = root
 
@@ -519,9 +553,23 @@ vars_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   vars_plugins = /usr/share/ansible_plugins/vars_plugins
+    vars_plugins = /usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+
+.. _vault_password_file:
+
+vault_password_file
+===================
+
+.. versionadded:: 1.7
+
+Configures the path to the Vault password file as an alternative to specifying ``--vault-password-file`` on the command line::
+
+   vault_password_file = /path/to/vault_password_file
+
+As of 1.7 this file can also be a script. If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output. If your script needs to prompt for data, prompts can be sent to standard error.
 
 .. _paramiko_settings:
 
@@ -540,7 +588,7 @@ The default setting of yes will record newly discovered and approved (if host ke
 This setting may be inefficient for large numbers of hosts, and in those situations, using the ssh transport is definitely recommended
 instead.  Setting it to False will improve performance and is recommended when host key checking is disabled::
 
-   record_host_keys=True
+    record_host_keys=True
 
 .. _openssh_settings:
 
@@ -569,14 +617,14 @@ control_path
 
 This is the location to save ControlPath sockets. This defaults to::
 
-   control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r
+    control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r
 
 On some systems with very long hostnames or very long path names (caused by long user names or
 deeply nested home directories) this can exceed the character limit on
 file socket names (108 characters for most platforms). In that case, you
 may wish to shorten the string to something like the below::
 
-   control_path = %(directory)s/%%h-%%r
+    control_path = %(directory)s/%%h-%%r
 
 Ansible 1.4 and later will instruct users to run with "-vvvv" in situations where it hits this problem
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
@@ -590,7 +638,7 @@ scp_if_ssh
 Occasionally users may be managing a remote system that doesn't have SFTP enabled.  If set to True, we can
 cause scp to be used to transfer remote files instead::
 
-   scp_if_ssh=False
+    scp_if_ssh=False
 
 There's really no reason to change this unless problems are encountered, and then there's also no real drawback
 to managing the switch.  Most environments support SFTP by default and this doesn't usually need to be changed.
@@ -614,8 +662,8 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
 .. _accelerate_settings:
 
-Accelerate Mode Settings
-------------------------
+Accelerated Mode Settings
+-------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
@@ -628,9 +676,9 @@ accelerate_port
 
 .. versionadded:: 1.3
 
-This is the port to use for accelerate mode::
+This is the port to use for accelerated mode::
 
-   accelerate_port = 5099
+    accelerate_port = 5099
 
 .. _accelerate_timeout:
 

@@ -22,7 +22,7 @@ The GCE modules all require the apache-libcloud module, which you can install fr
 Credentials
 -----------
 
-To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section. Once you've created a new client ID and downloaded the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
+To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section and choosing to create a new client ID for a service account. Once you've created a new client ID and downloaded the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
 
 .. code-block:: bash
 
@@ -136,15 +136,15 @@ For the following use case, let's use this small shell script as a wrapper.
   #!/bin/bash
   PLAYBOOK="$1"
 
-  if [ -z $PLAYBOOK ]; then
-    echo "You need to pass a playback as argument to this script."
+  if [[ -z $PLAYBOOK ]]; then
+    echo "You need to pass a playbook as argument to this script."
     exit 1
   fi
 
   export SSL_CERT_FILE=$(pwd)/cacert.cer
   export ANSIBLE_HOST_KEY_CHECKING=False
 
-  if [ ! -f "$SSL_CERT_FILE" ]; then
+  if [[ ! -f "$SSL_CERT_FILE" ]]; then
     curl -O http://curl.haxx.se/ca/cacert.pem
   fi
 
@@ -175,11 +175,11 @@ A playbook would looks like this:
      tasks:
        - name: Launch instances
          gce:
-             instance_names: dev 
-             machine_type: "{{ machine_type }}" 
-             image: "{{ image }}" 
-             service_account_email: "{{ service_account_email }}" 
-             pem_file: "{{ pem_file }}" 
+             instance_names: dev
+             machine_type: "{{ machine_type }}"
+             image: "{{ image }}"
+             service_account_email: "{{ service_account_email }}"
+             pem_file: "{{ pem_file }}"
              project_id: "{{ project_id }}"
              tags: webserver
          register: gce
@@ -188,15 +188,18 @@ A playbook would looks like this:
          wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
          with_items: gce.instance_data
 
-       - name: add_host hostname={{ item.public_ip }} groupname=new_instances
+       - name: Add host to groupname
+         add_host: hostname={{ item.public_ip }} groupname=new_instances
+         with_items: gce.instance_data
 
    - name: Manage new instances
      hosts: new_instances
      connection: ssh
+     sudo: True
      roles:
        - base_configuration
        - production_server
-   
+
 Note that use of the "add_host" module above creates a temporary, in-memory group.  This means that a play in the same playbook can then manage machines
 in the 'new_instances' group, if so desired.  Any sort of arbitrary configuration is possible at this point.
 

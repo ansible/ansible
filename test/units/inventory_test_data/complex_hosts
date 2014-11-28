@@ -1,4 +1,4 @@
-# order of groups, children, and vars is not signficant
+# order of groups, children, and vars is not significant
 # so this example mixes them up for maximum testing
 
 [nc:children]

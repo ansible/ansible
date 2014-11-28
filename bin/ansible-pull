@@ -49,6 +49,7 @@ import time
 from ansible import utils
 from ansible.utils import cmd_functions
 from ansible import errors
+from ansible import inventory
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -134,6 +135,8 @@ def main(args):
                     help="vault password file")
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
                       help='ask for sudo password')
+    parser.add_option('-t', '--tags', dest='tags', default=False,
+                      help='only run plays and tasks tagged with these values')
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -150,7 +153,12 @@ def main(args):
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
-    inv_opts = 'localhost,'
+    # Attempt to use the inventory passed in as an argument
+    # It might not yet have been downloaded so use localhost if note
+    if not options.inventory or not os.path.exists(options.inventory):
+        inv_opts = 'localhost,'
+    else:
+        inv_opts = options.inventory
     limit_opts = 'localhost:%s:127.0.0.1' % hostname
     repo_opts = "name=%s dest=%s" % (options.url, options.dest)
 
@@ -166,7 +174,7 @@ def main(args):
     if path is None:
         sys.stderr.write("module '%s' not found.\n" % options.module_name)
         return 1
-    cmd = 'ansible all -i "%s" %s -m %s -a "%s"' % (
+    cmd = 'ansible localhost -i "%s" %s -m %s -a "%s"' % (
             inv_opts, base_opts, options.module_name, repo_opts
             )
 
@@ -208,6 +216,8 @@ def main(args):
         cmd += ' -e "%s"' % ev
     if options.ask_sudo_pass:
         cmd += ' -K'
+    if options.tags:
+        cmd += ' -t "%s"' % options.tags
     os.chdir(options.dest)
 
     # RUN THE PLAYBOOK COMMAND

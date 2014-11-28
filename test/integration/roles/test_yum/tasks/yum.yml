@@ -69,7 +69,6 @@
     that:
         - "'invocation' in yum_result"
         - "'changed' in yum_result"
-        - "'item' in yum_result"
         - "'msg' in yum_result"
         - "'rc' in yum_result"
         - "'results' in yum_result"

@@ -4,8 +4,25 @@ Ansible Releases at a Glance
 Active Development
 ++++++++++++++++++
 
-1.7    "Summer Nights" -------- SUMMER 2014
+1.9    "Dancing In the Street" - in progress
 
+Released
+++++++++
+
+1.8.1    "You Really Got Me" -- 11-26-2014
+1.7.2  "Summer Nights" -------- 09-24-2014
+1.7.1  "Summer Nights" -------- 08-14-2014
+1.7    "Summer Nights" -------- 08-06-2014
+1.6.10 "The Cradle Will Rock" - 07-25-2014
+1.6.9  "The Cradle Will Rock" - 07-24-2014
+1.6.8  "The Cradle Will Rock" - 07-22-2014
+1.6.7  "The Cradle Will Rock" - 07-21-2014
+1.6.6  "The Cradle Will Rock" - 07-01-2014
+1.6.5  "The Cradle Will Rock" - 06-25-2014
+1.6.4  "The Cradle Will Rock" - 06-25-2014
+1.6.3  "The Cradle Will Rock" - 06-09-2014
+1.6.2  "The Cradle Will Rock" - 05-23-2014
+1.6.1  "The Cradle Will Rock" - 05-07-2014
 1.6    "The Cradle Will Rock" - 05-05-2014 
 1.5.5  "Love Walks In" -------- 04-18-2014
 1.5.4  "Love Walks In" -------- 04-01-2014
