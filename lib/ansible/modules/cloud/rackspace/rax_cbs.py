@@ -28,6 +28,12 @@ options:
     description:
       - Description to give the volume being created
     default: null
+  image:
+    description:
+      - image to use for bootable volumes. Can be an C(id), C(human_id) or
+        C(name). This option requires C(pyrax>=1.9.3)
+    default: null
+    version_added: 1.9
   meta:
     description:
       - A hash of metadata to associate with the volume
@@ -99,6 +105,8 @@ EXAMPLES = '''
       register: my_volume
 '''
 
+from distutils.version import LooseVersion
+
 try:
     import pyrax
     HAS_PYRAX = True
@@ -107,7 +115,8 @@ except ImportError:
 
 
 def cloud_block_storage(module, state, name, description, meta, size,
-                        snapshot_id, volume_type, wait, wait_timeout):
+                        snapshot_id, volume_type, wait, wait_timeout,
+                        image):
     changed = False
     volume = None
     instance = {}
@@ -119,15 +128,26 @@ def cloud_block_storage(module, state, name, description, meta, size,
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
+    if image:
+        # pyrax<1.9.3 did not have support for specifying an image when
+        # creating a volume which is required for bootable volumes
+        if LooseVersion(pyrax.version.version) < LooseVersion('1.9.3'):
+            module.fail_json(msg='Creating a bootable volume requires '
+                                 'pyrax>=1.9.3')
+        image = rax_find_image(module, pyrax, image)
+
     volume = rax_find_volume(module, pyrax, name)
 
     if state == 'present':
         if not volume:
+            kwargs = dict()
+            if image:
+                kwargs['image'] = image
             try:
                 volume = cbs.create(name, size=size, volume_type=volume_type,
                                     description=description,
                                     metadata=meta,
-                                    snapshot_id=snapshot_id)
+                                    snapshot_id=snapshot_id, **kwargs)
                 changed = True
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
@@ -168,7 +188,8 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            description=dict(),
+            description=dict(type='str'),
+            image=dict(type='str'),
             meta=dict(type='dict', default={}),
             name=dict(required=True),
             size=dict(type='int', default=100),
@@ -189,6 +210,7 @@ def main():
         module.fail_json(msg='pyrax is required for this module')
 
     description = module.params.get('description')
+    image = module.params.get('image')
     meta = module.params.get('meta')
     name = module.params.get('name')
     size = module.params.get('size')
@@ -201,11 +223,12 @@ def main():
     setup_rax_module(module, pyrax)
 
     cloud_block_storage(module, state, name, description, meta, size,
-                        snapshot_id, volume_type, wait, wait_timeout)
+                        snapshot_id, volume_type, wait, wait_timeout,
+                        image)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()

@@ -35,6 +35,34 @@ options:
       - "yes"
       - "no"
     version_added: 1.5
+  boot_from_volume:
+    description:
+      - Whether or not to boot the instance from a Cloud Block Storage volume.
+        If C(yes) and I(image) is specified a new volume will be created at
+        boot time. I(boot_volume_size) is required with I(image) to create a
+        new volume at boot time.
+    default: "no"
+    choices:
+      - "yes"
+      - "no"
+    version_added: 1.9
+  boot_volume:
+    description:
+      - Cloud Block Storage ID or Name to use as the boot volume of the
+        instance
+    version_added: 1.9
+  boot_volume_size:
+    description:
+      - Size of the volume to create in Gigabytes. This is only required with
+        I(image) and I(boot_from_volume).
+    default: 100
+    version_added: 1.9
+  boot_volume_terminate:
+    description:
+      - Whether the I(boot_volume) or newly created volume from I(image) will
+        be terminated when the server is terminated
+    default: false
+    version_added: 1.9
   config_drive:
     description:
       - Attach read-only configuration drive to server as label config-2
@@ -99,7 +127,9 @@ options:
     version_added: 1.4
   image:
     description:
-      - image to use for the instance. Can be an C(id), C(human_id) or C(name)
+      - image to use for the instance. Can be an C(id), C(human_id) or C(name).
+        With I(boot_from_volume), a Cloud Block Storage volume will be created
+        with this image
     default: null
   instance_ids:
     description:
@@ -213,7 +243,7 @@ except ImportError:
 def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
            files={}, wait=True, wait_timeout=300, disk_config=None,
            group=None, nics=[], extra_create_args={}, user_data=None,
-           config_drive=False, existing=[]):
+           config_drive=False, existing=[], block_device_mapping_v2=[]):
     cs = pyrax.cloudservers
     changed = False
 
@@ -239,6 +269,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
             module.fail_json(msg='Failed to load %s' % lpath)
     try:
         servers = []
+        bdmv2 = block_device_mapping_v2
         for name in names:
             servers.append(cs.servers.create(name=name, image=image,
                                              flavor=flavor, meta=meta,
@@ -247,6 +278,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
                                              disk_config=disk_config,
                                              config_drive=config_drive,
                                              userdata=user_data,
+                                             block_device_mapping_v2=bdmv2,
                                              **extra_create_args))
     except Exception, e:
         module.fail_json(msg='%s' % e.message)
@@ -394,13 +426,35 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                  disk_config=None, count=1, group=None, instance_ids=[],
                  exact_count=False, networks=[], count_offset=0,
                  auto_increment=False, extra_create_args={}, user_data=None,
-                 config_drive=False):
+                 config_drive=False, boot_from_volume=False,
+                 boot_volume=None, boot_volume_size=None,
+                 boot_volume_terminate=False):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     if not cnw:
         module.fail_json(msg='Failed to instantiate client. This '
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
+
+    if state == 'present' or (state == 'absent' and instance_ids is None):
+        for arg, value in dict(name=name, flavor=flavor).iteritems():
+            if not value:
+                module.fail_json(msg='%s is required for the "rax" module' %
+                                     arg)
+
+        if not boot_from_volume and not boot_volume and not image:
+            module.fail_json(msg='image is required for the "rax" module')
+
+        if boot_from_volume and not image and not boot_volume:
+            module.fail_json(msg='image or boot_volume are required for the '
+                                 '"rax" with boot_from_volume')
+
+        if boot_from_volume and image and not boot_volume_size:
+            module.fail_json(msg='boot_volume_size is required for the "rax" '
+                                 'module with boot_from_volume and image')
+
+        if boot_from_volume and image and boot_volume:
+            image = None
 
     servers = []
 
@@ -438,12 +492,6 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
 
     # act on the state
     if state == 'present':
-        for arg, value in dict(name=name, flavor=flavor,
-                               image=image).iteritems():
-            if not value:
-                module.fail_json(msg='%s is required for the "rax" module' %
-                                     arg)
-
         # Idempotent ensurance of a specific count of servers
         if exact_count is not False:
             # See if we can find servers that match our options
@@ -583,7 +631,6 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 # Perform more simplistic matching
                 search_opts = {
                     'name': '^%s$' % name,
-                    'image': image,
                     'flavor': flavor
                 }
                 servers = []
@@ -591,6 +638,36 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                     # Ignore DELETED servers
                     if server.status == 'DELETED':
                         continue
+
+                    if not image and boot_volume:
+                        vol = rax_find_bootable_volume(module, pyrax, server,
+                                                       exit=False)
+                        if not vol:
+                            continue
+                        volume_image_metadata = vol.volume_image_metadata
+                        vol_image_id = volume_image_metadata.get('image_id')
+                        if vol_image_id:
+                            server_image = rax_find_image(module, pyrax,
+                                                      vol_image_id, exit=False)
+                            if server_image:
+                                server.image = dict(id=server_image)
+
+                    # Match image IDs taking care of boot from volume
+                    if image and not server.image:
+                        vol = rax_find_bootable_volume(module, pyrax, server)
+                        volume_image_metadata = vol.volume_image_metadata
+                        vol_image_id = volume_image_metadata.get('image_id')
+                        if not vol_image_id:
+                            continue
+                        server_image = rax_find_image(module, pyrax,
+                                                      vol_image_id, exit=False)
+                        if image != server_image:
+                            continue
+
+                        server.image = dict(id=server_image)
+                    elif image and server.image['id'] != image:
+                        continue
+
                     # Ignore servers with non matching metadata
                     if server.metadata != meta:
                         continue
@@ -616,34 +693,85 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 # them, we aren't performing auto_increment here
                 names = [name] * (count - len(servers))
 
+        block_device_mapping_v2 = []
+        if boot_from_volume:
+            mapping = {
+                'boot_index': '0',
+                'delete_on_termination': boot_volume_terminate,
+                'destination_type': 'volume',
+            }
+            if image:
+                if boot_volume_size < 100:
+                    module.fail_json(msg='"boot_volume_size" must be greater '
+                                         'than or equal to 100')
+                mapping.update({
+                    'uuid': image,
+                    'source_type': 'image',
+                    'volume_size': boot_volume_size,
+                })
+                image = None
+            elif boot_volume:
+                volume = rax_find_volume(module, pyrax, boot_volume)
+                mapping.update({
+                    'uuid': pyrax.utils.get_id(volume),
+                    'source_type': 'volume',
+                })
+            block_device_mapping_v2.append(mapping)
+
         create(module, names=names, flavor=flavor, image=image,
                meta=meta, key_name=key_name, files=files, wait=wait,
                wait_timeout=wait_timeout, disk_config=disk_config, group=group,
                nics=nics, extra_create_args=extra_create_args,
                user_data=user_data, config_drive=config_drive,
-               existing=servers)
+               existing=servers,
+               block_device_mapping_v2=block_device_mapping_v2)
 
     elif state == 'absent':
         if instance_ids is None:
             # We weren't given an explicit list of server IDs to delete
             # Let's match instead
-            for arg, value in dict(name=name, flavor=flavor,
-                                   image=image).iteritems():
-                if not value:
-                    module.fail_json(msg='%s is required for the "rax" '
-                                         'module' % arg)
             search_opts = {
                 'name': '^%s$' % name,
-                'image': image,
                 'flavor': flavor
             }
             for server in cs.servers.list(search_opts=search_opts):
                 # Ignore DELETED servers
                 if server.status == 'DELETED':
                     continue
+
+                if not image and boot_volume:
+                    vol = rax_find_bootable_volume(module, pyrax, server,
+                                                   exit=False)
+                    if not vol:
+                        continue
+                    volume_image_metadata = vol.volume_image_metadata
+                    vol_image_id = volume_image_metadata.get('image_id')
+                    if vol_image_id:
+                        server_image = rax_find_image(module, pyrax,
+                                                  vol_image_id, exit=False)
+                        if server_image:
+                            server.image = dict(id=server_image)
+
+                # Match image IDs taking care of boot from volume
+                if image and not server.image:
+                    vol = rax_find_bootable_volume(module, pyrax, server)
+                    volume_image_metadata = vol.volume_image_metadata
+                    vol_image_id = volume_image_metadata.get('image_id')
+                    if not vol_image_id:
+                        continue
+                    server_image = rax_find_image(module, pyrax,
+                                                  vol_image_id, exit=False)
+                    if image != server_image:
+                        continue
+
+                    server.image = dict(id=server_image)
+                elif image and server.image['id'] != image:
+                    continue
+
                 # Ignore servers with non matching metadata
                 if meta != server.metadata:
                     continue
+
                 servers.append(server)
 
             # Build a list of server IDs to delete
@@ -672,6 +800,10 @@ def main():
     argument_spec.update(
         dict(
             auto_increment=dict(default=True, type='bool'),
+            boot_from_volume=dict(default=False, type='bool'),
+            boot_volume=dict(type='str'),
+            boot_volume_size=dict(type='int', default=100),
+            boot_volume_terminate=dict(type='bool', default=False),
             config_drive=dict(default=False, type='bool'),
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
@@ -712,6 +844,10 @@ def main():
                              'playbook pertaining to the "rax" module')
 
     auto_increment = module.params.get('auto_increment')
+    boot_from_volume = module.params.get('boot_from_volume')
+    boot_volume = module.params.get('boot_volume')
+    boot_volume_size = module.params.get('boot_volume_size')
+    boot_volume_terminate = module.params.get('boot_volume_terminate')
     config_drive = module.params.get('config_drive')
     count = module.params.get('count')
     count_offset = module.params.get('count_offset')
@@ -757,7 +893,9 @@ def main():
                  exact_count=exact_count, networks=networks,
                  count_offset=count_offset, auto_increment=auto_increment,
                  extra_create_args=extra_create_args, user_data=user_data,
-                 config_drive=config_drive)
+                 config_drive=config_drive, boot_from_volume=boot_from_volume,
+                 boot_volume=boot_volume, boot_volume_size=boot_volume_size,
+                 boot_volume_terminate=boot_volume_terminate)
 
 
 # import module snippets
