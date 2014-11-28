@@ -1004,7 +1004,7 @@ class Runner(object):
                 final_args.append(arg)
         module_args = ' '.join(final_args)
 
-        result = handler.run(conn, tmp, module_name, module_args, inject, complex_args, no_log=self.no_log)
+        result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
         until = self.module_vars.get('until', None)
         if until is not None and result.comm_ok:
@@ -1022,7 +1022,7 @@ class Runner(object):
                     tmp = ''
                     if self._early_needs_tmp_path(module_name, handler):
                         tmp = self._make_tmp_path(conn)
-                    result = handler.run(conn, tmp, module_name, module_args, inject, complex_args, no_log=self.no_log)
+                    result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
                     inject[self.module_vars.get('register')] = result.result
@@ -1040,11 +1040,6 @@ class Runner(object):
             # connection or parsing errors...
             self.callbacks.on_unreachable(host, result.result)
         else:
-            if self.no_log:
-                if 'cmd' in result.result.keys():
-                    if 'stderr' in result.result.keys() and str(result.result['cmd']).strip('" ') in str(result.result['stderr']).strip('" '):
-                            result.result['stderr'] = re.sub(result.result['cmd'].strip('" '), 'COMMAND_HIDDDEN', result.result['stderr'])
-                    result.result['cmd'] = "COMMAND_HIDDEN"
             data = result.result
 
             # https://github.com/ansible/ansible/issues/4958

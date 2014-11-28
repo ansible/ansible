@@ -53,12 +53,7 @@ class ActionModule(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        if self.runner.no_log:
-            module_arguments = "ARGUMENTS_HIDDEN"
-        else:
-            module_arguments = module_args
-
-        vv("REMOTE_MODULE %s %s" % (module_name, module_arguments), host=conn.host)
+        vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
         return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject, complex_args=complex_args)
 
 
