@@ -107,7 +107,7 @@ To install from source.
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git
+    $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
     $ source ./hacking/env-setup
 
@@ -117,7 +117,15 @@ If you don't have pip installed in your version of Python, install pip::
 
 Ansible also uses the following Python modules that need to be installed::
 
-    $ sudo pip install paramiko PyYAML jinja2 httplib2
+    $ sudo pip install paramiko PyYAML Jinja2 httplib2
+
+Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
+which point at Ansible's own modules (not the same kind of modules, alas).
+
+.. code-block:: bash
+
+    $ git pull --rebase
+    $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
 will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
@@ -171,16 +179,18 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ansible>`_.
 
 To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-get install apt-add-repository
-    $ sudo apt-add-repository ppa:rquillo/ansible
+    $ sudo apt-get install software-properties-common
+    $ sudo apt-add-repository ppa:ansible/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
+
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 

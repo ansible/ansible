@@ -25,6 +25,14 @@ import sys
 import os
 import stat
 
+# Augment PYTHONPATH to find Python modules relative to this file path
+# This is so that we can find the modules when running from a local checkout
+# installed as editable with `pip install -e ...` or `python setup.py develop`
+local_module_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'lib')
+)
+sys.path.append(local_module_path)
+
 import ansible.playbook
 import ansible.constants as C
 import ansible.utils.template
@@ -83,6 +91,8 @@ def main(args):
         help="start the playbook at the task matching this name")
     parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
         help="run handlers even if a task fails")
+    parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
+        help="clear the fact cache")
 
     options, args = parser.parse_args(args)
 
@@ -99,11 +109,6 @@ def main(args):
 
     if (options.ask_vault_pass and options.vault_password_file):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
-
-    inventory = ansible.inventory.Inventory(options.inventory)
-    inventory.subset(options.subset)
-    if len(inventory.list_hosts()) == 0:
-        raise errors.AnsibleError("provided hosts list is empty")
 
     sshpass = None
     sudopass = None
@@ -125,17 +130,9 @@ def main(args):
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
 
-    if options.vault_password_file:
-        this_path = os.path.expanduser(options.vault_password_file)
-        try:
-            f = open(this_path, "rb")
-            tmp_vault_pass=f.read().strip()
-            f.close()
-        except (OSError, IOError), e:
-            raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
-
-        if not options.ask_vault_pass:
-            vault_pass = tmp_vault_pass
+    # read vault_pass from a file
+    if not options.ask_vault_pass and options.vault_password_file:
+        vault_pass = utils.read_vault_file(options.vault_password_file)
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
@@ -160,11 +157,13 @@ def main(args):
         if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
+    inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0:
+        raise errors.AnsibleError("provided hosts list is empty")
+
     # run all playbooks specified on the command line
     for playbook in args:
-
-        # let inventory know which playbooks are using so it can know the basedirs
-        inventory.set_playbook_basedir(os.path.dirname(playbook))
 
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
@@ -201,6 +200,10 @@ def main(args):
             vault_password=vault_pass,
             force_handlers=options.force_handlers
         )
+
+        if options.flush_cache:
+            display(callbacks.banner("FLUSHING FACT CACHE"))
+            pb.SETUP_CACHE.flush()
 
         if options.listhosts or options.listtasks or options.syntax:
             print ''
@@ -244,7 +247,8 @@ def main(args):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
-                print ''
+                if options.listhosts or options.listtasks:
+                    print ''
             continue
 
         if options.syntax:
@@ -324,4 +328,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt, ke:
         display("ERROR: interrupted", color='red', stderr=True)
         sys.exit(1)
-

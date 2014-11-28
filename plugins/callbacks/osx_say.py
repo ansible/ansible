@@ -49,9 +49,6 @@ class CallbackModule(object):
     def runner_on_ok(self, host, res):
         say("pew", LASER_VOICE)
 
-    def runner_on_error(self, host, msg):
-        pass
-
     def runner_on_skipped(self, host, item=None):
         say("pew", LASER_VOICE)
 
@@ -100,8 +97,8 @@ class CallbackModule(object):
     def playbook_on_not_import_for_host(self, host, missing_file):
         pass
 
-    def playbook_on_play_start(self, pattern):
-        say("Starting play: %s" % pattern, HAPPY_VOICE)
+    def playbook_on_play_start(self, name):
+        say("Starting play: %s" % name, HAPPY_VOICE)
 
     def playbook_on_stats(self, stats):
         say("Play complete", HAPPY_VOICE)

@@ -157,7 +157,7 @@ class DigitalOceanInventory(object):
         # DigitalOceanInventory data
         self.data = {}      # All DigitalOcean data
         self.inventory = {} # Ansible Inventory
-        self.index = {}     # Varous indices of Droplet metadata
+        self.index = {}     # Various indices of Droplet metadata
 
         # Define defaults
         self.cache_path = '.'
@@ -368,7 +368,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
 
     def load_droplet_variables_for_host(self):
-        '''Generate a JSON reponse to a --host call'''
+        '''Generate a JSON response to a --host call'''
         host = self.to_safe(str(self.args.host))
 
         if not host in self.index['host_to_droplet']:

@@ -1,4 +1,5 @@
 # Maintainer: Michel Blanc <mblanc@erasme.org>
+# Contributor: Scott Hansen https://github.com/firecat53
 # Contributor: Buce <dmbuce@gmail.com>
 # Contributor: Bartłomiej Piotrowski <b@bpiotrowski.pl>
 # Contributor: cgtx <carl@carlgeorge.us>
@@ -9,7 +10,7 @@
 # Contributor: Michael DeHaan <michael@ansible.com>
 
 pkgname=ansible-git
-pkgver=1.1.4095.g3f2f5fe
+pkgver=1.6.0.1835.ga1809a3
 pkgrel=1
 pkgdesc='Radically simple IT automation platform'
 arch=('any')
@@ -33,6 +34,7 @@ pkgver() {
 
 build() {
   cd $pkgname
+  git submodule update --init --recursive
   make PYTHON=python2
 }
 
@@ -40,7 +42,6 @@ package() {
   cd $pkgname
 
   install -dm755 $pkgdir/usr/share/ansible
-  cp -dpr --no-preserve=ownership ./library/* "$pkgdir/usr/share/ansible/"
   cp -dpr --no-preserve=ownership ./examples "$pkgdir/usr/share/ansible"
 
   python2 setup.py install -O1 --root="$pkgdir"

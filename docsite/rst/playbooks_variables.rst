@@ -5,19 +5,17 @@ Variables
 
 While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
 
-All of your systems are likely not the same.  On some systems you may want to set some behavior
-or configuration that is slightly different from others. 
+On some systems you may want to set some behavior or configuration that is slightly different from others. 
 
 Also, some of the observed behavior or state 
 of remote systems might need to influence how you configure those systems.  (Such as you might need to find out the IP
 address of a system and even use it as a configuration value on another system).
 
-You might have some templates for configuration files that are mostly the same, but slightly different
-based on those variables.  
+You might have some templates for configuration files that are mostly the same, but slightly different based on those variables.  
 
 Variables in Ansible are how we deal with differences between systems.  
 
-Once understanding variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
+To understand variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
@@ -180,10 +178,48 @@ Jinja2 provides a useful 'default' filter, that is often a better approach to fa
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+
+.. _omitting_undefined_variables:
+
+Omitting Undefined Variables and Parameters
+-------------------------------------------
+
+As of Ansible 1.8, it is possible to use the default filter to omit variables and module parameters using the special
+`omit` variable::
+
+    - name: touch files with an optional mode
+      file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
+      with_items:
+        - path: /tmp/foo
+        - path: /tmp/bar
+        - path: /tmp/baz
+          mode: "0444"
+
+For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
+parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
+
+
+.. _list_filters:
+
+List Filters
+------------
+
+These filters all operate on list variables.
+
+.. versionadded:: 1.8
+
+To get the minimum value from list of numbers::
+
+    {{ list1 | min }}
+
+To get the maximum value from a list of numbers::
+
+    {{ [3, 4, 2] | max }}
+
 .. _set_theory_filters:
 
 Set Theory Filters
---------------------
+------------------
 All these functions return a unique set from sets or lists.
 
 .. versionadded:: 1.4
@@ -261,18 +297,32 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(start=1, step=10) }}    => 51
 
 
+Shuffle Filter
+--------------
+
+.. versionadded:: 1.8
+
+This filter will randomize an existing list, giving a different order every invocation.
+
+To get a random list from an existing  list::
+
+    {{ ['a','b','c']|shuffle }} => ['c','a','b']
+    {{ ['a','b','c']|shuffle }} => ['b','c','a']
+
+note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
+
 .. _other_useful_filters:
 
 Other Useful Filters
 --------------------
 
 To concatenate a list into a string::
-   
+
    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
-    {{ path | basename }} 
+    {{ path | basename }}
 
 To get the directory from a path::
 
@@ -282,14 +332,18 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
 
+To get the real path of a link (new in version 1.8)::
+
+   {{ path | readlink }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
 
-To take an md5sum of a filename::
+To take a sha1sum of a filename::
 
-    {{ filename | md5 }}
+    {{ filename | sha1 }}
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
@@ -649,7 +703,7 @@ And you will see the following fact added::
     "ansible_local": {
             "preferences": {
                 "general": {
-                    "asdf" : "1", 
+                    "asdf" : "1",
                     "bar"  : "2"
                 }
             }
@@ -667,7 +721,7 @@ can allow that fact to be used during that particular play.  Otherwise, it will 
 Here is an example of what that might look like::
 
   - hosts: webservers
-    tasks: 
+    tasks:
       - name: create directory for ansible custom facts
         file: state=directory recurse=yes path=/etc/ansible/facts.d
       - name: install custom impi fact
@@ -676,6 +730,48 @@ Here is an example of what that might look like::
         setup: filter=ansible_local
 
 In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
+
+.. _fact_caching:
+
+Fact Caching
+````````````
+
+.. versionadded:: 1.8
+
+As shown elsewhere in the docs, it is possible for one server to reference variables about another, like so::
+
+    {{ hostvars['asdf.example.com']['ansible_os_family'] }}
+
+With "Fact Caching" disabled, in order to do this, Ansible must have already talked to 'asdf.example.com' in the
+current play, or another play up higher in the playbook.  This is the default configuration of ansible.
+
+To avoid this, Ansible 1.8 allows the ability to save facts between playbook runs, but this feature must be manually
+enabled.  Why might this be useful?
+
+Imagine, for instance, a very large infrastructure with thousands of hosts.  Fact caching could be configured to run nightly, but
+configuration of a small set of servers could run ad-hoc or periodically throughout the day.  With fact-caching enabled, it would
+not be necessary to "hit" all servers to reference variables and information about them.
+
+With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
+the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
+
+To configure fact caching, enable it in ansible.cfg as follows::
+
+    [defaults]
+    fact_caching = redis
+    fact_caching_timeout = 86400
+    # seconds
+
+At the time of writing, Redis is the only supported fact caching engine.  
+To get redis up and running, perform the equivalent OS commands::
+
+    yum install redis
+    service redis start
+    pip install redis
+
+Note that the Python redis library should be installed from pip, the version packaged in EPEL is too old for use by Ansible.
+
+In current embodiments, this feature is in beta-level state and the Redis plugin does not support port or password configuration, this is expected to change in the near future.
 
 .. _registered_variables:
 
@@ -761,6 +857,7 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
    {% endfor %}
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
 
 Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
@@ -769,11 +866,13 @@ period, without the rest of the domain.
 
 *play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
+*delegate_to* is the inventory hostname of the host that the current task has been delegated to using 'delegate_to'.
+
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
 
-.. _variable_file_seperation_details:
+.. _variable_file_separation_details:
 
 Variable File Separation
 ````````````````````````
@@ -852,64 +951,6 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax
 Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
 or in a file as above.
 
-.. _conditional_imports:
-
-Conditional Imports
-```````````````````
-
-.. note:: This behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
-
-Sometimes you will want to do certain things differently in a playbook based on certain criteria.
-Having one playbook that works on multiple platforms and OS versions is a good example.
-
-As an example, the name of the Apache package may be different between CentOS and Debian,
-but it is easily handled with a minimum of syntax in an Ansible Playbook::
-
-    ---
-
-    - hosts: all
-      remote_user: root
-      vars_files:
-        - "vars/common.yml"
-        - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
-
-      tasks:
-
-      - name: make sure apache is running
-        service: name={{ apache }} state=running
-
-.. note::
-   The variable 'ansible_os_family' is being interpolated into
-   the list of filenames being defined for vars_files.
-
-As a reminder, the various YAML files contain just keys and values::
-
-    ---
-    # for vars/CentOS.yml
-    apache: httpd
-    somethingelse: 42
-
-How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
-would be 'vars/CentOS.yml', followed by '/vars/os_defaults.yml' if that file
-did not exist.   If no files in the list were found, an error would be raised.
-On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
-falling back on 'vars/os_defaults.yml'. Pretty simple.
-
-To use this conditional import feature, you'll need facter or ohai installed prior to running the playbook, but
-you can of course push this out with Ansible if you like::
-
-    # for facter
-    ansible -m yum -a "pkg=facter ensure=installed"
-    ansible -m yum -a "pkg=ruby-json ensure=installed"
-
-    # for ohai
-    ansible -m yum -a "pkg=ohai ensure=installed"
-
-Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
-from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
-in more streamlined & auditable configuration rules -- especially because there are a
-minimum of decision points to track.
-
 .. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
@@ -929,9 +970,10 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they win in a certain order, which is::
 
-    * -e variables always win
-    * then comes "most everything else"
-    * then comes variables defined in inventory
+    * extra vars (-e in the command line) always win
+    * then comes connection variables defined in inventory (ansible_ssh_user, etc)
+    * then comes "most everything else" (command line switches, vars in play, included vars, etc)
+    * then comes the rest of the variables defined in inventory
     * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
 
@@ -1029,7 +1071,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
         - { role: something_else }
 
 .. note:: There are some protections in place to avoid the need to namespace variables.  
-          In the above, variables defined in common_settings are most definitely available to 'app_user' and 'something_else' tasks, but if
+          In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
           "something's" guaranteed to have foo set at 12, even if somewhere deep in common settings it set foo to 20.
 
 So, that's precedence, explained in a more direct way.  Don't worry about precedence, just think about if your role is defining a

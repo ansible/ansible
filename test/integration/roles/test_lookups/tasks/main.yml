@@ -36,20 +36,41 @@
 # PASSWORD LOOKUP
 
 - name: remove previous password files
-  file: dest={{output_dir}}/password state=absent
+  file: dest={{output_dir}}/lookup/password state=absent
+  with_items:
+  - "{{output_dir}}/lookup/password"
+  - "{{output_dir}}/lookup"
 
 - name: create a password file
   set_fact: 
-    newpass: "{{ lookup('password', output_dir + '/password length=8') }}"
+    newpass: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
+
+- name: stat the password file directory
+  stat: path="{{output_dir}}/lookup"
+  register: result
+
+- name: assert the directory's permissions
+  assert:
+    that:
+    - result.stat.mode == '0700'
+
+- name: stat the password file
+  stat: path="{{output_dir}}/lookup/password"
+  register: result
+
+- name: assert the directory's permissions
+  assert:
+    that:
+    - result.stat.mode == '0600'
 
 - name: get password length
-  shell: wc -c {{output_dir}}/password | awk '{print $1}'
+  shell: wc -c {{output_dir}}/lookup/password | awk '{print $1}'
   register: wc_result
 
 - debug: var=wc_result.stdout
 
 - name: read password
-  shell: cat {{output_dir}}/password
+  shell: cat {{output_dir}}/lookup/password
   register: cat_result
 
 - debug: var=cat_result.stdout
@@ -92,7 +113,7 @@
 
 # https://github.com/ansible/ansible/issues/6550
 - name: confirm pipe lookup works with multiple positional args
-  debug: msg="{{ lookup('pipe', 'ls /tmp /') }}"         
+  debug: msg="{{ lookup('pipe', 'ls -l /tmp') }}"         
 
 
 

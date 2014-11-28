@@ -49,12 +49,32 @@ class ActionModule(object):
         source  = options.get('src', None)
         dest    = options.get('dest', None)
         copy    = utils.boolean(options.get('copy', 'yes'))
+        creates = options.get('creates', None)
 
         if source is None or dest is None:
             result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
-        dest = os.path.expanduser(dest) # CCTODO: Fix path for Windows hosts.
+        if creates:
+            # do not run the command if the line contains creates=filename
+            # and the filename already exists. This allows idempotence
+            # of command executions.
+            module_args_tmp = "path=%s" % creates
+            module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
+                                                        complex_args=complex_args, persist_files=True)
+            stat = module_return.result.get('stat', None)
+            if stat and stat.get('exists', False):
+                return ReturnData(
+	            conn=conn,
+                    comm_ok=True,
+                    result=dict(
+                        skipped=True,
+                        changed=False,
+                        msg=("skipped, since %s exists" % creates)
+                    )
+                )
+
+        dest = self.runner._remote_expand_user(conn, dest, tmp) # CCTODO: Fix path for Windows hosts.
         source = template.template(self.runner.basedir, os.path.expanduser(source), inject)
         if copy:
             if '_original_file' in inject:
@@ -62,8 +82,8 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
-        if remote_md5 != '3':
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+        if remote_checksum != '3':
             result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
@@ -76,9 +96,23 @@ class ActionModule(object):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
-            module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+            if self.runner.sudo and self.runner.sudo_user != 'root' or self.runner.su and self.runner.su_user != 'root':
+                if not self.runner.noop_on_check(inject):
+                    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
+            # Build temporary module_args.
+            new_module_args = dict(
+                src=tmp_src,
+                original_basename=os.path.basename(source),
+            )
+
+            # make sure checkmod is passed on correctly
+            if self.runner.noop_on_check(inject):
+                new_module_args['CHECKMODE'] = True
+
+            module_args = utils.merge_module_args(module_args, new_module_args)
         else:
             module_args = "%s original_basename=%s" % (module_args, pipes.quote(os.path.basename(source)))
+            # make sure checkmod is passed on correctly
+            if self.runner.noop_on_check(inject):
+                module_args += " CHECKMODE=True"
         return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)

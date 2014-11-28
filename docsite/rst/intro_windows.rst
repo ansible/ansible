@@ -22,7 +22,7 @@ Note that it is expected you have a basic understanding of Ansible prior to jump
 .. _windows_installing:
 
 Installing on the Control Machine
-``````````````````````````````````
+`````````````````````````````````
 
 On a Linux control machine::
 
@@ -45,7 +45,7 @@ In group_vars/windows.yml, define the following inventory variables::
     # ansible-vault edit group_vars/windows.yml
 
     ansible_ssh_user: Administrator
-    ansible_ssh_pass: SekritPasswordGoesHere
+    ansible_ssh_pass: SecretPasswordGoesHere
     ansible_ssh_port: 5986
     ansible_connection: winrm
 
@@ -59,7 +59,7 @@ communication channel that leverages Windows remoting::
     ansible windows [-i inventory] -m win_ping --ask-vault-pass
 
 If you haven't done anything to prep your systems yet, this won't work yet.  This is covered in a later
-section about how to enable powershell remoting - and if neccessary - how to upgrade powershell to
+section about how to enable powershell remoting - and if necessary - how to upgrade powershell to
 a version that is 3 or higher.
 
 You'll run this command again later though, to make sure everything is working.
@@ -69,65 +69,19 @@ You'll run this command again later though, to make sure everything is working.
 Windows System Prep
 ```````````````````
 
-In order for Ansible to manage your windows machines, you will have to enable Powershell remoting first, which also enables WinRM.
+In order for Ansible to manage your windows machines, you will have to enable Powershell remoting configured.
 
-From the Windows host, launch the Powershell Client. For information on Powershell, visit `Microsoft's Using Powershell article <http://technet.microsoft.com/en-us/library/dn425048.aspx>`_.
+To automate setup of WinRM, you can run `this powershell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine. 
 
-In the powershell session, run the following to enable PS Remoting and set the execution policy
-
-.. code-block:: bash
-
-    $  Enable-PSRemoting -Force
-    $  Set-ExecutionPolicy RemoteSigned
-
-If your Windows firewall is enabled, you must also run the following command to allow firewall access to the public firewall profile:
-
-.. code-block:: bash
-
-    #  Windows 2012 / 2012R2
-    $  Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
-
-    #  Windows 2008 / 2008R2
-    $  NetSH ADVFirewall Set AllProfiles Settings remotemanagement Enable
-
-By default, Powershell remoting enables an HTTP listener. The following commands enable an HTTPS listener, which secures communication between the Control Machine and windows.
-
-An SSL certificate for server authentication is required to create the HTTPS listener. The existence of an existing certificate in the computer account can be verified by using the MMC snap-in.
-
-A best practice for SSL certificates is generating them from an internal or external certificate authority. An existing certificate could be located in the computer account certificate store `using the following article <http://technet.microsoft.com/en-us/library/cc754431.aspx#BKMK_computer>`_.
-
-Alternatively, a self-signed SSL certificate can be generated in powershell using `the following technet article <http://social.technet.microsoft.com/wiki/contents/articles/4714.how-to-generate-a-self-signed-certificate-using-powershell.aspx>`_. At a minimum, the subject name should match the hostname, and Server Authentication is required. Once the self signed certificate is obtained, the certificate thumbprint can be identified using `How to: Retrieve the Thumbprint of a Certificate <http://msdn.microsoft.com/en-us/library/ms734695%28v=vs.110%29.aspx>`_.
-
-.. code-block:: bash
-
-    #  Create the https listener
-    $  winrm create winrm/config/Listener?Address=*+Transport=HTTPS  @{Hostname="host_name";CertificateThumbprint="certificate_thumbprint"}
-
-    #  Delete the http listener
-    $  WinRM delete winrm/config/listener?Address=*+Transport=HTTP
-
-Again, if your Windows firewall is enabled, the following command to allow firewall access to the HTTPS listener:
-
-.. code-block:: bash
-
-    #  Windows 2008 / 2008R2 / 2012 / 2012R2
-    $  netsh advfirewall firewall add rule Profile=public name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
-
-It's time to verify things are working::
-
-    ansible windows [-i inventory] -m win_ping --ask-vault-pass
-
-However, if you are still running Powershell 2.0 on remote systems, it's time to use Ansible to upgrade powershell
-before proceeding further, as some of the Ansible modules will require Powershell 3.0.  
-
-In the future, Ansible may provide a shortcut installer that automates these steps for prepping a Windows machine.
+Admins may wish to modify this setup slightly, for instance to increase the timeframe of
+the certificate.
 
 .. _getting_to_powershell_three_or_higher:
 
 Getting to Powershell 3.0 or higher
 ```````````````````````````````````
 
-Powershell 3.0 or higher is needed for most provided Ansible modules for Windows.
+Powershell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script.
 
 Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator.  You will now be running Powershell 3 and can try connectivity again using the win_ping technique referenced above.
 
@@ -141,7 +95,7 @@ Windows modules as listed in the `"windows" subcategory of the Ansible module in
 
 Browse this index to see what is available.
 
-In many cases, it may not be neccessary to even write or use an Ansible module.
+In many cases, it may not be necessary to even write or use an Ansible module.
 
 In particular, the "script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very native way to do things, as in the following playbook::
 
@@ -174,7 +128,7 @@ Modules (ps1 files) should start as follows::
 
     # code goes here, reading in stdin as JSON and outputting JSON
 
-The above magic is neccessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few mpmore useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
+The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
 
 What modules you see in windows/ are just a start.  Additional modules may be submitted as pull requests to github.
 
@@ -225,7 +179,7 @@ Running individual commands uses the 'raw' module, as opposed to the shell or co
           register: ipconfig
         - debug: var=ipconfig
 
-And for a final example, here's how to use the win_stat module to test for file existance.  Note that the data returned byt he win_stat module is slightly different than what is provided by the Linux equivalent::
+And for a final example, here's how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows

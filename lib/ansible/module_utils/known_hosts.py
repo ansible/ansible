@@ -72,10 +72,14 @@ def get_fqdn(repo_url):
         if 'ssh' not in parts[0] and 'git' not in parts[0]:
             # don't try and scan a hostname that's not ssh
             return None
+        # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
+        # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
             result = parts[1]
-        if "@" in result:
-            result = result.split("@", 1)[1]
+            if ":" in result:
+                result = result.split(":")[0]
+            if "@" in result:
+                result = result.split("@", 1)[1]
 
     return result
 
