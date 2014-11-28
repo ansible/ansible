@@ -7,5 +7,5 @@ recursive-include docs *
 include Makefile
 include VERSION
 include MANIFEST.in
-exclude lib/ansible/modules/core/.git
-exclude lib/ansible/modules/extras/.git
+prune lib/ansible/modules/core/.git
+prune lib/ansible/modules/extras/.git
