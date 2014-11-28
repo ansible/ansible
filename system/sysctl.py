@@ -84,7 +84,7 @@ EXAMPLES = '''
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl: name=kernel.panic value=3 sysctl_file=/tmp/test_sysctl.conf reload=no
 
-# Set ip fowarding on in /proc and do not reload the sysctl file
+# Set ip forwarding on in /proc and do not reload the sysctl file
 - sysctl: name="net.ipv4.ip_forward" value=1 sysctl_set=yes
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
