@@ -25,7 +25,8 @@ author: Michael DeHaan
 version_added: "0.1"
 short_description:  Manage services.
 description:
-    - Controls services on remote hosts.
+    - Controls services on remote hosts. Supported init systems are: BSD init,
+      OpenRC, SysV, systemd, upstart.
 options:
     name:
         required: true
