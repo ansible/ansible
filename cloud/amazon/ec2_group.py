@@ -55,7 +55,7 @@ options:
   purge_rules_egress:
     version_added: "1.8"
     description:
-      - Purge existing rules_egree on security group that are not found in rules_egress
+      - Purge existing rules_egress on security group that are not found in rules_egress
     required: false
     default: 'true'
     aliases: []
