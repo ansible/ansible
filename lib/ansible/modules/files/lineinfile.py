@@ -148,7 +148,7 @@ EXAMPLES = r"""
 
 - lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
 
-# Validate a the sudoers file before saving
+# Validate the sudoers file before saving
 - lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
 """
 
