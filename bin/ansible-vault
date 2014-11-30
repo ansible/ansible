@@ -57,8 +57,12 @@ def build_option_parser(action):
     # options for all actions
     #parser.add_option('-c', '--cipher', dest='cipher', default="AES256", help="cipher to use")
     parser.add_option('--debug', dest='debug', action="store_true", help="debug")
+    if C.DEFAULT_VAULT_PASSWORD_FILES:
+        default_password_file = C.DEFAULT_VAULT_PASSWORD_FILES[0]
+    else:
+        default_password_file = None
     parser.add_option('--vault-password-file', dest='password_file',
-                      help="vault password file", default=C.DEFAULT_VAULT_PASSWORD_FILE)
+                      help="vault password file", default=default_password_file)
 
     # options specific to actions
     if action == "create":

@@ -76,8 +76,10 @@ CIPHER_WHITELIST=['AES', 'AES256']
 
 class VaultLib(object):
 
-    def __init__(self, password):
-        self.password = password
+    def __init__(self, passwords):
+        if isinstance(passwords, basestring):
+            passwords = [passwords]
+        self.passwords = passwords
         self.cipher_name = None
         self.version = '1.1'
 
@@ -109,14 +111,14 @@ class VaultLib(object):
         """
 
         # encrypt sha + data
-        enc_data = this_cipher.encrypt(data, self.password)
+        enc_data = this_cipher.encrypt(data, self.passwords[0])
 
         # add header 
         tmp_data = self._add_header(enc_data)
         return tmp_data
 
     def decrypt(self, data):
-        if self.password is None:
+        if not self.passwords:
             raise errors.AnsibleError("A vault password must be specified to decrypt data")
 
         if not self.is_encrypted(data):
@@ -133,11 +135,14 @@ class VaultLib(object):
             raise errors.AnsibleError("%s cipher could not be found" % self.cipher_name)
 
         # try to unencrypt data
-        data = this_cipher.decrypt(data, self.password)
-        if data is None:
+        for password in self.passwords:
+            dec_data = this_cipher.decrypt(data, password)
+            if dec_data is not None:
+                break
+        else:
             raise errors.AnsibleError("Decryption failed")
 
-        return data            
+        return dec_data            
 
     def _add_header(self, data):     
         # combine header and encrypted data in 80 char columns

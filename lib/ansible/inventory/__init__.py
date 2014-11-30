@@ -38,14 +38,14 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
+                  '_pattern_cache', '_vault_passwords', '_vars_plugins', '_playbook_basedir']
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
+    def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_passwords=[]):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
         self.host_list = host_list
-        self._vault_password=vault_password
+        self._vault_passwords = vault_passwords
 
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
@@ -142,11 +142,11 @@ class Inventory(object):
 
         # get group vars from group_vars/ files and vars plugins
         for group in self.groups:
-            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, vault_password=self._vault_password))
+            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, vault_passwords=self._vault_passwords))
 
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
-            host.vars = utils.combine_vars(host.vars, self.get_host_variables(host.name, vault_password=self._vault_password))
+            host.vars = utils.combine_vars(host.vars, self.get_host_variables(host.name, vault_passwords=self._vault_passwords))
 
 
     def _match(self, str, pattern_str):
@@ -411,18 +411,25 @@ class Inventory(object):
                 return group
         return None
 
-    def get_group_variables(self, groupname, update_cached=False, vault_password=None):
+    def get_group_variables(self, groupname, update_cached=False, vault_passwords=[]):
         if groupname not in self._vars_per_group or update_cached:
-            self._vars_per_group[groupname] = self._get_group_variables(groupname, vault_password=vault_password)
+            self._vars_per_group[groupname] = self._get_group_variables(groupname, vault_passwords=vault_passwords)
         return self._vars_per_group[groupname]
 
-    def _get_group_variables(self, groupname, vault_password=None):
+    def _get_group_variables(self, groupname, vault_passwords=[]):
 
         group = self.get_group(groupname)
         if group is None:
             raise Exception("group not found: %s" % groupname)
 
         vars = {}
+        # Don't break compatibility with old vars_plugins when no more than one password is provided
+        if len(vault_passwords) == 0:
+            vault_password = None
+        elif len(vault_passwords) == 1:
+            vault_password = vault_passwords[0]
+        else:
+            vault_password = vault_passwords
 
         # plugin.get_group_vars retrieves just vars for specific group
         vars_results = [ plugin.get_group_vars(group, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_group_vars')]
@@ -435,26 +442,33 @@ class Inventory(object):
 
         return vars
 
-    def get_variables(self, hostname, update_cached=False, vault_password=None):
+    def get_variables(self, hostname, update_cached=False, vault_passwords=None):
 
         host = self.get_host(hostname)
         if not host:
             raise Exception("host not found: %s" % hostname)
         return host.get_variables()
 
-    def get_host_variables(self, hostname, update_cached=False, vault_password=None):
+    def get_host_variables(self, hostname, update_cached=False, vault_passwords=None):
 
         if hostname not in self._vars_per_host or update_cached:
-            self._vars_per_host[hostname] = self._get_host_variables(hostname, vault_password=vault_password)
+            self._vars_per_host[hostname] = self._get_host_variables(hostname, vault_passwords=vault_passwords)
         return self._vars_per_host[hostname]
 
-    def _get_host_variables(self, hostname, vault_password=None):
+    def _get_host_variables(self, hostname, vault_passwords=[]):
 
         host = self.get_host(hostname)
         if host is None:
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
+        # Don't break compatibility with old vars_plugins when no more than one password is provided
+        if len(vault_passwords) == 0:
+            vault_password = None
+        elif len(vault_passwords) == 1:
+            vault_password = vault_passwords[0]
+        else:
+            vault_password = vault_passwords
 
         # plugin.run retrieves all vars (also from groups) for host
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
@@ -642,12 +656,12 @@ class Inventory(object):
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
                 base_path = os.path.join(basedir, "group_vars/%s" % group.name)
-                results = utils.load_vars(base_path, results, vault_password=self._vault_password)
+                results = utils.load_vars(base_path, results, vault_passwords=self._vault_passwords)
 
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
                 base_path = os.path.join(basedir, "host_vars/%s" % host.name)
-                results = utils.load_vars(base_path, results, vault_password=self._vault_password)
+                results = utils.load_vars(base_path, results, vault_passwords=self._vault_passwords)
 
         # all done, results is a dictionary of variables for this particular host.
         return results

@@ -55,9 +55,9 @@ class DataLoader():
 
     _FILE_CACHE = dict()
 
-    def __init__(self, vault_password=None):
+    def __init__(self, vault_passwords=[]):
         self._basedir = '.'
-        self._vault = VaultLib(password=vault_password)
+        self._vault = VaultLib(passwords=vault_passwords)
 
     def load(self, data, file_name='<string>', show_content=True):
         '''

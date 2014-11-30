@@ -759,7 +759,7 @@ be before there depending on the exact syntax problem.
     raise errors.AnsibleYAMLValidationFailed(msg)
 
 
-def parse_yaml_from_file(path, vault_password=None):
+def parse_yaml_from_file(path, vault_passwords=None):
     ''' convert a yaml file to a data structure '''
 
     data = None
@@ -770,12 +770,12 @@ def parse_yaml_from_file(path, vault_password=None):
     except IOError:
         raise errors.AnsibleError("file could not read: %s" % path)
 
-    vault = VaultLib(password=vault_password)
+    vault = VaultLib(passwords=vault_passwords)
     if vault.is_encrypted(data):
         # if the file is encrypted and no password was specified,
         # the decrypt call would throw an error, but we check first
         # since the decrypt function doesn't know the file name
-        if vault_password is None:
+        if not vault_passwords:
             raise errors.AnsibleError("A vault password must be specified to decrypt %s" % path)
         data = vault.decrypt(data)
         show_content = False
@@ -1066,8 +1066,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for su password')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
         help='ask for vault password')
-    parser.add_option('--vault-password-file', default=constants.DEFAULT_VAULT_PASSWORD_FILE,
-        dest='vault_password_file', help="vault password file")
+    parser.add_option('--vault-password-file', default=constants.DEFAULT_VAULT_PASSWORD_FILES,
+        action='append', dest='vault_password_files', help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -1519,7 +1519,7 @@ def before_comment(msg):
     msg = msg.replace("**NOT_A_COMMENT**","#")
     return msg
 
-def load_vars(basepath, results, vault_password=None):
+def load_vars(basepath, results, vault_passwords=[]):
     """
     Load variables from any potential yaml filename combinations of basepath,
     returning result.
@@ -1531,7 +1531,7 @@ def load_vars(basepath, results, vault_password=None):
     found_paths = []
 
     for path in paths_to_check:
-        found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+        found, results = _load_vars_from_path(path, results, vault_passwords=vault_passwords)
         if found:
             found_paths.append(path)
 
@@ -1548,7 +1548,7 @@ def load_vars(basepath, results, vault_password=None):
 ## load variables from yaml files/dirs
 #  e.g. host/group_vars
 #
-def _load_vars_from_path(path, results, vault_password=None):
+def _load_vars_from_path(path, results, vault_passwords=[]):
     """
     Robustly access the file at path and load variables, carefully reporting
     errors in a friendly/informative way.
@@ -1579,17 +1579,17 @@ def _load_vars_from_path(path, results, vault_password=None):
                 % (path, err2.strerror, ))
         # follow symbolic link chains by recursing, so we repeat the same
         # permissions checks above and provide useful errors.
-        return _load_vars_from_path(target, results, vault_password)
+        return _load_vars_from_path(target, results, vault_passwords)
 
     # directory
     if stat.S_ISDIR(pathstat.st_mode):
 
         # support organizing variables across multiple files in a directory
-        return True, _load_vars_from_folder(path, results, vault_password=vault_password)
+        return True, _load_vars_from_folder(path, results, vault_passwords=vault_passwords)
 
     # regular file
     elif stat.S_ISREG(pathstat.st_mode):
-        data = parse_yaml_from_file(path, vault_password=vault_password)
+        data = parse_yaml_from_file(path, vault_passwords=vault_passwords)
         if data and type(data) != dict:
             raise errors.AnsibleError(
                 "%s must be stored as a dictionary/hash" % path)
@@ -1606,7 +1606,7 @@ def _load_vars_from_path(path, results, vault_password=None):
         raise errors.AnsibleError("Expected a variable file or directory "
             "but found a non-file object at path %s" % (path, ))
 
-def _load_vars_from_folder(folder_path, results, vault_password=None):
+def _load_vars_from_folder(folder_path, results, vault_passwords=[]):
     """
     Load all variables within a folder recursively.
     """
@@ -1627,7 +1627,7 @@ def _load_vars_from_folder(folder_path, results, vault_password=None):
     # do not parse hidden files or dirs, e.g. .svn/
     paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
     for path in paths:
-        _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
+        _found, results = _load_vars_from_path(path, results, vault_passwords=vault_passwords)
     return results
 
 def update_hash(hash, key, new_value):

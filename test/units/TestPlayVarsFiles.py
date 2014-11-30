@@ -26,7 +26,7 @@ class FakeInventory(object):
         return "."        
     def src(self):
         return "fakeinventory"
-    def get_variables(self, host, vault_password=None):
+    def get_variables(self, host, vault_passwords=None):
         if host in self.hosts:
             return self.hosts[host]        
         else:

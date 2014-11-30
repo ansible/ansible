@@ -107,13 +107,13 @@ def main(args):
                          "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
                          "mutually exclusive")
 
-    if (options.ask_vault_pass and options.vault_password_file):
+    if (options.ask_vault_pass and options.vault_password_files):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
     sshpass = None
     sudopass = None
     su_pass = None
-    vault_pass = None
+    vault_passwords = []
 
     options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
 
@@ -127,18 +127,21 @@ def main(args):
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
         (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
+        if vault_pass:
+            vault_passwords.append(vault_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
 
     # read vault_pass from a file
-    if not options.ask_vault_pass and options.vault_password_file:
-        vault_pass = utils.read_vault_file(options.vault_password_file)
+    if not options.ask_vault_pass and options.vault_password_files:
+        vault_passwords.extend(
+            utils.read_vault_file(f) for f in options.vault_password_files)
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_passwords=vault_passwords))
         elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
@@ -157,7 +160,7 @@ def main(args):
         if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
-    inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
+    inventory = ansible.inventory.Inventory(options.inventory, vault_passwords=vault_passwords)
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0:
         raise errors.AnsibleError("provided hosts list is empty")
@@ -197,7 +200,7 @@ def main(args):
             su=options.su,
             su_pass=su_pass,
             su_user=options.su_user,
-            vault_password=vault_pass,
+            vault_passwords=vault_passwords,
             force_handlers=options.force_handlers
         )
 
@@ -213,7 +216,7 @@ def main(args):
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir,
-                                              vault_password=pb.vault_password)
+                                             vault_passwords=pb.vault_passwords)
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
 

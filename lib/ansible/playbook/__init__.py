@@ -79,7 +79,7 @@ class PlayBook(object):
         su               = False,
         su_user          = False,
         su_pass          = False,
-        vault_password   = False,
+        vault_passwords  = False,
         force_handlers   = False,
     ):
 
@@ -150,7 +150,7 @@ class PlayBook(object):
         self.su               = su
         self.su_user          = su_user
         self.su_pass          = su_pass
-        self.vault_password   = vault_password
+        self.vault_passwords  = vault_passwords
         self.force_handlers   = force_handlers
 
         self.callbacks.playbook = self
@@ -257,7 +257,7 @@ class PlayBook(object):
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data = utils.parse_yaml_from_file(path, vault_password=self.vault_password)
+        playbook_data = utils.parse_yaml_from_file(path, vault_passwords=self.vault_passwords)
         accumulated_plays = []
         play_basedirs = []
 
@@ -310,7 +310,7 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
-            play = Play(self, play_ds, play_basedir, vault_password=self.vault_password)
+            play = Play(self, play_ds, play_basedir, vault_passwords=self.vault_passwords)
             assert play is not None
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
@@ -427,7 +427,7 @@ class PlayBook(object):
             su=task.su,
             su_user=task.su_user,
             su_pass=task.su_pass,
-            vault_pass = self.vault_password,
+            vault_pass=self.vault_passwords,
             run_hosts=hosts,
             no_log=task.no_log,
             run_once=task.run_once,
@@ -605,7 +605,7 @@ class PlayBook(object):
             su=play.su,
             su_user=play.su_user,
             su_pass=self.su_pass,
-            vault_pass=self.vault_password,
+            vault_pass=self.vault_passwords,
             transport=play.transport,
             is_playbook=True,
             module_vars=play.vars,
@@ -675,7 +675,7 @@ class PlayBook(object):
 
         # now with that data, handle contentional variable file imports!
         all_hosts = self._trim_unavailable_hosts(play._play_hosts)
-        play.update_vars_files(all_hosts, vault_password=self.vault_password)
+        play.update_vars_files(all_hosts, vault_passwords=self.vault_passwords)
         hosts_count = len(all_hosts)
 
         if play.serial.endswith("%"):
