@@ -91,16 +91,16 @@ def _executor_hook(job_queue, result_queue, new_stdin):
 class HostVars(dict):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, vars_cache, inventory, vault_password=None):
+    def __init__(self, vars_cache, inventory, vault_passwords=[]):
         self.vars_cache = vars_cache
         self.inventory = inventory
         self.lookup = {}
         self.update(vars_cache)
-        self.vault_password = vault_password
+        self.vault_passwords = vault_passwords
 
     def __getitem__(self, host):
         if host not in self.lookup:
-            result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
+            result = self.inventory.get_variables(host, vault_passwords=self.vault_passwords).copy()
             result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = template.template('.', result, self.vars_cache)
         return self.lookup[host]
@@ -401,7 +401,7 @@ class Runner(object):
         else:
             # look up the variables for the host directly from inventory
             try:
-                host_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+                host_vars = self.inventory.get_variables(host, vault_passwords=self.vault_pass)
                 if 'ansible_ssh_user' in host_vars:
                     thisuser = host_vars['ansible_ssh_user']
             except Exception, e:
@@ -611,7 +611,7 @@ class Runner(object):
         return utils.merge_hash(combined_cache, self.vars_cache)
 
     def get_inject_vars(self, host):
-        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        host_variables = self.inventory.get_variables(host, vault_passwords=self.vault_pass)
         combined_cache = self.get_combined_cache()
 
         # use combined_cache and host_variables to template the module_vars
@@ -668,7 +668,7 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_passwords=self.vault_pass)
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)

@@ -116,6 +116,20 @@ class TestVaultLib(unittest.TestCase):
         assert enc_data != "foobar", "encryption failed"
         assert dec_data == "foobar", "decryption failed"           
 
+    def test_decrypt_multiple_passwords(self):
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
+            raise SkipTest
+        v = VaultLib('ansible')
+        v.cipher_name = 'AES256'
+        enc_data = v.encrypt("foobar")
+        assert enc_data != "foobar", "encryption failed"
+        print(enc_data)
+
+        v = VaultLib(['dummy_pass', 'ansible'])
+        v.cipher_name = 'AES256'
+        dec_data = v.decrypt(enc_data)
+        assert dec_data == "foobar", "decryption failed"
+
     def test_encrypt_encrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
