@@ -256,7 +256,7 @@ def privileges_get(cursor, user,host):
     for grant in grants:
         res = re.match("GRANT (.+) ON (.+) TO '.+'@'.+'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
         if res is None:
-            module.fail_json(msg="unable to parse the MySQL grant string")
+            raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
         privileges = [ pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
@@ -485,6 +485,8 @@ def main():
                 changed = user_mod(cursor, user, host, password, priv, append_privs)
             except SQLParseError, e:
                 module.fail_json(msg=str(e))
+            except InvalidPrivsError, e:
+                module.mail_json(msg=str(e))
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
