@@ -54,6 +54,11 @@ options:
 ''' be specified by subnet ID or by a CIDR such as '10.0.0.0/24'.
     required: true
     aliases: []
+  propagating_vgw_ids:
+    description:
+      - Enables route propagation from virtual gateways specified by ID.
+    required: false
+    aliases: []
   wait:
     description:
       - wait for the VPC to be in state 'available' before returning
@@ -329,6 +334,24 @@ def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
     return {'changed': changed}
 
 
+def ensure_propagation(vpc_conn, route_table_id, propagating_vgw_ids,
+                       check_mode):
+
+    # NOTE: As of boto==2.15.0, it is not yet possible to query the existing
+    # propagating gateways. However, EC2 does support this as evidenced by
+    # the describe-route-tables tool. For now, just enable the given VGWs
+    # and do not disable any others.
+    changed = False
+    for vgw_id in propagating_vgw_ids:
+        if vgw_id not in original_association_ids:
+            changed = True
+            vpc_conn.enable_vgw_route_propagation(route_table_id,
+                                                  vgw_id,
+                                                  test_run=check_mode)
+
+    return {'changed': changed}
+
+
 def ensure_route_table_absent(vpc_conn, vpc_id, route_table_id, resource_tags,
                               check_mode):
     if route_table_id:
@@ -347,7 +370,8 @@ def ensure_route_table_absent(vpc_conn, vpc_id, route_table_id, resource_tags,
 
 
 def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
-                               routes, subnets, check_mode):
+                               routes, subnets, propagating_vgw_ids,
+                               check_mode):
     changed = False
     tags_valid = False
     if route_table_id:
@@ -370,6 +394,12 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
                 'Unable to create route table {0}, error: {1}'
                 .format(route_table_id or resource_tags, e)
             )
+
+    if propagating_vgw_ids is not None:
+        result = ensure_propagation(vpc_conn, route_table_id,
+                                    propagating_vgw_ids,
+                                    check_mode=check_mode)
+        changed = changed or result['changed']
 
     if not tags_valid and resource_tags is not None:
         result = ensure_tags(vpc_conn, route_table.id, resource_tags,
@@ -422,6 +452,7 @@ def main():
     argument_spec.update({
         'vpc_id': {'required': True},
         'route_table_id': {'required': False},
+        'propagating_vgw_ids': {'type': 'list', 'required': False},
         'resource_tags': {'type': 'dict', 'required': False},
         'routes': {'type': 'list', 'required': False},
         'subnets': {'type': 'list', 'required': False},
@@ -450,6 +481,7 @@ def main():
     vpc_id = module.params.get('vpc_id')
     route_table_id = module.params.get('route_table_id')
     resource_tags = module.params.get('resource_tags')
+    propagating_vgw_ids = module.params.get('propagating_vgw_ids', [])
 
     routes = module.params.get('routes')
     for route_spec in routes:
@@ -462,7 +494,7 @@ def main():
         if state == 'present':
             result = ensure_route_table_present(
                 vpc_conn, vpc_id, route_table_id, resource_tags,
-                routes, subnets, module.check_mode
+                routes, subnets, propagating_vgw_ids, module.check_mode
             )
         elif state == 'absent':
             result = ensure_route_table_absent(
