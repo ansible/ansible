@@ -171,11 +171,6 @@ def get_resource_tags(vpc_conn, resource_id):
             vpc_conn.get_all_tags(filters={'resource-id': resource_id})}
 
 
-def tags_match(match_tags, candidate_tags):
-    return all((k in candidate_tags and candidate_tags[k] == v
-                for k, v in match_tags.iteritems()))
-
-
 def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
@@ -204,11 +199,18 @@ def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
 
 
 def get_route_table_by_tags(vpc_conn, vpc_id, tags):
-    route_tables = vpc_conn.get_all_route_tables(filters={'vpc_id': vpc_id})
-    for route_table in route_tables:
-        this_tags = get_resource_tags(vpc_conn, route_table.id)
-        if tags_match(tags, this_tags):
-            return route_table
+    filters = {'vpc_id': vpc_id}
+    filters.update({'tag:{}'.format(t): v
+                   for t, v in tags.iteritems()})
+    route_tables = vpc_conn.get_all_route_tables(filters=filters)
+
+    if not route_tables:
+        return None
+    elif len(route_tables) == 1:
+        return route_tables[0]
+
+    raise RouteTableException(
+        'Found more than one route table based on the supplied tags, aborting')
 
 
 def route_spec_matches_route(route_spec, route):
