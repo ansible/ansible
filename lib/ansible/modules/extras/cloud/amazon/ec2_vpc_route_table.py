@@ -171,7 +171,7 @@ def get_resource_tags(vpc_conn, resource_id):
             vpc_conn.get_all_tags(filters={'resource-id': resource_id})}
 
 
-def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
+def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
         if tags == cur_tags:
@@ -179,11 +179,11 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
 
         to_delete = {k: cur_tags[k] for k in cur_tags if k not in tags}
         if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=dry_run)
+            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
 
         to_add = {k: tags[k] for k in tags if k not in cur_tags}
         if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=dry_run)
+            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
 
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
@@ -252,17 +252,17 @@ def ensure_routes(vpc_conn, route_table, route_specs, check_mode):
                         if r.gateway_id != 'local']
 
     changed = routes_to_delete or route_specs_to_create
-    if check_mode and changed:
-        return {'changed': True}
-    elif changed:
+    if changed:
         for route_spec in route_specs_to_create:
-            vpc_conn.create_route(route_table.id, **route_spec)
+            vpc_conn.create_route(route_table.id,
+                                  dry_run=check_mode,
+                                  **route_spec)
 
         for route in routes_to_delete:
-            vpc_conn.delete_route(route_table.id, route.destination_cidr_block)
-        return {'changed': True}
-    else:
-        return {'changed': False}
+            vpc_conn.delete_route(route_table.id,
+                                  route.destination_cidr_block,
+                                  dry_run=check_mode)
+    return {'changed': changed}
 
 
 def get_subnet_by_cidr(vpc_conn, vpc_id, cidr):
@@ -323,10 +323,8 @@ def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
                  if a_id not in new_association_ids]
 
     for a_id in to_delete:
-        if check_mode:
-            return {'changed': True}
         changed = True
-        vpc_conn.disassociate_route_table(a_id)
+        vpc_conn.disassociate_route_table(a_id, dry_run=check_mode)
 
     return {'changed': changed}
 
@@ -344,10 +342,7 @@ def ensure_route_table_absent(vpc_conn, vpc_id, route_table_id, resource_tags,
     if route_table is None:
         return {'changed': False}
 
-    if check_mode:
-        return {'changed': True}
-
-    vpc_conn.delete_route_table(route_table.id)
+    vpc_conn.delete_route_table(route_table.id, dry_run=check_mode)
     return {'changed': True}
 
 
@@ -378,7 +373,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
 
     if not tags_valid and resource_tags is not None:
         result = ensure_tags(vpc_conn, route_table.id, resource_tags,
-                             add_only=True, dry_run=check_mode)
+                             add_only=True, check_mode=check_mode)
         changed = changed or result['changed']
 
     if routes is not None:
