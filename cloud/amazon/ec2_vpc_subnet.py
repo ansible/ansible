@@ -123,19 +123,19 @@ except ImportError:
     sys.exit(1)
 
 
-class VPCSubnetException(Exception):
+class AnsibleVPCSubnetException(Exception):
     pass
 
 
-class VPCSubnetCreationException(VPCSubnetException):
+class AnsibleVPCSubnetCreationException(AnsibleVPCSubnetException):
     pass
 
 
-class VPCSubnetDeletionException(VPCSubnetException):
+class AnsibleVPCSubnetDeletionException(AnsibleVPCSubnetException):
     pass
 
 
-class TagCreationException(VPCSubnetException):
+class AnsibleTagCreationException(AnsibleVPCSubnetException):
     pass
 
 
@@ -154,7 +154,7 @@ def create_subnet(vpc_conn, vpc_id, cidr, az):
         while not subnet_exists(vpc_conn, new_subnet.id):
             time.sleep(0.1)
     except EC2ResponseError as e:
-        raise VPCSubnetCreationException(
+        raise AnsibleVPCSubnetCreationException(
             'Unable to create subnet {0}, error: {1}'.format(cidr, e))
     return new_subnet
 
@@ -181,8 +181,8 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
-        raise TagCreationException('Unable to update tags for {0}, error: {1}'
-                                   .format(resource_id, e))
+        raise AnsibleTagCreationException(
+            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
 
 
 def get_matching_subnet(vpc_conn, vpc_id, cidr):
@@ -231,7 +231,7 @@ def ensure_subnet_absent(vpc_conn, vpc_id, cidr, check_mode):
         vpc_conn.delete_subnet(subnet.id)
         return {'changed': True}
     except EC2ResponseError as e:
-        raise VPCSubnetDeletionException(
+        raise AnsibleVPCSubnetDeletionException(
             'Unable to delete subnet {0}, error: {1}'
             .format(subnet.cidr_block, e))
 
@@ -276,7 +276,7 @@ def main():
         elif state == 'absent':
             result = ensure_subnet_absent(vpc_conn, vpc_id, cidr,
                                           check_mode=module.check_mode)
-    except VPCSubnetException as e:
+    except AnsibleVPCSubnetException as e:
         module.fail_json(msg=str(e))
 
     module.exit_json(**result)
