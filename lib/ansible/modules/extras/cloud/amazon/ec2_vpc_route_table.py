@@ -200,8 +200,8 @@ def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
 
 def get_route_table_by_tags(vpc_conn, vpc_id, tags):
     filters = {'vpc_id': vpc_id}
-    filters.update({'tag:{}'.format(t): v
-                   for t, v in tags.iteritems()})
+    filters.update(dict((('tag:{0}'.format(t), v)
+                         for t, v in tags.iteritems())))
     route_tables = vpc_conn.get_all_route_tables(filters=filters)
 
     if not route_tables:
