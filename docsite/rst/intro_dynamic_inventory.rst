@@ -189,7 +189,9 @@ To see the complete list of variables available for an instance, run the script 
     ./ec2.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
-explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter.
+explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter::
+
+    # ./ec2.py --refresh-cache
 
 .. _other_inventory_scripts:
 
