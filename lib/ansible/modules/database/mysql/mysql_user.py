@@ -184,7 +184,7 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
     changed = False
     grant_option = False
 
-    # Handle passwords.
+    # Handle passwords
     if password is not None:
         cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
         current_pass_hash = cursor.fetchone()
@@ -194,7 +194,7 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
             cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
             changed = True
 
-    # Handle privileges.
+    # Handle privileges
     if new_priv is not None:
         curr_priv = privileges_get(cursor, user,host)
 
@@ -297,6 +297,8 @@ def privileges_unpack(priv):
     return output
 
 def privileges_revoke(cursor, user,host,db_table,grant_option):
+    # Escape '%' since mysql db.execute() uses a format string
+    db_table = db_table.replace('%', '%%')
     if grant_option:
         query = ["REVOKE GRANT OPTION ON %s" % mysql_quote_identifier(db_table, 'table')]
         query.append("FROM %s@%s")
@@ -308,7 +310,9 @@ def privileges_revoke(cursor, user,host,db_table,grant_option):
     cursor.execute(query, (user, host))
 
 def privileges_grant(cursor, user,host,db_table,priv):
-
+    # Escape '%' since mysql db.execute uses a format string and the
+    # specification of db and table often use a % (SQL wildcard)
+    db_table = db_table.replace('%', '%%')
     priv_string = ",".join(filter(lambda x: x != 'GRANT', priv))
     query = ["GRANT %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
     query.append("TO %s@%s")
