@@ -96,7 +96,7 @@ except ImportError:
         raise
 
 
-class IGWExcepton(Exception):
+class AnsibleIGWException(Exception):
     pass
 
 
@@ -115,8 +115,8 @@ def ensure_igw_absent(vpc_conn, vpc_id, check_mode):
             vpc_conn.detach_internet_gateway(igw.id, vpc_id)
             vpc_conn.delete_internet_gateway(igw.id)
         except EC2ResponseError as e:
-            raise IGWExcepton('Unable to delete Internet Gateway, error: {0}'
-                              .format(e))
+            raise AnsibleIGWException(
+                'Unable to delete Internet Gateway, error: {0}'.format(e))
 
     return {'changed': True}
 
@@ -126,7 +126,7 @@ def ensure_igw_present(vpc_conn, vpc_id, check_mode):
         filters={'attachment.vpc-id': vpc_id})
 
     if len(igws) > 1:
-        raise IGWExcepton(
+        raise AnsibleIGWException(
             'EC2 returned more than one Internet Gateway for VPC {0}, aborting'
             .format(vpc_id))
 
@@ -141,8 +141,8 @@ def ensure_igw_present(vpc_conn, vpc_id, check_mode):
             vpc_conn.attach_internet_gateway(igw.id, vpc_id)
             return {'changed': True, 'gateway_id': igw.id}
         except EC2ResponseError as e:
-            raise IGWExcepton('Unable to create Internet Gateway, error: {0}'
-                              .format(e))
+            raise AnsibleIGWException(
+                'Unable to create Internet Gateway, error: {0}'.format(e))
 
 
 def main():
@@ -181,7 +181,7 @@ def main():
         elif state == 'absent':
             result = ensure_igw_absent(vpc_conn, vpc_id,
                                        check_mode=module.check_mode)
-    except IGWExcepton as e:
+    except AnsibleIGWException as e:
         module.fail_json(msg=str(e))
 
     module.exit_json(**result)
