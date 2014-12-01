@@ -242,7 +242,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update({
         'vpc_id': {'required': True},
-        'resource_tags': {'type': 'dict', 'required': True},
+        'resource_tags': {'type': 'dict', 'required': False},
         'cidr': {'required': True},
         'az': {},
         'state': {'choices': ['present', 'absent'], 'default': 'present'},
