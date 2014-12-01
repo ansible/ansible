@@ -166,7 +166,7 @@ def get_resource_tags(vpc_conn, resource_id):
             vpc_conn.get_all_tags(filters={'resource-id': resource_id})}
 
 
-def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
+def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
         if cur_tags == tags:
@@ -174,11 +174,11 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
 
         to_delete = {k: cur_tags[k] for k in cur_tags if k not in tags}
         if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=dry_run)
+            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
 
         to_add = {k: tags[k] for k in tags if k not in cur_tags}
         if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=dry_run)
+            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
 
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
@@ -204,7 +204,7 @@ def ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags, check_mode):
 
     if tags is not None:
         tag_result = ensure_tags(vpc_conn, subnet.id, tags, add_only=True,
-                                 dry_run=check_mode)
+                                 check_mode=check_mode)
         tags = tag_result['tags']
         changed = changed or tag_result['changed']
     else:
@@ -226,11 +226,9 @@ def ensure_subnet_absent(vpc_conn, vpc_id, cidr, check_mode):
     subnet = get_matching_subnet(vpc_conn, vpc_id, cidr)
     if subnet is None:
         return {'changed': False}
-    elif check_mode:
-        return {'changed': True}
 
     try:
-        vpc_conn.delete_subnet(subnet.id)
+        vpc_conn.delete_subnet(subnet.id, dry_run=check_mode)
         return {'changed': True}
     except EC2ResponseError as e:
         raise AnsibleVPCSubnetDeletionException(
