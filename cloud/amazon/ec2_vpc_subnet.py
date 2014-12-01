@@ -111,16 +111,18 @@ EXAMPLES = '''
 '''
 
 
-import sys
+import sys  # noqa
 import time
 
 try:
     import boto.ec2
     import boto.vpc
     from boto.exception import EC2ResponseError
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+    if __name__ != '__main__':
+        raise
 
 
 class AnsibleVPCSubnetException(Exception):
@@ -249,6 +251,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+    if not HAS_BOTO:
+        module.fail_json(msg='boto is required for this module')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
     if not region:
