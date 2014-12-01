@@ -20,7 +20,6 @@ module: cloudformation
 short_description: create a AWS CloudFormation stack
 description:
      - Launches an AWS CloudFormation stack and waits for it complete.
-version_added: "1.1"
 options:
   stack_name:
     description:
@@ -98,17 +97,17 @@ EXAMPLES = '''
 tasks:
 - name: launch ansible cloudformation example
   cloudformation:
-    stack_name="ansible-cloudformation" state=present
-    region=us-east-1 disable_rollback=true
-    template=files/cloudformation-example.json
-  args:
+    stack_name: "ansible-cloudformation" 
+    state: "present"
+    region: "us-east-1 disable_rollback=true"
+    template: "files/cloudformation-example.json"
     template_parameters:
-      KeyName: jmartin
-      DiskType: ephemeral
-      InstanceType: m1.small
+      KeyName: "jmartin"
+      DiskType: "ephemeral"
+      InstanceType: "m1.small"
       ClusterSize: 3
     tags:
-      Stack: ansible-cloudformation
+      Stack: "ansible-cloudformation"
 '''
 
 import json

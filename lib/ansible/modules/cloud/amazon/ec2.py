@@ -17,10 +17,9 @@
 DOCUMENTATION = '''
 ---
 module: ec2
-short_description: create, terminate, start or stop an instance in ec2, return instanceid
+short_description: create, terminate, start or stop an instance in ec2
 description:
-    - Creates or terminates ec2 instances. When created optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
-version_added: "0.9"
+    - Creates or terminates ec2 instances.  
 options:
   key_name:
     description:
@@ -28,12 +27,6 @@ options:
     required: false
     default: null
     aliases: ['keypair']
-  id:
-    description:
-      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on. For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
-    required: false
-    default: null
-    aliases: []
   group:
     description:
       - security group (or list of groups) to use with the instance
@@ -76,7 +69,7 @@ options:
     aliases: []
   image:
     description:
-       - I(emi) (or I(ami)) to use for the instance
+       - I(ami) ID to use for the instance
     required: true
     default: null
     aliases: []
@@ -94,7 +87,7 @@ options:
     aliases: []
   wait:
     description:
-      - wait for the instance to be in state 'running' before returning
+      - wait for the instance to be 'running' before returning.  Does not wait for SSH, see 'wait_for' example for details.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -226,54 +219,55 @@ extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-# Note: None of these examples set aws_access_key, aws_secret_key, or region.
-# It is assumed that their matching environment variables are set.
+# Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Basic provisioning example
-- local_action:
-    module: ec2
+- ec2:
     key_name: mykey
-    instance_type: c1.medium
-    image: emi-40603AD1
+    instance_type: t2.micro
+    image: ami-123456
     wait: yes
     group: webserver
     count: 3
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
 
 # Advanced example with tagging and CloudWatch
-- local_action:
-    module: ec2
+- ec2:
     key_name: mykey
     group: databases
-    instance_type: m1.large
-    image: ami-6e649707
+    instance_type: t2.micro
+    image: ami-123456
     wait: yes
     wait_timeout: 500
     count: 5
     instance_tags: 
        db: postgres
     monitoring: yes
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
 
 # Single instance with additional IOPS volume from snapshot and volume delete on termination
-local_action:
-    module: ec2
+- ec2:
     key_name: mykey
     group: webserver
-    instance_type: m1.large
-    image: ami-6e649707
+    instance_type: c3.medium
+    image: ami-123456
     wait: yes
     wait_timeout: 500
     volumes:
-    - device_name: /dev/sdb
-      snapshot: snap-abcdef12
-      device_type: io1
-      iops: 1000
-      volume_size: 100
-      delete_on_termination: true
+      - device_name: /dev/sdb
+        snapshot: snap-abcdef12
+        device_type: io1
+        iops: 1000
+        volume_size: 100
+        delete_on_termination: true
     monitoring: yes
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
 
 # Multiple groups example
-local_action:
-    module: ec2
+- ec2:
     key_name: mykey
     group: ['databases', 'internal-services', 'sshable', 'and-so-forth']
     instance_type: m1.large
@@ -284,10 +278,11 @@ local_action:
     instance_tags: 
         db: postgres
     monitoring: yes
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
 
 # Multiple instances with additional volume from snapshot
-local_action:
-    module: ec2
+- ec2:
     key_name: mykey
     group: webserver
     instance_type: m1.large
@@ -300,21 +295,11 @@ local_action:
       snapshot: snap-abcdef12
       volume_size: 10
     monitoring: yes
-
-# VPC example
-- local_action:
-    module: ec2
-    key_name: mykey
-    group_id: sg-1dc53f72
-    instance_type: m1.small
-    image: ami-6e649707
-    wait: yes
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
 
 # Spot instance example
-- local_action:
-    module: ec2
+- ec2:
     spot_price: 0.24
     spot_wait_timeout: 600
     keypair: mykey
@@ -328,7 +313,6 @@ local_action:
 # Launch instances, runs some tasks
 # and then terminate them
 
-
 - name: Create a sandbox instance
   hosts: localhost
   gather_facts: False
@@ -340,13 +324,21 @@ local_action:
     region: us-east-1
   tasks:
     - name: Launch instance
-      local_action: ec2 key_name={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image }} wait=true region={{ region }}
+      ec2: 
+         key_name: "{{ keypair }}"
+         group: "{{ security_group }}"
+         instance_type: "{{ instance_type }}"
+         image: "{{ image }}"
+         wait: true
+         region: "{{ region }}"
+         vpc_subnet_id: subnet-29e63245
+         assign_public_ip: yes
       register: ec2
     - name: Add new instance to host group
-      local_action: add_host hostname={{ item.public_ip }} groupname=launched
+      add_host: hostname={{ item.public_ip }} groupname=launched
       with_items: ec2.instances
     - name: Wait for SSH to come up
-      local_action: wait_for host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      wait_for: host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
       with_items: ec2.instances
 
 - name: Configure instance(s)
@@ -362,8 +354,7 @@ local_action:
   connection: local
   tasks:
     - name: Terminate instances that were previously launched
-      local_action:
-        module: ec2
+      ec2:
         state: 'absent'
         instance_ids: '{{ ec2.instance_ids }}'
 
@@ -382,12 +373,13 @@ local_action:
     region: us-east-1
   tasks:
     - name: Start the sandbox instances
-      local_action:
-        module: ec2
+      ec2:
         instance_ids: '{{ instance_ids }}'
         region: '{{ region }}'
         state: running
         wait: True
+        vpc_subnet_id: subnet-29e63245
+        assign_public_ip: yes
   role:
     - do_neat_stuff
     - do_more_neat_stuff
@@ -404,38 +396,40 @@ local_action:
     region: us-east-1
   tasks:
     - name: Stop the sandbox instances
-      local_action:
-      module: ec2
-      instance_ids: '{{ instance_ids }}'
-      region: '{{ region }}'
-      state: stopped
-      wait: True
+      ec2:
+        instance_ids: '{{ instance_ids }}'
+        region: '{{ region }}'
+        state: stopped
+        wait: True
+        vpc_subnet_id: subnet-29e63245
+        assign_public_ip: yes
 
 #
 # Enforce that 5 instances with a tag "foo" are running
+# (Highly recommended!)
 #
 
-- local_action:
-    module: ec2
+- ec2:
     key_name: mykey
     instance_type: c1.medium
-    image: emi-40603AD1
+    image: ami-40603AD1
     wait: yes
     group: webserver
     instance_tags:
         foo: bar
     exact_count: 5
     count_tag: foo
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
 
 #
 # Enforce that 5 running instances named "database" with a "dbtype" of "postgres"
 #
 
-- local_action:
-    module: ec2
+- ec2:
     key_name: mykey
     instance_type: c1.medium
-    image: emi-40603AD1
+    image: ami-40603AD1
     wait: yes
     group: webserver
     instance_tags: 
@@ -445,6 +439,8 @@ local_action:
     count_tag: 
         Name: database
         dbtype: postgres
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
 
 #
 # count_tag complex argument examples
