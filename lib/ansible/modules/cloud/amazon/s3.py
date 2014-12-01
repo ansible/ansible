@@ -68,7 +68,7 @@ options:
     aliases: []
   s3_url:
     description:
-        - "S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined. Ansible tries to guess if fakes3 (https://github.com/jubos/fake-s3) or Eucalyptus Walrus (https://github.com/eucalyptus/eucalyptus/wiki/Walrus) is used and configure connection accordingly. Current heuristic is: everything with scheme fakes3:// is fakes3, everything else not ending with amazonaws.com is Walrus."
+        - "S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS"
     default: null
     aliases: [ S3_URL ]
   aws_secret_key:
