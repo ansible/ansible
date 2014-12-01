@@ -808,9 +808,9 @@ class LinuxHardware(Hardware):
             d['sectors'] = get_file_content(sysdir + "/size")
             if not d['sectors']:
                 d['sectors'] = 0
-            d['sectorsize'] = get_file_content(sysdir + "/queue/physical_block_size")
+            d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size",512)
             if not d['sectorsize']:
-                d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size",512)
+                d['sectorsize'] = get_file_content(sysdir + "/queue/physical_block_size")
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
