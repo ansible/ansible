@@ -353,6 +353,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                 netloc = netloc.split('@', 1)[1]
             if ':' in netloc:
                 hostname, port = netloc.split(':', 1)
+                port = int(port)
             else:
                 hostname = netloc
                 port = 443
