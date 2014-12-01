@@ -156,11 +156,11 @@ except ImportError:
     sys.exit(1)
 
 
-class RouteTableException(Exception):
+class AnsibleRouteTableException(Exception):
     pass
 
 
-class TagCreationException(RouteTableException):
+class AnsibleTagCreationException(AnsibleRouteTableException):
     pass
 
 
@@ -191,8 +191,8 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
-        raise TagCreationException('Unable to update tags for {0}, error: {1}'
-                                   .format(resource_id, e))
+        raise AnsibleTagCreationException(
+            'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
 
 
 def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
@@ -265,7 +265,7 @@ def get_subnet_by_cidr(vpc_conn, vpc_id, cidr):
     subnets = vpc_conn.get_all_subnets(
         filters={'cidr': cidr, 'vpc_id': vpc_id})
     if len(subnets) != 1:
-        raise RouteTableException(
+        raise AnsibleRouteTableException(
             'Subnet with CIDR {0} has {1} matches'.format(cidr, len(subnets))
         )
     return subnets[0]
@@ -274,8 +274,9 @@ def get_subnet_by_cidr(vpc_conn, vpc_id, cidr):
 def get_subnet_by_id(vpc_conn, vpc_id, subnet_id):
     subnets = vpc_conn.get_all_subnets(filters={'subnet-id': subnet_id})
     if len(subnets) != 1:
-        raise RouteTableException(
-            'Subnet with ID {0} has {1} matches'.format(subnet_id, len(subnets))
+        raise AnsibleRouteTableException(
+            'Subnet with ID {0} has {1} matches'.format(
+                subnet_id, len(subnets))
         )
     return subnets[0]
 
@@ -333,7 +334,7 @@ def ensure_route_table_absent(vpc_conn, vpc_id, route_table_id, resource_tags,
     elif resource_tags:
         route_table = get_route_table_by_tags(vpc_conn, vpc_id, resource_tags)
     else:
-        raise RouteTableException(
+        raise AnsibleRouteTableException(
             'must provide route_table_id or resource_tags')
 
     if route_table is None:
@@ -356,7 +357,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
         route_table = get_route_table_by_tags(vpc_conn, vpc_id, resource_tags)
         tags_valid = route_table is not None
     else:
-        raise RouteTableException(
+        raise AnsibleRouteTableException(
             'must provide route_table_id or resource_tags')
 
     if check_mode and route_table is None:
@@ -366,7 +367,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
         try:
             route_table = vpc_conn.create_route_table(vpc_id)
         except EC2ResponseError as e:
-            raise RouteTableException(
+            raise AnsibleRouteTableException(
                 'Unable to create route table {0}, error: {1}'
                 .format(route_table_id or resource_tags, e)
             )
@@ -381,7 +382,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
             result = ensure_routes(vpc_conn, route_table, routes, check_mode)
             changed = changed or result['changed']
         except EC2ResponseError as e:
-            raise RouteTableException(
+            raise AnsibleRouteTableException(
                 'Unable to ensure routes for route table {0}, error: {1}'
                 .format(route_table, e)
             )
@@ -396,7 +397,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
                     subnet = get_subnet_by_id(vpc_conn, vpc_id, subnet_name)
                 associated_subnets.append(subnet)
         except EC2ResponseError as e:
-            raise RouteTableException(
+            raise AnsibleRouteTableException(
                 'Unable to find subnets for route table {0}, error: {1}'
                 .format(route_table, e)
             )
@@ -406,7 +407,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
                 vpc_conn, vpc_id, route_table, associated_subnets, check_mode)
             changed = changed or result['changed']
         except EC2ResponseError as e:
-            raise RouteTableException(
+            raise AnsibleRouteTableException(
                 'Unable to associate subnets for route table {0}, error: {1}'
                 .format(route_table, e)
             )
@@ -467,7 +468,7 @@ def main():
                 vpc_conn, vpc_id, route_table_id, resource_tags,
                 module.check_mode
             )
-    except RouteTableException as e:
+    except AnsibleRouteTableException as e:
         module.fail_json(msg=str(e))
 
     module.exit_json(**result)
