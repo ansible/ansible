@@ -50,8 +50,8 @@ options:
     aliases: []
   subnets:
     description:
-      - An array of subnets to add to this route table. Subnets may either be'''
-''' specified by subnet ID or by a CIDR such as '10.0.0.0/24'.
+      - An array of subnets to add to this route table. Subnets may either'''
+''' be specified by subnet ID or by a CIDR such as '10.0.0.0/24'.
     required: true
     aliases: []
   wait:
