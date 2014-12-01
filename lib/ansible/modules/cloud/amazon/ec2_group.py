@@ -70,8 +70,7 @@ notes:
 
 EXAMPLES = '''
 - name: example ec2 group
-  local_action:
-    module: ec2_group
+  ec2_group:
     name: example
     description: an example EC2 group
     vpc_id: 12345

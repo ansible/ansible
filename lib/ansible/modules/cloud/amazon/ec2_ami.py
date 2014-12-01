@@ -18,9 +18,9 @@ DOCUMENTATION = '''
 ---
 module: ec2_ami
 version_added: "1.3"
-short_description: create or destroy an image in ec2, return imageid
+short_description: create or destroy an image in ec2
 description:
-     - Creates or deletes ec2 images. This module has a dependency on python-boto >= 2.5
+     - Creates or deletes ec2 images. 
 options:
   instance_id:
     description:
@@ -89,13 +89,10 @@ extends_documentation_fragment: aws
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
-# 
-# See http://alestic.com/2011/06/ec2-ami-security for more information about ensuring the security of your AMI.
 
 EXAMPLES = '''
 # Basic AMI Creation
-- local_action:
-    module: ec2_ami
+- ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     instance_id: i-xxxxxx
@@ -104,8 +101,7 @@ EXAMPLES = '''
   register: instance
 
 # Basic AMI Creation, without waiting
-- local_action:
-    module: ec2_ami
+- ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     region: xxxxxx
@@ -115,22 +111,20 @@ EXAMPLES = '''
   register: instance
 
 # Deregister/Delete AMI
-- local_action:
-    module: ec2_ami
+- ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     region: xxxxxx
-    image_id: ${instance.image_id}
+    image_id: "{{ instance.image_id }}"
     delete_snapshot: True
     state: absent
 
 # Deregister AMI
-- local_action:
-    module: ec2_ami
+- ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     region: xxxxxx
-    image_id: ${instance.image_id}
+    image_id: "{{ instance.image_id }}"
     delete_snapshot: False
     state: absent
 

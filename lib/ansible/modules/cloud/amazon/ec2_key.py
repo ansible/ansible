@@ -56,15 +56,13 @@ EXAMPLES = '''
 # Creates a new ec2 key pair named `example` if not present, returns generated
 # private key
 - name: example ec2 key
-  local_action:
-    module: ec2_key
+  ec2_key:
     name: example
 
 # Creates a new ec2 key pair named `example` if not present using provided key
-# material
+# material.  This could use the 'file' lookup plugin to pull this off disk.
 - name: example2 ec2 key
-  local_action:
-    module: ec2_key
+  ec2_key:
     name: example2
     key_material: 'ssh-rsa AAAAxyz...== me@example.com'
     state: present
@@ -72,16 +70,14 @@ EXAMPLES = '''
 # Creates a new ec2 key pair named `example` if not present using provided key
 # material
 - name: example3 ec2 key
-  local_action:
-    module: ec2_key
+  ec2_key:
     name: example3
     key_material: "{{ item }}"
   with_file: /path/to/public_key.id_rsa.pub
 
 # Removes ec2 key pair by name
 - name: remove example key
-  local_action:
-    module: ec2_key
+  ec2_key:
     name: example
     state: absent
 '''

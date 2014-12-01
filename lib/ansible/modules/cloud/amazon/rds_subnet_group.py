@@ -71,8 +71,7 @@ author: Scott Anderson
 
 EXAMPLES = '''
 # Add or change a subnet group
-- local_action:
-    module: rds_subnet_group
+- rds_subnet_group
     state: present
     name: norwegian-blue
     description: My Fancy Ex Parrot Subnet Group
@@ -81,9 +80,9 @@ EXAMPLES = '''
       - subnet-bbbbbbbb
 
 # Remove a parameter group
-- rds_param_group: >
-      state=absent
-      name=norwegian-blue
+- rds_param_group:
+    state: absent
+    name: norwegian-blue
 '''
 
 import sys

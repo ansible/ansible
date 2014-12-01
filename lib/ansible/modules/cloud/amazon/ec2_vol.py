@@ -105,36 +105,31 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 # Simple attachment action
-- local_action: 
-    module: ec2_vol 
+- ec2_vol: 
     instance: XXXXXX 
     volume_size: 5 
     device_name: sdd
 
 # Example using custom iops params   
-- local_action: 
-    module: ec2_vol 
+- ec2_vol:
     instance: XXXXXX 
     volume_size: 5 
     iops: 200
     device_name: sdd
 
 # Example using snapshot id
-- local_action:
-    module: ec2_vol
+- ec2_vol:
     instance: XXXXXX
     snapshot: "{{ snapshot }}"
 
 # Playbook example combined with instance launch 
-- local_action: 
-    module: ec2 
+- ec2:
     keypair: "{{ keypair }}"
     image: "{{ image }}"
     wait: yes 
     count: 3
     register: ec2
-- local_action: 
-    module: ec2_vol 
+- ec2_vol:
     instance: "{{ item.id }} " 
     volume_size: 5
     with_items: ec2.instances
@@ -144,8 +139,7 @@ EXAMPLES = '''
 #   * Nothing will happen if the volume is already attached.
 #   * Volume must exist in the same zone.
 
-- local_action: 
-    module: ec2 
+- ec2:
     keypair: "{{ keypair }}"
     image: "{{ image }}"
     zone: YYYYYY
@@ -154,8 +148,7 @@ EXAMPLES = '''
     count: 1
     register: ec2
 
-- local_action: 
-    module: ec2_vol 
+- ec2_vol:
     instance: "{{ item.id }}" 
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
@@ -163,22 +156,15 @@ EXAMPLES = '''
     register: ec2_vol
 
 # Remove a volume
-- local_action:
-    module: ec2_vol
+- ec2_vol:
     id: vol-XXXXXXXX
     state: absent
 
 # List volumes for an instance
-- local_action:
-    module: ec2_vol
+- ec2_vol:
     instance: i-XXXXXX
     state: list
 '''
-
-# Note: this module needs to be made idempotent. Possible solution is to use resource tags with the volumes.
-# if state=present and it doesn't exist, create, tag and attach. 
-# Check for state by looking for volume attachment with tag (and against block device mapping?).
-# Would personally like to revisit this in May when Eucalyptus also has tagging support (3.3).
 
 import sys
 import time

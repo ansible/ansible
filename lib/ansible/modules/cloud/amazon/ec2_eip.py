@@ -69,13 +69,13 @@ EXAMPLES = '''
   ec2_eip: instance_id=i-1212f003
 
 - name: allocate a new elastic IP without associating it to anything
-  ec2_eip:
+  action: ec2_eip
   register: eip
 - name: output the IP
   debug: msg="Allocated IP is {{ eip.public_ip }}"
 
 - name: provision new instances with ec2
-  ec2: keypair=mykey instance_type=c1.medium image=emi-40603AD1 wait=yes group=webserver count=3
+  ec2: keypair=mykey instance_type=c1.medium image=ami-40603AD1 wait=yes group=webserver count=3
   register: ec2
 - name: associate new elastic IPs with each of the instances
   ec2_eip: "instance_id={{ item }}"

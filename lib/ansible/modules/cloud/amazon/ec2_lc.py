@@ -125,7 +125,7 @@ EXAMPLES = '''
     name: special
     image_id: ami-XXX
     key_name: default
-    security_groups: 'group,group2'
+    security_groups: ['group', 'group2' ]
     instance_type: t1.micro
 
 '''

@@ -224,44 +224,45 @@ requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
 
+# FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
+
 EXAMPLES = '''
 # Basic mysql provisioning example
-- rds: >
-      command=create
-      instance_name=new_database
-      db_engine=MySQL
-      size=10
-      instance_type=db.m1.small
-      username=mysql_admin
-      password=1nsecure
+- rds:
+    command: create
+    instance_name: new_database
+    db_engine: MySQL
+    size: 10
+    instance_type: db.m1.small
+    username: mysql_admin
+    password: 1nsecure
 
 # Create a read-only replica and wait for it to become available
-- rds: >
-      command=replicate
-      instance_name=new_database_replica
-      source_instance=new_database
-      wait=yes
-      wait_timeout=600
+- rds: 
+    command: replicate
+    instance_name: new_database_replica
+    source_instance: new_database
+    wait: yes
+    wait_timeout: 600
 
 # Delete an instance, but create a snapshot before doing so
-- rds: >
-      command=delete
-      instance_name=new_database
-      snapshot=new_database_snapshot
+- rds:
+    command: delete
+    instance_name: new_database
+    snapshot: new_database_snapshot
 
 # Get facts about an instance
-- rds: >
-      command=facts
-      instance_name=new_database
-      register: new_database_facts
+- rds:
+    command: facts
+    instance_name: new_database
+    register: new_database_facts
 
 # Rename an instance and wait for the change to take effect
-- rds: >
-      command=modify
-      instance_name=new_database
-      new_instance_name=renamed_database
-      wait=yes
-    
+- rds:
+    command: modify
+    instance_name: new_database
+    new_instance_name: renamed_database
+    wait: yes
 '''
 
 import sys

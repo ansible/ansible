@@ -16,10 +16,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 DOCUMENTATION = '''
 ---
 module: ec2_ami_search
-short_description: Retrieve AWS AMI for a given operating system.
+short_description: Retrieve AWS AMI information for a given operating system.
 version_added: "1.6"
 description:
   - Look up the most recent AMI on AWS for a given operating system.

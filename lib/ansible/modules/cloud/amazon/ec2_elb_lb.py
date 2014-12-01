@@ -115,7 +115,8 @@ EXAMPLES = """
 # Note: None of these examples set aws_access_key, aws_secret_key, or region.
 # It is assumed that their matching environment variables are set.
 
-# Basic provisioning example
+# Basic provisioning example (non-VPC)
+
 - local_action:
     module: ec2_elb_lb
     name: "test-please-delete"
@@ -134,8 +135,8 @@ EXAMPLES = """
         # ssl certificate required for https or ssl
         ssl_certificate_id: "arn:aws:iam::123456789012:server-certificate/company/servercerts/ProdServerCert"
 
+# Internal ELB example
 
-# Basic VPC provisioning example
 - local_action:
     module: ec2_elb_lb
     name: "test-vpc"

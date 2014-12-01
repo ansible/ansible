@@ -88,51 +88,53 @@ requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
 
+# FIXME: the command stuff should have a more state like configuration alias -- MPD
+
 EXAMPLES = '''
 # Add new.foo.com as an A record with 3 IPs
-- route53: >
-      command=create
-      zone=foo.com
-      record=new.foo.com
-      type=A
-      ttl=7200
-      value=1.1.1.1,2.2.2.2,3.3.3.3
+- route53:
+      command: create
+      zone: foo.com
+      record: new.foo.com
+      type: A
+      ttl: 7200
+      value: 1.1.1.1,2.2.2.2,3.3.3.3
 
 # Retrieve the details for new.foo.com
-- route53: >
-      command=get
-      zone=foo.com
-      record=new.foo.com
-      type=A
+- route53:
+      command: get
+      zone: foo.com
+      record: new.foo.com
+      type: A
   register: rec
 
 # Delete new.foo.com A record using the results from the get command
-- route53: >
-      command=delete
-      zone=foo.com
-      record={{ rec.set.record }}
-      type={{ rec.set.type }}
-      value={{ rec.set.value }}
+- route53:
+      command: delete
+      zone: foo.com
+      record: "{{ rec.set.record }}"
+      type: "{{ rec.set.type }}"
+      value: "{{ rec.set.value }}"
 
 # Add an AAAA record.  Note that because there are colons in the value
 # that the entire parameter list must be quoted:
-- route53: >
-      command=create
-      zone=foo.com
-      record=localhost.foo.com
-      type=AAAA
-      ttl=7200
-      value="::1"
+- route53:
+      command: "create"
+      zone: "foo.com"
+      record: "localhost.foo.com"
+      type: "AAAA"
+      ttl: "7200"
+      value: "::1"
 
 # Add a TXT record. Note that TXT and SPF records must be surrounded
 # by quotes when sent to Route 53:
-- route53: >
-      command=create
-      zone=foo.com
-      record=localhost.foo.com
-      type=TXT
-      ttl=7200
-      value="\"bar\""
+- route53:
+      command: "create"
+      zone: "foo.com"
+      record: "localhost.foo.com"
+      type: "TXT"
+      ttl: "7200"
+      value: '"bar"'
 
 
 '''
