@@ -44,6 +44,11 @@ options:
       - Host running the database
     required: false
     default: localhost
+  login_unix_socket:
+    description
+      - Path to a Unix domain socket for local connections
+    required: false
+    default: null
   owner:
     description:
       - Name of the role to set as owner of the database
@@ -178,7 +183,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         return True
     else:
         db_info = get_db_info(cursor, db)
-        if (encoding and 
+        if (encoding and
             get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             raise NotSupportedError(
                 'Changing database encoding is not supported. '
@@ -204,7 +209,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
        return False
     else:
         db_info = get_db_info(cursor, db)
-        if (encoding and 
+        if (encoding and
             get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             return False
         elif lc_collate and lc_collate != db_info['lc_collate']:
@@ -226,6 +231,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default=""),
             login_host=dict(default=""),
+            login_unix_socket=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=True, aliases=['name']),
             owner=dict(default=""),
@@ -251,7 +257,7 @@ def main():
     state = module.params["state"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so 
+    # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
@@ -260,8 +266,14 @@ def main():
         "login_password":"password",
         "port":"port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems() 
+    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
               if k in params_map and v != '' )
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
     try:
         db_connection = psycopg2.connect(database="template1", **kw)
         # Enable autocommit so we can create databases
