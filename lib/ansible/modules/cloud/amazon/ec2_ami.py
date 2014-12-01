@@ -69,6 +69,12 @@ options:
       - Image ID to be deregistered.
     required: false
     default: null
+  device_mapping:
+    version_added: "1.9"
+    description:
+      - An optional list of devices with custom configurations (same block-device-mapping parameters)
+    required: false
+    default: null
   delete_snapshot:
     description:
       - Whether or not to delete an AMI while deregistering it.
@@ -108,6 +114,23 @@ EXAMPLES = '''
     instance_id: i-xxxxxx
     wait: no
     name: newtest
+  register: instance
+
+# AMI Creation, with a custom root-device size and another EBS attached
+- ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    instance_id: i-xxxxxx
+    name: newtest
+    device_mapping:
+        - device_name: /dev/sda1
+          size: XXX
+          delete_on_termination: true
+          volume_type: gp2
+        - device_name: /dev/sdb
+          size: YYY
+          delete_on_termination: false
+          volume_type: gp2
   register: instance
 
 # Deregister/Delete AMI
