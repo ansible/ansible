@@ -73,6 +73,7 @@ import os
 import sys
 from stat import *
 import pwd
+import grp
 
 def main():
     module = AnsibleModule(
@@ -157,6 +158,9 @@ def main():
         pw = pwd.getpwuid(st.st_uid)
 
         d['pw_name']   = pw.pw_name
+
+        grp_info = grp.getgrgid(pw.pw_gid)
+        d['gr_name'] = grp_info.gr_name
     except:
         pass
 
