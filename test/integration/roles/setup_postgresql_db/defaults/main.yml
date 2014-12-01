@@ -1,0 +1,8 @@
+pg_hba_location: "/var/lib/pgsql/data/pg_hba.conf"
+
+postgresql_service: postgresql
+
+postgresql_packages: 
+    - postgresql
+    - postgresql-server
+    - python-psycopg2

@@ -1,0 +1,46 @@
+# test code to assert postgresql db exist
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Verify database changed and database does not exist
+#
+- name: assert database changed 
+  assert:
+    that:
+       - "output.changed == {{changed}}"
+       - "output.db =='{{ database_name }}'"
+
+- name: list database 
+  command: psql -c "SELECT * FROM pg_database WHERE datname='{{ database_name }}'"
+  sudo: yes
+  sudo_user: postgres
+  register: result
+
+- name: assert database exists 
+  assert: { that: "'{{ database_name }}' in result.stdout" }
+
+- name: show database owner
+  command: psql -c "\l"
+  sudo: yes
+  sudo_user: postgres
+  register: result
+  when: db_user is defined
+
+- name: assert database owner
+  assert: { that: "'{{ database_user }}' in result.stdout" }
+  when: db_user is defined
