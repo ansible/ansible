@@ -103,28 +103,19 @@ author: Lester Wade, Ralph Tice
 EXAMPLES = '''
 # Simple PUT operation
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
+
 # Simple GET operation
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get
-# GET/download and overwrite local file (trust remote)
-- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get 
-# GET/download and do not overwrite local file (trust remote)
-- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get force=false
-# PUT/upload and overwrite remote file (trust local)
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
+
 # PUT/upload with metadata
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip'
-# PUT/upload with multiple metadata
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
-# PUT/upload and do not overwrite remote file (trust local)
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put force=false
-# Download an object as a string to use else where in your playbook
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=getstr
+
 # Create an empty bucket
 - s3: bucket=mybucket mode=create
-# Create a bucket with key as directory
-- s3: bucket=mybucket object=/my/directory/path mode=create
-# Create an empty bucket in the EU region
-- s3: bucket=mybucket mode=create region=eu-west-1
+
+# Create a bucket with key as directory, in the EU region
+- s3: bucket=mybucket object=/my/directory/path mode=create region=eu-west-1
+
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
 '''

@@ -50,7 +50,7 @@ EXAMPLES = '''
 # Basic example of adding tag(s)
 tasks:
 - name: tag a resource
-  local_action: ec2_tag resource=vol-XXXXXX region=eu-west-1 state=present
+  ec2_tag: resource=vol-XXXXXX region=eu-west-1 state=present
   args:
     tags:
       Name: ubervol
@@ -59,11 +59,11 @@ tasks:
 # Playbook example of adding tag(s) to spawned instances
 tasks:
 - name: launch some instances
-  local_action: ec2 keypair={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image_id }} wait=true region=eu-west-1
+  ec2: keypair={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image_id }} wait=true region=eu-west-1
   register: ec2
 
 - name: tag my launched instances
-  local_action: ec2_tag resource={{ item.id }} region=eu-west-1 state=present
+  ec2_tag: resource={{ item.id }} region=eu-west-1 state=present
   with_items: ec2.instances
   args:
     tags:

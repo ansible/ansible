@@ -119,20 +119,22 @@ extends_documentation_fragment: aws
 """
 
 EXAMPLES = '''
-A basic example of configuration:
+# Basic configuration
 
 - ec2_asg:
     name: special
-    load_balancers: 'lb1,lb2'
-    availability_zones: 'eu-west-1a,eu-west-1b'
+    load_balancers: [ 'lb1', 'lb2' ]
+    availability_zones: [ 'eu-west-1a', 'eu-west-1b' ]
     launch_config_name: 'lc-1'
     min_size: 1
     max_size: 10
     desired_capacity: 5
-    vpc_zone_identifier: 'subnet-abcd1234,subnet-1a2b3c4d'
+    vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
     tags:
       - environment: production
         propagate_at_launch: no
+
+# Rolling ASG Updates
 
 Below is an example of how to assign a new launch config to an ASG and terminate old instances.  
 
@@ -415,8 +417,9 @@ def replace(connection, module):
     max_size =  module.params.get('max_size')
     min_size =  module.params.get('min_size')
     desired_capacity =  module.params.get('desired_capacity')
+
+    # FIXME: we need some more docs about this feature
     replace_instances = module.params.get('replace_instances')
-    
     
     # wait for instance list to be populated on a newly provisioned ASG
     instance_wait = time.time() + 30
