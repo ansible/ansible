@@ -668,7 +668,7 @@ class Runner(object):
         ''' executes any module one or more times '''
 
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+        hostvars = HostVars(utils.merge_hash(inject['combined_cache'], self.extra_vars), self.inventory, vault_password=self.vault_pass)
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
