@@ -71,11 +71,6 @@ tasks:
       env: prod
 '''
 
-# Note: this module needs to be made idempotent. Possible solution is to use resource tags with the volumes.
-# if state=present and it doesn't exist, create, tag and attach. 
-# Check for state by looking for volume attachment with tag (and against block device mapping?).
-# Would personally like to revisit this in May when Eucalyptus also has tagging support (3.3).
-
 import sys
 import time
 
