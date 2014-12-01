@@ -68,21 +68,18 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 # Simple snapshot of volume using volume_id
-- local_action: 
-    module: ec2_snapshot 
+- ec2_snapshot:
     volume_id: vol-abcdef12   
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
 
 # Snapshot of volume mounted on device_name attached to instance_id
-- local_action: 
-    module: ec2_snapshot 
+- ec2_snapshot:
     instance_id: i-12345678
     device_name: /dev/sdb1
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
 
 # Snapshot of volume with tagging
-- local_action: 
-    module: ec2_snapshot 
+- ec2_snapshot:
     instance_id: i-12345678
     device_name: /dev/sdb1
     snapshot_tags:

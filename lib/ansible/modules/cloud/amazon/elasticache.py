@@ -111,8 +111,7 @@ EXAMPLES = """
 # It is assumed that their matching environment variables are set.
 
 # Basic example
-- local_action:
-    module: elasticache
+- elasticache:
     name: "test-please-delete"
     state: present
     engine: memcached
@@ -126,14 +125,12 @@ EXAMPLES = """
 
 
 # Ensure cache cluster is gone
-- local_action:
-    module: elasticache
+- elasticache:
     name: "test-please-delete"
     state: absent
 
 # Reboot cache cluster
-- local_action:
-    module: elasticache
+- elasticache:
     name: "test-please-delete"
     state: rebooted
 

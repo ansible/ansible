@@ -130,16 +130,14 @@ EXAMPLES = '''
 # It is assumed that their matching environment variables are set.
 
 # Basic creation example:
-      local_action:
-        module: ec2_vpc
+      ec2_vpc:
         state: present
         cidr_block: 172.23.0.0/16
         resource_tags: { "Environment":"Development" }
         region: us-west-2
 # Full creation example with subnets and optional availability zones.
 # The absence or presence of subnets deletes or creates them respectively.
-      local_action:
-        module: ec2_vpc
+      ec2_vpc:
         state: present
         cidr_block: 172.22.0.0/16
         resource_tags: { "Environment":"Development" }
@@ -170,8 +168,7 @@ EXAMPLES = '''
       register: vpc
 
 # Removal of a VPC by id
-      local_action:
-        module: ec2_vpc
+      ec2_vpc:
         state: absent
         vpc_id: vpc-aaaaaaa
         region: us-west-2
