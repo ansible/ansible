@@ -316,7 +316,7 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
    # now just on the CentOS hosts...
 
    - hosts: CentOS
-     gather_facts: False
+     gather_facts: no
 
      tasks:
         - # tasks that only happen on CentOS go here

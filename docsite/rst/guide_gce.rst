@@ -195,7 +195,7 @@ A playbook would looks like this:
    - name: Manage new instances
      hosts: new_instances
      connection: ssh
-     sudo: True
+     sudo: yes
      roles:
        - base_configuration
        - production_server
@@ -229,7 +229,7 @@ a basic example of what is possible::
 
         - name: Install lighttpd
           apt: pkg=lighttpd state=installed
-          sudo: True
+          sudo: yes
 
         - name: Allow HTTP
           local_action: gce_net

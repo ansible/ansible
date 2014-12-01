@@ -38,7 +38,7 @@ In playbook steps, we'll typically be using the following pattern:
 
     - hosts: localhost
       connection: local
-      gather_facts: False
+      gather_facts: no
       tasks:
 
 .. _credentials_file:
@@ -300,7 +300,7 @@ This can be achieved with the ``rax_facts`` module and an inventory file similar
 
     - name: Gather info about servers
       hosts: test_servers
-      gather_facts: False
+      gather_facts: no
       tasks:
         - name: Get facts about servers
           local_action:
@@ -419,7 +419,7 @@ Create an isolated cloud network and build a server
     - name: Build Servers on an Isolated Network
       hosts: localhost
       connection: local
-      gather_facts: False
+      gather_facts: no
       tasks:
         - name: Network create request
           local_action:
@@ -463,7 +463,7 @@ Build a complete webserver environment with servers, custom networks and load ba
     - name: Build environment
       hosts: localhost
       connection: local
-      gather_facts: False
+      gather_facts: no
       tasks:
         - name: Load Balancer create request
           local_action:
@@ -579,7 +579,7 @@ Using a Control Machine
     - name: Create an exact count of servers
       hosts: localhost
       connection: local
-      gather_facts: False
+      gather_facts: no
       tasks:
         - name: Server build requests
           local_action:
@@ -611,7 +611,7 @@ Using a Control Machine
     
     - name: Wait for rackconnect and managed cloud automation to complete
       hosts: new_web
-      gather_facts: false
+      gather_facts: no
       tasks:
         - name: Wait for rackconnnect automation to complete
           local_action:

@@ -52,7 +52,7 @@ In previous version of Ansible, this can be still be accomplished as follows::
     - name: this command prints FAILED when it fails
       command: /usr/bin/example-command -x -y -z
       register: command_result
-      ignore_errors: True
+      ignore_errors: yes
 
     - name: fail the play if the previous command did not succeed
       fail: msg="the command failed"
@@ -81,7 +81,7 @@ does not cause handlers to fire::
 
       # this will never report 'changed' status
       - shell: wall 'beep'
-        changed_when: False
+        changed_when: no
 
 
 .. seealso::

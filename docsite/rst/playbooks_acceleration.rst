@@ -41,12 +41,12 @@ Accelerated mode offers several improvements over the (deprecated) original fire
 * There are fewer requirements. ZeroMQ is no longer required, nor are there any special packages beyond python-keyczar 
 * python 2.5 or higher is required.
 
-In order to use accelerated mode, simply add `accelerate: true` to your play::
+In order to use accelerated mode, simply add `accelerate: yes` to your play::
 
     ---
 
     - hosts: all
-      accelerate: true
+      accelerate: yes
 
       tasks:
 
@@ -62,7 +62,7 @@ If you wish to change the port Ansible will use for the accelerated connection, 
     ---
 
     - hosts: all
-      accelerate: true
+      accelerate: yes
       # default port is 5099
       accelerate_port: 10000
 
