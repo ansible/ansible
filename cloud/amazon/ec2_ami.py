@@ -136,6 +136,7 @@ import time
 try:
     import boto
     import boto.ec2
+    from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -155,6 +156,7 @@ def create_image(module, ec2):
     wait_timeout = int(module.params.get('wait_timeout'))
     description = module.params.get('description')
     no_reboot = module.params.get('no_reboot')
+    device_mapping = module.params.get('device_mapping')
     tags =  module.params.get('tags')
 
     try:
@@ -162,6 +164,17 @@ def create_image(module, ec2):
                   'name': name,
                   'description': description,
                   'no_reboot': no_reboot}
+
+        if device_mapping:
+            bdm = BlockDeviceMapping()
+            for device in device_mapping:
+                if 'device_name' not in device:
+                    module.fail_json(msg = 'Device name must be set for volume')
+                device_name = device['device_name']
+                del device['device_name']
+                bd = BlockDeviceType(**device)
+                bdm[device_name] = bd
+            params['block_device_mapping'] = bdm
 
         image_id = ec2.create_image(**params)
     except boto.exception.BotoServerError, e:
@@ -257,8 +270,8 @@ def main():
             description = dict(default=""),
             no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
-            tags = dict(type='dict'),
-
+            device_mapping = dict(type='list'),
+            tags = dict(type='dict')
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -291,4 +304,3 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
 main()
-
