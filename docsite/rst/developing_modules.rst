@@ -48,7 +48,7 @@ modules.   Keep in mind, though, that some modules in ansible's source tree are 
 so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
 you'll turn to stone.  Nobody ever executes async_wrapper directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time.py`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `timetest.py`::
 
     #!/usr/bin/python
 
@@ -73,7 +73,7 @@ There's a useful test script in the source checkout for ansible::
 
 Let's run the script you just wrote with that::
 
-    ansible/hacking/test-module -m ./time.py
+    ansible/hacking/test-module -m ./timetest.py
 
 You should see output that looks something like this::
 
