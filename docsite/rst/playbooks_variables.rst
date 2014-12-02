@@ -762,7 +762,15 @@ To configure fact caching, enable it in ansible.cfg as follows::
     fact_caching_timeout = 86400
     # seconds
 
-At the time of writing, Redis is the only supported fact caching engine.  
+    # smart gathering is optional, but can speed things up
+    # see below
+    gathering = smart
+
+If gathering is set to smart, and gather_facts is not explicitly specified on
+a play, then Ansible will only gather facts for a host if the fact cache is empty or
+stale.
+
+At the time of writing, Redis is the only supported fact caching engine.
 To get redis up and running, perform the equivalent OS commands::
 
     yum install redis
