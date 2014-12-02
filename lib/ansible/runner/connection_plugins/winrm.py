@@ -193,7 +193,7 @@ class Connection(object):
     def fetch_file(self, in_path, out_path):
         out_path = out_path.replace('\\', '/')
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
-        buffer_size = 2**20 # 1MB chunks
+        buffer_size = 2**19 # 0.5MB chunks
         if not os.path.exists(os.path.dirname(out_path)):
             os.makedirs(os.path.dirname(out_path))
         out_file = None

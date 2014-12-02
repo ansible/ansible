@@ -1193,7 +1193,7 @@ class Runner(object):
             return path
 
         if len(split_path) > 1:
-            return os.path.join(initial_fragment, *split_path[1:])
+            return conn.shell.join_path(initial_fragment, *split_path[1:])
         else:
             return initial_fragment
 
