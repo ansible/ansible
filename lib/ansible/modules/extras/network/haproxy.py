@@ -88,7 +88,7 @@ EXAMPLES = '''
 - haproxy: action=set_weight host={{ inventory_hostname }} backend=www weight=10
 
 author: Ravi Bhure <ravibhure@gmail.com>
-version_added: "1.6"
+version_added: "1.9"
 '''
 
 import logging
