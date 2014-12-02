@@ -89,13 +89,12 @@ def lookup(name, *args, **kwargs):
     tvars = kwargs.get('vars', None)
 
     if instance is not None:
-        # safely catch run failures per #5059
         try:
             ran = instance.run(*args, inject=tvars, **kwargs)
-        except errors.AnsibleUndefinedVariable:
+        except errors.AnsibleError:
             raise
         except Exception, e:
-            ran = None
+            raise errors.AnsibleError('Unexpected error in during lookup: %s' % e)
         if ran:
             ran = ",".join(ran)
         return ran
