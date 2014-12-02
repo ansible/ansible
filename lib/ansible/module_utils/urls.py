@@ -55,6 +55,7 @@ import os
 import re
 import socket
 import tempfile
+from ansible import constants
 
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
@@ -252,9 +253,32 @@ class SSLValidationHandler(urllib2.BaseHandler):
         except:
             self.module.fail_json(msg='Connection to proxy failed')
 
+    def no_proxy_check(self, url):
+        '''
+        Check if no_proxy environment is set and honor those locations.
+        '''
+        no_proxy = os.environ.get('no_proxy')
+        if no_proxy:
+            no_proxy = no_proxy.split(',')
+            netloc = urlparse.urlparse(url).netloc
+
+            for host in no_proxy:
+                if netloc.endswith(host) or netloc.split(':')[0].endswith(host):
+                    # Our requested URL matches something in no_proxy, so don't
+                    # use the proxy for this
+                    return {}
+        return no_proxy
+
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
+
+        # Check if no_proxy is set and if our URL is included
+        no_proxy = self.no_proxy_check(req.get_full_url())
+
+        if not no_proxy:
+            return req
+
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
