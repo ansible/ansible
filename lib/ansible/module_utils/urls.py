@@ -252,30 +252,31 @@ class SSLValidationHandler(urllib2.BaseHandler):
         except:
             self.module.fail_json(msg='Connection to proxy failed')
 
-    def no_proxy_check(self, url):
+    def detect_no_proxy(self, url):
         '''
-        Check if no_proxy environment is set and honor those locations.
+        Detect if the 'no_proxy' environment variable is set and honor those locations.
         '''
-        no_proxy = os.environ.get('no_proxy')
-        if no_proxy:
-            no_proxy = no_proxy.split(',')
+        env_no_proxy = os.environ.get('no_proxy')
+        if env_no_proxy:
+            env_no_proxy = env_no_proxy.split(',')
             netloc = urlparse.urlparse(url).netloc
 
-            for host in no_proxy:
+            for host in env_no_proxy:
                 if netloc.endswith(host) or netloc.split(':')[0].endswith(host):
                     # Our requested URL matches something in no_proxy, so don't
                     # use the proxy for this
-                    return {}
-        return no_proxy
+                    return False
+        return True
 
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
 
-        # Check if no_proxy is set and if our URL is included
-        no_proxy = self.no_proxy_check(req.get_full_url())
+        # Detect if 'no_proxy' environment variable is set and if our URL is included
+        use_proxy = self.detect_no_proxy(req.get_full_url())
 
-        if not no_proxy:
+        if not use_proxy:
+            # ignore proxy settings for this host request
             return req
 
         try:
