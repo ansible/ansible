@@ -252,6 +252,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
         except:
             self.module.fail_json(msg='Connection to proxy failed')
 
+<<<<<<< HEAD
     def detect_no_proxy(self, url):
         '''
         Detect if the 'no_proxy' environment variable is set and honor those locations.
@@ -268,10 +269,13 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     return False
         return True
 
+=======
+>>>>>>> parent of 8e2a6bd... Honor the no_proxy environment variable
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
 
+<<<<<<< HEAD
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
 
@@ -279,6 +283,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
             # ignore proxy settings for this host request
             return req
 
+=======
+>>>>>>> parent of 8e2a6bd... Honor the no_proxy environment variable
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
