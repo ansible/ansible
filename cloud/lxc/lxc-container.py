@@ -1015,9 +1015,12 @@ class LxcContainerManagement(object):
         :returns: size and measurement of an LV
         :type: ``tuple``
         """
+
         build_command = [
             'vgdisplay',
-            name
+            name,
+            '--units',
+            'g'
         ]
         rc, stdout, err = self._run_command(build_command)
         if rc != 0:
@@ -1041,11 +1044,14 @@ class LxcContainerManagement(object):
         :returns: size and measurement of an LV
         :type: ``tuple``
         """
+
         vg = self._get_lxc_vg()
         lv = os.path.join(vg, name)
         build_command = [
             'lvdisplay',
-            lv
+            lv,
+            '--units',
+            'g'
         ]
         rc, stdout, err = self._run_command(build_command)
         if rc != 0:
@@ -1072,6 +1078,7 @@ class LxcContainerManagement(object):
         :param snapshot_size_gb: Size of snapshot to create
         :type snapshot_size_gb: ``int``
         """
+
         vg = self._get_lxc_vg()
         free_space, messurement = self._get_vg_free_pe(name=vg)
 
@@ -1112,6 +1119,7 @@ class LxcContainerManagement(object):
         :param mount_point: path on the file system that is mounted.
         :type mount_point: ``str``
         """
+
         vg = self._get_lxc_vg()
 
         build_command = [
@@ -1181,6 +1189,7 @@ class LxcContainerManagement(object):
         :param name: The name of the logical volume
         :type name: ``str``
         """
+
         vg = self._get_lxc_vg()
         build_command = [
             self.module.get_bin_path('lvremove', True),
@@ -1204,6 +1213,7 @@ class LxcContainerManagement(object):
         :param temp_dir: path to the temporary local working directory
         :type temp_dir: ``str``
         """
+
         build_command = [
             self.module.get_bin_path('rsync', True),
             '-aHAX',
@@ -1225,6 +1235,7 @@ class LxcContainerManagement(object):
         :param mount_point: path on the file system that is mounted.
         :type mount_point: ``str``
         """
+
         build_command = [
             self.module.get_bin_path('umount', True),
             mount_point,
