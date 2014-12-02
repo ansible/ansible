@@ -667,8 +667,22 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
+        # We build the proper injected dictionary for all future
+        # templating operations in this run
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(utils.merge_hash(inject['combined_cache'], self.extra_vars), self.inventory, vault_password=self.vault_pass)
+
+        # Then we selectively merge some variable dictionaries down to a
+        # single dictionary, used to template the HostVars for this host
+        temp_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        temp_vars = utils.merge_hash(temp_vars, inject['combined_cache'])
+        temp_vars = utils.merge_hash(temp_vars, self.play_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.play_file_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.extra_vars)
+
+        hostvars = HostVars(temp_vars, self.inventory, vault_password=self.vault_pass)
+
+        # and we save the HostVars in the injected dictionary so they
+        # may be referenced from playbooks/templates
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
@@ -1193,7 +1207,7 @@ class Runner(object):
             return path
 
         if len(split_path) > 1:
-            return os.path.join(initial_fragment, *split_path[1:])
+            return conn.shell.join_path(initial_fragment, *split_path[1:])
         else:
             return initial_fragment
 
