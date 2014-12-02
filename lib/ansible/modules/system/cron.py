@@ -123,8 +123,8 @@ updates: [ 'Mike Grozak', 'Patrick Callahan' ]
 
 EXAMPLES = '''
 # Ensure a job that runs at 2 and 5 exists.
-# Creates an entry like "* 5,2 * * ls -alh > /dev/null"
-- cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+# Creates an entry like "0 5,2 * * ls -alh > /dev/null"
+- cron: name="check dirs" minute="0" hour="5,2" job="ls -alh > /dev/null"
 
 # Ensure an old job is no longer present. Removes any job that is prefixed
 # by "#Ansible: an old job" from the crontab
