@@ -29,7 +29,7 @@ version_added: "1.6"
 options:
   name:
     description:
-      - The name of the Perl library to install
+      - The name of the Perl library to install. You may use the "full distribution path", e.g.  MIYAGAWA/Plack-0.99_05.tar.gz
     required: false
     default: null
     aliases: ["pkg"]
@@ -56,6 +56,8 @@ options:
 examples:
    - code: "cpanm: name=Dancer"
      description: Install I(Dancer) perl package.
+   - code: "cpanm: name=MIYAGAWA/Plack-0.99_05.tar.gz"
+     description: Install version 0.99_05 of the I(Plack) perl package.
    - code: "cpanm: name=Dancer locallib=/srv/webapps/my_app/extlib"
      description: "Install I(Dancer) (U(http://perldancer.org/)) into the specified I(locallib)"
    - code: "cpanm: from_path=/srv/webapps/my_app/src/"

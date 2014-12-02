@@ -5,7 +5,15 @@ This repo contains a subset of ansible-modules with slightly lower use or priori
 
 All new modules should be submitted here, and have a chance to be promoted to core over time.
 
-Take care to submit tickets to the appropriate repo where modules are contained. The docs.ansible.com website indicates this at the bottom of each module documentation page.
+Reporting bugs
+==============
+
+Take care to submit tickets to the appropriate repo where modules are contained. The repo is mentioned at the bottom of modlue documentation page at [docs.ansible.com](http://docs.ansible.com/).
+
+Testing modules
+===============
+
+Ansible [module development guide](http://docs.ansible.com/developing_modules.html#testing-modules) contains the latest info about that.
 
 License
 =======
