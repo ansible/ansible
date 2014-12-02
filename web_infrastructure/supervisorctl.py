@@ -210,10 +210,10 @@ def main():
             module.fail_json(msg=out, name=name, state=state)
 
     if state == 'started':
-        take_action_on_processes(processes, lambda s: s != 'RUNNING', 'start', 'started')
+        take_action_on_processes(processes, lambda s: s not in ('RUNNING', 'STARTING'), 'start', 'started')
 
     if state == 'stopped':
-        take_action_on_processes(processes, lambda s: s == 'RUNNING', 'stop', 'stopped')
+        take_action_on_processes(processes, lambda s: s in ('RUNNING', 'STARTING'), 'stop', 'stopped')
 
 # import module snippets
 from ansible.module_utils.basic import *
