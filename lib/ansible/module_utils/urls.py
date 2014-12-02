@@ -55,7 +55,6 @@ import os
 import re
 import socket
 import tempfile
-from ansible import constants
 
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
