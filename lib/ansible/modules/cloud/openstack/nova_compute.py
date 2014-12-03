@@ -121,7 +121,7 @@ options:
      description:
         - Should a floating ip be auto created and assigned
      required: false
-     default: 'yes'
+     default: 'no'
      version_added: "1.8"
    floating_ips:
      description:
