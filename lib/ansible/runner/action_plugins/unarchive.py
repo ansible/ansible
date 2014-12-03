@@ -83,6 +83,9 @@ class ActionModule(object):
                 source = utils.path_dwim(self.runner.basedir, source)
 
         remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+        if remote_checksum == '4':
+            result = dict(failed=True, msg="python isn't present on the system.  Unable to compute checksum")
+            return ReturnData(conn=conn, result=result)
         if remote_checksum != '3':
             result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
