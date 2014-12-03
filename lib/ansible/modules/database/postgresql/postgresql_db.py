@@ -45,7 +45,7 @@ options:
     required: false
     default: localhost
   login_unix_socket:
-    description
+    description:
       - Path to a Unix domain socket for local connections
     required: false
     default: null
