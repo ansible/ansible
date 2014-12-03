@@ -108,10 +108,16 @@ class Play(object):
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
-        # tasks/handlers as they may have inventory scope overrides
+        # tasks/handlers as they may have inventory scope overrides. We also
+        # create a set of temporary variables for templating, so we don't
+        # trample on the existing vars structures
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
-        ds = template(basedir, ds, self.vars)
+
+        temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+
+        ds = template(basedir, ds, temp_vars)
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
