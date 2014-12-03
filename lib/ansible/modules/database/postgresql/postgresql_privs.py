@@ -100,7 +100,7 @@ options:
     required: no
     default: 5432
   unix_socket:
-    description
+    description:
       - Path to a Unix domain socket for local connections.
       - 'Alias: I(login_unix_socket)'
     required: false

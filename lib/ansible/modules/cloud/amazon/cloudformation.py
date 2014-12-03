@@ -20,6 +20,7 @@ module: cloudformation
 short_description: create a AWS CloudFormation stack
 description:
      - Launches an AWS CloudFormation stack and waits for it complete.
+version_added: "1.1"
 options:
   stack_name:
     description:
