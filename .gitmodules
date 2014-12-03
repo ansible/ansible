@@ -14,3 +14,6 @@
 	path = v2/ansible/modules/extras
 	url = https://github.com/ansible/ansible-modules-extras.git
 	branch = devel
+[submodule "examples/playbooks"]
+	path = examples/playbooks
+	url = https://github.com/ansible/ansible-examples
