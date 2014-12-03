@@ -215,7 +215,7 @@ EXAMPLES = """
     name: 'New ELB'
     security_group_ids: 'sg-123456, sg-67890'
     region: us-west-2
-    subnets: 'subnet-123456, subnet-67890'
+    subnets: 'subnet-123456,subnet-67890'
     purge_subnets: yes
     listeners:
       - protocol: http
