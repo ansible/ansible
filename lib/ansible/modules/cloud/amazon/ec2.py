@@ -19,7 +19,8 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
-    - Creates or terminates ec2 instances.  
+    - Creates or terminates ec2 instances.
+version_added: "0.9"
 options:
   key_name:
     description:
