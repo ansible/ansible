@@ -7,6 +7,7 @@ short_description: Pause and start Uptime Robot monitoring
 description:
     - This module will let you start and pause Uptime Robot Monitoring
 author: Nate Kingsley
+version_added: "1.9"
 requirements:
     - Valid Uptime Robot API Key
 options:
