@@ -24,12 +24,13 @@ module: glusterfs
 short_description: manage GlusterFS
 description:
   - Manage GlusterFS volumes
+version_added: "1.9"
 options:
   action:
     required: true
     choices: [ 'create', 'start', 'stop', 'tune', 'rebalance', 'limit-usage' ]
     description:
-      - Mode of operation: create volume, start/stop volume, set tuning options, rebalance or set quota
+      - Indicates the action to take. Create volume, start/stop volume, set tuning options, rebalance or set quota
   name:
     required: true
     description:

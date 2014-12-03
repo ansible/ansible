@@ -27,7 +27,7 @@ module: win_chocolatey
 version_added: "1.8"
 short_description: Installs packages using chocolatey
 description:
-    - Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages: http://chocolatey.org/packages.
+    - Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages can be found at http://chocolatey.org/packages
 options:
   package:
     description:
@@ -46,7 +46,7 @@ options:
     aliases: []
   force:
     description:
-      - Forces install of the package (even if it already exists). Using Force will cause ansible to always report "changed: true" on its run
+      - Forces install of the package (even if it already exists). Using Force will cause ansible to always report that a change was made
     required: false
     choices:
       - yes
