@@ -1,0 +1,44 @@
+- include_vars: default.yml
+
+- name: Create test user
+  user:
+    name: "{{ sudo_test_user }}"
+
+- name: tilde expansion honors sudo in file
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
+  file:
+    path: "~/foo.txt"
+    state: touch
+
+- name: check that the path in the user's home dir was created
+  stat:
+    path: "~{{ sudo_test_user }}/foo.txt"
+  register: results
+
+- assert:
+    that:
+      - "results.stat.exists == True"
+
+- name: tilde expansion honors sudo in template
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
+  template:
+    src: "bar.j2"
+    dest: "~/bar.txt"
+
+- name: check that the path in the user's home dir was created
+  stat:
+    path: "~{{ sudo_test_user }}/bar.txt"
+  register: results
+
+- assert:
+    that:
+      - "results.stat.exists == True"
+
+- name: Remove test user and their home dir
+  user:
+    name: "{{ sudo_test_user }}"
+    state: "absent"
+    remove: "yes"
+

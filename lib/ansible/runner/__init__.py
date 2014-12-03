@@ -1196,8 +1196,16 @@ class Runner(object):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'):
             return path
+
         split_path = path.split(os.path.sep, 1)
-        cmd = conn.shell.expand_user(split_path[0])
+        expand_path = split_path[0]
+        if expand_path == '~':
+            if self.sudo and self.sudo_user:
+                expand_path = '~%s' % self.sudo_user
+            elif self.su and self.su_user:
+                expand_path = '~%s' % self.su_user
+
+        cmd = conn.shell.expand_user(expand_path)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, su=False)
         initial_fragment = utils.last_non_blank_line(data['stdout'])
 
