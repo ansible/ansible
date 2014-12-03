@@ -404,7 +404,7 @@ class Runner(object):
                     host_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
                     if 'ansible_ssh_user' in host_vars:
                         thisuser = host_vars['ansible_ssh_user']
-        except errors.AnsibleException, e:
+        except errors.AnsibleError, e:
             # the hostname was not found in the inventory, so
             # we just ignore this and try the next method
             pass
