@@ -394,7 +394,7 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         thisuser = None
 
-        if host in inject['hostvars']:
+        if host in inject['hostvars'] and isinstance(inject['hostvars'].get(host), dict):
             if inject['hostvars'][host].get('ansible_ssh_user'):
                 # user for delegate host in inventory
                 thisuser = inject['hostvars'][host].get('ansible_ssh_user')
