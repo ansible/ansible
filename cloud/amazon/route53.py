@@ -162,7 +162,7 @@ def commit(changes, retry_interval):
             code = code.split("</Code>")[0]
             if code != 'PriorRequestNotComplete' or retry < 0:
                 raise e
-            time.sleep(retry_interval)
+            time.sleep(float(retry_interval))
 
 def main():
     argument_spec = ec2_argument_spec()
