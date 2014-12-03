@@ -36,7 +36,7 @@ options:
       - Action to take.
     required: true
     default: null
-    choices: [ "enable_server", "disable_server", "get_weight", "set_weight" ]
+    choices: [ "enabled", "disabled", "get_weight", "set_weight" ]
   host:
     description:
       - Host (backend) to operate in Haproxy.
@@ -67,19 +67,19 @@ options:
 
 EXAMPLES = '''
 # disable backend server in 'www' backend
-- haproxy: action=disable_server host={{ inventory_hostname }} backend=www
+- haproxy: action=disabled host={{ inventory_hostname }} backend=www
 
 # disable backend server without backend name (applied to all)
-- haproxy: action=disable_server host={{ inventory_hostname }}
+- haproxy: action=disabled host={{ inventory_hostname }}
 
 # disable server, provide socket file
-- haproxy: action=disable_server host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
+- haproxy: action=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
 
 # disable backend server in 'www' backend and drop open sessions to it
-- haproxy: action=disable_server host={{ inventory_hostname }} backend=www shutdown_sessions=true
+- haproxy: action=disabled host={{ inventory_hostname }} backend=www shutdown_sessions=true
 
 # enable backend server in 'www' backend
-- haproxy: action=enable_server host={{ inventory_hostname }} backend=www
+- haproxy: action=enabled host={{ inventory_hostname }} backend=www
 
 # report a server's current weight in 'www' backend
 - haproxy: action=get_weight host={{ inventory_hostname }} backend=www
@@ -102,8 +102,8 @@ RECV_SIZE = 1024
 
 def main():
     ACTION_CHOICES = [
-        'enable_server',
-        'disable_server',
+        'enabled',
+        'disabled',
         'get_weight',
         'set_weight'
         ]
@@ -118,6 +118,8 @@ def main():
             socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
             shutdown_sessions=dict(required=False, default=False),
         ),
+        supports_check_mode=True,
+
     )
     action = module.params['action']
     host = module.params['host']
@@ -128,22 +130,22 @@ def main():
 
     ##################################################################
     # Required args per action:
-    # (enable/disable)_server = (host)
+    # (enabled/disabled) = (host)
     #
     # AnsibleModule will verify most stuff, we need to verify
     # 'socket' manually.
 
     ##################################################################
 
-    if action in ['enable_server', 'disable_server', 'get_weight', 'set_weight']:
-        if not host:
-            module.fail_json(msg='no host specified for action requiring one')
+    if action in ['set_weight']:
+        if not weight:
+            module.fail_json(msg='no weight specified for action, require value in number')
+
     ##################################################################
     if not socket:
         module.fail_json('unable to locate haproxy.sock')
 
     ##################################################################
-    supports_check_mode=True,
     required_one_of=[['action', 'host']]
 
     ansible_haproxy = HAProxy(module, **module.params)
@@ -202,7 +204,7 @@ class HAProxy(object):
         self.client.close()
         return result
 
-    def enable_server(self, host, backend):
+    def enabled(self, host, backend):
         """
         Enables backend server for a particular backend.
 
@@ -238,7 +240,7 @@ class HAProxy(object):
             cmd = "enable server %s/%s" % (pxname, svname)
             self.execute(cmd)
 
-    def disable_server(self, host, backend, shutdown_sessions):
+    def disabled(self, host, backend, shutdown_sessions):
         """
         Disable backend server for a particular backend.
 
@@ -366,11 +368,11 @@ class HAProxy(object):
         needful (at the earliest).
         """
         # toggle enable/disbale server
-        if self.action == 'enable_server':
-            self.enable_server(self.host, self.backend)
+        if self.action == 'enabled':
+            self.enabled(self.host, self.backend)
 
-        elif self.action == 'disable_server':
-            self.disable_server(self.host, self.backend, self.shutdown_sessions)
+        elif self.action == 'disabled':
+            self.disabled(self.host, self.backend, self.shutdown_sessions)
 
         # toggle get/set weight
         elif self.action == 'get_weight':
