@@ -420,7 +420,7 @@ class Inventory(object):
 
         group = self.get_group(groupname)
         if group is None:
-            raise Exception("group not found: %s" % groupname)
+            raise errors.AnsibleError("group not found: %s" % groupname)
 
         vars = {}
 
@@ -439,7 +439,7 @@ class Inventory(object):
 
         host = self.get_host(hostname)
         if not host:
-            raise Exception("host not found: %s" % hostname)
+            raise errors.AnsibleError("host not found: %s" % hostname)
         return host.get_variables()
 
     def get_host_variables(self, hostname, update_cached=False, vault_password=None):
