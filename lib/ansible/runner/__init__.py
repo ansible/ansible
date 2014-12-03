@@ -1223,7 +1223,10 @@ class Runner(object):
 
     def _remote_checksum(self, conn, tmp, path, inject):
         ''' takes a remote checksum and returns 1 if no file '''
-        python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
+        if 'delegate_to' in inject and inject['delegate_to']:
+            python_interp = inject['hostvars'][inject['delegate_to']].get('ansible_python_interpreter', 'python')
+        else:
+            python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
         cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
