@@ -865,6 +865,7 @@ class Play(object):
                             target_filename = filename4
                     update_vars_cache(host, data, target_filename=target_filename)
                 else:
+                    self.vars = utils.combine_vars(self.vars, data)
                     self.vars_file_vars = utils.combine_vars(self.vars_file_vars, data)
                 # we did process this file
                 return True
