@@ -243,6 +243,11 @@ def randomize_list(mylist):
         pass
     return mylist
 
+
+def ensure_separator(some_directory):
+    """ Ensure that a directory string ends in a path separator"""
+    return os.path.join(some_directory, "")
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -268,6 +273,7 @@ class FilterModule(object):
             'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
             'relpath': os.path.relpath,
+            'ensure_separator': ensure_separator,
 
             # failure testing
             'failed'  : failed,
