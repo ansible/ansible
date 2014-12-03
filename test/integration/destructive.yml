@@ -1,6 +1,8 @@
 - hosts: testhost
   gather_facts: True
   roles:
+    # In destructive because it creates and removes a user
+    - { role: test_sudo, tags: test_sudo}
     - { role: test_service, tags: test_service }
     # Current pip unconditionally uses md5.  We can re-enable if pip switches
     # to a different hash or allows us to not check md5
