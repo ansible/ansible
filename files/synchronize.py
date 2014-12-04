@@ -145,6 +145,7 @@ options:
     required: false
     version_added: "1.6"
 notes:
+   - `rsync` must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
    - The remote user for the dest path will always be the remote_user, not
