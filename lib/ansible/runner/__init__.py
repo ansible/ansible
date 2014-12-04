@@ -594,12 +594,16 @@ class Runner(object):
             if not exec_rc.comm_ok:
                 self.callbacks.on_unreachable(host, exec_rc.result)
             return exec_rc
-        except errors.AnsibleError, ae:
-            msg = str(ae)
+        except errors.AnsibleError as ae:
+            original_file = self.get_inject_vars(host).get('_original_file')
+            msg = '%s (module_name: %s; module_args: %s; file: %s)' % (
+                ae, self.module_name, self.module_args, original_file)
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
         except Exception:
-            msg = traceback.format_exc()
+            original_file = self.get_inject_vars(host).get('_original_file')
+            msg = '%s (module_name: %s; module_args: %s; file: %s)' % (
+                traceback.format_exc(), self.module_name, self.module_args, original_file)
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 
