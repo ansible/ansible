@@ -95,11 +95,11 @@ def zypper_version(module):
         return rc, stderr
 
 # Function used for getting versions of currently installed packages.
-def get_current_version( packages):
+def get_current_version(m, packages):
     cmd = ['/bin/rpm', '-q', '--qf', '%{NAME} %{VERSION}-%{RELEASE}\n']
     cmd.extend(packages)
 
-    stdout = subprocess.check_output(cmd)
+    rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
     current_version = {}
     rpmoutput_re = re.compile('^(\S+) (\S+)$')
