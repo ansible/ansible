@@ -95,24 +95,30 @@ def zypper_version(module):
         return rc, stderr
 
 # Function used for getting versions of currently installed packages.
-def get_current_version(m, name):
+def get_current_version( packages):
     cmd = ['/bin/rpm', '-q', '--qf', '%{NAME} %{VERSION}-%{RELEASE}\n']
-    cmd.extend(name)
-    (rc, stdout, stderr) = m.run_command(cmd)
+    cmd.extend(packages)
+
+    stdout = subprocess.check_output(cmd)
 
     current_version = {}
     rpmoutput_re = re.compile('^(\S+) (\S+)$')
-    for stdoutline, package in zip(stdout.splitlines(), name):
-        m = rpmoutput_re.match(stdoutline)
-        if m == None:
+
+    for stdoutline in stdout.splitlines():
+        match = rpmoutput_re.match(stdoutline)
+        if match == None:
             return None
-        rpmpackage = m.group(1)
-        rpmversion = m.group(2)
-        if package != rpmpackage:
+        package = match.group(1)
+        version = match.group(2)
+        current_version[package] = version
+
+    for package in packages:
+        if package not in current_version:
+            print package + ' was not returned by rpm \n'
             return None
-        current_version[package] = rpmversion
 
     return current_version
+
 
 # Function used to find out if a package is currently installed.
 def get_package_state(m, packages):
@@ -123,19 +129,21 @@ def get_package_state(m, packages):
 
     installed_state = {}
     rpmoutput_re = re.compile('^package (\S+) (.*)$')
-    for stdoutline, name in zip(stdout.splitlines(), packages):
-        m = rpmoutput_re.match(stdoutline)
-        if m == None:
+    for stdoutline in stdout.splitlines():
+        match = rpmoutput_re.match(stdoutline)
+        if match == None:
             return None
-        package = m.group(1)
-        result = m.group(2)
-        if not name.startswith(package):
-            print name + ':' + package + ':' + stdoutline + '\n'
-            return None
+        package = match.group(1)
+        result = match.group(2)
         if result == 'is installed':
-            installed_state[name] = True
+            installed_state[package] = True
         else:
-            installed_state[name] = False
+            installed_state[package] = False
+
+    for package in packages:
+	if package not in installed_state:
+            print package + ' was not returned by rpm \n'
+            return None
 
     return installed_state
 
