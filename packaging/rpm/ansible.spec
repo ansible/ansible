@@ -110,6 +110,9 @@ rm -rf %{buildroot}
 
 %changelog
 
+* Thu Dec 04 2014 Michael DeHaan <michael@ansible.com> - 1.8.2
+- Release 1.8.2
+
 * Wed Nov 26 2014 Michael DeHaan <michael@ansible.com> - 1.8.1
 - Release 1.8.1
 

@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+## 1.8.2 "You Really Got Me" - Dec 04, 2014
+
+* Various bug fixes for packaging issues related to modules.
+* Various bug fixes for lookup plugins.
+* Various bug fixes for some modules (continued cleanup of postgresql issues, etc.).
+
 ## 1.8.1 "You Really Got Me" - Nov 26, 2014
 
 * Various bug fixes in postgresql and mysql modules.
