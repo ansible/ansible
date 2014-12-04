@@ -495,6 +495,7 @@ try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
+    from boto.vpc import VPCConnection
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -675,7 +676,7 @@ def boto_supports_param_in_spot_request(ec2, param):
     method = getattr(ec2, 'request_spot_instances')
     return param in method.func_code.co_varnames
 
-def enforce_count(module, ec2):
+def enforce_count(module, ec2, vpc):
 
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
@@ -700,7 +701,7 @@ def enforce_count(module, ec2):
         to_create = exact_count - len(instances)
         if not checkmode:
             (instance_dict_array, changed_instance_ids, changed) \
-                = create_instances(module, ec2, override_count=to_create)
+                = create_instances(module, ec2, vpc, override_count=to_create)
 
             for inst in instance_dict_array:
                 instances.append(inst)
@@ -731,7 +732,7 @@ def enforce_count(module, ec2):
     return (all_instances, instance_dict_array, changed_instance_ids, changed)
     
         
-def create_instances(module, ec2, override_count=None):
+def create_instances(module, ec2, vpc, override_count=None):
     """
     Creates new instances
 
@@ -780,10 +781,16 @@ def create_instances(module, ec2, override_count=None):
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
         sys.exit(1)
 
+    if vpc_subnet_id:
+        vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+
     try:
         # Here we try to lookup the group id from the security group name - if group is set.
         if group_name:
-            grp_details = ec2.get_all_security_groups()
+            if vpc_id:
+                grp_details = ec2.get_all_security_groups(filters={'vpc_id': vpc_id})
+            else:
+                grp_details = ec2.get_all_security_groups()
             if type(group_name) == list:
                 group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
             elif type(group_name) == str:
@@ -1197,6 +1204,20 @@ def main():
 
     ec2 = ec2_connect(module)
 
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    if region:
+        try:
+            vpc = boto.vpc.connect_to_region(
+                region,
+                aws_access_key_id=aws_access_key,
+                aws_secret_access_key=aws_secret_key
+            )
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="region must be specified")
+
     tagged_instances = [] 
 
     state = module.params.get('state')
@@ -1221,9 +1242,9 @@ def main():
             module.fail_json(msg='image parameter is required for new instance')
 
         if module.params.get('exact_count') is None:
-            (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)
+            (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2, vpc)
         else:
-            (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2)
+            (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2, vpc)
 
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 
