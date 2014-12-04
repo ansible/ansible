@@ -335,6 +335,7 @@ def cleanup_packages(module, packages):
 def run_emerge(module, packages, *args):
     args = list(args)
 
+    args.append('--ask=n')
     if module.check_mode:
         args.append('--pretend')
 
