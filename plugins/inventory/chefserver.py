@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# (c) 2014, Sergei Antipov, 2GIS
+# (c) 2014, Sergei Antipov <s.antipov@2gis.ru>, 2GIS
 #
 # This file is part of Ansible,
 #
@@ -23,7 +23,20 @@
 Chef Server external inventory script.
 ======================================
 
-Returns hosts and environment groups from Chef Server
+Generates Ansible inventory based on environment groups from Chef Server.
+Configuration is read from 'chefserver.ini'.
+When run in --list mode, instances are grouped by the chef_environment attribute.
+
+When run against a specific host, this script returns the following attributes
+based on the data obtained from pychef Node object:
+    - chef_environment
+    - automatic
+    - normal
+    - default
+    - override
+    - run_list
+
+usage: chefserver.py [--list] [--host HOST]
 """
 
 import os, sys
