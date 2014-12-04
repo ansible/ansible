@@ -277,7 +277,7 @@
   assert:
     that:
     - "'skipped' in result"
-    - result.skipped
+    - result.results.skipped
 
 - name: test a with_items loop skipping a single item
   debug: var=item
