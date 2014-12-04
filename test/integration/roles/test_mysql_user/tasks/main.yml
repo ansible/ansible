@@ -153,22 +153,22 @@
 - include: user_password_update_test.yml 
 
 # ============================================================
-# Assert create user with SELECT privileges, attemp to create database and update privileges to create database
+# Assert create user with SELECT privileges, attempt to create database and update privileges to create database
 #
 - include: test_privs.yml current_privilege=SELECT current_append_privs=no
 
 # ============================================================
-# Assert creating user with SELECT privileges, attemp to create database and append privileges to create database
+# Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege=DROP current_append_privs=yes
 
 # ============================================================
-# Assert create user with SELECT privileges, attemp to create database and update privileges to create database
+# Assert create user with SELECT privileges, attempt to create database and update privileges to create database
 #
 - include: test_privs.yml current_privilege='UPDATE,ALTER' current_append_privs=no
 
 # ============================================================
-# Assert creating user with SELECT privileges, attemp to create database and append privileges to create database
+# Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes
 

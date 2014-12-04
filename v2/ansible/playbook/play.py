@@ -170,7 +170,7 @@ class Play(Base):
 
         if len(self.roles) > 0:
             for ri in self.roles:
-                # The internal list of roles are actualy RoleInclude objects,
+                # The internal list of roles are actually RoleInclude objects,
                 # so we load the role from that now
                 role = Role.load(ri)
 

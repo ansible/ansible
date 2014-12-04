@@ -149,7 +149,7 @@ it will be automatically discoverable via a dynamic group like so::
      tasks:
        - ping
 
-Using this philosophy can be a great way to keep systems seperated by the function they perform.
+Using this philosophy can be a great way to keep systems separated by the function they perform.
 
 In this example, if we wanted to define variables that are automatically applied to each machine tagged with the 'class' of 'webserver', 'group_vars'
 in ansible can be used.  See :doc:`splitting_out_vars`.
