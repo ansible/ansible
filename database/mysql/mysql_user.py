@@ -490,7 +490,7 @@ def main():
             except SQLParseError, e:
                 module.fail_json(msg=str(e))
             except InvalidPrivsError, e:
-                module.mail_json(msg=str(e))
+                module.fail_json(msg=str(e))
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
