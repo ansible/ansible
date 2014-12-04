@@ -733,6 +733,10 @@ class Runner(object):
                         result = utils.jsonify(dict(changed=False, skipped=True))
                         self.callbacks.on_skipped(host, None)
                         return ReturnData(host=host, result=result)
+            except errors.AnsibleError, e:
+                raise
+            except Exception, e:
+                raise errors.AnsibleError("Unexpected error while executing task: %s" % str(e))
 
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
