@@ -40,7 +40,7 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
     """ idempotently add a git url hostkey """
 
-    fqdn = get_fqdn(module.params['repo'])
+    fqdn = get_fqdn(url)
 
     if fqdn:
         known_host = check_hostkey(module, fqdn)
