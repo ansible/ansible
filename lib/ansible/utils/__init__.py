@@ -48,7 +48,6 @@ import sys
 import json
 import subprocess
 import contextlib
-import jinja2.exceptions
 
 from vault import VaultLib
 
@@ -1469,15 +1468,11 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                new_terms = template.template(basedir, terms, inject, convert_bare=True, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
+                new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
                 if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass
                 else:
                     terms = new_terms
-            except errors.AnsibleUndefinedVariable:
-                raise
-            except jinja2.exceptions.UndefinedError, e:
-                raise errors.AnsibleUndefinedVariable('undefined variable in items: %s' % e)
             except:
                 pass
 
