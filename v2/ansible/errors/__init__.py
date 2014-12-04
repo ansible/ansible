@@ -61,7 +61,7 @@ class AnsibleError(Exception):
     def _get_error_lines_from_file(self, file_name, line_number):
         '''
         Returns the line in the file which coresponds to the reported error
-        location, as well as the line preceeding it (if the error did not
+        location, as well as the line preceding it (if the error did not
         occur on the first line), to provide context to the error.
         '''
 
@@ -82,7 +82,7 @@ class AnsibleError(Exception):
         Given an object reporting the location of the exception in a file, return
         detailed information regarding it including:
 
-          * the line which caused the error as well as the one preceeding it
+          * the line which caused the error as well as the one preceding it
           * causes and suggested remedies for common syntax errors
 
         If this error was created with show_content=False, the reporting of content

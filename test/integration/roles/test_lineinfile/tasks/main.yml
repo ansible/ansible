@@ -243,7 +243,7 @@
     that:
     - "result.stat.checksum == 'f9af7008e3cb67575ce653d094c79cabebf6e523'"
 
-# Test EOF with empty file to make sure no unneccessary newline is added
+# Test EOF with empty file to make sure no unnecessary newline is added
 - name: testempty deploy the testempty file for lineinfile
   copy: src=testempty.txt dest={{output_dir}}/testempty.txt
   register: result
