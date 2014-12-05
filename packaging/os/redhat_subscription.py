@@ -63,11 +63,11 @@ options:
 
 EXAMPLES = '''
 # Register as user (joe_user) with password (somepass) and auto-subscribe to available content.
-- redhat_subscription: action=register username=joe_user password=somepass autosubscribe=true
+- redhat_subscription: state=present username=joe_user password=somepass autosubscribe=true
 
 # Register with activationkey (1-222333444) and consume subscriptions matching
 # the names (Red hat Enterprise Server) and (Red Hat Virtualization)
-- redhat_subscription: action=register
+- redhat_subscription: state=present
                        activationkey=1-222333444
                        pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
 '''
