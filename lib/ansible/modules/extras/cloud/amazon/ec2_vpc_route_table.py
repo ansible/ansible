@@ -51,7 +51,7 @@ options:
   subnets:
     description:
       - An array of subnets to add to this route table. Subnets may either'''
-''' be specified by subnet ID or by a CIDR such as '10.0.0.0/24'.
+''' be specified by subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
     required: true
     aliases: []
   propagating_vgw_ids:
@@ -141,8 +141,8 @@ EXAMPLES = '''
       - Name: Internal
     subnets:
       - '{{application_subnet.subnet_id}}'
-      - '{{database_subnet.subnet_id}}'
-      - '{{splunk_subnet.subnet_id}}'
+      - 'Database Subnet'
+      - '10.0.0.0/8'
     routes:
       - dest: 0.0.0.0/0
         instance_id: '{{nat.instance_id}}'
@@ -151,6 +151,7 @@ EXAMPLES = '''
 
 
 import sys  # noqa
+import re
 
 try:
     import boto.ec2
@@ -169,6 +170,70 @@ class AnsibleRouteTableException(Exception):
 
 class AnsibleTagCreationException(AnsibleRouteTableException):
     pass
+
+
+class AnsibleSubnetSearchException(AnsibleRouteTableException):
+    pass
+
+CIDR_RE = re.compile('^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$')
+SUBNET_RE = re.compile('^subnet-[A-z0-9]+$')
+ROUTE_TABLE_RE = re.compile('^rtb-[A-z0-9]+$')
+
+
+def find_subnets(vpc_conn, vpc_id, identified_subnets):
+    """
+    Finds a list of subnets, each identified either by a raw ID, a unique
+    'Name' tag, or a CIDR such as 10.0.0.0/8.
+
+    Note that this function is duplicated in other ec2 modules, and should
+    potentially be moved into potentially be moved into a shared module_utils
+    """
+    subnet_ids = []
+    subnet_names = []
+    subnet_cidrs = []
+    for subnet in (identified_subnets or []):
+        if re.match(SUBNET_RE, subnet):
+            subnet_ids.append(subnet)
+        elif re.match(CIDR_RE, subnet):
+            subnet_cidrs.append(subnet)
+        else:
+            subnet_names.append(subnet)
+
+    subnets_by_id = []
+    if subnet_ids:
+        subnets_by_id = vpc_conn.get_all_subnets(
+            subnet_ids, filters={'vpc_id': vpc_id})
+
+        for subnet_id in subnet_ids:
+            if not any(s.id == subnet_id for s in subnets_by_id):
+                raise AnsibleSubnetSearchException(
+                    'Subnet ID "{0}" does not exist'.format(subnet_id))
+
+    subnets_by_cidr = []
+    if subnet_cidrs:
+        subnets_by_cidr = vpc_conn.get_all_subnets(
+            filters={'vpc_id': vpc_id, 'cidr': subnet_cidrs})
+
+        for cidr in subnet_cidrs:
+            if not any(s.cidr_block == cidr for s in subnets_by_cidr):
+                raise AnsibleSubnetSearchException(
+                    'Subnet CIDR "{0}" does not exist'.format(subnet_cidr))
+
+    subnets_by_name = []
+    if subnet_names:
+        subnets_by_name = vpc_conn.get_all_subnets(
+            filters={'vpc_id': vpc_id, 'tag:Name': subnet_names})
+
+        for name in subnet_names:
+            matching = [s.tags.get('Name') == name for s in subnets_by_name]
+            if len(matching) == 0:
+                raise AnsibleSubnetSearchException(
+                    'Subnet named "{0}" does not exist'.format(name))
+            elif len(matching) > 1:
+                raise AnsibleSubnetSearchException(
+                    'Multiple subnets named "{0}"'.format(name))
+
+    return subnets_by_id + subnets_by_cidr + subnets_by_name
 
 
 def get_resource_tags(vpc_conn, resource_id):
@@ -266,26 +331,6 @@ def ensure_routes(vpc_conn, route_table, route_specs, check_mode):
                                   route.destination_cidr_block,
                                   dry_run=check_mode)
     return {'changed': changed}
-
-
-def get_subnet_by_cidr(vpc_conn, vpc_id, cidr):
-    subnets = vpc_conn.get_all_subnets(
-        filters={'cidr': cidr, 'vpc_id': vpc_id})
-    if len(subnets) != 1:
-        raise AnsibleRouteTableException(
-            'Subnet with CIDR {0} has {1} matches'.format(cidr, len(subnets))
-        )
-    return subnets[0]
-
-
-def get_subnet_by_id(vpc_conn, vpc_id, subnet_id):
-    subnets = vpc_conn.get_all_subnets(filters={'subnet-id': subnet_id})
-    if len(subnets) != 1:
-        raise AnsibleRouteTableException(
-            'Subnet with ID {0} has {1} matches'.format(
-                subnet_id, len(subnets))
-        )
-    return subnets[0]
 
 
 def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
@@ -417,12 +462,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
     if subnets:
         associated_subnets = []
         try:
-            for subnet_name in subnets:
-                if ('.' in subnet_name) and ('/' in subnet_name):
-                    subnet = get_subnet_by_cidr(vpc_conn, vpc_id, subnet_name)
-                else:
-                    subnet = get_subnet_by_id(vpc_conn, vpc_id, subnet_name)
-                associated_subnets.append(subnet)
+            associated_subnets = find_subnets(vpc_conn, vpc_id, subnets)
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
                 'Unable to find subnets for route table {0}, error: {1}'
