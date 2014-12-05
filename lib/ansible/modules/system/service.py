@@ -399,7 +399,7 @@ class LinuxService(Service):
             if os.path.isfile(initscript):
                 self.svc_initscript = initscript
 
-        def check_systemd(name, initscript):
+        def check_systemd():
             # verify systemd is installed (by finding systemctl)
             if not location.get('systemctl', False):
                 return False
@@ -414,51 +414,18 @@ class LinuxService(Service):
 
             for line in f:
                 if 'systemd' in line:
-                    systemd_enabled = True
-                    break
-
-            if not systemd_enabled:
-                return False
-
-            originalname = name
-            # default to .service if the unit type is not specified
-            if name.find('.') > 0:
-                unit_name, unit_type = name.rsplit('.', 1)
-                if unit_type not in ("service", "socket", "device", "mount", "automount",
-                                     "swap", "target", "path", "timer", "snapshot"):
-                    name = "%s.service" % name
-            else:
-                name = "%s.service" % name
-
-            rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
-
-            # adjust the service name to account for template service unit files
-            index = name.find('@')
-            if index != -1:
-                template_name = name[:index+1]
-            else:
-                template_name = name
-
-            self.__systemd_unit = None
-            for line in out.splitlines():
-                if line.startswith(template_name):
-                    self.__systemd_unit = name
                     return True
-
-            # systemd also handles init scripts (and is enabled at this point)
-            if initscript:
-                self.__systemd_unit = originalname
-                return True
 
             return False
 
         # Locate a tool to enable/disable a service
-        if check_systemd(self.name, self.svc_initscript):
+        if location.get('systemctl',False) and check_systemd():
             # service is managed by systemd
-            self.enable_cmd = location['systemctl']
+            self.__systemd_unit = self.name
             self.svc_cmd = location['systemctl']
+            self.enable_cmd = location['systemctl']
 
-        elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
+        elif location.get('initctl', False) and os.path.exists("/etc/init/%s.conf" % self.name):
             # service is managed by upstart
             self.enable_cmd = location['initctl']
             # set the upstart version based on the output of 'initctl version'
@@ -627,10 +594,6 @@ class LinuxService(Service):
 
         self.changed = True
         action = None
-
-        # FIXME: we use chkconfig or systemctl
-        # to decide whether to run the command here but need something
-        # similar for upstart
 
         #
         # Upstart's initctl
@@ -831,9 +794,9 @@ class LinuxService(Service):
         (rc, out, err) = self.execute_command("%s %s %s" % args)
         if rc != 0:
             if err:
-                self.module.fail_json(msg=err)
+                self.module.fail_json(msg="Error when trying to %s %s: rc=%s %s" % (action, self.name, rc, err))
             else:
-                self.module.fail_json(msg=out)
+                self.module.fail_json(msg="Failure for %s %s: rc=%s %s" % (action, self.name, rc, out))
 
         return (rc, out, err)
 
