@@ -420,6 +420,7 @@ class LinuxService(Service):
             if not systemd_enabled:
                 return False
 
+            originalname = name
             # default to .service if the unit type is not specified
             if name.find('.') > 0:
                 unit_name, unit_type = name.rsplit('.', 1)
@@ -446,6 +447,7 @@ class LinuxService(Service):
 
             # systemd also handles init scripts (and is enabled at this point)
             if initscript:
+                self.__systemd_unit = originalname
                 return True
 
             return False
