@@ -110,7 +110,7 @@ class ChefserverInventory(object):
 	for node in chef.Search('node', '*:*'):
 	    name = node["name"]
 
-	    meta["hostvars"][name] = self.node_to_dict(name)
+	    meta["hostvars"][name] = self.node_to_dict(node)
 
 	    environment = node["chef_environment"]
 	    if groups.has_key(environment):
@@ -131,14 +131,13 @@ class ChefserverInventory(object):
 	if instance is None:
 	    return {}
 
-	node = self.get_instance(instance)
 	return {
-	    "chef_environment": node["chef_environment"],
-	    "automatic": node["automatic"],
-	    "normal": node["normal"],
-	    "default": node["default"],
-	    "override": node["override"],
-	    "run_list": node["run_list"]
+	    "chef_environment": instance["chef_environment"],
+	    "automatic": instance["automatic"],
+	    "normal": instance["normal"],
+	    "default": instance["default"],
+	    "override": instance["override"],
+	    "run_list": instance["run_list"]
 	}
 
     def json_format_dict(self, data, pretty=False):
