@@ -21,22 +21,26 @@
 DOCUMENTATION = '''
 ---
 module: haproxy
-short_description: An Ansible module to handle actions enable/disable server and set/get weight from haproxy using socket commands.
+short_description: An Ansible module to handle states enable/disable server and set weight to backend host in haproxy using socket commands.
 description:
-    - Enable/Diable Haproxy Backend Server,
-    - Get/Set weight of Haproxy Backend Server,
-      using haproxy socket commands - http://haproxy.1wt.eu
+    - The Enable Haproxy Backend Server, with
+      supports get current weight for server (default) and
+      set weight for haproxy backend server when provides.
+
+    - The Disable Haproxy Backend Server, with
+      supports get current weight for server (default) and
+      shutdown sessions while disabling backend host server.
 notes:
-    - "enable or disable or set weight commands are restricted and can only be issued on sockets configured for level 'admin', "
+    - "enable or disable commands are restricted and can only be issued on sockets configured for level 'admin', "
     - "Check - http://haproxy.1wt.eu/download/1.5/doc/configuration.txt, "
     - "Example: 'stats socket /var/run/haproxy.sock level admin'"
 options:
-  action:
+  state:
     description:
-      - Action to take.
+      - describe the desired state of the given host in lb pool.
     required: true
     default: null
-    choices: [ "enabled", "disabled", "get_weight", "set_weight" ]
+    choices: [ "enabled", "disabled" ]
   host:
     description:
       - Host (backend) to operate in Haproxy.
@@ -66,26 +70,25 @@ options:
 '''
 
 EXAMPLES = '''
-# disable backend server in 'www' backend
-- haproxy: action=disabled host={{ inventory_hostname }} backend=www
+examples:
 
-# disable backend server without backend name (applied to all)
-- haproxy: action=disabled host={{ inventory_hostname }}
+# disable server in 'www' backend pool
+- haproxy: state=disabled host={{ inventory_hostname }} backend=www
+
+# disable server without backend pool name (apply to all available backend pool)
+- haproxy: state=disabled host={{ inventory_hostname }}
 
 # disable server, provide socket file
-- haproxy: action=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
+- haproxy: state=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
 
-# disable backend server in 'www' backend and drop open sessions to it
-- haproxy: action=disabled host={{ inventory_hostname }} backend=www shutdown_sessions=true
+# disable backend server in 'www' backend pool and drop open sessions to it
+- haproxy: state=disabled host={{ inventory_hostname }} backend=www socket=/var/run/haproxy.sock shutdown_sessions=true
 
-# enable backend server in 'www' backend
-- haproxy: action=enabled host={{ inventory_hostname }} backend=www
+# enable server in 'www' backend pool
+- haproxy: state=enabled host={{ inventory_hostname }} backend=www
 
-# report a server's current weight in 'www' backend
-- haproxy: action=get_weight host={{ inventory_hostname }} backend=www
-
-# change a server's current weight in 'www' backend
-- haproxy: action=set_weight host={{ inventory_hostname }} backend=www weight=10
+# enable server in 'www' backend pool with change server(s) weight
+- haproxy: state=enabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock weight=10 backend=www
 
 author: Ravi Bhure <ravibhure@gmail.com>
 version_added: "1.9"
@@ -104,14 +107,12 @@ def main():
     ACTION_CHOICES = [
         'enabled',
         'disabled',
-        'get_weight',
-        'set_weight'
         ]
 
     # load ansible module object
     module = AnsibleModule(
         argument_spec = dict(
-            action = dict(required=True, default=None, choices=ACTION_CHOICES),
+            state = dict(required=True, default=None, choices=ACTION_CHOICES),
             host=dict(required=True, default=None),
             backend=dict(required=False, default=None),
             weight=dict(required=False, default=None),
@@ -121,7 +122,7 @@ def main():
         supports_check_mode=True,
 
     )
-    action = module.params['action']
+    state = module.params['state']
     host = module.params['host']
     backend = module.params['backend']
     weight = module.params['weight']
@@ -129,7 +130,7 @@ def main():
     shutdown_sessions = module.params['shutdown_sessions']
 
     ##################################################################
-    # Required args per action:
+    # Required args per state:
     # (enabled/disabled) = (host)
     #
     # AnsibleModule will verify most stuff, we need to verify
@@ -137,16 +138,12 @@ def main():
 
     ##################################################################
 
-    if action in ['set_weight']:
-        if not weight:
-            module.fail_json(msg='no weight specified for action, require value in number')
-
     ##################################################################
     if not socket:
         module.fail_json('unable to locate haproxy.sock')
 
     ##################################################################
-    required_one_of=[['action', 'host']]
+    required_one_of=[['state', 'host']]
 
     ansible_haproxy = HAProxy(module, **module.params)
     if module.check_mode:
@@ -173,7 +170,7 @@ class HAProxy(object):
 
     def __init__(self, module, **kwargs):
         self.module = module
-        self.action = kwargs['action']
+        self.state = kwargs['state']
         self.host = kwargs['host']
         self.backend = kwargs['backend']
         self.weight = kwargs['weight']
@@ -190,7 +187,6 @@ class HAProxy(object):
 
         buffer = ""
 
-
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
         self.client.sendall('%s\n' % cmd)
@@ -200,11 +196,11 @@ class HAProxy(object):
         while buf:
           result += buf
           buf = self.client.recv(RECV_SIZE)
-	self.command_results = result.strip()
+        self.command_results = result.strip()
         self.client.close()
         return result
 
-    def enabled(self, host, backend):
+    def enabled(self, host, backend, weight):
         """
         Enables backend server for a particular backend.
 
@@ -232,12 +228,16 @@ class HAProxy(object):
             if 'BACKEND' in line:
               result =  line.split(',')[0]
               pxname = result
-              cmd = "enable server %s/%s" % (pxname, svname)
+              cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
+              if weight:
+                cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
               self.execute(cmd)
 
         else:
             pxname = backend
-            cmd = "enable server %s/%s" % (pxname, svname)
+            cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
+            if weight:
+              cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
             self.execute(cmd)
 
     def disabled(self, host, backend, shutdown_sessions):
@@ -273,93 +273,16 @@ class HAProxy(object):
             if 'BACKEND' in line:
               result =  line.split(',')[0]
               pxname = result
-              cmd = "disable server %s/%s" % (pxname, svname)
-              if shutdown_sessions:
+              cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
+              if shutdown_sessions == 'true':
                 cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
               self.execute(cmd)
 
         else:
             pxname = backend
-            cmd = "disable server %s/%s" % (pxname, svname)
-            if shutdown_sessions:
+            cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
+            if shutdown_sessions == 'true':
               cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
-            self.execute(cmd)
-
-    def get_weight(self, host, backend):
-        """
-        Report a server's current weight.
-
-        get weight <backend>/<server>
-          Report the current weight and the initial weight of server <server> in
-          backend <backend> or an error if either doesn't exist. The initial weight is
-          the one that appears in the configuration file. Both are normally equal
-          unless the current weight has been changed. Both the backend and the server
-          may be specified either by their name or by their numeric ID, prefixed with a
-          sharp ('#').
-
-        Syntax: get weight <pxname>/<svname>
-        """
-        svname = host
-        if self.backend is None:
-          output = self.execute('show stat')
-          #sanitize and make a list of lines
-          output = output.lstrip('# ').strip()
-          output = output.split('\n')
-          result = output
-
-          for line in result:
-            if 'BACKEND' in line:
-              result =  line.split(',')[0]
-              pxname = result
-              cmd = "get weight %s/%s" % (pxname, svname)
-              self.execute(cmd)
-
-        else:
-            pxname = backend
-            cmd = "get weight %s/%s" % (pxname, svname)
-            self.execute(cmd)
-
-    def set_weight(self, host, backend, weight):
-        """
-        Change a server's current weight.
-
-        set weight <backend>/<server> <weight>[%]
-          Change a server's weight to the value passed in argument. If the value ends
-          with the '%' sign, then the new weight will be relative to the initially
-          configured weight. Relative weights are only permitted between 0 and 100%,
-          and absolute weights are permitted between 0 and 256. Servers which are part
-          of a farm running a static load-balancing algorithm have stricter limitations
-          because the weight cannot change once set. Thus for these servers, the only
-          accepted values are 0 and 100% (or 0 and the initial weight). Changes take
-          effect immediately, though certain LB algorithms require a certain amount of
-          requests to consider changes. A typical usage of this command is to disable
-          a server during an update by setting its weight to zero, then to enable it
-          again after the update by setting it back to 100%. This command is restricted
-          and can only be issued on sockets configured for level "admin". Both the
-          backend and the server may be specified either by their name or by their
-          numeric ID, prefixed with a sharp ('#').
-
-        Syntax: set weight <pxname>/<svname>
-        """
-        svname = host
-        weight = weight
-        if self.backend is None:
-          output = self.execute('show stat')
-          #sanitize and make a list of lines
-          output = output.lstrip('# ').strip()
-          output = output.split('\n')
-          result = output
-
-          for line in result:
-            if 'BACKEND' in line:
-              result =  line.split(',')[0]
-              pxname = result
-              cmd = "set weight %s/%s %s" % (pxname, svname, weight)
-              self.execute(cmd)
-
-        else:
-            pxname = backend
-            cmd = "set weight %s/%s %s" % (pxname, svname, weight)
             self.execute(cmd)
 
     def act(self):
@@ -368,22 +291,15 @@ class HAProxy(object):
         needful (at the earliest).
         """
         # toggle enable/disbale server
-        if self.action == 'enabled':
-            self.enabled(self.host, self.backend)
+        if self.state == 'enabled':
+            self.enabled(self.host, self.backend, self.weight)
 
-        elif self.action == 'disabled':
+        elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)
 
-        # toggle get/set weight
-        elif self.action == 'get_weight':
-            self.get_weight(self.host, self.backend)
-
-        elif self.action == 'set_weight':
-            self.set_weight(self.host, self.backend, self.weight)
-        # wtf?
         else:
-            self.module.fail_json(msg="unknown action specified: '%s'" % \
-                                      self.action)
+            self.module.fail_json(msg="unknown state specified: '%s'" % \
+                                      self.state)
 
         self.module.exit_json(stdout=self.command_results, changed=True)
 
