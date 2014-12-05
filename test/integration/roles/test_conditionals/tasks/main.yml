@@ -276,8 +276,9 @@
 - name: assert the task was skipped
   assert:
     that:
-    - "'skipped' in result"
-    - result.skipped
+    - "result.results|length == 1"
+    - "'skipped' in result.results[0]"
+    - "result.results[0].skipped == True"
 
 - name: test a with_items loop skipping a single item
   debug: var=item

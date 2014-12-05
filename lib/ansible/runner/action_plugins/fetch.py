@@ -129,7 +129,7 @@ class ActionModule(object):
             elif remote_checksum == '3':
                 result = dict(msg="remote file is a directory, fetch cannot work on directories", file=source, changed=False)
             elif remote_checksum == '4':
-                result = dict(msg="python isn't present on the remote system.  Unable to fetch file", file=source, changed=False)
+                result = dict(msg="python isn't present on the system.  Unable to compute checksum", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
 
         # calculate checksum for the local file

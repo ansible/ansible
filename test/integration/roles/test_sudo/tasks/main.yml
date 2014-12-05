@@ -19,6 +19,7 @@
 - assert:
     that:
       - "results.stat.exists == True"
+      - "results.stat.path|dirname|basename == '{{ sudo_test_user }}'"
 
 - name: tilde expansion honors sudo in template
   sudo: True
@@ -35,6 +36,24 @@
 - assert:
     that:
       - "results.stat.exists == True"
+      - "results.stat.path|dirname|basename == '{{ sudo_test_user }}'"
+
+- name: tilde expansion honors sudo in copy
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
+  copy:
+    src: baz.txt
+    dest: "~/baz.txt"
+
+- name: check that the path in the user's home dir was created
+  stat:
+    path: "~{{ sudo_test_user }}/baz.txt"
+  register: results
+
+- assert:
+    that:
+      - "results.stat.exists == True"
+      - "results.stat.path|dirname|basename == '{{ sudo_test_user }}'"
 
 - name: Remove test user and their home dir
   user:
