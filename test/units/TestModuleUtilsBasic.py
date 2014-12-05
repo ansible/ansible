@@ -319,8 +319,10 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         # cases.  Since the input will have at least one ":" present before
         # the password we can tell some things about the beginning and end of
         # the data, though:
-        self.assertTrue(ssh_output.startswith("{'"))
-        self.assertTrue(ssh_output.endswith("'}}}}"))
+        self.assertTrue(ssh_output.startswith("{'"),
+                        'ssh output %r did not start with %r' % (ssh_output, "{'"))
+        self.assertTrue(ssh_output.endswith("'}}}}"),
+                        'ssh output %r did not end with %r' % (ssh_output, "'}}}}"))
         try:
             self.assertIn(":********@foo.com/data',", ssh_output)
         except AttributeError:
