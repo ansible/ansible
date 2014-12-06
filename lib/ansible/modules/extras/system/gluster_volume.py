@@ -20,22 +20,22 @@
 
 
 DOCUMENTATION = """
-module: glusterfs
-short_description: manage GlusterFS
+module: gluster_volume
+short_description: Manage GlusterFs volumes
 description:
-  - Manage GlusterFS volumes
-version_added: "1.9"
+  - Create, remove, start, stop and tune GlusterFS volumes
 options:
-  action:
-    required: true
-    choices: [ 'create', 'start', 'stop', 'tune', 'rebalance', 'limit-usage' ]
-    description:
-      - Indicates the action to take. Create volume, start/stop volume, set tuning options, rebalance or set quota
   name:
     required: true
     description:
       - The volume name
-  hosts:
+  state:
+    required: true
+    choices: [ 'present', 'absent', 'started', 'stopped' ]
+    description:
+      - Mode of operation: present/absent ensure if a module exists or not.
+        started/stopped make sure it is enabled or not.
+  cluster:
     required: false
     description:
       - List of hosts to use for probing and brick setup
@@ -43,16 +43,11 @@ options:
     required: false
     description:
       - Override local hostname (for peer probing purposes)
-  glusterbin:
-    required: false
-    default: /usr/sbin/gluster
-    description:
-      - Override gluster cli path
-  replica:
+  replicas:
     required: false
     description:
       - Replica count for volume
-  stripe:
+  stripes:
     required: false
     description:
       - Stripe count for volume
@@ -65,27 +60,25 @@ options:
     required: false
     description:
       - Brick path on servers
-  start:
+  start_on_create:
+    choices: [ 'yes', 'no']
     required: false
     description:
-      - Controls whether the volume is started after creation or not
+      - Controls whether the volume is started after creation or not, defaults to yes
   rebalance:
+    choices: [ 'yes', 'no']
     required: false
     description:
-      - Controls whether the volume is rebalanced after adding bricks or not
-  option:
-    required: false
-    description:
-      - Tuning parameter name when action=tune
-  parameter:
-    required: false
-    description:
-      - Tuning parameter value when action=tune
+      - Controls whether the cluster is rebalanced after changes
   directory:
     required: false
     description:
       - Directory for limit-usage
-  value:
+  options:
+    required: false
+    description:
+      - A dictionary/hash with options/settings for the volume
+  quota:
     required: false
     description:
       - Quota value for limit-usage (be sure to use 10.0MB instead of 10MB, see quota list)
@@ -97,76 +90,31 @@ author: Taneli Leppä
 
 EXAMPLES = """
 - name: create gluster volume
-  glusterfs: action=create name=test1 brick=/bricks/brick1/g1 rebalance=yes
-  args:
-    hosts: "{{ play_hosts }}"
+  gluster_volume: state=present name=test1 brick=/bricks/brick1/g1 rebalance=yes hosts:"{{ play_hosts }}"
   run_once: true
 
 - name: tune
-  glusterfs: action=tune name=test1 option=performance.cache-size parameter=256MB
-  run_once: true
+  gluster_volume: state=present name=test1 options='{performance.cache-size: 256MB}'
 
 - name: start gluster volume
-  glusterfs: action=start name=test1
-  run_once: true
+  gluster_volume: status=started name=test1
 
 - name: limit usage
-  glusterfs: action=limit-usage name=test1 directory=/foo value=20.0MB
-  run_once: true
+  gluster_volume: state=present name=test1 directory=/foo quota=20.0MB
 
 - name: stop gluster volume
-  glusterfs: action=stop name=test1
-  run_once: true
+  gluster_volume: state=stopped name=test1
+
+- name: remove gluster volume
+  gluster_volume: state=absent name=test1
 """
 
-import os
 import shutil
 import time
 import socket
-import re
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(required=True, default=None, choices=[ 'create', 'start', 'stop', 'tune', 'rebalance', 'limit-usage' ]),
-            name=dict(required=True, default=None, aliases=['volume']),
-            hosts=dict(required=False, default=None, type='list'),
-            host=dict(required=False, default=None),
-            stripe=dict(required=False, default=None, type='int'),
-            replica=dict(required=False, default=None, type='int'),
-            transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
-            brick=dict(required=False, default=None),
-            start=dict(required=False, default='1'),
-            rebalance=dict(required=False, default='0'),
-            option=dict(required=False, default=None),
-            parameter=dict(required=False, default=None),
-            value=dict(required=False, default=None),
-            directory=dict(required=False, default=None),
-            glusterbin=dict(required=False, default='/usr/sbin/gluster'),
-            )
-        )
 
-    changed = False
-    action = module.params['action']
-    volume_name = module.params['name']
-    glusterbin = module.params['glusterbin']
-    hosts = module.params['hosts']
-    brick_path = module.params['brick']
-    stripe = module.params['stripe']
-    replica = module.params['replica']
-    transport = module.params['transport']
-    myhostname = module.params['host']
-    start_volume = module.boolean(module.params['start'])
-    rebalance = module.boolean(module.params['rebalance'])
-    if not myhostname:
-        myhostname = socket.gethostname()
-    if not os.path.exists(glusterbin):
-        module.fail_json(msg='could not find gluster commandline client at %s' % glusterbin)
-        
-    set_option = module.params['option']
-    set_parameter = module.params['parameter']
-    value = module.params['value']
-    directory = module.params['directory']
 
     def run_gluster(gargs, **kwargs):
         args = [glusterbin]
@@ -259,7 +207,7 @@ def main():
             if row[:1] == '/':
                 q = re.split('\s+', row)
                 quotas[q[0]] = q[1]
-        return quotas        
+        return quotas
 
     def wait_for_peer(host):
         for x in range(0, 4):
@@ -275,11 +223,11 @@ def main():
             module.fail_json(msg='failed to probe peer %s' % host)
         changed = True
 
-    def probe_all_peers(hosts, peers):
+    def probe_all_peers(hosts, peers, myhostname):
         for host in hosts:
             if host not in peers:
                 # dont probe ourselves
-                if myhostname != host: 
+                if myhostname != host:
                     probe(host)
 
     def create_volume(name, stripe, replica, transport, hosts, brick):
@@ -299,7 +247,7 @@ def main():
 
     def start_volume(name):
         run_gluster([ 'volume', 'start', name ])
-        
+
     def stop_volume(name):
         run_gluster_yes([ 'volume', 'stop', name ])
 
@@ -314,22 +262,75 @@ def main():
 
     def enable_quota(name):
         run_gluster([ 'volume', 'quota', name, 'enable' ])
-        
-    def set_quota(name, directory, value):
-        run_gluster([ 'volume', 'quota', name, 'limit-usage', directory, value ])
 
-    #
+    def set_quota(name, directory, value):
+            run_gluster([ 'volume', 'quota', name, 'limit-usage', directory, value ])
+
+
+    ### MAIN ###
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=True, default=None, aliases=['volume']),
+            state=dict(required=True, choices=[ 'present', 'absent', 'started', 'stopped', 'rebalanced' ]),
+            cluster=dict(required=False, default=None, type='list'),
+            host=dict(required=False, default=None),
+            stripes=dict(required=False, default=None, type='int'),
+            replicas=dict(required=False, default=None, type='int'),
+            transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
+            brick=dict(required=False, default=None),
+            start_on_create=dict(required=False, default=True, type='bool'),
+            rebalance=dict(required=False, default=False, taype='bool'),
+            options=dict(required=False, default=None, type='dict'),
+            quota=dict(required=False),
+            directory=dict(required=False, default=None),
+            )
+        )
+
+    glusterbin = module.get_bin_path('gluster', True)
+
+    changed = False
+
+    action = module.params['state']
+    volume_name = module.params['name']
+    cluster= module.params['cluster']
+    brick_path = module.params['brick']
+    stripes = module.params['stripes']
+    replicas = module.params['replicas']
+    transport = module.params['transport']
+    myhostname = module.params['host']
+    start_volume = module.boolean(module.params['start_on_create'])
+    rebalance = module.boolean(module.params['rebalance'])
+
+    if not myhostname:
+        myhostname = socket.gethostname()
+
+    options = module.params['options']
+    quota = module.params['quota']
+    directory = module.params['directory']
+
+
+    # get current state info
     peers = get_peers()
     volumes = get_volumes()
     quotas = {}
     if volume_name in volumes and volumes[volume_name]['quota'] and volumes[volume_name]['status'].lower() == 'started':
         quotas = get_quotas(volume_name, True)
-    if action == 'create':
-        probe_all_peers(hosts, peers)
-        if volume_name not in volumes:
-            create_volume(volume_name, stripe, replica, transport, hosts, brick_path)
+
+    # do the work!
+    if action == 'absent':
+        if volume_name in volumes:
+            run_gluster([ 'volume', 'delete', name ])
             changed = True
-            volumes = get_volumes()
+
+    if action == 'present':
+        probe_all_peers(cluster, peers, myhostname)
+
+        # create if it doesn't exist
+        if volume_name not in volumes:
+            create_volume(volume_name, stripes, replicas, transport, cluster, brick_path)
+            changed = True
+
         if volume_name in volumes:
             if volumes[volume_name]['status'].lower() != 'started' and start_volume:
                 start_volume(volume_name)
@@ -339,8 +340,8 @@ def main():
             new_bricks = []
             removed_bricks = []
             all_bricks = []
-            for host in hosts:
-                brick = '%s:%s' % (host, brick_path)
+            for node in cluster:
+                brick = '%s:%s' % (node, brick_path)
                 all_bricks.append(brick)
                 if brick not in volumes[volume_name]['bricks']:
                     new_bricks.append(brick)
@@ -349,55 +350,47 @@ def main():
             for brick in volumes[volume_name]['bricks']:
                 if brick not in all_bricks:
                     removed_bricks.append(brick)
-               
+
             for brick in new_bricks:
                 add_brick(volume_name, brick)
                 changed = True
 
-            if len(new_bricks) > 0 and rebalance:
-                rebalance(volume_name)
-                    
+            # handle quotas
+            if quota:
+                if not volumes[volume_name]['quota']:
+                    enable_quota(volume_name)
+                quotas = get_quotas(volume_name, False)
+                if directory not in quotas or quotas[directory] != quota:
+                    set_quota(volume_name, directory, quota)
+                    changed = True
+
+            # set options
+            for option in options.keys():
+                if option not in volumes[volume_name]['options'] or volumes[volume_name]['options'][option] != options[option]:
+                    set_volume_option(volume_name, option, options[option])
+                    changed = True
+
         else:
             module.fail_json(msg='failed to create volume %s' % volume_name)
-    if action == 'start':
-        if volume_name not in volumes:
-            module.fail_json(msg='volume not found %s' % volume_name)
+
+    if volume_name not in volumes:
+        module.fail_json(msg='volume not found %s' % volume_name)
+
+    if action == 'started':
         if volumes[volume_name]['status'].lower() != 'started':
             start_volume(volume_name)
-            volumes = get_volumes()
             changed = True
-    if action == 'rebalance':
-        if volume_name not in volumes:
-            module.fail_json(msg='volume not found %s' % volume_name)
-        rebalance(volume_name)
-        changed = True
-    if action == 'stop':
-        if volume_name not in volumes:
-            module.fail_json(msg='volume not found %s' % volume_name)
+
+    if action == 'stopped':
         if volumes[volume_name]['status'].lower() != 'stopped':
             stop_volume(volume_name)
-            volumes = get_volumes()
             changed = True
-    if action == 'tune':
-        if volume_name not in volumes:
-            module.fail_json(msg='volume not found %s' % volume_name)
-        if set_option not in volumes[volume_name]['options'] or volumes[volume_name]['options'][set_option] != set_parameter:
-            set_volume_option(volume_name, set_option, set_parameter)
-            volumes = get_volumes()
-            changed = True
-    if action == 'limit-usage':
-        if volume_name not in volumes:
-            module.fail_json(msg='volume not found %s' % volume_name)
-        if not volumes[volume_name]['quota']:
-            enable_quota(volume_name)
 
-        quotas = get_quotas(volume_name, False)
-        if directory not in quotas:
-            set_quota(volume_name, directory, value)
-            changed = True
-        elif quotas[directory] != value:
-            set_quota(volume_name, directory, value)
-            changed = True
+    if changed:
+        volumes = get_volumes()
+        if rebalance:
+            rebalance(volume_name)
+
     facts = {}
     facts['glusterfs'] = { 'peers': peers, 'volumes': volumes, 'quotas': quotas }
 
