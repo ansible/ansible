@@ -276,6 +276,8 @@ def create_autoscaling_group(connection, module):
             ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg=str(e))
+    elif vpc_zone_identifier:
+        vpc_zone_identifier = ','.join(vpc_zone_identifier)
 
     asg_tags = []
     for tag in set_tags:
@@ -555,7 +557,7 @@ def main():
             min_size=dict(type='int'),
             max_size=dict(type='int'),
             desired_capacity=dict(type='int'),
-            vpc_zone_identifier=dict(type='str'),
+            vpc_zone_identifier=dict(type='list'),
             replace_batch_size=dict(type='int', default=1),
             replace_all_instances=dict(type='bool', default=False),
             replace_instances=dict(type='list', default=[]),
