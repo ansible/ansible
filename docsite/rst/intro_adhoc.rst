@@ -230,7 +230,7 @@ checked on later. The same job ID is given to the same task on all
 hosts, so you won't lose track.  If you kick hosts and don't want
 to poll, it looks like this::
 
-    $ ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+    $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
 If you do decide you want to check on the job status later, you can::
 
