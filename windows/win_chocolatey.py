@@ -29,7 +29,7 @@ short_description: Installs packages using chocolatey
 description:
     - Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages can be found at http://chocolatey.org/packages
 options:
-  package:
+  name:
     description:
       - Name of the package to be installed
     required: true
@@ -97,22 +97,22 @@ author: Trond Hindenes, Peter Mounce
 EXAMPLES = '''
   # Install git
   win_chocolatey:
-    package: git
+    name: git
 
   # Install notepadplusplus version 6.6
   win_chocolatey:
-    package: notepadplusplus.install
+    name: notepadplusplus.install
     version: 6.6
 
   # Uninstall git
   win_chocolatey:
-    package: git
+    name: git
     state: absent
 
   # Install Application Request Routing v3 from webpi
   # Logically, this requires that you install IIS first (see win_feature)
   # To find a list of packages available via webpi source, `choco list -source webpi`
   win_chocolatey:
-    package: ARRv3
+    name: ARRv3
     source: webpi
 '''
