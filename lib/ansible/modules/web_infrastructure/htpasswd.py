@@ -46,7 +46,10 @@ options:
     choices: ["apr_md5_crypt", "des_crypt", "ldap_sha1", "plaintext"]
     default: "apr_md5_crypt"
     description:
-      - Encryption scheme to be used.
+      - Encryption scheme to be used.  As well as the four choices listed
+        here, you can also use any other hash supported by passlib, such as
+        md5_crypt and sha256_crypt, which are linux passwd hashes.  If you
+        do so the password file will not be compatible with Apache or Nginx
   state:
     required: false
     choices: [ present, absent ]
@@ -74,6 +77,8 @@ EXAMPLES = """
 - htpasswd: path=/etc/nginx/passwdfile name=janedoe password=9s36?;fyNp owner=root group=www-data mode=0640
 # Remove a user from a password file
 - htpasswd: path=/etc/apache2/passwdfile name=foobar state=absent
+# Add a user to a password file suitable for use by libpam-pwdfile
+- htpasswd: path=/etc/mail/passwords name=alex password=oedu2eGh crypt_scheme=md5_crypt
 """
 
 
@@ -82,13 +87,15 @@ import tempfile
 from distutils.version import StrictVersion
 
 try:
-    from passlib.apache import HtpasswdFile
+    from passlib.apache import HtpasswdFile, htpasswd_context
+    from passlib.context import CryptContext
     import passlib
 except ImportError:
     passlib_installed = False
 else:
     passlib_installed = True
 
+apache_hashes = ["apr_md5_crypt", "des_crypt", "ldap_sha1", "plaintext"]
 
 def create_missing_directories(dest):
     destpath = os.path.dirname(dest)
@@ -100,6 +107,10 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
     """ Ensures user is present
 
     Returns (msg, changed) """
+    if crypt_scheme in apache_hashes:
+        context = htpasswd_context
+    else:
+        context = CryptContext(schemes = [ crypt_scheme ] + apache_hashes)
     if not os.path.exists(dest):
         if not create:
             raise ValueError('Destination %s does not exist' % dest)
@@ -107,9 +118,9 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
             return ("Create %s" % dest, True)
         create_missing_directories(dest)
         if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
-            ht = HtpasswdFile(dest, new=True, default_scheme=crypt_scheme)
+            ht = HtpasswdFile(dest, new=True, default_scheme=crypt_scheme, context=context)
         else:
-            ht = HtpasswdFile(dest, autoload=False, default=crypt_scheme)
+            ht = HtpasswdFile(dest, autoload=False, default=crypt_scheme, context=context)
         if getattr(ht, 'set_password', None):
             ht.set_password(username, password)
         else:
@@ -118,9 +129,9 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         return ("Created %s and added %s" % (dest, username), True)
     else:
         if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
-            ht = HtpasswdFile(dest, new=False, default_scheme=crypt_scheme)
+            ht = HtpasswdFile(dest, new=False, default_scheme=crypt_scheme, context=context)
         else:
-            ht = HtpasswdFile(dest, default=crypt_scheme)
+            ht = HtpasswdFile(dest, default=crypt_scheme, context=context)
 
         found = None
         if getattr(ht, 'check_password', None):
