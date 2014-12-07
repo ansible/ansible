@@ -39,13 +39,13 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.package)
+If ($params.name)
 {
-    $package = $params.package
+    $package = $params.name
 }
 Else
 {
-    Fail-Json $result "missing required argument: package"
+    Fail-Json $result "missing required argument: name"
 }
 
 if(($params.logPath).length -gt 0)
