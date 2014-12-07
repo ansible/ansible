@@ -102,55 +102,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
 RECV_SIZE = 1024
-
-def main():
-    ACTION_CHOICES = [
-        'enabled',
-        'disabled',
-        ]
-
-    # load ansible module object
-    module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(required=True, default=None, choices=ACTION_CHOICES),
-            host=dict(required=True, default=None),
-            backend=dict(required=False, default=None),
-            weight=dict(required=False, default=None),
-            socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
-            shutdown_sessions=dict(required=False, default=False),
-        ),
-        supports_check_mode=True,
-
-    )
-    state = module.params['state']
-    host = module.params['host']
-    backend = module.params['backend']
-    weight = module.params['weight']
-    socket = module.params['socket']
-    shutdown_sessions = module.params['shutdown_sessions']
-
-    ##################################################################
-    # Required args per state:
-    # (enabled/disabled) = (host)
-    #
-    # AnsibleModule will verify most stuff, we need to verify
-    # 'socket' manually.
-
-    ##################################################################
-
-    ##################################################################
-    if not socket:
-        module.fail_json('unable to locate haproxy.sock')
-
-    ##################################################################
-    required_one_of=[['state', 'host']]
-
-    ansible_haproxy = HAProxy(module, **module.params)
-    if module.check_mode:
-        module.exit_json(changed=True)
-    else:
-        ansible_haproxy.act()
-    ##################################################################
+ACTION_CHOICES = ['enabled', 'disabled']
 
 ######################################################################
 class TimeoutException(Exception):
@@ -194,95 +146,70 @@ class HAProxy(object):
         buf = ''
         buf = self.client.recv(RECV_SIZE)
         while buf:
-          result += buf
-          buf = self.client.recv(RECV_SIZE)
+            result += buf
+            buf = self.client.recv(RECV_SIZE)
         self.command_results = result.strip()
         self.client.close()
         return result
 
     def enabled(self, host, backend, weight):
         """
-        Enables backend server for a particular backend.
-
-        enable server <backend>/<server>
-          If the server was previously marked as DOWN for maintenance, this marks the
-          server UP and checks are re-enabled.
-
-          Both the backend and the server may be specified either by their name or by
-          their numeric ID, prefixed with a sharp ('#').
-
-          This command is restricted and can only be issued on sockets configured for
-          level "admin".
-
-        Syntax: enable server <pxname>/<svname>
+        Enabled action, marks server to UP and checks are re-enabled,
+        also supports to get current weight for server (default) and
+        set the weight for haproxy backend server when provides.
         """
         svname = host
         if self.backend is None:
-          output = self.execute('show stat')
-          #sanitize and make a list of lines
-          output = output.lstrip('# ').strip()
-          output = output.split('\n')
-          result = output
+            output = self.execute('show stat')
+            #sanitize and make a list of lines
+            output = output.lstrip('# ').strip()
+            output = output.split('\n')
+            result = output
 
-          for line in result:
-            if 'BACKEND' in line:
-              result =  line.split(',')[0]
-              pxname = result
-              cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
-              if weight:
-                cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
-              self.execute(cmd)
+            for line in result:
+                if 'BACKEND' in line:
+                    result =  line.split(',')[0]
+                    pxname = result
+                    cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
+                    if weight:
+                        cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
+                    self.execute(cmd)
 
         else:
             pxname = backend
             cmd = "get weight %s/%s ; enable server %s/%s" % (pxname, svname, pxname, svname)
             if weight:
-              cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
+                cmd += "; set weight %s/%s %s" % (pxname, svname, weight)
             self.execute(cmd)
 
     def disabled(self, host, backend, shutdown_sessions):
         """
-        Disable backend server for a particular backend.
-
-        disable server <backend>/<server>
-          Mark the server DOWN for maintenance. In this mode, no more checks will be
-          performed on the server until it leaves maintenance.
-          If the server is tracked by other servers, those servers will be set to DOWN
-          during the maintenance.
-
-          In the statistics page, a server DOWN for maintenance will appear with a
-          "MAINT" status, its tracking servers with the "MAINT(via)" one.
-
-          Both the backend and the server may be specified either by their name or by
-          their numeric ID, prefixed with a sharp ('#').
-
-          This command is restricted and can only be issued on sockets configured for
-          level "admin".
-
-        Syntax: disable server <pxname>/<svname>
+        Disabled action, marks server to DOWN for maintenance. In this mode, no more checks will be
+        performed on the server until it leaves maintenance,
+        also it shutdown sessions while disabling backend host server.
         """
         svname = host
         if self.backend is None:
-          output = self.execute('show stat')
-          #sanitize and make a list of lines
-          output = output.lstrip('# ').strip()
-          output = output.split('\n')
-          result = output
+            output = self.execute('show stat')
+            #sanitize and make a list of lines
+            output = output.lstrip('# ').strip()
+            output = output.split('\n')
+            result = output
 
-          for line in result:
-            if 'BACKEND' in line:
-              result =  line.split(',')[0]
-              pxname = result
-              cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
-              if shutdown_sessions == 'true':
-                cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
-              self.execute(cmd)
+            for line in result:
+                if 'BACKEND' in line:
+                    result =  line.split(',')[0]
+                    pxname = result
+                    cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
+                    if shutdown_sessions:
+                        cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
+                    self.execute(cmd)
 
         else:
             pxname = backend
             cmd = "get weight %s/%s ; disable server %s/%s" % (pxname, svname, pxname, svname)
-            if shutdown_sessions == 'true':
-              cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
+            if shutdown_sessions:
+                cmd += "; shutdown sessions server %s/%s" % (pxname, svname)
             self.execute(cmd)
 
     def act(self):
@@ -290,6 +217,7 @@ class HAProxy(object):
         Figure out what you want to do from ansible, and then do the
         needful (at the earliest).
         """
+
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
@@ -302,6 +230,47 @@ class HAProxy(object):
                                       self.state)
 
         self.module.exit_json(stdout=self.command_results, changed=True)
+
+def main():
+
+    # load ansible module object
+    module = AnsibleModule(
+        argument_spec = dict(
+            state = dict(required=True, default=None, choices=ACTION_CHOICES),
+            host=dict(required=True, default=None),
+            backend=dict(required=False, default=None),
+            weight=dict(required=False, default=None),
+            socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
+            shutdown_sessions=dict(required=False, default=False),
+        ),
+
+    )
+    state = module.params['state']
+    host = module.params['host']
+    backend = module.params['backend']
+    weight = module.params['weight']
+    socket = module.params['socket']
+    shutdown_sessions = module.params['shutdown_sessions']
+
+    ##################################################################
+    # Required args per state:
+    # (enabled/disabled) = (host)
+    #
+    # AnsibleModule will verify most stuff, we need to verify
+    # 'socket' manually.
+
+    ##################################################################
+
+    ##################################################################
+    if not socket:
+        module.fail_json(msg="unable to locate haproxy socket")
+
+    ##################################################################
+    required_one_of=[['state', 'host']]
+
+    ansible_haproxy = HAProxy(module, **module.params)
+    ansible_haproxy.act()
+    ##################################################################
 
 # import module snippets
 from ansible.module_utils.basic import *
