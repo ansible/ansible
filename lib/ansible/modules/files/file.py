@@ -336,13 +336,13 @@ def main():
                     open(path, 'w').close()
                 except OSError, e:
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % str(e))
-            elif prev_state in ['file', 'directory']:
+            elif prev_state in ['file', 'directory', 'hard']:
                 try:
                     os.utime(path, None)
                 except OSError, e:
                     module.fail_json(path=path, msg='Error while touching existing target: %s' % str(e))
             else:
-                module.fail_json(msg='Cannot touch other than files and directories')
+                module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
                 module.set_fs_attributes_if_different(file_args, True)
             except SystemExit, e:
