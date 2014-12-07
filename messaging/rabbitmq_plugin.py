@@ -72,7 +72,8 @@ class RabbitMqPlugins(object):
                 bin_path = os.path.join(module.params['prefix'], 'sbin')
             else:
                 # No such path exists.
-                raise Exception("No binary folder in RabbitMQ prefix")
+                raise Exception("No binary folder in prefix %s" %
+                        module.params['prefix'])
 
             self._rabbitmq_plugins = bin_path + "/rabbitmq-plugins"
 
