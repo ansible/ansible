@@ -197,7 +197,7 @@ class ActionModule(object):
                 return ReturnData(conn=conn, result=result)
 
             if remote_checksum != '1' and not force:
-                # remote_file does not exist so continue to next iteration.
+                # remote_file exists so continue to next iteration.
                 continue
 
             if local_checksum != remote_checksum:
