@@ -34,6 +34,7 @@ class InventoryParser(object):
     """
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
+        self.filename = filename
 
         with open(filename) as fh:
             self.lines = fh.readlines()
@@ -87,7 +88,7 @@ class InventoryParser(object):
         self.groups = dict(all=all, ungrouped=ungrouped)
         active_group_name = 'ungrouped'
 
-        for line in self.lines:
+        for line_number, line in enumerate(self.lines):
             line = utils.before_comment(line).strip()
             if line.startswith("[") and line.endswith("]"):
                 active_group_name = line.replace("[","").replace("]","")
@@ -142,7 +143,13 @@ class InventoryParser(object):
                             try:
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
-                                raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
+                                msg = "Invalid ini entry in %s:%s. Line was: '%s'." \
+                                      " Expected format is 'variable=value'" % (
+                                          self.filename,
+                                          line_number,
+                                          line,
+                                      )
+                                raise errors.AnsibleError(msg)
                             host.set_variable(k, self._parse_value(v))
                     self.groups[active_group_name].add_host(host)
 
