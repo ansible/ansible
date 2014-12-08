@@ -717,7 +717,7 @@ class TestUtils(unittest.TestCase):
         # jinja2 loop blocks with lots of complexity
         _test_combo(
             # in memory of neighbors cat
-            # we preserve line breaks unless a line continuation character preceeds them
+            # we preserve line breaks unless a line continuation character precedes them
             'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip" \\\ndone\nand done',
             ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done\n', 'and', 'done']
         )
