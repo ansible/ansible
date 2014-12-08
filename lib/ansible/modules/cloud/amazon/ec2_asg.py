@@ -248,7 +248,7 @@ def get_properties(autoscaling_group):
         properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
 
-    if hasattr(autoscaling_group, "tags"):
+    if getattr(autoscaling_group, "tags", None):
         properties['tags'] = dict((t.key, t.value) for t in autoscaling_group.tags)
 
     return properties
