@@ -188,7 +188,7 @@
       - "file11_result.uid == 1235"
 
 - name: fail to create soft link to non existent file
-  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=no
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=no
   register: file12_result
   ignore_errors: true
 
@@ -198,7 +198,7 @@
       - "file12_result.failed == true"
 
 - name: force creation soft link to non existent
-  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=yes
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=yes
   register: file13_result
 
 - name: verify that link was created

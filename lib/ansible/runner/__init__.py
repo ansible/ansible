@@ -986,7 +986,7 @@ class Runner(object):
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
-            # that no variables inadvertantly (or maliciously) add params
+            # that no variables inadvertently (or maliciously) add params
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
