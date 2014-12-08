@@ -1227,10 +1227,28 @@ class Runner(object):
 
     def _remote_checksum(self, conn, tmp, path, inject):
         ''' takes a remote checksum and returns 1 if no file '''
-        if 'delegate_to' in inject and inject['delegate_to'] and inject['delegate_to'] in inject['hostvars']:
-            python_interp = inject['hostvars'][inject['delegate_to']].get('ansible_python_interpreter', 'python')
+
+        # Lookup the python interp from the host or delegate
+
+        # host == inven_host when there is no delegate
+        host = inject['inventory_hostname']
+        if 'delegate_to' in inject:
+            delegate = inject['delegate_to']
+            if delegate:
+                # host == None when the delegate is not in inventory
+                host = None
+                # delegate set, check whether the delegate has inventory vars
+                delegate = template.template(self.basedir, delegate, inject)
+                if delegate in inject['hostvars']:
+                    # host == delegate if we need to lookup the
+                    # python_interpreter from the delegate's inventory vars
+                    host = delegate
+
+        if host:
+            python_interp = inject['hostvars'][host].get('ansible_python_interpreter', 'python')
         else:
-            python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
+            python_interp = 'python'
+
         cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
