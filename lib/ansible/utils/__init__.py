@@ -1055,6 +1055,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
+    parser.add_option('--allow-empty-inventory', default=C.DEFAULT_ALLOW_EMPTY_INVENTORY, dest='allow_empty_inventory',
+        action='store_true', help='Allow an inventory file to not define any host')
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
