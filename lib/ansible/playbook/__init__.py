@@ -1,4 +1,5 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2014, Steven Richards <sbrichards@mit.edu>
 #
 # This file is part of Ansible
 #
@@ -262,13 +263,13 @@ class PlayBook(object):
         play_basedirs = []
 
         if type(playbook_data) != list:
-            raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list, got %s" % type(playbook_data))
+            raise errors.AnsibleError("%s\nparse error: playbooks must be formatted as a YAML list, got %s" % (path, type(playbook_data)))
 
         basedir = os.path.dirname(path) or '.'
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
-                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), received: %s" % play)
+                raise errors.AnsibleError("%s\nparse error: each play in a playbook must be a YAML dictionary (hash), received: %s" % (path, play))
 
             if 'include' in play:
                 # a playbook (list of plays) decided to include some other list of plays
