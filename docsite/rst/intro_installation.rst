@@ -165,6 +165,14 @@ Fedora users can install Ansible directly, though if you are using RHEL or CentO
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
+For Fedora users, the Ansible version provided by your Fedora release can be a bit behind recent releases.
+To install a more up-to-date version use the `updates-testing <http://fedoraproject.org/wiki/QA:Updates_Testing>`_ 
+Fedora repository.
+
+.. code-block:: bash
+
+    $ sudo yum install ansible --enablerepo=updates-testing
+
 You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
 
 .. code-block:: bash
