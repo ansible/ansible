@@ -479,16 +479,23 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
         # no submodules
         return changed
 
-    # Check for new submodules
     gitmodules_file = open(os.path.join(dest, '.gitmodules'), 'r')
     for line in gitmodules_file:
-        if line.strip().startswith('path'):
+        # Check for new submodules
+        if not changed and line.strip().startswith('path'):
             path = line.split('=', 1)[1].strip()
             # Check that dest/path/.git exists
             if not os.path.exists(os.path.join(dest, path, '.git')):
                 changed = True
-                break
-        ### FIXME: Add the submodule hostkeys here as well
+
+        # add the submodule repo's hostkey
+        if line.strip().startswith('url'):
+            repo = line.split('=', 1)[1].strip()
+            if module.params['ssh_opts'] is not None:
+                if not "-o StrictHostKeyChecking=no" in module.params['ssh_opts']:
+                    add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
+            else:
+                add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
 
     # Check for updates to existing modules
     if not changed:
