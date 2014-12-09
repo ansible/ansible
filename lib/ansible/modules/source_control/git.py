@@ -155,7 +155,7 @@ EXAMPLES = '''
        version=release-0.22
 
 # Example read-write git checkout from github
-- git: repo=git@github.com/mylogin/hello.git dest=/home/mylogin/hello
+- git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
 
 # Example just ensuring the repo checkout exists
 - git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
