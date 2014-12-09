@@ -58,7 +58,10 @@ be terminated.
 What is being counted is specified by the "count_tag" parameter.  The parameter "instance_tags" is used to apply tags to the newly created
 instance.
 
+    # demo_setup.yml
+
     - hosts: localhost
+      connection: local
       gather_facts: False
 
       tasks:
@@ -84,6 +87,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
     # demo_setup.yml
 
     - hosts: localhost
+      connection: local
       gather_facts: False
 
       tasks:
