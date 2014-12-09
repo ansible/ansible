@@ -688,8 +688,8 @@ def main():
             repo_updated = True
 
     # switch to version specified regardless of whether
-    # we cloned or pulled
-    if repo_updated and not bare:
+    # we got new revisions from the repository
+    if not bare:
         switch_version(git_path, module, dest, remote, version)
 
     # Deal with submodules
