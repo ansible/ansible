@@ -21,6 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: haproxy
+version_added: "1.9"
 short_description: An Ansible module to handle states enable/disable server and set weight to backend host in haproxy using socket commands.
 description:
     - The Enable Haproxy Backend Server, with
@@ -91,7 +92,6 @@ examples:
 - haproxy: state=enabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock weight=10 backend=www
 
 author: Ravi Bhure <ravibhure@gmail.com>
-version_added: "1.9"
 '''
 
 import socket
