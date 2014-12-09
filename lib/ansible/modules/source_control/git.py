@@ -103,7 +103,7 @@ options:
         choices: [ "yes", "no" ]
         version_added: "1.2"
         description:
-            - If C(no), just returns information about the repository without updating.
+            - If C(no), do not retrieve new revisions from the origin repository
     executable:
         required: false
         default: null
