@@ -329,5 +329,5 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
 
         # The overzealous-ness here may lead to us changing the algorithm in
         # the future.  We could make it consume less of the data (with the
-        # possiblity of leaving partial passwords exposed) and encourage
+        # possibility of leaving partial passwords exposed) and encourage
         # people to use no_log instead of relying on this obfuscation.

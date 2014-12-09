@@ -220,7 +220,7 @@
 - name: clean up
   file: dest=/tmp/worldwritable state=absent
 
-# test overwritting a link using "follow=yes" so that the link
+# test overwriting a link using "follow=yes" so that the link
 # is preserved and the link target is updated
 
 - name: create a test file to symlink to

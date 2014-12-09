@@ -1360,7 +1360,7 @@ class HPUX(Hardware):
                 self.facts['memtotal_mb'] = int(data) / 1024
             except AttributeError:
                 #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
-                #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
+                #adb output. Unfortunately /dev/kmem doesn't have world-read, so this only works as root.
                 if os.access("/dev/kmem", os.R_OK):
                     rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
                     if not err:

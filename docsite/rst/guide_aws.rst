@@ -58,7 +58,10 @@ be terminated.
 What is being counted is specified by the "count_tag" parameter.  The parameter "instance_tags" is used to apply tags to the newly created
 instance.
 
+    # demo_setup.yml
+
     - hosts: localhost
+      connection: local
       gather_facts: False
 
       tasks:
@@ -84,6 +87,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
     # demo_setup.yml
 
     - hosts: localhost
+      connection: local
       gather_facts: False
 
       tasks:
@@ -149,7 +153,7 @@ it will be automatically discoverable via a dynamic group like so::
      tasks:
        - ping
 
-Using this philosophy can be a great way to keep systems seperated by the function they perform.
+Using this philosophy can be a great way to keep systems separated by the function they perform.
 
 In this example, if we wanted to define variables that are automatically applied to each machine tagged with the 'class' of 'webserver', 'group_vars'
 in ansible can be used.  See :doc:`splitting_out_vars`.

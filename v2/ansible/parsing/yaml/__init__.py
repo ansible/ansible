@@ -130,12 +130,12 @@ class DataLoader():
                     show_content = False
             return (data, show_content)
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occured while trying to read the file '%s': %s" % (file_name, str(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
 
     def _handle_error(self, yaml_exc, file_name, show_content):
         '''
         Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
-        file name/position where a YAML exception occured, and raises an AnsibleParserError
+        file name/position where a YAML exception occurred, and raises an AnsibleParserError
         to display the syntax exception information.
         '''
 
