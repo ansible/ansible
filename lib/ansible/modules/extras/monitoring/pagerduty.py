@@ -131,9 +131,12 @@ EXAMPLES='''
              desc=deployment
 '''
 
-import json
 import datetime
 import base64
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 def auth_header(user, passwd, token):
     if token:
