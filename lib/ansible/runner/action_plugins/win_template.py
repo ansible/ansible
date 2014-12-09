@@ -75,10 +75,9 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-
-        if dest.endswith("\\"): # TODO: Check that this fixes the path for Windows hosts.
+        if conn.shell.path_has_trailing_slash(dest):
             base = os.path.basename(source)
-            dest = os.path.join(dest, base)
+            dest = conn.shell.join_path(dest, base)
 
         # template the source data locally & get ready to transfer
         try:

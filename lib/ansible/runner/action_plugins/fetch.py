@@ -127,13 +127,13 @@ class ActionModule(object):
             elif remote_checksum == '2':
                 result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
             elif remote_checksum == '3':
-                result = dict(failed=True, msg="remote file is a directory, fetch cannot work on directories", file=source, changed=False)
+                result = dict(msg="remote file is a directory, fetch cannot work on directories", file=source, changed=False)
             elif remote_checksum == '4':
                 result = dict(msg="python isn't present on the system.  Unable to compute checksum", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
 
         # calculate checksum for the local file
-        local_checksum = utils.md5(dest)
+        local_checksum = utils.checksum(dest)
 
         if remote_checksum != local_checksum:
             # create the containing directories, if needed
@@ -147,8 +147,7 @@ class ActionModule(object):
                 f = open(dest, 'w')
                 f.write(remote_data)
                 f.close()
-            new_checksum = utils.md5(dest)
-            # new_checksum = utils.secure_hash(dest)
+            new_checksum = utils.secure_hash(dest)
             # For backwards compatibility.  We'll return None on FIPS enabled
             # systems
             try:
