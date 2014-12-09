@@ -94,11 +94,8 @@ author: Ravi Bhure <ravibhure@gmail.com>
 version_added: "1.9"
 '''
 
-import logging
 import socket
-import re
 
-logger = logging.getLogger(__name__)
 
 DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
 RECV_SIZE = 1024
@@ -120,14 +117,15 @@ class HAProxy(object):
     http://haproxy.1wt.eu/download/1.5/doc/configuration.txt#Unix Socket commands
     """
 
-    def __init__(self, module, **kwargs):
+    def __init__(self, module):
         self.module = module
-        self.state = kwargs['state']
-        self.host = kwargs['host']
-        self.backend = kwargs['backend']
-        self.weight = kwargs['weight']
-        self.socket = kwargs['socket']
-        self.shutdown_sessions = kwargs['shutdown_sessions']
+
+        self.state = self.module.params['state']
+        self.host = self.module.params['host']
+        self.backend = self.module.params['backend']
+        self.weight = self.module.params['weight']
+        self.socket = self.module.params['socket']
+        self.shutdown_sessions = self.module.params['shutdown_sessions']
 
         self.command_results = []
 
@@ -136,8 +134,6 @@ class HAProxy(object):
         Executes a HAProxy command by sending a message to a HAProxy's local
         UNIX socket and waiting up to 'timeout' milliseconds for the response.
         """
-
-        buffer = ""
 
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
@@ -214,8 +210,7 @@ class HAProxy(object):
 
     def act(self):
         """
-        Figure out what you want to do from ansible, and then do the
-        needful (at the earliest).
+        Figure out what you want to do from ansible, and then do it.
         """
 
         # toggle enable/disbale server
@@ -226,8 +221,7 @@ class HAProxy(object):
             self.disabled(self.host, self.backend, self.shutdown_sessions)
 
         else:
-            self.module.fail_json(msg="unknown state specified: '%s'" % \
-                                      self.state)
+            self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
         self.module.exit_json(stdout=self.command_results, changed=True)
 
@@ -245,32 +239,12 @@ def main():
         ),
 
     )
-    state = module.params['state']
-    host = module.params['host']
-    backend = module.params['backend']
-    weight = module.params['weight']
-    socket = module.params['socket']
-    shutdown_sessions = module.params['shutdown_sessions']
 
-    ##################################################################
-    # Required args per state:
-    # (enabled/disabled) = (host)
-    #
-    # AnsibleModule will verify most stuff, we need to verify
-    # 'socket' manually.
-
-    ##################################################################
-
-    ##################################################################
     if not socket:
         module.fail_json(msg="unable to locate haproxy socket")
 
-    ##################################################################
-    required_one_of=[['state', 'host']]
-
     ansible_haproxy = HAProxy(module, **module.params)
     ansible_haproxy.act()
-    ##################################################################
 
 # import module snippets
 from ansible.module_utils.basic import *
