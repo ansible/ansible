@@ -50,7 +50,7 @@ options:
   state:
     description:
       - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
-        If state is absent, stack will be removed.
+        If state is "absent", stack will be removed.
     required: true
     default: null
     aliases: []
