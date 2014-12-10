@@ -161,7 +161,7 @@ This can be optionally paired with "delegate_to" to specify an individual host t
 When "run_once" is not used with "delegate_to" it will execute on the first host, as defined by inventory,
 in the group(s) of hosts targeted by the play. e.g. webservers[0] if the play targeted "hosts: webservers".
 
-This aproach is similar, although more concise and cleaner than applying a conditional to a task such as::
+This approach is similar, although more concise and cleaner than applying a conditional to a task such as::
 
         - command: /opt/application/upgrade_db.py
           when: inventory_hostname == webservers[0]
