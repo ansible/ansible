@@ -1030,7 +1030,7 @@ class Runner(object):
 
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                retries = self.module_vars.get('retries')
+                retries = template.template(self.basedir, self.module_vars.get('retries'), inject, expand_lists=False)
                 delay   = self.module_vars.get('delay')
                 for x in range(1, int(retries) + 1):
                     # template the delay, cast to float and sleep
