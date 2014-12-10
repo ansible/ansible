@@ -277,8 +277,8 @@ def privileges_unpack(priv):
     not specified in the string, as MySQL will always provide this by default.
     """
     output = {}
-    for item in priv.split('/'):
-        pieces = item.split(':')
+    for item in priv.strip().split('/'):
+        pieces = item.strip().split(':')
         if '.' in pieces[0]:
             pieces[0] = pieces[0].split('.')
             for idx, piece in enumerate(pieces):
