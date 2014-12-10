@@ -571,6 +571,7 @@ class LinuxHardware(Hardware):
 
     platform = 'Linux'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+    EXTRA_MEMORY_FACTS = ['Buffers', 'Cached', 'SwapCached']
 
     def __init__(self):
         Hardware.__init__(self)
@@ -587,6 +588,7 @@ class LinuxHardware(Hardware):
         return self.facts
 
     def get_memory_facts(self):
+        memstats = {}
         if not os.access("/proc/meminfo", os.R_OK):
             return
         for line in open("/proc/meminfo").readlines():
@@ -595,6 +597,26 @@ class LinuxHardware(Hardware):
             if key in LinuxHardware.MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
+            if key in LinuxHardware.MEMORY_FACTS or key in LinuxHardware.EXTRA_MEMORY_FACTS:
+                 val = data[1].strip().split(' ')[0]
+                 memstats[key.lower()] = long(val) / 1024
+        self.facts['memory_mb'] = {
+                     'real' : {
+                         'total': memstats['memtotal'],
+                         'used': (memstats['memtotal'] - memstats['memfree']),
+                         'free': memstats['memfree']
+                     },
+                     'nocache' : {
+                         'free': memstats['cached'] + memstats['memfree'] + memstats['buffers'],
+                         'used': memstats['memtotal'] - (memstats['cached'] + memstats['memfree'] + memstats['buffers'])
+                     },
+                     'swap' : {
+                         'total': memstats['swaptotal'],
+                         'free': memstats['swapfree'],
+                         'used': memstats['swaptotal'] - memstats['swapfree'],
+                         'cached': memstats['swapcached']
+                     }
+                 }
 
     def get_cpu_facts(self):
         i = 0
@@ -1355,7 +1377,7 @@ class HPUX(Hardware):
                 self.facts['memtotal_mb'] = int(data) / 1024
             except AttributeError:
                 #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
-                #adb output. Unfortunately /dev/kmem doesn't have world-read, so this only works as root.
+                #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
                 if os.access("/dev/kmem", os.R_OK):
                     rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
                     if not err:
@@ -1974,7 +1996,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
             if line:
                 words = line.split()
 
-		# only this condition differs from GenericBsdIfconfigNetwork
+        # only this condition differs from GenericBsdIfconfigNetwork
                 if re.match('^\w*\d*:', line):
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
@@ -2448,4 +2470,3 @@ def get_all_facts(module):
     setup_result['verbose_override'] = True
 
     return setup_result
-
