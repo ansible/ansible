@@ -145,16 +145,16 @@ options:
     required: false
     version_added: "1.6"
 notes:
-   - `rsync` must be installed on both the local and remote machine.
+   - rsync must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
    - The remote user for the dest path will always be the remote_user, not
-     the sudo_user. 
+     the sudo_user.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - To exclude files and directories from being synchronized, you may add 
      C(.rsync-filter) files to the source directory.
-     
-     
+
+
 author: Timothy Appnel
 '''
 
