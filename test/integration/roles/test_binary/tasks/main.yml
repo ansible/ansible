@@ -30,6 +30,7 @@
     path: "{{ output_dir }}/b64_latin1"
   register: b64_latin1
 
+# Tests themselves
 - name: copy with utf-8 content in a playbook
   copy:
     content: "{{ simple_accents }}\n"
@@ -43,7 +44,6 @@
 - assert:
     that:
       - 'results.stat.checksum == from_playbook.stat.checksum'
-  ignore_errors: True
 
 - name: copy with utf8 in a base64 encoded string
   copy:
@@ -58,22 +58,20 @@
 - assert:
     that:
       - 'results.stat.checksum == b64_utf8.stat.checksum'
-  ignore_errors: True
 
-#- name: copy with latin1 in a base64 encoded string
-#  copy:
-#    content: "{{ latin1_simple_accents|b64decode }}\n"
-#    dest: "{{ output_dir }}/b64_latin1.txt"
-#
-#- name: Check that what was written matches
-#  stat:
-#    path: "{{ output_dir }}/b64_latin1.txt"
-#  register: results
-#
-#- assert:
-#    that:
-#      - 'results.stat.checksum == b64_latin1.stat.checksum'
-#  ignore_errors: True
+- name: copy with latin1 in a base64 encoded string
+  copy:
+    content: "{{ latin1_simple_accents|b64decode }}\n"
+    dest: "{{ output_dir }}/b64_latin1.txt"
+
+- name: Check that what was written matches
+  stat:
+    path: "{{ output_dir }}/b64_latin1.txt"
+  register: results
+
+- assert:
+    that:
+      - 'results.stat.checksum == b64_latin1.stat.checksum'
 
 - name: Template with a unicode string from the playbook
   template:
@@ -103,21 +101,21 @@
     that:
       - 'results.stat.checksum == b64_utf8.stat.checksum'
 
-#- name: Template with latin1 in a base64 encoded string
-#  template:
-#    src: "b64_latin1_template.j2"
-#    dest: "{{ output_dir }}/b64_latin1_template.txt"
-#
-#- name: Check that what was written matches
-#  stat:
-#    path: "{{ output_dir }}/b64_latin1_template.txt"
-#  register: results
-#
-#- assert:
-#    that:
-#      - 'results.stat.checksum == b64_latin1.stat.checksum'
+- name: Template with latin1 in a base64 encoded string
+  template:
+    src: "b64_latin1_template.j2"
+    dest: "{{ output_dir }}/b64_latin1_template.txt"
+
+- name: Check that what was written matches
+  stat:
+    path: "{{ output_dir }}/b64_latin1_template.txt"
+  register: results
+
+- assert:
+    that:
+      - 'results.stat.checksum == b64_latin1.stat.checksum'
 
 # These might give garbled output but none of them should traceback
 - debug: var=simple_accents
 - debug: msg={{ utf8_simple_accents|b64decode}}
-#- debug: msg={{ latin1_simple_accents|b64decode}}
+- debug: msg={{ latin1_simple_accents|b64decode}}
