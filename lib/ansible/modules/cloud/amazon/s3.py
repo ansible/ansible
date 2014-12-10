@@ -376,7 +376,7 @@ def main():
                 if overwrite is True:
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
+                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=False)
         
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
         if sum_matches is True and overwrite is False:
