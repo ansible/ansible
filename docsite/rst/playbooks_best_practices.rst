@@ -411,7 +411,7 @@ for you.  For example, you will probably not need ``vars``,
 ``vars_files``, ``vars_prompt`` and ``--extra-vars`` all at once,
 while also using an external inventory file.
 
-If something feels complicated, it probably is, and may be a good opportunity to simply things.
+If something feels complicated, it probably is, and may be a good opportunity to simplify things.
 
 .. _version_control:
 
