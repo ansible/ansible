@@ -126,6 +126,12 @@ options:
     required: false
     default: null
     aliases: []
+  email:
+    description:
+      - Set remote API email
+    required: false
+    default: null
+    aliases: []
   hostname:
     description:
       - Set container hostname
