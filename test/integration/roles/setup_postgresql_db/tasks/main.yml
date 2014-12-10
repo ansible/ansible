@@ -70,11 +70,11 @@
   when: ansible_os_family == 'Debian'
 
 - name: Generate pt_BR locale (Red Hat)
-  command: locale-gen -f UTF-8 -i pt_BR pt_BR
+  command: localedef -f UTF-8 -i pt_BR pt_BR
   when: ansible_os_family == 'RedHat'
 
 - name: Generate es_MX locale (Red Hat)
-  command: locale-gen -f UTF-8 -i es_MX es_MX
+  command: localedef -f UTF-8 -i es_MX es_MX
   when: ansible_os_family == 'RedHat'
 
 - name: restart postgresql service
