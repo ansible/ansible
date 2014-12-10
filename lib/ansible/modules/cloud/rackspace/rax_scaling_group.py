@@ -209,8 +209,16 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
         lbs = []
         if loadbalancers:
             for lb in loadbalancers:
-                lb_id = lb.get('id')
-                port = lb.get('port')
+                try:
+                    lb_id = int(lb.get('id'))
+                except (ValueError, TypeError):
+                    module.fail_json(msg='Load balancer ID is not an integer: '
+                                         '%s' % lb.get('id'))
+                try:
+                    port = int(lb.get('port'))
+                except (ValueError, TypeError):
+                    module.fail_json(msg='Load balancer port is not an '
+                                         'integer: %s' % lb.get('port'))
                 if not lb_id or not port:
                     continue
                 lbs.append((lb_id, port))
@@ -294,7 +302,8 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             if config_drive != lc.get('config_drive'):
                 lc_args['config_drive'] = config_drive
 
-            if base64.b64encode(user_data) != lc.get('user_data'):
+            if (user_data and
+                    base64.b64encode(user_data) != lc.get('user_data')):
                 lc_args['user_data'] = user_data
 
             if lc_args:
