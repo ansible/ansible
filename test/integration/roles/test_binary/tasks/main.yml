@@ -4,6 +4,10 @@
 # Probably easier to see them all in a single block to know what we're testing.
 # When we can start testing v2 we should test that all of these work.
 
+# In v1: The following line will traceback if it's the first task in the role.
+# Does not traceback if it's the second or third etc task.
+- debug: msg="{{ utf8_simple_accents|b64decode}}"
+
 # Expected values of the written files
 - name: get checksums that we expect later files to have
   copy:
@@ -117,5 +121,5 @@
 
 # These might give garbled output but none of them should traceback
 - debug: var=simple_accents
-- debug: msg={{ utf8_simple_accents|b64decode}}
-- debug: msg={{ latin1_simple_accents|b64decode}}
+- debug: msg="{{ utf8_simple_accents|b64decode}}"
+- debug: msg="{{ latin1_simple_accents|b64decode}}"
