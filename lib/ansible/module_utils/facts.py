@@ -571,7 +571,6 @@ class LinuxHardware(Hardware):
 
     platform = 'Linux'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
-    EXTRA_MEMORY_FACTS = ['Buffers', 'Cached', 'SwapCached']
 
     def __init__(self):
         Hardware.__init__(self)
@@ -1996,7 +1995,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
             if line:
                 words = line.split()
 
-        # only this condition differs from GenericBsdIfconfigNetwork
+		# only this condition differs from GenericBsdIfconfigNetwork
                 if re.match('^\w*\d*:', line):
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
@@ -2470,3 +2469,4 @@ def get_all_facts(module):
     setup_result['verbose_override'] = True
 
     return setup_result
+
