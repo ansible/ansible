@@ -213,7 +213,7 @@ class Play(object):
                 break
 
         if role_path is None:
-            raise errors.AnsibleError("cannot find role in %s" % " or ".join(possible_paths))
+            raise errors.AnsibleError("cannot find role '%s' in %s" % ( role, " or ".join(possible_paths)))
 
         return (role_path, role_vars)
 
