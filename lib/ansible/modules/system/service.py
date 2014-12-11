@@ -994,7 +994,14 @@ class OpenBsdService(Service):
         if stderr:
             self.module.fail_json(msg=stderr)
 
-        default_flags = stdout.rstrip()
+        default_string = stdout.rstrip()
+
+        # Depending on the service the string returned from 'default' may be
+        # either a set of flags or the boolean YES/NO
+        if default_string == "YES" or default_string == "NO":
+            default_flags = ''
+        else:
+            default_flags = default_string
 
         rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'status', self.name))
 
