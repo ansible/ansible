@@ -52,17 +52,17 @@ if (Test-Path $dest -PathType Container)
 
 If (Test-Path $dest)
 {
-    $dest_md5 = Get-FileMd5 ($dest);
-    $src_md5 = Get-FileMd5 ($src);
+    $dest_checksum = Get-FileChecksum ($dest);
+    $src_checksum = Get-FileChecksum ($src);
 
-    If (! $src_md5.CompareTo($dest_md5))
+    If (! $src_checksum.CompareTo($dest_checksum))
     {
         # New-Item -Force creates subdirs for recursive copies
         New-Item -Force $dest -Type file;
         Copy-Item -Path $src -Destination $dest -Force;
     }
-    $dest_md5 = Get-FileMd5 ($dest);
-    If ( $src_md5.CompareTo($dest_md5))
+    $dest_checksum = Get-FileChecksum ($dest);
+    If ( $src_checksum.CompareTo($dest_checksum))
     {
         $result.changed = $TRUE;
     }
@@ -78,7 +78,7 @@ Else
     $result.changed = $TRUE;
 }
 
-$dest_checksum = Get-FileMd5($dest);
+$dest_checksum = Get-FileChecksum($dest);
 $result.checksum = $dest_checksum;
 
 Exit-Json $result;
