@@ -53,8 +53,9 @@ Else
 
 If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
 {
-    $hash = Get-FileMd5($path);
+    $hash = Get-FileChecksum($path);
     Set-Attr $result.stat "md5" $hash;
+    Set-Attr $result.stat "checksum" $hash;
 }
 
 Exit-Json $result;
