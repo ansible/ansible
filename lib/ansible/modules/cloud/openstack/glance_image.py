@@ -254,7 +254,7 @@ def main():
         else:
             _glance_delete_image(module, module.params, client)
 
-# this is magic, see lib/ansible/module.params['common.py
+# this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 main()
