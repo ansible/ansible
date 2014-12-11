@@ -49,7 +49,7 @@ options:
         aliases: [ "prefer-source" ]
     prefer_dist:
         description:
-            - Forces installation from package dist even for de versions ( see --prefer-dist )
+            - Forces installation from package dist even for dev versions ( see --prefer-dist )
         required: false
         default: "no"
         choices: [ "yes", "no" ]
