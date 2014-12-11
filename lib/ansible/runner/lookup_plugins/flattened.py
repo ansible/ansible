@@ -69,6 +69,7 @@ class LookupModule(object):
 
         # see if the string represents a list and convert to list if so
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+        terms = utils.resolve_nested_lookup_plugin_terms(terms, self.basedir, inject)
 
         if not isinstance(terms, list):
             raise errors.AnsibleError("with_flattened expects a list")
