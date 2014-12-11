@@ -156,10 +156,10 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'DELETE', 'INDEX', 'INSERT', 'SELECT', 'UPDATE',
                          'CREATE TEMPORARY TABLES', 'TRIGGER', 'CREATE VIEW',
                          'SHOW VIEW', 'ALTER ROUTINE', 'CREATE ROUTINE',
-                         'EXECUTE', 'FILE', 'CREATE USER', 'PROCESS',
-                         'RELOAD', 'REPLICATION CLIENT', 'REPLICATION SLAVE',
-                         'SHOW DATABASES', 'SHUTDOWN', 'SUPER', 'ALL',
-                         'ALL PRIVILEGES', 'USAGE',))
+                         'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
+                         'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
+                         'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE',))
 
 class InvalidPrivsError(Exception):
     pass
