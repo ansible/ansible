@@ -571,6 +571,8 @@ class LinuxHardware(Hardware):
 
     platform = 'Linux'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+    EXTRA_MEMORY_FACTS = ['Buffers', 'Cached', 'SwapCached']
+
 
     def __init__(self):
         Hardware.__init__(self)
@@ -580,6 +582,7 @@ class LinuxHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
+        self.get_memory_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
