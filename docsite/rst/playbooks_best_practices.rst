@@ -77,7 +77,7 @@ Use Dynamic Inventory With Clouds
 
 If you are using a cloud provider, you should not be managing your inventory in a static file.  See :doc:`intro_dynamic_inventory`. 
 
-This does not just apply to clouds -- If you have another system maintaing a canonical list of systems 
+This does not just apply to clouds -- If you have another system maintaining a canonical list of systems
 in your infrastructure, usage of dynamic inventory is a great idea in general.
 
 .. _stage_vs_prod:
