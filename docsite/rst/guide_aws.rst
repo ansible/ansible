@@ -56,7 +56,7 @@ In the example below, the "exact_count" of instances is set to 5.  This means if
 be terminated.
 
 What is being counted is specified by the "count_tag" parameter.  The parameter "instance_tags" is used to apply tags to the newly created
-instance.
+instance.::
 
     # demo_setup.yml
 
@@ -82,7 +82,7 @@ instance.
 
 The data about what instances are created is being saved by the "register" keyword in the variable named "ec2".
 
-From this, we'll use the add_host module to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task::
+From this, we'll use the add_host module to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task.::
 
     # demo_setup.yml
 
