@@ -93,6 +93,8 @@ def lookup(name, *args, **kwargs):
             ran = instance.run(*args, inject=tvars, **kwargs)
         except errors.AnsibleError:
             raise
+        except jinja2.exceptions.UndefinedError, e:
+            raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
         except Exception, e:
             raise errors.AnsibleError('Unexpected error in during lookup: %s' % e)
         if ran:
