@@ -74,7 +74,7 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        vvv("EXEC COMMAND %s" % cmd)
+        vvv("EXEC COMMAND %s" % cmd, runner=self.runner)
 
         if (self.runner.sudo and sudoable) or (self.runner.su and su):
             raise errors.AnsibleError(
@@ -102,7 +102,7 @@ class Connection(object):
     def put_file(self, in_path, out_path):
 
         ''' transfer a file from local to remote '''
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
 
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -123,7 +123,7 @@ class Connection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
 
         data = dict(mode='fetch', in_path=in_path)
         data = utils.jsonify(data)

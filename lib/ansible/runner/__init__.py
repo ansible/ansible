@@ -1042,7 +1042,7 @@ class Runner(object):
                         tmp = self._make_tmp_path(conn)
                     result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
-                    vv("Result from run %i is: %s" % (x, result.result))
+                    vv("Result from run %i is: %s" % (x, result.result), runner=self)
                     inject[self.module_vars.get('register')] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):

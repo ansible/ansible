@@ -142,7 +142,7 @@ class Connection(object):
         if not HAVE_PARAMIKO:
             raise errors.AnsibleError("paramiko is not installed")
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host, runner=self.runner)
 
         ssh = paramiko.SSHClient()
 
@@ -212,7 +212,7 @@ class Connection(object):
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
                 quoted_command = cmd
-            vvv("EXEC %s" % quoted_command, host=self.host)
+            vvv("EXEC %s" % quoted_command, host=self.host, runner=self.runner)
             chan.exec_command(quoted_command)
 
         else:
@@ -229,7 +229,7 @@ class Connection(object):
             elif self.runner.su or su:
                 shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
 
-            vvv("EXEC %s" % shcmd, host=self.host)
+            vvv("EXEC %s" % shcmd, host=self.host, runner=self.runner)
             sudo_output = ''
 
             try:
@@ -277,7 +277,7 @@ class Connection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
 
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
 
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -304,7 +304,7 @@ class Connection(object):
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
 
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
 
         try:
             self.sftp = self._connect_sftp()

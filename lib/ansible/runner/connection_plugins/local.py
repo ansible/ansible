@@ -60,7 +60,7 @@ class Connection(object):
             local_cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
         executable = executable.split()[0] if executable else None
 
-        vvv("EXEC %s" % (local_cmd), host=self.host)
+        vvv("EXEC %s" % (local_cmd), host=self.host, runner=self.runner)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir, executable=executable,
                              stdin=subprocess.PIPE,
@@ -97,7 +97,7 @@ class Connection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
@@ -110,7 +110,7 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         ''' fetch a file from local to local -- for copatibility '''
         self.put_file(in_path, out_path)
 

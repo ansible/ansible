@@ -56,7 +56,7 @@ class Connection(object):
     def connect(self, port=None):
         ''' connect to the chroot; nothing to do here '''
 
-        vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
+        vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot, runner=self.runner)
 
         return self
 
@@ -76,7 +76,7 @@ class Connection(object):
         else:
             local_cmd = '%s "%s" %s' % (self.chroot_cmd, self.chroot, cmd)
 
-        vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        vvv("EXEC %s" % (local_cmd), host=self.chroot, runner=self.runner)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
@@ -93,7 +93,7 @@ class Connection(object):
         normpath = os.path.normpath(out_path)
         out_path = os.path.join(self.chroot, normpath[1:])
 
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot, runner=self.runner)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
@@ -113,7 +113,7 @@ class Connection(object):
         normpath = os.path.normpath(in_path)
         in_path = os.path.join(self.chroot, normpath[1:])
 
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot, runner=self.runner)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:

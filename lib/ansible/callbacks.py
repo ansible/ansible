@@ -176,22 +176,29 @@ def call_callback_module(method_name, *args, **kwargs):
             if method is not None:
                 method(*args, **kwargs)
 
-def vv(msg, host=None):
-    return verbose(msg, host=host, caplevel=1)
+def vv(msg, host=None, runner=None):
+    return verbose(msg, host=host, caplevel=1, runner=runner)
 
-def vvv(msg, host=None):
-    return verbose(msg, host=host, caplevel=2)
+def vvv(msg, host=None, runner=None):
+    return verbose(msg, host=host, caplevel=2, runner=runner)
 
-def vvvv(msg, host=None):
-    return verbose(msg, host=host, caplevel=3)
+def vvvv(msg, host=None, runner=None):
+    return verbose(msg, host=host, caplevel=3, runner=runner)
 
-def verbose(msg, host=None, caplevel=2):
+def verbose(msg, host=None, caplevel=2, runner=None):
     msg = utils.sanitize_output(msg)
+    if runner:
+        callback = runner.callbacks.on_verbose_message
+    else:
+        callback = lambda msg, level: None
+
     if utils.VERBOSITY > caplevel:
         if host is None:
             display(msg, color='blue')
+            callback(msg, caplevel)
         else:
             display("<%s> %s" % (host, msg), color='blue')
+            callback("<%s> %s" % (host, msg), caplevel)
 
 class AggregateStats(object):
     ''' holds stats about per-host activity during playbook runs '''
@@ -364,6 +371,9 @@ class DefaultRunnerCallbacks(object):
 
     def on_file_diff(self, host, diff):
         call_callback_module('runner_on_file_diff', host, diff)
+
+    def on_verbose_message(self, host, msg, caplevel):
+        call_callback_module('runner_on_verbose_message', host, msg, caplevel)
 
 ########################################################################
 

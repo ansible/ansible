@@ -59,6 +59,9 @@ class CallbackModule(object):
     def runner_on_async_failed(self, host, res, jid):
         pass
 
+    def runner_on_verbose_message(self, host, msg, caplevel):
+        pass
+
     def playbook_on_start(self):
         pass
 

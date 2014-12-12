@@ -50,7 +50,7 @@ class ActionModule(object):
 
         # Parse out any hostname:port patterns
         new_name = args.get('name', args.get('hostname', None))
-        vv("creating host via 'add_host': hostname=%s" % new_name)
+        vv("creating host via 'add_host': hostname=%s" % new_name, runner=self.runner)
 
         if ":" in new_name:
             new_name, new_port = new_name.split(":")
@@ -93,7 +93,7 @@ class ActionModule(object):
                         if new_host.name not in inventory._groups_list[group_name]:
                             inventory._groups_list[group_name].append(new_host.name)
 
-                vv("added host to group via add_host module: %s" % group_name)
+                vv("added host to group via add_host module: %s" % group_name, runner=self.runner)
             result['new_groups'] = groupnames.split(",")
             
         result['new_host'] = new_name
