@@ -326,6 +326,8 @@ EXAMPLES = '''
 HAS_DOCKER_PY = True
 
 import sys
+import json
+import re
 from urlparse import urlparse
 try:
     import docker.client
@@ -635,6 +637,18 @@ class DockerManager(object):
 
         return False
 
+    def get_inspect_image(self):
+        image, tag = get_split_image_tag(self.module.params.get('image'))
+        if tag is None:
+            tag = 'latest'
+        resource = '%s:%s' % (image, tag)
+
+        matching_image = None
+        for image in self.client.images(name=image):
+            if resource in image.get('RepoTags', []):
+                matching_image = image
+        return matching_image
+
     def get_inspect_containers(self, containers):
         inspect = []
         for i in containers:
@@ -687,6 +701,41 @@ class DockerManager(object):
 
         return running
 
+    def pull_image(self):
+        extra_params = {}
+        if self.module.params.get('insecure_registry'):
+            if self.ensure_capability('insecure_registry', fail=False):
+                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
+
+        resource = self.module.params.get('image')
+        image, tag = get_split_image_tag(resource)
+        if self.module.params.get('username'):
+            try:
+                self.client.login(
+                    self.module.params.get('username'),
+                    password=self.module.params.get('password'),
+                    email=self.module.params.get('email'),
+                    registry=self.module.params.get('registry')
+                )
+            except:
+                self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
+        try:
+            last = None
+            for line in self.client.pull(image, tag=tag, stream=True, **extra_params):
+                last = line
+            status = json.loads(last).get('status', '')
+            if status.startswith('Status: Image is up to date for'):
+                # Image is already up to date. Don't increment the counter.
+                pass
+            elif status.startswith('Status: Downloaded newer image for'):
+                # Image was updated. Increment the pull counter.
+                self.increment_counter('pull')
+            else:
+                # Unrecognized status string.
+                self.module.fail_json(msg="Unrecognized status from pull", status=status)
+        except:
+            self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
+
     def create_containers(self, count=1):
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
@@ -708,11 +757,6 @@ class DockerManager(object):
         if params['volumes_from'] is not None:
             self.ensure_capability('volumes_from')
 
-        extra_params = {}
-        if self.module.params.get('insecure_registry'):
-            if self.ensure_capability('insecure_registry', fail=False):
-                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
-
         def do_create(count, params):
             results = []
             for _ in range(count):
@@ -725,23 +769,7 @@ class DockerManager(object):
         try:
             containers = do_create(count, params)
         except:
-            resource = self.module.params.get('image')
-            image, tag = get_split_image_tag(resource)
-            if self.module.params.get('username'):
-                try:
-                    self.client.login(
-                        self.module.params.get('username'),
-                        password=self.module.params.get('password'),
-                        email=self.module.params.get('email'),
-                        registry=self.module.params.get('registry')
-                    )
-                except:
-                    self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
-            try:
-                self.client.pull(image, tag=tag, **extra_params)
-            except:
-                self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
-            self.increment_counter('pull')
+            self.pull_image()
             containers = do_create(count, params)
 
         return containers
@@ -807,6 +835,7 @@ def main():
         argument_spec = dict(
             count           = dict(default=1),
             image           = dict(required=True),
+            pull            = dict(required=False, default='missing', choices=['missing', 'always']),
             command         = dict(required=False, default=None),
             expose          = dict(required=False, default=None, type='list'),
             ports           = dict(required=False, default=None, type='list'),
@@ -849,11 +878,24 @@ def main():
         count = int(module.params.get('count'))
         name = module.params.get('name')
         image = module.params.get('image')
+        pull = module.params.get('pull')
 
         if count < 0:
             module.fail_json(msg="Count must be greater than zero")
         if count > 1 and name:
             module.fail_json(msg="Count and name must not be used together")
+
+        # Explicitly pull new container images, if requested.
+        # Do this before noticing running and deployed containers so that the image names will differ
+        # if a newer image has been pulled.
+        if pull == "always":
+            manager.pull_image()
+
+        # Find the ID of the requested image and tag, if available.
+        image_id = None
+        inspected_image = manager.get_inspect_image()
+        if inspected_image:
+            image_id = inspected_image.get('Id')
 
         running_containers = manager.get_running_containers()
         running_count = len(running_containers)
@@ -877,7 +919,7 @@ def main():
 
                 # the named container is running, but with a
                 # different image or tag, so we stop it first
-                if existing_container and existing_container.get('Config', dict()).get('Image') != image:
+                if existing_container and (image_id is None or existing_container.get('Image') != image_id):
                     manager.stop_containers([existing_container])
                     manager.remove_containers([existing_container])
                     running_containers = manager.get_running_containers()
