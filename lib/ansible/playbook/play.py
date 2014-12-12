@@ -726,6 +726,12 @@ class Play(object):
                 salt_size = var.get("salt_size", None)
                 salt = var.get("salt", None)
 
+                if prompt != vname:
+                    prompt = template(self.playbook.basedir, prompt, vars)
+
+                if default:
+                    default = template(self.playbook.basedir, default, vars)
+
                 if vname not in self.playbook.extra_vars:
                     vars[vname] = self.playbook.callbacks.on_vars_prompt(
                                      vname, private, prompt, encrypt, confirm, salt_size, salt, default
