@@ -319,11 +319,12 @@ def handle_create(module, gs, bucket, obj):
         else:
             module.exit_json(msg="Bucket created successfully", changed=create_bucket(module, gs, bucket))
     if bucket and obj:
+        if obj.endswith('/'):
+            dirobj = obj
+        else:
+            dirobj = obj + "/"
+
         if bucket_check(module, gs, bucket):
-            if obj.endswith('/'):
-                dirobj = obj
-            else:
-                dirobj = obj + "/"
             if key_check(module, gs, bucket, dirobj):
                 module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
             else:      
