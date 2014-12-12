@@ -447,21 +447,23 @@ class User(object):
 
     def group_exists(self,group):
         try:
-            if group.isdigit():
-                if grp.getgrgid(int(group)):
-                    return True
-            else:
-                if grp.getgrnam(group):
-                    return True
-        except KeyError:
-            return False
+            # Try group as a gid first
+            grp.getgrgid(int(group))
+            return True
+        except (ValueError, KeyError):
+            try:
+                grp.getgrnam(group)
+                return True
+            except KeyError:
+                return False
 
-    def group_info(self,group):
+    def group_info(self, group):
         if not self.group_exists(group):
             return False
-        if group.isdigit():
-            return list(grp.getgrgid(group))
-        else:
+        try:
+            # Try group as a gid first
+            return list(grp.getgrgid(int(group)))
+        except (ValueError, KeyError):
             return list(grp.getgrnam(group))
 
     def get_groups_set(self, remove_existing=True):
