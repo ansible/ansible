@@ -211,7 +211,11 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
         elif self.args.host:     json_data = self.load_droplet_variables_for_host()
         else:    # '--list' this is last to make it default
-                                 json_data = self.inventory
+                                 json_data = {}
+                                 header = self.meta_header(self.data['droplets'])
+                                 json_data["_meta"] = { "hostvars": header }
+                                 for k in self.inventory:
+                                     json_data[k] = self.inventory[k]
 
         if self.args.pretty:
             print json.dumps(json_data, sort_keys=True, indent=2)
@@ -409,6 +413,15 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             info['do_distro'] = self.index['image_to_distro'].get(droplet['image_id'])
 
         return info
+
+
+    def meta_header(self, drlist):
+        # generate the "_meta" header for new style inventory list
+        header = {}
+        for d in drlist:
+            ip = d['ip_address']
+            header[ip] = d
+        return header
 
 
 
