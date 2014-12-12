@@ -325,11 +325,15 @@ class Facts(object):
                             if 'suse' in data.lower():
                                 if path == '/etc/os-release':
                                     release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+                                    distdata = get_file_content(path).split('\n')[0]
+                                    self.facts['distribution'] = distdata.split('=')[1]
                                     if release:
                                         self.facts['distribution_release'] = release.groups()[0]
                                         break
                                 elif path == '/etc/SuSE-release':
                                     data = data.splitlines()
+                                    distdata = get_file_content(path).split('\n')[0]
+                                    self.facts['distribution'] = distdata.split()[0]
                                     for line in data:
                                         release = re.search('CODENAME *= *([^\n]+)', line)
                                         if release:
