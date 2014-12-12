@@ -79,7 +79,7 @@ options:
     aliases: []
   delete_snapshot:
     description:
-      - Whether or not to deleted an AMI while deregistering it.
+      - Whether or not to delete an AMI while deregistering it.
     required: false
     default: null
     aliases: []
