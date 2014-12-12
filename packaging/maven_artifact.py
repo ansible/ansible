@@ -30,7 +30,7 @@ import base64
 
 DOCUMENTATION = '''
 ---
-module: download_artifact
+module: maven_artifact
 short_description: Downloads an Artifact from a Maven Repository
 version_added: "historical"
 description:
@@ -97,20 +97,20 @@ options:
 
 EXAMPLES = '''
 # Download the latest version of the commons-collections artifact from Maven Central
-- download_artifact: group_id=org.apache.commons artifact_id=commons-collections target=/tmp/commons-collections-latest.jar
+- maven_artifact: group_id=org.apache.commons artifact_id=commons-collections target=/tmp/commons-collections-latest.jar
 
 # Download Apache Commons-Collections 3.2 from Maven Central
-- download_artifact: group_id=org.apache.commons artifact_id=commons-collections version=3.2 target=/tmp/commons-collections-3.2.jar
+- maven_artifact: group_id=org.apache.commons artifact_id=commons-collections version=3.2 target=/tmp/commons-collections-3.2.jar
 
 # Download an artifact from a private repository requiring authentication
-- download_artifact: group_id=com.company artifact_id=library-name repository_url=https://repo.company.com/maven username=user password=pass target=/tmp/library-name-latest.jar
+- maven_artifact: group_id=com.company artifact_id=library-name repository_url=https://repo.company.com/maven username=user password=pass target=/tmp/library-name-latest.jar
 
 # Download a WAR File to the Tomcat webapps directory to be deployed
-- download_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven target=/var/lib/tomcat7/webapps/web-app.war
+- maven_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven target=/var/lib/tomcat7/webapps/web-app.war
 '''
 
 class Artifact(object):
-    def __init__(self, group_id, artifact_id, version, classifier=None, extension=jar):
+    def __init__(self, group_id, artifact_id, version, classifier=None, extension='jar'):
         if not group_id:
             raise ValueError("group_id must be set")
         if not artifact_id:
