@@ -93,7 +93,7 @@ def main(args):
         help="run handlers even if a task fails")
     parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
         help="clear the fact cache")
-
+    parser.add_option('-r', '--retry-file', dest='retry_file', help="retry filename for failed hosts")
     options, args = parser.parse_args(args)
 
     if len(args) == 0:
@@ -198,7 +198,8 @@ def main(args):
             su_pass=su_pass,
             su_user=options.su_user,
             vault_password=vault_pass,
-            force_handlers=options.force_handlers
+            force_handlers=options.force_handlers,
+            retry_file=options.retry_file
         )
 
         if options.flush_cache:
