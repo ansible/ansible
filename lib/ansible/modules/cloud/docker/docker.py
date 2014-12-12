@@ -27,335 +27,300 @@ module: docker
 version_added: "1.4"
 short_description: manage docker containers
 description:
-     - Manage the life cycle of docker containers.
+- Manage the life cycle of docker containers.
 options:
   count:
     description:
-      - Set number of containers to run
-    required: False
+    - Number of matching containers that should be in the desired state.
     default: 1
-    aliases: []
   image:
     description:
-       - Set container image to use
+    - Container image used to match and launch containers.
     required: true
-    default: null
-    aliases: []
+  pull:
+    description:
+    - Control when container images are updated from the C(docker_url) registry.
+    - If "missing," images will be pulled only when missing from the host; if
+    - '"always," the registry will be checked for a newer version of the image'
+    - each time the task executes.
+    default: missing
+    choices: [ "missing", "always" ]
+    version_added: "1.9"
   command:
     description:
-       - Set command to run in a container on startup
-    required: false
+    - Command used to match and launch containers.
     default: null
-    aliases: []
   name:
     description:
-       - Set name for container (used to find single container or to provide links)
-    required: false
+    - Name used to match and uniquely name launched containers. Explicit names
+    - are used to uniquely identify a single container or to link among
+    - containers. Mutually exclusive with a "count" other than "1".
     default: null
-    aliases: []
     version_added: "1.5"
   ports:
     description:
-      - Set private to public port mapping specification using docker CLI-style syntax [([<host_interface>:[host_port]])|(<host_port>):]<container_port>[/udp]
-    required: false
+     - List containing private to public port mapping specification. Use docker
+     - 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000) where'
+     - 8000 is a container port, 9000 is a host port, and 0.0.0.0 is a host
+     - interface.
     default: null
-    aliases: []
     version_added: "1.5"
   expose:
     description:
-      - Set container ports to expose for port mappings or links. (If the port is already exposed using EXPOSE in a Dockerfile, you don't need to expose it again.)
-    required: false
+    - List of additional container ports to expose for port mappings or links.
+    - If the port is already exposed using EXPOSE in a Dockerfile, you don't
+    - need to expose it again.
     default: null
-    aliases: []
     version_added: "1.5"
   publish_all_ports:
     description:
-      - Publish all exposed ports to the host interfaces
-    required: false
+    - Publish all exposed ports to the host interfaces.
     default: false
-    aliases: []
     version_added: "1.5"
   volumes:
     description:
-      - Set volume(s) to mount on the container
+    - List of volumes to mount within the container using docker CLI-style
+    - 'syntax: C(/host:/container[:mode]) where "mode" may be "rw" or "ro".'
     required: false
     default: null
-    aliases: []
   volumes_from:
     description:
-      - Set shared volume(s) from another container
-    required: false
+    - List of names of containers to mount volumes from.
     default: null
-    aliases: []
   links:
     description:
-      - Link container(s) to other container(s) (e.g. links=redis,postgresql:db)
-    required: false
+    - List of other containers to link within this container with an optional
+    - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
-    aliases: []
     version_added: "1.5"
   memory_limit:
     description:
-      - Set RAM allocated to container. It will be passed as a number of bytes. For example 1048576 = 1Gb
+    - RAM allocated to the container as a number of bytes or as a human-readable
+    - string like "512MB". Leave as "0" to specify no limit.
     required: false
     default: null
     aliases: []
     default: 256MB
   docker_url:
     description:
-      - URL of docker host to issue commands to
-    required: false
-    default: unix://var/run/docker.sock
-    aliases: []
+    - URL of the host running the docker daemon. This will default to the env
+    - var DOCKER_HOST if unspecified.
+    default: ${DOCKER_HOST} or unix://var/run/docker.sock
+  docker_tls_cert:
+    description:
+    - Path to a PEM-encoded client certificate to secure the Docker connection.
+    default: ${DOCKER_CERT_PATH}/cert.pem
+  docker_tls_key:
+    description:
+    - Path to a PEM-encoded client key to secure the Docker connection.
+    default: ${DOCKER_CERT_PATH}/key.pem
+  docker_tls_cacert:
+    description:
+    - Path to a PEM-encoded certificate authority to secure the Docker connection.
+    default: ${DOCKER_CERT_PATH}/ca.pem
   docker_api_version:
     description:
-      - Remote API version to use. This defaults to the current default as specified by docker-py.
-    required: false
+    - Remote API version to use. This defaults to the current default as
+    - specified by docker-py.
     default: docker-py default remote API version
-    aliases: []
     version_added: "1.8"
   username:
     description:
-      - Set remote API username
-    required: false
+    - Remote API username.
     default: null
-    aliases: []
   password:
     description:
-      - Set remote API password
-    required: false
+    - Remote API password.
     default: null
-    aliases: []
   email:
     description:
-      - Set remote API email
-    required: false
+    - Remote API email.
     default: null
-    aliases: []
   hostname:
     description:
-      - Set container hostname
-    required: false
+    - Container hostname.
     default: null
-    aliases: []
   domainname:
     description:
-      - Set container domain name
-    required: false
+    - Container domain name.
     default: null
-    aliases: []
   env:
     description:
-      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
-    required: false
+    - Pass a dict of environment variables to the container.
     default: null
-    aliases: []
   dns:
     description:
-      - Set custom DNS servers for the container
+    - List of custom DNS servers for the container.
     required: false
     default: null
-    aliases: []
   detach:
     description:
-      - Enable detached mode on start up, leaves container running in background
-    required: false
+    - Enable detached mode to leave the container running in background.
     default: true
-    aliases: []
   state:
     description:
-      - Set the state of the container
+    - Assert the container's desired state. "present" only asserts that the
+    - matching containers exist. "started" asserts that the matching containers
+    - both exist and are running, but takes no action if any configuration has
+    - changed. "reloaded" asserts that all matching containers are running and
+    - restarts any that have any images or configuration out of date. "restarted"
+    - unconditionally restarts (or starts) the matching containers. "stopped" and
+    - '"killed" stop and kill all matching containers. "absent" stops and then'
+    - removes any matching containers.
     required: false
     default: present
-    choices: [ "present", "running", "stopped", "absent", "killed", "restarted" ]
-    aliases: []
+    choices:
+    - present
+    - started
+    - reloaded
+    - restarted
+    - killed
+    - absent
   privileged:
     description:
-      - Set whether the container should run in privileged mode
-    required: false
+    - Whether the container should run in privileged mode or not.
     default: false
-    aliases: []
   lxc_conf:
     description:
-      - LXC config parameters,  e.g. lxc.aa_profile:unconfined
-    required: false
-    default:
-    aliases: []
-  name:
-    description:
-      - Set the name of the container (cannot use with count)
-    required: false
+    - LXC configuration parameters, such as C(lxc.aa_profile:unconfined).
     default: null
-    aliases: []
-    version_added: "1.5"
   stdin_open:
     description:
-      - Keep stdin open
-    required: false
+    - Keep stdin open after a container is launched.
     default: false
-    aliases: []
     version_added: "1.6"
   tty:
     description:
-      - Allocate a pseudo-tty
-    required: false
+    - Allocate a pseudo-tty within the container.
     default: false
-    aliases: []
     version_added: "1.6"
   net:
     description:
-      - Set Network mode for the container (bridge, none, container:<name|id>, host). Requires docker >= 0.11.
-    required: false
+    - 'Network mode for the launched container: bridge, none, container:<name|id>'
+    - or host. Requires docker >= 0.11.
     default: false
-    aliases: []
     version_added: "1.8"
   registry:
     description:
-      - The remote registry URL to use for pulling images.
-    required: false
-    default: ''
+    - Remote registry URL to pull images from.
+    default: DockerHub
     aliases: []
     version_added: "1.8"
   restart_policy:
     description:
-      - Set the container restart policy
-    required: false
-    default: false
-    aliases: []
+    - Container restart policy.
+    choices: ["no", "on-failure", "always"]
+    default: null
     version_added: "1.9"
   restart_policy_retry:
     description:
-      - Set the retry limit for container restart policy
-    required: false
-    default: false
-    aliases: []
+    - Maximum number of times to restart a container. Leave as "0" for unlimited
+    - retries.
+    default: 0
     version_added: "1.9"
   insecure_registry:
     description:
-      - Use insecure private registry by HTTP instead of HTTPS (needed for docker-py >= 0.5.0).
-    required: false
+    - Use insecure private registry by HTTP instead of HTTPS. Needed for
+    - docker-py >= 0.5.0.
     default: false
-    aliases: []
     version_added: "1.9"
 
-author: Cove Schneider, Joshua Conner, Pavel Antonov
+author: Cove Schneider, Joshua Conner, Pavel Antonov, Ash Wilson
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
 
 EXAMPLES = '''
-Start one docker container running tomcat in each host of the web group and bind tomcat's listening port to 8080
-on the host:
+# Containers are matched either by name (if provided) or by an exact match of
+# the image they were launched with and the command they're running. The module
+# can accept either a name to target a container uniquely, or a count to operate
+# on multiple containers at once when it makes sense to do so.
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080
+# Ensure that a data container with the name "mydata" exists. If no container
+# by this name exists, it will be created, but not started.
 
-The tomcat server's port is NAT'ed to a dynamic port on the host, but you can determine which port the server was
-mapped to using docker_containers:
+- name: data container
+  docker:
+    name: mydata
+    image: busybox
+    state: present
+    volumes:
+    - /data
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080 count=5
-  - name: Display IP address and port mappings for containers
-    debug: msg={{inventory_hostname}}:{{item['HostConfig']['PortBindings']['8080/tcp'][0]['HostPort']}}
-    with_items: docker_containers
+# Ensure that a Redis server is running, using the volume from the data
+# container. Expose the default Redis port.
 
-Just as in the previous example, but iterates over the list of docker containers with a sequence:
+- name: redis container
+  docker:
+    name: myredis
+    image: redis
+    command: redis-server --appendonly yes
+    state: started
+    expose:
+    - 6379
+    volumes_from:
+    - mydata
 
-- hosts: web
-  sudo: yes
-  vars:
-    start_containers_count: 5
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080 count={{start_containers_count}}
-  - name: Display IP address and port mappings for containers
-    debug: msg="{{inventory_hostname}}:{{docker_containers[{{item}}]['HostConfig']['PortBindings']['8080/tcp'][0]['HostPort']}}"
-    with_sequence: start=0 end={{start_containers_count - 1}}
+# Ensure that a container of your application server is running. This will:
+# - pull the latest version of your application image from DockerHub.
+# - ensure that a container is running with the specified name and exact image.
+#   If any configuration options have changed, the existing container will be
+#   stopped and removed, and a new one will be launched in its place.
+# - link this container to the existing redis container launched above with
+#   an alias.
+# - bind TCP port 9000 within the container to port 8080 on all interfaces
+#   on the host.
+# - bind UDP port 9001 within the container to port 8081 on the host, only
+#   listening on localhost.
+# - set the environment variable SECRET_KEY to "ssssh".
 
-Stop, remove all of the running tomcat containers and list the exit code from the stopped containers:
+- name: application container
+  docker:
+    name: myapplication
+    image: someuser/appimage
+    state: reloaded
+    pull: always
+    links:
+    - "myredis:aliasedredis"
+    ports:
+    - "8080:9000"
+    - "127.0.0.1:8081:9001/udp"
+    env:
+        SECRET_KEY: ssssh
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: stop tomcat servers
-    docker: image=centos command="service tomcat6 start" state=absent
-  - name: Display return codes from stopped containers
-    debug: msg="Returned {{inventory_hostname}}:{{item}}"
-    with_items: docker_containers
+# Ensure that exactly five containers of another server are running with this
+# exact image and command. If fewer than five are running, more will be launched;
+# if more are running, the excess will be stopped.
 
-Create a named container:
+- name: load-balanced containers
+  docker:
+    state: reloaded
+    count: 5
+    image: someuser/anotherappimage
+    command: sleep 1d
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat server
-    docker: image=centos name=tomcat command="service tomcat6 start" ports=8080
+# Unconditionally restart a service container. This may be useful within a
+# handler, for example.
 
-Create multiple named containers:
+- name: application service
+  docker:
+    name: myservice
+    image: someuser/serviceimage
+    state: restarted
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos name={{item}} command="service tomcat6 start" ports=8080
-    with_items:
-      - crookshank
-      - snowbell
-      - heathcliff
-      - felix
-      - sylvester
+# Stop all containers running the specified image.
 
-Create containers named in a sequence:
+- name: obsolete container
+  docker:
+    image: someuser/oldandbusted
+    state: stopped
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos name={{item}} command="service tomcat6 start" ports=8080
-    with_sequence: start=1 end=5 format=tomcat_%d.example.com
+# Stop and remove a container with the specified name.
 
-Create two linked containers:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: ensure redis container is running
-    docker: image=crosbymichael/redis name=redis
-
-  - name: ensure redis_ambassador container is running
-    docker: image=svendowideit/ambassador ports=6379:6379 links=redis:redis name=redis_ambassador_ansible
-
-Create containers with options specified as key-value pairs and lists:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  - docker:
-        image: namespace/image_name
-        links:
-          - postgresql:db
-          - redis:redis
-
-
-Create containers with options specified as strings and lists as comma-separated strings:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  docker: image=namespace/image_name links=postgresql:db,redis:redis
-
-Create a container with no networking:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  docker: image=namespace/image_name net=none
-
+- name: obsolete container
+  docker:
+    name: ohno
+    image: someuser/oldandbusted
+    state: absent
 '''
 
 HAS_DOCKER_PY = True
@@ -494,7 +459,7 @@ class DockerManager(object):
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
-                # with bind mode 
+                # with bind mode
                 elif len(parts) == 3:
                     if parts[2] not in ['ro', 'rw']:
                         self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
