@@ -51,7 +51,6 @@ options:
     description:
       - "Should this configuration be in the running firewalld configuration or persist across reboots"
     required: true
-    default: true
   immediate:
     description:
       - "Should this configuration be applied immediately, if set as permanent"
@@ -62,7 +61,6 @@ options:
     description:
       - "Should this port accept(enabled) or reject(disabled) connections"
     required: true
-    default: enabled
   timeout:
     description:
       - "The amount of time the rule should be in effect for when non-permanent"
