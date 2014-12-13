@@ -48,7 +48,7 @@ modules.   Keep in mind, though, that some modules in ansible's source tree are 
 so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
 you'll turn to stone.  Nobody ever executes async_wrapper directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time.py`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `timetest.py`::
 
     #!/usr/bin/python
 
@@ -73,7 +73,7 @@ There's a useful test script in the source checkout for ansible::
 
 Let's run the script you just wrote with that::
 
-    ansible/hacking/test-module -m ./time.py
+    ansible/hacking/test-module -m ./timetest.py
 
 You should see output that looks something like this::
 
@@ -309,8 +309,7 @@ You should also never do this in a module::
 
     print "some status message"
 
-Because the output is supposed to be valid JSON.  Except that's not quite true,
-but we'll get to that later.
+Because the output is supposed to be valid JSON.
 
 Modules must not output anything on standard error, because the system will merge
 standard out with standard error and prevent the JSON from parsing. Capturing standard
@@ -343,28 +342,13 @@ and guidelines:
 
 * If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
 
-* Modules should return JSON or key=value results all on one line.  JSON is best if you can do JSON.  All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+* Modules should output valid JSON only. All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
 * Return codes from modules are not actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
-
-.. _module_dev_shorthand:
-
-Shorthand Vs JSON
-`````````````````
-
-To make it easier to write modules in bash and in cases where a JSON
-module might not be available, it is acceptable for a module to return
-key=value output all on one line, like this.   The Ansible parser
-will know what to do::
-
-    somekey=1 somevalue=2 rc=3 favcolor=red
-
-If you're writing a module in Python or Ruby or whatever, though, returning
-JSON is probably the simplest way to go.
 
 .. _module_documenting:
 
@@ -469,7 +453,7 @@ gives them slightly higher development priority (though they'll work in exactly 
 Deprecating and making module aliases
 ``````````````````````````````````````
 
-Starting in 1.8 you can deprecate modules by renaming them with a preceeding _, i.e. old_cloud.py to 
+Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to 
 _old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.

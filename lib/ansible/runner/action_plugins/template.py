@@ -92,6 +92,13 @@ class ActionModule(object):
         local_checksum = utils.checksum_s(resultant)
         remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
 
+        if remote_checksum in ('0', '2', '3', '4'):
+            # Note: 1 means the file is not present which is fine; template
+            # will create it
+            result = dict(failed=True, msg="failed to checksum remote file."
+                        " Checksum error code: %s" % remote_checksum)
+            return ReturnData(conn=conn, comm_ok=True, result=result)
+
         if local_checksum != remote_checksum:
 
             # template is different from the remote value

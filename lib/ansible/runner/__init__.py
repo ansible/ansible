@@ -667,8 +667,22 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
+        # We build the proper injected dictionary for all future
+        # templating operations in this run
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+
+        # Then we selectively merge some variable dictionaries down to a
+        # single dictionary, used to template the HostVars for this host
+        temp_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        temp_vars = utils.merge_hash(temp_vars, inject['combined_cache'])
+        temp_vars = utils.merge_hash(temp_vars, self.play_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.play_file_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.extra_vars)
+
+        hostvars = HostVars(temp_vars, self.inventory, vault_password=self.vault_pass)
+
+        # and we save the HostVars in the injected dictionary so they
+        # may be referenced from playbooks/templates
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
@@ -719,6 +733,10 @@ class Runner(object):
                         result = utils.jsonify(dict(changed=False, skipped=True))
                         self.callbacks.on_skipped(host, None)
                         return ReturnData(host=host, result=result)
+            except errors.AnsibleError, e:
+                raise
+            except Exception, e:
+                raise errors.AnsibleError("Unexpected error while executing task: %s" % str(e))
 
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
@@ -968,7 +986,7 @@ class Runner(object):
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
-            # that no variables inadvertantly (or maliciously) add params
+            # that no variables inadvertently (or maliciously) add params
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
@@ -1182,8 +1200,16 @@ class Runner(object):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'):
             return path
+
         split_path = path.split(os.path.sep, 1)
-        cmd = conn.shell.expand_user(split_path[0])
+        expand_path = split_path[0]
+        if expand_path == '~':
+            if self.sudo and self.sudo_user:
+                expand_path = '~%s' % self.sudo_user
+            elif self.su and self.su_user:
+                expand_path = '~%s' % self.su_user
+
+        cmd = conn.shell.expand_user(expand_path)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, su=False)
         initial_fragment = utils.last_non_blank_line(data['stdout'])
 
@@ -1193,7 +1219,7 @@ class Runner(object):
             return path
 
         if len(split_path) > 1:
-            return os.path.join(initial_fragment, *split_path[1:])
+            return conn.shell.join_path(initial_fragment, *split_path[1:])
         else:
             return initial_fragment
 
@@ -1201,7 +1227,28 @@ class Runner(object):
 
     def _remote_checksum(self, conn, tmp, path, inject):
         ''' takes a remote checksum and returns 1 if no file '''
-        python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
+
+        # Lookup the python interp from the host or delegate
+
+        # host == inven_host when there is no delegate
+        host = inject['inventory_hostname']
+        if 'delegate_to' in inject:
+            delegate = inject['delegate_to']
+            if delegate:
+                # host == None when the delegate is not in inventory
+                host = None
+                # delegate set, check whether the delegate has inventory vars
+                delegate = template.template(self.basedir, delegate, inject)
+                if delegate in inject['hostvars']:
+                    # host == delegate if we need to lookup the
+                    # python_interpreter from the delegate's inventory vars
+                    host = delegate
+
+        if host:
+            python_interp = inject['hostvars'][host].get('ansible_python_interpreter', 'python')
+        else:
+            python_interp = 'python'
+
         cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])

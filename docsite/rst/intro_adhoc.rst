@@ -225,16 +225,16 @@ Ensure a service is stopped::
 Time Limited Background Operations
 ``````````````````````````````````
 
-Long running operations can be backgrounded, and their status can be
-checked on later. The same job ID is given to the same task on all
-hosts, so you won't lose track.  If you kick hosts and don't want
-to poll, it looks like this::
+Long running operations can be backgrounded, and their status can be checked on
+later. If you kick hosts and don't want to poll, it looks like this::
 
-    $ ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+    $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
-If you do decide you want to check on the job status later, you can::
+If you do decide you want to check on the job status later, you can use the
+async_status module, passing it the job id that was returned when you ran
+the original job in the background::
 
-    $ ansible all -m async_status -a "jid=123456789"
+    $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
 
 Polling is built-in and looks like this::
 

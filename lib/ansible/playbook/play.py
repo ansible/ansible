@@ -108,10 +108,16 @@ class Play(object):
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
-        # tasks/handlers as they may have inventory scope overrides
+        # tasks/handlers as they may have inventory scope overrides. We also
+        # create a set of temporary variables for templating, so we don't
+        # trample on the existing vars structures
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
-        ds = template(basedir, ds, self.vars)
+
+        temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+
+        ds = template(basedir, ds, temp_vars)
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
@@ -619,8 +625,14 @@ class Play(object):
                 dirname = self.basedir
                 if original_file:
                     dirname = os.path.dirname(original_file)
-                include_file = template(dirname, tokens[0], mv)
+
+                # temp vars are used here to avoid trampling on the existing vars structures
+                temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
+                temp_vars = utils.merge_hash(temp_vars, mv)
+                temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+                include_file = template(dirname, tokens[0], temp_vars)
                 include_filename = utils.path_dwim(dirname, include_file)
+
                 data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
                 if 'role_name' in x and data is not None:
                     for y in data:

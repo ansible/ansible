@@ -98,7 +98,7 @@ class CacheModule(BaseCacheModule):
     def keys(self):
         keys = []
         for k in os.listdir(self._cache_dir):
-            if not self.has_expired(k):
+            if not (k.startswith('.') or self.has_expired(k)):
                 keys.append(k)
         return keys
 

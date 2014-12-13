@@ -41,7 +41,7 @@
        - "result.changed == true"
        - "result.db =='{{ db_name }}'"
 
-- name: assert database was backup succesfully  
+- name: assert database was backup successfully  
   command: file {{ db_file_name }}
   register: result
 

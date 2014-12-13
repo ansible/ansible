@@ -167,17 +167,20 @@ class PluginLoader(object):
                 else:
                     suffixes = ['.py', '']
 
-        for suffix in suffixes:
-            full_name = '%s%s' % (name, suffix)
-            if full_name in self._plugin_path_cache:
-                return self._plugin_path_cache[full_name]
+        # loop over paths and then loop over suffixes to find plugin
+        for i in self._get_paths():
+            for suffix in suffixes:
+                full_name = '%s%s' % (name, suffix)
 
-            for i in self._get_paths():
+                if full_name in self._plugin_path_cache:
+                    return self._plugin_path_cache[full_name]
+
                 path = os.path.join(i, full_name)
                 if os.path.isfile(path):
                     self._plugin_path_cache[full_name] = path
                     return path
 
+        # if nothing is found, try finding alias/deprecated
         if not name.startswith('_'):
             return self.find_plugin('_' + name, suffixes, transport)
 

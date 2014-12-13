@@ -1,7 +1,7 @@
 Best Practices
 ==============
 
-Here are some tips for making the most of Ansible playbooks.
+Here are some tips for making the most of Ansible and Ansible playbooks.
 
 You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  (NOTE: These may not use all of the features in the latest release, but are still an excellent reference!).
 
@@ -12,10 +12,13 @@ You can find some example playbooks illustrating these best practices in our `an
 Content Organization
 ++++++++++++++++++++++
 
-The following section shows one of many possible ways to organize playbook content. Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
+The following section shows one of many possible ways to organize playbook content. 
 
-(One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
-of the main playbooks page.  See :doc:`playbooks_roles`).
+Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
+
+One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
+of the main playbooks page.  See :doc:`playbooks_roles`.  You absolutely should be using roles.  Roles are great.  Use roles.  Roles!
+Did we say that enough?  Roles are great.
 
 .. _directory_layout:
 
@@ -33,6 +36,9 @@ The top level of the directory would contain files and directories like so::
     host_vars/
        hostname1              # if systems need specific variables, put them here
        hostname2              # ""
+
+    library/                  # if any custom modules, put them here (optional)
+    filter_plugins/           # if any custom filter plugins, put them here (optional)
 
     site.yml                  # master playbook
     webservers.yml            # playbook for webserver tier
@@ -60,12 +66,30 @@ The top level of the directory would contain files and directories like so::
         monitoring/           # ""
         fooapp/               # "" 
 
+.. note: If you find yourself having too many top level playbooks (for instance you have a playbook you wrote for a specific hotfix, etc), it may
+make sense to have a playbooks/ directory instead.  This can be a good idea as you get larger.  If you do this, 
+configure your roles_path in ansible.cfg to find your roles location.
+
+.. _use_dynamic_inventory_with_clouds:
+
+Use Dynamic Inventory With Clouds
+`````````````````````````````````
+
+If you are using a cloud provider, you should not be managing your inventory in a static file.  See :doc:`intro_dynamic_inventory`. 
+
+This does not just apply to clouds -- If you have another system maintaining a canonical list of systems
+in your infrastructure, usage of dynamic inventory is a great idea in general.
+
 .. _stage_vs_prod:
 
-How to Arrange Inventory, Stage vs Production
-`````````````````````````````````````````````
+How to Differentiate  Stage vs Production
+`````````````````````````````````````````
 
-In the example below, the *production* file contains the inventory of all of your production hosts.  Of course you can pull inventory from an external data source as well, but this is just a basic example.  
+If managing static inventory, it is frequently asked how to differentiate different types of environments.  The following example
+shows a good way to do this.  Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
+tag "environment:production", and you'll get a group of systems automatically discovered named "ec2_tag_environment_production".
+
+Let's show a static inventory example though.  Below, the *production* file contains the inventory of all of your production hosts. 
 
 It is suggested that you define groups based on purpose of the host (roles) and also geography or datacenter location (if applicable)::
 
@@ -106,13 +130,14 @@ It is suggested that you define groups based on purpose of the host (roles) and 
     boston-webservers
     boston-dbservers
 
-
 .. _groups_and_hosts:
 
 Group And Host Variables
 ````````````````````````
 
-Now, groups are nice for organization, but that's not all groups are good for.  You can also assign variables to them!  For instance, atlanta has its own NTP servers, so when setting up ntp.conf, we should use them.  Let's set those now::
+This section extends on the previous example.
+
+Groups are nice for organization, but that's not all groups are good for.  You can also assign variables to them!  For instance, atlanta has its own NTP servers, so when setting up ntp.conf, we should use them.  Let's set those now::
 
     ---
     # file: group_vars/atlanta
@@ -140,6 +165,9 @@ We can define specific hardware variance in systems in a host_vars file, but avo
     foo_agent_port: 86
     bar_agent_port: 99
 
+Again, if we are using dynamic inventory sources, many dynamic groups are automatically created.  So a tag like "class:webserver" would load in 
+variables from the file "group_vars/ec2_tag_class_webserver" automatically. 
+
 .. _split_by_role:
 
 Top Level Playbooks Are Separated By Role
@@ -161,6 +189,12 @@ In a file like webservers.yml (also at the top level), we simply map the configu
       roles:
         - common
         - webtier
+
+The idea here is that we can choose to configure our whole infrastructure by "running" site.yml or we could just choose to run a subset by running
+webservers.yml.  This is analogous to the "--limit" parameter to ansible but a little more explicit::
+
+   ansible-playbook site.yml --limit webservers
+   ansible-playbook webservers.yml
 
 .. _role_organization:
 
@@ -286,7 +320,7 @@ parameter in your playbooks to make it clear, especially as some modules support
 Group By Roles
 ++++++++++++++
 
-A system can be in multiple groups.  See :doc:`intro_inventory` and :doc:`intro_patterns`.   Having groups named after things like
+We're somewhat repeating ourselves with this tip, but it's worth repeating. A system can be in multiple groups.  See :doc:`intro_inventory` and :doc:`intro_patterns`.   Having groups named after things like
 *webservers* and *dbservers* is repeated in the examples because it's a very powerful concept.
 
 This allows playbooks to target machines based on role, as well as to assign role specific variables
@@ -299,7 +333,7 @@ See :doc:`playbooks_roles`.
 Operating System and Distribution Variance
 ++++++++++++++++++++++++++++++++++++++++++
 
-When dealing with a parameter that is different between two different operating systems, the best way to handle this is
+When dealing with a parameter that is different between two different operating systems, a great way to handle this is
 by using the group_by module.
 
 This makes a dynamic group of hosts matching certain criteria, even if that group is not defined in the inventory file::
@@ -307,19 +341,18 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
    ---
 
    # talk to all hosts just so we can learn about them 
-
    - hosts: all
-
      tasks:
-        - group_by: key={{ ansible_distribution }}
+        - group_by: key=os_{{ ansible_distribution }}
 
    # now just on the CentOS hosts...
 
-   - hosts: CentOS
+   - hosts: os_CentOS
      gather_facts: False
-
      tasks:
         - # tasks that only happen on CentOS go here
+
+This will throw all systems into a dynamic group based on the operating system name.
 
 If group-specific settings are needed, this can also be done. For example::
 
@@ -328,20 +361,29 @@ If group-specific settings are needed, this can also be done. For example::
     asdf: 10
 
     ---
-    # file: group_vars/CentOS
+    # file: group_vars/os_CentOS
     asdf: 42
 
 In the above example, CentOS machines get the value of '42' for asdf, but other machines get '10'.
+This can be used not only to set variables, but also to apply certain roles to only certain systems.
+
+Alternatively, if only variables are needed:
+
+    - hosts: all
+      tasks:
+        - include_vars: "os_{{ ansible_distribution }}.yml"
+        - debug: var=asdf
+
+This will pull in variables based on the OS name.  
 
 .. _ship_modules_with_playbooks:
 
 Bundling Ansible Modules With Playbooks
 +++++++++++++++++++++++++++++++++++++++
 
-.. versionadded:: 0.5
-
 If a playbook has a "./library" directory relative to its YAML file, this directory can be used to add ansible modules that will
-automatically be in the ansible module path.  This is a great way to keep modules that go with a playbook together.
+automatically be in the ansible module path.  This is a great way to keep modules that go with a playbook together.  This is shown
+in the directory structure example at the start of this section.
 
 .. _whitespace:
 
@@ -369,6 +411,8 @@ for you.  For example, you will probably not need ``vars``,
 ``vars_files``, ``vars_prompt`` and ``--extra-vars`` all at once,
 while also using an external inventory file.
 
+If something feels complicated, it probably is, and may be a good opportunity to simplify things.
+
 .. _version_control:
 
 Version Control
@@ -395,3 +439,4 @@ changed the rules that are automating your infrastructure.
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
+
