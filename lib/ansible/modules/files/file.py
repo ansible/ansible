@@ -240,6 +240,10 @@ def main():
                     tmp_file_args['path']=curpath
                     changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
 
+        # We already know prev_state is not 'absent', therefore it exists in some form.
+        elif prev_state != 'directory':
+            module.fail_json(path=path, msg='%s already exists as a %s' % (path, prev_state))
+
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
         if recurse:
