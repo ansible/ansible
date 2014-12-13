@@ -911,7 +911,7 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. note::
    It's also possible to keep per-host and per-group variables in very
-   similar files, this is covered in :doc:`intro_patterns`.
+   similar files, this is covered in :doc:`playbooks_best_practices`.
 
 .. _passing_variables_on_the_command_line:
 
