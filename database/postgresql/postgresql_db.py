@@ -281,15 +281,19 @@ def main():
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding,
                                          lc_collate, lc_ctype)
-        else:
-            if state == "absent":
-                changed = db_delete(cursor, db)
+            module.exit_json(changed=changed,db=db)
 
-            elif state == "present":
-                changed = db_create(cursor, db, owner, template, encoding,
-                                    lc_collate, lc_ctype)
+        if state == "absent":
+            changed = db_delete(cursor, db)
+
+        elif state == "present":
+            changed = db_create(cursor, db, owner, template, encoding,
+                                lc_collate, lc_ctype)
     except NotSupportedError, e:
         module.fail_json(msg=str(e))
+    except SystemExit:
+        # Avoid catching this on Python 2.4 
+        raise
     except Exception, e:
         module.fail_json(msg="Database query failed: %s" % e)
 
