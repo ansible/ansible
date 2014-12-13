@@ -230,6 +230,7 @@ class Connection(object):
                 host_fh.close()
                 
             for line in data.split("\n"):
+                line = line.strip()
                 if line is None or " " not in line:
                     continue
                 tokens = line.split()
