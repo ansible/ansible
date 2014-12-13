@@ -311,6 +311,9 @@ def main():
                 module.fail_json(msg=str(e))
     except NotSupportedError, e:
         module.fail_json(msg=str(e))
+    except SystemExit:
+        # Avoid catching this on Python 2.4 
+        raise
     except Exception, e:
         module.fail_json(msg="Database query failed: %s" % e)
 
