@@ -45,18 +45,6 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import *
 
 
-# wrap get_distribution_version in case it returns a string
-def _get_distribution_version():
-    distribution_version = get_distribution_version()
-
-    if type(distribution_version) is str:
-        distribution_version = 0
-    elif type(distribution_version) is None:
-        distribution_version = 0
-
-    return distribution_version
-
-
 class UnimplementedStrategy(object):
     def __init__(self, module):
         self.module = module
@@ -353,7 +341,7 @@ class RedHat5Hostname(Hostname):
 class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
-    distribution_version = _get_distribution_version()
+    distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
@@ -362,7 +350,7 @@ class RedHatServerHostname(Hostname):
 class RedHatWorkstationHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux workstation'
-    distribution_version = _get_distribution_version()
+    distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
@@ -371,7 +359,7 @@ class RedHatWorkstationHostname(Hostname):
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
-    distribution_version = _get_distribution_version()
+    distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
@@ -380,7 +368,7 @@ class CentOSHostname(Hostname):
 class CentOSLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos linux'
-    distribution_version = _get_distribution_version()
+    distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
         strategy_class = FedoraStrategy
     else:
