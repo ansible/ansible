@@ -224,6 +224,13 @@ options:
     default: false
     aliases: []
     version_added: "1.9"
+  insecure_registry:
+    description:
+      - Use insecure private registry by HTTP instead of HTTPS (needed for docker-py >= 0.5.0).
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.9"
 
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
@@ -743,7 +750,7 @@ class DockerManager:
                 except:
                     self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
             try:
-                self.client.pull(image, tag=tag)
+                self.client.pull(image, tag=tag, insecure_registry=self.module.params.get('insecure_registry'))
             except:
                 self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
             self.increment_counter('pull')
@@ -840,7 +847,8 @@ def main():
             tty             = dict(default=False, type='bool'),
             lxc_conf        = dict(default=None, type='list'),
             name            = dict(default=None),
-            net             = dict(default=None)
+            net             = dict(default=None),
+            insecure_registry = dict(default=False, type='bool'),
         )
     )
 
