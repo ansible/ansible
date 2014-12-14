@@ -87,6 +87,15 @@
 - name: verify that afile.txt is present
   file: path={{output_dir_test}}/afile.txt state=file
 
+- name: re-run previous command using creates with globbing
+  command: "{{output_dir_test | expanduser}}/create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.*"
+  register: command_result3
+
+- name: assert that creates with globbing is working
+  assert:
+    that:
+      - "command_result3.changed != True"
+
 # removes
 
 - name: remove afile.txt with remote_afile.sh via command
@@ -94,12 +103,15 @@
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
-  register: command_result3
 
-- name: assert that the file was removed by the script
+- name: re-run previous command using removes with globbing
+  command: "{{output_dir_test | expanduser}}/remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.*"
+  register: command_result4
+
+- name: assert that removes with globbing is working
   assert:
     that:
-      - "command_result3.changed != True"
+      - "command_result4.changed != True"
 
 ##
 ## shell
