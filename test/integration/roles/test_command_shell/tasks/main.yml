@@ -50,18 +50,16 @@
 
 # executable
 
-# FIXME doesn't have the expected stdout.
+- name: execute the test.sh script with executable via command
+  command: "{{output_dir_test | expanduser}}/test.sh executable=/bin/bash"
+  register: command_result1
 
-#- name: execute the test.sh script with executable via command
-#  command: "{{output_dir_test | expanduser}}/test.sh executable=/bin/bash"
-#  register: command_result1
-#
-#- name: assert that the script executed correctly with command
-#  assert:
-#    that:
-#      - "command_result1.rc == 0"
-#      - "command_result1.stderr == ''"
-#      - "command_result1.stdout == 'win'"
+- name: assert that the script executed correctly with command
+  assert:
+    that:
+      - "command_result1.rc == 0"
+      - "command_result1.stderr == ''"
+      - "command_result1.stdout == 'win'"
 
 # chdir
 
@@ -131,18 +129,16 @@
 
 # executable
 
-# FIXME doesn't pass the expected stdout
+- name: execute the test.sh script
+  shell: "{{output_dir_test | expanduser}}/test.sh executable=/bin/bash"
+  register: shell_result1
 
-#- name: execute the test.sh script
-#  shell: "{{output_dir_test | expanduser}}/test.sh executable=/bin/bash"
-#  register: shell_result1
-#
-#- name: assert that the shell executed correctly
-#  assert:
-#    that:
-#      - "shell_result1.rc == 0"
-#      - "shell_result1.stderr == ''"
-#      - "shell_result1.stdout == 'win'"
+- name: assert that the shell executed correctly
+  assert:
+    that:
+      - "shell_result1.rc == 0"
+      - "shell_result1.stderr == ''"
+      - "shell_result1.stdout == 'win'"
 
 # chdir
 
