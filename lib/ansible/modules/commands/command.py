@@ -21,6 +21,7 @@
 import copy
 import sys
 import datetime
+import glob
 import traceback
 import re
 import shlex
@@ -188,7 +189,7 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of command executions.
         v = os.path.expanduser(creates)
-        if os.path.exists(v):
+        if glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
@@ -202,7 +203,7 @@ def main():
     # and the filename does not exist.  This allows idempotence
     # of command executions.
         v = os.path.expanduser(removes)
-        if not os.path.exists(v):
+        if not glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,
