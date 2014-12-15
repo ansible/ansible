@@ -23,6 +23,30 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 [[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
 [[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
+#
+# Generate egg_info so that pkg_resources works
+#
+
+# Do the work in a function so we don't repeat ourselves later
+gen_egg_info()
+{
+    python setup.py egg_info
+    if [ -e $PREFIX_PYTHONPATH/ansible*.egg-info ] ; then
+        rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
+    fi
+    mv ansible*.egg-info $PREFIX_PYTHONPATH
+}
+
+# In some shells if pushd is a no-op then popd sends you to a previous
+# directory in history
+if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
+    pushd "$ANSIBLE_HOME"
+    gen_egg_info
+    popd
+else
+    gen_egg_info
+fi
+
 # Print out values unless -q is set
 
 if [ $# -eq 0 -o "$1" != "-q" ] ; then
@@ -33,7 +57,7 @@ if [ $# -eq 0 -o "$1" != "-q" ] ; then
     echo "PYTHONPATH=$PYTHONPATH"
     echo "MANPATH=$MANPATH"
     echo ""
-    
+
     echo "Remember, you may wish to specify your host file with -i"
     echo ""
     echo "Done!"
