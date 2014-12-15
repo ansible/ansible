@@ -2,6 +2,8 @@
 # usage: source ./hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
+GIT=git
+
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=`dirname $BASH_SOURCE`
@@ -23,6 +25,12 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 [[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
 [[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
+for dir in {lib,v2}/ansible/modules/{core,extras}; do
+    if [ ! -d $dir ]; then
+        $GIT submodule update --init $dir
+    fi
+done
+
 # Print out values unless -q is set
 
 if [ $# -eq 0 -o "$1" != "-q" ] ; then
@@ -33,7 +41,7 @@ if [ $# -eq 0 -o "$1" != "-q" ] ; then
     echo "PYTHONPATH=$PYTHONPATH"
     echo "MANPATH=$MANPATH"
     echo ""
-    
+
     echo "Remember, you may wish to specify your host file with -i"
     echo ""
     echo "Done!"
