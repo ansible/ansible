@@ -225,6 +225,26 @@ If the location given to -i in Ansible is a directory (or as so configured in an
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
 
+.. _static_groups_of_dynamic:
+
+Static Groups of Dynamic Groups
+```````````````````````````````
+
+When defining groups of groups in the static inventory file, the child groups
+must also be defined in the static inventory file, or ansible will return an
+error. If you want to define a static group of dynamic child groups, define
+the dynamic groups as empty in the static inventory file. For example::
+
+    [tag_Name_staging_foo]
+
+    [tag_Name_staging_bar]
+
+    [staging:children]
+    tag_Name_staging_foo
+    tag_Name_staging_bar
+
+
+
 .. seealso::
 
    :doc:`intro_inventory`
