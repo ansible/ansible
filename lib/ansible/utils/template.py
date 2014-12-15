@@ -92,6 +92,8 @@ def lookup(name, *args, **kwargs):
         # safely catch run failures per #5059
         try:
             ran = instance.run(*args, inject=vars, **kwargs)
+        except errors.AnsibleError:
+            raise
         except Exception, e:
             ran = None
         if ran:
