@@ -107,7 +107,8 @@ tasks:
   cloudformation:
     stack_name: "ansible-cloudformation" 
     state: "present"
-    region: "us-east-1 disable_rollback=true"
+    region: "us-east-1" 
+    disable_rollback: true
     template: "files/cloudformation-example.json"
     template_parameters:
       KeyName: "jmartin"
