@@ -455,19 +455,21 @@ def fetch(git_path, module, repo, dest, version, remote, bare):
         (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
     else:
         (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote), cwd=dest)
-    if rc != 0:
-        module.fail_json(msg="Failed to download remote objects and refs")
     out_acc.append(out1)
     err_acc.append(err1)
+    if rc != 0:
+        module.fail_json(msg="Failed to download remote objects and refs: %s %s" %
+                (''.join(out_acc), ''.join(err_acc)))
 
     if bare:
         (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'], cwd=dest)
     else:
         (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
-    if rc != 0:
-        module.fail_json(msg="Failed to download remote objects and refs")
     out_acc.append(out2)
     err_acc.append(err2)
+    if rc != 0:
+        module.fail_json(msg="Failed to download remote objects and refs: %s %s" %
+                (''.join(out_acc), ''.join(err_acc)))
 
     return (rc, ''.join(out_acc), ''.join(err_acc))
 
