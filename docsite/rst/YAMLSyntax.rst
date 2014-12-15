@@ -34,7 +34,7 @@ with a ``- `` (dash and whitespace) character::
     - Strawberry
     - Mango
 
-A dictionary is represented in a simple ``key: `` (colon and whitespac) and ``value`` form::
+A dictionary is represented in a simple ``key: `` (colon and whitespace) and ``value`` form::
 
     ---
     # An employee record
