@@ -18,8 +18,8 @@
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # http://docs.ansible.com/playbooks_vault.html for more details.
 
-#__requires__ = ['ansible']
-#import pkg_resources
+__requires__ = ['ansible']
+import pkg_resources
 
 import os
 import sys
