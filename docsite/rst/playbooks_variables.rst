@@ -311,6 +311,39 @@ To get a random list from an existing  list::
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
 
+
+.. _math_stuff:
+
+Math
+--------------------
+.. versionadded:: 1.9
+
+
+To see if something is actually a number::
+
+    {{ myvar | isnan }}
+
+Get the logarithm (default is e)::
+
+    {{ myvar | log }}
+
+Get the base 10 logarithm::
+
+    {{ myvar | log(10) }}
+
+Give me the power of 2! (or 5)::
+
+    {{ myvar | pow(2) }}
+    {{ myvar | pow(5) }}
+
+Square root, or the 5th::
+
+    {{ myvar | root }}
+    {{ myvar | root(5) }}
+
+Note that jinja2 already provides some like abs() and round().
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
