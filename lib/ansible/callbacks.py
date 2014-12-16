@@ -672,7 +672,7 @@ class PlaybookCallbacks(object):
             result = prompt(msg, private)
 
         # if result is false and default is not None
-        if not result and default:
+        if not result and default is not None:
             result = default
 
 
