@@ -98,13 +98,7 @@ ElseIf ((Get-Service "WinRM").Status -ne "Running")
 If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\localhost\Listener)))
 {
     Write-Verbose "Enabling PS Remoting."
-    Try
-    {
-        Enable-PSRemoting -Force -ErrorAction SilentlyContinue
-    }
-    Catch
-    {
-    }
+    Enable-PSRemoting -Force -ErrorAction Stop
 }
 Else
 {
