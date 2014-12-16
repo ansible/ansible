@@ -426,7 +426,8 @@ def main():
         uresp[ukey] = value
 
     if 'content_type' in uresp:
-        if uresp['content_type'].startswith('application/json'):
+        if uresp['content_type'].startswith('application/json') or \
+                uresp['content_type'].startswith('text/json'):
             try:
                 js = json.loads(content)
                 uresp['json'] = js
