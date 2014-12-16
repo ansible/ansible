@@ -71,7 +71,7 @@ def pager(text):
             pager_print(text)
         else:
             pager_pipe(text, os.environ['PAGER'])
-    elif hasattr(os, 'system') and os.system('(less) 2> /dev/null') == 0:
+    elif subprocess.call('(less --version) 2> /dev/null', shell = True) == 0:
         pager_pipe(text, 'less')
     else:
         pager_print(text)
@@ -165,7 +165,10 @@ def get_snippet_text(doc):
     return "\n".join(text)
 
 def get_module_list_text(module_list):
-    columns = max(60, int(os.popen('stty size', 'r').read().split()[1]))
+    tty_size = 0
+    if os.isatty(0):
+        tty_size = int(os.popen('stty size', 'r').read().split()[1])
+    columns = max(60, tty_size)
     displace = max(len(x) for x in module_list)
     linelimit = columns - displace - 5
     text = []
