@@ -223,7 +223,7 @@ Generally speaking, we find most users using Packer.
 
 If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable.
 
-.. aws_next_steps::
+.. _aws_next_steps:
 
 Next Steps: Explore Modules
 ```````````````````````````

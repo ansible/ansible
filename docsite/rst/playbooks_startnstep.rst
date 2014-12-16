@@ -4,7 +4,7 @@ Start and Step
 This shows a few alternative ways to run playbooks. These modes are very useful for testing new plays or debugging.
 
 
-.. _start_at_task
+.. _start_at_task:
 
 Start-at-task
 `````````````
@@ -15,7 +15,7 @@ If you want to start executing your playbook at a particular task, you can do so
 The above will start executing your playbook at a task named "install packages".
 
 
-.. _step
+.. _step:
 
 Step
 ````

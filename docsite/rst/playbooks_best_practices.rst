@@ -66,9 +66,7 @@ The top level of the directory would contain files and directories like so::
         monitoring/           # ""
         fooapp/               # "" 
 
-.. note: If you find yourself having too many top level playbooks (for instance you have a playbook you wrote for a specific hotfix, etc), it may
-make sense to have a playbooks/ directory instead.  This can be a good idea as you get larger.  If you do this, 
-configure your roles_path in ansible.cfg to find your roles location.
+.. note: If you find yourself having too many top level playbooks (for instance you have a playbook you wrote for a specific hotfix, etc), it may make sense to have a playbooks/ directory instead.  This can be a good idea as you get larger.  If you do this, configure your roles_path in ansible.cfg to find your roles location.
 
 .. _use_dynamic_inventory_with_clouds:
 
@@ -367,7 +365,7 @@ If group-specific settings are needed, this can also be done. For example::
 In the above example, CentOS machines get the value of '42' for asdf, but other machines get '10'.
 This can be used not only to set variables, but also to apply certain roles to only certain systems.
 
-Alternatively, if only variables are needed:
+Alternatively, if only variables are needed::
 
     - hosts: all
       tasks:
