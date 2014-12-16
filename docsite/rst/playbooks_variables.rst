@@ -310,7 +310,7 @@ To get a random list from an existing  list::
     {{ ['a','b','c']|shuffle }} => ['b','c','a']
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
-j
+
 
 .. _math_stuff:
 
