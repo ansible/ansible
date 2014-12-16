@@ -148,11 +148,8 @@ def package_present(m, name, installed_state, disable_gpg_check, disable_recomme
     if len(packages) != 0:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
-        if disable_gpg_check and not old_zypper:
-            cmd.append('--no-gpg-check')
-        else:
+        if disable_gpg_check:
             cmd.append('--no-gpg-checks')
-
         cmd.extend(['install', '--auto-agree-with-licenses'])
         # add install parameter
         if disable_recommends and not old_zypper:
@@ -182,10 +179,16 @@ def package_latest(m, name, installed_state, disable_gpg_check, disable_recommen
     if not changed:
         pre_upgrade_versions = get_current_version(m, name)
 
+    cmd = ['/usr/bin/zypper', '--non-interactive']
+
+    if disable_gpg_check:
+        cmd.append('--no-gpg-checks')
+
     if old_zypper:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'install', '--auto-agree-with-licenses']
+        cmd.extend(['install', '--auto-agree-with-licenses'])
     else:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses']
+        cmd.extend(['update', '--auto-agree-with-licenses'])
+
     cmd.extend(name)
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
