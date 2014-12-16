@@ -18,30 +18,6 @@
 import math
 from ansible import errors
 
-def absolute(x):
-
-    if isinstance(x, float):
-        return math.fabs(x)
-    elif isinstance(x, int):
-        return abs(x)
-    else
-        raise errors.AnsibleFilterError('abs() can only be used on numbers')
-
-
-def cieling(x):
-    try:
-        return math.ciel(x)
-    except TypeError, e:
-        raise errors.AnsibleFilterError('ciel() can only be used on floats: %s' % str(e))
-
-
-def flooring(x):
-    try:
-        return math.floor(x)
-    except TypeError, e:
-        raise errors.AnsibleFilterError('floor() can only be used on floats: %s' % str(e))
-
-
 def isnotanumber(x):
     try:
         return math.isnan(x)
@@ -82,12 +58,7 @@ class FilterModule(object):
     def filters(self):
         return {
             # general math
-            'abs': absolute,
             'isnan': isnotanumber,
-
-            # rounding
-            'ceil': cieling,
-            'floor': flooring,
 
             # exponents and logarithms
             'log': logarithm,

@@ -318,18 +318,10 @@ Math
 --------------------
 .. versionadded:: 1.9
 
-To get the absolute value of a number::
-
-    {{ -23 | abs }}
 
 To see if something is actually a number::
 
     {{ myvar | isnan }}
-
-Rounding::
-
-    {{ myvar | ceil }}
-    {{ myvar | floor }}
 
 Get the logarithm (default is e)::
 
@@ -348,6 +340,8 @@ Square root, or the 5th::
 
     {{ myvar | root }}
     {{ myvar | root(5) }}
+
+Note that jinja2 already provides some like abs() and round().
 
 
 .. _other_useful_filters:
