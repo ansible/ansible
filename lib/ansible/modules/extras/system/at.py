@@ -78,7 +78,7 @@ import tempfile
 
 
 def add_job(module, result, at_cmd, count, units, command, script_file):
-    at_command = "%s now + %s %s -f %s" % (at_cmd, count, units, script_file)
+    at_command = "%s -f %s now + %s %s" % (at_cmd, script_file, count, units)
     rc, out, err = module.run_command(at_command, check_rc=True)
     if command:
         os.unlink(script_file)
