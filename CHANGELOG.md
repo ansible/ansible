@@ -5,6 +5,8 @@ Ansible Changes By Release
 
 in progress, details pending
 
+* Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+
 ## 1.8.1 "You Really Got Me" - Nov 26, 2014
 
 * Various bug fixes in postgresql and mysql modules.
