@@ -182,8 +182,7 @@ def install(module):
         cmd.append('--no-user-install')
     if module.params['pre_release']:
         cmd.append('--pre')
-    cmd.append('--no-rdoc')
-    cmd.append('--no-ri')
+    cmd.append('--no-document')
     cmd.append(module.params['gem_source'])
     module.run_command(cmd, check_rc=True)
 
