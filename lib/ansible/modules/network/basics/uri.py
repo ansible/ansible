@@ -304,7 +304,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         r.update(resp_redir)
         r.update(resp)
         try:
-            return r, unicode(content.decode('unicode_escape')), dest
+            return r, unicode(content.decode('raw_unicode_escape')), dest
         except:
             return r, content, dest
     except httplib2.RedirectMissingLocation:
