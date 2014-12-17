@@ -102,6 +102,16 @@ users feature branch into the newly created branch.
    their version of `devel`. If the source looks like `someuser:devel`, make sure there is only one commit listed on
    the pull request.
 
+Tesing Pull Requests From the Core and Extras Submodules
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+If you want to test a pull request from either ansible-modules-core or ansible-modules-extras you'll want to do the followingi::
+
+   ## This example is for checking out a P/R in ansible-modules-core where XXX represents the P/R number
+   cd $(ANSIBLE_BASE_REPO_DIR)/lib/ansible/modules/core
+   git fetch origin pull/XXX/head:testing_PRXXX
+   git checkout testing_PRXXX
+
 For Those About To Test, We Salute You
 ++++++++++++++++++++++++++++++++++++++
 
