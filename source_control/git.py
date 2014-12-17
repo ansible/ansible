@@ -36,9 +36,9 @@ options:
         required: true
         description:
             - Absolute path of where the repository should be checked out to.
-              This parameter is required, unless C(update) is set to C(no)
-              This change was made in version 1.8. Prior to this version, the
-              C(dest) parameter was always required.
+              This parameter is required, unless C(clone) is set to C(no)
+              This change was made in version 1.8.3. Prior to this version,
+              the C(dest) parameter was always required.
     version:
         required: false
         default: "HEAD"
@@ -97,6 +97,13 @@ options:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored.
+    clone:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "1.8.3"
+        description:
+            - If C(no), do not clone the repository if it does not exist locally
     update:
         required: false
         default: "yes"
@@ -158,7 +165,7 @@ EXAMPLES = '''
 - git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
 
 # Example just ensuring the repo checkout exists
-- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
+- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout clone=no update=no
 '''
 
 import re
@@ -588,6 +595,7 @@ def main():
             reference=dict(default=None),
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
+            clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
             accept_hostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, required=False),
@@ -607,6 +615,7 @@ def main():
     force     = module.params['force']
     depth     = module.params['depth']
     update    = module.params['update']
+    allow_clone = module.params['clone']
     bare      = module.params['bare']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
@@ -614,8 +623,8 @@ def main():
     ssh_opts  = module.params['ssh_opts']
 
     gitconfig = None
-    if not dest and update:
-        module.fail_json(msg="the destination directory must be specified unless update=no")
+    if not dest and allow_clone:
+        module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(os.path.expanduser(dest))
         if bare:
@@ -651,11 +660,12 @@ def main():
     before = None
     local_mods = False
     repo_updated = None
-    if gitconfig and not os.path.exists(gitconfig) or not gitconfig and not update:
-        # if there is no git configuration, do a clone operation  unless the
-        # user requested no updates or we're doing a check mode test (in
-        # which case we do a ls-remote), otherwise clone the repo
-        if module.check_mode or not update:
+    if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
+        # if there is no git configuration, do a clone operation unless:
+        # * the user requested no clone (they just want info)
+        # * we're doing a check mode test
+        # In those cases we do an ls-remote
+        if module.check_mode or not allow_clone:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
         # there's no git config, so clone
