@@ -1,0 +1,43 @@
+# (c) 2014, René Moser <mail@renemoser.net>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run a command which fails
+  shell: /bin/false
+  register: failed_result
+  ignore_errors: yes
+
+- name: run a command depending on success of the first task
+  shell: echo "skipping if not successful"
+  when: failed_result|success
+  register: result1
+
+- name: run a command depending on fail of the first task
+  shell: echo "skipping if not failed"
+  when: failed_result|failed
+  register: result2
+
+- name: run a command depending on skip of the first task
+  shell: echo "skipping if not skipped"
+  when: failed_result|skipped
+  register: result3
+
+- name: assert that the depending commands were skipped
+  assert:
+    that:
+    - "result1.skipped == true"
+    - "result2.changed == true"
+    - "result3.skipped == true"

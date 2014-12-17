@@ -1,0 +1,3 @@
+- hosts: testhost
+  roles:
+  - { role: test_var_results, tags: test_var_results }
