@@ -62,6 +62,19 @@ options:
     required: false
     default: 0
     version_added: "1.5.1"
+  state:
+    description:
+      - whether to add or create a snapshot
+    required: false
+    default: present
+    choices: ['absent', 'present']
+    version_added: "1.9"
+  snapshot_id:
+    description:
+      - snapshot id to remove
+    required: false
+    version_added: "1.9"
+
 author: Will Thames
 extends_documentation_fragment: aws
 '''
@@ -85,6 +98,12 @@ EXAMPLES = '''
     snapshot_tags:
         frequency: hourly
         source: /data
+
+# Remove a snapshot
+- local_action:
+    module: ec2_snapshot
+    snapshot_id: snap-abcd1234
+    state: absent
 '''    
 
 import sys
@@ -103,24 +122,28 @@ def main():
             volume_id = dict(),
             description = dict(),
             instance_id = dict(),
+            snapshot_id = dict(),
             device_name = dict(),
             wait = dict(type='bool', default='true'),
             wait_timeout = dict(default=0),
             snapshot_tags = dict(type='dict', default=dict()),
+            state = dict(choices=['absent','present'], default='present'),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
     volume_id = module.params.get('volume_id')
+    snapshot_id = module.params.get('snapshot_id')
     description = module.params.get('description')
     instance_id = module.params.get('instance_id')
     device_name = module.params.get('device_name')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
     snapshot_tags = module.params.get('snapshot_tags')
+    state = module.params.get('state')
 
-    if not volume_id and not instance_id or volume_id and instance_id:
-        module.fail_json('One and only one of volume_id or instance_id must be specified')
+    if not volume_id and not instance_id and not snapshot_id or volume_id and instance_id and snapshot_id:
+        module.fail_json('One and only one of volume_id or instance_id or snapshot_id must be specified')
     if instance_id and not device_name or device_name and not instance_id:
         module.fail_json('Instance ID and device name must both be specified')
 
@@ -134,6 +157,20 @@ def main():
             volume_id = volumes[0].id
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    if state == 'absent':
+        if not snapshot_id:
+            module.fail_json(msg = 'snapshot_id must be set when state is absent')
+        try:
+            snapshots = ec2.get_all_snapshots([snapshot_id])
+            ec2.delete_snapshot(snapshot_id)
+            module.exit_json(changed=True)
+        except boto.exception.BotoServerError, e:
+            # exception is raised if snapshot does not exist
+            if e.error_code == 'InvalidSnapshot.NotFound':
+                module.exit_json(changed=False)
+            else:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     try:
         snapshot = ec2.create_snapshot(volume_id, description=description)
