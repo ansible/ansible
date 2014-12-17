@@ -101,7 +101,7 @@ options:
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
-        version_added: "1.8.3"
+        version_added: "1.9"
         description:
             - If C(no), do not clone the repository if it does not exist locally
     update:
