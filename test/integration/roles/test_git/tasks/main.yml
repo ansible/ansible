@@ -146,6 +146,7 @@
   git:
     repo: '{{ repo_format1 }}'
     update: no
+    clone: no
     accept_hostkey: yes
   register: git_result
 
