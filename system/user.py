@@ -1255,7 +1255,7 @@ class SunOS(User):
                 cmd.append('-G')
                 new_groups = groups
                 if self.append:
-                    new_groups.extend(current_groups)
+                    new_groups.update(current_groups)
                 cmd.append(','.join(new_groups))
 
         if self.comment is not None and info[4] != self.comment:
