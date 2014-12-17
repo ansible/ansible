@@ -117,9 +117,9 @@ except ImportError:
 def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
-        proto, from_port, to_port = (rule.get(x, None) for x in ('proto', 'from_port', 'to_port'))
+        proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
     else:  # isinstance boto.ec2.securitygroup.IPPermissions
-        proto, from_port, to_port = (getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port'))
+        proto, from_port, to_port = [getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port')]
 
     key = "%s-%s-%s-%s-%s-%s" % (prefix, proto, from_port, to_port, group_id, cidr_ip)
     return key.lower().replace('-none', '-None')
