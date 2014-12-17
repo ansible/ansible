@@ -192,7 +192,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         destpath = os.path.dirname(dest)
-        if not os.path.exists(destpath):
+        if not os.path.exists(destpath) and not module.check_mode:
             os.makedirs(destpath)
         lines = []
     else:
@@ -281,6 +281,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if backup and os.path.exists(dest):
             backupdest = module.backup_local(dest)
         write_changes(module, lines, dest)
+
+    if module.check_mode and not os.path.exists(dest):
+        module.exit_json(changed=changed, msg=msg, backup=backupdest)
 
     msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg, backup=backupdest)
