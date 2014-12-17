@@ -21,7 +21,7 @@ from ansible import errors
 def isnotanumber(x):
     try:
         return math.isnan(x)
-    except TypeError, e:
+    except TypeError:
         return False
 
 
@@ -30,14 +30,14 @@ def logarithm(x, base=math.e):
         if base == 10:
             return math.log10(x)
         else:
-            return = math.log(x, base)
+            return math.log(x, base)
     except TypeError, e:
         raise errors.AnsibleFilterError('log() can only be used on numbers: %s' % str(e))
 
 
-def power(x):
+def power(x, y):
     try:
-        return math.pow(x,y)
+        return math.pow(x, y)
     except TypeError, e:
         raise errors.AnsibleFilterError('pow() can only be used on numbers: %s' % str(e))
 
