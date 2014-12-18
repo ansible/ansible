@@ -437,13 +437,13 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                              'incorrectly capitalized region name.')
 
     if state == 'present' or (state == 'absent' and instance_ids is None):
+        if not boot_from_volume and not boot_volume and not image:
+            module.fail_json(msg='image is required for the "rax" module')
+
         for arg, value in dict(name=name, flavor=flavor).iteritems():
             if not value:
                 module.fail_json(msg='%s is required for the "rax" module' %
                                      arg)
-
-        if not boot_from_volume and not boot_volume and not image:
-            module.fail_json(msg='image is required for the "rax" module')
 
         if boot_from_volume and not image and not boot_volume:
             module.fail_json(msg='image or boot_volume are required for the '
