@@ -1917,6 +1917,16 @@ def main():
         if user.groups is not None:
             result['groups'] = user.groups
 
+        # handle missing homedirs
+        info = user.user_info()
+        if user.home is None:
+            user.home = info[5]
+        if not os.path.exists(user.home) and user.createhome:
+            if not module.check_mode:
+                user.create_homedir(user.home)
+                user.chown_homedir(info[2], info[3], user.home)
+            result['changed'] = True
+
         # deal with ssh key
         if user.sshkeygen:
             (rc, out, err) = user.ssh_key_gen()
@@ -1931,16 +1941,6 @@ def main():
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
-
-        # handle missing homedirs
-        info = user.user_info()
-        if user.home is None:
-            user.home = info[5]
-        if not os.path.exists(user.home) and user.createhome:
-            if not module.check_mode:
-                user.create_homedir(user.home)
-                user.chown_homedir(info[2], info[3], user.home)
-            result['changed'] = True
 
     module.exit_json(**result)
 
