@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_updates
-version_added: "1.8"
+version_added: "1.9"
 short_description: Lists / Installs windows updates
 description:
     - Installs windows updates using PSWindowsUpdate (http://gallery.technet.microsoft.com/scriptcenter/2d191bcd-3308-4edd-9de2-88dff796b0bc).
