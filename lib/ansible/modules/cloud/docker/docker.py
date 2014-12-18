@@ -458,7 +458,7 @@ def check_dependencies(module):
             module.fail_json(msg="The Ansible Docker module requires `docker-py` >= 0.3.0.")
 
 
-class DockerManager:
+class DockerManager(object):
 
     counters = {'created':0, 'started':0, 'stopped':0, 'killed':0, 'removed':0, 'restarted':0, 'pull':0}
     _capabilities = set()
