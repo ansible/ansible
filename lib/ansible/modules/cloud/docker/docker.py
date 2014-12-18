@@ -469,6 +469,8 @@ class DockerManager:
             'dns': ((0, 3, 0), '1.10'),
             'volume_from': ((0, 3, 0), '1.10'),
             'restart_policy': ((0, 5, 0), '1.14'),
+            # Clientside only
+            'insecure_registry': ((0, 5, 0), '0.0')
             }
 
     def __init__(self, module):
@@ -536,17 +538,24 @@ class DockerManager:
                     docker.utils.compare_version(req_vers[1], api_version) >= 0):
                 self._capabilities.add(cap)
 
-    def ensure_capability(self, capability):
+    def ensure_capability(self, capability, fail=True):
         """
         Some of the functionality this ansible module implements are only
         available in newer versions of docker.  Ensure that the capability
         is available here.
+
+        If fail is set to False then return True or False depending on whether
+        we have the capability.  Otherwise, simply fail and exit the module if
+        we lack the capability.
         """
         if not self._capabilities:
             self._check_capabilties()
 
         if capability in self._capabilities:
             return True
+
+        if not fail:
+            return False
 
         api_version = self.client.version()['ApiVersion']
         self.module.fail_json(msg='Specifying the `%s` parameter requires'
@@ -725,6 +734,11 @@ class DockerManager:
         if params['volumes_from'] is not None:
             self.ensure_capability('volumes_from')
 
+        extra_params = {}
+        if self.module.params.get('insecure_registry'):
+            if self.ensure_capability('insecure_registry', fail=False):
+                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
+
         def do_create(count, params):
             results = []
             for _ in range(count):
@@ -750,7 +764,7 @@ class DockerManager:
                 except:
                     self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
             try:
-                self.client.pull(image, tag=tag, insecure_registry=self.module.params.get('insecure_registry'))
+                self.client.pull(image, tag=tag, **extra_params)
             except:
                 self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
             self.increment_counter('pull')
