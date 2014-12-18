@@ -130,13 +130,6 @@ except ImportError:
     sys.exit(1)
 
 
-class Region:
-    def __init__(self, region):
-        '''connects boto to the region specified in the cloudformation template'''
-        self.name = region
-        self.endpoint = 'cloudformation.%s.amazonaws.com' % region
-
-
 def boto_exception(err):
     '''generic error message handler'''
     if hasattr(err, 'error_message'):
@@ -239,11 +232,10 @@ def main():
     stack_outputs = {}
 
     try:
-        cf_region = Region(region)
-        cfn = boto.cloudformation.connection.CloudFormationConnection(
-                  aws_access_key_id=aws_access_key, 
+        cfn = boto.cloudformation.connect_to_region(
+                  region,
+                  aws_access_key_id=aws_access_key,
                   aws_secret_access_key=aws_secret_key,
-                  region=cf_region,
               )
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
