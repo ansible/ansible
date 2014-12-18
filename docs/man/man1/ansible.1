@@ -89,14 +89,19 @@ The
 to pass to the module\&.
 .RE
 .PP
-\fB\-k\fR, \fB\-\-ask\-pass\fR
+\fB\-k\fR, \fB\-\-ask\-pass\fR  
 .RS 4
 Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
 .RE
 .PP
+\fB--ask-su-pass\fR
+.RS 4
+Prompt for the su password instead of assuming key\-based authentication with ssh\-agent\&.
+.RE
+.PP
 \fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
 .RS 4
-Prompt for the password to use with \-\-sudo, if any
+Prompt for the password to use with \-\-sudo, if any\&.
 .RE
 .PP
 \fB\-o\fR, \fB\-\-one\-line\fR
@@ -106,7 +111,12 @@ Try to output everything on one line\&.
 .PP
 \fB\-s\fR, \fB\-\-sudo\fR
 .RS 4
-Run the command as the user given by \-u and sudo to root\&.
+Run the command as the user given by \-u and sudo to root.
+.RE
+.PP
+\fB\-S\fR, \fB\-\-su\fR
+.RS 4
+Run operations with su\&.
 .RE
 .PP
 \fB\-t\fR \fIDIRECTORY\fR, \fB\-\-tree=\fR\fIDIRECTORY\fR
