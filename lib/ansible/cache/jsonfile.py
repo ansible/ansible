@@ -34,6 +34,8 @@ class CacheModule(BaseCacheModule):
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
         self._cache_dir = C.CACHE_PLUGIN_CONNECTION # expects a dir path
+        if not self._cache_dir:
+            utils.exit("error, fact_caching_connection is not set, cannot use fact cache")
 
         if not os.path.exists(self._cache_dir):
             try:
