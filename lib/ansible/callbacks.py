@@ -80,13 +80,13 @@ def log_lockfile():
     uid = os.getuid()
     path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
     lockfile = open(path, 'w')
-    # use fcntl to set FD_CLOEXEC on the file descriptor, 
+    # use fcntl to set FD_CLOEXEC on the file descriptor,
     # so that we don't leak the file descriptor later
     lockfile_fd = lockfile.fileno()
     old_flags = fcntl.fcntl(lockfile_fd, fcntl.F_GETFD)
     fcntl.fcntl(lockfile_fd, fcntl.F_SETFD, old_flags | fcntl.FD_CLOEXEC)
     return lockfile
-    
+
 LOG_LOCK = log_lockfile()
 
 def log_flock(runner):
@@ -483,7 +483,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
-        display(msg, color='red', runner=self.runner)
+        # Display Cyan error message instead of Red when ignoring errors
+        color = 'cyan' if ignore_errors else 'red'
+        display(msg, color=color, runner=self.runner)
 
         if stderr:
             display("stderr: %s" % stderr, color='red', runner=self.runner)
