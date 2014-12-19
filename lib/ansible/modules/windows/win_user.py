@@ -38,13 +38,13 @@ options:
       - Full name of the user
     required: false
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   description:
     description:
       - Description of the user
     required: false
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   password:
     description:
       - Optionally set the user's password to this (plain text) value.
@@ -57,7 +57,7 @@ options:
     required: false
     choices: [ 'always', 'on_create' ]
     default: always
-    version_added: "1.8"
+    version_added: "1.9"
   password_expired:
     description:
       - C(yes) will require the user to change their password at next login.
@@ -65,7 +65,7 @@ options:
     required: false
     choices: [ 'yes', 'no' ]
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   password_never_expires:
     description:
       - C(yes) will set the password to never expire.  C(no) will allow the
@@ -73,7 +73,7 @@ options:
     required: false
     choices: [ 'yes', 'no' ]
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   user_cannot_change_password:
     description:
       - C(yes) will prevent the user from changing their password.  C(no) will
@@ -81,7 +81,7 @@ options:
     required: false
     choices: [ 'yes', 'no' ]
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   account_disabled:
     description:
       - C(yes) will disable the user account.  C(no) will clear the disabled
@@ -89,14 +89,14 @@ options:
     required: false
     choices: [ 'yes', 'no' ]
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   account_locked:
     description:
       - C(no) will unlock the user account if locked.
     required: false
     choices: [ 'no' ]
     default: null
-    version_added: "1.8"
+    version_added: "1.9"
   groups:
     description:
       - Adds or removes the user from this comma-separated lis of groups,
@@ -104,7 +104,7 @@ options:
         C(replace) and I(groups) is set to the empty string ('groups='), the
         user is removed from all groups.
     required: false
-    version_added: "1.8"
+    version_added: "1.9"
   groups_action:
     description:
       - If C(replace), the user is added as a member of each group in
@@ -114,11 +114,11 @@ options:
     required: false
     choices: [ "replace", "add", "remove" ]
     default: "replace"
-    version_added: "1.8"
+    version_added: "1.9"
   state:
     description:
       - When C(present), creates or updates the user account.  When C(absent),
-        removes the user account if it exists.  When C(query) (new in 1.8),
+        removes the user account if it exists.  When C(query) (new in 1.9),
         retrieves the user account details without making any changes.
     required: false
     choices:
