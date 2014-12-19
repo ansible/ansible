@@ -43,7 +43,7 @@ class CacheModule(BaseCacheModule):
                 return None
 
     def _get_cache_file(self, key):
-        return "%s/%s" % (self._cache_dir, key)
+        return "%s/%s.json" % (self._cache_dir, key)
 
     def get(self, key):
 
@@ -101,7 +101,9 @@ class CacheModule(BaseCacheModule):
     def keys(self):
         keys = []
         for k in os.listdir(self._cache_dir):
-            if not (k.startswith('.') or self.has_expired(k)):
+            if not (k.startswith('.') or self.has_expired(k)) and k.endswith('.json'):
+                # remove .json
+                k = k[:-5]
                 keys.append(k)
         return keys
 
