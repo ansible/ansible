@@ -176,6 +176,10 @@ EXAMPLES = '''
 - git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
 
 # Example just ensuring the repo checkout exists
+- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
+
+# Example just get information about the repository whether or not it has
+# already been cloned locally.
 - git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout clone=no update=no
 
 # Example checkout a github repo and use refspec to fetch all pull requests
