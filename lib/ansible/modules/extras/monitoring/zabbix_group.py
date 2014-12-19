@@ -36,7 +36,7 @@ options:
         choices: [ 'present', 'absent' ]
     host_group:
         description:
-            - Name of the host groupto be added or removed.
+            - Name of the host group to be added or removed.
         required: true
         default: null
         aliases: [ ]
