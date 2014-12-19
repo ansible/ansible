@@ -42,6 +42,9 @@ class CacheModule(BaseCacheModule):
                 utils.warning("error while trying to create cache dir %s : %s" % (self._cache_dir, str(e)))
                 return None
 
+    def _get_cache_file(self, key):
+        return "%s/%s" % (self._cache_dir, key)
+
     def get(self, key):
 
         if key in self._cache:
@@ -50,7 +53,7 @@ class CacheModule(BaseCacheModule):
         if self.has_expired(key):
            raise KeyError
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file(key)
         try:
             f = open( cachefile, 'r')
         except (OSError,IOError), e:
@@ -66,7 +69,7 @@ class CacheModule(BaseCacheModule):
 
         self._cache[key] = value
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file(key)
         try:
             #TODO: check if valid keys can have invalid FS chars, base32?
             f = open(cachefile, 'w')
@@ -79,7 +82,7 @@ class CacheModule(BaseCacheModule):
 
     def has_expired(self, key):
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file(key)
         try:
             st = os.stat(cachefile)
         except (OSError,IOError), e:
@@ -110,7 +113,7 @@ class CacheModule(BaseCacheModule):
         if self.has_expired(key):
             return False
         try:
-            st = os.stat("%s/%s" % (self._cache_dir, key))
+            st = os.stat(self._get_cache_file(key))
             return True
         except (OSError,IOError), e:
             if e.errno == errno.ENOENT:
@@ -121,7 +124,7 @@ class CacheModule(BaseCacheModule):
     def delete(self, key):
         del self._cache[key]
         try:
-            os.remove("%s/%s" % (self._cache_dir, key))
+            os.remove(self._get_cache_file(key))
         except (OSError,IOError), e:
             pass #TODO: only pass on non existing?
 
