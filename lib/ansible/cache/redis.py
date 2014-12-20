@@ -20,9 +20,9 @@ import collections
 # FIXME: can we store these as something else before we ship it?
 import sys
 import time
-import json
 
 from ansible import constants as C
+from ansible.utils import jsonify
 from ansible.cache.base import BaseCacheModule
 
 try:
@@ -65,7 +65,7 @@ class CacheModule(BaseCacheModule):
         return json.loads(value)
 
     def set(self, key, value):
-        value2 = json.dumps(value)
+        value2 = jsonify(value)
         if self._timeout > 0: # a timeout of 0 is handled as meaning 'never expire'
             self._cache.setex(self._make_key(key), int(self._timeout), value2)
         else:
