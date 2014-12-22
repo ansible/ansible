@@ -474,7 +474,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
     ''' updates repo from remote sources '''
-    commands = [["set a new url %s for %s" % (repo, remote)], [git_path, 'remote', 'set-url', remote, repo]]
+    commands = [("set a new url %s for %s" % (repo, remote), [git_path, 'remote', 'set-url', remote, repo])]
 
     fetch_str = 'download remote objects and refs'
 
@@ -482,14 +482,14 @@ def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
         refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         if refspec:
             refspecs.append(refspec)
-        commands.append([fetch_str, [git_path, 'fetch', remote] + refspecs])
+        commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
     else:
-        commands.append([fetch_str, [git_path, 'fetch', '--tags']])
+        commands.append((fetch_str, [git_path, 'fetch', '--tags']))
         if refspec:
             # unlike in bare mode, there's no way to combine the
             # additional refspec with the default git fetch behavior,
             # so use two commands
-            commands.append([fetch_str, [git_path, 'fetch', remote, refspec]])
+            commands.append((fetch_str, [git_path, 'fetch', remote, refspec]))
 
     for (label,command) in commands:
         (rc,out,err) = module.run_command(command, cwd=dest)
