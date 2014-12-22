@@ -258,7 +258,7 @@ class ElbManager:
         try:
             elb = connect_to_aws(boto.ec2.elb, self.region, 
                                  **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
 
         elbs = elb.get_all_load_balancers()
@@ -278,7 +278,7 @@ class ElbManager:
         try:
             ec2 = connect_to_aws(boto.ec2, self.region, 
                                  **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
         return ec2.get_only_instances(instance_ids=[self.instance_id])[0]
 
