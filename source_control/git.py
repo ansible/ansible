@@ -484,12 +484,14 @@ def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
             refspecs.append(refspec)
         commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
     else:
-        commands.append((fetch_str, [git_path, 'fetch', '--tags']))
+        # unlike in bare mode, there's no way to combine the
+        # additional refspec with the default git fetch behavior,
+        # so use two commands
+        commands.append((fetch_str, [git_path, 'fetch', remote]))
+        refspecs = ['+refs/tags/*:refs/tags/*']
         if refspec:
-            # unlike in bare mode, there's no way to combine the
-            # additional refspec with the default git fetch behavior,
-            # so use two commands
-            commands.append((fetch_str, [git_path, 'fetch', remote, refspec]))
+            refspecs.append(refspec)
+        commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
 
     for (label,command) in commands:
         (rc,out,err) = module.run_command(command, cwd=dest)
