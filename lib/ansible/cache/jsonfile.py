@@ -20,9 +20,9 @@ import time
 import errno
 
 try:
-    import json
-except ImportError:
     import simplejson as json
+except ImportError:
+    import json
 
 from ansible import constants as C
 from ansible import utils
