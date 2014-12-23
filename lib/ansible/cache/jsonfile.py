@@ -20,6 +20,11 @@ import time
 import json
 import errno
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from ansible import constants as C
 from ansible import utils
 from ansible.cache.base import BaseCacheModule
