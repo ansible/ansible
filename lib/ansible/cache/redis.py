@@ -21,6 +21,11 @@ import collections
 import sys
 import time
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 from ansible import constants as C
 from ansible.utils import jsonify
 from ansible.cache.base import BaseCacheModule

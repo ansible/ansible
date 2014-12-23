@@ -45,7 +45,6 @@ import warnings
 import traceback
 import getpass
 import sys
-import json
 import subprocess
 import contextlib
 
@@ -63,9 +62,10 @@ CODE_REGEX = re.compile(r'(?:{%|%})')
 
 
 try:
-    import json
-except ImportError:
+    # simplejson can be much faster if it's available
     import simplejson as json
+except ImportError:
+    import json
 
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
