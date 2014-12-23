@@ -977,12 +977,19 @@ class AnsibleModule(object):
             default = v.get('default', None)
             if pre == True:
                 # this prevents setting defaults on required items
-                if default is not None and k not in self.params:
+                if default is not None and k not in self.params and default not in self.argument_spec:
                     self.params[k] = default
             else:
                 # make sure things without a default still get set None
-                if k not in self.params:
+                if k not in self.params and default not in self.argument_spec:
                     self.params[k] = default
+
+        # now we fill all defaults whose default values are set to be same as some other module var
+        if pre == False:
+            for (k,v) in self.argument_spec.iteritems():
+                default = v.get('default', None)
+                if default in self.argument_spec and k not in self.params:
+                    self.params[k] = self.params[default]
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
