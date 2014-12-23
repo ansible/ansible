@@ -118,6 +118,7 @@ import os.path
 import tempfile
 import re
 import shlex
+import urllib2
 
 class keydict(dict):
 
@@ -332,6 +333,14 @@ def enforce_state(module, params):
     manage_dir  = params.get("manage_dir", True)
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
+
+    if key.startswith("http"):
+        try:
+        gh_key = urllib2.urlopen(key).read()
+    except urllib2.URLError, e:
+        module.fail_json(msg="no key found at: %s" % key)
+
+    key = gh_key
 
     # extract individual keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
