@@ -184,7 +184,7 @@ variables. Note that this only works on Ansible 1.4 or later.
 
 Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
-directory will be loaded second.
+directory will override variables set in the inventory directory.
 
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
