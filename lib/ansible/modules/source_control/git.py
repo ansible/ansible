@@ -762,7 +762,9 @@ def main():
                 if version in get_tags(git_path, module, dest):
                     repo_updated = False
             else:
-                repo_updated = False
+                # if the remote is a branch and we have the branch locally, exit early
+                if version in get_branches(git_path, module, dest):
+                    repo_updated = False
         if repo_updated is None:
             if module.check_mode:
                 module.exit_json(changed=True, before=before, after=remote_head)
