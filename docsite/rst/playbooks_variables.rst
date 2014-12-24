@@ -297,18 +297,65 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(start=1, step=10) }}    => 51
 
 
+Shuffle Filter
+--------------
+
+.. versionadded:: 1.8
+
+This filter will randomize an existing list, giving a different order every invocation.
+
+To get a random list from an existing  list::
+
+    {{ ['a','b','c']|shuffle }} => ['c','a','b']
+    {{ ['a','b','c']|shuffle }} => ['b','c','a']
+
+note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
+
+
+.. _math_stuff:
+
+Math
+--------------------
+.. versionadded:: 1.9
+
+
+To see if something is actually a number::
+
+    {{ myvar | isnan }}
+
+Get the logarithm (default is e)::
+
+    {{ myvar | log }}
+
+Get the base 10 logarithm::
+
+    {{ myvar | log(10) }}
+
+Give me the power of 2! (or 5)::
+
+    {{ myvar | pow(2) }}
+    {{ myvar | pow(5) }}
+
+Square root, or the 5th::
+
+    {{ myvar | root }}
+    {{ myvar | root(5) }}
+
+Note that jinja2 already provides some like abs() and round().
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
 --------------------
 
 To concatenate a list into a string::
-   
+
    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
-    {{ path | basename }} 
+    {{ path | basename }}
 
 To get the directory from a path::
 
@@ -318,14 +365,18 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
 
+To get the real path of a link (new in version 1.8)::
+
+   {{ path | readlink }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
 
-To take an md5sum of a filename::
+To take a sha1sum of a filename::
 
-    {{ filename | md5 }}
+    {{ filename | sha1 }}
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
@@ -667,7 +718,7 @@ For instance, what if you want users to be able to control some aspect about how
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
 If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
-ending in ".fact", can be YAML, JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
 
 For instance assume a /etc/ansible/facts.d/preferences.fact::
 
@@ -685,7 +736,7 @@ And you will see the following fact added::
     "ansible_local": {
             "preferences": {
                 "general": {
-                    "asdf" : "1", 
+                    "asdf" : "1",
                     "bar"  : "2"
                 }
             }
@@ -703,7 +754,7 @@ can allow that fact to be used during that particular play.  Otherwise, it will 
 Here is an example of what that might look like::
 
   - hosts: webservers
-    tasks: 
+    tasks:
       - name: create directory for ansible custom facts
         file: state=directory recurse=yes path=/etc/ansible/facts.d
       - name: install custom impi fact
@@ -741,7 +792,8 @@ To configure fact caching, enable it in ansible.cfg as follows::
 
     [defaults]
     fact_caching = redis
-    fact_caching_timeout = 86400 # seconds
+    fact_caching_timeout = 86400
+    # seconds
 
 At the time of writing, Redis is the only supported fact caching engine.  
 To get redis up and running, perform the equivalent OS commands::
@@ -838,6 +890,7 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
    {% endfor %}
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
 
 Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
@@ -845,6 +898,8 @@ reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the 
 period, without the rest of the domain.
 
 *play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+
+*delegate_to* is the inventory hostname of the host that the current task has been delegated to using 'delegate_to'.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
@@ -889,7 +944,7 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. note::
    It's also possible to keep per-host and per-group variables in very
-   similar files, this is covered in :doc:`intro_patterns`.
+   similar files, this is covered in :ref:`splitting_out_vars`.
 
 .. _passing_variables_on_the_command_line:
 
@@ -948,9 +1003,10 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they win in a certain order, which is::
 
-    * -e variables always win
-    * then comes "most everything else"
-    * then comes variables defined in inventory
+    * extra vars (-e in the command line) always win
+    * then comes connection variables defined in inventory (ansible_ssh_user, etc)
+    * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+    * then comes the rest of the variables defined in inventory
     * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
 

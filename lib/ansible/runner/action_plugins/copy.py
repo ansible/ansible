@@ -157,12 +157,15 @@ class ActionModule(object):
             if "-tmp-" not in tmp_path:
                 tmp_path = self.runner._make_tmp_path(conn)
 
-        for source_full, source_rel in source_files:
-            # Generate the MD5 hash of the local file.
-            local_md5 = utils.md5(source_full)
+        # expand any user home dir specifier
+        dest = self.runner._remote_expand_user(conn, dest, tmp_path)
 
-            # If local_md5 is not defined we can't find the file so we should fail out.
-            if local_md5 is None:
+        for source_full, source_rel in source_files:
+            # Generate a hash of the local file.
+            local_checksum = utils.checksum(source_full)
+
+            # If local_checksum is not defined we can't find the file so we should fail out.
+            if local_checksum is None:
                 result = dict(failed=True, msg="could not find src=%s" % source_full)
                 return ReturnData(conn=conn, result=result)
 
@@ -174,27 +177,31 @@ class ActionModule(object):
             else:
                 dest_file = conn.shell.join_path(dest)
 
-            # Attempt to get the remote MD5 Hash.
-            remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
+            # Attempt to get the remote checksum
+            remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file, inject)
 
-            if remote_md5 == '3':
-                # The remote_md5 was executed on a directory.
+            if remote_checksum == '3':
+                # The remote_checksum was executed on a directory.
                 if content is not None:
                     # If source was defined as content remove the temporary file and fail out.
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
                     result = dict(failed=True, msg="can not use content with a dir as dest")
                     return ReturnData(conn=conn, result=result)
                 else:
-                    # Append the relative source location to the destination and retry remote_md5.
+                    # Append the relative source location to the destination and retry remote_checksum
                     dest_file = conn.shell.join_path(dest, source_rel)
-                    remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
+                    remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file, inject)
 
-            if remote_md5 != '1' and not force:
-                # remote_file does not exist so continue to next iteration.
+            if remote_checksum == '4':
+                result = dict(msg="python isn't present on the system.  Unable to compute checksum", failed=True)
+                return ReturnData(conn=conn, result=result)
+
+            if remote_checksum != '1' and not force:
+                # remote_file exists so continue to next iteration.
                 continue
 
-            if local_md5 != remote_md5:
-                # The MD5 hashes don't match and we will change or error out.
+            if local_checksum != remote_checksum:
+                # The checksums don't match and we will change or error out.
                 changed = True
 
                 # Create a tmp_path if missing only if this is not recursive.
@@ -254,7 +261,7 @@ class ActionModule(object):
                 module_executed = True
 
             else:
-                # no need to transfer the file, already correct md5, but still need to call
+                # no need to transfer the file, already correct hash, but still need to call
                 # the file module in case we want to change attributes
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
@@ -283,8 +290,8 @@ class ActionModule(object):
                 module_executed = True
 
             module_result = module_return.result
-            if not module_result.get('md5sum'):
-                module_result['md5sum'] = local_md5
+            if not module_result.get('checksum'):
+                module_result['checksum'] = local_checksum
             if module_result.get('failed') == True:
                 return module_return
             if module_result.get('changed') == True:

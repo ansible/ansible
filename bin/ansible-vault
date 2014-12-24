@@ -18,8 +18,16 @@
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # http://docs.ansible.com/playbooks_vault.html for more details.
 
-#__requires__ = ['ansible']
-#import pkg_resources
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
 
 import os
 import sys

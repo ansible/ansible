@@ -57,16 +57,19 @@ feature development, so clearing bugs out of the way is one of the best things y
 If you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.  You can do this by checking out ansible, making a test
 branch off the main one, merging a GitHub issue, testing, and then commenting on that particular issue on GitHub.
 
-I'd Like To Report A Bugs
+I'd Like To Report A Bug
 ------------------------------------
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
-Bugs should be reported to `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ after 
+Bugs related to the core language should be reported to `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ after 
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
 to see if the issue has already been reported.  
 
-When filing a bug, please use the `issue template <https://raw2.github.com/ansible/ansible/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information.
+MODULE related bugs however should go to `ansible-modules-core <github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
+
+When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
+
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
 
@@ -102,8 +105,7 @@ documenting a new feature, submit a github pull request to  the code that
 lives in the “docsite/rst” subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
 
-Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module
-in the library/ directory.
+Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in either the ansible-modules-core or ansible-modules-extra repos on github, depending on the module.  Information about this is always listed on the bottom of the web documentation for each module.
 
 Aside from modules, the main docs are in restructured text
 format.  
@@ -113,7 +115,7 @@ github about any errors you spot or sections you would like to see added. For mo
 on creating pull requests, please refer to the
 `github help guide <https://help.github.com/articles/using-pull-requests>`_.
 
-For Current and Propspective Developers
+For Current and Prospective Developers
 =======================================
 
 I'd Like To Learn How To Develop on Ansible
@@ -130,10 +132,10 @@ Modules are some of the easiest places to get started.
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps it’s source on github at 
-`github.com/ansible/ansible <http://github.com/ansible/ansible>`_ 
- 
-and takes contributions through
+The Ansible project keeps its source on github at 
+`github.com/ansible/ansible <http://github.com/ansible/ansible>`_ for the core application, and two sub repos ansible/ansible-modules-core and ansible/ansible-modules-extras for module related items.   If you need to know if a module is in 'core' or 'extras', consult the web documentation page for that module.
+
+The project takes contributions through
 `github pull requests <https://help.github.com/articles/using-pull-requests>`_.
 
 It is usually a good idea to join the ansible-devel list to discuss any large features prior to submission, and this especially helps in avoiding duplicate work or efforts where we decide, upon seeing a pull request for the first time, that revisions are needed.  (This is not usually needed for module development, but can be nice for large changes).
@@ -144,7 +146,7 @@ to modify a pull request later.
 
 When submitting patches, be sure to run the unit tests first “make tests” and always use 
 “git rebase” vs “git merge” (aliasing git pull to git pull --rebase is a great idea) to 
-avoid merge commits in your submissions.  There are also integration tests that can be run in the "tests/integration" directory.  
+avoid merge commits in your submissions.  There are also integration tests that can be run in the "test/integration" directory.  
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that contain merge commits.  Use "git pull --rebase" vs "git pull" and "git rebase" vs "git merge". Also be sure to use topic branches to keep your additions on different branches, such that they won't pick up stray commits later.
 

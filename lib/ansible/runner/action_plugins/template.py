@@ -75,6 +75,8 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
+        # Expand any user home dir specification
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
 
         if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
             base = os.path.basename(source)
@@ -87,10 +89,17 @@ class ActionModule(object):
             result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        local_md5 = utils.md5s(resultant)
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+        local_checksum = utils.checksum_s(resultant)
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
 
-        if local_md5 != remote_md5:
+        if remote_checksum in ('0', '2', '3', '4'):
+            # Note: 1 means the file is not present which is fine; template
+            # will create it
+            result = dict(failed=True, msg="failed to checksum remote file."
+                        " Checksum error code: %s" % remote_checksum)
+            return ReturnData(conn=conn, comm_ok=True, result=result)
+
+        if local_checksum != remote_checksum:
 
             # template is different from the remote value
 
@@ -133,9 +142,12 @@ class ActionModule(object):
             # when running the file module based on the template data, we do
             # not want the source filename (the name of the template) to be used,
             # since this would mess up links, so we clear the src param and tell
-            # the module to follow links
+            # the module to follow links.  When doing that, we have to set
+            # original_basename to the template just in case the dest is
+            # a directory.
             new_module_args = dict(
                 src=None,
+                original_basename=os.path.basename(source),
                 follow=True,
             )
             # be sure to inject the check mode param into the module args and

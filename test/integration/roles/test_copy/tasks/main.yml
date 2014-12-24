@@ -40,6 +40,7 @@
       - "'group' in copy_result"
       - "'gid' in copy_result"
       - "'md5sum' in copy_result"
+      - "'checksum' in copy_result"
       - "'owner' in copy_result"
       - "'size' in copy_result"
       - "'src' in copy_result"
@@ -51,10 +52,16 @@
     that:
       - "copy_result.changed == true"
 
-- name: verify that the file md5sum is correct
-  assert: 
-    that: 
+- name: verify that the file checksums are correct
+  assert:
+    that:
+      - "copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+
+- name: verify that the legacy md5sum is correct
+  assert:
+    that:
       - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+  when: ansible_fips != True
 
 - name: check the stat results of the file
   stat: path={{output_file}}
@@ -70,7 +77,13 @@
       - "stat_results.stat.isfifo == false"
       - "stat_results.stat.isreg == true"
       - "stat_results.stat.issock == false"
+      - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+
+- name: verify that the legacy md5sum is correct
+  assert:
+    that:
       - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+  when: ansible_fips != True
 
 - name: overwrite the file via same means
   copy: src=foo.txt dest={{output_file}}
@@ -180,7 +193,7 @@
     that:
       - "copy_result6.changed"
       - "copy_result6.dest == '{{output_dir|expanduser}}/multiline.txt'"
-      - "copy_result6.md5sum == '1627d51e7e607c92cf1a502bf0c6cce3'"
+      - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)
 # this can't be relative to {{output_dir}} as ~root usually has mode 700
@@ -202,12 +215,12 @@
     that:
       - "copy_result7.changed"
       - "copy_result7.dest == '/tmp/worldwritable/file.txt'"
-      - "copy_result7.md5sum == '73feffa4b7f6bb68e44cf984c85f6e88'"
+      - "copy_result7.checksum == 'bbe960a25ea311d21d40669e93df2003ba9b90a2'"
 
 - name: clean up
   file: dest=/tmp/worldwritable state=absent
 
-# test overwritting a link using "follow=yes" so that the link
+# test overwriting a link using "follow=yes" so that the link
 # is preserved and the link target is updated
 
 - name: create a test file to symlink to
@@ -229,11 +242,11 @@
     that:
     - stat_link_result.stat.islnk
 
-- name: get the md5 of the link target
-  shell: md5sum {{output_dir}}/follow_test | cut -f1 -sd ' '
+- name: get the checksum of the link target
+  shell: sha1sum {{output_dir}}/follow_test | cut -f1 -sd ' '
   register: target_file_result
 
 - name: assert that the link target was updated
   assert:
     that:
-    - replace_follow_result.md5sum == target_file_result.stdout
+    - replace_follow_result.checksum == target_file_result.stdout

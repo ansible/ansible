@@ -45,7 +45,6 @@ import warnings
 import traceback
 import getpass
 import sys
-import json
 import subprocess
 import contextlib
 
@@ -63,14 +62,27 @@ CODE_REGEX = re.compile(r'(?:{%|%})')
 
 
 try:
-    import json
-except ImportError:
+    # simplejson can be much faster if it's available
     import simplejson as json
+except ImportError:
+    import json
 
+# Note, sha1 is the only hash algorithm compatible with python2.4 and with
+# FIPS-140 mode (as of 11-2014)
+try:
+    from hashlib import sha1 as sha1
+except ImportError:
+    from sha import sha as sha1
+
+# Backwards compat only
 try:
     from hashlib import md5 as _md5
 except ImportError:
-    from md5 import md5 as _md5
+    try:
+        from md5 import md5 as _md5
+    except ImportError:
+        # Assume we're running in FIPS mode here
+        _md5 = None
 
 PASSLIB_AVAILABLE = False
 try:
@@ -415,14 +427,36 @@ def role_spec_parse(role_spec):
 
 
 def role_yaml_parse(role):
-    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-        role["src"] = "git+" + role["src"]
-    if '+' in role["src"]:
-        (scm, src) = role["src"].split('+')
-        role["scm"] = scm
-        role["src"] = src
-    if 'name' not in role:
-        role["name"] = repo_url_to_role_name(role["src"])
+    if 'role' in role:
+        # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+        role_info = role_spec_parse(role['role'])
+        if isinstance(role_info, dict):
+            # Warning: Slight change in behaviour here.  name may be being
+            # overloaded.  Previously, name was only a parameter to the role.
+            # Now it is both a parameter to the role and the name that
+            # ansible-galaxy will install under on the local system.
+            if 'name' in role and 'name' in role_info:
+                del role_info['name']
+            role.update(role_info)
+    else:
+        # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+        if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+            role["src"] = "git+" + role["src"]
+
+        if '+' in role["src"]:
+            (scm, src) = role["src"].split('+')
+            role["scm"] = scm
+            role["src"] = src
+
+        if 'name' not in role:
+            role["name"] = repo_url_to_role_name(role["src"])
+
+        if 'version' not in role:
+            role['version'] = ''
+
+        if 'scm' not in role:
+            role['scm'] = None
+
     return role
 
 
@@ -798,22 +832,22 @@ def merge_hash(a, b):
 
     return result
 
-def md5s(data):
-    ''' Return MD5 hex digest of data. '''
+def secure_hash_s(data, hash_func=sha1):
+    ''' Return a secure hash hex digest of data. '''
 
-    digest = _md5()
+    digest = hash_func()
     try:
         digest.update(data)
     except UnicodeEncodeError:
         digest.update(data.encode('utf-8'))
     return digest.hexdigest()
 
-def md5(filename):
-    ''' Return MD5 hex digest of local file, None if file is not present or a directory. '''
+def secure_hash(filename, hash_func=sha1):
+    ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
 
     if not os.path.exists(filename) or os.path.isdir(filename):
         return None
-    digest = _md5()
+    digest = hash_func()
     blocksize = 64 * 1024
     try:
         infile = open(filename, 'rb')
@@ -826,17 +860,38 @@ def md5(filename):
         raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
 
+# The checksum algorithm must match with the algorithm in ShellModule.checksum() method
+checksum = secure_hash
+checksum_s = secure_hash_s
+
+# Backwards compat.  Some modules include md5s in their return values
+# Continue to support that for now.  As of ansible-1.8, all of those modules
+# should also return "checksum" (sha1 for now)
+# Do not use m5 unless it is needed for:
+# 1) Optional backwards compatibility
+# 2) Compliance with a third party protocol
+#
+# MD5 will not work on systems which are FIPS-140-2 compliant.
+def md5s(data):
+    if not _md5:
+        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+    return secure_hash_s(data, _md5)
+
+def md5(filename):
+    if not _md5:
+        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+    return secure_hash(filename, _md5)
+
 def default(value, function):
     ''' syntactic sugar around lazy evaluation of defaults '''
     if value is None:
         return function()
     return value
 
-def _gitinfo():
+
+def _git_repo_info(repo_path):
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
-
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -846,7 +901,7 @@ def _gitinfo():
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
                 else:
-                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+                    repo_path = os.path.join(repo_path[:-4], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
@@ -857,22 +912,50 @@ def _gitinfo():
             f = open(branch_path)
             commit = f.readline()[:10]
             f.close()
-            date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:
-                offset = time.timezone
-            else:
-                offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+        else:
+            # detached HEAD
+            commit = branch[:10]
+            branch = 'detached HEAD'
+            branch_path = os.path.join(repo_path, "HEAD")
+
+        date = time.localtime(os.stat(branch_path).st_mtime)
+        if time.daylight == 0:
+            offset = time.timezone
+        else:
+            offset = time.altzone
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+            time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
     return result
+
+
+def _gitinfo():
+    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    repo_path = os.path.join(basedir, '.git')
+    result = _git_repo_info(repo_path)
+    submodules = os.path.join(basedir, '.gitmodules')
+    if not os.path.exists(submodules):
+       return result
+    f = open(submodules)
+    for line in f:
+        tokens = line.strip().split(' ')
+        if tokens[0] == 'path':
+            submodule_path = tokens[2]
+            submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
+            if not submodule_info:
+                submodule_info = ' not found - use git submodule update --init ' + submodule_path
+            result += "\n  {0}: {1}".format(submodule_path, submodule_info)
+    f.close()
+    return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
     gitinfo = _gitinfo()
     if gitinfo:
         result = result + " {0}".format(gitinfo)
+    result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
     return result
 
 def version_info(gitinfo=False):
@@ -1148,7 +1231,7 @@ def boolean(value):
     else:
         return False
 
-def make_sudo_cmd(sudo_user, executable, cmd):
+def make_sudo_cmd(sudo_exe, sudo_user, executable, cmd):
     """
     helper function for connection plugins to create sudo commands
     """
@@ -1163,7 +1246,7 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
+        sudo_exe, sudo_exe, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
@@ -1181,12 +1264,24 @@ def make_su_cmd(su_user, executable, cmd):
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
 
+# For v2, consider either using kitchen or copying my code from there for
+# to_unicode and to_bytes handling (TEK)
 _TO_UNICODE_TYPES = (unicode, type(None))
 
 def to_unicode(value):
+    # Use with caution -- this function is not encoding safe (non-utf-8 values
+    # will cause tracebacks if they contain bytes from 0x80-0xff inclusive)
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
+
+def to_bytes(value):
+    # Note: value is assumed to be a basestring to mirror to_unicode.  Better
+    # implementations (like kitchen.text.converters.to_bytes) bring that check
+    # into the function
+    if isinstance(value, str):
+        return value
+    return value.encode('utf-8')
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks

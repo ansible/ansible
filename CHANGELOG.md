@@ -1,7 +1,20 @@
 Ansible Changes By Release
 ==========================
 
-## 1.8 "You Really Got Me" - Active Development
+## 1.9 "Dancing In the Street" - ACTIVE DEVELOPMENT
+
+in progress, details pending
+
+* Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+
+## 1.8.1 "You Really Got Me" - Nov 26, 2014
+
+* Various bug fixes in postgresql and mysql modules.
+* Fixed a bug related to lookup plugins used within roles not finding files based on the relative paths to the roles files/ directory.
+* Fixed a bug related to vars specified in plays being templated too early, resulting in incorrect variable interpolation.
+* Fixed a bug related to git submodules in bare repos.
+
+## 1.8 "You Really Got Me" - Nov 25, 2014
 
 Major changes:
 
@@ -16,6 +29,10 @@ Major changes:
 * command_warnings feature will warn about when usage of the shell/command module can be simplified to use core modules - this can be enabled in ansible.cfg
 * new omit value can be used to leave off a parameter when not set, like so module_name: a=1 b={{ c | default(omit) }}, would not pass value for b (not even an empty value) if c was not set.
 * developers: 'baby JSON' in module responses, originally intended for writing modules in bash, is removed as a feature to simplify logic, script module remains available for running bash scripts.
+* async jobs started in "fire & forget" mode can now be checked on at a later time.
+* added ability to subcategorize modules for docs.ansible.com
+* added ability for shipped modules to have aliases with symlinks
+* added ability to deprecate older modules by starting with "_" and including "deprecated: message why" in module docs
 
 New Modules:
 
@@ -32,6 +49,7 @@ New Modules:
 Some other notable changes:
 
 * added the ability to set "instance filters" in the ec2.ini to limit results from the inventory plugin.
+* upgrades for various variable precedence items and parsing related items
 * added a new "follow" parameter to the file and copy modules, which allows actions to be taken on the target of a symlink rather than the symlink itself.
 * if a module should ever traceback, it will return a standard error, catchable by ignore_errors, versus an 'unreachable'
 * ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
@@ -55,9 +73,41 @@ Some other notable changes:
 * various parser improvements
 * produce a friendly error message if the SSH key is too permissive
 * ec2_ami_search: support for SSD and IOPS provisioned EBS images
+* can set ansible_sudo_exe as an inventory variable which allows specifying
+  a different sudo (or equivalent) command
+* git module: Submodule handling has changed.  Previously if you used the
+  ``recursive`` parameter to handle submodules, ansible would track the
+  submodule upstream's head revision.  This has been changed to checkout the
+  version of the submodule specified in the superproject's git repository.
+  This is inline with what git submodule update does.  If you want the old
+  behaviour use the new module parameter track_submodules=yes
+* Checksumming of transferred files has been made more portable and now uses
+  the sha1 algorithm instead of md5 to be compatible with FIPS-140.
+  - As a small side effect, the fetch module no longer returns a useful value
+    in remote_md5.  If you need a replacement, switch to using remote_checksum
+    which returns the sha1sum of the remote file.
+* ansible-doc CLI tool contains various improvements for working with different terminals
 
 And various other bug fixes and improvements ...
 
+
+## 1.7.2 "Summer Nights" - Sep 24, 2014
+
+- Fixes a bug in accelerate mode which caused a traceback when trying to use that connection method.
+- Fixes a bug in vault where the password file option was not being used correctly internally.
+- Improved multi-line parsing when using YAML literal blocks (using > or |).
+- Fixed a bug with the file module and the creation of relative symlinks.
+- Fixed a bug where checkmode was not being honored during the templating of files.
+- Other various bug fixes.
+
+## 1.7.1 "Summer Nights" - Aug 14, 2014
+
+- Security fix to disallow specifying 'args:' as a string, which could allow the insertion of extra module parameters through variables.
+- Performance enhancements related to previous security fixes, which could cause slowness when modules returned very large JSON results. This specifically impacted the unarchive module frequently, which returns the details of all unarchived files in the result.
+- Docker module bug fixes:
+  * Fixed support for specifying rw/ro bind modes for volumes
+  * Fixed support for allowing the tag in the image parameter
+- Various other bug fixes
 
 ## 1.7 "Summer Nights" - Aug 06, 2014
 

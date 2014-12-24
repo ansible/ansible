@@ -432,7 +432,11 @@ class Ec2Inventory(object):
             self.push(self.inventory, key_name, dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'keys', key_name)
-        
+
+        # Inventory: Group by VPC
+        if instance.vpc_id:
+            self.push(self.inventory, self.to_safe('vpc_id_' + instance.vpc_id), dest)
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -504,13 +508,13 @@ class Ec2Inventory(object):
         self.push(self.inventory, instance.availability_zone, dest)
         if self.nested_groups:
             self.push_group(self.inventory, region, instance.availability_zone)
-        
+
         # Inventory: Group by instance type
         type_name = self.to_safe('type_' + instance.instance_class)
         self.push(self.inventory, type_name, dest)
         if self.nested_groups:
             self.push_group(self.inventory, 'types', type_name)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
@@ -622,8 +626,8 @@ class Ec2Inventory(object):
                 for group in value:
                     group_ids.append(group.id)
                     group_names.append(group.name)
-                instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
-                instance_vars["ec2_security_group_names"] = ','.join(group_names)
+                instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
+                instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
             else:
                 pass
                 # TODO Product codes if someone finds them useful

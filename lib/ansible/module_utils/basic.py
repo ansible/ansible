@@ -87,10 +87,19 @@ except ImportError:
 
 HAVE_HASHLIB=False
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1 as _sha1
     HAVE_HASHLIB=True
 except ImportError:
-    from md5 import md5 as _md5
+    from sha import sha as _sha1
+
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    try:
+        from md5 import md5 as _md5
+    except ImportError:
+        # MD5 unavailable.  Possibly FIPS mode
+        _md5 = None
 
 try:
     from hashlib import sha256 as _sha256
@@ -222,6 +231,26 @@ def load_platform_subclass(cls, *args, **kwargs):
         subclass = cls
 
     return super(cls, subclass).__new__(subclass)
+
+
+def json_dict_unicode_to_bytes(d):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, unicode):
+        return d.encode('utf-8')
+    elif isinstance(d, dict):
+        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+    elif isinstance(d, list):
+        return list(map(json_dict_unicode_to_bytes, d))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_unicode_to_bytes, d))
+    else:
+        return d
+
 
 class AnsibleModule(object):
 
@@ -968,7 +997,7 @@ class AnsibleModule(object):
             if k in params:
                 self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
-        params2 = json.loads(MODULE_COMPLEX_ARGS)
+        params2 = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
         params2.update(params)
         return (params2, args)
 
@@ -1213,8 +1242,23 @@ class AnsibleModule(object):
         return digest.hexdigest()
 
     def md5(self, filename):
-        ''' Return MD5 hex digest of local file using digest_from_file(). '''
+        ''' Return MD5 hex digest of local file using digest_from_file().
+
+        Do not use this function unless you have no other choice for:
+            1) Optional backwards compatibility
+            2) Compatibility with a third party protocol
+
+        This function will not work on systems complying with FIPS-140-2.
+
+        Most uses of this function can use the module.sha1 function instead.
+        '''
+        if not _md5:
+            raise ValueError('MD5 not available.  Possibly running in FIPS mode')
         return self.digest_from_file(filename, _md5())
+
+    def sha1(self, filename):
+        ''' Return SHA1 hex digest of local file using digest_from_file(). '''
+        return self.digest_from_file(filename, _sha1())
 
     def sha256(self, filename):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
@@ -1326,7 +1370,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1334,12 +1378,17 @@ class AnsibleModule(object):
         If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
         If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
-        - check_rc (boolean)  Whether to call fail_json in case of
-                              non zero RC.  Default is False.
-        - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is True.
-        - executable (string) See documentation for subprocess.Popen().
-                              Default is None.
+        - check_rc (boolean)    Whether to call fail_json in case of
+                                non zero RC.  Default is False.
+        - close_fds (boolean)   See documentation for subprocess.Popen().
+                                Default is True.
+        - executable (string)   See documentation for subprocess.Popen().
+                                Default is None.
+        - prompt_regex (string) A regex string (not a compiled regex) which
+                                can be used to detect prompts in the stdout
+                                which would otherwise cause the execution
+                                to hang (especially if no input data is
+                                specified)
         '''
 
         shell = False
@@ -1354,6 +1403,13 @@ class AnsibleModule(object):
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        prompt_re = None
+        if prompt_regex:
+            try:
+                prompt_re = re.compile(prompt_regex, re.MULTILINE)
+            except re.error:
+                self.fail_json(msg="invalid prompt regular expression given to run_command")
 
         # expand things like $HOME and ~
         if not shell:
@@ -1448,6 +1504,10 @@ class AnsibleModule(object):
                     stderr += dat
                     if dat == '':
                         rpipes.remove(cmd.stderr)
+                # if we're checking for prompts, do it now
+                if prompt_re:
+                    if prompt_re.search(stdout) and not data:
+                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated

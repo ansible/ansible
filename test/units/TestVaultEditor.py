@@ -37,6 +37,15 @@ except ImportError:
 
 class TestVaultEditor(TestCase):
 
+    def _is_fips(self):
+        try:
+            data = open('/proc/sys/crypto/fips_enabled').read().strip()
+        except:
+            return False
+        if data != '1':
+            return False
+        return True
+
     def test_methods_exist(self):
         v = VaultEditor(None, None, None)
         slots = ['create_file',
@@ -51,6 +60,8 @@ class TestVaultEditor(TestCase):
             assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
 
     def test_decrypt_1_0(self):
+        if self._is_fips():
+            raise SkipTest('Vault-1.0 will not function on FIPS enabled systems')
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         dirpath = tempfile.mkdtemp()
@@ -75,18 +86,18 @@ class TestVaultEditor(TestCase):
         assert error_hit == False, "error decrypting 1.0 file"            
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip() 
 
-    def test_decrypt_1_0_newline(self):
+    def test_decrypt_1_1_newline(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         dirpath = tempfile.mkdtemp()
-        filename = os.path.join(dirpath, "foo-ansible-1.0-ansible-newline-ansible.yml")
+        filename = os.path.join(dirpath, "foo-ansible-1.1-ansible-newline-ansible.yml")
         shutil.rmtree(dirpath)
         shutil.copytree("vault_test_data", dirpath)
         ve = VaultEditor(None, "ansible\nansible\n", filename)
 
         # make sure the password functions for the cipher
         error_hit = False
-        try:        
+        try:
             ve.decrypt_file()
         except errors.AnsibleError, e:
             error_hit = True
@@ -97,8 +108,8 @@ class TestVaultEditor(TestCase):
         f.close()
 
         shutil.rmtree(dirpath)
-        assert error_hit == False, "error decrypting 1.0 file with newline in password"            
-        #assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip() 
+        assert error_hit == False, "error decrypting 1.1 file with newline in password"
+        #assert fdata.strip() == "foo", "incorrect decryption of 1.1 file: %s" % fdata.strip()
 
 
     def test_decrypt_1_1(self):
@@ -112,7 +123,7 @@ class TestVaultEditor(TestCase):
 
         # make sure the password functions for the cipher
         error_hit = False
-        try:        
+        try:
             ve.decrypt_file()
         except errors.AnsibleError, e:
             error_hit = True
@@ -123,11 +134,13 @@ class TestVaultEditor(TestCase):
         f.close()
 
         shutil.rmtree(dirpath)
-        assert error_hit == False, "error decrypting 1.0 file"            
-        assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip() 
+        assert error_hit == False, "error decrypting 1.1 file"
+        assert fdata.strip() == "foo", "incorrect decryption of 1.1 file: %s" % fdata.strip()
 
 
     def test_rekey_migration(self):
+        if self._is_fips():
+            raise SkipTest('Vault-1.0 will not function on FIPS enabled systems')
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         dirpath = tempfile.mkdtemp()

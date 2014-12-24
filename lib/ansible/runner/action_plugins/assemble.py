@@ -108,10 +108,11 @@ class ActionModule(object):
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter, _re)
 
-        pathmd5 = utils.md5s(path)
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+        path_checksum = utils.checksum_s(path)
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
 
-        if pathmd5 != remote_md5:
+        if path_checksum != remote_checksum:
             resultant = file(path).read()
             if self.runner.diff:
                 dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
@@ -147,6 +148,11 @@ class ActionModule(object):
                 dest=dest,
                 original_basename=os.path.basename(src),
             )
+
+            # make sure checkmod is passed on correctly
+            if self.runner.noop_on_check(inject):
+                new_module_args['CHECKMODE'] = True
+
             module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             return self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject)

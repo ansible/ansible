@@ -154,9 +154,9 @@ command module appear to be simplified by using a default Ansible module
 instead.  This can include reminders to use the 'git' module instead of
 shell commands to execute 'git'.  Using modules when possible over arbitrary
 shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks.
+also easier to maintain playbooks::
 
-    command_warnings=False
+    command_warnings = False
 
 These warnings can be silenced by adjusting the following
 setting or adding warn=yes or warn=no to the end of the command line
@@ -662,8 +662,8 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
 .. _accelerate_settings:
 
-Accelerate Mode Settings
-------------------------
+Accelerated Mode Settings
+-------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
@@ -676,7 +676,7 @@ accelerate_port
 
 .. versionadded:: 1.3
 
-This is the port to use for accelerate mode::
+This is the port to use for accelerated mode::
 
     accelerate_port = 5099
 

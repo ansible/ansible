@@ -12,7 +12,7 @@ ansible-pull - set up a remote copy of ansible on each managed node
 
 SYNOPSIS
 --------
-ansible -d DEST -U URL [options] [ <filename.yml> ]
+ansible-pull -d DEST -U URL [options] [ <filename.yml> ]
 
 
 DESCRIPTION

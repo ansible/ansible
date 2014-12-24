@@ -65,7 +65,7 @@ class Connection(object):
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+                                 "-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         cp_in_use = False
         cp_path_set = False
@@ -76,7 +76,7 @@ class Connection(object):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
-            self.common_args += ["-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+            self.common_args += ["-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         if not C.HOST_KEY_CHECKING:
             self.common_args += ["-o", "StrictHostKeyChecking=no"]
@@ -230,6 +230,7 @@ class Connection(object):
                 host_fh.close()
                 
             for line in data.split("\n"):
+                line = line.strip()
                 if line is None or " " not in line:
                     continue
                 tokens = line.split()
@@ -283,7 +284,7 @@ class Connection(object):
             else:
                 ssh_cmd.append(cmd)
         else:
-            sudocmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            sudocmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
         vvv("EXEC %s" % ' '.join(ssh_cmd), host=self.host)

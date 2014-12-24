@@ -26,9 +26,9 @@ import re
 import collections
 import operator as py_operator
 from ansible import errors
-from ansible.utils import md5s
+from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
-from random import SystemRandom
+from random import SystemRandom, shuffle
 from jinja2.filters import environmentfilter
 
 
@@ -235,6 +235,13 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
+def randomize_list(mylist):
+    try:
+        mylist = list(mylist)
+        shuffle(mylist)
+    except:
+        pass
+    return mylist
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -281,8 +288,13 @@ class FilterModule(object):
             # quote string for shell usage
             'quote': quote,
 
+            # hash filters
             # md5 hex digest of string
             'md5': md5s,
+            # sha1 hex digeset of string
+            'sha1': checksum_s,
+            # checksum of string as used by ansible for checksuming files
+            'checksum': checksum_s,
 
             # file glob
             'fileglob': fileglob,
@@ -305,6 +317,7 @@ class FilterModule(object):
             # version comparison
             'version_compare': version_compare,
 
-            # random numbers
+            # random stuff
             'random': rand,
+            'shuffle': randomize_list,
         }

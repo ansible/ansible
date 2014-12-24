@@ -411,7 +411,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            display("<job %s> polling, %ss remaining" % (jid, clock), runner=self.runner)
+            display("<job %s> polling on %s, %ss remaining" % (jid, host, clock), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
@@ -603,11 +603,13 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_no_hosts_remaining')
 
     def on_task_start(self, name, is_conditional):
+        name = utils.to_bytes(name)
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
 
         if hasattr(self, 'start_at'):
+            self.start_at = utils.to_bytes(self.start_at)
             if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
                 # we found out match, we can get rid of this now
                 del self.start_at
@@ -670,7 +672,7 @@ class PlaybookCallbacks(object):
             result = prompt(msg, private)
 
         # if result is false and default is not None
-        if not result and default:
+        if not result and default is not None:
             result = default
 
 

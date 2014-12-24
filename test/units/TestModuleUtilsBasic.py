@@ -7,7 +7,7 @@ from nose.tools import timed
 
 from ansible import errors
 from ansible.module_common import ModuleReplacer
-from ansible.utils import md5 as utils_md5
+from ansible.utils import checksum as utils_checksum
 
 TEST_MODULE_DATA = """
 from ansible.module_utils.basic import *
@@ -113,8 +113,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             (rc, out, err) = self.module.run_command('echo "foo bar" > %s' % tmp_path, use_unsafe_shell=True)
             self.assertEqual(rc, 0)
             self.assertTrue(os.path.exists(tmp_path))
-            md5sum = utils_md5(tmp_path)
-            self.assertEqual(md5sum, '5ceaa7ed396ccb8e959c02753cb4bd18')
+            checksum = utils_checksum(tmp_path)
+            self.assertEqual(checksum, 'd53a205a336e07cf9eac45471b3870f9489288ec')
         except:
             raise
         finally:
@@ -127,8 +127,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             (rc, out, err) = self.module.run_command('echo "foo bar" >> %s' % tmp_path, use_unsafe_shell=True)
             self.assertEqual(rc, 0)
             self.assertTrue(os.path.exists(tmp_path))
-            md5sum = utils_md5(tmp_path)
-            self.assertEqual(md5sum, '5ceaa7ed396ccb8e959c02753cb4bd18')
+            checksum = utils_checksum(tmp_path)
+            self.assertEqual(checksum, 'd53a205a336e07cf9eac45471b3870f9489288ec')
         except:
             raise
         finally:
@@ -294,12 +294,20 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         ssh_output = self.module._heuristic_log_sanitize(ssh_data)
 
         # Basic functionality: Successfully hid the password
-        self.assertNotIn('pas:word', url_output)
-        self.assertNotIn('pas:word', ssh_output)
+        try:
+            self.assertNotIn('pas:word', url_output)
+            self.assertNotIn('pas:word', ssh_output)
 
-        # Slightly more advanced, we hid all of the password despite the ":"
-        self.assertNotIn('pas', url_output)
-        self.assertNotIn('pas', ssh_output)
+            # Slightly more advanced, we hid all of the password despite the ":"
+            self.assertNotIn('pas', url_output)
+            self.assertNotIn('pas', ssh_output)
+        except AttributeError:
+            # python2.6 or less's unittest
+            self.assertFalse('pas:word' in url_output, '%s is present in %s' % ('"pas:word"', url_output))
+            self.assertFalse('pas:word' in ssh_output, '%s is present in %s' % ('"pas:word"', ssh_output))
+
+            self.assertFalse('pas' in url_output, '%s is present in %s' % ('"pas"', url_output))
+            self.assertFalse('pas' in ssh_output, '%s is present in %s' % ('"pas"', ssh_output))
 
         # In this implementation we replace the password with 8 "*" which is
         # also the length of our password.  The url fields should be able to
@@ -313,9 +321,13 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         # the data, though:
         self.assertTrue(ssh_output.startswith("{'"))
         self.assertTrue(ssh_output.endswith("'}}}}"))
-        self.assertIn(":********@foo.com/data',", ssh_output)
+        try:
+            self.assertIn(":********@foo.com/data',", ssh_output)
+        except AttributeError:
+            # python2.6 or less's unittest
+            self.assertTrue(":********@foo.com/data'," in ssh_output, '%s is not present in %s' % (":********@foo.com/data',", ssh_output))
 
         # The overzealous-ness here may lead to us changing the algorithm in
         # the future.  We could make it consume less of the data (with the
-        # possiblity of leaving partial passwords exposed) and encourage
+        # possibility of leaving partial passwords exposed) and encourage
         # people to use no_log instead of relying on this obfuscation.
