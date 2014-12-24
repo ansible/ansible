@@ -173,6 +173,29 @@ def package_split(pkgspec):
     else:
         return parts[0], None
 
+def package_versions(pkgname, pkg, pkg_cache):
+    versions = {}
+
+    try:
+        for p in pkg.versions:
+            versions[p.version] = p.version
+    except AttributeError:
+        # assume older version of python-apt is installed
+        # apt.package.Package#versions require python-apt >= 0.7.9.
+        pkg_cache_list = filter(lambda p: p.Name == pkgname, pkg_cache.Packages)
+
+        for pkg_cache in pkg_cache_list:
+            for p in pkg_cache.VersionList:
+                versions[p.VerStr] = p.VerStr
+
+    return versions
+
+def package_version_compare(version, other_version):
+    try:
+        return apt_pkg.version_compare(version, other_version)
+    except AttributeError:
+        return apt_pkg.VersionCompare(version, other_version)
+
 def package_status(m, pkgname, version, cache, state):
     try:
         # get the package from the cache, as well as the
@@ -206,12 +229,8 @@ def package_status(m, pkgname, version, cache, state):
             package_is_installed = pkg.isInstalled
 
     if version:
-        try:
-            avail_upgrades = fnmatch.filter((p.version for p in pkg.versions), version)
-        except AttributeError:
-            # assume older version of python-apt is installed
-            # apt.package.Package#versions require python-apt >= 0.7.9.
-            avail_upgrades = []
+        versions = package_versions(pkgname, pkg, cache._cache)
+        avail_upgrades = fnmatch.filter(versions, version)
 
         if package_is_installed:
             try:
@@ -225,7 +244,7 @@ def package_status(m, pkgname, version, cache, state):
             # Only claim the package is upgradable if a candidate matches the version
             package_is_upgradable = False
             for candidate in avail_upgrades:
-                if pkg.versions[candidate] > pkg.installed:
+                if package_version_compare(versions[candidate], installed_version) > 0:
                     package_is_upgradable = True
                     break
         else:
