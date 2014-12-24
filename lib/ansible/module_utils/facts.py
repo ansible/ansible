@@ -865,6 +865,7 @@ class SunOSHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_dmi_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -924,6 +925,77 @@ class SunOSHardware(Hardware):
         self.facts['swaptotal_mb'] = (free + used) / 1024
         self.facts['swap_allocated_mb'] = allocated / 1024
         self.facts['swap_reserved_mb'] = reserved / 1024
+
+    def get_dmi_facts(self):
+        smbios_bin = module.get_bin_path('smbios')
+
+        SMB_TYPE_BIOS = dict(
+            bios_date='Release Date',
+            bios_version='Version String',
+        )
+        SMB_TYPE_SYSTEM = dict(
+            product_name='Product',
+            product_serial='Serial Number',
+            product_uuid='UUID',
+            product_version='Version',
+            system_vendor='Manufacturer'
+        )
+
+        SMB_TYPE_CHASSIS = dict(
+            form_factor='Chassis Type',
+        )
+
+        for (k, v) in SMB_TYPE_BIOS.items():
+            if smbios_bin is not None:
+                (rc, out, err) = module.run_command('%s -t SMB_TYPE_BIOS' % (smbios_bin))
+                if rc == 0:
+                    smbios_dict = dict((line.split(':')[0].strip(), line.split(':')[1].strip()) for line in out.splitlines() if ':' in line )
+                    thisvalue = smbios_dict[v]
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    self.facts[k] = thisvalue
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
+        for (k, v) in SMB_TYPE_SYSTEM.items():
+            if smbios_bin is not None:
+                (rc, out, err) = module.run_command('%s -t SMB_TYPE_SYSTEM' % (smbios_bin))
+                if rc == 0:
+                    smbios_dict = dict((line.split(':')[0].strip(), line.split(':')[1].strip()) for line in out.splitlines() if ':' in line )
+                    thisvalue = smbios_dict[v]
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    self.facts[k] = thisvalue
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
+        for (k, v) in SMB_TYPE_CHASSIS.items():
+            if smbios_bin is not None:
+                (rc, out, err) = module.run_command('%s -t SMB_TYPE_CHASSIS' % (smbios_bin))
+                if rc == 0:
+                    smbios_dict = dict((line.split(':')[0].strip(), line.split(':')[1].strip()) for line in out.splitlines() if ':' in line )
+                    thisvalue = smbios_dict[v]
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    self.facts[k] = thisvalue
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
 
 class OpenBSDHardware(Hardware):
     """
