@@ -206,7 +206,12 @@ def package_status(m, pkgname, version, cache, state):
             package_is_installed = pkg.isInstalled
 
     if version:
-        avail_upgrades = fnmatch.filter((p.version for p in pkg.versions), version)
+        try:
+            avail_upgrades = fnmatch.filter((p.version for p in pkg.versions), version)
+        except AttributeError:
+            # assume older version of python-apt is installed
+            # apt.package.Package#versions require python-apt >= 0.7.9.
+            avail_upgrades = []
 
         if package_is_installed:
             try:
