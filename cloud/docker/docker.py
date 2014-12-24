@@ -443,7 +443,7 @@ def get_docker_py_versioninfo():
         # than 0.3.0 so it's okay to lie here.
         version = (0,)
 
-    return version
+    return tuple(version)
 
 def check_dependencies(module):
     """
