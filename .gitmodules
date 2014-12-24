@@ -1,6 +1,6 @@
 [submodule "lib/ansible/modules/core"]
 	path = lib/ansible/modules/core
-	url = https://github.com/ansible/ansible-modules-core.git
+	url = https://github.com/47lining/ansible-modules-core.git
 	branch = devel
 [submodule "lib/ansible/modules/extras"]
 	path = lib/ansible/modules/extras
