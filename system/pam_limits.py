@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Sebastien Rohaut <sebastien.rohaut@gmail.com>
@@ -110,7 +109,8 @@ def main():
             use_max           = dict(default=False, type='bool'),
             use_min           = dict(default=False, type='bool'),
             backup            = dict(default=False, type='bool'),
-            dest              = dict(default=limits_conf, type='str')
+            dest              = dict(default=limits_conf, type='str'),
+            comment           = dict(required=False, default='', type='str')
         )
     )
 
@@ -122,6 +122,7 @@ def main():
     use_min     =       module.params['use_min']
     backup      =       module.params['backup']
     limits_conf =       module.params['dest']
+    new_comment =       module.params['comment']
 
     changed = False
 
@@ -130,6 +131,9 @@ def main():
             module.fail_json(msg="%s is not writable. Use sudo" % (limits_conf) )
     else:
         module.fail_json(msg="%s is not visible (check presence, access rights, use sudo)" % (limits_conf) )
+
+    if use_max and use_min:
+        module.fail_json(msg="Cannot use use_min and use_max at the same time." )
 
     # Backup
     if backup:
@@ -146,6 +150,7 @@ def main():
     new_value = value
 
     for line in f:
+
         if line.startswith('#'):
             nf.write(line)
             continue
@@ -154,6 +159,21 @@ def main():
         if not newline:
             nf.write(line)
             continue
+
+        # Remove comment in line
+        newline = newline.split('#',1)[0]
+        try:
+            old_comment = line.split('#',1)[1]
+        except:
+            old_comment = ''
+
+        newline = newline.rstrip()
+
+        if not new_comment:
+            new_comment = old_comment
+
+        if new_comment:
+            new_comment = "\t#"+new_comment
 
         line_fields = newline.split(' ')
 
@@ -183,7 +203,7 @@ def main():
             # Change line only if value has changed
             if new_value != actual_value:
                 changed = True
-                new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + str(new_value) + "\n"
+                new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + str(new_value) + new_comment + "\n"
                 message = new_limit
                 nf.write(new_limit)
             else:
@@ -194,7 +214,7 @@ def main():
 
     if not found:
         changed = True
-        new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + str(new_value) + "\n"
+        new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + str(new_value) + new_comment + "\n"
         message = new_limit
         nf.write(new_limit)
 
