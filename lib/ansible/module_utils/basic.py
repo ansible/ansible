@@ -1115,12 +1115,11 @@ class AnsibleModule(object):
             msg = msg.encode('utf-8')
 
         if (has_journal):
-            journal_args = ["MESSAGE=%s %s" % (module, msg)]
-            journal_args.append("MODULE=%s" % os.path.basename(__file__))
+            journal_args = [("MODULE", os.path.basename(__file__))]
             for arg in log_args:
-                journal_args.append(arg.upper() + "=" + str(log_args[arg]))
+                journal_args.append((arg.upper(), str(log_args[arg])))
             try:
-                journal.sendv(*journal_args)
+                journal.send("%s %s" % (module, msg), **dict(journal_args))
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
