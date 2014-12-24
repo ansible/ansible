@@ -684,7 +684,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     hfmor = dcprops.hostFolder._obj
 
     # virtualmachineFolder managed object reference
-    if vm_extra_config['folder']:
+    if vm_extra_config.get('folder'):
         if vm_extra_config['folder'] not in vsphere_client._get_managed_objects(MORTypes.Folder).values():
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find folder named: %s" % vm_extra_config['folder'])
