@@ -46,7 +46,7 @@ except ImportError:
     import simplejson as json
 
 # --------------------------------------------------------------
-# timeout function to make sure some fact gathering 
+# timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
 class TimeoutError(Exception):
@@ -320,6 +320,11 @@ class Facts(object):
                                 self.facts['distribution_version'] = data.split()[1]
                                 self.facts['distribution_release'] = ora_prefix + data
                                 break
+                            elif 'SmartOS' in data:
+                                self.facts['distribution'] = data.split()[0]
+                                self.facts['distribution_version'] = data.split()[1]
+                                self.facts['distribution_release'] = data.split()[1]
+                                break
                         elif name == 'SuSE':
                             data = get_file_content(path)
                             if 'suse' in data.lower():
@@ -387,6 +392,9 @@ class Facts(object):
             dsa_filename = '/etc/ssh_host_dsa_key.pub'
             rsa_filename = '/etc/ssh_host_rsa_key.pub'
             ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
+        elif self.facts['distribution'] == 'SmartOS':
+            dsa_filename = '/var/ssh/ssh_host_dsa_key.pub'
+            rsa_filename = '/var/ssh/ssh_host_rsa_key.pub'
         dsa = get_file_content(dsa_filename)
         rsa = get_file_content(rsa_filename)
         ecdsa = get_file_content(ecdsa_filename)
@@ -410,6 +418,8 @@ class Facts(object):
                 self.facts['pkg_mgr'] = pkg['name']
         if self.facts['system'] == 'OpenBSD':
                 self.facts['pkg_mgr'] = 'openbsd_pkg'
+        if self.facts['distribution'] == 'SmartOS':
+                self.facts['pkg_mgr'] = 'pkgin'
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
