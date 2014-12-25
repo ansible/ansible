@@ -54,7 +54,7 @@ def aws_common_argument_spec():
         aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),
         validate_certs=dict(default=True, type='bool'),
-        security_token=dict(no_log=True),
+        security_token=dict(aliases=['access_token'], no_log=True),
         profile=dict(),
     )
 
@@ -87,38 +87,38 @@ def get_aws_connection_info(module):
     validate_certs = module.params.get('validate_certs')
 
     if not ec2_url:
-        if 'EC2_URL' in os.environ:
-            ec2_url = os.environ['EC2_URL']
-        elif 'AWS_URL' in os.environ:
+        if 'AWS_URL' in os.environ:
             ec2_url = os.environ['AWS_URL']
+        elif 'EC2_URL' in os.environ:
+            ec2_url = os.environ['EC2_URL']
 
     if not access_key:
-        if 'EC2_ACCESS_KEY' in os.environ:
-            access_key = os.environ['EC2_ACCESS_KEY']
-        elif 'AWS_ACCESS_KEY_ID' in os.environ:
+        if 'AWS_ACCESS_KEY_ID' in os.environ:
             access_key = os.environ['AWS_ACCESS_KEY_ID']
         elif 'AWS_ACCESS_KEY' in os.environ:
             access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            access_key = os.environ['EC2_ACCESS_KEY']
         else:
             # in case access_key came in as empty string
             access_key = None
 
     if not secret_key:
-        if 'EC2_SECRET_KEY' in os.environ:
-            secret_key = os.environ['EC2_SECRET_KEY']
-        elif 'AWS_SECRET_ACCESS_KEY' in os.environ:
+        if 'AWS_SECRET_ACCESS_KEY' in os.environ:
             secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
         elif 'AWS_SECRET_KEY' in os.environ:
             secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            secret_key = os.environ['EC2_SECRET_KEY']
         else:
             # in case secret_key came in as empty string
             secret_key = None
 
     if not region:
-        if 'EC2_REGION' in os.environ:
-            region = os.environ['EC2_REGION']
-        elif 'AWS_REGION' in os.environ:
+        if 'AWS_REGION' in os.environ:
             region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
         else:
             # boto.config.get returns None if config not found
             region = boto.config.get('Boto', 'aws_region')
@@ -128,6 +128,8 @@ def get_aws_connection_info(module):
     if not security_token:
         if 'AWS_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['AWS_SECURITY_TOKEN']
+        elif 'EC2_SECURITY_TOKEN' in os.environ:
+            security_token = os.environ['EC2_SECURITY_TOKEN']
         else:
             # in case security_token came in as empty string
             security_token = None
