@@ -180,7 +180,8 @@ def package_versions(pkgname, pkg, pkg_cache):
         # assume older version of python-apt is installed
         # apt.package.Package#versions require python-apt >= 0.7.9.
         pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
-        pkg_versions = (p.VersionList for p in pkg_cache_list)
+        pkg_list_of_lists = (p.VersionList for p in pkg_cache_list)
+        pkg_versions = (p for l in pkg_list_of_lists for p in l)
         versions = set(p.VerStr for p in pkg_versions)
 
     return versions
