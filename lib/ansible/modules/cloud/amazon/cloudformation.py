@@ -41,12 +41,6 @@ options:
     required: false
     default: {}
     aliases: []
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: true
-    default: null
-    aliases: ['aws_region', 'ec2_region']
   state:
     description:
       - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
@@ -75,29 +69,17 @@ options:
     default: null
     aliases: []
     version_added: "1.4"
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-    version_added: "1.5"
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
-    version_added: "1.5"
   region:
     description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
+      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
+    required: true
+    default: null
     aliases: ['aws_region', 'ec2_region']
     version_added: "1.5"
 
 requirements: [ "boto" ]
 author: James S. Martin
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -233,7 +215,7 @@ def main():
     template_parameters = module.params['template_parameters']
     tags = module.params['tags']
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     kwargs = dict()
     if tags is not None:
@@ -249,8 +231,7 @@ def main():
     try:
         cfn = boto.cloudformation.connect_to_region(
                   region,
-                  aws_access_key_id=aws_access_key,
-                  aws_secret_access_key=aws_secret_key,
+                  **aws_connect_kwargs
               )
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
