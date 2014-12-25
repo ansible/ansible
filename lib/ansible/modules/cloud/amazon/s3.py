@@ -71,18 +71,6 @@ options:
         - "S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS"
     default: null
     aliases: [ S3_URL ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: null
-    aliases: ['ec2_secret_key', 'secret_key']
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
@@ -91,13 +79,13 @@ options:
     version_added: "1.6"
   region:
     description:
-     - "AWS region to create the bucket in. If not set then the value of the EC2_REGION and AWS_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect."
+     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect."
     required: false
     default: null
     version_added: "1.8"
-
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -130,6 +118,7 @@ from boto.s3.connection import OrdinaryCallingFormat
 try:
     import boto
     from boto.s3.connection import Location
+    from boto.s3.connection import S3Connection
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -301,7 +290,7 @@ def main():
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     if region in ('us-east-1', '', None):
         # S3ism for the US Standard region
@@ -323,13 +312,13 @@ def main():
     try:
         if is_fakes3(s3_url):
             fakes3 = urlparse.urlparse(s3_url)
-            s3 = boto.connect_s3(
-                aws_access_key,
-                aws_secret_key,
+            s3 = S3Connection(
                 is_secure=False,
                 host=fakes3.hostname,
                 port=fakes3.port,
-                calling_format=OrdinaryCallingFormat())
+                calling_format=OrdinaryCallingFormat(),
+                **aws_connect_kwargs
+            )
         elif is_walrus(s3_url):
             walrus = urlparse.urlparse(s3_url).hostname
             s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)

@@ -96,33 +96,13 @@ options:
     aliases: []
   region:
     description:
-      - region in which the resource exists.
-    required: false
+      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
+    required: true
     default: null
     aliases: ['aws_region', 'ec2_region']
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
-
 requirements: [ "boto" ]
 author: Carson Gee
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -599,7 +579,19 @@ def main():
 
     state = module.params.get('state')
 
-    vpc_conn = ec2_connect(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            vpc_conn = boto.vpc.connect_to_region(
+                region,
+                **aws_connect_kwargs
+            )
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     if module.params.get('state') == 'absent':
         vpc_id = module.params.get('vpc_id')
