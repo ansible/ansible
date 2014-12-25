@@ -49,24 +49,13 @@ options:
     aliases: []
   region:
     description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
     required: true
     default: null
-    aliases: [ 'aws_region', 'ec2_region' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
+    aliases: ['aws_region', 'ec2_region']
 requirements: [ "boto" ]
 author: Scott Anderson
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -121,13 +110,13 @@ def main():
                 module.fail_json(msg = str("Parameter %s not allowed for state='absent'" % not_allowed))
 
     # Retrieve any AWS settings from the environment.
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     if not region:
-        module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
+        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     try:
-        conn = boto.rds.connect_to_region(region, **aws_connect_params)
+        conn = boto.rds.connect_to_region(region, **aws_connection_kwargs)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 

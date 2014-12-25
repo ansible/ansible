@@ -92,24 +92,13 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key']
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key']
   region:
     description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
+      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
+    required: true
+    default: null
     aliases: ['aws_region', 'ec2_region']
-
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = """
@@ -163,7 +152,7 @@ class ElastiCacheManager(object):
     def __init__(self, module, name, engine, cache_engine_version, node_type,
                  num_nodes, cache_port, cache_subnet_group,
                  cache_security_groups, security_group_ids, zone, wait,
-                 hard_modify, aws_access_key, aws_secret_key, region):
+                 hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
         self.engine = engine
@@ -178,9 +167,8 @@ class ElastiCacheManager(object):
         self.wait = wait
         self.hard_modify = hard_modify
 
-        self.aws_access_key = aws_access_key
-        self.aws_secret_key = aws_secret_key
         self.region = region
+        self.aws_connect_kwargs = aws_connect_kwargs
 
         self.changed = False
         self.data = None
@@ -433,9 +421,10 @@ class ElastiCacheManager(object):
         try:
             endpoint = "elasticache.%s.amazonaws.com" % self.region
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return ElastiCacheConnection(aws_access_key_id=self.aws_access_key,
-                                         aws_secret_access_key=self.aws_secret_key,
-                                         region=connect_region)
+            return ElastiCacheConnection(
+                region=connect_region,
+                **self.aws_connect_kwargs
+            )
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=e.message)
 
@@ -509,7 +498,7 @@ def main():
         argument_spec=argument_spec,
     )
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     name = module.params['name']
     state = module.params['state']
@@ -537,7 +526,7 @@ def main():
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
 
     if not region:
-        module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
+        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
@@ -545,8 +534,7 @@ def main():
                                              cache_subnet_group,
                                              cache_security_groups,
                                              security_group_ids, zone, wait,
-                                             hard_modify, aws_access_key,
-                                             aws_secret_key, region)
+                                             hard_modify, region, **aws_connect_kwargs)
 
     if state == 'present':
         elasticache_manager.ensure_present()
