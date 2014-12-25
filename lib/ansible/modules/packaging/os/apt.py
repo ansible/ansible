@@ -174,19 +174,14 @@ def package_split(pkgspec):
         return parts[0], None
 
 def package_versions(pkgname, pkg, pkg_cache):
-    versions = {}
-
     try:
-        for p in pkg.versions:
-            versions[p.version] = p.version
+        versions = set(p.version for p in pkg.versions)
     except AttributeError:
         # assume older version of python-apt is installed
         # apt.package.Package#versions require python-apt >= 0.7.9.
-        pkg_cache_list = filter(lambda p: p.Name == pkgname, pkg_cache.Packages)
-
-        for pkg_cache in pkg_cache_list:
-            for p in pkg_cache.VersionList:
-                versions[p.VerStr] = p.VerStr
+        pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
+        pkg_versions = (p.VersionList for p in pkg_cache_list)
+        versions = set(p.VerStr for p in pkg_versions)
 
     return versions
 
@@ -244,7 +239,7 @@ def package_status(m, pkgname, version, cache, state):
             # Only claim the package is upgradable if a candidate matches the version
             package_is_upgradable = False
             for candidate in avail_upgrades:
-                if package_version_compare(versions[candidate], installed_version) > 0:
+                if package_version_compare(candidate, installed_version) > 0:
                     package_is_upgradable = True
                     break
         else:
