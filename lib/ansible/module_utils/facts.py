@@ -866,6 +866,7 @@ class SunOSHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_device_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -996,6 +997,33 @@ class SunOSHardware(Hardware):
             else:
                 self.facts[k] = 'NA'
 
+    def get_device_facts(self):
+        self.facts['devices'] = {}
+
+        DISK_FACTS = ["Product", "Revision", "Serial No", "Size", "Vendor",
+                      "Hard Errors", "Soft Errors", "Transport Errors", "Media Error",
+                      "Predictive Failure Analysis", "Illegal Request",
+                     ]
+
+        d = {}
+        rc, out, err = module.run_command("/usr/bin/kstat -C sderr")
+        if rc != 0:
+            return dict()
+
+        sd_instances = set(sorted([line.split(':')[1] for line in out.split('\n') if line.startswith('sderr')]))
+        for instance in sd_instances:
+            lines = (line for line in out.split('\n') if len(line) > 0 and line.split(':')[1] == instance)
+            for line in lines:
+                _, _, _, statistic, value = line.split(':')
+                if statistic in DISK_FACTS:
+                    if statistic == 'Size':
+                        d[statistic.lower().replace(" ", "_")] = module.pretty_bytes(float(value))
+                    else:
+                        d[statistic.lower().replace(" ", "_")] = value.rstrip()
+
+            diskname = 'sd' + str(instance)
+            self.facts['devices'][diskname] = d
+            d = {}
 
 class OpenBSDHardware(Hardware):
     """
