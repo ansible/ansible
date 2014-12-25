@@ -757,11 +757,14 @@ def execute_install(args, options, parser):
     no_deps    = get_opt(options, "no_deps", False)
     roles_path = get_opt(options, "roles_path")
 
-    roles_done = []
+    roles_left = []
     if role_file:
         f = open(role_file, 'r')
         if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-            roles_left = map(ansible.utils.role_yaml_parse, yaml.safe_load(f))
+            roles_in_yaml = yaml.safe_load(f)
+            # Make sure yaml file is not empty
+            if roles_in_yaml is not None:
+                roles_left = map(ansible.utils.role_yaml_parse, roles_in_yaml)
         else:
             # roles listed in a file, one per line
             roles_left = map(ansible.utils.role_spec_parse, f.readlines())
