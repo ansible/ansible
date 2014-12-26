@@ -28,6 +28,7 @@ requirements: [ hostname ]
 description:
     - Set system's hostname
     - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI.
+    - Any distribution that uses systemd as their init system
 options:
     name:
         required: true
@@ -232,9 +233,9 @@ class RedHatStrategy(GenericStrategy):
 
 # ===========================================
 
-class FedoraStrategy(GenericStrategy):
+class SystemdStrategy(GenericStrategy):
     """
-    This is a Fedora family Hostname manipulation strategy class - it uses
+    This is a Systemd hostname manipulation strategy class - it uses
     the hostnamectl command.
     """
 
@@ -323,17 +324,17 @@ class OpenRCStrategy(GenericStrategy):
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
-    strategy_class = FedoraStrategy
+    strategy_class = SystemdStrategy
 
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
     distribution = 'Opensuse '
-    strategy_class = FedoraStrategy
+    strategy_class = SystemdStrategy
 
 class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
-    strategy_class = FedoraStrategy
+    strategy_class = SystemdStrategy
 
 class RedHat5Hostname(Hostname):
     platform = 'Linux'
@@ -345,7 +346,7 @@ class RedHatServerHostname(Hostname):
     distribution = 'Red hat enterprise linux server'
     distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
-        strategy_class = FedoraStrategy
+        strategy_class = SystemdStrategy
     else:
         strategy_class = RedHatStrategy
 
@@ -354,7 +355,7 @@ class RedHatWorkstationHostname(Hostname):
     distribution = 'Red hat enterprise linux workstation'
     distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
-        strategy_class = FedoraStrategy
+        strategy_class = SystemdStrategy
     else:
         strategy_class = RedHatStrategy
 
@@ -363,7 +364,7 @@ class CentOSHostname(Hostname):
     distribution = 'Centos'
     distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
-        strategy_class = FedoraStrategy
+        strategy_class = SystemdStrategy
     else:
         strategy_class = RedHatStrategy
 
@@ -372,7 +373,7 @@ class CentOSLinuxHostname(Hostname):
     distribution = 'Centos linux'
     distribution_version = get_distribution_version()
     if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
-        strategy_class = FedoraStrategy
+        strategy_class = SystemdStrategy
     else:
         strategy_class = RedHatStrategy
 
