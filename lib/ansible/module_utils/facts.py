@@ -96,6 +96,7 @@ class Facts(object):
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
                     ('/etc/os-release', 'Debian'),
+                    ('/etc/lsb-release', 'Debian'),
                     ('/etc/lsb-release', 'Mandriva') )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
@@ -344,8 +345,22 @@ class Facts(object):
                             if 'Debian' in data:
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
-                                    self.facts['distribution_release'] = release.groups()[0]
-                                break
+                                    self.facts['distribution_version'] = release.groups()[0]
+                                    break
+                            elif self.facts['distribution_release'] == 'NA':
+                                dist_version = re.search('DISTRIB_RELEASE=(.*)', data)
+                                dist_codename = re.search('DISTRIB_CODENAME=(.*)', data)
+                                dist_description = re.search('DISTRIB_DESCRIPTION=(.*)', data)
+                                if dist_version and dist_codename and dist_description:
+                                    version = dist_version.groups()[0].strip('"')
+                                    release = dist_codename.groups()[0].strip('"')
+                                    distribution = dist_description.groups()[0].strip('"').split()[0]
+                                    major_version = version.split('.')[0]
+                                    self.facts['distribution'] = distribution
+                                    self.facts['distribution_version'] = version
+                                    self.facts['distribution_release'] = release
+                                    self.facts['distribution_major_version'] = major_version
+                                    break
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:
