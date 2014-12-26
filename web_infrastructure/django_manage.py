@@ -30,7 +30,8 @@ options:
   command:
     choices: [ 'cleanup', 'collectstatic', 'flush', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
     description:
-      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate. Other commands can be entered, but will fail if they're unknown to Django.
+      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate.
+      - Other commands can be entered, but will fail if they're unknown to Django.  Other commands that may prompt for user input should be run with the I(--noinput) flag.
     required: true
   app_path:
     description:
@@ -102,7 +103,7 @@ EXAMPLES = """
 # Load the initial_data fixture into the application
 - django_manage: command=loaddata app_path={{ django_dir }} fixtures={{ initial_data }}
 
-#Run syncdb on the application
+# Run syncdb on the application
 - django_manage: >
       command=syncdb
       app_path={{ django_dir }}
@@ -110,8 +111,11 @@ EXAMPLES = """
       pythonpath={{ settings_dir }}
       virtualenv={{ virtualenv_dir }}
 
-#Run the SmokeTest test case from the main app. Useful for testing deploys.
-- django_manage: command=test app_path=django_dir apps=main.SmokeTest
+# Run the SmokeTest test case from the main app. Useful for testing deploys.
+- django_manage: command=test app_path={{ django_dir }} apps=main.SmokeTest
+
+# Create an initial superuser. 
+- django_manage: command="createsuperuser --noinput --username=admin --email=admin@example.com" app_path={{ django_dir }}
 """
 
 
