@@ -173,10 +173,10 @@ def main(args):
     if options.checkout:
         repo_opts += ' version=%s' % options.checkout
     if options.private_key and os.path.isfile(options.private_key):
-            repo_opts += ' key_file=%s' %options.private_key
+        repo_opts += ' key_file=%s' %options.private_key
     elif options.private_key:
-            sys.stderr.write("Private key '%s' not found.\n" % options.private_key)
-            return 1
+        sys.stderr.write("Private key '%s' not found.\n" % options.private_key)
+        return 1
     path = utils.plugins.module_finder.find_plugin(options.module_name)
     if path is None:
         sys.stderr.write("module '%s' not found.\n" % options.module_name)
