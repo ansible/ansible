@@ -467,7 +467,7 @@ class DockerManager(object):
     # server APIVersion is passed to a docker-py function that takes strings
     _cap_ver_req = {
             'dns': ((0, 3, 0), '1.10'),
-            'volume_from': ((0, 3, 0), '1.10'),
+            'volumes_from': ((0, 3, 0), '1.10'),
             'restart_policy': ((0, 5, 0), '1.14'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
