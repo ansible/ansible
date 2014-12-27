@@ -202,8 +202,12 @@ def package_status(m, pkgname, version, cache, state):
         ll_pkg = cache._cache[pkgname] # the low-level package object
     except KeyError:
         if state == 'install':
-            if cache.get_providing_packages(pkgname):
-                return False, True, False
+            try:
+                if cache.get_providing_packages(pkgname):
+                    return False, True, False
+            except AttributeError:
+                # older python-apt providing packages cannot be used
+                pass
             m.fail_json(msg="No package matching '%s' is available" % pkgname)
         else:
             return False, False, False
