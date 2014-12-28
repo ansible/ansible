@@ -144,6 +144,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 import os
 import datetime
 import fnmatch
+import itertools
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -180,9 +181,8 @@ def package_versions(pkgname, pkg, pkg_cache):
         # assume older version of python-apt is installed
         # apt.package.Package#versions require python-apt >= 0.7.9.
         pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
-        pkg_list_of_lists = (p.VersionList for p in pkg_cache_list)
-        pkg_versions = (p for l in pkg_list_of_lists for p in l)
-        versions = set(p.VerStr for p in pkg_versions)
+        pkg_versions = (p.VersionList for p in pkg_cache_list)
+        versions = set(p.VerStr for p in itertools.chain(*pkg_versions))
 
     return versions
 
@@ -205,10 +205,10 @@ def package_status(m, pkgname, version, cache, state):
             try:
                 if cache.get_providing_packages(pkgname):
                     return False, True, False
+                m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
-                # older python-apt providing packages cannot be used
-                pass
-            m.fail_json(msg="No package matching '%s' is available" % pkgname)
+                # python-apt version too old to detect virtual packages
+                m.fail_json(msg="No package matching '%s' is available (python-apt version too old to detect virtual packages)" % pkgname)
         else:
             return False, False, False
     try:
