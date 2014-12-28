@@ -750,12 +750,18 @@ class DockerManager(object):
                   'stdin_open':   self.module.params.get('stdin_open'),
                   'tty':          self.module.params.get('tty'),
                   'volumes_from': self.module.params.get('volumes_from'),
+                  'dns':          self.module.params.get('dns'),
                   }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
             params['volumes_from'] = ""
 
         if params['volumes_from'] is not None:
             self.ensure_capability('volumes_from')
+
+        extra_params = {}
+        if self.module.params.get('insecure_registry'):
+            if self.ensure_capability('insecure_registry', fail=False):
+                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
 
         def do_create(count, params):
             results = []
