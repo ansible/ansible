@@ -116,6 +116,11 @@ def set_mount(**kwargs):
     )
     args.update(kwargs)
 
+    # save the mount name before space replacement
+    origname =  args['name']
+    # replace any space in mount name with '\040' to make it fstab compatible (man fstab)
+    args['name'] = args['name'].replace(' ', r'\040')
+
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
     to_write = []
@@ -160,7 +165,8 @@ def set_mount(**kwargs):
     if changed:
         write_fstab(to_write, args['fstab'])
 
-    return (args['name'], changed)
+    # mount function needs origname
+    return (origname, changed)
 
 
 def unset_mount(**kwargs):
@@ -174,6 +180,11 @@ def unset_mount(**kwargs):
         fstab  = '/etc/fstab'
     )
     args.update(kwargs)
+
+    # save the mount name before space replacement
+    origname =  args['name']
+    # replace any space in mount name with '\040' to make it fstab compatible (man fstab)
+    args['name'] = args['name'].replace(' ', r'\040')
 
     to_write = []
     changed = False
@@ -203,7 +214,8 @@ def unset_mount(**kwargs):
     if changed:
         write_fstab(to_write, args['fstab'])
 
-    return (args['name'], changed)
+    # umount needs origname
+    return (origname, changed)
 
 
 def mount(module, **kwargs):
