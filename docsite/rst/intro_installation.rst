@@ -115,19 +115,7 @@ Next, you need Phyton and Python Setup Tools::
 
 	$ yum install python python-setuptools
 
-Now that Python Setup Tools is installed, you can install pip, which is used in later steps::
-
-.. code-block:: bash
-
-	$ sudo easy_install pip
-
-The last prerequisites will use pip to install Paramiko, PyYAML, Jinja2 and httpdlib2::
-
-.. code-block: bash
-
-	$ sudo pip install paramiko PyYAML Jinja2 httplib2 
-
-You are now ready to install from source.
+Now that Python Setup Tools is installed, you are now ready to install from source.
 
 .. code-block:: bash
 
