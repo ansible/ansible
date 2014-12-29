@@ -103,7 +103,31 @@ when they are implemented, and also easily contribute to the project. Because th
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
-To install from source.
+Prior to installing Ansible, there are several packages that need to be installed. Replace yum with apt-get as needed. First, if you do not have git installed, do so now::
+
+.. code-block:: bash
+
+	$ yum install git
+
+Next, you need Phyton and Python Setup Tools::
+
+.. code-block:: bash
+
+	$ yum install python python-setuptools
+
+Now that Python Setup Tools is installed, you can install pip, which is used in later steps::
+
+.. code-block:: bash
+
+	$ sudo easy_install pip
+
+The last prerequisites will use pip to install Paramiko, PyYAML, Jinja2 and httpdlib2::
+
+.. code-block: bash
+
+	$ sudo pip install paramiko PyYAML Jinja2 httplib2 
+
+You are now ready to install from source.
 
 .. code-block:: bash
 
