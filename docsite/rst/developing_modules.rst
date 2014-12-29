@@ -441,12 +441,12 @@ Getting Your Module Into Ansible
 ````````````````````````````````
 
 High-quality modules with minimal dependencies
-can be included in the ansible, but modules (just due to the programming
+can be included in Ansible, but modules (just due to the programming
 preferences of the developers) will need to be implemented in Python and use
 the AnsibleModule common code, and should generally use consistent arguments with the rest of
 the program.   Stop by the mailing list to inquire about requirements if you like, and submit
 a github pull request to the `extras <https://github.com/ansible/ansible-modules-extras>`_ project.
-Included modules will ship with ansible, and also have a change to be promoted to 'core' status, which
+Included modules will ship with ansible, and also have a chance to be promoted to 'core' status, which
 gives them slightly higher development priority (though they'll work in exactly the same way).
 
 
