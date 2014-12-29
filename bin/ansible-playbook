@@ -221,7 +221,7 @@ def main(args):
             for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir,
-                                              vault_password=pb.vault_password)
+                                              vault_password=pb.vault_password, syntax_check=options.syntax)
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
 

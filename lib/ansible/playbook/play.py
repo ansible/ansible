@@ -38,7 +38,7 @@ class Play(object):
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user',
-       'vault_password', 'no_log',
+       'vault_password', 'no_log', 'syntax_check',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -53,7 +53,7 @@ class Play(object):
 
     # *************************************************
 
-    def __init__(self, playbook, ds, basedir, vault_password=None):
+    def __init__(self, playbook, ds, basedir, vault_password=None, syntax_check=False):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
@@ -61,6 +61,7 @@ class Play(object):
                 raise errors.AnsibleError("%s is not a legal parameter at this level in an Ansible Playbook" % x)
 
         # allow all playbook keys to be set by --extra-vars
+        self.syntax_check     = syntax_check
         self.vars             = ds.get('vars', {})
         self.vars_prompt      = ds.get('vars_prompt', {})
         self.playbook         = playbook
@@ -147,6 +148,7 @@ class Play(object):
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
         self.no_log           = utils.boolean(ds.get('no_log', 'false'))
+        self.syntax_check     = syntax_check
 
         # gather_facts is not a simple boolean, as None means  that a 'smart'
         # fact gathering mode will be used, so we need to be careful here as
@@ -711,7 +713,10 @@ class Play(object):
         else:
             vars.update(self.vars)
 
-        if type(self.vars_prompt) == list:
+        if self.syntax_check:
+            pass
+
+        elif type(self.vars_prompt) == list:
             for var in self.vars_prompt:
                 if not 'name' in var:
                     raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
