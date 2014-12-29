@@ -103,15 +103,11 @@ when they are implemented, and also easily contribute to the project. Because th
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
-Prior to installing Ansible, there are several packages that need to be installed. Replace yum with apt-get as needed. First, if you do not have git installed, do so now::
-
-.. code-block:: bash
+Prior to installing Ansible, there are a few packages that need to be installed. Replace yum with apt-get as needed. First, if you do not have git installed, do so now::
 
 	$ yum install git
 
 Next, you need Phyton and Python Setup Tools::
-
-.. code-block:: bash
 
 	$ yum install python python-setuptools
 
@@ -123,7 +119,7 @@ Now that Python Setup Tools is installed, you are now ready to install from sour
     $ cd ./ansible
     $ source ./hacking/env-setup
 
-If you don't have pip installed in your version of Python, install pip::
+If you don't have pip installed in your version of Python, install pip (pip is included with python-setuptools)::
 
     $ sudo easy_install pip
 
