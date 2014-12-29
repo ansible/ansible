@@ -146,7 +146,19 @@ other than /etc/ansible/hosts:
 
 You can read more about the inventory file in later parts of the manual.
 
-Now let's test things with a ping command:
+Now let's test things with a ping command. In order to perform this test you will need sshPass. If wget is not installed, install it now::
+
+	$ yum install wget
+
+Now download the appropriate package, for example::
+
+	$ wget http://dl.fedoraproject.org/pub/epel/6/x86_64/sshpass-1.05-1.el6.x86_64.rpm
+
+Finally, install the package::
+
+	$ rpm -Uvh sshpass-1.05-1.el6.x86_64.rpm
+
+You can now test your Ansible installation by running::
 
 .. code-block:: bash
 
