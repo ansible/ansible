@@ -261,7 +261,7 @@ system.  These can be used to implement conditional execution of tasks but also 
 
     $ ansible all -m setup
 
-Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
+It's also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
 Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`Playbooks <playbooks>`. 
 
