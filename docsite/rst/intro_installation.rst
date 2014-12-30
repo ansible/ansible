@@ -89,6 +89,11 @@ On the managed nodes, you only need Python 2.4 or later, but if you are running 
 
 Installing the Control Machine
 ``````````````````````````````
+There are several packages needed to install and run Ansible::
+
+- Python
+- Python Setup Tools
+- sshpass
 
 .. _from_source:
 
@@ -103,15 +108,7 @@ when they are implemented, and also easily contribute to the project. Because th
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
-Prior to installing Ansible, there are a few packages that need to be installed. Replace yum with apt-get as needed. First, if you do not have git installed, do so now::
-
-	$ yum install git
-
-Next, you need Phyton and Python Setup Tools::
-
-	$ yum install python python-setuptools
-
-Now that Python Setup Tools is installed, you are now ready to install from source.
+To install from source::
 
 .. code-block:: bash
 
@@ -146,17 +143,7 @@ other than /etc/ansible/hosts:
 
 You can read more about the inventory file in later parts of the manual.
 
-Now let's test things with a ping command. In order to perform this test you will need sshPass. If wget is not installed, install it now::
-
-	$ yum install wget
-
-Now download the appropriate package, for example::
-
-	$ wget http://dl.fedoraproject.org/pub/epel/6/x86_64/sshpass-1.05-1.el6.x86_64.rpm
-
-Finally, install the package::
-
-	$ rpm -Uvh sshpass-1.05-1.el6.x86_64.rpm
+Now let's test things with a ping command. In order to perform this test you will need sshPass.
 
 You can now test your Ansible installation by running::
 
