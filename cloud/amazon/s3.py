@@ -430,7 +430,6 @@ def main():
 
         # At this point explicitly define the overwrite condition.
         if sum_matches is True and pathrtn is True and overwrite == 'always':
-            download_s3file(module, s3, bucket, obj, dest)
             download_s3file(module, s3, bucket, obj, dest, retries)
 
         # If sum does not match but the destination exists, we
