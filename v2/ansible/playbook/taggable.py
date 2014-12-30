@@ -31,13 +31,11 @@ class Taggable:
         return self._tags[:]
 
     def evaluate_tags(self, only_tags, skip_tags):
-        my_tags = self.get_tags()
-
+        my_tags = set(self.tags)
         if skip_tags:
             skipped_tags = my_tags.intersection(skip_tags)
             if len(skipped_tags) > 0:
                 return False
-
         matched_tags = my_tags.intersection(only_tags)
         if len(matched_tags) > 0 or 'all' in only_tags:
             return True

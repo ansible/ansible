@@ -148,23 +148,17 @@ class Block(Base, Conditional, Taggable):
         if self._parent_block is not None:
             if not self._parent_block.evaluate_conditional(all_vars):
                 return False
-        if self._role is not None:
+        elif self._role is not None:
             if not self._role.evaluate_conditional(all_vars):
                 return False
         return super(Block, self).evaluate_conditional(all_vars)
 
-    def get_tags(self):
-        tags = set(self.tags[:])
-        if self._parent_block:
-            tags.update(self._parent_block.get_tags())
-        if self._role:
-            tags.update(self._role.get_tags())
-        return tags
+    def evaluate_tags(self, only_tags, skip_tags):
+        if self._parent_block is not None:
+            if not self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                return False
+        elif self._role is not None:
+            if not self._role.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                return False
+        return super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
 
-    #def get_conditionals(self):
-    #    conditionals = set(self.when[:])
-    #    if self._parent_block:
-    #        conditionals.update(self._parent_block.get_conditionals())
-    #    if self._role:
-    #        conditionals.update(self._role.get_conditionals())
-    #    return conditionals

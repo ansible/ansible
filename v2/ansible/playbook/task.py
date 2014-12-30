@@ -99,6 +99,7 @@ class Task(Base, Conditional, Taggable):
         self._block        = block
         self._role         = role
         self._task_include = task_include
+        self._dep_chain    = []
 
         super(Task, self).__init__()
 
@@ -185,24 +186,21 @@ class Task(Base, Conditional, Taggable):
 
         return new_ds
 
+    def post_validate(self, all_vars=dict(), ignore_undefined=False):
+        '''
+        Override of base class post_validate, to also do final validation on
+        the block to which this task belongs.
+        '''
+
+        if self._block:
+            self._block.post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
+        #if self._role:
+        #    self._role.post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
+
+        super(Task, self).post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
+
     def get_vars(self):
         return self.serialize()
-
-    def get_tags(self):
-        tags = set(self.tags[:])
-        if self._block:
-            tags.update(self._block.get_tags())
-        if self._role:
-            tags.update(self._role.get_tags())
-        return tags
-
-    #def get_conditionals(self):
-    #    conditionals = set(self.when[:])
-    #    if self._block:
-    #        conditionals.update(self._block.get_conditionals())
-    #    if self._role:
-    #        conditionals.update(self._role.get_conditionals())
-    #    return conditionals
 
     def compile(self):
         '''
@@ -215,6 +213,7 @@ class Task(Base, Conditional, Taggable):
 
     def copy(self):
         new_me = super(Task, self).copy()
+        new_me._dep_chain = self._dep_chain[:]
 
         new_me._block = None
         if self._block:
@@ -232,6 +231,7 @@ class Task(Base, Conditional, Taggable):
 
     def serialize(self):
         data = super(Task, self).serialize()
+        data['dep_chain'] = self._dep_chain
 
         if self._block:
             data['block'] = self._block.serialize()
@@ -243,6 +243,8 @@ class Task(Base, Conditional, Taggable):
 
     def deserialize(self, data):
         block_data = data.get('block')
+        self._dep_chain = data.get('dep_chain', [])
+
         if block_data:
             b = Block()
             b.deserialize(block_data)
@@ -259,18 +261,22 @@ class Task(Base, Conditional, Taggable):
         super(Task, self).deserialize(data)
 
     def evaluate_conditional(self, all_vars):
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                if not dep.evaluate_conditional(all_vars):
+                    return False
         if self._block is not None:
             if not self._block.evaluate_conditional(all_vars):
                 return False
         return super(Task, self).evaluate_conditional(all_vars)
 
-    def post_validate(self, all_vars=dict(), ignore_undefined=False):
-        '''
-        '''
+    def evaluate_tags(self, only_tags, skip_tags):
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                if not dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                    return False
+        if self._block is not None:
+            if not self._block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                return False
+        return super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
 
-        if self._block:
-            self._block.post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
-        if self._role:
-            self._role.post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
-
-        super(Task, self).post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)

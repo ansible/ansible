@@ -235,18 +235,6 @@ class Role(Base, Conditional, Taggable):
 
         return all_vars
 
-    def get_tags(self):
-        tags = set(self.tags[:])
-        for parent in self._parents:
-            tags.update(parent.get_tags())
-        return tags
-
-    #def get_conditionals(self):
-    #    conditionals = set(self.when[:])
-    #    for parent in self._parents:
-    #        conditionals.update(parent.get_conditionals())
-    #    return conditionals
-
     def get_direct_dependencies(self):
         return self._dependencies[:]
 
@@ -279,18 +267,32 @@ class Role(Base, Conditional, Taggable):
 
         return self._had_task_run and self._completed
 
-    def compile(self):
+    def compile(self, dep_chain=[]):
         '''
         Returns the task list for this role, which is created by first
         recursively compiling the tasks for all direct dependencies, and
         then adding on the tasks for this role.
+
+        The role compile() also remembers and saves the dependency chain
+        with each task, so tasks know by which route they were found, and
+        can correctly take their parent's tags/conditionals into account.
         '''
 
         task_list = []
 
+        # update the dependency chain here
+        new_dep_chain = dep_chain + [self]
+
         deps = self.get_direct_dependencies()
         for dep in deps:
-            task_list.extend(dep.compile())
+            dep_tasks = dep.compile(dep_chain=new_dep_chain)
+            for dep_task in dep_tasks:
+                # since we're modifying the task, and need it to be unique,
+                # we make a copy of it here and assign the dependency chain
+                # to the copy, then append the copy to the task list.
+                new_dep_task = dep_task.copy()
+                new_dep_task._dep_chain = new_dep_chain
+                task_list.append(new_dep_task)
 
         task_list.extend(compile_block_list(self._task_blocks))
 
@@ -356,15 +358,3 @@ class Role(Base, Conditional, Taggable):
 
         super(Role, self).deserialize(data)
 
-    def evaluate_conditional(self, all_vars):
-        parent_conditionals = True
-        if len(self._parents) > 0:
-            parent_conditionals = False
-            for parent in self._parents:
-                parent_conditionals |= parent.evaluate_conditional(all_vars)
-
-        if not parent_conditionals:
-            return False
-        else:
-            return super(Role, self).evaluate_conditional(all_vars)
- 

@@ -168,9 +168,17 @@ class PlayState:
                 return None
 
         if task._role:
-            if cur_role and task._role != cur_role:
+            # if we had a current role, mark that role as completed
+            if cur_role and task._role != cur_role and not peek:
                 cur_role._completed = True
+
             cur_role = task._role
+
+            # if the current role has not had its task run flag set, mark
+            # clear the completed flag so we can correctly determine if the
+            # role was run
+            if not cur_role._had_task_run and not peek:
+                cur_role._completed = False
 
         # If we're not just peeking at the next task, save the internal state 
         if not peek:
