@@ -144,6 +144,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 import os
 import datetime
 import fnmatch
+import itertools
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -181,7 +182,7 @@ def package_versions(pkgname, pkg, pkg_cache):
         # apt.package.Package#versions require python-apt >= 0.7.9.
         pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
         pkg_versions = (p.VersionList for p in pkg_cache_list)
-        versions = set(p.VerStr for p in pkg_versions)
+        versions = set(p.VerStr for p in itertools.chain(*pkg_versions))
 
     return versions
 
@@ -201,9 +202,14 @@ def package_status(m, pkgname, version, cache, state):
         ll_pkg = cache._cache[pkgname] # the low-level package object
     except KeyError:
         if state == 'install':
-            if cache.get_providing_packages(pkgname):
+            try:
+                if cache.get_providing_packages(pkgname):
+                    return False, True, False
+                m.fail_json(msg="No package matching '%s' is available" % pkgname)
+            except AttributeError:
+                # python-apt version too old to detect virtual packages
+                # mark as upgradable and let apt-get install deal with it
                 return False, True, False
-            m.fail_json(msg="No package matching '%s' is available" % pkgname)
         else:
             return False, False, False
     try:
