@@ -95,6 +95,13 @@ options:
     required: false
     default: null
     version_added: "1.8"
+  retries:
+    description:
+     - On recoverable failure, how many times to retry before actually failing.
+    required: false
+    default: 0
+    version_added: "1.9"
+
 
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
@@ -133,6 +140,7 @@ import sys
 import os
 import urlparse
 import hashlib
+from ssl import SSLError
 
 try:
     import boto
@@ -237,14 +245,23 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
-def download_s3file(module, s3, bucket, obj, dest):
-    try:
-        bucket = s3.lookup(bucket)
-        key = bucket.lookup(obj)
-        key.get_contents_to_filename(dest)
-        module.exit_json(msg="GET operation complete", changed=True)
-    except s3.provider.storage_copy_error, e:
-        module.fail_json(msg= str(e))
+def download_s3file(module, s3, bucket, obj, dest, retries):
+    # retries is the number of loops; range/xrange needs to be one
+    # more to get that count of loops.
+    bucket = s3.lookup(bucket)
+    key = bucket.lookup(obj)
+    for x in xrange(0, retries + 1):
+        try:
+            key.get_contents_to_filename(dest)
+            module.exit_json(msg="GET operation complete", changed=True)
+        except s3.provider.storage_copy_error, e:
+            module.fail_json(msg= str(e))
+        except SSLError as e:
+            # actually fail on last pass through the loop.
+            if x == retries:
+                module.fail_json(msg="s3 download failed; %s" % e)
+            # otherwise, try again, this may be a transient timeout.
+            pass
 
 def download_s3str(module, s3, bucket, obj):
     try:
@@ -292,7 +309,8 @@ def main():
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
-            metadata      = dict(type='dict'),
+            metadata       = dict(type='dict'),
+            retries        = dict(aliases=['retry'], type='str', default=0),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -307,6 +325,7 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
+    retries = int(module.params.get('retries'))
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -368,7 +387,7 @@ def main():
         # If the destination path doesn't exist, no need to md5um etag check, so just download.
         pathrtn = path_check(dest)
         if pathrtn is False:
-            download_s3file(module, s3, bucket, obj, dest)
+            download_s3file(module, s3, bucket, obj, dest, retries)
 
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists. 
         if pathrtn is True:
@@ -377,13 +396,13 @@ def main():
             if md5_local == md5_remote:
                 sum_matches = True
                 if overwrite is True:
-                    download_s3file(module, s3, bucket, obj, dest)
+                    download_s3file(module, s3, bucket, obj, dest, retries)
                 else:
                     module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
             else:
                 sum_matches = False
                 if overwrite is True:
-                    download_s3file(module, s3, bucket, obj, dest)
+                    download_s3file(module, s3, bucket, obj, dest, retries)
                 else:
                     module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
         
@@ -393,7 +412,7 @@ def main():
 
         # At this point explicitly define the overwrite condition.
         if sum_matches is True and pathrtn is True and overwrite is True:
-            download_s3file(module, s3, bucket, obj, dest)
+            download_s3file(module, s3, bucket, obj, dest, retries)
 
         # If sum does not match but the destination exists, we 
                
