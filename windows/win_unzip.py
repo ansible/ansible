@@ -27,7 +27,7 @@ module: win_unzip
 version_added: ""
 short_description: Unzips compressed files on the Windows node
 description:
-     - Unzips compressed files, and can force reboot (if needed, i.e. such as hotfixes).
+     - Unzips compressed files, and can force reboot (if needed, i.e. such as hotfixes). If the destination directory does not exist, it will be created before unzipping the file. Specifying rm parameter will allow removal of the zip file after extraction.
 options:
   zip:
     description:
@@ -37,7 +37,7 @@ options:
     aliases: []
   dest:
     description:
-      - Destination of zip file (provide absolute path of directory)
+      - Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
     required: true
     default: null
     aliases: []
