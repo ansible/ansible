@@ -41,7 +41,12 @@ If (-Not($params.dest -eq $null)) {
     $dest = $params.dest.toString()
 
     If (-Not (Test-Path $dest -PathType Container)){
-        New-Item -itemtype directory -path $dest
+        Try{  
+            New-Item -itemtype directory -path $dest
+        }
+        Catch {
+            Fail-Json $result "Error creating $dest directory"
+        }
     }
 }
 Else {
