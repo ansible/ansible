@@ -41,7 +41,7 @@ If (-Not($params.dest -eq $null)) {
     $dest = $params.dest.toString()
 
     If (-Not (Test-Path $dest -PathType Container)){
-        Try{  
+        Try{
             New-Item -itemtype directory -path $dest
         }
         Catch {
@@ -54,18 +54,14 @@ Else {
 }
 
 Try {
-    cd C:\
     $shell = New-Object -ComObject Shell.Application
     $shell.NameSpace($dest).copyhere(($shell.NameSpace($zip)).items(), 20)
     $result.changed = $true
 }
 Catch {
-    $sp = $zip.split(".")
-    $ext = $sp[$sp.length-1]
-
     # Used to allow reboot after exe hotfix extraction (Windows 2008 R2 SP1)
     # This will have no effect in most cases.
-    If (-Not ($ext -eq "exe")){
+    If (-Not ([System.IO.Path]::GetExtension($zip) -match ".exe")){
         $result.changed = $false
         Fail-Json $result "Error unzipping $zip to $dest"
     }
