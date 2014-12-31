@@ -601,6 +601,11 @@ def get_instance_info(inst):
     except AttributeError:
         instance_info['ebs_optimized'] = False
 
+    try:
+        instance_info['tenancy'] = getattr(inst, 'placement_tenancy')
+    except AttributeError:
+        instance_info['tenancy'] = 'default'
+
     return instance_info
 
 def boto_supports_associate_public_ip_address(ec2):
