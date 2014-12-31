@@ -21,7 +21,7 @@
 
 DOCUMENTATION = """
 module: gluster_volume
-short_description: Manage GlusterFs volumes
+short_description: Manage GlusterFS volumes
 description:
   - Create, remove, start, stop and tune GlusterFS volumes
 options:
@@ -33,8 +33,8 @@ options:
     required: true
     choices: [ 'present', 'absent', 'started', 'stopped' ]
     description:
-      - Mode of operation: present/absent ensure if a module exists or not.
-        started/stopped make sure it is enabled or not.
+      - Use present/absent ensure if a volume exists or not,
+      use started/stopped to control it's availability.
   cluster:
     required: false
     description:
