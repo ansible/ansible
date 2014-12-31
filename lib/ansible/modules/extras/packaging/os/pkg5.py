@@ -48,6 +48,7 @@ EXAMPLES = '''
 - pkg5: name=service/network/finger state=absent
 '''
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -67,12 +68,26 @@ def main():
     )
 
     params = module.params
+    packages = []
+
+    # pkg(5) FRMIs include a comma before the release number, but
+    # AnsibleModule will have split this into multiple items for us.
+    # Try to spot where this has happened and fix it.
+    for fragment in params['name']:
+        if (
+            re.search('^\d+(?:\.\d+)*', fragment)
+            and packages and re.search('@[^,]*$', packages[-1])
+        ):
+            packages[-1] += ',' + fragment
+        else:
+            packages.append(fragment)
+
     if params['state'] in ['present', 'installed']:
-        ensure(module, 'present', params['name'])
+        ensure(module, 'present', packages)
     elif params['state'] in ['latest']:
-        ensure(module, 'latest', params['name'])
+        ensure(module, 'latest', packages)
     elif params['state'] in ['absent', 'uninstalled', 'removed']:
-        ensure(module, 'absent', params['name'])
+        ensure(module, 'absent', packages)
 
 
 def ensure(module, state, packages):
