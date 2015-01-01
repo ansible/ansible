@@ -26,7 +26,7 @@ Installing on the Control Machine
 
 On a Linux control machine::
 
-   pip install http://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
+   pip install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
 
 .. _windows_inventory:
 

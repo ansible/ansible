@@ -385,7 +385,7 @@ def process_category(category, categories, options, env, template, outputname):
 .. note::
     - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.  The module documentation details page may explain more about this rationale.
     - %s: This marks a module as 'extras', which means it ships with ansible but may be a newer module and possibly (but not necessarily) less activity maintained than 'core' modules.
-    - Tickets filed on modules are filed to different repos than those on the main open source project. Core module tickets should be filed at `ansible/ansible-modules-core on GitHub <http://github.com/ansible/ansible-modules-core>`_, extras tickets to `ansible/ansible-modules-extras on GitHub <http://github.com/ansible/ansible-modules-extras>`_
+    - Tickets filed on modules are filed to different repos than those on the main open source project. Core module tickets should be filed at `ansible/ansible-modules-core on GitHub <https://github.com/ansible/ansible-modules-core>`_, extras tickets to `ansible/ansible-modules-extras on GitHub <https://github.com/ansible/ansible-modules-extras>`_
 """ % (DEPRECATED, NOTCORE))
     category_file.close()
 
