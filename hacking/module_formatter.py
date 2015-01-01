@@ -88,6 +88,24 @@ def html_ify(text):
 
     return t
 
+#####################################################################################
+
+def strip_formatting(text):
+    ''' Strips formatting
+    In lists of modules, etc, we don't want certain words to be formatted
+    Also due to a bug in RST, you can not easily nest formatting
+    #http://docutils.sourceforge.net/FAQ.html#is-nested-inline-markup-possible
+    '''
+
+    t = cgi.escape(text)
+    t = _ITALIC.sub(r"\1", t)
+    t = _BOLD.sub(r"\1", t)
+    t = _MODULE.sub(r"\1", t)
+    t = _URL.sub(r"\1", t)
+    t = _CONST.sub(r"\1", t)
+
+    return t
+
 
 #####################################################################################
 
@@ -310,7 +328,8 @@ def print_modules(module, category_file, deprecated, core, options, env, templat
     result = process_module(modname, options, env, template, outputname, module_map, aliases)
 
     if result != "SKIPPED":
-        category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
+        # Some of the module descriptions have formatting in them, this is noisy in lists, so remove it
+        category_file.write("  %s - %s <%s_module>\n" % (modstring, strip_formatting(result), module))
 
 def process_category(category, categories, options, env, template, outputname):
 
