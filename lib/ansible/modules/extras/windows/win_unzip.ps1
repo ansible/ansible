@@ -67,12 +67,12 @@ Catch {
     }
 }
 
-If ($params.rm -eq "true"){
+If ($params.rm -eq "true" -Or $params.rm -eq "yes"){
     Remove-Item $zip -Recurse -Force
     Set-Attr $result.win_unzip "rm" "true"
 }
 
-If ($params.restart -eq "true") {
+If ($params.restart -eq "true" -Or $params.restart -eq "yes") {
     Restart-Computer -Force
     Set-Attr $result.win_unzip "restart" "true"
 }
