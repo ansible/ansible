@@ -57,6 +57,12 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  content_type:
+    description:
+      - Content type to use for requests made to the webhook
+    required: false
+    default: 'json'
+    choices: ['json', 'form']
 
 author: Phillip Gentry, CX Inc
 '''
@@ -69,7 +75,7 @@ EXAMPLES = '''
 - local_action: github_hooks action=cleanall user={{ gituser }} oauthkey={{ oauthkey }} repo={{ repo }}
 '''
 
-def list(module, hookurl, oauthkey, repo, user):
+def _list(module, hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
@@ -81,38 +87,38 @@ def list(module, hookurl, oauthkey, repo, user):
     else:
         return False, response.read()
 
-def clean504(module, hookurl, oauthkey, repo, user):
-    current_hooks = list(hookurl, oauthkey, repo, user)[1]
+def _clean504(module, hookurl, oauthkey, repo, user):
+    current_hooks = _list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
     for hook in decoded:
         if hook['last_response']['code'] == 504:
             # print "Last response was an ERROR for hook:"
             # print hook['id']
-            delete(module, hookurl, oauthkey, repo, user, hook['id'])
+            _delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
 
-def cleanall(module, hookurl, oauthkey, repo, user):
-    current_hooks = list(hookurl, oauthkey, repo, user)[1]
+def _cleanall(module, hookurl, oauthkey, repo, user):
+    current_hooks = _list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
     for hook in decoded:
         if hook['last_response']['code'] != 200:
             # print "Last response was an ERROR for hook:"
             # print hook['id']
-            delete(module, hookurl, oauthkey, repo, user, hook['id'])
+            _delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
 
-def create(module, hookurl, oauthkey, repo, user):
+def _create(module, hookurl, oauthkey, repo, user, content_type):
     url = "%s/hooks" % repo
     values = {
         "active": True,
         "name": "web",
         "config": {
             "url": "%s" % hookurl,
-            "content_type": "json"
+            "content_type": "%s" % content_type
             }
         }
     data = json.dumps(values)
@@ -126,7 +132,7 @@ def create(module, hookurl, oauthkey, repo, user):
     else:
         return 0, response.read()
 
-def delete(module, hookurl, oauthkey, repo, user, hookid):
+def _delete(module, hookurl, oauthkey, repo, user, hookid):
     url = "%s/hooks/%s" % (repo, hookid)
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
@@ -144,6 +150,7 @@ def main():
         repo=dict(required=True),
         user=dict(required=True),
         validate_certs=dict(default='yes', type='bool'),
+        content_type=dict(default='json', choices=['json', 'form']),
         )
     )
 
@@ -152,18 +159,19 @@ def main():
     oauthkey = module.params['oauthkey']
     repo = module.params['repo']
     user = module.params['user']
+    content_type = module.params['content_type']
 
     if action == "list":
-        (rc, out) = list(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _list(module, hookurl, oauthkey, repo, user)
 
     if action == "clean504":
-        (rc, out) = clean504(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _clean504(module, hookurl, oauthkey, repo, user)
 
     if action == "cleanall":
-        (rc, out) = cleanall(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _cleanall(module, hookurl, oauthkey, repo, user)
 
     if action == "create":
-        (rc, out) = create(module, hookurl, oauthkey, repo, user)
+        (rc, out) = _create(module, hookurl, oauthkey, repo, user, content_type)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)

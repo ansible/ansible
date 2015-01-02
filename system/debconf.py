@@ -34,6 +34,7 @@ notes:
     - A number of questions have to be answered (depending on the package).
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
+    - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
 requirements: [ debconf, debconf-utils ]
 options:
   name:
