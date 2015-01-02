@@ -345,6 +345,9 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         return False
     tempdir = tempfile.mkdtemp()
     clone_cmd = [scm, 'clone', role_url, role_name]
+    if scm == 'git':
+        clone_cmd += ['--mirror']
+
     with open('/dev/null', 'w') as devnull:
         try:
             print "- executing: %s" % " ".join(clone_cmd)
