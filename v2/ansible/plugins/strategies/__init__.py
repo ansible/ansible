@@ -23,6 +23,10 @@ import Queue
 import time
 
 from ansible.errors import *
+
+from ansible.inventory.host import Host
+from ansible.inventory.group import Group
+
 from ansible.playbook.helpers import compile_block_list
 from ansible.playbook.role import ROLE_CACHE
 from ansible.utils.debug import debug
@@ -154,6 +158,19 @@ class StrategyBase:
                             if entry == hashed_entry :
                                 role_obj._had_task_run = True
 
+                elif result[0] == 'add_host':
+                    task_result = result[1]
+                    new_host_info = task_result._result.get('add_host', dict())
+                    
+                    self._add_host(new_host_info)
+
+                elif result[0] == 'add_group':
+                    task_result = result[1]
+                    host        = task_result._host
+                    group_name  = task_result._result.get('add_group')
+
+                    self._add_group(host, group_name)
+
                 elif result[0] == 'notify_handler':
                     handler_name = result[1]
                     host         = result[2]
@@ -188,6 +205,74 @@ class StrategyBase:
             if self._tqm._terminated:
                 break
             time.sleep(0.01)
+
+    def _add_host(self, host_info):
+        '''
+        Helper function to add a new host to inventory based on a task result.
+        '''
+
+        host_name = host_info.get('host_name')
+
+        # Check if host in cache, add if not
+        if host_name in self._inventory._hosts_cache:
+            new_host = self._inventory._hosts_cache[host_name]
+        else:
+            new_host = Host(host_name)
+            self._inventory._hosts_cache[host_name] = new_host
+
+            allgroup = self._inventory.get_group('all')
+            allgroup.add_host(new_host)
+
+        # Set/update the vars for this host
+        # FIXME: probably should have a set vars method for the host?
+        new_vars = host_info.get('host_vars', dict())
+        new_host.vars.update(new_vars)
+
+        new_groups = host_info.get('groups', [])
+        for group_name in new_groups:
+            if not self._inventory.get_group(group_name):
+                new_group = Group(group_name)
+                self._inventory.add_group(new_group)
+                new_group.vars = self._inventory.get_group_variables(group_name)
+            else:
+                new_group = self._inventory.get_group(group_name)
+
+            new_group.add_host(new_host)
+
+            # add this host to the group cache
+            if self._inventory._groups_list is not None:
+                if group_name in self._inventory._groups_list:
+                    if new_host.name not in self._inventory._groups_list[group_name]:
+                        self._inventory._groups_list[group_name].append(new_host.name)
+
+        # clear pattern caching completely since it's unpredictable what
+        # patterns may have referenced the group
+        # FIXME: is this still required?
+        self._inventory.clear_pattern_cache()
+
+    def _add_group(self, host, group_name):
+        '''
+        Helper function to add a group (if it does not exist), and to assign the
+        specified host to that group.
+        '''
+
+        new_group = self._inventory.get_group(group_name)
+        if not new_group:
+            # create the new group and add it to inventory
+            new_group = Group(group_name)
+            self._inventory.add_group(new_group)
+
+            # and add the group to the proper hierarchy
+            allgroup = self._inventory.get_group('all')
+            allgroup.add_child_group(new_group)
+
+        # the host here is from the executor side, which means it was a
+        # serialized/cloned copy and we'll need to look up the proper
+        # host object from the master inventory
+        actual_host = self._inventory.get_host(host.name)
+
+        # and add the host to the group
+        new_group.add_host(actual_host)
 
     def cleanup(self, iterator, connection_info):
         '''

@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.connection_info import ConnectionInformation
+from ansible.playbook.task import Task
 from ansible.plugins import lookup_loader, connection_loader, action_loader
 
 from ansible.utils.debug import debug
@@ -110,8 +111,8 @@ class TaskExecutor:
         the retry/until and block rescue/always execution
         '''
 
-        connection = self._get_connection()
-        handler    = self._get_action_handler(connection=connection)
+        self._connection = self._get_connection()
+        self._handler    = self._get_action_handler(connection=self._connection)
 
         # check to see if this task should be skipped, due to it being a member of a
         # role which has already run (and whether that role allows duplicate execution)
@@ -147,8 +148,12 @@ class TaskExecutor:
                 result['attempts'] = attempt + 1
 
             debug("running the handler")
-            result = handler.run(task_vars=self._job_vars)
+            result = self._handler.run(task_vars=self._job_vars)
             debug("handler run complete")
+
+            if self._task.async > 0 and self._task.poll > 0:
+                result = self._poll_async_result(result=result)
+
             if self._task.until:
                 # TODO: implement until logic (pseudo logic follows...)
                 # if VariableManager.check_conditional(cond, extra_vars=(dict(result=result))):
@@ -163,6 +168,54 @@ class TaskExecutor:
 
         debug("attempt loop complete, returning result")
         return result
+
+    def _poll_async_result(self, result):
+        '''
+        Polls for the specified JID to be complete
+        '''
+
+        # the async_wrapper module returns dumped JSON via its stdout
+        # response, so we parse it here
+        try:
+            async_data = json.loads(result.get('stdout'))
+        except ValueError, e:
+            return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))
+
+        async_jid = async_data.get('ansible_job_id')
+        if async_jid is None:
+            return dict(failed=True, msg="No job id was returned by the async task")
+
+        # Create a new psuedo-task to run the async_status module, and run
+        # that (with a sleep for "poll" seconds between each retry) until the
+        # async time limit is exceeded.
+
+        async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
+
+        # Because this is an async task, the action handler is async. However,
+        # we need the 'normal' action handler for the status check, so get it
+        # now via the action_loader
+        normal_handler = action_loader.get(
+            'normal',
+            task=async_task,
+            connection=self._connection,
+            connection_info=self._connection_info,
+            loader=self._loader
+        )
+
+        time_left = self._task.async
+        while time_left > 0:
+            time.sleep(self._task.poll)
+
+            async_result = normal_handler.run()
+            if int(async_result.get('finished', 0)) == 1 or 'failed' in async_result or 'skipped' in async_result:
+                break
+
+            time_left -= self._task.poll
+
+        if int(async_result.get('finished', 0)) != 1:
+            return dict(failed=True, msg="async task did not complete within the requested time")
+        else:
+            return async_result
 
     def _get_connection(self):
         '''

@@ -60,7 +60,6 @@ class TestTask(unittest.TestCase):
 
     def test_load_task_kv_form(self):
         t = Task.load(kv_shell_task)
-        print("task action is %s" % t.action)
         self.assertEqual(t.action, 'command')
         self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
 

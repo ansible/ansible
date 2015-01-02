@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError
@@ -41,8 +43,8 @@ class RoleMetadata(Base):
     _dependencies     = FieldAttribute(isa='list', default=[])
     _galaxy_info      = FieldAttribute(isa='GalaxyInfo')
 
-    def __init__(self):
-        self._owner = None
+    def __init__(self, owner=None):
+        self._owner = owner
         super(RoleMetadata, self).__init__()
 
     @staticmethod
@@ -54,7 +56,7 @@ class RoleMetadata(Base):
         if not isinstance(data, dict):
             raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
 
-        m = RoleMetadata().load_data(data, variable_manager=variable_manager, loader=loader)
+        m = RoleMetadata(owner=owner).load_data(data, variable_manager=variable_manager, loader=loader)
         return m
 
     def _load_dependencies(self, attr, ds):
@@ -62,7 +64,12 @@ class RoleMetadata(Base):
         This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
         '''
-        return load_list_of_roles(ds, variable_manager=self._variable_manager, loader=self._loader)
+
+        current_role_path = None
+        if self._owner:
+            current_role_path = os.path.dirname(self._owner._role_path)
+
+        return load_list_of_roles(ds, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_galaxy_info(self, attr, ds):
         '''
