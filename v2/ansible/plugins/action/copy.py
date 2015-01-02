@@ -87,8 +87,8 @@ class ActionModule(ActionBase):
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception, err:
-                result = dict(failed=True, msg="could not write content temp file: %s" % err)
-                return ReturnData(conn=conn, result=result)
+                return dict(failed=True, msg="could not write content temp file: %s" % err)
+
         ###############################################################################################
         # FIXME: first_available_file needs to be reworked?
         ###############################################################################################
@@ -263,7 +263,7 @@ class ActionModule(ActionBase):
                 #if self.runner.no_log:
                 #    new_module_args['NO_LOG'] = True
 
-                module_return = self._execute_module(module_name='copy', module_args=new_module_args, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='copy', module_args=new_module_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             else:
@@ -292,7 +292,7 @@ class ActionModule(ActionBase):
                 #    new_module_args['NO_LOG'] = True
 
                 # Execute the file module.
-                module_return = self._execute_module(module_name='file', module_args=new_module_args, tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='file', module_args=new_module_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             if not module_return.get('checksum'):

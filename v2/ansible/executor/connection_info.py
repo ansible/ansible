@@ -51,7 +51,7 @@ class ConnectionInformation:
         self.sudo_user   = ''
         self.sudo_pass   = ''
         self.verbosity   = 0
-        self.only_tags   = set()
+        self.only_tags   = set(['all'])
         self.skip_tags   = set()
 
         if play:
@@ -93,15 +93,19 @@ class ConnectionInformation:
             self.connection = options.connection
 
         # get the tag info from options, converting a comma-separated list
-        # of values into a proper list if need be
-        if isinstance(options.tags, list):
-            self.only_tags.update(options.tags)
-        elif isinstance(options.tags, basestring):
-            self.only_tags.update(options.tags.split(','))
-        if isinstance(options.skip_tags, list):
-            self.skip_tags.update(options.skip_tags)
-        elif isinstance(options.skip_tags, basestring):
-            self.skip_tags.update(options.skip_tags.split(','))
+        # of values into a proper list if need be. We check to see if the
+        # options have the attribute, as it is not always added via the CLI
+        if hasattr(options, 'tags'):
+            if isinstance(options.tags, list):
+                self.only_tags.update(options.tags)
+            elif isinstance(options.tags, basestring):
+                self.only_tags.update(options.tags.split(','))
+
+        if hasattr(options, 'skip_tags'):
+            if isinstance(options.skip_tags, list):
+                self.skip_tags.update(options.skip_tags)
+            elif isinstance(options.skip_tags, basestring):
+                self.skip_tags.update(options.skip_tags.split(','))
 
     def copy(self, ci):
         '''

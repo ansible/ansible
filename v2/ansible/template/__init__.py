@@ -109,7 +109,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -123,7 +123,7 @@ class Templar:
             if isinstance(variable, basestring):
                 result = variable
                 if self._contains_vars(variable):
-                    result = self._do_template(variable)
+                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines)
     
                     # if this looks like a dictionary or list, convert it to such using the safe_eval method
                     if (result.startswith("{") and not result.startswith("{{")) or result.startswith("["):
@@ -196,7 +196,7 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data):
+    def _do_template(self, data, preserve_trailing_newlines=False):
 
         try:
             # FIXME: is this even required? it seems to conflict with the lines
@@ -251,6 +251,17 @@ class Templar:
                     )
                 else:
                     raise AnsibleError("an unexpected type error occurred. Error was %s" % te)
+
+            if preserve_trailing_newlines:
+                # The low level calls above do not preserve the newline
+                # characters at the end of the input data, so we use the
+                # calculate the difference in newlines and append them
+                # to the resulting output for parity
+                res_newlines  = self._count_newlines_from_end(res)
+                data_newlines = self._count_newlines_from_end(data)
+                if data_newlines > res_newlines:
+                    res += '\n' * (data_newlines - res_newlines)
+
             return res
         except UndefinedError, AnsibleUndefinedVariable:
             if self._fail_on_undefined_errors:

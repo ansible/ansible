@@ -110,16 +110,12 @@ class ResultProcess(multiprocessing.Process):
 
                 # send callbacks, execute other options based on the result status
                 if result.is_failed():
-                    #self._callback.runner_on_failed(result._task, result)
                     self._send_result(('host_task_failed', result))
                 elif result.is_unreachable():
-                    #self._callback.runner_on_unreachable(result._task, result)
                     self._send_result(('host_unreachable', result))
                 elif result.is_skipped():
-                    #self._callback.runner_on_skipped(result._task, result)
                     self._send_result(('host_task_skipped', result))
                 else:
-                    #self._callback.runner_on_ok(result._task, result)
                     self._send_result(('host_task_ok', result))
 
                     # if this task is notifying a handler, do it now
@@ -131,8 +127,14 @@ class ResultProcess(multiprocessing.Process):
                         for notify in result._task.notify:
                             self._send_result(('notify_handler', notify, result._host))
 
-                    # if this task is registering facts, do that now
-                    if 'ansible_facts' in result._result:
+                    if 'add_host' in result._result:
+                        # this task added a new host (add_host module)
+                        self._send_result(('add_host', result))
+                    elif 'add_group' in result._result:
+                        # this task added a new group (group_by module)
+                        self._send_result(('add_group', result))
+                    elif 'ansible_facts' in result._result:
+                        # if this task is registering facts, do that now
                         if result._task.action in ('set_fact', 'include_vars'):
                             for (key, value) in result._result['ansible_facts'].iteritems():
                                 self._send_result(('set_host_var', result._host, key, value))

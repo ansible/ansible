@@ -23,6 +23,7 @@ import StringIO
 import json
 import os
 import random
+import sys # FIXME: probably not needed
 import tempfile
 import time
 
@@ -249,8 +250,8 @@ class ActionBase:
         data = self._low_level_execute_command(cmd, tmp, sudoable=True)
         # FIXME: implement this function?
         #data2 = utils.last_non_blank_line(data['stdout'])
-        data2 = data['stdout'].strip().splitlines()[-1]
         try:
+            data2 = data['stdout'].strip().splitlines()[-1]
             if data2 == '':
                 # this may happen if the connection to the remote server
                 # failed, so just return "INVALIDCHECKSUM" to avoid errors
@@ -258,6 +259,8 @@ class ActionBase:
             else:
                 return data2.split()[0]
         except IndexError:
+            # FIXME: this should probably not print to sys.stderr, but should instead
+            #        fail in a more normal way?
             sys.stderr.write("warning: Calculating checksum failed unusually, please report this to the list so it can be fixed\n")
             sys.stderr.write("command: %s\n" % cmd)
             sys.stderr.write("----\n")
@@ -331,7 +334,7 @@ class ActionBase:
 
         # a remote tmp path may be necessary and not already created
         remote_module_path = None
-        if self._late_needs_tmp_path(tmp, module_style):
+        if not tmp and self._late_needs_tmp_path(tmp, module_style):
             tmp = self._make_tmp_path()
             remote_module_path = self._shell.join_path(tmp, module_name)
 
@@ -384,9 +387,12 @@ class ActionBase:
 
         # FIXME: in error situations, the stdout may not contain valid data, so we
         #        should check for bad rc codes better to catch this here
-        data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
-        if 'parsed' in data and data['parsed'] == False:
-            data['msg'] += res['stderr']
+        if 'stdout' in res and res['stdout'].strip():
+            data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
+            if 'parsed' in data and data['parsed'] == False:
+                data['msg'] += res['stderr']
+        else:
+            data = dict()
 
         debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data

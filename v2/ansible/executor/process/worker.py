@@ -74,6 +74,9 @@ class WorkerProcess(multiprocessing.Process):
                 # using the one that was passed in
                 pass
 
+        if self._new_stdin:
+            sys.stdin = self._new_stdin
+
         super(WorkerProcess, self).__init__()
 
     def run(self):
@@ -130,7 +133,7 @@ class WorkerProcess(multiprocessing.Process):
                 debug("WORKER EXCEPTION: %s" % traceback.format_exc())
                 try:
                     if task:
-                        task_result = TaskResult(host, task, dict(failed=True, exception=True, stdout=traceback.format_exc()))
+                        task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
                         self._rslt_q.put(task_result, block=False)
                 except:
                     # FIXME: most likely an abort, catch those kinds of errors specifically

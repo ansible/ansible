@@ -53,7 +53,7 @@ class Task(Base, Conditional, Taggable):
     # will be used if defined
     # might be possible to define others
 
-    _args                 = FieldAttribute(isa='dict')
+    _args                 = FieldAttribute(isa='dict', default=dict())
     _action               = FieldAttribute(isa='string')
 
     _always_run           = FieldAttribute(isa='bool')

@@ -25,17 +25,24 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        # note: the fail module does not need to pay attention to check mode
-        # it always runs.
+        if not 'that' in self._task.args:
+            raise AnsibleError('conditional required in "that" string')
 
         msg = None
         if 'msg' in self._task.args:
             msg = self._task.args['msg']
 
-        if not 'that' in self._task.args:
-            raise AnsibleError('conditional required in "that" string')
+        # make sure the 'that' items are a list
+        thats = self._task.args['that']
+        if not isinstance(thats, list):
+            thats = [ thats ]
 
-        for that in self._task.args['that']:
+        # Now we iterate over the that items, temporarily assigning them
+        # to the task's when value so we can evaluate the conditional using
+        # the built in evaluate function. The when has already been evaluated
+        # by this point, and is not used again, so we don't care about mangling
+        # that value now
+        for that in thats:
             self._task.when = [ that ]
             test_result = self._task.evaluate_conditional(all_vars=task_vars)
             if not test_result:

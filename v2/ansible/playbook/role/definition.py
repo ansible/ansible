@@ -38,8 +38,8 @@ class RoleDefinition(Base, Conditional, Taggable):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self):
-        self._role_path   = None
+    def __init__(self, role_path=None):
+        self._role_path   = role_path
         self._role_params = dict()
         super(RoleDefinition, self).__init__()
 
@@ -112,7 +112,11 @@ class RoleDefinition(Base, Conditional, Taggable):
         '''
 
         # FIXME: this should use unfrackpath once the utils code has been sorted out
-        role_path = os.path.normpath(role_name)
+        if self._role_path:
+            role_path = self._role_path
+        else:
+            role_path = os.path.normpath(role_name)
+
         if self._loader.path_exists(role_path):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
@@ -127,6 +131,7 @@ class RoleDefinition(Base, Conditional, Taggable):
         #        in the yaml so the error line/file can be reported
         #        here
 
+        #import epdb; epdb.st()
         raise AnsibleError("the role '%s' was not found" % role_name)
 
     def _split_role_params(self, ds):
