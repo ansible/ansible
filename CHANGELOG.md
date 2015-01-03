@@ -97,7 +97,7 @@ And various other bug fixes and improvements ...
 - Fixes a bug in vault where the password file option was not being used correctly internally.
 - Improved multi-line parsing when using YAML literal blocks (using > or |).
 - Fixed a bug with the file module and the creation of relative symlinks.
-- Fixed a bug where checkmode was not being honored during the templating of files.
+- Fixed a bug where checkmode was not being honoured during the templating of files.
 - Other various bug fixes.
 
 ## 1.7.1 "Summer Nights" - Aug 14, 2014
@@ -140,7 +140,7 @@ New Modules:
 Other notable changes:
 
 * Security fixes
-  - Prevent the use of lookups when using legaxy "{{ }}" syntax around variables and with_* loops.
+  - Prevent the use of lookups when using legacy "{{ }}" syntax around variables and with_* loops.
   - Remove relative paths in TAR-archived file names used by ansible-galaxy.
 * Inventory speed improvements for very large inventories.
 * Vault password files can now be executable, to support scripts that fetch the vault password.
@@ -319,7 +319,7 @@ Major features/changes:
 * ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
-* if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
+* if repoquery is unavailable, the yum module will automatically attempt to install yum-utils
 * ansible-vault: a framework for encrypting your playbooks and variable files 
 * added support for privilege escalation via 'su' into bin/ansible and bin/ansible-playbook and associated keywords 'su', 'su_user', 'su_pass' for tasks/plays
 
@@ -782,7 +782,7 @@ Bugfixes and Misc Changes:
 * misc fixes to the Riak module
 * make template module slightly more efficient
 * base64encode / decode filters are now available to templates
-* libvirt module can now work with multiple different libvirt connecton URIs
+* libvirt module can now work with multiple different libvirt connection URIs
 * fix for postgresql password escaping
 * unicode fix for shlex.split in some cases
 * apt module upgrade logic improved
@@ -817,7 +817,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * service pattern argument now correctly read for BSD services
 * fetch location can now be controlled more directly via the 'flat' parameter.
 * added basename and dirname as Jinja2 filters available to all templates
-* pip works better when sudoing from unpriveledged users
+* pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
 * fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
