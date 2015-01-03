@@ -4,6 +4,7 @@
 import os
 import os.path
 from subprocess import Popen, PIPE, call
+import re
 
 DOCUMENTATION = '''
 ---
