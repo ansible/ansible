@@ -362,10 +362,8 @@ def main():
                 except IOError:
                     break
             elif port:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(connect_timeout)
                 try:
-                    s.connect( (host, port) )
+                    s = socket.create_connection( (host, port), connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                     time.sleep(1)
@@ -410,10 +408,8 @@ def main():
                         elapsed = datetime.datetime.now() - start
                         module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
             elif port:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(connect_timeout)
                 try:
-                    s.connect( (host, port) )
+                    s = socket.create_connection( (host, port), connect_timeout)
                     if search_regex:
                         data = ''
                         matched = False
