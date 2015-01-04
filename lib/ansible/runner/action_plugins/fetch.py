@@ -110,7 +110,7 @@ class ActionModule(object):
                 dest = utils.path_dwim(self.runner.basedir, dest)
         else:
             # files are saved in dest dir, with a subdir for each host, then the filename
-            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source_local)
+            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), inject['inventory_hostname'], source_local)
 
         dest = dest.replace("//","/")
 
