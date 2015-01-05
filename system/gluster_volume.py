@@ -24,6 +24,7 @@ module: gluster_volume
 short_description: Manage GlusterFS volumes
 description:
   - Create, remove, start, stop and tune GlusterFS volumes
+version_added: "1.9"
 options:
   name:
     required: true
@@ -34,7 +35,7 @@ options:
     choices: [ 'present', 'absent', 'started', 'stopped' ]
     description:
       - Use present/absent ensure if a volume exists or not,
-      use started/stopped to control it's availability.
+        use started/stopped to control it's availability.
   cluster:
     required: false
     description:
