@@ -154,7 +154,7 @@ def main():
 
     lvs_cmd = module.get_bin_path("lvs", required=True)
     rc, current_lvs, err = module.run_command(
-        "%s --noheadings -o lv_name,size --units %s --separator ';' %s" % (lvs_cmd, unit, vg))
+        "lvs --noheadings --nosuffix -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
 
     if rc != 0:
         if state == 'absent':
