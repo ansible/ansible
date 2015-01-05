@@ -153,7 +153,7 @@ def main():
         unit = size_unit
 
     rc, current_lvs, err = module.run_command(
-        "lvs --noheadings -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
+        "lvs --noheadings --nosuffix -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
 
     if rc != 0:
         if state == 'absent':
