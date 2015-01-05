@@ -19,7 +19,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI format and looks like this::
+The format for /etc/ansible/hosts is an INI-like format and looks like this::
 
     mail.example.com
 
