@@ -326,6 +326,8 @@ def create_autoscaling_group(connection, module):
         for attr in ASG_ATTRIBUTES:
             if module.params.get(attr):
                 module_attr = module.params.get(attr)
+                if attr == 'vpc_zone_identifier':
+                    module_attr = ','.join(module_attr)
                 group_attr = getattr(as_group, attr)
                 # we do this because AWS and the module may return the same list
                 # sorted differently
