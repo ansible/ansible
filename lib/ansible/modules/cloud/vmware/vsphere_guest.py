@@ -69,11 +69,13 @@ options:
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
+    version_added: "1.9"
     description:
      - Specifies if the VM should be deployed from a template (cannot be ran with state)
      default: no
      choices: ['yes', 'no']
   template_src:
+    version_added: "1.9"
     description:
      - Name of the source template to deploy from
      default: None
