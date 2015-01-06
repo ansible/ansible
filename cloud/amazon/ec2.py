@@ -915,6 +915,17 @@ def create_instances(module, ec2, override_count=None):
                             continue
                         else:
                             module.fail_json(msg = str(e))
+
+                # The instances returned through ec2.run_instances above can be in
+                # terminated state due to idempotency. See commit 7f11c3d for a complete
+                # explanation.
+                terminated_instances = [ str(instance.id) for instance in res.instances
+                                        if instance.state == 'terminated' ]
+                if terminated_instances:
+                    module.fail_json(msg = "Instances with id(s) %s " % terminated_instances +
+                                        "were created previously but have since been terminated - " +
+                                        "use a (possibly different) 'instanceid' parameter")
+
             else:
                 if private_ip:
                     module.fail_json(
@@ -951,15 +962,6 @@ def create_instances(module, ec2, override_count=None):
                     instids = spot_req_inst_ids.values()
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
-
-        # The instances returned through run_instances can be in
-        # terminated state due to idempotency.
-        terminated_instances = [ str(instance.id) for instance in res.instances
-                                 if instance.state == 'terminated' ]
-        if terminated_instances:
-            module.fail_json(msg = "Instances with id(s) %s " % terminated_instances +
-                                   "were created previously but have since been terminated - " +
-                                   "use a (possibly different) 'instanceid' parameter")
 
         # wait here until the instances are up
         num_running = 0
