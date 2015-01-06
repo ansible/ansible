@@ -103,6 +103,23 @@ EXAMPLES = '''
 
 '''
 
+
+def get_state(path):
+    ''' Find out current state '''
+
+    if os.path.lexists(path):
+        if os.path.islink(path):
+            return 'link'
+        elif os.path.isdir(path):
+            return 'directory'
+        elif os.stat(path).st_nlink > 1:
+            return 'hard'
+        else:
+            # could be many other things, but defaulting to file
+            return 'file'
+
+    return 'absent'
+
 def main():
 
     module = AnsibleModule(
@@ -143,18 +160,7 @@ def main():
             pass
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
-    # Find out current state
-    prev_state = 'absent'
-    if os.path.lexists(path):
-        if os.path.islink(path):
-            prev_state = 'link'
-        elif os.path.isdir(path):
-            prev_state = 'directory'
-        elif os.stat(path).st_nlink > 1:
-            prev_state = 'hard'
-        else:
-            # could be many other things, but defaulting to file
-            prev_state = 'file'
+    prev_state = get_state(path)
 
     # state should default to file, but since that creates many conflicts,
     # default to 'current' when it exists.
@@ -220,6 +226,11 @@ def main():
         module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
+
+        if follow and prev_state == 'link':
+            path = os.readlink(path)
+            prev_state = get_state(path)
+
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
