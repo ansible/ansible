@@ -156,7 +156,7 @@ def main():
             ipv4_range = dict(),
             fwname = dict(),
             name = dict(),
-            src_range = dict(),
+            src_range = dict(type='list'),
             src_tags = dict(type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
