@@ -82,7 +82,7 @@ options:
         required: false
         default: null
         version_added: 0.0.1
-    target:
+    dest:
         description: The path where the artifact should be written to
         required: true
         default: false
@@ -97,16 +97,16 @@ options:
 
 EXAMPLES = '''
 # Download the latest version of the commons-collections artifact from Maven Central
-- maven_artifact: group_id=org.apache.commons artifact_id=commons-collections target=/tmp/commons-collections-latest.jar
+- maven_artifact: group_id=org.apache.commons artifact_id=commons-collections dest=/tmp/commons-collections-latest.jar
 
 # Download Apache Commons-Collections 3.2 from Maven Central
-- maven_artifact: group_id=org.apache.commons artifact_id=commons-collections version=3.2 target=/tmp/commons-collections-3.2.jar
+- maven_artifact: group_id=org.apache.commons artifact_id=commons-collections version=3.2 dest=/tmp/commons-collections-3.2.jar
 
 # Download an artifact from a private repository requiring authentication
-- maven_artifact: group_id=com.company artifact_id=library-name repository_url=https://repo.company.com/maven username=user password=pass target=/tmp/library-name-latest.jar
+- maven_artifact: group_id=com.company artifact_id=library-name repository_url=https://repo.company.com/maven username=user password=pass dest=/tmp/library-name-latest.jar
 
 # Download a WAR File to the Tomcat webapps directory to be deployed
-- maven_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven target=/var/lib/tomcat7/webapps/web-app.war
+- maven_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven dest=/var/lib/tomcat7/webapps/web-app.war
 '''
 
 class Artifact(object):
@@ -321,8 +321,8 @@ def main():
             repository_url = dict(default=None),
             username = dict(default=None),
             password = dict(default=None),
-            state = dict(default="latest", choices=["present","absent"]), # TODO - Implement a "latest" state 
-            target = dict(default=None),
+            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state 
+            dest = dict(default=None),
         )
     )
 
@@ -335,7 +335,7 @@ def main():
     repository_username = module.params["username"]
     repository_password = module.params["password"]
     state = module.params["state"]
-    target = module.params["target"]
+    dest = module.params["dest"]
 
     if not repository_url:
         repository_url = "http://repo1.maven.org/maven2"
@@ -348,19 +348,19 @@ def main():
         module.fail_json(msg=e.args[0])
 
     prev_state = "absent"
-    if os.path.lexists(target):
+    if os.path.lexists(dest):
         prev_state = "present"
     else:
-        path = os.path.dirname(target)
+        path = os.path.dirname(dest)
         if not os.path.exists(path):
             os.makedirs(path)
 
     if prev_state == "present":
-        module.exit_json(target=target, state=state, changed=False)
+        module.exit_json(dest=dest, state=state, changed=False)
 
     try:
         if downloader.download(artifact, target):
-            module.exit_json(state=state, target=target, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
+            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
         else:
             module.fail_json(msg="Unable to download the artifact")
     except ValueError as e:
