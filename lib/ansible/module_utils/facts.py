@@ -330,9 +330,9 @@ class Facts(object):
                             elif 'OmniOS' in data:
                                 self.facts['distribution'] = 'OmniOS'
                             elif uname_rc == 0 and 'NexentaOS_' in uname_out:
-                                self.facts['distribution'] = 'NexentaStor'
+                                self.facts['distribution'] = 'Nexenta'
 
-                            if self.fact['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'NexentaStor'):
+                            if self.fact['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
                                 self.facts['distribution_release'] = data.strip()
                                 if uname_rc == 0:
                                     self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
