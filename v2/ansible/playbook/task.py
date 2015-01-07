@@ -61,7 +61,7 @@ class Task(Base, Conditional, Taggable):
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='string')
     _connection           = FieldAttribute(isa='string')
-    _delay                = FieldAttribute(isa='int', default=0)
+    _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
     _environment          = FieldAttribute(isa='dict')
     _failed_when          = FieldAttribute(isa='string')
