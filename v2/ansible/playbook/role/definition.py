@@ -38,9 +38,10 @@ class RoleDefinition(Base, Conditional, Taggable):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self, role_path=None):
-        self._role_path   = role_path
-        self._role_params = dict()
+    def __init__(self, role_basedir=None):
+        self._role_path    = None
+        self._role_basedir = role_basedir
+        self._role_params  = dict()
         super(RoleDefinition, self).__init__()
 
     def __repr__(self):
@@ -112,17 +113,18 @@ class RoleDefinition(Base, Conditional, Taggable):
         '''
 
         # FIXME: this should use unfrackpath once the utils code has been sorted out
-        if self._role_path:
-            role_path = self._role_path
-        else:
-            role_path = os.path.normpath(role_name)
+        role_path = os.path.normpath(role_name)
 
         if self._loader.path_exists(role_path):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
         else:
             # FIXME: this should search in the configured roles path
-            for path in (os.path.join(self._loader.get_basedir(), 'roles'), './roles', '/etc/ansible/roles'):
+            role_search_paths = [os.path.join(self._loader.get_basedir(), 'roles'), './roles', '/etc/ansible/roles']
+            if self._role_basedir:
+                role_search_paths = [self._role_basedir] + role_search_paths
+
+            for path in role_search_paths:
                 role_path = os.path.join(path, role_name)
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)
@@ -131,7 +133,6 @@ class RoleDefinition(Base, Conditional, Taggable):
         #        in the yaml so the error line/file can be reported
         #        here
 
-        #import epdb; epdb.st()
         raise AnsibleError("the role '%s' was not found" % role_name)
 
     def _split_role_params(self, ds):
