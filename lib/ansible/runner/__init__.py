@@ -1461,9 +1461,15 @@ class Runner(object):
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
             # We aren't iterating over all the hosts in this
-            # group. So, just pick the first host in our group to
+            # group. So, just choose the "delegate_to" host if that is defined and is
+            # one of the targeted hosts, otherwise pick the first host in our group to
             # construct the conn object with.
-            result_data = self._executor(hosts[0], None).result
+            if self.delegate_to is not None and self.delegate_to in hosts:
+                host = self.delegate_to
+            else:
+                host = hosts[0]
+
+            result_data = self._executor(host, None).result
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.
