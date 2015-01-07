@@ -1042,6 +1042,9 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
+def expand_tilde(option, opt, value, parser):
+    setattr(parser.values, option.dest, os.path.expanduser(value))
+
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
     ''' create an options parser for any ansible script '''
@@ -1054,6 +1057,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
+        nargs=1, action="callback", callback=expand_tilde,
         default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
@@ -1066,11 +1070,13 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
         help='ask for vault password')
     parser.add_option('--vault-password-file', default=constants.DEFAULT_VAULT_PASSWORD_FILE,
+        nargs=1, action="callback", callback=expand_tilde,
         dest='vault_password_file', help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
+        action="callback", callback=expand_tilde, nargs=1,
         default=None)
 
     if subset_opts:
