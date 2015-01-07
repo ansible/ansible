@@ -348,6 +348,9 @@ def main():
         module.fail_json(msg=e.args[0])
 
     prev_state = "absent"
+    if os.path.isdir(dest):
+        dest = dest + "/" + artifact_id + "-" + version + ".jar"
+            
     if os.path.lexists(dest):
         prev_state = "present"
     else:
@@ -359,7 +362,7 @@ def main():
         module.exit_json(dest=dest, state=state, changed=False)
 
     try:
-        if downloader.download(artifact, target):
+        if downloader.download(artifact, dest):
             module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
         else:
             module.fail_json(msg="Unable to download the artifact")
