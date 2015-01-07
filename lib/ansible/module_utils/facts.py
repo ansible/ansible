@@ -46,7 +46,7 @@ except ImportError:
     import simplejson as json
 
 # --------------------------------------------------------------
-# timeout function to make sure some fact gathering 
+# timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
 class TimeoutError(Exception):
@@ -320,6 +320,11 @@ class Facts(object):
                                 self.facts['distribution_version'] = data.split()[1]
                                 self.facts['distribution_release'] = ora_prefix + data
                                 break
+                            elif 'SmartOS' in data:
+                                self.facts['distribution'] = data.split()[0]
+                                self.facts['distribution_version'] = data.split()[1]
+                                self.facts['distribution_release'] = data.split()[1]
+                                break
                         elif name == 'SuSE':
                             data = get_file_content(path)
                             if 'suse' in data.lower():
@@ -387,6 +392,9 @@ class Facts(object):
             dsa_filename = '/etc/ssh_host_dsa_key.pub'
             rsa_filename = '/etc/ssh_host_rsa_key.pub'
             ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
+        elif self.facts['distribution'] == 'SmartOS':
+            dsa_filename = '/var/ssh/ssh_host_dsa_key.pub'
+            rsa_filename = '/var/ssh/ssh_host_rsa_key.pub'
         dsa = get_file_content(dsa_filename)
         rsa = get_file_content(rsa_filename)
         ecdsa = get_file_content(ecdsa_filename)
@@ -410,6 +418,8 @@ class Facts(object):
                 self.facts['pkg_mgr'] = pkg['name']
         if self.facts['system'] == 'OpenBSD':
                 self.facts['pkg_mgr'] = 'openbsd_pkg'
+        if self.facts['distribution'] == 'SmartOS':
+                self.facts['pkg_mgr'] = 'pkgin'
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
@@ -855,6 +865,8 @@ class SunOSHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_dmi_facts()
+        self.get_device_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -914,6 +926,104 @@ class SunOSHardware(Hardware):
         self.facts['swaptotal_mb'] = (free + used) / 1024
         self.facts['swap_allocated_mb'] = allocated / 1024
         self.facts['swap_reserved_mb'] = reserved / 1024
+
+    def get_dmi_facts(self):
+        smbios_bin = module.get_bin_path('smbios')
+
+        SMB_TYPE_BIOS = dict(
+            bios_date='Release Date',
+            bios_version='Version String',
+        )
+        SMB_TYPE_SYSTEM = dict(
+            product_name='Product',
+            product_serial='Serial Number',
+            product_uuid='UUID',
+            product_version='Version',
+            system_vendor='Manufacturer'
+        )
+
+        SMB_TYPE_CHASSIS = dict(
+            form_factor='Chassis Type',
+        )
+
+        for (k, v) in SMB_TYPE_BIOS.items():
+            if smbios_bin is not None:
+                (rc, out, err) = module.run_command('%s -t SMB_TYPE_BIOS' % (smbios_bin))
+                if rc == 0:
+                    smbios_dict = dict((line.split(':')[0].strip(), line.split(':')[1].strip()) for line in out.splitlines() if ':' in line )
+                    thisvalue = smbios_dict[v]
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    self.facts[k] = thisvalue
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
+        for (k, v) in SMB_TYPE_SYSTEM.items():
+            if smbios_bin is not None:
+                (rc, out, err) = module.run_command('%s -t SMB_TYPE_SYSTEM' % (smbios_bin))
+                if rc == 0:
+                    smbios_dict = dict((line.split(':')[0].strip(), line.split(':')[1].strip()) for line in out.splitlines() if ':' in line )
+                    thisvalue = smbios_dict[v]
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    self.facts[k] = thisvalue
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
+        for (k, v) in SMB_TYPE_CHASSIS.items():
+            if smbios_bin is not None:
+                (rc, out, err) = module.run_command('%s -t SMB_TYPE_CHASSIS' % (smbios_bin))
+                if rc == 0:
+                    smbios_dict = dict((line.split(':')[0].strip(), line.split(':')[1].strip()) for line in out.splitlines() if ':' in line )
+                    thisvalue = smbios_dict[v]
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    self.facts[k] = thisvalue
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
+    def get_device_facts(self):
+        self.facts['devices'] = {}
+
+        DISK_FACTS = ["Product", "Revision", "Serial No", "Size", "Vendor",
+                      "Hard Errors", "Soft Errors", "Transport Errors", "Media Error",
+                      "Predictive Failure Analysis", "Illegal Request",
+                     ]
+
+        d = {}
+        rc, out, err = module.run_command("/usr/bin/kstat -C sderr")
+        if rc != 0:
+            return dict()
+
+        sd_instances = set(sorted([line.split(':')[1] for line in out.split('\n') if line.startswith('sderr')]))
+        for instance in sd_instances:
+            lines = (line for line in out.split('\n') if len(line) > 0 and line.split(':')[1] == instance)
+            for line in lines:
+                _, _, _, statistic, value = line.split(':')
+                if statistic in DISK_FACTS:
+                    if statistic == 'Size':
+                        d[statistic.lower().replace(" ", "_")] = module.pretty_bytes(float(value))
+                    else:
+                        d[statistic.lower().replace(" ", "_")] = value.rstrip()
+
+            diskname = 'sd' + str(instance)
+            self.facts['devices'][diskname] = d
+            d = {}
 
 class OpenBSDHardware(Hardware):
     """
