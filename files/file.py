@@ -218,7 +218,15 @@ def main():
             module.exit_json(path=path, changed=False)
 
     elif state == 'file':
+
         if state != prev_state:
+            if follow and prev_state == 'link':
+                # follow symlink and operate on original
+                path = os.readlink(path)
+                prev_state = get_state(path)
+                file_args['path'] = path
+
+        if prev_state not in ['file','hard']:
             # file is not absent and any other state is a conflict
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
