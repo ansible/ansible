@@ -609,13 +609,32 @@ class LinuxHardware(Hardware):
         coreid = 0
         sockets = {}
         cores = {}
+
+        xen = False
         xen_paravirt = False
+        if os.path.exists('/proc/xen'):
+            xen = True
+        try:
+            if open('/sys/hypervisor/type').readline().strip() == 'xen':
+                xen = True
+        except IOError:
+            pass
+
         if not os.access("/proc/cpuinfo", os.R_OK):
             return
         self.facts['processor'] = []
         for line in open("/proc/cpuinfo").readlines():
             data = line.split(":", 1)
             key = data[0].strip()
+
+            if xen:
+                if key == 'flags':
+                    # Check for vme cpu flag, Xen paravirt does not expose this.
+                    #   Need to detect Xen paravirt because it exposes cpuinfo
+                    #   differently than Xen HVM or KVM and causes reporting of
+                    #   only a single cpu core.
+                    if 'vme' not in data:
+                        xen_paravirt = True
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
@@ -628,13 +647,6 @@ class LinuxHardware(Hardware):
                 if key == 'model name':
                     model_name_occurrence += 1
                 i += 1
-            elif key == 'flags':
-                # Check for vme cpu flag, Xen paravirt does not expose this.
-                #   Need to detect Xen paravirt because it exposes cpuinfo
-                #   differently than Xen HVM or KVM and causes reporting of
-                #   only a single cpu core.
-                if 'vme' not in data:
-                    xen_paravirt = True
             elif key == 'physical id':
                 physid = data[1].strip()
                 if physid not in sockets:
