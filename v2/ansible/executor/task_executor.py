@@ -137,7 +137,7 @@ class TaskExecutor:
 
         delay = self._task.delay
         if delay < 0:
-            delay = 0
+            delay = 1
 
         debug("starting attempt loop")
         result = None
@@ -151,14 +151,29 @@ class TaskExecutor:
             result = self._handler.run(task_vars=self._job_vars)
             debug("handler run complete")
 
-            if self._task.async > 0 and self._task.poll > 0:
-                result = self._poll_async_result(result=result)
+            if self._task.async > 0:
+                # the async_wrapper module returns dumped JSON via its stdout
+                # response, so we parse it here and replace the result
+                try:
+                    result = json.loads(result.get('stdout'))
+                except ValueError, e:
+                    return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))
+
+                if self._task.poll > 0:
+                    result = self._poll_async_result(result=result)
 
             if self._task.until:
-                # TODO: implement until logic (pseudo logic follows...)
-                # if VariableManager.check_conditional(cond, extra_vars=(dict(result=result))):
-                #     break
-                pass
+                # make a copy of the job vars here, in case we need to update them
+                vars_copy = self._job_vars.copy()
+                # now update them with the registered value, if it is set
+                if self._task.register:
+                    vars_copy[self._task.register] = result
+                # now create a pseudo task, and assign the value of the until parameter
+                # to the when param, so we can use evaluate_conditional()
+                pseudo_task = Task()
+                pseudo_task.when = self._task.until
+                if pseudo_task.evaluate_conditional(vars_copy):
+                    break
             elif 'failed' not in result and result.get('rc', 0) == 0:
                 # if the result is not failed, stop trying
                 break
@@ -174,14 +189,7 @@ class TaskExecutor:
         Polls for the specified JID to be complete
         '''
 
-        # the async_wrapper module returns dumped JSON via its stdout
-        # response, so we parse it here
-        try:
-            async_data = json.loads(result.get('stdout'))
-        except ValueError, e:
-            return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))
-
-        async_jid = async_data.get('ansible_job_id')
+        async_jid = result.get('ansible_job_id')
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
