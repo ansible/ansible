@@ -155,10 +155,11 @@ options:
               present on target host.
     ssh_key_file:
         required: false
-        default: $HOME/.ssh/id_rsa
+        default: .ssh/id_rsa
         version_added: "0.9"
         description:
-            - Optionally specify the SSH key filename.
+            - Optionally specify the SSH key filename. If this is a relative
+              filename then it will be relative to the user's home directory.
     ssh_key_comment:
         required: false
         default: ansible-generated on $HOSTNAME
@@ -191,8 +192,8 @@ EXAMPLES = '''
 # Remove the user 'johnd'
 - user: name=johnd state=absent remove=yes
 
-# Create a 2048-bit SSH key for user jsmith
-- user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048
+# Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
+- user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048 ssh_key_file=.ssh/id_rsa
 '''
 
 import os
