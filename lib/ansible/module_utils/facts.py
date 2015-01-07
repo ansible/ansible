@@ -82,7 +82,8 @@ class Facts(object):
     subclass Facts.
     """
 
-    _I386RE = re.compile(r'i[3456]86')
+    # i86pc is a Solaris and derivatives-ism
+    _I386RE = re.compile(r'i([3456]86|86pc)')
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
     OSDIST_LIST = ( ('/etc/redhat-release', 'RedHat'),
@@ -320,6 +321,23 @@ class Facts(object):
                                 self.facts['distribution_version'] = data.split()[1]
                                 self.facts['distribution_release'] = ora_prefix + data
                                 break
+
+                            uname_rc, uname_out, uname_err = module.run_command(['uname', '-v'])
+                            if 'SmartOS' in data:
+                                self.facts['distribution'] = 'SmartOS'
+                            elif 'OpenIndiana' in data:
+                                self.facts['distribution'] = 'OpenIndiana'
+                            elif 'OmniOS' in data:
+                                self.facts['distribution'] = 'OmniOS'
+                            elif uname_rc == 0 and 'NexentaOS_' in uname_out:
+                                self.facts['distribution'] = 'NexentaStor'
+
+                            if self.fact['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'NexentaStor'):
+                                self.facts['distribution_release'] = data.strip()
+                                if uname_rc == 0:
+                                    self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
+                                break
+
                         elif name == 'SuSE':
                             data = get_file_content(path)
                             if 'suse' in data.lower():
