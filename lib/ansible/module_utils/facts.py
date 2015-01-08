@@ -612,10 +612,10 @@ class LinuxHardware(Hardware):
 
         xen = False
         xen_paravirt = False
-        if os.path.exists('/proc/xen'):
-            xen = True
         try:
-            if open('/sys/hypervisor/type').readline().strip() == 'xen':
+            if os.path.exists('/proc/xen'):
+                xen = True
+            elif open('/sys/hypervisor/type').readline().strip() == 'xen':
                 xen = True
         except IOError:
             pass
