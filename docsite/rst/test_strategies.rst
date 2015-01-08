@@ -19,16 +19,16 @@ also very easy to run the steps on the localhost or testing servers. Ansible let
 The Right Level of Testing
 ``````````````````````````
 
-Ansible resources are models of desired-state.  As such, it should not be necessary to test that services are running, packages are
+Ansible resources are models of desired-state.  As such, it should not be necessary to test that services are started, packages are
 installed, or other such things.  Ansible is the system that will ensure these things are declaratively true.   Instead, assert these
 things in your playbooks.
 
 .. code-block:: yaml
 
    tasks:
-     - service: name=foo state=running enabled=yes
+     - service: name=foo state=started enabled=yes
 
-If you think the service may not be running, the best thing to do is request it to be running.  If the service fails to start, Ansible
+If you think the service may not be started, the best thing to do is request it to be started.  If the service fails to start, Ansible
 will yell appropriately. (This should not be confused with whether the service is doing something functional, which we'll show more about how to
 do later).
 
