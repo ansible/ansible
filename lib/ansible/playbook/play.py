@@ -437,7 +437,8 @@ class Play(object):
             meta_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
             defaults_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
-            task      = self._resolve_main(task_basepath)
+            tasks_file = role_params.get('tasks', 'main')
+            task  = self._resolve_main(task_basepath, fn=tasks_file)
             handler   = self._resolve_main(handler_basepath)
             vars_file = self._resolve_main(vars_basepath)
             meta_file = self._resolve_main(meta_basepath)
@@ -508,17 +509,17 @@ class Play(object):
 
     # *************************************************
 
-    def _resolve_main(self, basepath):
+    def _resolve_main(self, basepath, fn='main'):
         ''' flexibly handle variations in main filenames '''
         # these filenames are acceptable:
         mains = (
-                 os.path.join(basepath, 'main'),
-                 os.path.join(basepath, 'main.yml'),
-                 os.path.join(basepath, 'main.yaml'),
-                 os.path.join(basepath, 'main.json'),
+                 os.path.join(basepath, fn),
+                 os.path.join(basepath, fn + '.yml'),
+                 os.path.join(basepath, fn + '.yaml'),
+                 os.path.join(basepath, fn + '.json'),
                 )
         if sum([os.path.isfile(x) for x in mains]) > 1:
-            raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
+            raise errors.AnsibleError("found multiple %s files at %s, only one allowed" % (fn, basepath))
         else:
             for m in mains:
                 if os.path.isfile(m):
