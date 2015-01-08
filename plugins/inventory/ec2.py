@@ -648,7 +648,7 @@ class Ec2Inventory(object):
             # try updating the cache
             self.do_api_calls_update_cache()
             if not self.args.host in self.index:
-                # host migh not exist anymore
+                # host might not exist anymore
                 return self.json_format_dict({}, True)
 
         (region, instance_id) = self.index[self.args.host]
