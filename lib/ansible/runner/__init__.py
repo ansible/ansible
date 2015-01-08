@@ -990,11 +990,12 @@ class Runner(object):
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
+            pre_args = "Pre: " + module_args
             module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
             num_args_post = self._count_module_args(module_args)
             if num_args_pre != num_args_post:
                 raise errors.AnsibleError("A variable inserted a new parameter into the module args. " + \
-                                          "Be sure to quote variables if they contain equal signs (for example: \"{{var}}\").")
+                                          "Be sure to quote variables if they contain equal signs (for example: \"{{var}}\"). " + pre_args + ", Post: " + module_args)
             # And we also make sure nothing added in special flags for things
             # like the command/shell module (ie. #USE_SHELL)
             if '#USE_SHELL' in module_args:
