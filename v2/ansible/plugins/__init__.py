@@ -240,7 +240,7 @@ callback_loader = PluginLoader(
 
 connection_loader = PluginLoader(
     'Connection',
-    'ansible.plugins.connection',
+    'ansible.plugins.connections',
     C.DEFAULT_CONNECTION_PLUGIN_PATH,
     'connection_plugins',
     aliases={'paramiko': 'paramiko_ssh'}
@@ -253,37 +253,44 @@ shell_loader = PluginLoader(
     'shell_plugins',
 )
 
-module_finder = PluginLoader(
+module_loader = PluginLoader(
     '',
     'ansible.modules',
     C.DEFAULT_MODULE_PATH,
     'library'
 )
 
-lookup_finder = PluginLoader(
+lookup_loader = PluginLoader(
     'LookupModule',
     'ansible.plugins.lookup',
     C.DEFAULT_LOOKUP_PLUGIN_PATH,
     'lookup_plugins'
 )
 
-vars_finder = PluginLoader(
+vars_loader = PluginLoader(
     'VarsModule',
     'ansible.plugins.vars',
     C.DEFAULT_VARS_PLUGIN_PATH,
     'vars_plugins'
 )
 
-filter_finder = PluginLoader(
+filter_loader = PluginLoader(
     'FilterModule',
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins'
 )
 
-fragment_finder = PluginLoader(
+fragment_loader = PluginLoader(
     'ModuleDocFragment',
     'ansible.utils.module_docs_fragments',
     os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
     '',
+)
+
+strategy_loader = PluginLoader(
+    'StrategyModule',
+    'ansible.plugins.strategies',
+    None,
+    'strategy_plugins',
 )

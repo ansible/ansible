@@ -21,25 +21,28 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
+from ansible.playbook.role import Role
+from ansible.playbook.taggable import Taggable
 from ansible.playbook.task_include import TaskInclude
 
-class Block(Base):
+class Block(Base, Conditional, Taggable):
 
-    _block     = FieldAttribute(isa='list')
-    _rescue    = FieldAttribute(isa='list')
-    _always    = FieldAttribute(isa='list')
-    _tags      = FieldAttribute(isa='list', default=[])
-    _when      = FieldAttribute(isa='list', default=[])
+    _block  = FieldAttribute(isa='list')
+    _rescue = FieldAttribute(isa='list')
+    _always = FieldAttribute(isa='list')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
     #_otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, parent_block=None, role=None, task_include=None):
+    def __init__(self, parent_block=None, role=None, task_include=None, use_handlers=False):
         self._parent_block = parent_block
-        self._role = role
+        self._role         = role
         self._task_include = task_include
+        self._use_handlers = use_handlers
+
         super(Block, self).__init__()
 
     def get_variables(self):
@@ -48,9 +51,9 @@ class Block(Base):
         return dict()
 
     @staticmethod
-    def load(data, parent_block=None, role=None, task_include=None, loader=None):
-        b = Block(parent_block=parent_block, role=role, task_include=task_include)
-        return b.load_data(data, loader=loader)
+    def load(data, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+        b = Block(parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
+        return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def munge(self, ds):
         '''
@@ -70,17 +73,17 @@ class Block(Base):
         return ds
 
     def _load_block(self, attr, ds):
-        return load_list_of_tasks(ds, block=self, loader=self._loader)
+        return load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
 
     def _load_rescue(self, attr, ds):
-        return load_list_of_tasks(ds, block=self, loader=self._loader)
+        return load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
 
     def _load_always(self, attr, ds):
-        return load_list_of_tasks(ds, block=self, loader=self._loader)
+        return load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
 
     # not currently used
     #def _load_otherwise(self, attr, ds):
-    #    return self._load_list_of_tasks(ds, block=self, loader=self._loader)
+    #    return self._load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
 
     def compile(self):
         '''
@@ -93,3 +96,69 @@ class Block(Base):
             task_list.extend(task.compile())
 
         return task_list
+
+    def copy(self):
+        new_me = super(Block, self).copy()
+        new_me._use_handlers = self._use_handlers
+
+        new_me._parent_block = None
+        if self._parent_block:
+            new_me._parent_block = self._parent_block.copy()
+
+        new_me._role = None
+        if self._role:
+            new_me._role = self._role
+
+        new_me._task_include = None
+        if self._task_include:
+            new_me._task_include = self._task_include.copy()
+
+        return new_me
+
+    def serialize(self):
+        '''
+        Override of the default serialize method, since when we're serializing
+        a task we don't want to include the attribute list of tasks.
+        '''
+
+        data = dict(when=self.when)
+
+        if self._role is not None:
+            data['role'] = self._role.serialize()
+
+        return data
+
+    def deserialize(self, data):
+        '''
+        Override of the default deserialize method, to match the above overridden
+        serialize method
+        '''
+
+        # unpack the when attribute, which is the only one we want
+        self.when = data.get('when')
+
+        # if there was a serialized role, unpack it too
+        role_data = data.get('role')
+        if role_data:
+            r = Role()
+            r.deserialize(role_data)
+            self._role = r
+
+    def evaluate_conditional(self, all_vars):
+        if self._parent_block is not None:
+            if not self._parent_block.evaluate_conditional(all_vars):
+                return False
+        elif self._role is not None:
+            if not self._role.evaluate_conditional(all_vars):
+                return False
+        return super(Block, self).evaluate_conditional(all_vars)
+
+    def evaluate_tags(self, only_tags, skip_tags):
+        if self._parent_block is not None:
+            if not self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                return False
+        elif self._role is not None:
+            if not self._role.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                return False
+        return super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
+

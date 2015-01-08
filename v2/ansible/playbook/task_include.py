@@ -25,7 +25,7 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
-from ansible.plugins import lookup_finder
+from ansible.plugins import lookup_loader
 
 
 __all__ = ['TaskInclude']
@@ -49,6 +49,7 @@ class TaskInclude(Base):
     #-----------------------------------------------------------------
     # Attributes
 
+    _name      = FieldAttribute(isa='string')
     _include   = FieldAttribute(isa='string')
     _loop      = FieldAttribute(isa='string', private=True)
     _loop_args = FieldAttribute(isa='list', private=True)
@@ -56,19 +57,20 @@ class TaskInclude(Base):
     _vars      = FieldAttribute(isa='dict', default=dict())
     _when      = FieldAttribute(isa='list', default=[])
 
-    def __init__(self, block=None, role=None, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None, use_handlers=False):
         self._block        = block
         self._role         = role
         self._task_include = task_include
+        self._use_handlers = use_handlers
 
         self._task_blocks  = []
 
         super(TaskInclude, self).__init__()
 
     @staticmethod
-    def load(data, block=None, role=None, task_include=None, loader=None):
-        ti = TaskInclude(block=block, role=role, task_include=None)
-        return ti.load_data(data, loader=loader)
+    def load(data, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+        ti = TaskInclude(block=block, role=role, task_include=None, use_handlers=use_handlers)
+        return ti.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def munge(self, ds):
         '''
@@ -87,7 +89,7 @@ class TaskInclude(Base):
         for (k,v) in ds.iteritems():
             if k == 'include':
                 self._munge_include(ds, new_ds, k, v)
-            elif k.replace("with_", "") in lookup_finder:
+            elif k.replace("with_", "") in lookup_loader:
                 self._munge_loop(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
@@ -148,6 +150,7 @@ class TaskInclude(Base):
                                 parent_block=self._block,
                                 task_include=self,
                                 role=self._role,
+                                use_handlers=self._use_handlers,
                                 loader=self._loader
                             )
         return ds

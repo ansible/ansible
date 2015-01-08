@@ -19,18 +19,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.playbook.base import Base
-from ansible.playbook.attribute import Attribute, FieldAttribute
-
 from ansible.errors import AnsibleError
 
-from ansible.parsing.splitter import parse_kv
 from ansible.parsing.mod_args import ModuleArgsParser
-from ansible.parsing.yaml import DataLoader
+from ansible.parsing.splitter import parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.plugins import module_finder, lookup_finder
 
-class Task(Base):
+from ansible.plugins import module_loader, lookup_loader
+
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.base import Base
+from ansible.playbook.block import Block
+from ansible.playbook.conditional import Conditional
+from ansible.playbook.role import Role
+from ansible.playbook.taggable import Taggable
+
+from ansible.utils.listify import listify_lookup_plugin_terms
+
+class Task(Base, Conditional, Taggable):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -49,15 +55,15 @@ class Task(Base):
     # will be used if defined
     # might be possible to define others
 
-    _args                 = FieldAttribute(isa='dict')
+    _args                 = FieldAttribute(isa='dict', default=dict())
     _action               = FieldAttribute(isa='string')
 
     _always_run           = FieldAttribute(isa='bool')
     _any_errors_fatal     = FieldAttribute(isa='bool')
-    _async                = FieldAttribute(isa='int')
+    _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='string')
     _connection           = FieldAttribute(isa='string')
-    _delay                = FieldAttribute(isa='int')
+    _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
     _environment          = FieldAttribute(isa='dict')
     _failed_when          = FieldAttribute(isa='string')
@@ -75,10 +81,10 @@ class Task(Base):
 
     _no_log               = FieldAttribute(isa='bool')
     _notify               = FieldAttribute(isa='list')
-    _poll                 = FieldAttribute(isa='integer')
+    _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _remote_user          = FieldAttribute(isa='string')
-    _retries              = FieldAttribute(isa='integer')
+    _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
     _su                   = FieldAttribute(isa='bool')
     _su_pass              = FieldAttribute(isa='string')
@@ -86,10 +92,8 @@ class Task(Base):
     _sudo                 = FieldAttribute(isa='bool')
     _sudo_user            = FieldAttribute(isa='string')
     _sudo_pass            = FieldAttribute(isa='string')
-    _tags                 = FieldAttribute(isa='list', default=[])
     _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
-    _when                 = FieldAttribute(isa='list', default=[])
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -97,6 +101,7 @@ class Task(Base):
         self._block        = block
         self._role         = role
         self._task_include = task_include
+        self._dep_chain    = []
 
         super(Task, self).__init__()
 
@@ -104,12 +109,15 @@ class Task(Base):
        ''' return the name of the task '''
 
        if self._role and self.name:
-           return "%s : %s" % (self._role.name, self.name)
+           return "%s : %s" % (self._role.get_name(), self.name)
        elif self.name:
            return self.name
        else:
            flattened_args = self._merge_kv(self.args)
-           return "%s %s" % (self.action, flattened_args)
+           if self._role:
+               return "%s : %s %s" % (self._role.get_name(), self.action, flattened_args)
+           else:
+               return "%s %s" % (self.action, flattened_args)
 
     def _merge_kv(self, ds):
         if ds is None:
@@ -126,9 +134,9 @@ class Task(Base):
             return buf
 
     @staticmethod
-    def load(data, block=None, role=None, task_include=None, loader=None):
+    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Task(block=block, role=role, task_include=task_include)
-        return t.load_data(data, loader=loader)
+        return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
@@ -173,12 +181,29 @@ class Task(Base):
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
                 continue
-            elif k.replace("with_", "") in lookup_finder:
+            elif k.replace("with_", "") in lookup_loader:
                 self._munge_loop(ds, new_ds, k, v)
             else:
                 new_ds[k] = v
 
         return new_ds
+
+    def post_validate(self, all_vars=dict(), fail_on_undefined=True):
+        '''
+        Override of base class post_validate, to also do final validation on
+        the block to which this task belongs.
+        '''
+
+        if self._block:
+            self._block.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+
+        super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+
+    def _post_validate_loop_args(self, attr, value, all_vars, fail_on_undefined):
+        return listify_lookup_plugin_terms(value, all_vars)
+
+    def get_vars(self):
+        return self.serialize()
 
     def compile(self):
         '''
@@ -188,3 +213,73 @@ class Task(Base):
         '''
 
         return [self]
+
+    def copy(self):
+        new_me = super(Task, self).copy()
+        new_me._dep_chain = self._dep_chain[:]
+
+        new_me._block = None
+        if self._block:
+            new_me._block = self._block.copy()
+
+        new_me._role = None
+        if self._role:
+            new_me._role = self._role
+
+        new_me._task_include = None
+        if self._task_include:
+            new_me._task_include = self._task_include.copy()
+
+        return new_me
+
+    def serialize(self):
+        data = super(Task, self).serialize()
+        data['dep_chain'] = self._dep_chain
+
+        if self._block:
+            data['block'] = self._block.serialize()
+
+        if self._role:
+            data['role'] = self._role.serialize()
+
+        return data
+
+    def deserialize(self, data):
+        block_data = data.get('block')
+        self._dep_chain = data.get('dep_chain', [])
+
+        if block_data:
+            b = Block()
+            b.deserialize(block_data)
+            self._block = b
+            del data['block']
+
+        role_data = data.get('role')
+        if role_data:
+            r = Role()
+            r.deserialize(role_data)
+            self._role = r
+            del data['role']
+
+        super(Task, self).deserialize(data)
+
+    def evaluate_conditional(self, all_vars):
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                if not dep.evaluate_conditional(all_vars):
+                    return False
+        if self._block is not None:
+            if not self._block.evaluate_conditional(all_vars):
+                return False
+        return super(Task, self).evaluate_conditional(all_vars)
+
+    def evaluate_tags(self, only_tags, skip_tags):
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                if not dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                    return False
+        if self._block is not None:
+            if not self._block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
+                return False
+        return super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
+

@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.parsing.yaml import DataLoader
+from ansible.parsing import DataLoader
 
 class DictDataLoader(DataLoader):
 
