@@ -15,30 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
-import ansible.utils as utils
-import ansible.errors as errors
+from ansible.plugins.lookup import LookupBase
 
-def flatten(terms):
-    ret = []
-    for term in terms:
-        if isinstance(term, list):
-            ret.extend(term)
-        else:
-            ret.append(term)
-    return ret
+class LookupModule(LookupBase):
 
-class LookupModule(object):
-
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-
-    def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
-
-        if not isinstance(terms, list) and not isinstance(terms,set):
-            raise errors.AnsibleError("with_items expects a list or a set")
-
-        return flatten(terms)
-
+    def run(self, terms, **kwargs):
+        return self._flatten(terms)
 

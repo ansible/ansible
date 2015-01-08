@@ -23,12 +23,17 @@ import os
 
 from collections import defaultdict
 
-from ansible.parsing.yaml import DataLoader
+from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
+from ansible.template import Templar
+
+from ansible.utils.debug import debug
+
+CACHED_VARS = dict()
 
 class VariableManager:
 
-    def __init__(self, inventory_path=None, loader=None):
+    def __init__(self):
 
         self._fact_cache       = FactCache()
         self._vars_cache       = defaultdict(dict)
@@ -36,10 +41,22 @@ class VariableManager:
         self._host_vars_files  = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
 
-        if not loader:
-            self._loader = DataLoader()
-        else:
-            self._loader = loader
+        self._templar = Templar()
+
+    def _get_cache_entry(self, play=None, host=None, task=None):
+        play_id = "NONE"
+        if play:
+            play_id = play._uuid
+
+        host_id = "NONE"
+        if host:
+            host_id = host.get_name()
+
+        task_id = "NONE"
+        if task:
+            task_id = task._uuid
+
+        return "PLAY:%s;HOST:%s;TASK:%s" % (play_id, host_id, task_id)
 
     @property
     def extra_vars(self):
@@ -77,7 +94,7 @@ class VariableManager:
 
         return result
 
-    def get_vars(self, play=None, host=None, task=None):
+    def get_vars(self, loader, play=None, host=None, task=None):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -97,49 +114,76 @@ class VariableManager:
         - extra vars
         '''
 
-        vars = defaultdict(dict)
+        debug("in VariableManager get_vars()")
+        cache_entry = self._get_cache_entry(play=play, host=host, task=task)
+        if cache_entry in CACHED_VARS:
+            debug("vars are cached, returning them now")
+            return CACHED_VARS[cache_entry]
+
+        all_vars = defaultdict(dict)
 
         if play:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                vars = self._merge_dicts(vars, role.get_default_vars())
+                all_vars = self._merge_dicts(all_vars, role.get_default_vars())
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
             # files and then any vars from host_vars files which may apply to
             # this host or the groups it belongs to
+
+            # we merge in the special 'all' group_vars first, if they exist
+            if 'all' in self._group_vars_files:
+                all_vars = self._merge_dicts(all_vars, self._group_vars_files['all'])
+
             for group in host.get_groups():
-                if group in self._group_vars_files:
-                    vars = self._merge_dicts(vars, self._group_vars_files[group])
+                group_name = group.get_name()
+                all_vars = self._merge_dicts(all_vars, group.get_vars())
+                if group_name in self._group_vars_files and group_name != 'all':
+                    all_vars = self._merge_dicts(all_vars, self._group_vars_files[group_name])
 
             host_name = host.get_name()
             if host_name in self._host_vars_files:
-                vars = self._merge_dicts(vars, self._host_vars_files[host_name])
+                all_vars = self._merge_dicts(all_vars, self._host_vars_files[host_name])
 
             # then we merge in vars specified for this host
-            vars = self._merge_dicts(vars, host.get_vars())
+            all_vars = self._merge_dicts(all_vars, host.get_vars())
 
             # next comes the facts cache and the vars cache, respectively
-            vars = self._merge_dicts(vars, self._fact_cache.get(host.get_name(), dict()))
-            vars = self._merge_dicts(vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = self._merge_dicts(all_vars, self._fact_cache.get(host.get_name(), dict()))
+            all_vars = self._merge_dicts(all_vars, self._vars_cache.get(host.get_name(), dict()))
 
         if play:
-            vars = self._merge_dicts(vars, play.get_vars())
+            all_vars = self._merge_dicts(all_vars, play.get_vars())
             for vars_file in play.get_vars_files():
-                # Try templating the vars_file. If an unknown var error is raised,
-                # ignore it - unless a host is specified
-                # TODO ...
-
-                data = self._loader.load_from_file(vars_file)
-                vars = self._merge_dicts(vars, data)
+                self._templar.set_available_variables(all_vars)
+                try:
+                    vars_file = self._templar.template(vars_file)
+                    data = loader.load_from_file(vars_file)
+                    all_vars = self._merge_dicts(all_vars, data)
+                except:
+                    # FIXME: get_vars should probably be taking a flag to determine
+                    #        whether or not vars files errors should be fatal at this
+                    #        stage, or just base it on whether a host was specified?
+                    pass
+            for role in play.get_roles():
+                all_vars = self._merge_dicts(all_vars, role.get_vars())
 
         if task:
-            vars = self._merge_dicts(vars, task.get_vars())
+            if task._role:
+                all_vars = self._merge_dicts(all_vars, task._role.get_vars())
+            all_vars = self._merge_dicts(all_vars, task.get_vars())
 
-        vars = self._merge_dicts(vars, self._extra_vars)
+        all_vars = self._merge_dicts(all_vars, self._extra_vars)
 
-        return vars
+        # FIXME: we need to move the special variables from the old runner
+        #        inject into here (HostVars?, groups, etc.)
+
+        CACHED_VARS[cache_entry] = all_vars
+
+        debug("done with get_vars()")
+        return all_vars
 
     def _get_inventory_basename(self, path):
         '''
@@ -148,35 +192,64 @@ class VariableManager:
         '''
 
         (name, ext) = os.path.splitext(os.path.basename(path))
-        return name
+        if ext not in ('yml', 'yaml'):
+            return os.path.basename(path)
+        else:
+            return name
 
-    def _load_inventory_file(self, path):
+    def _load_inventory_file(self, path, loader):
         '''
         helper function, which loads the file and gets the
         basename of the file without the extension
         '''
 
-        data = self._loader.load_from_file(path)
+        data = loader.load_from_file(path)
         name = self._get_inventory_basename(path)
         return (name, data)
 
-    def add_host_vars_file(self, path):
+    def add_host_vars_file(self, path, loader):
         '''
         Loads and caches a host_vars file in the _host_vars_files dict,
         where the key to that dictionary is the basename of the file, minus
         the extension, for matching against a given inventory host name
         '''
 
-        (name, data) = self._load_inventory_file(path)
-        self._host_vars_files[name] = data
+        if os.path.exists(path):
+            (name, data) = self._load_inventory_file(path, loader)
+            self._host_vars_files[name] = data
 
-    def add_group_vars_file(self, path):
+    def add_group_vars_file(self, path, loader):
         '''
         Loads and caches a host_vars file in the _host_vars_files dict,
         where the key to that dictionary is the basename of the file, minus
         the extension, for matching against a given inventory host name
         '''
 
-        (name, data) = self._load_inventory_file(path)
-        self._group_vars_files[name] = data
+        if os.path.exists(path):
+            (name, data) = self._load_inventory_file(path, loader)
+            self._group_vars_files[name] = data
+
+
+    def set_host_facts(self, host, facts):
+        '''
+        Sets or updates the given facts for a host in the fact cache.
+        '''
+
+        assert isinstance(facts, dict)
+
+        host_name = host.get_name()
+        if host_name not in self._fact_cache:
+            self._fact_cache[host_name] = facts
+        else:
+            self._fact_cache[host_name].update(facts)
+
+    def set_host_variable(self, host, varname, value):
+        '''
+        Sets a value in the vars_cache for a host.
+        '''
+
+        host_name = host.get_name()
+        if host_name not in self._vars_cache:
+            self._vars_cache[host_name] = dict()
+        self._vars_cache[host_name][varname] = value
 
