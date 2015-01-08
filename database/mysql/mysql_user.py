@@ -117,6 +117,9 @@ EXAMPLES = """
 # Creates database user 'bob' and password '12345' with all database privileges and 'WITH GRANT OPTION'
 - mysql_user: name=bob password=12345 priv=*.*:ALL,GRANT state=present
 
+# Modifiy user Bob to require SSL connections. Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
+- mysql_user: name=bob append=true priv=*.*:REQUIRESSL state=present
+
 # Ensure no user named 'sally' exists, also passing in the auth credentials.
 - mysql_user: login_user=root login_password=123456 name=sally state=absent
 
@@ -159,7 +162,7 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
-                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE',))
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL'))
 
 class InvalidPrivsError(Exception):
     pass
@@ -261,6 +264,8 @@ def privileges_get(cursor, user,host):
         privileges = [ pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
             privileges.append('GRANT')
+        if "REQUIRE SSL" in res.group(4):
+            privileges.append('REQUIRESSL')
         db = res.group(2)
         output[db] = privileges
     return output
@@ -294,6 +299,11 @@ def privileges_unpack(priv):
     if '*.*' not in output:
         output['*.*'] = ['USAGE']
 
+    # if we are only specifying something like REQUIRESSL in *.* we still need
+    # to add USAGE as a privilege to avoid syntax errors
+    if priv.find('REQUIRESSL') != -1 and 'USAGE' not in output['*.*']:
+        output['*.*'].append('USAGE')
+
     return output
 
 def privileges_revoke(cursor, user,host,db_table,grant_option):
@@ -307,19 +317,28 @@ def privileges_revoke(cursor, user,host,db_table,grant_option):
     query = ["REVOKE ALL PRIVILEGES ON %s" % mysql_quote_identifier(db_table, 'table')]
     query.append("FROM %s@%s")
     query = ' '.join(query)
-    cursor.execute(query, (user, host))
+    try:
+        cursor.execute(query, (user, host))
+    except Exception, e:
+        raise Exception("%s. Query=\"%s\"" % (str(e), query % (user, host)))
 
 def privileges_grant(cursor, user,host,db_table,priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join(filter(lambda x: x != 'GRANT', priv))
+    priv_string = ",".join(filter(lambda x: x not in [ 'GRANT', 'REQUIRESSL' ], priv))
     query = ["GRANT %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
     query.append("TO %s@%s")
     if 'GRANT' in priv:
-        query.append("WITH GRANT OPTION")
+        query.append(" WITH GRANT OPTION")
+    if 'REQUIRESSL' in priv:
+        query.append(" REQUIRE SSL")
     query = ' '.join(query)
-    cursor.execute(query, (user, host))
+    try:
+        cursor.execute(query, (user, host))
+    except Exception, e:
+        raise Exception("%s. Query=\"%s\"" % (str(e), query % (user, host)))
+
 
 
 def strip_quotes(s):
