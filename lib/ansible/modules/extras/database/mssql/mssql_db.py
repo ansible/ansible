@@ -1,0 +1,211 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Ansible module to manage mssql databases
+# (c) 2014, Vedit Firat Arig <firatarig@gmail.com>
+# Outline and parts are reused from Mark Theunissen's mysql_db module
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: mssql_db
+short_description: Add or remove MSSQL databases from a remote host.
+description:
+   - Add or remove MSSQL databases from a remote host.
+version_added: "2.1"
+options:
+  name:
+    description:
+      - name of the database to add or remove
+    required: true
+    default: null
+    aliases: [ db ]
+  login_user:
+    description:
+      - The username used to authenticate with
+    required: false
+    default: null
+  login_password:
+    description:
+      - The password used to authenticate with
+    required: false
+    default: null
+  login_host:
+    description:
+      - Host running the database
+    required: false
+  login_port:
+    description:
+      - Port of the MSSQL server. Requires login_host be defined as other then localhost if login_port is used
+    required: false
+    default: 1433
+  state:
+    description:
+      - The database state
+    required: false
+    default: present
+    choices: [ "present", "absent", "import" ]
+  target:
+    description:
+      - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
+        files (C(.sql)) files are supported.
+    required: false
+notes:
+   - Requires the pymssql Python package on the remote host. For Ubuntu, this
+     is as easy as pip install pymssql (See M(pip).)
+requirements: [ pymssql ]
+author: Vedit Firat Arig 
+'''
+
+EXAMPLES = '''
+# Create a new database with name 'jackdata'
+- mssql_db: name=jackdata state=present
+# Copy database dump file to remote host and restore it to database 'my_db'
+- copy: src=dump.sql dest=/tmp
+- mssql_db: name=my_db state=import target=/tmp/dump.sql
+'''
+
+import os
+try:
+    import pymssql
+except ImportError:
+    mssql_found = False
+else:
+    mssql_found = True
+
+
+def db_exists(conn, cursor, db):
+    cursor.execute("SELECT name FROM master.sys.databases WHERE name = N'%s'", db)
+    conn.commit()
+    return bool(cursor.rowcount)
+
+
+def db_create(conn, cursor, db):
+    conn.autocommit(True)
+    cursor.execute("CREATE DATABASE %s", db)
+    conn.autocommit(False)
+    return db_exists(conn, cursor, db)
+
+
+def db_delete(conn, cursor, db):
+    conn.autocommit(True)
+    try:
+        single_user = "alter database %s set single_user with rollback immediate" % db
+        cursor.execute(single_user)
+    except:
+        pass
+    cursor.execute("DROP DATABASE %s", db)
+    conn.autocommit(False)
+    return not db_exists(conn, cursor, db)
+
+
+def db_import(conn, cursor, module, db, target):
+    if os.path.isfile(target):
+        with open(target, 'r') as backup:
+            sqlQuery = "USE %s\n"
+            for line in backup:
+                if line is None:
+                    break
+                elif line.startswith('GO'):
+                    cursor.execute(sqlQuery, db)
+                    sqlQuery = "USE %s\n"
+                else:
+                    sqlQuery += line
+            cursor.execute(sqlQuery, db)
+            conn.commit()
+        return 0, "import successful", ""
+    else:
+        return 1, "cannot find target file", "cannot find target file"
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=True, aliases=['db']),
+            login_user=dict(required=True),
+            login_password=dict(required=True),
+            login_host=dict(required=True),
+            login_port=dict(default="1433"),
+            target=dict(default=None),
+            state=dict(
+                default='present', choices=['present', 'absent', 'import'])
+        )
+    )
+
+    if not mssql_found:
+        module.fail_json(msg="pymssql python module is required")
+
+    db = module.params['name']
+    state = module.params['state']
+    target = module.params["target"]
+
+    login_user = module.params['login_user']
+    login_password = module.params['login_password']
+    login_host = module.params['login_host']
+    login_port = module.params['login_port']
+    login_querystring = "%s:%s" % (login_host, login_port)
+
+    if login_password is None or login_user is None:
+        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+
+    try:
+        conn = pymssql.connect(user=login_user, password=login_password, host=login_querystring, database='master')
+        cursor = conn.cursor()
+    except Exception, e:
+        if "Unknown database" in str(e):
+                errno, errstr = e.args
+                module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
+        else:
+                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+
+    changed = False
+    if db_exists(conn, cursor, db):
+        if state == "absent":
+            try:
+                changed = db_delete(conn, cursor, db)
+            except Exception, e:
+                module.fail_json(msg="error deleting database: " + str(e))
+        elif state == "import":
+            rc, stdout, stderr = db_import(conn, cursor, module, db, target)
+            if rc != 0:
+                module.fail_json(msg="%s" % stderr)
+            else:
+                module.exit_json(changed=True, db=db, msg=stdout)
+    else:
+        if state == "present":
+            try:
+                changed = db_create(conn, cursor, db)
+            except Exception, e:
+                module.fail_json(msg="error creating database: " + str(e))
+        elif state == "import":
+            try:
+                changed = db_create(conn, cursor, db)
+            except Exception, e:
+                module.fail_json(msg="error creating database: " + str(e))
+            rc, stdout, stderr = db_import(conn, cursor, module, db, target)
+            if rc != 0:
+                module.fail_json(msg="%s" % stderr)
+            else:
+                module.exit_json(changed=True, db=db, msg=stdout)
+
+    module.exit_json(changed=changed, db=db)
+
+# import module snippets
+from ansible.module_utils.basic import *
+if __name__ == '__main__':
+    main()
+
