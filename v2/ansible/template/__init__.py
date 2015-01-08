@@ -41,7 +41,7 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, basedir=None, variables=dict()):
+    def __init__(self, basedir=None, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
         self._basedir             = basedir
         self._filters             = None
         self._available_variables = variables
@@ -50,7 +50,7 @@ class Templar:
         # should result in fatal errors being raised
         self._fail_on_lookup_errors    = True
         self._fail_on_filter_errors    = True
-        self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+        self._fail_on_undefined_errors = fail_on_undefined
 
     def _count_newlines_from_end(self, in_str):
         '''

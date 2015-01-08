@@ -230,7 +230,7 @@ class PlayIterator:
         #        as args to __init__
         all_vars = inventory._variable_manager.get_vars(loader=inventory._loader, play=play)
         new_play = play.copy()
-        new_play.post_validate(all_vars, ignore_undefined=True)
+        new_play.post_validate(all_vars, fail_on_undefined=False)
 
         for host in inventory.get_hosts(new_play.hosts):
             if self._first_host is None:

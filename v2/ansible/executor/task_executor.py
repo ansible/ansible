@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.connection_info import ConnectionInformation
 from ansible.playbook.task import Task
 from ansible.plugins import lookup_loader, connection_loader, action_loader
@@ -55,22 +55,26 @@ class TaskExecutor:
         '''
 
         debug("in run()")
-        items = self._get_loop_items()
-        if items:
-            if len(items) > 0:
-                item_results = self._run_loop(items)
-                res = dict(results=item_results)
-            else:
-                res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
-        else:
-            debug("calling self._execute()")
-            res = self._execute()
-            debug("_execute() done")
 
-        debug("dumping result to json")
-        result = json.dumps(res)
-        debug("done dumping result, returning")
-        return result
+        try:
+            items = self._get_loop_items()
+            if items:
+                if len(items) > 0:
+                    item_results = self._run_loop(items)
+                    res = dict(results=item_results)
+                else:
+                    res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
+            else:
+                debug("calling self._execute()")
+                res = self._execute()
+                debug("_execute() done")
+
+            debug("dumping result to json")
+            result = json.dumps(res)
+            debug("done dumping result, returning")
+            return result
+        except AnsibleError, e:
+            return dict(failed=True, msg=str(e))
 
     def _get_loop_items(self):
         '''
@@ -80,7 +84,7 @@ class TaskExecutor:
 
         items = None
         if self._task.loop and self._task.loop in lookup_loader:
-            items = lookup_loader.get(self._task.loop).run(self._task.loop_args)
+            items = lookup_loader.get(self._task.loop).run(terms=self._task.loop_args, variables=self._job_vars)
 
         return items
 
@@ -98,7 +102,28 @@ class TaskExecutor:
         #        than it is today?
 
         for item in items:
+            # make copies of the job vars and task so we can add the item to
+            # the variables and re-validate the task with the item variable
+            task_vars = self._job_vars.copy()
+            task_vars['item'] = item
+
+            try:
+                tmp_task = self._task.copy()
+                tmp_task.post_validate(task_vars)
+            except AnsibleParserError, e:
+                results.append(dict(failed=True, msg=str(e)))
+                continue
+
+            # now we swap the internal task with the re-validate copy, execute,
+            # and swap them back so we can do the next iteration cleanly
+            (self._task, tmp_task) = (tmp_task, self._task)
             res = self._execute()
+            (self._task, tmp_task) = (tmp_task, self._task)
+
+            # FIXME: we should be sending back a callback result for each item in the loop here
+
+            # now update the result with the item info, and append the result
+            # to the list of results
             res['item'] = item
             results.append(res)
 

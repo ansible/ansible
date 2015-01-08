@@ -34,6 +34,8 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
+from ansible.utils.listify import listify_lookup_plugin_terms
+
 class Task(Base, Conditional, Taggable):
 
     """
@@ -186,18 +188,19 @@ class Task(Base, Conditional, Taggable):
 
         return new_ds
 
-    def post_validate(self, all_vars=dict(), ignore_undefined=False):
+    def post_validate(self, all_vars=dict(), fail_on_undefined=True):
         '''
         Override of base class post_validate, to also do final validation on
         the block to which this task belongs.
         '''
 
         if self._block:
-            self._block.post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
-        #if self._role:
-        #    self._role.post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
+            self._block.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
 
-        super(Task, self).post_validate(all_vars=all_vars, ignore_undefined=ignore_undefined)
+        super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+
+    def _post_validate_loop_args(self, attr, value, all_vars, fail_on_undefined):
+        return listify_lookup_plugin_terms(value, all_vars)
 
     def get_vars(self):
         return self.serialize()
