@@ -323,18 +323,27 @@ class Facts(object):
                                 break
 
                             uname_rc, uname_out, uname_err = module.run_command(['uname', '-v'])
+                            distribution_version = None
                             if 'SmartOS' in data:
                                 self.facts['distribution'] = 'SmartOS'
+                                if os.path.exists('/etc/product'):
+                                    product_data = dict([l.split(': ', 1) for l in get_file_content('/etc/product').split('\n') if ': ' in l])
+                                    if 'Image' in product_data:
+                                        distribution_version = product_data.get('Image').split()[-1]
                             elif 'OpenIndiana' in data:
                                 self.facts['distribution'] = 'OpenIndiana'
                             elif 'OmniOS' in data:
                                 self.facts['distribution'] = 'OmniOS'
+                                distribution_version = data.split()[-1]
                             elif uname_rc == 0 and 'NexentaOS_' in uname_out:
                                 self.facts['distribution'] = 'Nexenta'
+                                distribution_version = data.split()[-1].lstrip('v')
 
-                            if self.fact['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
+                            if self.facts['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
                                 self.facts['distribution_release'] = data.strip()
-                                if uname_rc == 0:
+                                if distribution_version is not None:
+                                    self.facts['distribution_version'] = distribution_version
+                                elif uname_rc == 0:
                                     self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
                                 break
 
