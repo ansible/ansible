@@ -317,10 +317,7 @@ def privileges_revoke(cursor, user,host,db_table,grant_option):
     query = ["REVOKE ALL PRIVILEGES ON %s" % mysql_quote_identifier(db_table, 'table')]
     query.append("FROM %s@%s")
     query = ' '.join(query)
-    try:
-        cursor.execute(query, (user, host))
-    except Exception, e:
-        raise Exception("%s. Query=\"%s\"" % (str(e), query % (user, host)))
+    cursor.execute(query, (user, host))
 
 def privileges_grant(cursor, user,host,db_table,priv):
     # Escape '%' since mysql db.execute uses a format string and the
@@ -330,16 +327,11 @@ def privileges_grant(cursor, user,host,db_table,priv):
     query = ["GRANT %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
     query.append("TO %s@%s")
     if 'GRANT' in priv:
-        query.append(" WITH GRANT OPTION")
+        query.append("WITH GRANT OPTION")
     if 'REQUIRESSL' in priv:
-        query.append(" REQUIRE SSL")
+        query.append("REQUIRE SSL")
     query = ' '.join(query)
-    try:
-        cursor.execute(query, (user, host))
-    except Exception, e:
-        raise Exception("%s. Query=\"%s\"" % (str(e), query % (user, host)))
-
-
+    cursor.execute(query, (user, host))
 
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
