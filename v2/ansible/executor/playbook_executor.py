@@ -65,7 +65,7 @@ class PlaybookExecutor:
                     # on it without the templating changes affecting the original object.
                     all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
                     new_play = play.copy()
-                    new_play.post_validate(all_vars, ignore_undefined=True)
+                    new_play.post_validate(all_vars, fail_on_undefined=False)
 
                     result = True
                     for batch in self._get_serialized_batches(new_play):

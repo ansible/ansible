@@ -96,7 +96,13 @@ class StrategyBase:
         debug("done getting variables")
 
         debug("running post_validate() on the task")
-        new_task.post_validate(task_vars)
+        if new_task.loop:
+            # if the task has a lookup loop specified, we do not error out
+            # on undefined variables yet, as fields may use {{item}} or some
+            # variant, which won't be defined until execution time
+            new_task.post_validate(task_vars, fail_on_undefined=False)
+        else:
+            new_task.post_validate(task_vars)
         debug("done running post_validate() on the task")
 
         # and then queue the new task

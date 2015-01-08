@@ -167,7 +167,7 @@ class Base:
 
         return new_me
 
-    def post_validate(self, all_vars=dict(), ignore_undefined=False):
+    def post_validate(self, all_vars=dict(), fail_on_undefined=True):
         '''
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
@@ -178,7 +178,7 @@ class Base:
         if self._loader is not None:
             basedir = self._loader.get_basedir()
 
-        templar = Templar(basedir=basedir, variables=all_vars)
+        templar = Templar(basedir=basedir, variables=all_vars, fail_on_undefined=fail_on_undefined)
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
 
@@ -195,7 +195,7 @@ class Base:
                 # run the post-validator if present
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
-                    method(self, attribute, value)
+                    value = method(attribute, value, all_vars, fail_on_undefined)
                 else:
                     # otherwise, just make sure the attribute is of the type it should be
                     if attribute.isa == 'string':
@@ -210,14 +210,14 @@ class Base:
                     elif attribute.isa == 'dict' and not isinstance(value, dict):
                         raise TypeError()
 
-                    # and assign the massaged value back to the attribute field
-                    setattr(self, name, value)
+                # and assign the massaged value back to the attribute field
+                setattr(self, name, value)
 
             except (TypeError, ValueError), e:
                 #raise AnsibleParserError("the field '%s' has an invalid value, and could not be converted to an %s" % (name, attribute.isa), obj=self.get_ds())
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e))
             except UndefinedError:
-                if not ignore_undefined:
+                if fail_on_undefined:
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined" % (name,))
 
     def serialize(self):

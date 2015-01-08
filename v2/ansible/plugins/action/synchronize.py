@@ -140,9 +140,7 @@ class ActionModule(ActionBase):
             else:
                 private_key = task_vars.get('ansible_ssh_private_key_file', self.runner.private_key_file)
 
-            private_key = template.template(self.runner.basedir, private_key, task_vars, fail_on_undefined=True)
-
-            if not private_key is None:
+            if private_key is not None:
                 private_key = os.path.expanduser(private_key)
                 
             # use the mode to define src and dest's url
@@ -172,7 +170,7 @@ class ActionModule(ActionBase):
         #    module_args = "CHECKMODE=True"
 
         # run the module and store the result
-        result = self.runner._execute_module('synchronize', tmp=tmpmodule_args, complex_args=options, task_vars=task_vars)
+        result = self.runner._execute_module('synchronize', module_args=, complex_args=options, task_vars=task_vars)
 
         return result
 
