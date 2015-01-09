@@ -30,7 +30,7 @@ version_added: "0.7"
 options:
   name:
     description:
-      - The name of the supervisord program or group to manage.  
+      - The name of the supervisord program or group to manage.
       - The name will be taken as group name when it ends with a colon I(:)
       - Group support is only available in Ansible version 1.6 or later.
     required: true
@@ -194,9 +194,14 @@ def main():
     if state == 'restarted':
         rc, out, err = run_supervisorctl('update', check_rc=True)
         processes = get_matched_processes()
+        if not processes:
+            module.fail_json(name=name, msg="ERROR (no such process)")
+
         take_action_on_processes(processes, lambda s: True, 'restart', 'started')
 
     processes = get_matched_processes()
+    if not processes:
+         module.fail_json(name=name, msg="ERROR (no such process)")
 
     if state == 'present':
         if len(processes) > 0:
