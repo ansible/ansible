@@ -79,6 +79,10 @@ class ConnectionInformation:
         self.sudo_user   = play.sudo_user
         self.sudo_pass   = play.sudo_pass
 
+        # non connection related
+        self.no_log      = play.no_log
+        self.environment = play.environment
+
     def set_options(self, options):
         '''
         Configures this connection information instance with data from
@@ -124,6 +128,12 @@ class ConnectionInformation:
         self.sudo_user   = ci.sudo_user
         self.sudo_pass   = ci.sudo_pass
         self.verbosity   = ci.verbosity
+
+        # other
+        self.no_log      = ci.no_log
+        self.environment = ci.environment
+
+        # requested tags
         self.only_tags   = ci.only_tags.copy()
         self.skip_tags   = ci.skip_tags.copy()
 
@@ -136,7 +146,7 @@ class ConnectionInformation:
         new_info = ConnectionInformation()
         new_info.copy(self)
 
-        for attr in ('connection', 'remote_user', 'su', 'su_user', 'su_pass', 'sudo', 'sudo_user', 'sudo_pass'):
+        for attr in ('connection', 'remote_user', 'su', 'su_user', 'su_pass', 'sudo', 'sudo_user', 'sudo_pass', 'environment', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val:

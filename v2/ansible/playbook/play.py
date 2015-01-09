@@ -80,6 +80,7 @@ class Play(Base, Taggable):
 
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
+    _environment         = FieldAttribute(isa='dict', default=dict())
     _max_fail_percentage = FieldAttribute(isa='string', default='0')
     _no_log              = FieldAttribute(isa='bool', default=False)
     _serial              = FieldAttribute(isa='int', default=0)
