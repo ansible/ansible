@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 # (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
+# (c) 2014, Justin Lecher <jlec@gentoo.org>
 #
 # This file is part of Ansible
 #
@@ -54,6 +55,13 @@ options:
           - Whether to disable GPG signature checking of
             all packages. Has an effect only if state is
             I(present).
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        aliases: []
+    refresh:
+       description:
+           - Enable autorefresh of the repository.
         required: false
         default: "no"
         choices: [ "yes", "no" ]
@@ -145,11 +153,11 @@ def repo_exists(module, old_zypper, **kwargs):
     return False
 
 
-def add_repo(module, repo, alias, description, disable_gpg_check, old_zypper):
+def add_repo(module, repo, alias, description, disable_gpg_check, old_zypper, refresh):
     if old_zypper:
         cmd = ['/usr/bin/zypper', 'sa']
     else:
-        cmd = ['/usr/bin/zypper', 'ar', '--check', '--refresh']
+        cmd = ['/usr/bin/zypper', 'ar', '--check']
 
     if repo.startswith("file:/") and old_zypper:
         cmd.extend(['-t', 'Plaindir'])
@@ -161,6 +169,9 @@ def add_repo(module, repo, alias, description, disable_gpg_check, old_zypper):
 
     if disable_gpg_check and not old_zypper:
         cmd.append('--no-gpgcheck')
+
+    if refresh:
+        cmd.append('--refresh')
 
     cmd.append(repo)
 
@@ -216,6 +227,7 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             description=dict(required=False),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
+            refresh = dict(required=False, default='yes', type='bool'),
         ),
         supports_check_mode=False,
     )
@@ -225,6 +237,7 @@ def main():
     name = module.params['name']
     description = module.params['description']
     disable_gpg_check = module.params['disable_gpg_check']
+    refresh = module.params['refresh']
 
     def exit_unchanged():
         module.exit_json(changed=False, repo=repo, state=state, name=name)
@@ -260,7 +273,7 @@ def main():
         if exists:
             exit_unchanged()
 
-        changed = add_repo(module, repo, name, description, disable_gpg_check, old_zypper)
+        changed = add_repo(module, repo, name, description, disable_gpg_check, old_zypper, refresh)
     elif state == 'absent':
         if not exists:
             exit_unchanged()
