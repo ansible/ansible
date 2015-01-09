@@ -358,3 +358,10 @@ class Role(Base, Conditional, Taggable):
 
         super(Role, self).deserialize(data)
 
+    def set_loader(self, loader):
+        self._loader = loader
+        for parent in self._parents:
+            parent.set_loader(loader)
+        for dep in self.get_direct_dependencies():
+            dep.set_loader(loader)
+

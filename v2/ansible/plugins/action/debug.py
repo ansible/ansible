@@ -33,7 +33,7 @@ class ActionModule(ActionBase):
                 result = dict(msg=self._task.args['msg'])
         # FIXME: move the LOOKUP_REGEX somewhere else
         elif 'var' in self._task.args: # and not utils.LOOKUP_REGEX.search(self._task.args['var']):
-            templar = Templar(variables=task_vars)
+            templar = Templar(loader=self._loader, variables=task_vars)
             results = templar.template(self._task.args['var'], convert_bare=True)
             result = dict()
             result[self._task.args['var']] = results

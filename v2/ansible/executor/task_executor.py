@@ -58,7 +58,7 @@ class TaskExecutor:
 
         try:
             items = self._get_loop_items()
-            if items:
+            if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
                     res = dict(results=item_results)
@@ -84,7 +84,7 @@ class TaskExecutor:
 
         items = None
         if self._task.loop and self._task.loop in lookup_loader:
-            items = lookup_loader.get(self._task.loop).run(terms=self._task.loop_args, variables=self._job_vars)
+            items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=self._task.loop_args, variables=self._job_vars)
 
         return items
 

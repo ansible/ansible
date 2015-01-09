@@ -200,7 +200,7 @@ class Task(Base, Conditional, Taggable):
         super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
 
     def _post_validate_loop_args(self, attr, value, all_vars, fail_on_undefined):
-        return listify_lookup_plugin_terms(value, all_vars)
+        return listify_lookup_plugin_terms(value, all_vars, loader=self._loader)
 
     def get_vars(self):
         return self.serialize()
@@ -283,3 +283,18 @@ class Task(Base, Conditional, Taggable):
                 return False
         return super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
 
+
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._block:
+            self._block.set_loader(loader)
+
+        for dep in self._dep_chain:
+            dep.set_loader(loader)

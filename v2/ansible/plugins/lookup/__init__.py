@@ -22,8 +22,8 @@ __metaclass__ = type
 __all__ = ['LookupBase']
 
 class LookupBase:
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, loader=None, **kwargs):
+        self._loader = loader
 
     def _flatten(self, terms):
         ret = []
@@ -40,4 +40,10 @@ class LookupBase:
             for y in b:
                 results.append(self._flatten([x,y]))
         return results
+
+    def _flatten_hash_to_list(self, terms):
+        ret = []
+        for key in terms:
+            ret.append({'key': key, 'value': terms[key]})
+        return ret
 

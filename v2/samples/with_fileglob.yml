@@ -1,0 +1,7 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - debug: msg="file is {{item}}"
+    with_fileglob:
+    - "*.yml"

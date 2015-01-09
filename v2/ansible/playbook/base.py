@@ -178,7 +178,7 @@ class Base:
         if self._loader is not None:
             basedir = self._loader.get_basedir()
 
-        templar = Templar(basedir=basedir, variables=all_vars, fail_on_undefined=fail_on_undefined)
+        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=fail_on_undefined)
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
 

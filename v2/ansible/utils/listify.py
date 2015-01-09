@@ -30,7 +30,7 @@ __all__ = ['listify_lookup_plugin_terms']
 
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 
-def listify_lookup_plugin_terms(terms, variables):
+def listify_lookup_plugin_terms(terms, variables, loader):
 
     if isinstance(terms, basestring):
         # someone did:
@@ -46,7 +46,7 @@ def listify_lookup_plugin_terms(terms, variables):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                templar = Templar(variables=variables)
+                templar = Templar(loader=loader, variables=variables)
                 new_terms = templar.template("{{ %s }}" % terms)
                 if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass

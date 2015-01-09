@@ -60,6 +60,7 @@ class PlayState:
         (rescue/always)
         '''
 
+        self._parent_iterator = parent_iterator
         self._run_state       = ITERATING_SETUP
         self._failed_state    = FAILED_NONE
         self._task_list       = parent_iterator._play.compile()
@@ -104,6 +105,8 @@ class PlayState:
                     if self._gather_facts == 'smart' and not self._host.gathered_facts or boolean(self._gather_facts):
                         self._host.set_gathered_facts(True)
                         task = Task()
+                        # FIXME: this is not the best way to get this...
+                        task.set_loader(self._parent_iterator._play._loader)
                         task.action = 'setup'
                         break
             elif run_state == ITERATING_TASKS:

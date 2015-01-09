@@ -41,8 +41,9 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, basedir=None, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
-        self._basedir             = basedir
+    def __init__(self, loader, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
+        self._loader              = loader
+        self._basedir             = loader.get_basedir()
         self._filters             = None
         self._available_variables = variables
 
@@ -180,15 +181,17 @@ class Templar:
         return thing if thing is not None else ''
 
     def _lookup(self, name, *args, **kwargs):
-        instance = lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
+        instance = lookup_loader.get(name.lower(), loader=self._loader)
 
         if instance is not None:
             # safely catch run failures per #5059
             try:
-                ran = instance.run(*args, inject=self._available_vars, **kwargs)
+                ran = instance.run(*args, variables=self._available_variables, **kwargs)
             except AnsibleUndefinedVariable:
                 raise
             except Exception, e:
+                if self._fail_on_lookup_errors:
+                    raise
                 ran = None
             if ran:
                 ran = ",".join(ran)

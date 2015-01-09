@@ -204,18 +204,3 @@ class DataLoader():
         self.set_basedir(cur_basedir)
         return source2 # which does not exist
 
-    #def __getstate__(self):
-    #    data = dict(
-    #        basedir = self._basedir,
-    #        vault_password = self._vault_password,
-    #        FILE_CACHE = self._FILE_CACHE,
-    #    )
-    #    return data
-
-    #def __setstate__(self, data):
-    #    self._basedir = data.get('basedir', '.')
-    #    self._FILE_CACHE = data.get('FILE_CACHE', dict())
-    #    self._vault_password = data.get('vault_password', '')
-    #
-    #    self._vault = VaultLib(password=self._vault_password)
-        

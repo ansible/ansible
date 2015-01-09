@@ -97,9 +97,23 @@ class WorkerProcess(multiprocessing.Process):
             try:
                 if not self._main_q.empty():
                     debug("there's work to be done!")
-                    (host, task, job_vars, connection_info) = self._main_q.get(block=False)
+                    (host, task, basedir, job_vars, connection_info) = self._main_q.get(block=False)
                     debug("got a task/handler to work on: %s" % task)
 
+                    # because the task queue manager starts workers (forks) before the
+                    # playbook is loaded, set the basedir of the loader inherted by
+                    # this fork now so that we can find files correctly
+                    self._loader.set_basedir(basedir)
+
+                    # Serializing/deserializing tasks does not preserve the loader attribute,
+                    # since it is passed to the worker during the forking of the process and
+                    # would be wasteful to serialize. So we set it here on the task now, and
+                    # the task handles updating parent/child objects as needed.
+                    task.set_loader(self._loader)
+
+                    # apply the given task's information to the connection info,
+                    # which may override some fields already set by the play or
+                    # the options specified on the command line
                     new_connection_info = connection_info.set_task_override(task)
 
                     # execute the task and build a TaskResult from the result
