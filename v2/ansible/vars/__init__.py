@@ -41,8 +41,6 @@ class VariableManager:
         self._host_vars_files  = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
 
-        self._templar = Templar()
-
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
         if play:
@@ -156,10 +154,10 @@ class VariableManager:
 
         if play:
             all_vars = self._merge_dicts(all_vars, play.get_vars())
+            templar = Templar(loader=loader, variables=all_vars)
             for vars_file in play.get_vars_files():
-                self._templar.set_available_variables(all_vars)
                 try:
-                    vars_file = self._templar.template(vars_file)
+                    vars_file = templar.template(vars_file)
                     data = loader.load_from_file(vars_file)
                     all_vars = self._merge_dicts(all_vars, data)
                 except:

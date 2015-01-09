@@ -77,7 +77,7 @@ class ActionModule(ActionBase):
             dest = os.path.join(dest, base)
 
         # template the source data locally & get ready to transfer
-        templar = Templar(basedir=self._loader.get_basedir(), variables=task_vars)
+        templar = Templar(loader=self._loader, variables=task_vars)
         try:
             with open(source, 'r') as f:
                 template_data = f.read()

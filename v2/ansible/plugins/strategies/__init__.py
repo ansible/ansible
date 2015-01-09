@@ -116,7 +116,7 @@ class StrategyBase:
                 self._cur_worker = 0
 
             self._pending_results += 1
-            main_q.put((host, new_task, task_vars, connection_info), block=False)
+            main_q.put((host, new_task, self._loader.get_basedir(), task_vars, connection_info), block=False)
         except (EOFError, IOError, AssertionError), e:
             # most likely an abort
             debug("got an error while queuing: %s" % e)

@@ -162,3 +162,10 @@ class Block(Base, Conditional, Taggable):
                 return False
         return super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
 
+    def set_loader(self, loader):
+        self._loader = loader
+        if self._parent_block:
+            self._parent_block.set_loader(loader)
+        elif self._role:
+            self._role.set_loader(loader)
+

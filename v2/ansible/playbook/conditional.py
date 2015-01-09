@@ -45,7 +45,7 @@ class Conditional:
         False if any of them evaluate as such.
         '''
 
-        templar = Templar(variables=all_vars)
+        templar = Templar(loader=self._loader, variables=all_vars)
         for conditional in self.when:
             if not self._check_conditional(conditional, templar):
                 return False
