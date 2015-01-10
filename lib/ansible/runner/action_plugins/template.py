@@ -22,6 +22,9 @@ from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ActionModule(object):
 
@@ -87,6 +90,7 @@ class ActionModule(object):
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject)
         except Exception, e:
+            logger.exception("Template rendering failed")
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
