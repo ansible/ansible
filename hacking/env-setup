@@ -18,9 +18,9 @@ PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-[[ $PYTHONPATH != ${PREFIX_PYTHONPATH}* ]] && export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
-[[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
-[[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
+expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
+expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
+expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
 
 #
 # Generate egg_info so that pkg_resources works
