@@ -445,7 +445,7 @@ def repolist(module, repoq, qf="%{repoid}"):
 def list_stuff(module, conf_file, stuff):
 
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
-    repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet', '-q']
+    repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
     if conf_file and os.path.exists(conf_file):
         repoq += ['-c', conf_file]
 
@@ -728,7 +728,7 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     if not repoquery:
         repoq = None
     else:
-        repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet', '-q']
+        repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
 
     if conf_file and os.path.exists(conf_file):
         yum_basecmd += ['-c', conf_file]
