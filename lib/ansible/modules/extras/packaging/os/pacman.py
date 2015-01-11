@@ -42,7 +42,7 @@ options:
             - Desired state of the package.
         required: false
         default: "present"
-        choices: ["present", "absent"]
+        choices: ["present", "absent", "latest"]
 
     recurse:
         description:
@@ -68,7 +68,7 @@ EXAMPLES = '''
 - pacman: name=foo state=present
 
 # Upgrade package foo
-- pacman: name=foo state=present update_cache=yes
+- pacman: name=foo state=latest update_cache=yes
 
 # Remove packages foo and bar
 - pacman: name=foo,bar state=absent
@@ -160,13 +160,13 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, packages, package_files):
+def install_packages(module, state, packages, package_files):
     install_c = 0
 
     for i, package in enumerate(packages):
-        # if the package is installed and up-to-date then skip
+        # if the package is installed and state == present or state == latest and is up-to-date then skip
         installed, updated = query_package(module, package)
-        if installed and updated:
+        if installed and (state == 'present' or (state == 'latest' and updated)):
             continue
 
         if package_files[i]:
@@ -191,9 +191,10 @@ def install_packages(module, packages, package_files):
 def check_packages(module, packages, state):
     would_be_changed = []
     for package in packages:
-        installed = query_package(module, package)
-        if ((state == "present" and not installed) or
-                (state == "absent" and installed)):
+        installed, updated = query_package(module, package)
+        if ((state in ["present", "latest"] and not installed) or
+                (state == "absent" and installed) or
+                (state == "latest" and not updated)):
             would_be_changed.append(package)
     if would_be_changed:
         if state == "absent":
@@ -208,7 +209,7 @@ def main():
     module = AnsibleModule(
         argument_spec    = dict(
             name         = dict(aliases=['pkg']),
-            state        = dict(default='present', choices=['present', 'installed', 'absent', 'removed']),
+            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             recurse      = dict(default='no', choices=BOOLEANS, type='bool'),
             update_cache = dict(default='no', aliases=['update-cache'], choices=BOOLEANS, type='bool')),
         required_one_of = [['name', 'update_cache']],
@@ -249,8 +250,8 @@ def main():
         if module.check_mode:
             check_packages(module, pkgs, p['state'])
 
-        if p['state'] == 'present':
-            install_packages(module, pkgs, pkg_files)
+        if p['state'] in ['present', 'latest']:
+            install_packages(module, p['state'], pkgs, pkg_files)
         elif p['state'] == 'absent':
             remove_packages(module, pkgs)
 
