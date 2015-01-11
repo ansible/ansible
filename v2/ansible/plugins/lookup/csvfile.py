@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
 import os
 import codecs
 import csv
 
-class LookupModule(object):
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
     def read_csv(self, filename, key, delimiter, dflt=None, col=1):
 
@@ -35,13 +34,11 @@ class LookupModule(object):
                 if row[0] == key:
                     return row[int(col)]
         except Exception, e:
-            raise errors.AnsibleError("csvfile: %s" % str(e))
+            raise AnsibleError("csvfile: %s" % str(e))
 
         return dflt
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+    def run(self, terms, variables=None, **kwargs):
 
         if isinstance(terms, basestring):
             terms = [ terms ]
@@ -65,12 +62,12 @@ class LookupModule(object):
                     assert(name in paramvals)
                     paramvals[name] = value
             except (ValueError, AssertionError), e:
-                raise errors.AnsibleError(e)
+                raise AnsibleError(e)
 
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
 
-            path = utils.path_dwim(self.basedir, paramvals['file'])
+            path = self._loader.path_dwim(paramvals['file'])
 
             var = self.read_csv(path, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
             if var is not None:

@@ -297,18 +297,65 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(start=1, step=10) }}    => 51
 
 
+Shuffle Filter
+--------------
+
+.. versionadded:: 1.8
+
+This filter will randomize an existing list, giving a different order every invocation.
+
+To get a random list from an existing  list::
+
+    {{ ['a','b','c']|shuffle }} => ['c','a','b']
+    {{ ['a','b','c']|shuffle }} => ['b','c','a']
+
+note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
+
+
+.. _math_stuff:
+
+Math
+--------------------
+.. versionadded:: 1.9
+
+
+To see if something is actually a number::
+
+    {{ myvar | isnan }}
+
+Get the logarithm (default is e)::
+
+    {{ myvar | log }}
+
+Get the base 10 logarithm::
+
+    {{ myvar | log(10) }}
+
+Give me the power of 2! (or 5)::
+
+    {{ myvar | pow(2) }}
+    {{ myvar | pow(5) }}
+
+Square root, or the 5th::
+
+    {{ myvar | root }}
+    {{ myvar | root(5) }}
+
+Note that jinja2 already provides some like abs() and round().
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
 --------------------
 
 To concatenate a list into a string::
-   
+
    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
-    {{ path | basename }} 
+    {{ path | basename }}
 
 To get the directory from a path::
 
@@ -317,7 +364,7 @@ To get the directory from a path::
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
-    
+
 To get the real path of a link (new in version 1.8)::
 
    {{ path | readlink }}
@@ -745,7 +792,8 @@ To configure fact caching, enable it in ansible.cfg as follows::
 
     [defaults]
     fact_caching = redis
-    fact_caching_timeout = 86400 # seconds
+    fact_caching_timeout = 86400
+    # seconds
 
 At the time of writing, Redis is the only supported fact caching engine.  
 To get redis up and running, perform the equivalent OS commands::
@@ -896,7 +944,7 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. note::
    It's also possible to keep per-host and per-group variables in very
-   similar files, this is covered in :doc:`intro_patterns`.
+   similar files, this is covered in :ref:`splitting_out_vars`.
 
 .. _passing_variables_on_the_command_line:
 
@@ -955,9 +1003,10 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they win in a certain order, which is::
 
-    * -e variables always win
-    * then comes "most everything else"
-    * then comes variables defined in inventory
+    * extra vars (-e in the command line) always win
+    * then comes connection variables defined in inventory (ansible_ssh_user, etc)
+    * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+    * then comes the rest of the variables defined in inventory
     * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
 

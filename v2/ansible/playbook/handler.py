@@ -19,22 +19,35 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from v2.errors import AnsibleError
-from v2.inventory import Host
-from v2.playbook import Task
+from ansible.errors import AnsibleError
+#from ansible.inventory.host import Host
+from ansible.playbook.task import Task
 
 class Handler(Task):
 
-    def __init__(self):
-        pass
+    def __init__(self, block=None, role=None, task_include=None):
+        self._flagged_hosts = []
+
+        super(Handler, self).__init__(block=block, role=role, task_include=task_include)
+
+    def __repr__(self):
+        ''' returns a human readable representation of the handler '''
+        return "HANDLER: %s" % self.get_name()
+
+    @staticmethod
+    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+        t = Handler(block=block, role=role, task_include=task_include)
+        return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def flag_for_host(self, host):
-        assert instanceof(host, Host)
-        pass
+        #assert instanceof(host, Host)
+        if host not in self._flagged_hosts:
+            self._flagged_hosts.append(host)
 
-    def has_triggered(self):
-        return self._triggered
+    def has_triggered(self, host):
+        return host in self._flagged_hosts
 
-    def set_triggered(self, triggered):
-        assert instanceof(triggered, bool)
-        self._triggered = triggered
+    def serialize(self):
+        result = super(Handler, self).serialize()
+        result['is_handler'] = True
+        return result

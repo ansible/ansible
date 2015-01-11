@@ -15,19 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import template
-import ansible.utils as utils
+import os
 
-class LookupModule(object):
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+from ansible.template import Templar
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
+    def run(self, terms, variables, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        if not isinstance(terms, list):
+            terms = [ terms ]
+
+        templar = Templar(loader=self._loader, variables=variables)
 
         ret = []
         for term in terms:
-            ret.append(template.template_from_file(self.basedir, term, inject))
+            path = self._loader.path_dwim(term)
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    template_data = f.read()
+                    res = templar.template(template_data, preserve_trailing_newlines=True)
+                    ret.append(res)
+            else:
+                raise AnsibleError("the template file %s could not be found for the lookup" % term)
         return ret

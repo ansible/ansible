@@ -45,10 +45,8 @@ import warnings
 import traceback
 import getpass
 import sys
-import json
 import subprocess
 import contextlib
-import jinja2.exceptions
 
 from vault import VaultLib
 
@@ -64,9 +62,10 @@ CODE_REGEX = re.compile(r'(?:{%|%})')
 
 
 try:
-    import json
-except ImportError:
+    # simplejson can be much faster if it's available
     import simplejson as json
+except ImportError:
+    import json
 
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
@@ -1265,13 +1264,24 @@ def make_su_cmd(su_user, executable, cmd):
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
 
+# For v2, consider either using kitchen or copying my code from there for
+# to_unicode and to_bytes handling (TEK)
 _TO_UNICODE_TYPES = (unicode, type(None))
 
 def to_unicode(value):
+    # Use with caution -- this function is not encoding safe (non-utf-8 values
+    # will cause tracebacks if they contain bytes from 0x80-0xff inclusive)
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
 
+def to_bytes(value):
+    # Note: value is assumed to be a basestring to mirror to_unicode.  Better
+    # implementations (like kitchen.text.converters.to_bytes) bring that check
+    # into the function
+    if isinstance(value, str):
+        return value
+    return value.encode('utf-8')
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
@@ -1458,13 +1468,11 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                new_terms = template.template(basedir, terms, inject, convert_bare=True, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
+                new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
                 if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass
                 else:
                     terms = new_terms
-            except jinja2.exceptions.UndefinedError, e:
-                raise errors.AnsibleUndefinedVariable('undefined variable in items: %s' % e)
             except:
                 pass
 

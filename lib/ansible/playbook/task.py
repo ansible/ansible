@@ -26,7 +26,7 @@ class Task(object):
 
     __slots__ = [
         'name', 'meta', 'action', 'when', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
+        'notify', 'module_name', 'module_args', 'module_vars', 'play_vars', 'play_file_vars', 'role_vars', 'role_params', 'default_vars',
         'play', 'notified_by', 'tags', 'register', 'role_name',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
@@ -45,7 +45,7 @@ class Task(object):
          'su', 'su_user', 'su_pass', 'no_log', 'run_once',
     ]
 
-    def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
+    def __init__(self, play, ds, module_vars=None, play_vars=None, play_file_vars=None, role_vars=None, role_params=None, default_vars=None, additional_conditions=None, role_name=None):
         ''' constructor loads from a task or handler datastructure '''
 
         # meta directives are used to tell things like ansible/playbook to run
@@ -119,9 +119,13 @@ class Task(object):
             elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
-        self.module_vars  = module_vars
-        self.default_vars = default_vars
-        self.play         = play
+        self.module_vars    = module_vars
+        self.play_vars      = play_vars
+        self.play_file_vars = play_file_vars
+        self.role_vars      = role_vars
+        self.role_params    = role_params
+        self.default_vars   = default_vars
+        self.play           = play
 
         # load various attributes
         self.name         = ds.get('name', None)
@@ -129,7 +133,7 @@ class Task(object):
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.su           = utils.boolean(ds.get('su', play.su))
-        self.environment  = ds.get('environment', {})
+        self.environment  = ds.get('environment', play.environment)
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false")) or self.play.no_log
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
@@ -219,7 +223,11 @@ class Task(object):
 
         # combine the default and module vars here for use in templating
         all_vars = self.default_vars.copy()
+        all_vars = utils.combine_vars(all_vars, self.play_vars)
+        all_vars = utils.combine_vars(all_vars, self.play_file_vars)
+        all_vars = utils.combine_vars(all_vars, self.role_vars)
         all_vars = utils.combine_vars(all_vars, self.module_vars)
+        all_vars = utils.combine_vars(all_vars, self.role_params)
 
         self.async_seconds = ds.get('async', 0)  # not async by default
         self.async_seconds = template.template_from_string(play.basedir, self.async_seconds, all_vars)

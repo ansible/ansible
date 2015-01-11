@@ -16,23 +16,20 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-from ansible import utils, errors
 
-class LookupModule(object):
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+    def run(self, terms, variables, **kwargs):
 
         ret = []
         for term in terms:
-            p = subprocess.Popen(term, cwd=self.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.extend(stdout.splitlines())
             else:
-                raise errors.AnsibleError("lookup_plugin.lines(%s) returned %d" % (term, p.returncode))
+                raise AnsibleError("lookup_plugin.lines(%s) returned %d" % (term, p.returncode))
         return ret

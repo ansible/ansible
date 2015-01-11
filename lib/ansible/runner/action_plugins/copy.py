@@ -192,8 +192,12 @@ class ActionModule(object):
                     dest_file = conn.shell.join_path(dest, source_rel)
                     remote_checksum = self.runner._remote_checksum(conn, tmp_path, dest_file, inject)
 
+            if remote_checksum == '4':
+                result = dict(msg="python isn't present on the system.  Unable to compute checksum", failed=True)
+                return ReturnData(conn=conn, result=result)
+
             if remote_checksum != '1' and not force:
-                # remote_file does not exist so continue to next iteration.
+                # remote_file exists so continue to next iteration.
                 continue
 
             if local_checksum != remote_checksum:

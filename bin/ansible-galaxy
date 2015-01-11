@@ -697,7 +697,7 @@ def execute_info(args, options, parser):
         if install_info:
             if 'version' in install_info:
                 install_info['intalled_version'] = install_info['version']
-                install_info.pop('version', None)
+                del install_info['version']
             role_info.update(install_info)
 
         remote_data = api_lookup_role_by_name(api_server, role, False)
@@ -714,7 +714,6 @@ def execute_info(args, options, parser):
 
         if role_info:
             print "- %s:" % (role)
-            import pprint
             for k in sorted(role_info.keys()):
 
                 if k in SKIP_INFO_KEYS:

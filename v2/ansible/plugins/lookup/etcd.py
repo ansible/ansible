@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils
 import os
 import urllib2
 try:
     import json
 except ImportError:
     import simplejson as json
+
+from ansible.plugins.lookup import LookupBase
 
 # this can be made configurable, not should not use ansible.cfg
 ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
@@ -57,22 +58,18 @@ class etcd():
 
         return value
 
-class LookupModule(object):
+class LookupModule(LookupBase):
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-        self.etcd = etcd()
-
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+    def run(self, terms, variables, **kwargs):
 
         if isinstance(terms, basestring):
             terms = [ terms ]
 
+        etcd = etcd()
+
         ret = []
         for term in terms:
             key = term.split()[0]
-            value = self.etcd.get(key)
+            value = etcd.get(key)
             ret.append(value)
         return ret

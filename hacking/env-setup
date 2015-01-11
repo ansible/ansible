@@ -3,9 +3,9 @@
 #    modifies environment for running Ansible from checkout
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
-if [[ $BASH_SOURCE ]] ; then
+if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=$(dirname "$BASH_SOURCE")
-elif [[ $(basename "$0") == env-setup ]]; then
+elif [ $(basename "$0") = "env-setup" ]; then
     HACKING_DIR=$(dirname "$0")
 else
     HACKING_DIR=$PWD/hacking
@@ -23,6 +23,30 @@ PREFIX_MANPATH=$ANSIBLE_HOME/docs/man
 [[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
 [[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
+#
+# Generate egg_info so that pkg_resources works
+#
+
+# Do the work in a function so we don't repeat ourselves later
+gen_egg_info()
+{
+    python setup.py egg_info
+    if [ -e $PREFIX_PYTHONPATH/ansible*.egg-info ] ; then
+        rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
+    fi
+    mv ansible*.egg-info $PREFIX_PYTHONPATH
+}
+
+# In some shells if pushd is a no-op then popd sends you to a previous
+# directory in history
+if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
+    pushd "$ANSIBLE_HOME"
+    gen_egg_info
+    popd
+else
+    gen_egg_info
+fi
+
 # Print out values unless -q is set
 
 if [[ $# -eq 0 || $1 != -q ]] ; then
@@ -32,10 +56,11 @@ if [[ $# -eq 0 || $1 != -q ]] ; then
     echo "PATH=$PATH"
     echo "PYTHONPATH=$PYTHONPATH"
     echo "MANPATH=$MANPATH"
-    echo
-    echo Remember, you may wish to specify your host file with -i
-    echo
-    echo 'Done!'
-    echo
+    echo ""
+
+    echo "Remember, you may wish to specify your host file with -i"
+    echo ""
+    echo "Done!"
+    echo ""
 fi
 

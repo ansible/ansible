@@ -15,34 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils as utils
-import ansible.errors as errors
 
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
+from ansible.utils.listify import listify_lookup_plugin_terms
 
-def check_list_of_one_list(term):
-    # make sure term is not a list of one (list of one..) item
-    # return the final non list item if so
+class LookupModule(LookupBase):
 
-    if isinstance(term,list) and len(term) == 1:
-        term = term[0]
-        if isinstance(term,list):
-            term = check_list_of_one_list(term)
+    def _check_list_of_one_list(self, term):
+        # make sure term is not a list of one (list of one..) item
+        # return the final non list item if so
 
-    return term
+        if isinstance(term,list) and len(term) == 1:
+            term = term[0]
+            if isinstance(term,list):
+                term = self._check_list_of_one_list(term)
 
+        return term
 
-
-class LookupModule(object):
-
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-
-
-    def flatten(self, terms, inject):
+    def _do_flatten(self, terms, variables):
 
         ret = []
         for term in terms:
-            term = check_list_of_one_list(term)
+            term = self._check_list_of_one_list(term)
 
             if term == 'None' or term == 'null':
                 # ignore undefined items
@@ -50,29 +45,25 @@ class LookupModule(object):
 
             if isinstance(term, basestring):
                 # convert a variable to a list
-                term2 = utils.listify_lookup_plugin_terms(term, self.basedir, inject)
+                term2 = listify_lookup_plugin_terms(term, variables, loader=self._loader)
                 # but avoid converting a plain string to a list of one string
                 if term2 != [ term ]:
                     term = term2
 
             if isinstance(term, list):
                 # if it's a list, check recursively for items that are a list
-                term = self.flatten(term, inject)
+                term = self._do_flatten(term, variables)
                 ret.extend(term)
-            else:   
+            else:
                 ret.append(term)
 
         return ret
 
 
-    def run(self, terms, inject=None, **kwargs):
-
-        # see if the string represents a list and convert to list if so
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+    def run(self, terms, variables, **kwargs):
 
         if not isinstance(terms, list):
-            raise errors.AnsibleError("with_flattened expects a list")
+            raise AnsibleError("with_flattened expects a list")
 
-        ret = self.flatten(terms, inject)
-        return ret
+        return self._do_flatten(terms, variables)
 

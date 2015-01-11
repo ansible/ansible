@@ -17,30 +17,47 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
 import os
 import errno
-from string import ascii_letters, digits
 import string
 import random
 
+from string import ascii_letters, digits
 
-class LookupModule(object):
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+from ansible.utils.encrypt import do_encrypt
 
-    LENGTH = 20
+DEFAULT_LENGTH = 20
 
-    def __init__(self, length=None, encrypt=None, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
+
+    def random_password(self, length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+        '''
+        Return a random password string of length containing only chars.
+        NOTE: this was moved from the old ansible utils code, as nothing
+              else appeared to use it.
+        '''
+
+        password = []
+        while len(password) < length:
+            new_char = os.urandom(1)
+            if new_char in chars:
+                password.append(new_char)
+
+        return ''.join(password)
 
     def random_salt(self):
         salt_chars = ascii_letters + digits + './'
-        return utils.random_password(length=8, chars=salt_chars)
+        return self.random_password(length=8, chars=salt_chars)
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+    def run(self, terms, variables, **kwargs):
 
         ret = []
+
+        if not isinstance(terms, list):
+            terms = [ terms ]
 
         for term in terms:
             # you can't have escaped spaces in yor pathname
@@ -48,7 +65,7 @@ class LookupModule(object):
             relpath = params[0]
 
             paramvals = {
-                'length': LookupModule.LENGTH,
+                'length': DEFAULT_LENGTH,
                 'encrypt': None,
                 'chars': ['ascii_letters','digits',".,:-_"],
             }
@@ -69,21 +86,21 @@ class LookupModule(object):
                     else:
                         paramvals[name] = value
             except (ValueError, AssertionError), e:
-                raise errors.AnsibleError(e)
+                raise AnsibleError(e)
 
             length  = paramvals['length']
             encrypt = paramvals['encrypt']
             use_chars = paramvals['chars']
 
             # get password or create it if file doesn't exist
-            path = utils.path_dwim(self.basedir, relpath)
+            path = self._loader.path_dwim(relpath)
             if not os.path.exists(path):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
                     try:
                         os.makedirs(pathdir, mode=0700)
                     except OSError, e:
-                        raise errors.AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
+                        raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
@@ -121,7 +138,7 @@ class LookupModule(object):
                         f.write(password + '\n')
 
             if encrypt:
-                password = utils.do_encrypt(password, encrypt, salt=salt)
+                password = do_encrypt(password, encrypt, salt=salt)
 
             ret.append(password)
 

@@ -17,23 +17,16 @@
 
 import os
 import glob
-from ansible import utils
 
-class LookupModule(object):
+from ansible.plugins.lookup import LookupBase
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+    def run(self, terms, variables=None, **kwargs):
 
         ret = []
-
         for term in terms:
-
-            dwimmed = utils.path_dwim(self.basedir, term)
+            dwimmed = self._loader.path_dwim(term)
             globbed = glob.glob(dwimmed)
             ret.extend(g for g in globbed if os.path.isfile(g))
-
         return ret

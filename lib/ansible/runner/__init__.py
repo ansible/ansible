@@ -134,7 +134,11 @@ class Runner(object):
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
-        default_vars=None,                  # ditto
+        play_vars=None,                     #
+        play_file_vars=None,                #
+        role_vars=None,                     #
+        role_params=None,                   #
+        default_vars=None,                  #
         extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
@@ -176,6 +180,10 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.play_vars        = utils.default(play_vars, lambda: {})
+        self.play_file_vars   = utils.default(play_file_vars, lambda: {})
+        self.role_vars        = utils.default(role_vars, lambda: {})
+        self.role_params      = utils.default(role_params, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
         self.extra_vars       = utils.default(extra_vars, lambda: {})
 
@@ -629,10 +637,18 @@ class Runner(object):
         inject = utils.combine_vars(inject, host_variables)
         # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
-        # followed by vars (vars, vars_files, vars/main.yml)
-        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # next come variables from vars and vars files
+        inject = utils.combine_vars(inject, self.play_vars)
+        inject = utils.combine_vars(inject, self.play_file_vars)
+        # next come variables from role vars/main.yml files
+        inject = utils.combine_vars(inject, self.role_vars)
         # then come the module variables
         inject = utils.combine_vars(inject, module_vars)
+        # followed by vars_cache things (set_fact, include_vars, and
+        # vars_files which had host-specific templating done)
+        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # role parameters next
+        inject = utils.combine_vars(inject, self.role_params)
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars
@@ -651,8 +667,22 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
+        # We build the proper injected dictionary for all future
+        # templating operations in this run
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+
+        # Then we selectively merge some variable dictionaries down to a
+        # single dictionary, used to template the HostVars for this host
+        temp_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        temp_vars = utils.merge_hash(temp_vars, inject['combined_cache'])
+        temp_vars = utils.merge_hash(temp_vars, self.play_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.play_file_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.extra_vars)
+
+        hostvars = HostVars(temp_vars, self.inventory, vault_password=self.vault_pass)
+
+        # and we save the HostVars in the injected dictionary so they
+        # may be referenced from playbooks/templates
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
@@ -703,22 +733,29 @@ class Runner(object):
                         result = utils.jsonify(dict(changed=False, skipped=True))
                         self.callbacks.on_skipped(host, None)
                         return ReturnData(host=host, result=result)
+            except errors.AnsibleError, e:
+                raise
+            except Exception, e:
+                raise errors.AnsibleError("Unexpected error while executing task: %s" % str(e))
 
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
             items = utils._clean_data_struct(items, from_remote=True)
-            if type(items) != list:
-                raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
+            if items is None:
+                items = []
+            else:
+                if type(items) != list:
+                    raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
-                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
-                use_these_items = []
-                for x in items:
-                    inject['item'] = x
-                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        use_these_items.append(x)
-                inject['item'] = ",".join(use_these_items)
-                items = None
+                if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
+                    # hack for apt, yum, and pkgng so that with_items maps back into a single module call
+                    use_these_items = []
+                    for x in items:
+                        inject['item'] = x
+                        if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                            use_these_items.append(x)
+                    inject['item'] = ",".join(use_these_items)
+                    items = None
 
         def _safe_template_complex_args(args, inject):
             # Ensure the complex args here are a dictionary, but
@@ -949,7 +986,7 @@ class Runner(object):
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
-            # that no variables inadvertantly (or maliciously) add params
+            # that no variables inadvertently (or maliciously) add params
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
@@ -1163,8 +1200,16 @@ class Runner(object):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'):
             return path
+
         split_path = path.split(os.path.sep, 1)
-        cmd = conn.shell.expand_user(split_path[0])
+        expand_path = split_path[0]
+        if expand_path == '~':
+            if self.sudo and self.sudo_user:
+                expand_path = '~%s' % self.sudo_user
+            elif self.su and self.su_user:
+                expand_path = '~%s' % self.su_user
+
+        cmd = conn.shell.expand_user(expand_path)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, su=False)
         initial_fragment = utils.last_non_blank_line(data['stdout'])
 
@@ -1174,7 +1219,7 @@ class Runner(object):
             return path
 
         if len(split_path) > 1:
-            return os.path.join(initial_fragment, *split_path[1:])
+            return conn.shell.join_path(initial_fragment, *split_path[1:])
         else:
             return initial_fragment
 
@@ -1182,7 +1227,28 @@ class Runner(object):
 
     def _remote_checksum(self, conn, tmp, path, inject):
         ''' takes a remote checksum and returns 1 if no file '''
-        python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
+
+        # Lookup the python interp from the host or delegate
+
+        # host == inven_host when there is no delegate
+        host = inject['inventory_hostname']
+        if 'delegate_to' in inject:
+            delegate = inject['delegate_to']
+            if delegate:
+                # host == None when the delegate is not in inventory
+                host = None
+                # delegate set, check whether the delegate has inventory vars
+                delegate = template.template(self.basedir, delegate, inject)
+                if delegate in inject['hostvars']:
+                    # host == delegate if we need to lookup the
+                    # python_interpreter from the delegate's inventory vars
+                    host = delegate
+
+        if host:
+            python_interp = inject['hostvars'][host].get('ansible_python_interpreter', 'python')
+        else:
+            python_interp = 'python'
+
         cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
@@ -1395,9 +1461,15 @@ class Runner(object):
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
             # We aren't iterating over all the hosts in this
-            # group. So, just pick the first host in our group to
+            # group. So, just choose the "delegate_to" host if that is defined and is
+            # one of the targeted hosts, otherwise pick the first host in our group to
             # construct the conn object with.
-            result_data = self._executor(hosts[0], None).result
+            if self.delegate_to is not None and self.delegate_to in hosts:
+                host = self.delegate_to
+            else:
+                host = hosts[0]
+
+            result_data = self._executor(host, None).result
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.

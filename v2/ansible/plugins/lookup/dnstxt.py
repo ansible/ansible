@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
 import os
+
 HAVE_DNS=False
 try:
     import dns.resolver
@@ -25,6 +25,9 @@ try:
 except ImportError:
     pass
 
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
+
 # ==============================================================
 # DNSTXT: DNS TXT records
 #
@@ -32,17 +35,12 @@ except ImportError:
 # TODO: configurable resolver IPs
 # --------------------------------------------------------------
 
-class LookupModule(object):
+class LookupModule(LookupBase):
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+    def run(self, terms, variables=None, **kwargs):
 
         if HAVE_DNS == False:
-            raise errors.AnsibleError("Can't LOOKUP(dnstxt): module dns.resolver is not installed")
-
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+            raise AnsibleError("Can't LOOKUP(dnstxt): module dns.resolver is not installed")
 
         if isinstance(terms, basestring):
             terms = [ terms ]
@@ -62,7 +60,9 @@ class LookupModule(object):
             except dns.resolver.Timeout:
                 string = ''
             except dns.exception.DNSException, e:
-                raise errors.AnsibleError("dns.resolver unhandled exception", e)
+                raise AnsibleError("dns.resolver unhandled exception", e)
 
             ret.append(''.join(string))
+
         return ret
+

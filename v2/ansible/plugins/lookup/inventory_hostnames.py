@@ -16,33 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
-import ansible.utils as utils
-import ansible.errors as errors
-import ansible.inventory as inventory
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
 
-def flatten(terms):
-    ret = []
-    for term in terms:
-        if isinstance(term, list):
-            ret.extend(term)
-        else:
-            ret.append(term)
-    return ret
-
-class LookupModule(object):
-
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-        if 'runner' in kwargs:
-            self.host_list = kwargs['runner'].inventory.host_list
-        else:
-            raise errors.AnsibleError("inventory_hostnames must be used as a loop. Example: \"with_inventory_hostnames: \'all\'\"")
+class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
-
         if not isinstance(terms, list):
-            raise errors.AnsibleError("with_inventory_hostnames expects a list")
-        return flatten(inventory.Inventory(self.host_list).list_hosts(terms))
+            raise AnsibleError("with_inventory_hostnames expects a list")
+
+        # FIXME: the inventory is no longer available this way, so we may have
+        #        to dump the host list into the list of variables and read it back
+        #        in here (or the inventory sources, so we can recreate the list
+        #        of hosts)
+        #return self._flatten(inventory.Inventory(self.host_list).list_hosts(terms))
+        return terms
 

@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 '''
-Compat library for ansible.  This contains compatiblity definitions for older python
+Compat library for ansible.  This contains compatibility definitions for older python
 When we need to import a module differently depending on python version, do it
 here.  Then in the code we can simply import from compat in order to get what we want.
 '''

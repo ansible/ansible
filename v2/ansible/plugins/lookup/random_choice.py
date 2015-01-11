@@ -16,7 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
-from ansible import utils
+
+from ansible.plugins.lookup import LookupBase
 
 # useful for introducing chaos ... or just somewhat reasonably fair selection
 # amongst available mirrors
@@ -28,14 +29,9 @@ from ansible import utils
 #             - two 
 #             - three
 
-class LookupModule(object):
-
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
         return [ random.choice(terms) ]
 

@@ -15,27 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils as utils
-import ansible.errors as errors
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
+from ansible.utils.listify import listify_lookup_plugin_terms
 
+class LookupModule(LookupBase):
 
-class LookupModule(object):
+    def run(self, terms, variables, **kwargs):
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-
-
-    def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
-        terms[0] = utils.listify_lookup_plugin_terms(terms[0], self.basedir, inject)
+        terms[0] = listify_lookup_plugin_terms(terms[0], variables, loader=self._loader)
 
         if not isinstance(terms, list) or not len(terms) == 2:
-            raise errors.AnsibleError(
-                "subelements lookup expects a list of two items, first a dict or a list, and second a string")
-        terms[0] = utils.listify_lookup_plugin_terms(terms[0], self.basedir, inject)
-        if not isinstance(terms[0], (list, dict)) or not isinstance(terms[1], basestring):
-            raise errors.AnsibleError(
-                "subelements lookup expects a list of two items, first a dict or a list, and second a string")
+            raise AnsibleError("subelements lookup expects a list of two items, first a dict or a list, and second a string")
 
         if isinstance(terms[0], dict): # convert to list:
             if terms[0].get('skipped',False) != False:
@@ -46,19 +37,20 @@ class LookupModule(object):
                 elementlist.append(terms[0][key])
         else: 
             elementlist = terms[0]
+
         subelement = terms[1]
 
         ret = []
         for item0 in elementlist:
             if not isinstance(item0, dict):
-                raise errors.AnsibleError("subelements lookup expects a dictionary, got '%s'" %item0)
-            if item0.get('skipped',False) != False:
+                raise AnsibleError("subelements lookup expects a dictionary, got '%s'" %item0)
+            if item0.get('skipped', False) != False:
                 # this particular item is to be skipped
                 continue 
             if not subelement in item0:
-                raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
+                raise AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
             if not isinstance(item0[subelement], list):
-                raise errors.AnsibleError("the key %s should point to a list, got '%s'" % (subelement, item0[subelement]))
+                raise AnsibleError("the key %s should point to a list, got '%s'" % (subelement, item0[subelement]))
             sublist = item0.pop(subelement, [])
             for item1 in sublist:
                 ret.append((item0, item1))

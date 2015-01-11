@@ -432,7 +432,11 @@ class Ec2Inventory(object):
             self.push(self.inventory, key_name, dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'keys', key_name)
-        
+
+        # Inventory: Group by VPC
+        if instance.vpc_id:
+            self.push(self.inventory, self.to_safe('vpc_id_' + instance.vpc_id), dest)
+
         # Inventory: Group by security group
         try:
             for group in instance.groups:
@@ -504,13 +508,13 @@ class Ec2Inventory(object):
         self.push(self.inventory, instance.availability_zone, dest)
         if self.nested_groups:
             self.push_group(self.inventory, region, instance.availability_zone)
-        
+
         # Inventory: Group by instance type
         type_name = self.to_safe('type_' + instance.instance_class)
         self.push(self.inventory, type_name, dest)
         if self.nested_groups:
             self.push_group(self.inventory, 'types', type_name)
-        
+
         # Inventory: Group by security group
         try:
             if instance.security_group:
@@ -644,7 +648,7 @@ class Ec2Inventory(object):
             # try updating the cache
             self.do_api_calls_update_cache()
             if not self.args.host in self.index:
-                # host migh not exist anymore
+                # host might not exist anymore
                 return self.json_format_dict({}, True)
 
         (region, instance_id) = self.index[self.args.host]

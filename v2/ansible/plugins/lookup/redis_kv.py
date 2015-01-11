@@ -15,15 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
 import os
+import re
+
 HAVE_REDIS=False
 try:
     import redis        # https://github.com/andymccurdy/redis-py/
     HAVE_REDIS=True
 except ImportError:
     pass
-import re
+
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
 
 # ==============================================================
 # REDISGET: Obtain value from a GET on a Redis key. Terms
@@ -31,17 +34,15 @@ import re
 # URL may be empty, in which case redis://localhost:6379 assumed
 # --------------------------------------------------------------
 
-class LookupModule(object):
+class LookupModule(LookupBase):
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+    def run(self, terms, variables, **kwargs):
 
-        if HAVE_REDIS == False:
-            raise errors.AnsibleError("Can't LOOKUP(redis_kv): module redis is not installed")
+        if not HAVE_REDIS:
+            raise AnsibleError("Can't LOOKUP(redis_kv): module redis is not installed")
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        if not isinstance(terms, list):
+            terms = [ terms ]
 
         ret = []
         for term in terms:
@@ -59,7 +60,7 @@ class LookupModule(object):
                 host = m.group('host')
                 port = int(m.group('port'))
             except AttributeError:
-                raise errors.AnsibleError("Bad URI in redis lookup")
+                raise AnsibleError("Bad URI in redis lookup")
 
             try:
                 conn = redis.Redis(host=host, port=port)

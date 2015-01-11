@@ -15,21 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
-from ansible.utils import template
 import os
 
-class LookupModule(object):
+from ansible.plugins.lookup import LookupBase
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
-
-        try:
-            terms = template.template(self.basedir, terms, inject)
-        except Exception, e:
-            pass
+    def run(self, terms, variables, **kwargs):
 
         if isinstance(terms, basestring):
             terms = [ terms ]
@@ -38,4 +30,5 @@ class LookupModule(object):
         for term in terms:
             var = term.split()[0]
             ret.append(os.getenv(var, ''))
+
         return ret

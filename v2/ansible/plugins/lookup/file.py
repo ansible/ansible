@@ -15,27 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
 import os
 import codecs
 
-class LookupModule(object):
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
+class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
-        ret = []
-
-        # this can happen if the variable contains a string, strictly not desired for lookup
-        # plugins, but users may try it, so make it work.
         if not isinstance(terms, list):
             terms = [ terms ]
 
+        ret = []
         for term in terms:
-            basedir_path  = utils.path_dwim(self.basedir, term)
+            basedir_path  = self._loader.path_dwim(term)
             relative_path = None
             playbook_path = None
 
@@ -44,16 +39,20 @@ class LookupModule(object):
             # basedir of the current file, use dwim_relative to look in the
             # role/files/ directory, and finally the playbook directory
             # itself (which will be relative to the current working dir)
-            if '_original_file' in inject:
-                relative_path = utils.path_dwim_relative(inject['_original_file'], 'files', term, self.basedir, check=False)
-            if 'playbook_dir' in inject:
-                playbook_path = os.path.join(inject['playbook_dir'], term)
+
+            # FIXME: the original file stuff still needs to be worked out, but the
+            #        playbook_dir stuff should be able to be removed as it should
+            #        be covered by the fact that the loader contains that info
+            #if '_original_file' in variables:
+            #    relative_path = self._loader.path_dwim_relative(variables['_original_file'], 'files', term, self.basedir, check=False)
+            #if 'playbook_dir' in variables:
+            #    playbook_path = os.path.join(variables['playbook_dir'], term)
 
             for path in (basedir_path, relative_path, playbook_path):
                 if path and os.path.exists(path):
                     ret.append(codecs.open(path, encoding="utf8").read().rstrip())
                     break
             else:
-                raise errors.AnsibleError("could not locate file in lookup: %s" % term)
+                raise AnsibleError("could not locate file in lookup: %s" % term)
 
         return ret
