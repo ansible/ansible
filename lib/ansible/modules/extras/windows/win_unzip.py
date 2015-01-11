@@ -27,11 +27,11 @@ module: win_unzip
 version_added: ""
 short_description: Unzips compressed files on the Windows node
 description:
-     - Unzips compressed files, and can force reboot (if needed, i.e. such as hotfixes). If the destination directory does not exist, it will be created before unzipping the file. Specifying rm parameter will allow removal of the zip file after extraction.
+     - Unzips compressed files, and can force reboot (if needed, i.e. such as hotfixes). Has ability to recursively unzip files within the src zip file provided using Read-Archive and piping to Expand-Archive (Using PSCX). If the destination directory does not exist, it will be created before unzipping the file. If a .zip file is specified as src and recurse is true then PSCX will be installed.  Specifying rm parameter will allow removal of the src file after extraction.
 options:
-  zip:
+  src:
     description:
-      - Zip file to be unzipped (provide absolute path)
+      - File to be unzipped (provide absolute path)
     required: true
     default: null
     aliases: []
@@ -45,7 +45,23 @@ options:
     description:
       - Remove the zip file, after unzipping
     required: no
+    choices:
+      - true
+      - false
+      - yes
+      - no
     default: false
+    aliases: []
+  recurse:
+    description:
+      - Recursively expand zipped files within the src file.
+    required: no
+    default: false
+    choices:
+      - true
+      - false
+      - yes
+      - no
     aliases: []
   restart:
     description:
@@ -53,6 +69,8 @@ options:
     choices:
       - true
       - false
+      - yes
+      - no
     required: false
     default: false
     aliases: []
@@ -60,11 +78,31 @@ author: Phil Schwartz
 '''
 
 EXAMPLES = '''
-# This unzips hotfix http://support.microsoft.com/kb/2842230 and forces reboot (for hotfix to take effect)
-$ ansible -i hosts -m win_unzip -a "zip=C:\\463984_intl_x64_zip.exe dest=C:\\Hotfix restart=true" all
 # This unzips a library that was downloaded with win_get_url, and removes the file after extraction
-$ ansible -i hosts -m win_unzip -a "zip=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=true" all
+$ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=true" all
 # Playbook example
+
+# Simple unzip
+---
+- name: Unzip a bz2 (BZip) file
+  win_unzip:
+    src: "C:\Users\Phil\Logs.bz2"
+    dest: "C:\Users\Phil\OldLogs"
+
+# This playbook example unzips a .zip file and recursively decompresses the contained .gz files and removes all unneeded compressed files after completion.
+---
+- name: Unzip ApplicationLogs.zip and decompress all GZipped log files
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Recursively decompress GZ files in ApplicationLogs.zip
+      win_unzip:
+        src: C:\Downloads\ApplicationLogs.zip
+        dest: C:\Application\Logs
+        recurse: yes
+        rm: true
+
+# Install hotfix (self-extracting .exe)
 ---
 - name: Install WinRM PowerShell Hotfix for Windows Server 2008 SP1
   hosts: all
@@ -76,8 +114,9 @@ $ ansible -i hosts -m win_unzip -a "zip=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=t
       dest: 'C:\\463984_intl_x64_zip.exe'
   - name: Unzip hotfix
     win_unzip:
-      zip: "C:\\463984_intl_x64_zip.exe"
+      src: "C:\\463984_intl_x64_zip.exe"
       dest: "C:\\Hotfix"
+      recurse: true
       restart: true
   - name: Wait for server reboot...
   local_action:
