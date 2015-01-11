@@ -25,6 +25,7 @@
 import traceback
 import os
 import yum
+import rpm
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -108,7 +109,7 @@ options:
 
 notes: []
 # informational: requirements for nodes
-requirements: [ yum, rpm ]
+requirements: [ yum ]
 author: Seth Vidal
 '''
 
@@ -399,14 +400,19 @@ def transaction_exists(pkglist):
 
 def local_nvra(module, path):
     """return nvra of a local rpm passed in"""
-    
-    cmd = ['/bin/rpm', '-qp' ,'--qf', 
-            '%{name}-%{version}-%{release}.%{arch}\n', path ]
-    rc, out, err = module.run_command(cmd)
-    if rc != 0:
-        return None
-    nvra = out.split('\n')[0]
-    return nvra
+
+    ts = rpm.TransactionSet()
+    ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES)
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        header = ts.hdrFromFdno(fd)
+    finally:
+        os.close(fd)
+
+    return '%s-%s-%s.%s' % (header[rpm.RPMTAG_NAME], 
+                            header[rpm.RPMTAG_VERSION],
+                            header[rpm.RPMTAG_RELEASE],
+                            header[rpm.RPMTAG_ARCH])
     
 def pkg_to_dict(pkgstr):
 
