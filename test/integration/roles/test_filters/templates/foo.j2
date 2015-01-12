@@ -17,9 +17,6 @@ Dumping the same structure to YAML, but don't pretty print
 
 {{ some_structure | to_yaml }}
 
-Dumping hostvars to JSON (exercising a python-2.6 bug)
-{{ hostvars | to_nice_json }}
-
 From a recorded task, the changed, failed, success, and skipped
 filters are shortcuts to ask if those tasks produced changes, failed,
 succeeded, or skipped (as one might guess).
