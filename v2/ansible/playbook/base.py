@@ -122,7 +122,10 @@ class Base:
         return self
 
     def get_ds(self):
-        return self._ds
+       	try:
+            return getattr(self, '_ds')
+        except AttributeError:
+            return None
 
     def get_loader(self):
         return self._loader
@@ -214,11 +217,10 @@ class Base:
                 setattr(self, name, value)
 
             except (TypeError, ValueError), e:
-                #raise AnsibleParserError("the field '%s' has an invalid value, and could not be converted to an %s" % (name, attribute.isa), obj=self.get_ds())
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e))
-            except UndefinedError:
+                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
+            except UndefinedError, e:
                 if fail_on_undefined:
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined" % (name,))
+                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):
         '''

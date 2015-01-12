@@ -203,7 +203,12 @@ class Task(Base, Conditional, Taggable):
         return listify_lookup_plugin_terms(value, all_vars, loader=self._loader)
 
     def get_vars(self):
-        return self.serialize()
+        all_vars = self.serialize()
+        if 'tags' in all_vars:
+            del all_vars['tags']
+        if 'when' in all_vars:
+            del all_vars['when']
+        return all_vars
 
     def compile(self):
         '''
@@ -273,16 +278,14 @@ class Task(Base, Conditional, Taggable):
                 return False
         return super(Task, self).evaluate_conditional(all_vars)
 
-    def evaluate_tags(self, only_tags, skip_tags):
+    def evaluate_tags(self, only_tags, skip_tags, all_vars):
+        result = False
         if len(self._dep_chain):
             for dep in self._dep_chain:
-                if not dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
-                    return False
+                result |= dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
         if self._block is not None:
-            if not self._block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
-                return False
-        return super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
-
+            result |= self._block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
+        return result | super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
 
     def set_loader(self, loader):
         '''

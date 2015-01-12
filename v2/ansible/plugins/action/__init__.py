@@ -397,7 +397,7 @@ class ActionBase:
         debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _low_level_execute_command(self, cmd, tmp, executable=None, sudoable=False, in_data=None):
+    def _low_level_execute_command(self, cmd, tmp, executable=None, sudoable=True, in_data=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -413,8 +413,19 @@ class ActionBase:
         if executable is None:
             executable = C.DEFAULT_EXECUTABLE
 
+        prompt      = None
+        success_key = None
+
+        if sudoable:
+            if self._connection_info.su and self._connection_info.su_user:
+                cmd, prompt, success_key = self._connection_info.make_su_cmd(executable, cmd)
+            elif self._connection_info.sudo and self._connection_info.sudo_user:
+                # FIXME: hard-coded sudo_exe here
+                cmd, prompt, success_key = self._connection_info.make_sudo_cmd('/usr/bin/sudo', executable, cmd)
+
         debug("executing the command through the connection")
-        rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data, sudoable=sudoable)
+        #rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data, sudoable=sudoable)
+        rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data)
         debug("command execution done")
 
         if not isinstance(stdout, basestring):

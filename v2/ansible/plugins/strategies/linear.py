@@ -36,7 +36,7 @@ class StrategyModule(StrategyBase):
 
         # iteratate over each task, while there is one left to run
         work_to_do = True
-        while work_to_do:
+        while work_to_do and not self._tqm._terminated:
 
             try:
                 debug("getting the remaining hosts for this loop")
@@ -52,7 +52,30 @@ class StrategyModule(StrategyBase):
                 callback_sent = False
                 work_to_do = False
                 for host in hosts_left:
-                    task = iterator.get_next_task_for_host(host)
+                    while True:
+                        task = iterator.get_next_task_for_host(host)
+                        if not task:
+                            break
+
+                        debug("getting variables")
+                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        debug("done getting variables")
+
+                        # check to see if this task should be skipped, due to it being a member of a
+                        # role which has already run (and whether that role allows duplicate execution)
+                        if task._role and task._role.has_run():
+                            # If there is no metadata, the default behavior is to not allow duplicates,
+                            # if there is metadata, check to see if the allow_duplicates flag was set to true
+                            if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
+                                debug("'%s' skipped because role has already run" % task)
+                                continue
+
+                        if not task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, task_vars):
+                            debug("'%s' failed tag evaluation" % task)
+                            continue
+
+                        break
+
                     if not task:
                         continue
 
@@ -61,24 +84,21 @@ class StrategyModule(StrategyBase):
                         self._callback.playbook_on_task_start(task.get_name(), False)
                         callback_sent = True
 
-                    host_name = host.get_name()
-                    if 1: #host_name not in self._tqm._failed_hosts and host_name not in self._tqm._unreachable_hosts:
-                        self._blocked_hosts[host_name] = True
-                        self._queue_task(iterator._play, host, task, connection_info)
+                    self._blocked_hosts[host.get_name()] = True
+                    self._queue_task(host, task, task_vars, connection_info)
 
                     self._process_pending_results()
 
                 debug("done queuing things up, now waiting for results queue to drain")
                 self._wait_on_pending_results()
                 debug("results queue empty")
-            except IOError, e:
-                debug("got IOError: %s" % e)
+            except (IOError, EOFError), e:
+                debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return 1
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
 
-        result &= super(StrategyModule, self).run(iterator, connection_info)
+        return super(StrategyModule, self).run(iterator, connection_info, result)
 
-        return result

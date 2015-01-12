@@ -143,7 +143,7 @@ def main(args):
     # create the playbook executor, which manages running the plays
     # via a task queue manager
     pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=options)
-    pbex.run()
+    return pbex.run()
 
 if __name__ == "__main__":
     #display(" ", log_only=True)

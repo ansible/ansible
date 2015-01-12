@@ -19,7 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
+from ansible.template import Templar
 
 class Taggable:
     _tags = FieldAttribute(isa='list', default=[])
@@ -27,20 +29,29 @@ class Taggable:
     def __init__(self):
         super(Taggable, self).__init__()
 
-    def get_tags(self):
-        return self._tags[:]
-
-    def evaluate_tags(self, only_tags, skip_tags):
-        if self.tags:
-            my_tags = set(self.tags)
+    def _load_tags(self, attr, ds):
+        if isinstance(ds, list):
+            return ds
+        elif isinstance(ds, basestring):
+            return [ ds ]
         else:
-            my_tags = set()
+            raise AnsibleError('tags must be specified as a list', obj=ds)
 
+    def evaluate_tags(self, only_tags, skip_tags, all_vars):
+        templar = Templar(loader=self._loader, variables=all_vars)
+        tags = templar.template(self.tags)
+        if not isinstance(tags, list):
+            tags = set([tags])
+        else:
+            tags = set(tags)
+
+        #print("%s tags are: %s, only_tags=%s, skip_tags=%s" % (self, my_tags, only_tags, skip_tags))
         if skip_tags:
-            skipped_tags = my_tags.intersection(skip_tags)
+            skipped_tags = tags.intersection(skip_tags)
             if len(skipped_tags) > 0:
                 return False
-        matched_tags = my_tags.intersection(only_tags)
+        matched_tags = tags.intersection(only_tags)
+        #print("matched tags are: %s" % matched_tags)
         if len(matched_tags) > 0 or 'all' in only_tags:
             return True
         else:

@@ -144,6 +144,7 @@ class Cli(object):
                 dict(action=dict(module=options.module_name, args=parse_kv(options.module_args))),
             ]
         )
+
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # now create a task queue manager to execute the play
@@ -155,7 +156,7 @@ class Cli(object):
             tqm.cleanup()
             raise
 
-        return (result, len(tqm._failed_hosts), len(tqm._unreachable_hosts))
+        return result
 
     # ----------------------------------------------
 
@@ -179,12 +180,7 @@ if __name__ == '__main__':
     try:
         cli = Cli()
         (options, args) = cli.parse()
-        (result, num_failed, num_unreachable) = cli.run(options, args)
-        if not result:
-            if num_failed > 0:
-                sys.exit(2)
-            elif num_unreachable > 0:
-                sys.exit(3)
+        result = cli.run(options, args)
         
     except AnsibleError, e:
         print(e)
@@ -195,3 +191,4 @@ if __name__ == '__main__':
         print("ERROR: %s" % str(e))
         sys.exit(1)
 
+    sys.exit(result)

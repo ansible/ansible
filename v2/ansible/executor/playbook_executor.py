@@ -53,6 +53,7 @@ class PlaybookExecutor:
 
         signal.signal(signal.SIGINT, self._cleanup)
 
+        result = 0
         try:
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
@@ -67,7 +68,6 @@ class PlaybookExecutor:
                     new_play = play.copy()
                     new_play.post_validate(all_vars, fail_on_undefined=False)
 
-                    result = True
                     for batch in self._get_serialized_batches(new_play):
                         if len(batch) == 0:
                             raise AnsibleError("No hosts matched the list specified in the play", obj=play._ds)
@@ -75,22 +75,22 @@ class PlaybookExecutor:
                         self._inventory.restrict_to_hosts(batch)
                         # and run it...
                         result = self._tqm.run(play=play)
-                        if not result:
+                        if result != 0:
                             break
 
-                    if not result:
+                    if result != 0:
                         # FIXME: do something here, to signify the playbook execution failed
                         self._cleanup()
-                        return 1
+                        return result
         except:
             self._cleanup()
             raise
 
         self._cleanup()
-        return 0
+        return result
 
     def _cleanup(self, signum=None, framenum=None):
-        self._tqm.cleanup()
+        return self._tqm.cleanup()
 
     def _get_serialized_batches(self, play):
         '''

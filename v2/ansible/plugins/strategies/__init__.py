@@ -60,12 +60,26 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts     = dict()
 
-    def run(self, iterator, connection_info):
+    def run(self, iterator, connection_info, result=True):
+        # save the counts on failed/unreachable hosts, as the cleanup/handler
+        # methods will clear that information during their runs
+        num_failed      = len(self._tqm._failed_hosts)
+        num_unreachable = len(self._tqm._unreachable_hosts)
+
         debug("running the cleanup portion of the play")
-        result = self.cleanup(iterator, connection_info)
+        result &= self.cleanup(iterator, connection_info)
         debug("running handlers")
         result &= self.run_handlers(iterator, connection_info)
-        return result
+
+        if not result:
+            if num_unreachable > 0:
+                return 3
+            elif num_failed > 0:
+                return 2
+            else:
+                return 1
+        else:
+            return 0
 
     def get_hosts_remaining(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name not in self._tqm._failed_hosts and host.get_name() not in self._tqm._unreachable_hosts]
@@ -73,37 +87,10 @@ class StrategyBase:
     def get_failed_hosts(self):
         return [host for host in self._inventory.get_hosts() if host.name in self._tqm._failed_hosts]
 
-    def _queue_task(self, play, host, task, connection_info):
+    def _queue_task(self, host, task, task_vars, connection_info):
         ''' handles queueing the task up to be sent to a worker '''
 
-        debug("entering _queue_task() for %s/%s/%s" % (play, host, task))
-        # copy the task, to make sure we have a clean version, since the
-        # post-validation step will alter attribute values but this Task object
-        # is shared across all hosts in the play
-        debug("copying task")
-        new_task = task.copy()
-        debug("done copying task")
-
-        # squash variables down to a single dictionary using the variable manager and
-        # call post_validate() on the task, which will finalize the attribute values
-        debug("getting variables")
-        try:
-            task_vars = self._variable_manager.get_vars(loader=self._loader, play=play, host=host, task=new_task)
-        except EOFError:
-            # usually happens if the program is aborted, and the proxied object
-            # queue is cut off from the call, so we just ignore this and exit
-            return
-        debug("done getting variables")
-
-        debug("running post_validate() on the task")
-        if new_task.loop:
-            # if the task has a lookup loop specified, we do not error out
-            # on undefined variables yet, as fields may use {{item}} or some
-            # variant, which won't be defined until execution time
-            new_task.post_validate(task_vars, fail_on_undefined=False)
-        else:
-            new_task.post_validate(task_vars)
-        debug("done running post_validate() on the task")
+        debug("entering _queue_task() for %s/%s" % (host, task))
 
         # and then queue the new task
         debug("%s - putting task (%s) in queue" % (host, task))
@@ -116,12 +103,12 @@ class StrategyBase:
                 self._cur_worker = 0
 
             self._pending_results += 1
-            main_q.put((host, new_task, self._loader.get_basedir(), task_vars, connection_info), block=False)
+            main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info), block=False)
         except (EOFError, IOError, AssertionError), e:
             # most likely an abort
             debug("got an error while queuing: %s" % e)
             return
-        debug("exiting _queue_task() for %s/%s/%s" % (play, host, task))
+        debug("exiting _queue_task() for %s/%s" % (host, task))
 
     def _process_pending_results(self):
         '''
@@ -140,7 +127,8 @@ class StrategyBase:
                     host = task_result._host
                     task = task_result._task
                     if result[0] == 'host_task_failed':
-                        self._tqm._failed_hosts[host.get_name()] = True
+                        if not task.ignore_errors:
+                            self._tqm._failed_hosts[host.get_name()] = True
                         self._callback.runner_on_failed(task, task_result)
                     elif result[0] == 'host_unreachable':
                         self._tqm._unreachable_hosts[host.get_name()] = True

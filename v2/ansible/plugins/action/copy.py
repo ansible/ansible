@@ -111,16 +111,10 @@ class ActionModule(ActionBase):
         #        return ReturnData(conn=conn, result=results)
         ###############################################################################################
         else:
-            # FIXME: templating needs to be worked out still
-            #source = template.template(self.runner.basedir, source, inject)
-            # FIXME: original_file stuff needs to be reworked - most likely
-            #        simply checking to see if the task has a role and using
-            #        using the role path as the dwim target and basedir would work
-            #if '_original_file' in inject:
-            #    source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
-            #else:
-            #    source = utils.path_dwim(self.runner.basedir, source)
-            source = self._loader.path_dwim(source)
+            if self._task._role is not None:
+                source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
+            else:
+                source = self._loader.path_dwim(source)
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
@@ -129,7 +123,7 @@ class ActionModule(ActionBase):
         if os.path.isdir(source):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
-                sz = len(source) + 1
+                sz = len(source)
             else:
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
