@@ -266,12 +266,12 @@ class User(object):
         # select whether we dump additional debug info through syslog
         self.syslogging = False
 
-    def execute_command(self, cmd, use_unsafe_shell=False):
+    def execute_command(self, cmd, use_unsafe_shell=False, data=None):
         if self.syslogging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
 
-        return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell)
+        return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def remove_user_userdel(self):
         cmd = [self.module.get_bin_path('userdel', True)]
@@ -1415,11 +1415,10 @@ class AIX(User):
         # set password with chpasswd
         if self.password is not None:
             cmd = []
-            cmd.append('echo \''+self.name+':'+self.password+'\' |')
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
-            self.execute_command(' '.join(cmd), use_unsafe_shell=True)
+            self.execute_command(' '.join(cmd), data="%s:%s" % (self.name, self.password))
 
         return (rc, out, err)
 
@@ -1494,11 +1493,10 @@ class AIX(User):
         # set password with chpasswd
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd = []
-            cmd.append('echo \''+self.name+':'+self.password+'\' |')
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
-            (rc2, out2, err2) = self.execute_command(' '.join(cmd), use_unsafe_shell=True)
+            (rc2, out2, err2) = self.execute_command(' '.join(cmd), data="%s:%s" % (self.name, self.password))
         else:
             (rc2, out2, err2) = (None, '', '')
 
