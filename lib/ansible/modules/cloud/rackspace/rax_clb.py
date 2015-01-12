@@ -152,7 +152,14 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
-    for balancer in clb.list():
+    balancer_list = clb.list()
+    while balancer_list:
+        retrieved = clb.list(marker=balancer_list.pop().id)
+        balancer_list.extend(retrieved)
+        if len(retrieved) < 2:
+            break
+
+    for balancer in balancer_list:
         if name != balancer.name and name != balancer.id:
             continue
 
