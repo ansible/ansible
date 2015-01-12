@@ -86,8 +86,6 @@ debconf: name='oracle-java7-installer' question='shared/accepted-oracle-license-
 debconf: name='tzdata'
 '''
 
-import pipes
-
 def get_selections(module, pkg):
     cmd = [module.get_bin_path('debconf-show', True), pkg]
     rc, out, err = module.run_command(' '.join(cmd))
@@ -106,14 +104,14 @@ def get_selections(module, pkg):
 
 def set_selection(module, pkg, question, vtype, value, unseen):
 
-    data = ' '.join([ question, vtype, value ])
-
     setsel = module.get_bin_path('debconf-set-selections', True)
-    cmd = ["echo %s %s |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
+    cmd = [setsel]
     if unseen:
         cmd.append('-u')
 
-    return module.run_command(' '.join(cmd), use_unsafe_shell=True)
+    data = ' '.join([pkg, question, vtype, value])
+
+    return module.run_command(cmd, data=data)
 
 def main():
 
