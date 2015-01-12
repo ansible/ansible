@@ -132,8 +132,8 @@ def main():
 
         # LVCREATE(8) -L --size option unit
         elif size[-1].isalpha():
-            if size[-1] in 'bBsSkKmMgGtTpPeE':
-                size_unit = size[-1]
+            if size[-1].lower() in 'bskmgtpe':
+                size_unit = size[-1].lower()
                 if size[0:-1].isdigit():
                     size = int(size[0:-1])
                 else:
