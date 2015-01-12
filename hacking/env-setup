@@ -8,16 +8,16 @@ if [ -n "$BASH_SOURCE" ] ; then
 elif [ $(basename "$0") = "env-setup" ]; then
     HACKING_DIR=$(dirname "$0")
 else
-    HACKING_DIR="$PWD/hacking"
+    HACKING_DIR=$PWD/hacking
 fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 ANSIBLE_HOME=$(dirname "$FULL_PATH")
 
-PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
-PREFIX_PATH="$ANSIBLE_HOME/bin"
-PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
+PREFIX_PYTHONPATH=$ANSIBLE_HOME/lib
+PREFIX_PATH=$ANSIBLE_HOME/bin
+PREFIX_MANPATH=$ANSIBLE_HOME/docs/man
 
 [[ $PYTHONPATH != ${PREFIX_PYTHONPATH}* ]] && export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
 [[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
@@ -49,10 +49,10 @@ fi
 
 # Print out values unless -q is set
 
-if [ $# -eq 0 -o "$1" != "-q" ] ; then
-    echo ""
-    echo "Setting up Ansible to run out of checkout..."
-    echo ""
+if [[ $# -eq 0 || $1 != -q ]] ; then
+    echo
+    echo Setting up Ansible to run out of checkout...
+    echo
     echo "PATH=$PATH"
     echo "PYTHONPATH=$PYTHONPATH"
     echo "MANPATH=$MANPATH"
