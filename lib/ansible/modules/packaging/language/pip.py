@@ -63,7 +63,7 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
   virtualenv_command:
-    version_aded: "1.1"
+    version_added: "1.1"
     description:
       - The command or a pathname to the command to create the virtual
         environment with. For example C(pyvenv), C(virtualenv),
