@@ -150,21 +150,13 @@ def log(msg):
     syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
     syslog.syslog(syslog.LOG_NOTICE, msg)
 
-def yum_base(conf_file=None, cachedir=False):
+def yum_base(conf_file=None):
 
     my = yum.YumBase()
     my.preconf.debuglevel=0
     my.preconf.errorlevel=0
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
-    if cachedir or os.geteuid() != 0:
-        if hasattr(my, 'setCacheDir'):
-            my.setCacheDir()
-        else:
-            cachedir = yum.misc.getCacheDir()
-            my.repos.setCacheDir(cachedir)
-            my.conf.cache = 0 
-
     return my
 
 def install_yum_utils(module):
