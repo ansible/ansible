@@ -498,16 +498,14 @@ def main():
         if user_exists(cursor, user, host):
             try:
                 changed = user_mod(cursor, user, host, password, priv, append_privs)
-            except SQLParseError, e:
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
-            except InvalidPrivsError, e:
-                module.mail_json(msg=str(e))
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
             try:
                 changed = user_add(cursor, user, host, password, priv)
-            except SQLParseError, e:
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
     elif state == "absent":
         if user_exists(cursor, user, host):
