@@ -135,7 +135,6 @@ def main():
     unseen   = module.params["unseen"]
 
     prev = get_selections(module, pkg)
-    diff = ''
 
     changed = False
     msg = ""
