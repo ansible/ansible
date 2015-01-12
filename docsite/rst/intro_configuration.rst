@@ -496,7 +496,7 @@ sudo_flags
 ==========
 
 Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the environment
-of the original user.  In some situations you may wish to add or remote flags, but in general most users
+of the original user.  In some situations you may wish to add or remove flags, but in general most users
 will not need to change this setting::
 
    sudo_flags=-H
