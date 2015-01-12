@@ -65,7 +65,7 @@ class ActionModule(object):
             stat = module_return.result.get('stat', None)
             if stat and stat.get('exists', False):
                 return ReturnData(
-	            conn=conn,
+                    conn=conn,
                     comm_ok=True,
                     result=dict(
                         skipped=True,

@@ -15,21 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import base64
 import json
 import os.path
-import yaml
 import types
 import pipes
 import glob
 import re
 import collections
 import operator as py_operator
+from random import SystemRandom, shuffle
+
+import yaml
+from jinja2.filters import environmentfilter
+from distutils.version import LooseVersion, StrictVersion
+
 from ansible import errors
 from ansible.utils import md5s, checksum_s
-from distutils.version import LooseVersion, StrictVersion
-from random import SystemRandom, shuffle
-from jinja2.filters import environmentfilter
 
 
 def to_nice_yaml(*a, **kw):
@@ -42,6 +45,22 @@ def to_json(a, *args, **kw):
 
 def to_nice_json(a, *args, **kw):
     '''Make verbose, human readable JSON'''
+    # python-2.6's json encoder is buggy (can't encode hostvars)
+    if sys.version_info < (2, 7):
+        try:
+            import simplejson
+        except ImportError:
+            pass
+        else:
+            try:
+                major = int(simplejson.__version__.split('.')[0])
+            except:
+                pass
+            else:
+                if major >= 2:
+                    return simplejson.dumps(a, indent=4, sort_keys=True, *args, **kw)
+        # Fallback to the to_json filter
+        return to_json(a, *args, **kw)
     return json.dumps(a, indent=4, sort_keys=True, *args, **kw)
 
 def failed(*a, **kw):
