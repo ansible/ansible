@@ -30,6 +30,7 @@ from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom, shuffle
 from jinja2.filters import environmentfilter
+from os import readlink
 
 
 def to_nice_yaml(*a, **kw):
@@ -268,6 +269,9 @@ class FilterModule(object):
             'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
             'relpath': os.path.relpath,
+            
+            #os
+            'readlink': readlink,
 
             # failure testing
             'failed'  : failed,
