@@ -141,9 +141,9 @@ class ResultProcess(multiprocessing.Process):
                         else:
                             self._send_result(('set_host_facts', result._host, result._result['ansible_facts']))
 
-                    # if this task is registering a result, do it now
-                    if result._task.register:
-                        self._send_result(('set_host_var', result._host, result._task.register, result._result))
+                # if this task is registering a result, do it now
+                if result._task.register:
+                    self._send_result(('set_host_var', result._host, result._task.register, result._result))
 
             except Queue.Empty:
                 pass

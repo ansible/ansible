@@ -24,8 +24,8 @@ import tempfile
 import base64
 import re
 
-
 from ansible.plugins.action import ActionBase
+from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
 
 class ActionModule(ActionBase):
@@ -78,21 +78,16 @@ class ActionModule(ActionBase):
         src        = self._task.args.get('src', None)
         dest       = self._task.args.get('dest', None)
         delimiter  = self._task.args.get('delimiter', None)
-        # FIXME: boolean needs to be moved out of utils
-        #remote_src = utils.boolean(options.get('remote_src', 'yes'))
         remote_src = self._task.args.get('remote_src', 'yes')
         regexp     = self._task.args.get('regexp', None)
 
         if src is None or dest is None:
             return dict(failed=True, msg="src and dest are required")
 
-        # FIXME: this should be boolean, hard-coded to yes for testing
-        if remote_src == 'yes':
+        if boolean(remote_src):
             return self._execute_module(tmp=tmp)
-        # FIXME: we don't do inject anymore, so not sure where the original
-        #        file stuff is going to end up at this time
-        #elif '_original_file' in inject:
-        #    src = utils.path_dwim_relative(inject['_original_file'], 'files', src, self.runner.basedir)
+        elif self._task._role is not None:
+            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
             # the source is local, so expand it here
             src = os.path.expanduser(src)

@@ -87,6 +87,7 @@ class Connection(ConnectionBase):
 
         if self._connection_info.port is not None:
             self._common_args += ["-o", "Port=%d" % (self._connection_info.port)]
+        # FIXME: need to get this from connection info
         #if self.private_key_file is not None:
         #    self._common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
         #elif self.runner.private_key_file is not None:
@@ -256,7 +257,7 @@ class Connection(ConnectionBase):
             self._display.vvv("EXEC previous known host file not found for %s" % host)
         return True
 
-    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None, sudoable=False):
+    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
@@ -266,15 +267,14 @@ class Connection(ConnectionBase):
             # inside a tty automatically invokes the python interactive-mode but the modules are not
             # compatible with the interactive-mode ("unexpected indent" mainly because of empty lines)
             ssh_cmd += ["-tt"]
-        # FIXME: verbosity needs to move, most likely into connection info or
-        #        whatever other context we pass around instead of runner objects
-        #if utils.VERBOSITY > 3:
-        #    ssh_cmd += ["-vvv"]
-        #else:
-        #    ssh_cmd += ["-q"]
-        ssh_cmd += ["-q"]
+        if self._connection_info.verbosity > 3:
+            ssh_cmd += ["-vvv"]
+        else:
+            ssh_cmd += ["-q"]
         ssh_cmd += self._common_args
 
+        # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
+        #        not sure if it's all working yet so this remains commented out
         #if self._ipv6:
         #    ssh_cmd += ['-6']
         ssh_cmd += [self._host.ipv4_address]
@@ -436,6 +436,9 @@ class Connection(ConnectionBase):
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
         host = self._host.ipv4_address
+
+        # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
+        #        not sure if it's all working yet so this remains commented out
         #if self._ipv6:
         #    host = '[%s]' % host
 
@@ -463,6 +466,9 @@ class Connection(ConnectionBase):
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
         host = self._host.ipv4_address
+
+        # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
+        #        not sure if it's all working yet so this remains commented out
         #if self._ipv6:
         #    host = '[%s]' % self._host
 

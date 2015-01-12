@@ -109,15 +109,14 @@ class TaskExecutor:
 
             try:
                 tmp_task = self._task.copy()
-                tmp_task.post_validate(task_vars)
             except AnsibleParserError, e:
                 results.append(dict(failed=True, msg=str(e)))
                 continue
 
-            # now we swap the internal task with the re-validate copy, execute,
+            # now we swap the internal task with the copy, execute,
             # and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
-            res = self._execute()
+            res = self._execute(variables=task_vars)
             (self._task, tmp_task) = (tmp_task, self._task)
 
             # FIXME: we should be sending back a callback result for each item in the loop here
@@ -129,32 +128,24 @@ class TaskExecutor:
 
         return results
 
-    def _execute(self):
+    def _execute(self, variables=None):
         '''
         The primary workhorse of the executor system, this runs the task
         on the specified host (which may be the delegated_to host) and handles
         the retry/until and block rescue/always execution
         '''
 
+        if variables is None:
+            variables = self._job_vars
+
         self._connection = self._get_connection()
         self._handler    = self._get_action_handler(connection=self._connection)
 
-        # check to see if this task should be skipped, due to it being a member of a
-        # role which has already run (and whether that role allows duplicate execution)
-        if self._task._role and self._task._role.has_run():
-            # If there is no metadata, the default behavior is to not allow duplicates,
-            # if there is metadata, check to see if the allow_duplicates flag was set to true
-            if self._task._role._metadata is None or self._task._role._metadata and not self._task._role._metadata.allow_duplicates:
-                debug("task belongs to a role which has already run, but does not allow duplicate execution")
-                return dict(skipped=True, skip_reason='This role has already been run, but does not allow duplicates')
-
-        if not self._task.evaluate_conditional(self._job_vars):
+        if not self._task.evaluate_conditional(variables):
             debug("when evaulation failed, skipping this task")
             return dict(skipped=True, skip_reason='Conditional check failed')
 
-        if not self._task.evaluate_tags(self._connection_info.only_tags, self._connection_info.skip_tags):
-            debug("Tags don't match, skipping this task")
-            return dict(skipped=True, skip_reason='Skipped due to specified tags')
+        self._task.post_validate(variables)
 
         retries = self._task.retries
         if retries <= 0:
@@ -173,7 +164,7 @@ class TaskExecutor:
                 result['attempts'] = attempt + 1
 
             debug("running the handler")
-            result = self._handler.run(task_vars=self._job_vars)
+            result = self._handler.run(task_vars=variables)
             debug("handler run complete")
 
             if self._task.async > 0:
@@ -189,7 +180,7 @@ class TaskExecutor:
 
             if self._task.until:
                 # make a copy of the job vars here, in case we need to update them
-                vars_copy = self._job_vars.copy()
+                vars_copy = variables.copy()
                 # now update them with the registered value, if it is set
                 if self._task.register:
                     vars_copy[self._task.register] = result

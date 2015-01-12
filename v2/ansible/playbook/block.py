@@ -153,14 +153,13 @@ class Block(Base, Conditional, Taggable):
                 return False
         return super(Block, self).evaluate_conditional(all_vars)
 
-    def evaluate_tags(self, only_tags, skip_tags):
+    def evaluate_tags(self, only_tags, skip_tags, all_vars):
+        result = False
         if self._parent_block is not None:
-            if not self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
-                return False
+            result |= self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
         elif self._role is not None:
-            if not self._role.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags):
-                return False
-        return super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags)
+            result |= self._role.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
+        return result | super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
 
     def set_loader(self, loader):
         self._loader = loader

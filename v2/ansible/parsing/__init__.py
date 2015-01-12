@@ -179,7 +179,7 @@ class DataLoader():
 
         basedir = os.path.dirname(role_path)
         if os.path.islink(basedir):
-            # FIXME: 
+            # FIXME: implement unfrackpath
             #basedir = unfrackpath(basedir)
             template2 = os.path.join(basedir, dirname, source)
         else:

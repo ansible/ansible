@@ -39,12 +39,12 @@ class Connection(ConnectionBase):
         ''' connect to the local host; nothing to do here '''
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the local host '''
 
         debug("in local.exec_command()")
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
-        if su or su_user:
+        if self._connection_info.su:
             raise AnsibleError("Internal Error: this module does not support running commands via su")
 
         if in_data:

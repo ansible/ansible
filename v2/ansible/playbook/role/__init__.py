@@ -35,6 +35,7 @@ from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
+from ansible.plugins import module_loader
 from ansible.utils.vars import combine_vars
 
 
@@ -127,6 +128,10 @@ class Role(Base, Conditional, Taggable):
         #self._loader.set_basedir(self._role_path)
 
         # load the role's files, if they exist
+        library = os.path.join(self._role_path, 'library')
+        if os.path.isdir(library):
+            module_loader.add_directory(library)
+
         metadata = self._load_role_yaml('meta')
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)

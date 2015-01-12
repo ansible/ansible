@@ -51,7 +51,7 @@ class ConnectionInformation:
         self.sudo_user   = ''
         self.sudo_pass   = ''
         self.verbosity   = 0
-        self.only_tags   = set(['all'])
+        self.only_tags   = set()
         self.skip_tags   = set()
 
         if play:
@@ -100,6 +100,9 @@ class ConnectionInformation:
                 self.only_tags.update(options.tags)
             elif isinstance(options.tags, basestring):
                 self.only_tags.update(options.tags.split(','))
+
+        if len(self.only_tags) == 0:
+            self.only_tags = set(['all'])
 
         if hasattr(options, 'skip_tags'):
             if isinstance(options.skip_tags, list):

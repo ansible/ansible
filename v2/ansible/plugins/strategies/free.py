@@ -43,7 +43,7 @@ class StrategyModule(StrategyBase):
         last_host = 0      
 
         work_to_do = True
-        while work_to_do:
+        while work_to_do and not self._tqm._terminated:
 
             hosts_left = self.get_hosts_remaining()
             if len(hosts_left) == 0:

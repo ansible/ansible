@@ -45,7 +45,7 @@ class ActionModule(ActionBase):
         # look up the files and use the first one we find as src
         #if 'first_available_file' in task_vars:
         #    found = False
-        #    for fn in self.runner.module_vars.get('first_available_file'):
+        #    for fn in task_vars.get('first_available_file'):
         #        fn_orig = fn
         #        fnt = template.template(self.runner.basedir, fn, task_vars)
         #        fnd = utils.path_dwim(self.runner.basedir, fnt)
@@ -59,14 +59,13 @@ class ActionModule(ActionBase):
         #        result = dict(failed=True, msg="could not find src in first_available_file list")
         #        return ReturnData(conn=conn, comm_ok=False, result=result)
         #else:
-        #    source = template.template(self.runner.basedir, source, task_vars)
-        #        
-        #    if '_original_file' in task_vars:
-        #        source = utils.path_dwim_relative(task_vars['_original_file'], 'templates', source, self.runner.basedir)
-        #    else:
-        #        source = utils.path_dwim(self.runner.basedir, source)
+        if 1:
+            if self._task._role is not None:
+                source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
+            else:
+                source = self._loader.path_dwim(source)
         ##################################################################################################
-        source = self._loader.path_dwim(source)
+        # END FIXME
         ##################################################################################################
 
         # Expand any user home dir specification

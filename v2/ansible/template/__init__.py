@@ -25,7 +25,7 @@ from jinja2.utils import concat as j2_concat
 from jinja2.runtime import StrictUndefined
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
 from ansible.plugins import filter_loader, lookup_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -266,7 +266,7 @@ class Templar:
                     res += '\n' * (data_newlines - res_newlines)
 
             return res
-        except UndefinedError, AnsibleUndefinedVariable:
+        except (UndefinedError, AnsibleUndefinedVariable), e:
             if self._fail_on_undefined_errors:
                 raise
             else:
