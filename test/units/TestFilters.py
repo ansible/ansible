@@ -4,7 +4,7 @@ Test bundled filters
 
 import os.path
 import unittest, tempfile, shutil
-from ansible import playbook, inventory, callbacks
+from ansible import playbook, inventory, callbacks, errors
 import ansible.runner.filter_plugins.core
 
 INVENTORY = inventory.Inventory(['localhost'])
@@ -144,6 +144,7 @@ class TestFilters(unittest.TestCase):
         #    playbook  = book,
         #    inventory = INVENTORY,
         #    transport = 'local',
+        
         #    callbacks = callbacks.PlaybookCallbacks(),
         #    runner_callbacks = callbacks.DefaultRunnerCallbacks(),
         #    stats  = callbacks.AggregateStats(),
@@ -183,3 +184,23 @@ class TestFilters(unittest.TestCase):
     def test_max(self):
         a = ansible.runner.filter_plugins.core.max([3, 2, 5, 4])
         assert a == 5
+        
+    def test_rand(self):
+        seed = "this is an arbitrary string"
+        
+        a = ansible.runner.filter_plugins.core.rand(None, 60, seed=seed)
+        b = ansible.runner.filter_plugins.core.rand(None, 60, seed=seed)
+        assert a == b
+        
+        c = ansible.runner.filter_plugins.core.rand(None, [0, 1, 2, 3], seed=seed)
+        d = ansible.runner.filter_plugins.core.rand(None, [0, 1, 2, 3], seed=seed)
+        assert c == d
+                
+        try:
+            ansible.runner.filter_plugins.core.rand(None, 60, seed=["mutable containers are not hashable"])
+        except errors.AnsibleFilterError as e:
+            # this should be an exception
+            assert True
+            return
+            
+        assert False

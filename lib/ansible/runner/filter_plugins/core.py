@@ -23,12 +23,12 @@ import types
 import pipes
 import glob
 import re
+import random
 import collections
 import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
-from random import SystemRandom, shuffle
 from jinja2.filters import environmentfilter
 
 
@@ -220,25 +220,33 @@ def version_compare(value, version, operator='eq', strict=False):
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed is not None:
+        if not isinstance(seed, collections.Hashable):
+            raise errors.AnsibleFilterError('seed must be hashable')
+        random.seed(seed)
+            
     if isinstance(end, (int, long)):
         if not start:
             start = 0
         if not step:
             step = 1
-        return r.randrange(start, end, step)
+        if seed is not None:
+            return random.randrange(start, end, step)
+        return random.SystemRandom().randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
             raise errors.AnsibleFilterError('start and step can only be used with integer values')
-        return r.choice(end)
+        if seed is not None:
+            return random.choice(end)
+        return random.SystemRandom().choice(end)
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 def randomize_list(mylist):
     try:
         mylist = list(mylist)
-        shuffle(mylist)
+        random.shuffle(mylist)
     except:
         pass
     return mylist
