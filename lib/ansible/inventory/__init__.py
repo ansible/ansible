@@ -607,8 +607,9 @@ class Inventory(object):
     def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False):
         """
         Loads variables from group_vars/<groupname> and host_vars/<hostname> in directories parallel
-        to the inventory base directory or in the same directory as the playbook.  Variables in the playbook
-        dir will win over the inventory dir if files are in both.
+        to the inventory base directory or in the same directory as the playbook, or in the current
+        working directory. Variables in the current dir will win over those in the playbook dir,
+        which will win over the inventory dir if files are in both.
         """
 
         results = {}
@@ -618,7 +619,14 @@ class Inventory(object):
         # look in both the inventory base directory and the playbook base directory
         # unless we do an update for a new playbook base dir
         if not new_pb_basedir:
-            basedirs = [_basedir, self._playbook_basedir]
+
+            # Include the current working directory first, if possible
+            try:
+                _cwd = os.getcwd()
+            except OSError:
+                _cwd = None
+
+            basedirs = [_cwd, _basedir, self._playbook_basedir]
         else:
             basedirs = [self._playbook_basedir]
 
