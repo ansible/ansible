@@ -467,11 +467,10 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
         if task.role_name:
-            name = '%s | %s' % (task.role_name, task.name)
+            self.callbacks.on_task_start('%s | %s' % (task.role_name, task.templated_name), is_handler)
         else:
-            name = task.name
+            self.callbacks.on_task_start(task.templated_name, is_handler)
 
-        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
@@ -555,9 +554,9 @@ class PlayBook(object):
 
         found = False
         for x in play.handlers():
-            if handler_name == template(play.basedir, x.name, x.module_vars):
+            if handler_name == x.templated_name:
                 found = True
-                self.callbacks.on_notify(host, x.name)
+                self.callbacks.on_notify(host, x.templated_name)
                 x.notified_by.append(host)
         if not found:
             raise errors.AnsibleError("change handler (%s) is not defined" % handler_name)
@@ -796,12 +795,10 @@ class PlayBook(object):
                     if len(handler.notified_by) > 0:
                         self.inventory.restrict_to(handler.notified_by)
 
-                        # Resolve the variables first
-                        handler_name = template(play.basedir, handler.name, handler.module_vars)
-                        if handler_name not in fired_names:
+                        if handler.templated_name not in fired_names:
                             self._run_task(play, handler, True)
                         # prevent duplicate handler includes from running more than once
-                        fired_names[handler_name] = 1
+                        fired_names[handler.templated_name] = 1
 
                         host_list = self._trim_unavailable_hosts(play._play_hosts)
                         if handler.any_errors_fatal and len(host_list) < hosts_count:
