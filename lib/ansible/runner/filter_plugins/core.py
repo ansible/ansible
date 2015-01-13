@@ -24,6 +24,9 @@ import pipes
 import glob
 import re
 import collections
+import crypt
+import hashlib
+import string
 import operator as py_operator
 from random import SystemRandom, shuffle
 
@@ -262,6 +265,39 @@ def randomize_list(mylist):
         pass
     return mylist
 
+def get_hash(data, hashtype='sha1'):
+
+    try: # see if hash is supported
+        h = hashlib.new(hashtype)
+    except:
+        return None
+
+    h.update(data)
+    return h.hexdigest()
+
+def get_encrypted_password(password, hashtype='sha512', salt=None):
+
+    # TODO: find a way to construct dynamically from system
+    cryptmethod= {
+        'md5':      '1',
+        'blowfish': '2a',
+        'sha256':   '5',
+        'sha512':   '6',
+    }
+
+    hastype = hashtype.lower()
+    if hashtype in cryptmethod:
+        if salt is None:
+            r = SystemRandom()
+            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(16)])
+
+        saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
+        encrypted = crypt.crypt(password,saltstring)
+        return encrypted
+
+    return None
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -314,6 +350,9 @@ class FilterModule(object):
             'sha1': checksum_s,
             # checksum of string as used by ansible for checksuming files
             'checksum': checksum_s,
+            # generic hashing
+            'password_hash': get_encrypted_password,
+            'hash': get_hash,
 
             # file glob
             'fileglob': fileglob,
