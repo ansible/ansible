@@ -619,6 +619,8 @@ def main():
 
     except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
+    except apt.cache.FetchFailedException:
+        module.fail_json(msg="Could not fetch updated apt files")
 
 # import module snippets
 from ansible.module_utils.basic import *
