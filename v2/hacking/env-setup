@@ -40,10 +40,10 @@ gen_egg_info()
 # directory in history
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
     pushd "$ANSIBLE_HOME"
-    gen_egg_info
+    #gen_egg_info
     popd
 else
-    gen_egg_info
+    #gen_egg_info
 fi
 
 # Print out values unless -q is set
