@@ -1,27 +1,50 @@
-#!/bin/bash
 # usage: source ./hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
-    HACKING_DIR=`dirname $BASH_SOURCE`
-elif [ $(basename $0) = "env-setup" ]; then
-    HACKING_DIR=`dirname $0`
+    HACKING_DIR=$(dirname "$BASH_SOURCE")
+elif [ $(basename "$0") = "env-setup" ]; then
+    HACKING_DIR=$(dirname "$0")
 else
     HACKING_DIR="$PWD/hacking"
 fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
-FULL_PATH=`python -c "import os; print(os.path.realpath('$HACKING_DIR'))"`
-ANSIBLE_HOME=`dirname "$FULL_PATH"`
+FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+ANSIBLE_HOME=$(dirname "$FULL_PATH")
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-[[ $PYTHONPATH != ${PREFIX_PYTHONPATH}* ]] && export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
-[[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
-[[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
+expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
+expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
+expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
+
+#
+# Generate egg_info so that pkg_resources works
+#
+
+# Do the work in a function so we don't repeat ourselves later
+gen_egg_info()
+{
+    python setup.py egg_info
+    if [ -e $PREFIX_PYTHONPATH/ansible*.egg-info ] ; then
+        rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
+    fi
+    mv ansible*.egg-info $PREFIX_PYTHONPATH
+}
+
+# In some shells if pushd is a no-op then popd sends you to a previous
+# directory in history
+if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
+    pushd "$ANSIBLE_HOME"
+    gen_egg_info
+    popd
+else
+    gen_egg_info
+fi
 
 # Print out values unless -q is set
 
@@ -33,7 +56,7 @@ if [ $# -eq 0 -o "$1" != "-q" ] ; then
     echo "PYTHONPATH=$PYTHONPATH"
     echo "MANPATH=$MANPATH"
     echo ""
-    
+
     echo "Remember, you may wish to specify your host file with -i"
     echo ""
     echo "Done!"
