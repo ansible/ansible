@@ -76,16 +76,33 @@ EXAMPLES = '''
 '''
 
 import os
+from zipfile import ZipFile
 
+class UnarchiveError(Exception):
+    pass
 
 # class to handle .zip files
 class ZipFile(object):
-    
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
         self.cmd_path = self.module.get_bin_path('unzip')
+        self._files_in_archive = []
+
+    @property
+    def files_in_archive(self, force_refresh=False):
+        if self._files_in_archive and not force_refresh:
+            return self._files_in_archive
+
+        archive = ZipFile(self.src)
+        try:
+            self._files_in_archive = archive.namelist()
+        except:
+            raise UnarchiveError('Unable to list files in the archive')
+
+        return self._files_in_archive
 
     def is_unarchived(self):
         return dict(unarchived=False)
@@ -107,13 +124,29 @@ class ZipFile(object):
 
 # class to handle gzipped tar files
 class TgzFile(object):
-    
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
         self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'z'
+        self._files_in_archive = []
+
+    @property
+    def files_in_archive(self, force_refresh=False):
+        if self._files_in_archive and not force_refresh:
+            return self._files_in_archive
+
+        cmd = '%s -t%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            raise UnarchiveError('Unable to list files in the archive')
+
+        for filename in out.splitlines():
+            if filename:
+                self._files_in_archive.append(filename)
+        return self._files_in_archive
 
     def is_unarchived(self):
         cmd = '%s -v -C "%s" --diff -%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
@@ -129,41 +162,35 @@ class TgzFile(object):
     def can_handle_archive(self):
         if not self.cmd_path:
             return False
-        cmd = '%s -t%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
-        rc, out, err = self.module.run_command(cmd)
-        if rc == 0:
-            if len(out.splitlines(True)) > 0:
+
+        try:
+            if self.files_in_archive:
                 return True
+        except UnarchiveError:
+            pass
+        # Errors and no files in archive assume that we weren't able to
+        # properly unarchive it
         return False
 
 
 # class to handle tar files that aren't compressed
 class TarFile(TgzFile):
     def __init__(self, src, dest, module):
-        self.src = src
-        self.dest = dest
-        self.module = module
-        self.cmd_path = self.module.get_bin_path('tar')
+        super(TarFile, self).__init__(src, dest, module)
         self.zipflag = ''
 
 
 # class to handle bzip2 compressed tar files
 class TarBzip(TgzFile):
     def __init__(self, src, dest, module):
-        self.src = src
-        self.dest = dest
-        self.module = module
-        self.cmd_path = self.module.get_bin_path('tar')
+        super(TarFile, self).__init__(src, dest, module)
         self.zipflag = 'j'
 
 
 # class to handle xz compressed tar files
 class TarXz(TgzFile):
     def __init__(self, src, dest, module):
-        self.src = src
-        self.dest = dest
-        self.module = module
-        self.cmd_path = self.module.get_bin_path('tar')
+        super(TarFile, self).__init__(src, dest, module)
         self.zipflag = 'J'
 
 
@@ -193,6 +220,7 @@ def main():
     src    = os.path.expanduser(module.params['src'])
     dest   = os.path.expanduser(module.params['dest'])
     copy   = module.params['copy']
+    file_args = module.load_file_common_arguments(module.params)
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -217,20 +245,25 @@ def main():
     res_args['check_results'] = handler.is_unarchived()
     if res_args['check_results']['unarchived']:
         res_args['changed'] = False
-        module.exit_json(**res_args)
+    else:
+        # do the unpack
+        try:
+            res_args['extract_results'] = handler.unarchive()
+            if res_args['extract_results']['rc'] != 0:
+                module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+        except IOError:
+            module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
+        else:
+            res_args['changed'] = True
 
-    # do the unpack
-    try:
-        res_args['extract_results'] = handler.unarchive()
-        if res_args['extract_results']['rc'] != 0:
-            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
-    except IOError:
-        module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
-
-    res_args['changed'] = True
+    # do we need to change perms?
+    for filename in handler.files_in_archive:
+        file_args['path'] = os.path.join(dest, filename)
+        res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
