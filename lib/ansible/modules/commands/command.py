@@ -178,6 +178,7 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
+        chdir = os.path.abspath(os.path.expanduser(chdir))
         os.chdir(chdir)
 
     if creates:
