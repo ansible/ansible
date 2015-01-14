@@ -63,7 +63,7 @@ options:
        description:
            - Enable autorefresh of the repository.
         required: false
-        default: "no"
+        default: "yes"
         choices: [ "yes", "no" ]
         aliases: []
 notes: []
