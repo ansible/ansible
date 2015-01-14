@@ -79,8 +79,8 @@ EXAMPLES = '''
       - subnet-aaaaaaaa
       - subnet-bbbbbbbb
 
-# Remove a parameter group
-- rds_param_group:
+# Remove a subnet group
+- rds_subnet_group:
     state: absent
     name: norwegian-blue
 '''
