@@ -38,13 +38,13 @@ gen_egg_info()
 
 # In some shells if pushd is a no-op then popd sends you to a previous
 # directory in history
-if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
-    pushd "$ANSIBLE_HOME"
-    #gen_egg_info
-    popd
-else
-    #gen_egg_info
-fi
+#if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
+#    pushd "$ANSIBLE_HOME"
+#    gen_egg_info
+#    popd
+#else
+#    gen_egg_info
+#fi
 
 # Print out values unless -q is set
 
