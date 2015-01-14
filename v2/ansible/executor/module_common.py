@@ -156,7 +156,6 @@ class ModuleReplacer(object):
 
             # these strings should be part of the 'basic' snippet which is required to be included
             module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
-            module_data = module_data.replace(REPLACER_ARGS, "''")
             module_data = module_data.replace(REPLACER_COMPLEX, encoded_args)
 
             # FIXME: we're not passing around an inject dictionary anymore, so
