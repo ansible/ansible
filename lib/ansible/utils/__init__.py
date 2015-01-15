@@ -462,8 +462,12 @@ def role_yaml_parse(role):
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
+    try:
+        loaded = json.loads(data)
+    except ValueError,e:
+        raise errors.AnsibleError("Unable to read provided data as JSON: %s" % str(e))
 
-    return json.loads(data)
+    return loaded
 
 def _clean_data(orig_data, from_remote=False, from_inventory=False):
     ''' remove jinja2 template tags from a string '''
