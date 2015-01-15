@@ -817,6 +817,10 @@ class Runner(object):
                      port,
                      complex_args=complex_args
                 )
+
+                if 'stdout' in result.result and 'stdout_lines' not in result.result:
+                    result.result['stdout_lines'] = result.result['stdout'].splitlines()
+
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
