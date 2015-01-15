@@ -1,6 +1,12 @@
 # usage: source ./hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
+# Default values for shell variables we use
+PYTHONPATH=${PYTHONPATH-""}
+PATH=${PATH-""}
+MANPATH=${MANPATH-""}
+VERBOSITY=${1-""}
+
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=$(dirname "$BASH_SOURCE")
@@ -40,15 +46,23 @@ gen_egg_info()
 # directory in history
 #if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
 #    pushd "$ANSIBLE_HOME"
-#    gen_egg_info
+#    if [ "$VERBOSITY" = "-q" ] ; then
+#        gen_egg_info 2>1 1> /dev/null
+#    else
+#        gen_egg_info
+#    fi
 #    popd
 #else
-#    gen_egg_info
+#    if [ "$VERBOSITY" = "-q" ] ; then
+#        gen_egg_info 2>1 1> /dev/null
+#    else
+#        gen_egg_info
+#    fi
 #fi
 
 # Print out values unless -q is set
 
-if [ $# -eq 0 -o "$1" != "-q" ] ; then
+if [ "$VERBOSITY" != "-q" ] ; then
     echo ""
     echo "Setting up Ansible to run out of checkout..."
     echo ""
