@@ -8,7 +8,7 @@ All new modules should be submitted here, and have a chance to be promoted to co
 Reporting bugs
 ==============
 
-Take care to submit tickets to the appropriate repo where modules are contained. The repo is mentioned at the bottom of modlue documentation page at [docs.ansible.com](http://docs.ansible.com/).
+Take care to submit tickets to the appropriate repo where modules are contained. The repo is mentioned at the bottom of module documentation page at [docs.ansible.com](http://docs.ansible.com/).
 
 Testing modules
 ===============
@@ -18,4 +18,4 @@ Ansible [module development guide](http://docs.ansible.com/developing_modules.ht
 License
 =======
 
-As with Ansible, modules distributed with Ansible are GPLv3 licensed.  User generated modules not part of this project can be of any license.
+As with Ansible, modules distributed with Ansible are GPLv3 licensed. User generated modules not part of this project can be of any license.
