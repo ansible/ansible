@@ -52,16 +52,16 @@ options:
             - A description of the repository
     disable_gpg_check:
         description:
-          - Whether to disable GPG signature checking of
-            all packages. Has an effect only if state is
-            I(present).
+            - Whether to disable GPG signature checking of
+              all packages. Has an effect only if state is
+              I(present).
         required: false
         default: "no"
         choices: [ "yes", "no" ]
         aliases: []
     refresh:
-       description:
-           - Enable autorefresh of the repository.
+        description:
+            - Enable autorefresh of the repository.
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
