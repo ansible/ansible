@@ -46,23 +46,34 @@ class CallbackModule(CallbackBase):
         pass
 
     def runner_on_failed(self, task, result, ignore_errors=False):
-        self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), result._result), color='red')
+        self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), json.dumps(result._result, ensure_ascii=False)), color='red')
 
     def runner_on_ok(self, task, result):
-        msg = "ok: [%s]" % result._host.get_name()
+
+        if result._result.get('changed', False):
+            msg = "changed: [%s]" % result._host.get_name()
+            color = 'yellow'
+        else:
+            msg = "ok: [%s]" % result._host.get_name()
+            color = 'green'
+
         if self._display._verbosity > 0 or 'verbose_always' in result._result:
+            indent = None
             if 'verbose_always' in result._result:
+                indent = 4
                 del result._result['verbose_always']
-            msg += " => %s" % result._result
-        self._display.display(msg, color='green')
+            msg += " => %s" % json.dumps(result._result, indent=indent, ensure_ascii=False)
+        self._display.display(msg, color=color)
 
     def runner_on_skipped(self, task, result):
-        msg = "SKIPPED: [%s]" % result._host.get_name()
+        msg = "skipping: [%s]" % result._host.get_name()
         if self._display._verbosity > 0 or 'verbose_always' in result._result:
+            indent = None
             if 'verbose_always' in result._result:
+                indent = 4
                 del result._result['verbose_always']
-            msg += " => %s" % result._result
-        self._display.display(msg)
+            msg += " => %s" % json.dumps(result._result, indent=indent, ensure_ascii=False)
+        self._display.display(msg, color='cyan')
 
     def runner_on_unreachable(self, task, result):
         self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), result._result), color='red')

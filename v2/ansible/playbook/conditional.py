@@ -32,7 +32,15 @@ class Conditional:
 
     _when = FieldAttribute(isa='list', default=[])
 
-    def __init__(self):
+    def __init__(self, loader=None):
+        # when used directly, this class needs a loader, but we want to
+        # make sure we don't trample on the existing one if this class
+        # is used as a mix-in with a playbook base class
+        if not hasattr(self, '_loader'):
+            if loader is None:
+                raise AnsibleError("a loader must be specified when using Conditional() directly")
+            else:
+                self._loader = loader
         super(Conditional, self).__init__()
 
     def _validate_when(self, attr, name, value):

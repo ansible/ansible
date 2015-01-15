@@ -150,7 +150,6 @@ class VariableManager:
 
             # next comes the facts cache and the vars cache, respectively
             all_vars = self._merge_dicts(all_vars, self._fact_cache.get(host.get_name(), dict()))
-            all_vars = self._merge_dicts(all_vars, self._vars_cache.get(host.get_name(), dict()))
 
         if play:
             all_vars = self._merge_dicts(all_vars, play.get_vars())
@@ -167,6 +166,9 @@ class VariableManager:
                     pass
             for role in play.get_roles():
                 all_vars = self._merge_dicts(all_vars, role.get_vars())
+
+        if host:
+            all_vars = self._merge_dicts(all_vars, self._vars_cache.get(host.get_name(), dict()))
 
         if task:
             if task._role:

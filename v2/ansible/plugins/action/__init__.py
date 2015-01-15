@@ -31,7 +31,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.module_common import ModuleReplacer
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.plugins import module_loader, shell_loader
+from ansible.plugins import shell_loader
 
 from ansible.utils.debug import debug
 
@@ -44,11 +44,12 @@ class ActionBase:
     action in use.
     '''
 
-    def __init__(self, task, connection, connection_info, loader):
+    def __init__(self, task, connection, connection_info, loader, module_loader):
         self._task            = task
         self._connection      = connection
         self._connection_info = connection_info
         self._loader          = loader
+        self._module_loader   = module_loader
         self._shell           = self.get_shell()
 
     def get_shell(self):
@@ -80,9 +81,9 @@ class ActionBase:
 
         # Search module path(s) for named module.
         module_suffixes = getattr(self._connection, 'default_suffixes', None)
-        module_path = module_loader.find_plugin(module_name, module_suffixes, transport=self._connection.get_transport())
+        module_path = self._module_loader.find_plugin(module_name, module_suffixes, transport=self._connection.get_transport())
         if module_path is None:
-            module_path2 = module_loader.find_plugin('ping', module_suffixes)
+            module_path2 = self._module_loader.find_plugin('ping', module_suffixes)
             if module_path2 is not None:
                 raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
             else:
@@ -391,6 +392,10 @@ class ActionBase:
             data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
             if 'parsed' in data and data['parsed'] == False:
                 data['msg'] += res['stderr']
+            # pre-split stdout into lines, if stdout is in the data and there
+            # isn't already a stdout_lines value there
+            if 'stdout' in data and 'stdout_lines' not in data:
+                data['stdout_lines'] = data.get('stdout', '').splitlines()
         else:
             data = dict()
 
@@ -424,7 +429,6 @@ class ActionBase:
                 cmd, prompt, success_key = self._connection_info.make_sudo_cmd('/usr/bin/sudo', executable, cmd)
 
         debug("executing the command through the connection")
-        #rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data, sudoable=sudoable)
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data)
         debug("command execution done")
 

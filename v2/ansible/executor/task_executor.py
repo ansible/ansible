@@ -22,8 +22,10 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.connection_info import ConnectionInformation
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import lookup_loader, connection_loader, action_loader
+from ansible.utils.listify import listify_lookup_plugin_terms
 
 from ansible.utils.debug import debug
 
@@ -41,12 +43,13 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, connection_info, loader):
+    def __init__(self, host, task, job_vars, connection_info, loader, module_loader):
         self._host            = host
         self._task            = task
         self._job_vars        = job_vars
         self._connection_info = connection_info
         self._loader          = loader
+        self._module_loader   = module_loader
 
     def run(self):
         '''
@@ -57,6 +60,13 @@ class TaskExecutor:
         debug("in run()")
 
         try:
+            # lookup plugins need to know if this task is executing from
+            # a role, so that it can properly find files/templates/etc.
+            roledir = None
+            if self._task._role:
+                roledir = self._task._role._role_path
+            self._job_vars['roledir'] = roledir
+
             items = self._get_loop_items()
             if items is not None:
                 if len(items) > 0:
@@ -84,7 +94,8 @@ class TaskExecutor:
 
         items = None
         if self._task.loop and self._task.loop in lookup_loader:
-            items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=self._task.loop_args, variables=self._job_vars)
+            loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, variables=self._job_vars, loader=self._loader)
+            items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=loop_terms, variables=self._job_vars)
 
         return items
 
@@ -184,11 +195,10 @@ class TaskExecutor:
                 # now update them with the registered value, if it is set
                 if self._task.register:
                     vars_copy[self._task.register] = result
-                # now create a pseudo task, and assign the value of the until parameter
-                # to the when param, so we can use evaluate_conditional()
-                pseudo_task = Task()
-                pseudo_task.when = self._task.until
-                if pseudo_task.evaluate_conditional(vars_copy):
+                # create a conditional object to evaluate the until condition
+                cond = Conditional(loader=self._loader)
+                cond.when = self._task.until
+                if cond.evaluate_conditional(vars_copy):
                     break
             elif 'failed' not in result and result.get('rc', 0) == 0:
                 # if the result is not failed, stop trying
@@ -223,7 +233,8 @@ class TaskExecutor:
             task=async_task,
             connection=self._connection,
             connection_info=self._connection_info,
-            loader=self._loader
+            loader=self._loader,
+            module_loader=self._module_loader,
         )
 
         time_left = self._task.async
@@ -283,7 +294,8 @@ class TaskExecutor:
             task=self._task,
             connection=connection,
             connection_info=self._connection_info,
-            loader=self._loader
+            loader=self._loader,
+            module_loader=self._module_loader,
         )
         if not handler:
             raise AnsibleError("the handler '%s' was not found" % handler_name)

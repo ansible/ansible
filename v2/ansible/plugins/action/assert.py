@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible.errors import AnsibleError
+from ansible.playbook.conditional import Conditional
 from ansible.plugins.action import ActionBase
 
 class ActionModule(ActionBase):
@@ -42,9 +43,10 @@ class ActionModule(ActionBase):
         # the built in evaluate function. The when has already been evaluated
         # by this point, and is not used again, so we don't care about mangling
         # that value now
+        cond = Conditional(loader=self._loader)
         for that in thats:
-            self._task.when = [ that ]
-            test_result = self._task.evaluate_conditional(all_vars=task_vars)
+            cond.when = [ that ]
+            test_result = cond.evaluate_conditional(all_vars=task_vars)
             if not test_result:
                 result = dict(
                    failed       = True,

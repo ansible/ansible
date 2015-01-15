@@ -17,10 +17,17 @@
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.template import Templar
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=dict()):
-        return dict(changed=True, ansible_facts=self._task.args)
+        templar = Templar(loader=self._loader, variables=task_vars)
+        facts = dict()
+        if self._task.args:
+            for (k, v) in self._task.args.iteritems():
+                k = templar.template(k)
+                facts[k] = v
+        return dict(changed=True, ansible_facts=facts)

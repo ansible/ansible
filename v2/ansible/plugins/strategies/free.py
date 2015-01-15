@@ -67,6 +67,11 @@ class StrategyModule(StrategyBase):
                     # anything to do do for this host
                     if host_name not in self._tqm._failed_hosts and host_name not in self._tqm._unreachable_hosts and iterator.get_next_task_for_host(host, peek=True):
 
+                        # FIXME: check task tags, etc. here as we do in linear
+                        # FIXME: handle meta tasks here, which will require a tweak
+                        #        to run_handlers so that only the handlers on this host
+                        #        are flushed and not all
+
                         # set the flag so the outer loop knows we've still found
                         # some work which needs to be done
                         work_to_do = True

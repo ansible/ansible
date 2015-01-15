@@ -32,7 +32,7 @@ class LookupModule(LookupBase):
     def __lookup_variabless(self, terms, variables):
         results = []
         for x in terms:
-            intermediate = listify_lookup_plugin_terms(x, variables)
+            intermediate = listify_lookup_plugin_terms(x, variables, loader=self._loader)
             results.append(intermediate)
         return results
 

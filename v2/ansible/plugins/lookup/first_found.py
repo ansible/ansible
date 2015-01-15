@@ -120,6 +120,7 @@
 import os
 
 from ansible.plugins.lookup import LookupBase
+from ansible.template import Templar
 
 class LookupModule(LookupBase):
 
@@ -167,22 +168,26 @@ class LookupModule(LookupBase):
         else:
             total_search = terms
 
+        templar = Templar(loader=self._loader, variables=variables)
+        roledir = variables.get('roledir')
         for fn in total_search:
-            # FIXME: the original file stuff needs to be fixed/implemented
-            #if variables and '_original_file' in variables:
-            #    # check the templates and vars directories too,
-            #    # if they exist
-            #    for roledir in ('templates', 'vars'):
-            #        path = self._loader.path_dwim(os.path.join(self.basedir, '..', roledir), fn)
-            #        if os.path.exists(path):
-            #            return [path]
+            fn = templar.template(fn)
+            if os.path.isabs(fn) and os.path.exists(fn):
+                return [fn]
+            else:
+                if roledir is not None:
+                    # check the templates and vars directories too,if they exist
+                    for subdir in ('templates', 'vars'):
+                        path = self._loader.path_dwim_relative(roledir, subdir, fn)
+                        if os.path.exists(path):
+                            return [path]
 
-            # if none of the above were found, just check the
-            # current filename against the basedir (this will already
-            # have ../files from runner, if it's a role task
-            path = self._loader.path_dwim(fn)
-            if os.path.exists(path):
-                return [path]
+                # if none of the above were found, just check the
+                # current filename against the basedir (this will already
+                # have ../files from runner, if it's a role task
+                path = self._loader.path_dwim(fn)
+                if os.path.exists(path):
+                    return [path]
         else:
             if skip:
                 return []

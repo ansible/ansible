@@ -20,5 +20,9 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+
+        if not isinstance(terms, list):
+            terms = [ terms ]
+
         return self._flatten(terms)
 

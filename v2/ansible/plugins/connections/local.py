@@ -117,7 +117,8 @@ class Connection(ConnectionBase):
         #vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         self._display.vvv("%s PUT %s TO %s" % (self._host, in_path, out_path))
         if not os.path.exists(in_path):
-            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            #raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise AnsibleError("file or module does not exist: %s" % in_path)
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:

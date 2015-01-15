@@ -63,12 +63,10 @@ class ActionModule(ActionBase):
         source = parts[0]
         args   = ' '.join(parts[1:])
 
-        # FIXME: need to sort out all the _original_file stuff still
-        #if '_original_file' in task_vars:
-        #    source = self._loader.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
-        #else:
-        #    source = self._loader.path_dwim(self.runner.basedir, source)
-        source = self._loader.path_dwim(source)
+        if self._task._role is not None:
+            source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
+        else:
+            source = self._loader.path_dwim(source)
 
         # transfer the file to a remote tmp location
         tmp_src = self._shell.join_path(tmp, os.path.basename(source))
