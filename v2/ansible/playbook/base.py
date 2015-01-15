@@ -231,13 +231,13 @@ class Base:
         as field attributes.
         '''
 
-        debug("starting serialization of %s" % self.__class__.__name__)
+        #debug("starting serialization of %s" % self.__class__.__name__)
         repr = dict()
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
             repr[name] = getattr(self, name)
 
-        debug("done serializing %s" % self.__class__.__name__)
+        #debug("done serializing %s" % self.__class__.__name__)
         return repr
 
     def deserialize(self, data):
@@ -248,7 +248,7 @@ class Base:
         and extended.
         '''
 
-        debug("starting deserialization of %s" % self.__class__.__name__)
+        #debug("starting deserialization of %s" % self.__class__.__name__)
         assert isinstance(data, dict)
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
@@ -256,7 +256,7 @@ class Base:
                 setattr(self, name, data[name])
             else:
                 setattr(self, name, attribute.default)
-        debug("done deserializing %s" % self.__class__.__name__)
+        #debug("done deserializing %s" % self.__class__.__name__)
 
     def __getattr__(self, needle):
 

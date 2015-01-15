@@ -18,6 +18,7 @@
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
+from ansible.utils.boolean import boolean
 
 class ActionModule(ActionBase):
 
@@ -29,5 +30,7 @@ class ActionModule(ActionBase):
         if self._task.args:
             for (k, v) in self._task.args.iteritems():
                 k = templar.template(k)
+                if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
+                    v = boolean(v)
                 facts[k] = v
         return dict(changed=True, ansible_facts=facts)

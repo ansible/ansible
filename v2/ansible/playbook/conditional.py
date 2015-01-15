@@ -55,11 +55,11 @@ class Conditional:
 
         templar = Templar(loader=self._loader, variables=all_vars)
         for conditional in self.when:
-            if not self._check_conditional(conditional, templar):
+            if not self._check_conditional(conditional, templar, all_vars):
                 return False
         return True
 
-    def _check_conditional(self, conditional, templar):
+    def _check_conditional(self, conditional, templar, all_vars):
         '''
         This method does the low-level evaluation of each conditional
         set on this object, using jinja2 to wrap the conditionals for
@@ -68,17 +68,20 @@ class Conditional:
 
         if conditional is None or conditional == '':
             return True
-        elif not isinstance(conditional, basestring):
-            return conditional
 
-        conditional = conditional.replace("jinja2_compare ","")
+        # FIXME: is this required? there is no indication what it does
+        #conditional = conditional.replace("jinja2_compare ","")
 
         # allow variable names
-        #if conditional in inject and '-' not in str(inject[conditional]):
-        #    conditional = inject[conditional]
+        #if conditional in all_vars and '-' not in str(all_vars[conditional]):
+        #    conditional = all_vars[conditional]
 
         conditional = templar.template(conditional, convert_bare=True)
-        original = str(conditional).replace("jinja2_compare ","")
+        if not isinstance(conditional, basestring):
+            return conditional
+
+        # FIXME: same as above
+        #original = str(conditional).replace("jinja2_compare ","")
 
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional

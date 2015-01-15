@@ -79,6 +79,10 @@ class TaskExecutor:
                 res = self._execute()
                 debug("_execute() done")
 
+            # make sure changed is set in the result, if it's not present
+            if 'changed' not in res:
+                res['changed'] = False
+
             debug("dumping result to json")
             result = json.dumps(res)
             debug("done dumping result, returning")
@@ -154,7 +158,7 @@ class TaskExecutor:
 
         if not self._task.evaluate_conditional(variables):
             debug("when evaulation failed, skipping this task")
-            return dict(skipped=True, skip_reason='Conditional check failed')
+            return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
 
         self._task.post_validate(variables)
 
@@ -165,6 +169,10 @@ class TaskExecutor:
         delay = self._task.delay
         if delay < 0:
             delay = 1
+
+        # make a copy of the job vars here, in case we need to update them
+        # with the registered variable value later on when testing conditions
+        vars_copy = variables.copy()
 
         debug("starting attempt loop")
         result = None
@@ -189,17 +197,28 @@ class TaskExecutor:
                 if self._task.poll > 0:
                     result = self._poll_async_result(result=result)
 
+            # update the local copy of vars with the registered value, if specified
+            if self._task.register:
+                vars_copy[self._task.register] = result 
+
+            # create a conditional object to evaluate task conditions
+            cond = Conditional(loader=self._loader)
+
+            # FIXME: make sure until is mutually exclusive with changed_when/failed_when
             if self._task.until:
-                # make a copy of the job vars here, in case we need to update them
-                vars_copy = variables.copy()
-                # now update them with the registered value, if it is set
-                if self._task.register:
-                    vars_copy[self._task.register] = result
-                # create a conditional object to evaluate the until condition
-                cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
                 if cond.evaluate_conditional(vars_copy):
                     break
+            elif (self._task.changed_when or self._task.failed_when) and 'skipped' not in result:
+                if self._task.changed_when:
+                    cond.when = [ self._task.changed_when ]
+                    result['changed'] = cond.evaluate_conditional(vars_copy)
+                if self._task.failed_when:
+                    cond.when = [ self._task.failed_when ]
+                    failed_when_result = cond.evaluate_conditional(vars_copy)
+                    result['failed_when_result'] = result['failed'] = failed_when_result
+                    if failed_when_result:
+                        break
             elif 'failed' not in result and result.get('rc', 0) == 0:
                 # if the result is not failed, stop trying
                 break

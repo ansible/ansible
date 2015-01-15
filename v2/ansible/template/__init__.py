@@ -30,6 +30,7 @@ from ansible.plugins import filter_loader, lookup_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
+from ansible.utils.debug import debug
 
 __all__ = ['Templar']
 
@@ -253,6 +254,7 @@ class Templar:
                         "Make sure your variable name does not contain invalid characters like '-'."
                     )
                 else:
+                    debug("failing because of a type error, template data is: %s" % data)
                     raise AnsibleError("an unexpected type error occurred. Error was %s" % te)
 
             if preserve_trailing_newlines:
