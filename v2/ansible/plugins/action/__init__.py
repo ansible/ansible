@@ -399,6 +399,12 @@ class ActionBase:
         else:
             data = dict()
 
+        # store the module invocation details back into the result
+        data['invocation'] = dict(
+            module_args = module_args,
+            module_name = module_name,
+        )
+
         debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
