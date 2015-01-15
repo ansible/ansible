@@ -465,6 +465,10 @@ class Ec2Inventory(object):
                 if self.nested_groups:
                     self.push_group(self.inventory, 'route53', name)
 
+        # Global Tag: instances without tags
+        if len(instance.tags) == 0:
+            self.push(self.inventory, 'tag_none', dest)
+            
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
 
