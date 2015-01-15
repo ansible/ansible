@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import re
 import yaml
 import argparse
 
@@ -9,6 +10,19 @@ try:
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
+
+
+def rax_list_iterator(svc, *args, **kwargs):
+    method = kwargs.pop('method', 'list')
+    items = getattr(svc, method)(*args, **kwargs)
+    while items:
+        retrieved = getattr(svc, method)(*args, marker=items[-1].id, **kwargs)
+        if items and retrieved and items[-1].id == retrieved[0].id:
+            del items[-1]
+        items.extend(retrieved)
+        if len(retrieved) < 2:
+            break
+    return items
 
 
 def parse_args():
@@ -53,13 +67,25 @@ def prompt_and_delete(item, prompt, assumeyes):
 
 def delete_rax(args):
     """Function for deleting CloudServers"""
+    search_opts = dict(name='^%s' % args.match_re)
     for region in pyrax.identity.services.compute.regions:
         cs = pyrax.connect_to_cloudservers(region=region)
-        servers = cs.servers.list(search_opts=dict(name='^%s' % args.match_re))
+        servers = rax_list_iterator(cs.servers, search_opts=search_opts)
         for server in servers:
             prompt_and_delete(server,
                               'Delete matching %s? [y/n]: ' % server,
                               args.assumeyes)
+
+
+def delete_rax_clb(args):
+    """Function for deleting Cloud Load Balancers"""
+    for region in pyrax.identity.services.load_balancer.regions:
+        clb = pyrax.connect_to_cloud_loadbalancers(region=region)
+        for lb in rax_list_iterator(clb):
+            if re.search(args.match_re, lb.name):
+                prompt_and_delete(lb,
+                                  'Delete matching %s? [y/n]: ' % lb,
+                                  args.assumeyes)
 
 
 def main():
@@ -69,6 +95,7 @@ def main():
     args = parse_args()
     authenticate()
     delete_rax(args)
+    delete_rax_clb(args)
 
 
 if __name__ == '__main__':

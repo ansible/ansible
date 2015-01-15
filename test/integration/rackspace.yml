@@ -7,3 +7,6 @@
   roles:
     - role: test_rax
       tags: test_rax
+
+    - role: test_rax_clb
+      tags: test_rax_clb
