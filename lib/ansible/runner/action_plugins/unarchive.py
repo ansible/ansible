@@ -91,6 +91,20 @@ class ActionModule(object):
             result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
+        # Perform a pre-check for creates parameter on the client,
+        # prevent transferring files if all ok and skipped is indicated
+        if creates is not None:
+            precheck_module_args = utils.merge_module_args(module_args, "precheck=True")
+            creates_result = self.runner._execute_module(conn, tmp, 'unarchive', precheck_module_args, inject=inject, complex_args=complex_args)
+            if not creates_result.is_successful():
+                return creates_result
+            if creates_result.result['skipped']:
+                return creates_result
+            # tmp path might be removed after module execution, we better create a new one for the archive transfer
+            tmp = self.runner._make_tmp_path(conn)
+
+        module_args = utils.merge_module_args(module_args, "precheck=False")
+
         if copy:
             # transfer the file to a remote tmp location
             tmp_src = tmp + 'source'
