@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleError
 from ansible.plugins.strategies import StrategyBase
-
 from ansible.utils.debug import debug
 
 class StrategyModule(StrategyBase):
@@ -80,12 +80,21 @@ class StrategyModule(StrategyBase):
                         continue
 
                     work_to_do = True
-                    if not callback_sent:
-                        self._callback.playbook_on_task_start(task.get_name(), False)
-                        callback_sent = True
+                    if task.action == 'meta':
+                        # meta tasks store their args in the _raw_params field of args,
+                        # since they do not use k=v pairs, so get that
+                        meta_action = task.args.get('_raw_params')
+                        if meta_action == 'flush_handlers':
+                            self.run_handlers(iterator, connection_info)
+                        else:
+                            raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
+                    else:
+                        if not callback_sent:
+                            self._callback.playbook_on_task_start(task.get_name(), False)
+                            callback_sent = True
 
-                    self._blocked_hosts[host.get_name()] = True
-                    self._queue_task(host, task, task_vars, connection_info)
+                        self._blocked_hosts[host.get_name()] = True
+                        self._queue_task(host, task, task_vars, connection_info)
 
                     self._process_pending_results()
 

@@ -29,6 +29,7 @@ from ansible.inventory.group import Group
 
 from ansible.playbook.helpers import compile_block_list
 from ansible.playbook.role import ROLE_CACHE
+from ansible.plugins import module_loader
 from ansible.utils.debug import debug
 
 
@@ -103,7 +104,7 @@ class StrategyBase:
                 self._cur_worker = 0
 
             self._pending_results += 1
-            main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info), block=False)
+            main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info, module_loader), block=False)
         except (EOFError, IOError, AssertionError), e:
             # most likely an abort
             debug("got an error while queuing: %s" % e)
@@ -154,20 +155,20 @@ class StrategyBase:
 
                 elif result[0] == 'add_host':
                     task_result = result[1]
-                    new_host_info = task_result._result.get('add_host', dict())
+                    new_host_info = task_result.get('add_host', dict())
                     
                     self._add_host(new_host_info)
 
                 elif result[0] == 'add_group':
-                    task_result = result[1]
-                    host        = task_result._host
-                    group_name  = task_result._result.get('add_group')
+                    host        = result[1]
+                    task_result = result[2]
+                    group_name  = task_result.get('add_group')
 
                     self._add_group(host, group_name)
 
                 elif result[0] == 'notify_handler':
-                    handler_name = result[1]
-                    host         = result[2]
+                    host         = result[1]
+                    handler_name = result[2]
                     if host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(host)
 

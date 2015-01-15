@@ -58,7 +58,6 @@ def listify_lookup_plugin_terms(terms, variables, loader):
         if '{' in terms or '[' in terms:
             # Jinja2 already evaluated a variable to a list.
             # Jinja2-ified list needs to be converted back to a real type
-            # TODO: something a bit less heavy than eval
             return safe_eval(terms)
 
         if isinstance(terms, basestring):

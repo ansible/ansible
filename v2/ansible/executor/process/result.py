@@ -109,15 +109,18 @@ class ResultProcess(multiprocessing.Process):
                 host_name = result._host.get_name()
 
                 # send callbacks, execute other options based on the result status
-                if result.is_failed():
-                    self._send_result(('host_task_failed', result))
-                elif result.is_unreachable():
+                # FIXME: this should all be cleaned up and probably moved to a sub-function.
+                #        the fact that this sometimes sends a TaskResult and other times
+                #        sends a raw dictionary back may be confusing, but the result vs.
+                #        results implementation for tasks with loops should be cleaned up
+                #        better than this
+                if result.is_unreachable():
                     self._send_result(('host_unreachable', result))
+                elif result.is_failed():
+                    self._send_result(('host_task_failed', result))
                 elif result.is_skipped():
                     self._send_result(('host_task_skipped', result))
                 else:
-                    self._send_result(('host_task_ok', result))
-
                     # if this task is notifying a handler, do it now
                     if result._task.notify:
                         # The shared dictionary for notified handlers is a proxy, which
@@ -125,21 +128,32 @@ class ResultProcess(multiprocessing.Process):
                         # So, per the docs, we reassign the list so the proxy picks up and
                         # notifies all other threads
                         for notify in result._task.notify:
-                            self._send_result(('notify_handler', notify, result._host))
+                            self._send_result(('notify_handler', result._host, notify))
 
-                    if 'add_host' in result._result:
-                        # this task added a new host (add_host module)
-                        self._send_result(('add_host', result))
-                    elif 'add_group' in result._result:
-                        # this task added a new group (group_by module)
-                        self._send_result(('add_group', result))
-                    elif 'ansible_facts' in result._result:
-                        # if this task is registering facts, do that now
-                        if result._task.action in ('set_fact', 'include_vars'):
-                            for (key, value) in result._result['ansible_facts'].iteritems():
-                                self._send_result(('set_host_var', result._host, key, value))
-                        else:
-                            self._send_result(('set_host_facts', result._host, result._result['ansible_facts']))
+                    if 'results' in result._result:
+                        # this task had a loop, and has more than one result, so
+                        # loop over all of them instead of a single result
+                        result_items = result._result['results']
+                    else:
+                        result_items = [ result._result ]
+
+                    for result_item in result_items:
+                        if 'add_host' in result_item:
+                            # this task added a new host (add_host module)
+                            self._send_result(('add_host', result_item))
+                        elif 'add_group' in result_item:
+                            # this task added a new group (group_by module)
+                            self._send_result(('add_group', result._host, result_item))
+                        elif 'ansible_facts' in result_item:
+                            # if this task is registering facts, do that now
+                            if result._task.action in ('set_fact', 'include_vars'):
+                                for (key, value) in result_item['ansible_facts'].iteritems():
+                                    self._send_result(('set_host_var', result._host, key, value))
+                            else:
+                                self._send_result(('set_host_facts', result._host, result_item['ansible_facts']))
+
+                    # finally, send the ok for this task
+                    self._send_result(('host_task_ok', result))
 
                 # if this task is registering a result, do it now
                 if result._task.register:

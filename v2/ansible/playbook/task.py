@@ -34,8 +34,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
-from ansible.utils.listify import listify_lookup_plugin_terms
-
 class Task(Base, Conditional, Taggable):
 
     """
@@ -198,9 +196,6 @@ class Task(Base, Conditional, Taggable):
             self._block.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
 
         super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
-
-    def _post_validate_loop_args(self, attr, value, all_vars, fail_on_undefined):
-        return listify_lookup_plugin_terms(value, all_vars, loader=self._loader)
 
     def get_vars(self):
         all_vars = self.serialize()
