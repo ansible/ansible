@@ -104,7 +104,7 @@ class ZipFile(object):
 
         return self._files_in_archive
 
-    def is_unarchived(self):
+    def is_unarchived(self, mode, owner, group):
         return dict(unarchived=False)
 
     def unarchive(self):
@@ -148,10 +148,32 @@ class TgzFile(object):
                 self._files_in_archive.append(filename)
         return self._files_in_archive
 
-    def is_unarchived(self):
-        cmd = '%s -v -C "%s" --diff -%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
+    def is_unarchived(self, mode, owner, group):
+        cmd = '%s -C "%s" --diff -%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         unarchived = (rc == 0)
+        if not unarchived:
+            # Check whether the differences are in something that we're
+            # setting anyway
+
+            # What will be set
+            to_be_set = set()
+            for perm in (('Mode', mode), ('Gid', group), ('Uid', owner)):
+                if perm[1] is not None:
+                    to_be_set.add(perm[0])
+
+            # What is different
+            changes = set()
+            difference_re = re.compile(r': (.*) differs$')
+            for line in out.splitlines():
+                match = difference_re.search(line)
+                if not match:
+                    # Unknown tar output. Assume we have changes
+                    return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
+                changes.add(match.groups()[0])
+
+            if changes and changes.issubset(to_be_set):
+                unarchived = True
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
@@ -242,7 +264,8 @@ def main():
     res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
     # do we need to do unpack?
-    res_args['check_results'] = handler.is_unarchived()
+    res_args['check_results'] = handler.is_unarchived(file_args['mode'],
+            file_args['owner'], file_args['group'])
     if res_args['check_results']['unarchived']:
         res_args['changed'] = False
     else:
