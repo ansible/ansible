@@ -742,8 +742,8 @@ class LinuxService(Service):
         if self.enable_cmd.endswith("update-rc.d"):
 
             enabled = False
-            links = glob.glob('/etc/rc?.d/S??' + self.name)
-            if links:
+            slinks = glob.glob('/etc/rc?.d/S??' + self.name)
+            if slinks:
                 enabled = True
 
             if self.enable != enabled:
@@ -751,6 +751,14 @@ class LinuxService(Service):
 
                 if self.enable:
                     action = 'enable'
+                    klinks = glob.glob('/etc/rc?.d/K??' + self.name)
+                    if not klinks:
+                        (rc, out, err) = self.execute_command("%s %s defaults"  % (self.enable_cmd, self.name))
+                        if rc != 0:
+                            if err:
+                                self.module.fail_json(msg=err)
+                            else:
+                                self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
                 else:
                     action = 'disable'
 
