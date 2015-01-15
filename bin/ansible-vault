@@ -81,7 +81,8 @@ def build_option_parser(action):
         parser.set_usage("usage: %prog encrypt [options] file_name")
     elif action == "rekey":
         parser.set_usage("usage: %prog rekey [options] file_name")
-    
+        parser.add_option('--vault-new-password-file', dest='new_password_file', help="vault new password file")
+
     # done, return the parser
     return parser
 
@@ -203,7 +204,10 @@ def execute_rekey(args, options, parser):
     else:
         password = utils.read_vault_file(options.password_file)
 
-    __, new_password = utils.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+    if not options.new_password_file:
+        __, new_password = utils.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+    else:
+        new_password = utils.read_vault_file(options.new_password_file)
 
     cipher = None
     for f in args:

@@ -52,7 +52,9 @@ Should you wish to change your password on a vault-encrypted file or files, you 
     ansible-vault rekey foo.yml bar.yml baz.yml
 
 This command can rekey multiple data files at once and will ask for the original
-password and also the new password.
+password and also the new password. To disable the password prompts you can use
+the `--vault-password-file` and, for this command, the `--vault-new-password-file`
+options, see :ref:`_running_a_playbook_with_vault`.
 
 .. _encrypting_files:
 

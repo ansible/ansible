@@ -82,6 +82,14 @@ The *rekey* command is used to change the password on a vault-encrypted files.
 This command can update multiple files at once, and will prompt for both the
 old and new passwords before modifying any data.
 
+The following option is additionally  available when running the *rekey*
+command:
+
+*--vault-new-password-file=*'FILE'::
+
+A file containing the new vault password to be used during the
+encryption/decryption steps. Be sure to keep this file secured if it is used.
+
 ENCRYPT
 -------
 
