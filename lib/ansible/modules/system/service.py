@@ -105,6 +105,7 @@ import shlex
 import select
 import time
 import string
+import glob
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -739,44 +740,28 @@ class LinuxService(Service):
         # update-rc.d style
         #
         if self.enable_cmd.endswith("update-rc.d"):
-            if self.enable:
-                action = 'enable'
-            else:
-                action = 'disable'
 
-            if self.enable:
-                # make sure the init.d symlinks are created
-                # otherwise enable might not work
-                (rc, out, err) = self.execute_command("%s %s defaults" \
-                                                      % (self.enable_cmd, self.name))
+            enabled = False
+            links = glob.glob('/etc/rc?.d/S??' + self.name)
+            if links:
+                enabled = True
+
+            if self.enable != enabled:
+                self.changed = True
+
+                if self.enable:
+                    action = 'enable'
+                else:
+                    action = 'disable'
+
+                (rc, out, err) = self.execute_command("%s %s %s"  % (self.enable_cmd, self.name, action))
                 if rc != 0:
                     if err:
                         self.module.fail_json(msg=err)
                     else:
-                        self.module.fail_json(msg=out)
+                        self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
 
-            (rc, out, err) = self.execute_command("%s -n %s %s" \
-                                                  % (self.enable_cmd, self.name, action))
-            self.changed = False
-            for line in out.splitlines():
-                if line.startswith('rename'):
-                    self.changed = True
-                    break
-                elif self.enable and 'do not exist' in line:
-                    self.changed = True
-                    break
-                elif not self.enable and 'already exist' in line:
-                    self.changed = True
-                    break
-
-            # Debian compatibility
-            for line in err.splitlines():
-                if self.enable and 'no runlevel symlinks to modify' in line:
-                    self.changed = True
-                    break
-
-            if not self.changed:
-                return
+            return
 
         #
         # If we've gotten to the end, the service needs to be updated
