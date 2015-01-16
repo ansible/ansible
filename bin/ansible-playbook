@@ -167,6 +167,8 @@ def main(args):
 
     inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
     inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0:
+        utils.warning("provided hosts list is empty")
 
     # run all playbooks specified on the command line
     for playbook in args:
