@@ -15,6 +15,7 @@ from ansible.playbook.task import Task
 from ansible.utils.cli import base_parser
 from ansible.utils.vars import combine_vars
 from ansible.vars import VariableManager
+from ansible.utils import warning
 
 #---------------------------------------------------------------------------------------------------
 
@@ -138,7 +139,7 @@ def main(args):
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=options.inventory)
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0:
-        raise AnsibleError("provided hosts list is empty")
+        warning("provided hosts list is empty, only localhost is available")
 
     # create the playbook executor, which manages running the plays
     # via a task queue manager
