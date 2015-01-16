@@ -102,6 +102,18 @@ def delete_rax_keypair(args):
                                   args.assumeyes)
 
 
+def delete_rax_network(args):
+    """Function for deleting Cloud Networks"""
+    print ("--- Cleaning Cloud Networks matching '%s'" % args.match_re)
+    for region in pyrax.identity.services.network.regions:
+        cnw = pyrax.connect_to_cloud_networks(region=region)
+        for network in cnw.list():
+            if re.search(args.match_re, network.name):
+                prompt_and_delete(network,
+                                  'Delete matching %s? [y/n]: ' % network,
+                                  args.assumeyes)
+
+
 def main():
     if not HAS_PYRAX:
         raise SystemExit('The pyrax python module is required for this script')
@@ -111,6 +123,11 @@ def main():
     delete_rax(args)
     delete_rax_clb(args)
     delete_rax_keypair(args)
+    delete_rax_network(args)
+
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print ('\nExiting...')
