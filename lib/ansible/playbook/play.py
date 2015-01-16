@@ -118,7 +118,7 @@ class Play(object):
         temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
         temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
 
-        ds = template(basedir, ds, temp_vars)
+        ds = template(basedir, ds, temp_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
