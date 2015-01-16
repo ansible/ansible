@@ -1,0 +1,7 @@
+---
+rackspace_region: IAD
+rackspace_image_human_id: "ubuntu-1404-lts-trusty-tahr-pvhvm"
+rackspace_image_id: "753a7703-4960-488b-aab4-a3cdd4b276dc"
+rackspace_image_name: "Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)"
+rackspace_flavor: "performance1-1"
+resource_prefix: ansible-testing
