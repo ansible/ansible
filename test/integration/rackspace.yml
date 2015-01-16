@@ -27,3 +27,6 @@
 
     - role: test_rax_clb_nodes
       tags: test_rax_clb_nodes
+
+    - role: test_rax_network
+      tags: test_rax_network
