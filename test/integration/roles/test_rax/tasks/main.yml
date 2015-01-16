@@ -748,11 +748,11 @@
     region: "{{ rackspace_region }}"
     image: "{{ rackspace_image_id }}"
     flavor: "{{ rackspace_flavor }}"
-    name: "{{ resource_prefix }}-10-%03d"
+    name: "{{ resource_prefix }}-11-%03d"
     count: 2
     count_offset: 10
     exact_count: true
-    group: "{{ resource_prefix }}-10"
+    group: "{{ resource_prefix }}-11"
     wait: true
   register: rax
 
@@ -764,24 +764,24 @@
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
-      - rax.instances|map(attribute='rax_name')|unique|list|sort == ['{{ resource_prefix }}-10-010', '{{ resource_prefix }}-10-011']
+      - rax.instances|map(attribute='rax_name')|unique|list|sort == ['{{ resource_prefix }}-11-010', '{{ resource_prefix }}-11-011']
 
-- name: "Test delete integration 10"
+- name: "Test delete integration 11"
   rax:
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
     image: "{{ rackspace_image_id }}"
     flavor: "{{ rackspace_flavor }}"
-    name: "{{ resource_prefix }}-10-%03d"
+    name: "{{ resource_prefix }}-11-%03d"
     count: 0
     count_offset: 10
     exact_count: true
-    group: "{{ resource_prefix }}-10"
+    group: "{{ resource_prefix }}-11"
     wait: true
   register: rax
 
-- name: "Validate delete integration 10"
+- name: "Validate delete integration 11"
   assert:
     that:
       - rax|success
@@ -789,4 +789,51 @@
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax instance_ids absent 1 (create)
+  rax:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    name: "{{ resource_prefix }}-12"
+    wait: true
+  register: rax
+
+- name: Validate rax instance_ids absent 1 (create)
+  assert:
+    that:
+      - rax|success
+      - rax|changed
+      - rax.action == 'create'
+      - rax.instances|length == 1
+      - rax.instances[0].name == "{{ resource_prefix }}-12"
+      - rax.instances[0] == rax.success[0]
+      - rax.instances[0].rax_status == 'ACTIVE'
+
+- name: Test rax instance_ids absent 2 (delete)
+  rax:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    instance_ids:
+      - "{{ rax.success.0.rax_id }}"
+    state: absent
+    wait: true
+  register: rax2
+
+- name: Validate rax instance_ids absent 2 (delete)
+  assert:
+    that:
+      - rax2|success
+      - rax2|changed
+      - rax2.action == 'delete'
+      - rax2.success.0.rax_id == rax.success.0.rax_id
 # ============================================================
