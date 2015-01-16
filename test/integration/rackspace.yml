@@ -19,6 +19,9 @@
     - role: test_rax_meta
       tags: test_rax_meta
 
+    - role: test_rax_keypair
+      tags: test_rax_keypair
+
     - role: test_rax_clb
       tags: test_rax_clb
 
