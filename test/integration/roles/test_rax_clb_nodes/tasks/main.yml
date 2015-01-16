@@ -1,12 +1,3 @@
----
-- name: Check for required variables
-  assert:
-    that:
-      - resource_prefix is defined and resource_prefix
-      - rackspace_username is defined and rackspace_username
-      - rackspace_api_key is defined and rackspace_api_key
-      - rackspace_region is defined and rackspace_region
-
 # ============================================================
 - name: Test rax_clb_nodes with no args
   rax_clb_nodes:
