@@ -17,16 +17,33 @@
   assert:
     that:
       - rax_clb|failed
+      - rax_clb.msg == 'missing required arguments: name'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb with name
+  rax_clb:
+    name: fail
+  ignore_errors: true
+  register: rax_clb
+
+- name: Validate results of rax_clb with only creds
+  assert:
+    that:
+      - rax_clb|failed
       - rax_clb.msg == 'No credentials supplied!'
 # ============================================================
 
 
 
 # ============================================================
-- name: Test rax_clb with credentials
+- name: Test rax_clb with name and credentials
   rax_clb:
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
+    name: fail
   ignore_errors: true
   register: rax_clb
 
@@ -48,13 +65,11 @@
   ignore_errors: true
   register: rax_clb
 
-## This assertion is currently failing, due to the module not providing the correct name of the missing argument
 - name: Validate rax_clb creds and region
   assert:
     that:
       - rax_clb|failed
-      - rax_clb.msg == 'name is required for rax_clb'
-  ignore_errors: true
+      - rax_clb.msg == 'missing required arguments: name'
 # ============================================================
 
 
