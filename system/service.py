@@ -106,7 +106,8 @@ import select
 import time
 import string
 
-if platform.system() == 'Linux':
+# The distutils module is not shipped with SUNWPython on Solaris.
+if platform.system() != 'SunOS':
     from distutils.version import LooseVersion
 
 class Service(object):
