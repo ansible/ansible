@@ -457,6 +457,10 @@ class Ec2Inventory(object):
                 self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
                 self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
+        # Inventory: Group instances without tags
+        if len(instance.tags) == 0:
+            self.push(self.inventory, self.to_safe('tagless'), dest)
+
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled:
             route53_names = self.get_instance_route53_names(instance)
