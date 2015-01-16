@@ -65,10 +65,6 @@ except ImportError:
 
 
 def cloud_network(module, state, label, cidr):
-    for arg in (state, label, cidr):
-        if not arg:
-            module.fail_json(msg='%s is required for cloud_networks' % arg)
-
     changed = False
     network = None
     networks = []
@@ -79,6 +75,9 @@ def cloud_network(module, state, label, cidr):
                              'incorrectly capitalized region name.')
 
     if state == 'present':
+        if not cidr:
+            module.fail_json(msg='missing required arguments: cidr')
+
         try:
             network = pyrax.cloud_networks.find_network_by_label(label)
         except pyrax.exceptions.NetworkNotFound:
@@ -115,7 +114,7 @@ def main():
         dict(
             state=dict(default='present',
                        choices=['present', 'absent']),
-            label=dict(),
+            label=dict(required=True),
             cidr=dict()
         )
     )
