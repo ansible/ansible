@@ -67,6 +67,7 @@ def prompt_and_delete(item, prompt, assumeyes):
 
 def delete_rax(args):
     """Function for deleting CloudServers"""
+    print ("--- Cleaning CloudServers matching '%s'" % args.match_re)
     search_opts = dict(name='^%s' % args.match_re)
     for region in pyrax.identity.services.compute.regions:
         cs = pyrax.connect_to_cloudservers(region=region)
@@ -79,6 +80,7 @@ def delete_rax(args):
 
 def delete_rax_clb(args):
     """Function for deleting Cloud Load Balancers"""
+    print ("--- Cleaning Cloud Load Balancers matching '%s'" % args.match_re)
     for region in pyrax.identity.services.load_balancer.regions:
         clb = pyrax.connect_to_cloud_loadbalancers(region=region)
         for lb in rax_list_iterator(clb):
