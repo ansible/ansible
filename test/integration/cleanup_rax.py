@@ -90,6 +90,18 @@ def delete_rax_clb(args):
                                   args.assumeyes)
 
 
+def delete_rax_keypair(args):
+    """Function for deleting Rackspace Key pairs"""
+    print ("--- Cleaning Key Pairs matching '%s'" % args.match_re)
+    for region in pyrax.identity.services.compute.regions:
+        cs = pyrax.connect_to_cloudservers(region=region)
+        for keypair in cs.keypairs.list():
+            if re.search(args.match_re, keypair.name):
+                prompt_and_delete(keypair,
+                                  'Delete matching %s? [y/n]: ' % keypair,
+                                  args.assumeyes)
+
+
 def main():
     if not HAS_PYRAX:
         raise SystemExit('The pyrax python module is required for this script')
@@ -98,7 +110,7 @@ def main():
     authenticate()
     delete_rax(args)
     delete_rax_clb(args)
-
+    delete_rax_keypair(args)
 
 if __name__ == '__main__':
     main()
