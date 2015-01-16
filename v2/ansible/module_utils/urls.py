@@ -56,6 +56,8 @@ import re
 import socket
 import tempfile
 
+from ansible import constants as C
+
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
 # ca cert, regardless of validity, for Python on Mac OS to use the
@@ -91,7 +93,7 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)
+        self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=C.SSL_PROTOCOL)
 
 class CustomHTTPSHandler(urllib2.HTTPSHandler):
 
