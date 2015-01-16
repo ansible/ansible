@@ -140,10 +140,6 @@ except ImportError:
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                         vip_type, timeout, wait, wait_timeout, vip_id):
-    for arg in (state, name, port, protocol, vip_type):
-        if not arg:
-            module.fail_json(msg='%s is required for rax_clb' % arg)
-
     if int(timeout) < 30:
         module.fail_json(msg='"timeout" must be greater than or equal to 30')
 
@@ -257,7 +253,7 @@ def main():
             algorithm=dict(choices=CLB_ALGORITHMS,
                            default='LEAST_CONNECTIONS'),
             meta=dict(type='dict', default={}),
-            name=dict(),
+            name=dict(required=True),
             port=dict(type='int', default=80),
             protocol=dict(choices=CLB_PROTOCOLS, default='HTTP'),
             state=dict(default='present', choices=['present', 'absent']),
