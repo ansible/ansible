@@ -791,6 +791,7 @@ the fact that they have not been communicated with in the current execution of /
 To configure fact caching, enable it in ansible.cfg as follows::
 
     [defaults]
+    gathering = smart
     fact_caching = redis
     fact_caching_timeout = 86400
     # seconds
