@@ -150,21 +150,6 @@ def _get_node(lb, node_id=None, address=None, port=None):
     return None
 
 
-def _is_primary(node):
-    """Return True if node is primary and enabled"""
-    return (node.type.lower() == 'primary' and
-            node.condition.lower() == 'enabled')
-
-
-def _get_primary_nodes(lb):
-    """Return a list of primary and enabled nodes"""
-    nodes = []
-    for node in lb.nodes:
-        if _is_primary(node):
-            nodes.append(node)
-    return nodes
-
-
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
@@ -230,13 +215,6 @@ def main():
     if state == 'absent':
         if not node:  # Removing a non-existent node
             module.exit_json(changed=False, state=state)
-
-        # The API detects this as well but currently pyrax does not return a
-        # meaningful error message
-        if _is_primary(node) and len(_get_primary_nodes(lb)) == 1:
-            module.fail_json(
-                msg='At least one primary node has to be enabled')
-
         try:
             lb.delete_node(node)
             result = {}
@@ -299,5 +277,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()
