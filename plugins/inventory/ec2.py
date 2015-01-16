@@ -218,6 +218,7 @@ class Ec2Inventory(object):
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
+        self.route53_replace_names = config.getboolean('ec2', 'route53_replace_names')
         self.route53_excluded_zones = []
         if config.has_option('ec2', 'route53_excluded_zones'):
             self.route53_excluded_zones.extend(
@@ -401,6 +402,22 @@ class Ec2Inventory(object):
         if self.pattern_exclude and self.pattern_exclude.match(dest):
             return
 
+        # Inventory: Group by Route53 domain names if enabled
+        if self.route53_enabled:
+            route53_names = self.get_instance_route53_names(instance)
+            if self.route53_replace_names:
+                #exclude wildcard CNAMEs ('*' is returned by octal \052 by route53 API)
+                valid_names = [name for name in route53_names if '\\052' not in name]
+                if len(valid_names) >= 1:
+                    #swap names so the old name is still available as an alias
+                    new_name = valid_names[0]
+                    route53_names = [dest if name == new_name else name for name in route53_names]
+                    dest = new_name
+            for name in route53_names:
+                self.push(self.inventory, name, dest)
+                if self.nested_groups:
+                    self.push_group(self.inventory, 'route53', name)
+
         # Add to index
         self.index[dest] = [region, instance.id]
 
@@ -456,14 +473,6 @@ class Ec2Inventory(object):
             if self.nested_groups:
                 self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
                 self.push_group(self.inventory, self.to_safe("tag_" + k), key)
-
-        # Inventory: Group by Route53 domain names if enabled
-        if self.route53_enabled:
-            route53_names = self.get_instance_route53_names(instance)
-            for name in route53_names:
-                self.push(self.inventory, name, dest)
-                if self.nested_groups:
-                    self.push_group(self.inventory, 'route53', name)
 
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
