@@ -16,6 +16,9 @@
     - role: test_rax_facts
       tags: test_rax_facts
 
+    - role: test_rax_meta
+      tags: test_rax_meta
+
     - role: test_rax_clb
       tags: test_rax_clb
 
