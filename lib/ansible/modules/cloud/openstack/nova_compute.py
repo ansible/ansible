@@ -22,7 +22,7 @@ import os
 
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient.v1_1 import floating_ips 
+    from novaclient.v1_1 import floating_ips
     from novaclient import exceptions
     from novaclient import utils
     import time
@@ -168,6 +168,12 @@ options:
      required: false
      default: None
      version_added: "1.6"
+   scheduler_hints:
+     description:
+        - Arbitrary key/value pairs to the scheduler for custom use
+     required: false
+     default: None
+     version_added: "1.9"
 requirements: ["novaclient"]
 '''
 
@@ -294,15 +300,15 @@ def _add_floating_ip_from_pool(module, nova, server):
     # instantiate FloatingIPManager object
     floating_ip_obj = floating_ips.FloatingIPManager(nova)
 
-    # empty dict and list 
-    usable_floating_ips = {} 
+    # empty dict and list
+    usable_floating_ips = {}
     pools = []
 
     # user specified
     pools = module.params['floating_ip_pools']
 
-    # get the list of all floating IPs. Mileage may 
-    # vary according to Nova Compute configuration 
+    # get the list of all floating IPs. Mileage may
+    # vary according to Nova Compute configuration
     # per cloud provider
     all_floating_ips = floating_ip_obj.list()
 
@@ -378,9 +384,9 @@ def _add_floating_ip(module, nova, server):
     else:
         return server
 
-    # this may look redundant, but if there is now a 
+    # this may look redundant, but if there is now a
     # floating IP, then it needs to be obtained from
-    # a recent server object if the above code path exec'd 
+    # a recent server object if the above code path exec'd
     try:
         server = nova.servers.get(server.id)
     except Exception, e:
@@ -422,7 +428,7 @@ def _create_server(module, nova):
                 'config_drive': module.params['config_drive'],
     }
 
-    for optional_param in ('region_name', 'key_name', 'availability_zone'):
+    for optional_param in ('region_name', 'key_name', 'availability_zone', 'scheduler_hints'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
     try:
@@ -443,7 +449,7 @@ def _create_server(module, nova):
                 private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
                 public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
-                # now exit with info 
+                # now exit with info
                 module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
             if server.status == 'ERROR':
@@ -543,6 +549,7 @@ def main():
         auto_floating_ip                = dict(default=False, type='bool'),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
+        scheduler_hints                 = dict(default=None),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -582,4 +589,3 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 main()
-
