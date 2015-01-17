@@ -991,33 +991,33 @@ class OpenBsdService(Service):
         if not self.enable_cmd:
             return super(OpenBsdService, self).service_enable()
 
-        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'default', self.name))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'getdef', self.name, 'flags'))
 
         if stderr:
             self.module.fail_json(msg=stderr)
 
-        default_string = stdout.rstrip()
+        getdef_string = stdout.rstrip()
 
         # Depending on the service the string returned from 'default' may be
         # either a set of flags or the boolean YES/NO
-        if default_string == "YES" or default_string == "NO":
+        if getdef_string == "YES" or getdef_string == "NO":
             default_flags = ''
         else:
-            default_flags = default_string
+            default_flags = getdef_string
 
-        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'status', self.name))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'flags'))
 
         if stderr:
             self.module.fail_json(msg=stderr)
 
-        status_string = stdout.rstrip()
+        get_string = stdout.rstrip()
 
-        # Depending on the service the string returned from 'status' may be
+        # Depending on the service the string returned from 'getdef/get' may be
         # either a set of flags or the boolean YES/NO
-        if status_string == "YES" or status_string == "NO":
+        if get_string == "YES" or get_string == "NO":
             current_flags = ''
         else:
-            current_flags = status_string
+            current_flags = get_string
 
         # If there are arguments from the user we use these as flags unless
         # they are already set.
@@ -1031,29 +1031,62 @@ class OpenBsdService(Service):
         else:
             changed_flags = ''
 
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'status'))
+
         if self.enable:
             if rc == 0 and not changed_flags:
                 return
 
-            action = "enable %s" % (self.name)
+            if rc != 0:
+                status_action = "set %s status on" % (self.name)
+            else:
+                status_action = ''
             if changed_flags:
-                action = action + " flags %s" % (changed_flags)
+                flags_action = "set %s flags %s" % (self.name, changed_flags)
+            else:
+                flags_action = ''
         else:
             if rc == 1:
                 return
 
-            action = "disable %s" % self.name
+            status_action = "set %s status off" % self.name
+            flags_action = ''
+
+        # Verify state assumption
+        if not status_action and not flags_action:
+            self.module.fail_json(msg="neither status_action or status_flags is set, this should never happen")
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, msg="changing service enablement")
 
-        rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, action))
+        status_modified = 0
+        if status_action:
+            rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, status_action))
 
-        if rc != 0:
-            if stderr:
-                self.module.fail_json(msg=stderr)
-            else:
-                self.module.fail_json(msg="rcctl failed to modify service enablement")
+            if rc != 0:
+                if stderr:
+                    self.module.fail_json(msg=stderr)
+                else:
+                    self.module.fail_json(msg="rcctl failed to modify service status")
+
+            status_modified = 1
+
+        if flags_action:
+            rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, flags_action))
+
+            if rc != 0:
+                if stderr:
+                    if status_modified:
+                        error_message = "rcctl modified service status but failed to set flags: " + stderr
+                    else:
+                        error_message = stderr
+                else:
+                    if status_modified:
+                        error_message = "rcctl modified service status but failed to set flags"
+                    else:
+                        error_message = "rcctl failed to modify service flags"
+
+                self.module.fail_json(msg=error_message)
 
         self.changed = True
 
