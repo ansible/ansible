@@ -1,8 +1,10 @@
 # usage: source hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
-# Default values for shell variables we use
-verbosity=${1-""}
+verbosity=${1-info} # Defaults to `info' if unspecified
+if [ "$verbosity" = -q ]; then
+    verbosity=silent
+fi
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
@@ -45,7 +47,7 @@ else
     current_dir="$ANSIBLE_HOME"
 fi
 cd "$ANSIBLE_HOME"
-if [ "$verbosity" = "-q" ] ; then
+if [ "$verbosity" = silent ] ; then
     gen_egg_info 2>1 1> /dev/null
 else
     gen_egg_info
@@ -56,7 +58,7 @@ cd "$current_dir"
 # Print out values unless -q is set
 #
 
-if [ "$verbosity" != "-q" ] ; then
+if [ "$verbosity" != silent ] ; then
     echo ""
     echo "Setting up Ansible to run out of checkout..."
     echo ""
