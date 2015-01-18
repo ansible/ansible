@@ -59,22 +59,18 @@ else
 fi
 cd "$current_dir"
 
-#
-# Print out values unless -q is set
-#
-
 if [ "$verbosity" != silent ] ; then
-    echo ""
-    echo "Setting up Ansible to run out of checkout..."
-    echo ""
-    echo "PATH=$PATH"
-    echo "PYTHONPATH=$PYTHONPATH"
-    echo "MANPATH=$MANPATH"
-    echo ""
-
-    echo "Remember, you may wish to specify your host file with -i"
-    echo ""
-    echo "Done!"
-    echo ""
+    cat <<- EOF
+	
+	Setting up Ansible to run out of checkout...
+	
+	PATH=$PATH
+	PYTHONPATH=$PYTHONPATH
+	MANPATH=$MANPATH
+	
+	Remember, you may wish to specify your host file with -i
+	
+	Done!
+	
+	EOF
 fi
-
