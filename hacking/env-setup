@@ -6,12 +6,8 @@ if [ "$verbosity" = -q ]; then
     verbosity=silent
 fi
 
-# When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
-if [ -n "$BASH_SOURCE" ] ; then
-    HACKING_DIR=$(dirname "$BASH_SOURCE")
-else
-    HACKING_DIR=$PWD/hacking
-fi
+HACKING_DIR=$PWD/hacking
+
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
