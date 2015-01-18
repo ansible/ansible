@@ -36,31 +36,28 @@ expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_M
 gen_egg_info()
 {
     python setup.py egg_info
-    if [ -e $PREFIX_PYTHONPATH/ansible*.egg-info ] ; then
-        rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
+    if [ -e "$PREFIX_PYTHONPATH/ansible*.egg-info" ] ; then
+        rm -r "$PREFIX_PYTHONPATH/ansible*.egg-info"
     fi
-    mv ansible*.egg-info $PREFIX_PYTHONPATH
+    mv "ansible*.egg-info" "$PREFIX_PYTHONPATH"
 }
 
-# In some shells if pushd is a no-op then popd sends you to a previous
-# directory in history
-#if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
-#    pushd "$ANSIBLE_HOME"
-#    if [ "$VERBOSITY" = "-q" ] ; then
-#        gen_egg_info 2>1 1> /dev/null
-#    else
-#        gen_egg_info
-#    fi
-#    popd
+if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
+    current_dir="$PWD"
+else
+    current_dir="$ANSIBLE_HOME"
+fi
+cd "$ANSIBLE_HOME"
+#if [ "$VERBOSITY" = "-q" ] ; then
+#    gen_egg_info 2>1 1> /dev/null
 #else
-#    if [ "$VERBOSITY" = "-q" ] ; then
-#        gen_egg_info 2>1 1> /dev/null
-#    else
-#        gen_egg_info
-#    fi
+#    gen_egg_info
 #fi
+cd "$current_dir"
 
+#
 # Print out values unless -q is set
+#
 
 if [ "$VERBOSITY" != "-q" ] ; then
     echo ""
