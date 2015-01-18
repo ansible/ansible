@@ -53,7 +53,7 @@ else
 fi
 cd "$ANSIBLE_HOME"
 if [ "$verbosity" = silent ] ; then
-    gen_egg_info 2>1 1> /dev/null
+    gen_egg_info 1> /dev/null 2>&1
 else
     gen_egg_info
 fi
