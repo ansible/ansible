@@ -14,18 +14,35 @@ FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 ANSIBLE_HOME=$(dirname "$FULL_PATH")
 
 PREFIX_PYTHONPATH=$ANSIBLE_HOME/lib
-PREFIX_PATH=$ANSIBLE_HOME/bin
-PREFIX_MANPATH=$ANSIBLE_HOME/docs/man
+prefix_path=$ANSIBLE_HOME/bin
+prefix_manpath=$ANSIBLE_HOME/docs/man
 
-expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
-expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
-expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
+path_already_in() {
+    local path_element=$1
+    local path_list=$2
+    case :$path_list: in
+        *:"$path_element":*)
+            return 0 # true
+            ;;
+        *)
+            return 1 # false
+            ;;
+    esac
+}
 
-#
+if ! path_already_in "$PREFIX_PYTHONPATH" "$PYTHONPATH"; then
+    export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
+fi
+
+if ! path_already_in "$prefix_path" "$PATH"; then
+    export PATH=$prefix_path:$PATH
+fi
+
+if ! path_already_in "$prefix_manpath" "$MANPATH"; then
+    export MANPATH=$prefix_manpath:$MANPATH
+fi
+
 # Generate egg_info so that pkg_resources works
-#
-
-# Do the work in a function so we don't repeat ourselves later
 gen_egg_info()
 {
     python setup.py egg_info
