@@ -1,4 +1,4 @@
-# usage: source ./hacking/env-setup [-q]
+# usage: source hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
 # Default values for shell variables we use
