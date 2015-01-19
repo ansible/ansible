@@ -15,7 +15,9 @@ from ansible.playbook.task import Task
 from ansible.utils.cli import base_parser
 from ansible.utils.vars import combine_vars
 from ansible.vars import VariableManager
-from ansible.utils import warning
+
+# Implement an ansible.utils.warning() function later
+warning = print
 
 #---------------------------------------------------------------------------------------------------
 
@@ -137,9 +139,23 @@ def main(args):
 
     # create the inventory, and filter it based on the subset specified (if any)
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=options.inventory)
-    inventory.subset(options.subset)
+
+    # Note: slightly wrong, this is written so that implicit localhost
+    # (which is not returned in list_hosts()) is taken into account for
+    # warning if inventory is empty.  But it can't be taken into account for
+    # checking if limit doesn't match any hosts.  Instead we don't worry about
+    # limit if only implicit localhost was in inventory to start with.
+    #
+    # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
+    no_hosts = False
     if len(inventory.list_hosts()) == 0:
+        # Empty inventory
         warning("provided hosts list is empty, only localhost is available")
+        no_hosts = True
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0 and no_hosts is False:
+        # Invalid limit
+        raise errors.AnsibleError("Specified --limit does not match any hosts")
 
     # create the playbook executor, which manages running the plays
     # via a task queue manager
