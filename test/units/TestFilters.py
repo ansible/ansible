@@ -3,7 +3,9 @@ Test bundled filters
 '''
 
 import os.path
+from socket import AF_INET, AF_INET6
 import unittest, tempfile, shutil
+import mock
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
 
@@ -183,3 +185,19 @@ class TestFilters(unittest.TestCase):
     def test_max(self):
         a = ansible.runner.filter_plugins.core.max([3, 2, 5, 4])
         assert a == 5
+
+    @mock.patch('ansible.runner.filter_plugins.core.socket.getaddrinfo')
+    def test_resolve(self, mock_gai):
+        mock_gai.return_value = [
+            (AF_INET,  1, 6, '', ('127.0.0.1', 80)),
+            (AF_INET6, 1, 6, '', ('::1', 80, 0, 0))
+        ]
+
+        a = ansible.runner.filter_plugins.core.resolve("", ["IPv4"])
+        assert a == ['127.0.0.1']
+
+        a = ansible.runner.filter_plugins.core.resolve("", ["IPv6"])
+        assert a == ['::1']
+
+        a = ansible.runner.filter_plugins.core.resolve("", ["v4", "v6"])
+        assert a == list(set(['127.0.0.1', '::1']))

@@ -19,6 +19,7 @@ import sys
 import base64
 import json
 import os.path
+import socket
 import types
 import pipes
 import glob
@@ -28,7 +29,7 @@ import operator as py_operator
 from random import SystemRandom, shuffle
 
 import yaml
-from jinja2.filters import environmentfilter
+from jinja2.filters import environmentfilter, Undefined
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
@@ -262,6 +263,47 @@ def randomize_list(mylist):
         pass
     return mylist
 
+def resolve(hosts, addr_types=["IPv4", "IPv6"], safe=True):
+
+    # Dictionary of address family names
+    ADDRESS_FAMILY_NAMES = {socket.AF_INET: set(["IPv4", "v4", "4", 4]),
+                            socket.AF_INET6: set(["IPv6", "v6", "6", 6])}
+
+    if not hasattr(addr_types, '__iter__'):
+        addr_types = [addr_types]
+    addr_types = set(addr_types)
+
+    if not hasattr(hosts, '__iter__'):
+        hosts = [hosts]
+
+    ips = []
+
+    for host in hosts:
+        if not isinstance(host, Undefined):
+            try:
+                addr_info = socket.getaddrinfo(host, 80)
+
+                # Get addresses list from structure, returned by 'getaddrinfo'
+                addr_list = filter(lambda a: ADDRESS_FAMILY_NAMES[a[0]] & addr_types, addr_info)
+                addr_list = map(lambda a: a[4][0], addr_list)
+
+            except socket.gaierror as e:
+                hint = "Can't resolve host '{0}': {1}".format(host, e)
+                addr_list = Undefined(hint=hint, obj=host)
+        else:
+            addr_list = Undefined(hint="Can't resolve undefined host", obj=host)
+
+        if isinstance(addr_list, Undefined) and safe:
+            # Raises an exception
+            addr_list + 1
+
+        ips += addr_list
+
+    # Deduplication
+    ips = list(set(ips))
+
+    return ips
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -317,6 +359,10 @@ class FilterModule(object):
 
             # file glob
             'fileglob': fileglob,
+
+            # translations
+            # translate list of hosts into list of IP addresses (DNS lookup)
+            'resolve': resolve,
 
             # regex
             'match': match,
