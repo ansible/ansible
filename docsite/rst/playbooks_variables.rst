@@ -369,6 +369,10 @@ To get the real path of a link (new in version 1.8)::
 
    {{ path | readlink }}
 
+To ensure a path ends with a path separator (useful with directories provided as prompt vars)::
+
+    {{ path | ensure_separator }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
