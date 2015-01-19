@@ -113,6 +113,7 @@ EXAMPLES = '''
       command: delete
       zone: foo.com
       record: "{{ rec.set.record }}"
+      ttl: "{{ rec.set.ttl }}"
       type: "{{ rec.set.type }}"
       value: "{{ rec.set.value }}"
 
