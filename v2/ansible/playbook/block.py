@@ -45,10 +45,20 @@ class Block(Base, Conditional, Taggable):
 
         super(Block, self).__init__()
 
-    def get_variables(self):
-        # blocks do not (currently) store any variables directly,
-        # so we just return an empty dict here
-        return dict()
+    def get_vars(self):
+        '''
+        Blocks do not store variables directly, however they may be a member
+        of a role or task include which does, so return those if present.
+        '''
+
+        all_vars = dict()
+
+        if self._role:
+            all_vars.update(self._role.get_vars())
+        if self._task_include:
+            all_vars.update(self._task_include.get_vars())
+
+        return all_vars
 
     @staticmethod
     def load(data, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
@@ -73,17 +83,49 @@ class Block(Base, Conditional, Taggable):
         return ds
 
     def _load_block(self, attr, ds):
-        return load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
+        return load_list_of_tasks(
+            ds,
+            block=self,
+            role=self._role,
+            task_include=self._task_include,
+            variable_manager=self._variable_manager,
+            loader=self._loader,
+            use_handlers=self._use_handlers,
+        )
 
     def _load_rescue(self, attr, ds):
-        return load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
+        return load_list_of_tasks(
+            ds,
+            block=self,
+            role=self._role,
+            task_include=self._task_include,
+            variable_manager=self._variable_manager,
+            loader=self._loader,
+            use_handlers=self._use_handlers,
+        )
 
     def _load_always(self, attr, ds):
-        return load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
+        return load_list_of_tasks(
+            ds, 
+            block=self, 
+            role=self._role, 
+            task_include=self._task_include,
+            variable_manager=self._variable_manager, 
+            loader=self._loader, 
+            use_handlers=self._use_handlers,
+        )
 
     # not currently used
     #def _load_otherwise(self, attr, ds):
-    #    return self._load_list_of_tasks(ds, block=self, role=self._role, variable_manager=self._variable_manager, loader=self._loader, use_handlers=self._use_handlers)
+    #    return load_list_of_tasks(
+    #        ds, 
+    #        block=self, 
+    #        role=self._role, 
+    #        task_include=self._task_include,
+    #        variable_manager=self._variable_manager, 
+    #        loader=self._loader, 
+    #        use_handlers=self._use_handlers,
+    #    )
 
     def compile(self):
         '''
@@ -125,6 +167,8 @@ class Block(Base, Conditional, Taggable):
 
         if self._role is not None:
             data['role'] = self._role.serialize()
+        if self._task_include is not None:
+            data['task_include'] = self._task_include.serialize()
 
         return data
 
@@ -133,6 +177,8 @@ class Block(Base, Conditional, Taggable):
         Override of the default deserialize method, to match the above overridden
         serialize method
         '''
+
+        from ansible.playbook.task_include import TaskInclude
 
         # unpack the when attribute, which is the only one we want
         self.when = data.get('when')
@@ -144,7 +190,17 @@ class Block(Base, Conditional, Taggable):
             r.deserialize(role_data)
             self._role = r
 
+        # if there was a serialized task include, unpack it too
+        ti_data = data.get('task_include')
+        if ti_data:
+            ti = TaskInclude()
+            ti.deserialize(ti_data)
+            self._task_include = ti
+
     def evaluate_conditional(self, all_vars):
+        if self._task_include is not None:
+            if not self._task_include.evaluate_conditional(all_vars):
+                return False
         if self._parent_block is not None:
             if not self._parent_block.evaluate_conditional(all_vars):
                 return False
@@ -167,4 +223,7 @@ class Block(Base, Conditional, Taggable):
             self._parent_block.set_loader(loader)
         elif self._role:
             self._role.set_loader(loader)
+
+        if self._task_include:
+            self._task_include.set_loader(loader)
 

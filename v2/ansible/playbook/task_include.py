@@ -24,14 +24,16 @@ from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
+from ansible.playbook.taggable import Taggable
 from ansible.plugins import lookup_loader
 
 
 __all__ = ['TaskInclude']
 
 
-class TaskInclude(Base):
+class TaskInclude(Base, Conditional, Taggable):
 
     '''
     A class used to wrap the use of `include: /some/other/file.yml`
@@ -146,13 +148,13 @@ class TaskInclude(Base):
             raise AnsibleParsingError("included task files must contain a list of tasks", obj=ds)
 
         self._task_blocks = load_list_of_blocks(
-                                data,
-                                parent_block=self._block,
-                                task_include=self,
-                                role=self._role,
-                                use_handlers=self._use_handlers,
-                                loader=self._loader
-                            )
+            data,
+            parent_block=self._block,
+            task_include=self,
+            role=self._role,
+            use_handlers=self._use_handlers,
+            loader=self._loader
+        )
         return ds
 
     def compile(self):
@@ -164,3 +166,77 @@ class TaskInclude(Base):
         task_list.extend(compile_block_list(self._task_blocks))
         return task_list
 
+    def get_vars(self):
+        '''
+        Returns the vars for this task include, but also first merges in
+        those from any parent task include which may exist.
+        '''
+
+        all_vars = dict()
+        if self._task_include:
+            all_vars.update(self._task_include.get_vars())
+        all_vars.update(self.vars)
+        return all_vars
+
+    def serialize(self):
+
+        data = super(TaskInclude, self).serialize()
+
+        if self._block:
+            data['block'] = self._block.serialize()
+
+        if self._role:
+            data['role'] = self._role.serialize()
+
+        if self._task_include:
+            data['task_include'] = self._task_include.serialize()
+
+        return data
+
+    def deserialize(self, data):
+
+        # import here to prevent circular importing issues
+        from ansible.playbook.block import Block
+        from ansible.playbook.role import Role
+
+        block_data = data.get('block')
+        if block_data:
+            b = Block()
+            b.deserialize(block_data)
+            self._block = b
+            del data['block']
+
+        role_data = data.get('role')
+        if role_data:
+            r = Role()
+            r.deserialize(role_data)
+            self._role = r
+            del data['role']
+
+        ti_data = data.get('task_include')
+        if ti_data:
+            ti = TaskInclude()
+            ti.deserialize(ti_data)
+            self._task_include = ti
+            del data['task_include']
+
+        super(TaskInclude, self).deserialize(data)
+
+    def evaluate_conditional(self, all_vars):
+        if self._task_include is not None:
+            if not self._task_include.evaluate_conditional(all_vars):
+                return False
+        if self._block is not None:
+            if not self._block.evaluate_conditional(all_vars):
+                return False
+        elif self._role is not None:
+            if not self._role.evaluate_conditional(all_vars):
+                return False
+        return super(TaskInclude, self).evaluate_conditional(all_vars)
+
+    def set_loader(self, loader):
+        self._loader = loader
+        if self._block:
+            self._block.set_loader(loader)
+        elif self._task_include:
+            self._task_include.set_loader(loader)

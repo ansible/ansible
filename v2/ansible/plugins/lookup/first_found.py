@@ -121,6 +121,7 @@ import os
 
 from ansible.plugins.lookup import LookupBase
 from ansible.template import Templar
+from ansible.utils.boolean import boolean
 
 class LookupModule(LookupBase):
 
