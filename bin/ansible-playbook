@@ -166,9 +166,23 @@ def main(args):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
-    inventory.subset(options.subset)
+
+    # Note: slightly wrong, this is written so that implicit localhost
+    # (which is not returned in list_hosts()) is taken into account for
+    # warning if inventory is empty.  But it can't be taken into account for
+    # checking if limit doesn't match any hosts.  Instead we don't worry about
+    # limit if only implicit localhost was in inventory to start with.
+    #
+    # Fix this in v2
+    no_hosts = False
     if len(inventory.list_hosts()) == 0:
-        utils.warning("provided hosts list is empty")
+        # Empty inventory
+        utils.warning("provided hosts list is empty, only localhost is available")
+        no_hosts = True
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0 and no_hosts is False:
+        # Invalid limit
+        raise errors.AnsibleError("Specified --limit does not match any hosts")
 
     # run all playbooks specified on the command line
     for playbook in args:
