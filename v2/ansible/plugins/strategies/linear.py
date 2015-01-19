@@ -70,7 +70,7 @@ class StrategyModule(StrategyBase):
                                 debug("'%s' skipped because role has already run" % task)
                                 continue
 
-                        if not task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, task_vars):
+                        if not task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, task_vars) and task.action != 'setup':
                             debug("'%s' failed tag evaluation" % task)
                             continue
 

@@ -33,6 +33,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.playbook.task_include import TaskInclude
 
 class Task(Base, Conditional, Taggable):
 
@@ -189,16 +190,23 @@ class Task(Base, Conditional, Taggable):
     def post_validate(self, all_vars=dict(), fail_on_undefined=True):
         '''
         Override of base class post_validate, to also do final validation on
-        the block to which this task belongs.
+        the block and task include (if any) to which this task belongs.
         '''
 
         if self._block:
             self._block.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+        if self._task_include:
+            self._task_include.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
 
         super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
 
     def get_vars(self):
-        all_vars = self.serialize()
+        all_vars = dict()
+        if self._task_include:
+            all_vars.update(self._task_include.get_vars())
+
+        all_vars.update(self.serialize())
+
         if 'tags' in all_vars:
             del all_vars['tags']
         if 'when' in all_vars:
@@ -242,6 +250,9 @@ class Task(Base, Conditional, Taggable):
         if self._role:
             data['role'] = self._role.serialize()
 
+        if self._task_include:
+            data['task_include'] = self._task_include.serialize()
+
         return data
 
     def deserialize(self, data):
@@ -261,6 +272,13 @@ class Task(Base, Conditional, Taggable):
             self._role = r
             del data['role']
 
+        ti_data = data.get('task_include')
+        if ti_data:
+            ti = TaskInclude()
+            ti.deserialize(ti_data)
+            self._task_include = ti
+            del data['task_include']
+
         super(Task, self).deserialize(data)
 
     def evaluate_conditional(self, all_vars):
@@ -270,6 +288,9 @@ class Task(Base, Conditional, Taggable):
                     return False
         if self._block is not None:
             if not self._block.evaluate_conditional(all_vars):
+                return False
+        if self._task_include is not None:
+            if not self._task_include.evaluate_conditional(all_vars):
                 return False
         return super(Task, self).evaluate_conditional(all_vars)
 
@@ -293,6 +314,8 @@ class Task(Base, Conditional, Taggable):
 
         if self._block:
             self._block.set_loader(loader)
+        if self._task_include:
+            self._task_include.set_loader(loader)
 
         for dep in self._dep_chain:
             dep.set_loader(loader)

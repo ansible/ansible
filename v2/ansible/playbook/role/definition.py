@@ -44,8 +44,8 @@ class RoleDefinition(Base, Conditional, Taggable):
         self._role_params  = dict()
         super(RoleDefinition, self).__init__()
 
-    def __repr__(self):
-        return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
+    #def __repr__(self):
+    #    return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):

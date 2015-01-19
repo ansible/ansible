@@ -30,7 +30,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
     return a list of Block() objects, where implicit blocks
     are created for each bare Task.
     '''
-
+ 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 

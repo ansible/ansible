@@ -43,7 +43,10 @@ class TaskResult:
         return self._check_key('skipped')
 
     def is_failed(self):
-        return self._check_key('failed') or self._result.get('rc', 0) != 0
+        if 'failed_when_result' in self._result:
+            return self._check_key('failed_when_result')
+        else:
+            return self._check_key('failed') or self._result.get('rc', 0) != 0
 
     def is_unreachable(self):
         return self._check_key('unreachable')
