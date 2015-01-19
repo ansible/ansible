@@ -43,6 +43,10 @@ class InventoryScript(object):
         except OSError, e:
             raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
+
+        if sp.returncode != 0:
+            raise errors.AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
+
         self.data = stdout
         # see comment about _meta below
         self.host_vars_from_top = None
