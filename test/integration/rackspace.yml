@@ -31,3 +31,6 @@
 
     - role: test_rax_cbs_attachments
       tags: test_rax_cbs_attachments
+
+    - role: test_rax_identity
+      tags: test_rax_identity
