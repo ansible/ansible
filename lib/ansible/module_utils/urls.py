@@ -55,7 +55,7 @@ import os
 import re
 import socket
 import tempfile
-from ansible import constants as C
+
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
 # ca cert, regardless of validity, for Python on Mac OS to use the
@@ -91,7 +91,7 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=C.SSL_PROTOCOL)
+        self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)
 
 class CustomHTTPSHandler(urllib2.HTTPSHandler):
 
@@ -292,12 +292,12 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     s.sendall('\r\n')
                     connect_result = s.recv(4096)
                     self.validate_proxy_response(connect_result)
-                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=C.SSL_PROTOCOL)
+                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
                 else:
                     self.module.fail_json(msg='Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
                 s.connect((self.hostname, self.port))
-                ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=C.SSL_PROTOCOL)
+                ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
