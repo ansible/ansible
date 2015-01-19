@@ -114,6 +114,18 @@ def delete_rax_network(args):
                                   args.assumeyes)
 
 
+def delete_rax_cbs(args):
+    """Function for deleting Cloud Networks"""
+    print ("--- Cleaning Cloud Block Storage matching '%s'" % args.match_re)
+    for region in pyrax.identity.services.network.regions:
+        cbs = pyrax.connect_to_cloud_blockstorage(region=region)
+        for volume in cbs.list():
+            if re.search(args.match_re, volume.name):
+                prompt_and_delete(volume,
+                                  'Delete matching %s? [y/n]: ' % volume,
+                                  args.assumeyes)
+
+
 def main():
     if not HAS_PYRAX:
         raise SystemExit('The pyrax python module is required for this script')
@@ -124,6 +136,7 @@ def main():
     delete_rax_clb(args)
     delete_rax_keypair(args)
     delete_rax_network(args)
+    delete_rax_cbs(args)
 
 
 if __name__ == '__main__':

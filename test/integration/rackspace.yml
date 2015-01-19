@@ -5,11 +5,6 @@
   tags:
     - rackspace
   roles:
-    - role: prepare_rax_tests
-      tags:
-        - prepare
-        - prepare_rax_tests
-
     - role: test_rax
       tags: test_rax
 
@@ -30,3 +25,6 @@
 
     - role: test_rax_network
       tags: test_rax_network
+
+    - role: test_rax_cbs
+      tags: test_rax_cbs
