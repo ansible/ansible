@@ -344,6 +344,41 @@ Square root, or the 5th::
 Note that jinja2 already provides some like abs() and round().
 
 
+.. _hash_filters:
+
+Hashing filters
+--------------------
+.. versionadded:: 1.9
+
+To get the sha1 hash of a string::
+
+    {{ 'test1'|hash('sha1') }}
+
+To get the md5 hash of a string::
+
+    {{ 'test1'|hash('md5') }}
+
+Get a string checksum::
+
+    {{ 'test2'|checksum }}
+
+Other hashes (platform dependant)::
+
+    {{ 'test2'|hash('blowfish') }}
+
+To get a sha512 password hash (random salt)::
+
+    {{ 'passwordsaresecret'|password_hash('sha512') }}
+
+To get a sha256 password hash with a specific salt::
+
+    {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+
+
+Hash types available depend on the master system running ansible,
+'hash' depends on hashlib password_hash depends on crypt.
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
@@ -373,10 +408,6 @@ To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
-
-To take a sha1sum of a filename::
-
-    {{ filename | sha1 }}
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
