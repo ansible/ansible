@@ -942,34 +942,118 @@ class FreeBsdService(Service):
 
 class OpenBsdService(Service):
     """
-    This is the OpenBSD Service manipulation class - it uses /etc/rc.d for
-    service control. Enabling a service is currently not supported because the
-    <service>_flags variable is not boolean, you should supply a rc.conf.local
-    file in some other way.
+    This is the OpenBSD Service manipulation class - it uses rcctl(8) or
+    /etc/rc.d scripts for service control. Enabling a service is
+    only supported if rcctl is present.
     """
 
     platform = 'OpenBSD'
     distribution = None
 
     def get_service_tools(self):
-        rcdir = '/etc/rc.d'
+        self.enable_cmd = self.module.get_bin_path('rcctl')
 
-        rc_script = "%s/%s" % (rcdir, self.name)
-        if os.path.isfile(rc_script):
-            self.svc_cmd = rc_script
+        if self.enable_cmd:
+            self.svc_cmd = self.enable_cmd
+        else:
+            rcdir = '/etc/rc.d'
+
+            rc_script = "%s/%s" % (rcdir, self.name)
+            if os.path.isfile(rc_script):
+                self.svc_cmd = rc_script
 
         if not self.svc_cmd:
-            self.module.fail_json(msg='unable to find rc.d script')
+            self.module.fail_json(msg='unable to find svc_cmd')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s" % (self.svc_cmd, 'check'))
+        if self.enable_cmd:
+            rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svc_cmd, 'check', self.name))
+        else:
+            rc, stdout, stderr = self.execute_command("%s %s" % (self.svc_cmd, 'check'))
+
+        if stderr:
+            self.module.fail_json(msg=stderr)
+
         if rc == 1:
             self.running = False
         elif rc == 0:
             self.running = True
 
     def service_control(self):
-        return self.execute_command("%s %s" % (self.svc_cmd, self.action))
+        if self.enable_cmd:
+            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name))
+        else:
+            return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
+
+    def service_enable(self):
+        if not self.enable_cmd:
+            return super(OpenBsdService, self).service_enable()
+
+        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'default', self.name))
+
+        if stderr:
+            self.module.fail_json(msg=stderr)
+
+        default_string = stdout.rstrip()
+
+        # Depending on the service the string returned from 'default' may be
+        # either a set of flags or the boolean YES/NO
+        if default_string == "YES" or default_string == "NO":
+            default_flags = ''
+        else:
+            default_flags = default_string
+
+        rc, stdout, stderr = self.execute_command("%s %s %s" % (self.enable_cmd, 'status', self.name))
+
+        if stderr:
+            self.module.fail_json(msg=stderr)
+
+        status_string = stdout.rstrip()
+
+        # Depending on the service the string returned from 'status' may be
+        # either a set of flags or the boolean YES/NO
+        if status_string == "YES" or status_string == "NO":
+            current_flags = ''
+        else:
+            current_flags = status_string
+
+        # If there are arguments from the user we use these as flags unless
+        # they are already set.
+        if self.arguments and self.arguments != current_flags:
+            changed_flags = self.arguments
+        # If the user has not supplied any arguments and the current flags
+        # differ from the default we reset them.
+        elif not self.arguments and current_flags != default_flags:
+            changed_flags = ' '
+        # Otherwise there is no need to modify flags.
+        else:
+            changed_flags = ''
+
+        if self.enable:
+            if rc == 0 and not changed_flags:
+                return
+
+            action = "enable %s" % (self.name)
+            if changed_flags:
+                action = action + " flags %s" % (changed_flags)
+        else:
+            if rc == 1:
+                return
+
+            action = "disable %s" % self.name
+
+        if self.module.check_mode:
+            self.module.exit_json(changed=True, msg="changing service enablement")
+
+        rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, action))
+
+        if rc != 0:
+            if stderr:
+                self.module.fail_json(msg=stderr)
+            else:
+                self.module.fail_json(msg="rcctl failed to modify service enablement")
+
+        self.changed = True
 
 # ===========================================
 # Subclass: NetBSD
