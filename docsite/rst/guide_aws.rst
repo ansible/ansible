@@ -104,6 +104,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
                 Name: Demo
              instance_tags:
                 Name: Demo
+          register: ec2
     
        - name: Add all instance public IPs to host group
          add_host: hostname={{ item.public_ip }} groupname=ec2hosts
