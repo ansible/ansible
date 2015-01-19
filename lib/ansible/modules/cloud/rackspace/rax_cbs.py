@@ -145,10 +145,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
                                                attempts=attempts)
 
         volume.get()
-        for key, value in vars(volume).iteritems():
-            if (isinstance(value, NON_CALLABLES) and
-                    not key.startswith('_')):
-                instance[key] = value
+        instance = rax_to_dict(volume)
 
         result = dict(changed=changed, volume=instance)
 
@@ -164,6 +161,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
 
     elif state == 'absent':
         if volume:
+            instance = rax_to_dict(volume)
             try:
                 volume.delete()
                 changed = True
