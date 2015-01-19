@@ -55,6 +55,7 @@ options:
     required: false
     default: standard
     aliases: []
+    version_added: "1.9"
   iops:
     description:
       - the provisioned IOPs you want to associate with this volume (integer).
