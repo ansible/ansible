@@ -28,3 +28,6 @@
 
     - role: test_rax_cbs
       tags: test_rax_cbs
+
+    - role: test_rax_cbs_attachments
+      tags: test_rax_cbs_attachments
