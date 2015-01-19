@@ -235,6 +235,7 @@ def start_server(interface, port, url, parser, options, args):
                 self.wfile.write("Page not found.")
 
             return
+        do_POST = do_GET
 
     server = HTTPServer((interface, port), PullHandler)
     print "Starting server, to initiate a pull visit http://%s:%s%s" % (interface, port, url)
