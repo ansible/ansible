@@ -193,9 +193,10 @@ def run(parser, options, args):
 
 def start_server(interface, port, url, parser, options, args):
     from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    import threading
 
     class PullHandler(BaseHTTPRequestHandler):
-        last_pull_time = 0
+        pull_in_progress = False
 
         def _constant_time_compare(self, val1, val2):
             """
@@ -210,8 +211,9 @@ def start_server(interface, port, url, parser, options, args):
             return result == 0
 
         def _pull(self):
-            PullHandler.last_pull_time = time.time()
+            PullHandler.pull_in_progress = True
             run(parser, options, args)
+            PullHandler.pull_in_progress = False
 
         def do_GET(self):
             if self._constant_time_compare(self.path, url):
@@ -219,12 +221,13 @@ def start_server(interface, port, url, parser, options, args):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
 
-                if time.time() - PullHandler.last_pull_time < 6:
-                    # It hasn't been a minute since the last pull.
-                    self.wfile.write('{"status": "You\'re trying too fast."}')
+                if PullHandler.pull_in_progress:
+                    self.wfile.write('{"status": "Another pull is already in progress."}')
                 else:
                     self.wfile.write('{"status": "ok"}')
-                    self._pull()
+                    t = threading.Thread(target=self._pull)
+                    t.daemon = True
+                    t.start()
             else:
                 self.send_response(404)
                 self.send_header('Content-type', 'text/html')
