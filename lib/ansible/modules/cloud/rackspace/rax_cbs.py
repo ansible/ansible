@@ -108,10 +108,6 @@ except ImportError:
 
 def cloud_block_storage(module, state, name, description, meta, size,
                         snapshot_id, volume_type, wait, wait_timeout):
-    for arg in (state, name, size, volume_type):
-        if not arg:
-            module.fail_json(msg='%s is required for rax_cbs' % arg)
-
     if size < 100:
         module.fail_json(msg='"size" must be greater than or equal to 100')
 
