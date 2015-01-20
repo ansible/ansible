@@ -409,6 +409,10 @@ To work with Base64 encoded strings::
     {{ encoded | b64decode }}
     {{ decoded | b64encode }}
 
+To create a UUID from a string (new in version 1.9)::
+
+    {{ hostname | to_uuid }}
+
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
 
