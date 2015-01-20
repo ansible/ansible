@@ -23,6 +23,7 @@ import pipes
 import random
 
 from ansible import constants as C
+from ansible.template import Templar
 
 
 __all__ = ['ConnectionInformation']
@@ -181,4 +182,17 @@ class ConnectionInformation:
 
         #return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
         return (sudocmd, prompt, success_key)
+
+    def _get_fields(self):
+        return [i for i in self.__dict__.keys() if i[:1] != '_']
+
+    def post_validate(self, variables, loader):
+        '''
+        Finalizes templated values which may be set on this objects fields.
+        '''
+
+        templar = Templar(loader=loader, variables=variables)
+        for field in self._get_fields():
+            value = templar.template(getattr(self, field))
+            setattr(self, field, value)
 
