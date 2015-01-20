@@ -107,6 +107,11 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.8"
+  stickiness:
+    description:
+      - An associative array of stickness policy settings. Policy will be applied to all listeners ( see example )
+    required: false
+    version_added: "2.0"
 
 extends_documentation_fragment: aws
 """
@@ -235,9 +240,46 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocol: http
-        load_balancer_port: 80
-        instance_port: 80
+      - protocols: http
+      - load_balancer_port: 80
+      - instance_port: 80
+
+# Create an ELB with load balanacer stickiness enabled
+- local_action:
+    module: ec2_elb_lb
+    name: "New ELB"
+    state: present
+    region: us-east-1
+    zones:
+      - us-east-1a
+      - us-east-1d
+    listeners:
+      - protocols: http
+      - load_balancer_port: 80
+      - instance_port: 80
+    stickiness:
+      type: loadbalancer
+      enabled: yes
+      expiration: 300
+
+# Create an ELB with application stickiness enabled
+- local_action:
+    module: ec2_elb_lb
+    name: "New ELB"
+    state: present
+    region: us-east-1
+    zones:
+      - us-east-1a
+      - us-east-1d
+    listeners:
+      - protocols: http
+      - load_balancer_port: 80
+      - instance_port: 80
+    stickiness:
+      type: application
+      enabled: yes
+      cookie: SESSIONID
+
 """
 
 try:
@@ -258,7 +300,8 @@ class ElbManager(object):
                  zones=None, purge_zones=None, security_group_ids=None, 
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
-                 cross_az_load_balancing=None,  region=None, **aws_connect_params):
+                 cross_az_load_balancing=None, 
+                 stickiness=None, region=None, **aws_connect_params):
 
         self.module = module
         self.name = name
@@ -273,6 +316,7 @@ class ElbManager(object):
         self.scheme = scheme
         self.connection_draining_timeout = connection_draining_timeout
         self.cross_az_load_balancing = cross_az_load_balancing
+        self.stickiness = stickiness
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -300,6 +344,8 @@ class ElbManager(object):
             self._set_connection_draining_timeout()
         if self._check_attribute_support('cross_zone_load_balancing'):
             self._set_cross_az_load_balancing()
+        # add sitcky options
+        self.select_stickiness_policy()
 
     def ensure_gone(self):
         """Destroy the ELB"""
@@ -318,6 +364,15 @@ class ElbManager(object):
                 'status': self.status
             }
         else:
+            try:
+                lb_cookie_policy = check_elb.policies.lb_cookie_stickiness_policies[0].__dict__['policy_name']
+            except:
+                lb_cookie_policy = None
+            try:
+                app_cookie_policy = check_elb.policies.app_cookie_stickiness_policies[0].__dict__['policy_name']
+            except:
+                app_cookie_policy = None
+
             info = {
                 'name': check_elb.name,
                 'dns_name': check_elb.dns_name,
@@ -327,7 +382,9 @@ class ElbManager(object):
                 'subnets': self.subnets,
                 'scheme': check_elb.scheme,
                 'hosted_zone_name': check_elb.canonical_hosted_zone_name,
-                'hosted_zone_id': check_elb.canonical_hosted_zone_name_id
+                'hosted_zone_id': check_elb.canonical_hosted_zone_name_id,
+                'lb_cookie_policy': lb_cookie_policy,
+                'app_cookie_policy': app_cookie_policy
             }
 
             if check_elb.health_check:
@@ -360,6 +417,8 @@ class ElbManager(object):
                     info['cross_az_load_balancing'] = 'yes'
                 else:
                     info['cross_az_load_balancing'] = 'no'
+
+            # return stickiness info? 
 
         return info
 
@@ -615,6 +674,103 @@ class ElbManager(object):
             attributes.connection_draining.enabled = False
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
 
+    def _policy_name(self, policy_type):
+        return __file__.split('/')[-1].replace('_', '-')  + '-' + policy_type
+
+    def _create_policy(self, policy_param, policy_meth, policy):
+        getattr(self.elb_conn, policy_meth )(policy_param, self.elb.name, policy)
+
+    def _delete_policy(self, elb_name, policy):
+        self.elb_conn.delete_lb_policy(elb_name, policy)
+
+    def _update_policy(self, policy_param, policy_meth, policy_attr, policy):
+        self._delete_policy(self.elb.name, policy)
+        self._create_policy(policy_param, policy_meth, policy)
+
+    def _set_listener_policy(self, listeners_dict, policy=[]):
+        for listener_port in listeners_dict:
+            if listeners_dict[listener_port].startswith('HTTP'):
+                self.elb_conn.set_lb_policies_of_listener(self.elb.name, listener_port, policy)
+
+    def _set_stickiness_policy(self, elb_info, listeners_dict, policy, **policy_attrs):
+        for p in getattr(elb_info.policies, policy_attrs['attr']):
+            if str(p.__dict__['policy_name']) == str(policy[0]):
+                if str(p.__dict__[policy_attrs['dict_key']]) != str(policy_attrs['param_value']):
+                    self._set_listener_policy(listeners_dict)
+                    self._update_policy(policy_attrs['param_value'], policy_attrs['method'], policy_attrs['attr'], policy[0])
+                    self.changed = True
+                break
+        else:
+            self._create_policy(policy_attrs['param_value'], policy_attrs['method'], policy[0])
+            self.changed = True
+        
+        self._set_listener_policy(listeners_dict, policy)
+
+    def select_stickiness_policy(self):
+        if self.stickiness:
+
+            if 'cookie' in self.stickiness and 'expiration' in self.stickiness:
+                self.module.fail_json(msg='\'cookie\' and \'expiration\' can not be set at the same time')
+
+            elb_info = self.elb_conn.get_all_load_balancers(self.elb.name)[0]
+            d = {}
+            for listener in elb_info.listeners:
+                d[listener[0]] = listener[2]
+            listeners_dict = d
+
+            if self.stickiness['type'] == 'loadbalancer':
+                policy = []
+                policy_type = 'LBCookieStickinessPolicyType'
+                if self.stickiness['enabled'] == True:
+
+                    if 'expiration' not in self.stickiness:
+                        self.module.fail_json(msg='expiration must be set when type is loadbalancer')
+
+                    policy_attrs = {
+                        'type': policy_type,
+                        'attr': 'lb_cookie_stickiness_policies',
+                        'method': 'create_lb_cookie_stickiness_policy',
+                        'dict_key': 'cookie_expiration_period',
+                        'param_value': self.stickiness['expiration']
+                    }
+                    policy.append(self._policy_name(policy_attrs['type']))
+                    self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
+                elif self.stickiness['enabled'] == False:
+                    if len(elb_info.policies.lb_cookie_stickiness_policies):
+                        if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
+                            self.changed = True
+                    else:
+                        self.changed = False
+                    self._set_listener_policy(listeners_dict)
+                    self._delete_policy(self.elb.name, self._policy_name(policy_type))
+
+            elif self.stickiness['type'] == 'application':
+                policy = []
+                policy_type = 'AppCookieStickinessPolicyType'
+                if self.stickiness['enabled'] == True:
+
+                    if 'cookie' not in self.stickiness:
+                        self.module.fail_json(msg='cookie must be set when type is application')
+
+                    policy_attrs = {
+                        'type': policy_type,
+                        'attr': 'app_cookie_stickiness_policies',
+                        'method': 'create_app_cookie_stickiness_policy',
+                        'dict_key': 'cookie_name',
+                        'param_value': self.stickiness['cookie']
+                    }
+                    policy.append(self._policy_name(policy_attrs['type']))
+                    self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
+                elif self.stickiness['enabled'] == False:
+                    if len(elb_info.policies.app_cookie_stickiness_policies):
+                        if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
+                            self.changed = True
+                    self._set_listener_policy(listeners_dict)
+                    self._delete_policy(self.elb.name, self._policy_name(policy_type))
+
+            else:
+                self._set_listener_policy(listeners_dict)
+ 
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
         protocol = self.health_check['ping_protocol'].upper()
@@ -641,7 +797,8 @@ def main():
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
             scheme={'default': 'internet-facing', 'required': False},
             connection_draining_timeout={'default': None, 'required': False},
-            cross_az_load_balancing={'default': None, 'required': False}
+            cross_az_load_balancing={'default': None, 'required': False},
+            stickiness={'default': None, 'required': False, 'type': 'dict'}
         )
     )
 
@@ -669,6 +826,7 @@ def main():
     scheme = module.params['scheme']
     connection_draining_timeout = module.params['connection_draining_timeout']
     cross_az_load_balancing = module.params['cross_az_load_balancing']
+    stickiness = module.params['stickiness']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -680,6 +838,7 @@ def main():
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets, scheme,
                          connection_draining_timeout, cross_az_load_balancing,
+                         stickiness,
                          region=region, **aws_connect_params)
 
     # check for unsupported attributes for this version of boto
