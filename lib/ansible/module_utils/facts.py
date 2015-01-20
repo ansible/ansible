@@ -795,6 +795,13 @@ class LinuxHardware(Hardware):
                         size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
                     except OSError, e:
                         continue
+                    lsblkPath = module.get_bin_path("lsblk")
+                    rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
+
+                    if rc == 0:
+                        uuid = out.strip()
+                    else:
+                        uuid = 'NA'
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
@@ -804,6 +811,7 @@ class LinuxHardware(Hardware):
                          # statvfs data
                          'size_total': size_total,
                          'size_available': size_available,
+                         'uuid': uuid,
                          })
 
     def get_device_facts(self):
