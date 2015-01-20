@@ -77,7 +77,7 @@ options:
     version_added: "1.5"
   volumes:
     description:
-      - Set volume(s) to mount on the container
+      - Set volume(s) to mount on the container separated with a comma (,) and in the format "source:dest[:rights]"
     required: false
     default: null
     aliases: []
@@ -96,11 +96,11 @@ options:
     version_added: "1.5"
   memory_limit:
     description:
-      - Set RAM allocated to container
+      - Set RAM allocated to container. It whould be passed as an amount of bytes. For example 1048576 = 1Gb
     required: false
     default: null
     aliases: []
-    default: 256MB
+    default: 262144
   docker_url:
     description:
       - URL of docker host to issue commands to
