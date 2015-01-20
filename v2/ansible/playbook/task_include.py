@@ -175,6 +175,8 @@ class TaskInclude(Base, Conditional, Taggable):
         all_vars = dict()
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
+        if self._block:
+            all_vars.update(self._block.get_vars())
         all_vars.update(self.vars)
         return all_vars
 

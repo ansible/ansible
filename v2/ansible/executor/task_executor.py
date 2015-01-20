@@ -167,15 +167,26 @@ class TaskExecutor:
         if variables is None:
             variables = self._job_vars
 
+        # fields set from the play/task may be based on variables, so we have to
+        # do the same kind of post validation step on it here before we use it
+        self._connection_info.post_validate(variables=variables, loader=self._loader)
+
+        # get the connection and the handler for this execution
         self._connection = self._get_connection()
         self._handler    = self._get_action_handler(connection=self._connection)
 
+        # Evaluate the conditional (if any) for this task, which we do before running
+        # the final task post-validation. We do this before the post validation due to
+        # the fact that the conditional may specify that the task be skipped due to a
+        # variable not being present which would otherwise cause validation to fail
         if not self._task.evaluate_conditional(variables):
             debug("when evaulation failed, skipping this task")
             return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
 
+        # Now we do final validation on the task, which sets all fields to their final values
         self._task.post_validate(variables)
 
+        # Read some values from the task, so that we can modify them if need be
         retries = self._task.retries
         if retries <= 0:
             retries = 1
@@ -192,7 +203,7 @@ class TaskExecutor:
         result = None
         for attempt in range(retries):
             if attempt > 0:
-                # FIXME: this should use the callback mechanism
+                # FIXME: this should use the callback/message passing mechanism
                 print("FAILED - RETRYING: %s (%d retries left)" % (self._task, retries-attempt))
                 result['attempts'] = attempt + 1
 
