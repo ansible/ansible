@@ -1,7 +1,7 @@
 - hosts: testhost
   vars_files:
     - vars/test_var_encrypted.yml
-  
+
   gather_facts: False
 
   tasks:
@@ -9,3 +9,11 @@
         that:
           - 'secret_var == "secret"'
 
+    - name: load the encrypted vars file as a fact
+      set_fact:
+        secret_contents: "{{ lookup('file', 'vars/test_var_encrypted.yml') }}"
+
+    - name: verify file lookup supports vault
+      assert:
+        that:
+          - 'secret_contents.splitlines()[0] == "---"'
