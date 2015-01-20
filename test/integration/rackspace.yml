@@ -34,3 +34,6 @@
 
     - role: test_rax_identity
       tags: test_rax_identity
+
+    - role: test_rax_cdb
+      tags: test_rax_cdb
