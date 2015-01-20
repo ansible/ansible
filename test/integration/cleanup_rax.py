@@ -126,17 +126,31 @@ def delete_rax_cbs(args):
                                   args.assumeyes)
 
 
+def delete_rax_cdb(args):
+    """Function for deleting Cloud Databases"""
+    print ("--- Cleaning Cloud Databases matching '%s'" % args.match_re)
+    for region in pyrax.identity.services.database.regions:
+        cdb = pyrax.connect_to_cloud_databases(region=region)
+        for db in rax_list_iterator(cdb):
+            if re.search(args.match_re, db.name):
+                prompt_and_delete(db,
+                                  'Delete matching %s? [y/n]: ' % db,
+                                  args.assumeyes)
+
+
 def main():
     if not HAS_PYRAX:
         raise SystemExit('The pyrax python module is required for this script')
 
     args = parse_args()
     authenticate()
-    delete_rax(args)
-    delete_rax_clb(args)
-    delete_rax_keypair(args)
-    delete_rax_network(args)
-    delete_rax_cbs(args)
+
+    for func in [delete_rax, delete_rax_clb, delete_rax_keypair,
+                 delete_rax_network, delete_rax_cbs, delete_rax_cdb]:
+        try:
+            func(args)
+        except Exception as e:
+            print ("---- %s failed (%s)" % (func.__name__, e.message))
 
 
 if __name__ == '__main__':
