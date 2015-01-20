@@ -112,14 +112,12 @@ class TaskExecutor:
 
         results = []
 
-        # FIXME: squash items into a flat list here for those modules
-        #        which support it (yum, apt, etc.) but make it smarter
-        #        than it is today?
+        # make copies of the job vars and task so we can add the item to
+        # the variables and re-validate the task with the item variable
+        task_vars = self._job_vars.copy()
 
+        items = self._squash_items(items, task_vars)
         for item in items:
-            # make copies of the job vars and task so we can add the item to
-            # the variables and re-validate the task with the item variable
-            task_vars = self._job_vars.copy()
             task_vars['item'] = item
 
             try:
@@ -142,6 +140,22 @@ class TaskExecutor:
             results.append(res)
 
         return results
+
+    def _squash_items(self, items, variables):
+        '''
+        Squash items down to a comma-separated list for certain modules which support it
+        (typically package management modules).
+        '''
+
+        if len(items) > 0 and self._task.action in ('apt', 'yum', 'pkgng', 'zypper'):
+            final_items = []
+            for item in items:
+                variables['item'] = item
+                if self._task.evaluate_conditional(variables):
+                    final_items.append(item)
+            return [",".join(final_items)]
+        else:
+            return items
 
     def _execute(self, variables=None):
         '''
