@@ -108,10 +108,6 @@ except ImportError:
 
 def cloud_block_storage(module, state, name, description, meta, size,
                         snapshot_id, volume_type, wait, wait_timeout):
-    for arg in (state, name, size, volume_type):
-        if not arg:
-            module.fail_json(msg='%s is required for rax_cbs' % arg)
-
     if size < 100:
         module.fail_json(msg='"size" must be greater than or equal to 100')
 
@@ -145,10 +141,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
                                                attempts=attempts)
 
         volume.get()
-        for key, value in vars(volume).iteritems():
-            if (isinstance(value, NON_CALLABLES) and
-                    not key.startswith('_')):
-                instance[key] = value
+        instance = rax_to_dict(volume)
 
         result = dict(changed=changed, volume=instance)
 
@@ -164,6 +157,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
 
     elif state == 'absent':
         if volume:
+            instance = rax_to_dict(volume)
             try:
                 volume.delete()
                 changed = True
