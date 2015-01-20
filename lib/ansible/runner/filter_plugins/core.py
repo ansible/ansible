@@ -29,6 +29,7 @@ import hashlib
 import string
 import operator as py_operator
 from random import SystemRandom, shuffle
+import uuid
 
 import yaml
 from jinja2.filters import environmentfilter
@@ -36,6 +37,9 @@ from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.utils import md5s, checksum_s
+
+
+UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
 def to_nice_yaml(*a, **kw):
@@ -297,6 +301,8 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 
     return None
 
+def to_uuid(string):
+    return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -306,6 +312,9 @@ class FilterModule(object):
             # base 64
             'b64decode': base64.b64decode,
             'b64encode': base64.b64encode,
+
+            # uuid
+            'to_uuid': to_uuid,
 
             # json
             'to_json': to_json,
