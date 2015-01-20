@@ -37,3 +37,6 @@
 
     - role: test_rax_cdb
       tags: test_rax_cdb
+
+    - role: test_rax_cdb_database
+      tags: test_rax_cdb_database
