@@ -33,7 +33,6 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-from ansible.executor.task_result import TaskResult
 from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 
@@ -130,7 +129,7 @@ class ResultProcess(multiprocessing.Process):
                         for notify in result._task.notify:
                             self._send_result(('notify_handler', result._host, notify))
 
-                    if 'results' in result._result:
+                    if result._task.loop:
                         # this task had a loop, and has more than one result, so
                         # loop over all of them instead of a single result
                         result_items = result._result['results']

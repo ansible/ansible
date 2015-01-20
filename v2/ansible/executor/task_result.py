@@ -55,6 +55,7 @@ class TaskResult:
         if 'results' in self._result:
             flag = False
             for res in self._result.get('results', []):
-                flag |= res.get(key, False)
+                if isinstance(res, dict):
+                    flag |= res.get(key, False)
         else:
             return self._result.get(key, False)
