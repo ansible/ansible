@@ -17,8 +17,7 @@ from ansible.utils.vars import combine_vars
 from ansible.vars import VariableManager
 
 # Implement an ansible.utils.warning() function later
-import __builtin__
-warning = getattr(__builtin__, 'print')
+warning = getattr(__builtins__, 'print')
 
 #---------------------------------------------------------------------------------------------------
 
