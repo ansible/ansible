@@ -79,12 +79,6 @@ def find_database(instance, name):
 
 
 def save_database(module, cdb_id, name, character_set, collate):
-
-    for arg, value in dict(cdb_id=cdb_id, name=name).iteritems():
-        if not value:
-            module.fail_json(msg='%s is required for the "rax_cdb_database" '
-                                 'module' % arg)
-
     cdb = pyrax.cloud_databases
 
     try:
@@ -111,12 +105,6 @@ def save_database(module, cdb_id, name, character_set, collate):
 
 
 def delete_database(module, cdb_id, name):
-
-    for arg, value in dict(cdb_id=cdb_id, name=name).iteritems():
-        if not value:
-            module.fail_json(msg='%s is required for the "rax_cdb_database" '
-                                 'module' % arg)
-
     cdb = pyrax.cloud_databases
 
     try:
@@ -136,7 +124,8 @@ def delete_database(module, cdb_id, name):
         else:
             changed = True
 
-    module.exit_json(changed=changed, action='delete')
+    module.exit_json(changed=changed, action='delete',
+                     database=rax_to_dict(database))
 
 
 def rax_cdb_database(module, state, cdb_id, name, character_set, collate):
