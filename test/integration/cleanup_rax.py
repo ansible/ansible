@@ -145,8 +145,8 @@ def main():
     args = parse_args()
     authenticate()
 
-    for func in [delete_rax, delete_rax_clb, delete_rax_keypair,
-                 delete_rax_network, delete_rax_cbs, delete_rax_cdb]:
+    funcs = [f for n, f in globals().items() if n.startswith('delete_rax')]
+    for func in sorted(funcs, key=lambda f: f.__name__):
         try:
             func(args)
         except Exception as e:
