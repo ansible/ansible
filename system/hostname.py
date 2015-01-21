@@ -380,12 +380,20 @@ class CentOSLinuxHostname(Hostname):
 class ScientificHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific'
-    strategy_class = RedHatStrategy
+    distribution_version = get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = SystemdStrategy
+    else:
+        strategy_class = RedHatStrategy
 
 class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific linux'
-    strategy_class = RedHatStrategy
+    distribution_version = get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = SystemdStrategy
+    else:
+        strategy_class = RedHatStrategy
 
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
