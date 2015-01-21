@@ -44,7 +44,7 @@ def is_present(name):
 def fix_case(name):
     """locale -a might return the encoding in either lower or upper case.
     Passing through this function makes them uniform for comparisons."""
-    return name.replace(".utf8", ".UTF-8")
+    return name.replace(".utf8", ".UTF-8").replace(".eucjp", ".EUC-JP")
 
 def replace_line(existing_line, new_line):
     """Replaces lines in /etc/locale.gen"""
