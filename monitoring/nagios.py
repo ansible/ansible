@@ -364,7 +364,7 @@ class Nagios(object):
 
         return notif_str
 
-    def schedule_svc_downtime(self, host, services=[], minutes=30):
+    def schedule_svc_downtime(self, host, services=None, minutes=30):
         """
         This command is used to schedule downtime for a particular
         service.
@@ -378,6 +378,10 @@ class Nagios(object):
         """
 
         cmd = "SCHEDULE_SVC_DOWNTIME"
+
+        if services is None:
+            services = []
+
         for service in services:
             dt_cmd_str = self._fmt_dt_str(cmd, host, minutes, svc=service)
             self._write_command(dt_cmd_str)
@@ -518,7 +522,7 @@ class Nagios(object):
         notif_str = self._fmt_notif_str(cmd, host)
         self._write_command(notif_str)
 
-    def disable_svc_notifications(self, host, services=[]):
+    def disable_svc_notifications(self, host, services=None):
         """
         This command is used to prevent notifications from being sent
         out for the specified service.
@@ -530,6 +534,10 @@ class Nagios(object):
         """
 
         cmd = "DISABLE_SVC_NOTIFICATIONS"
+
+        if services is None:
+            services = []
+
         for service in services:
             notif_str = self._fmt_notif_str(cmd, host, svc=service)
             self._write_command(notif_str)
@@ -628,7 +636,7 @@ class Nagios(object):
         else:
             return "Fail: could not write to the command file"
 
-    def enable_svc_notifications(self, host, services=[]):
+    def enable_svc_notifications(self, host, services=None):
         """
         Enables notifications for a particular service.
 
@@ -638,6 +646,10 @@ class Nagios(object):
         """
 
         cmd = "ENABLE_SVC_NOTIFICATIONS"
+
+        if services is None:
+            services = []
+
         nagios_return = True
         return_str_list = []
         for service in services:
