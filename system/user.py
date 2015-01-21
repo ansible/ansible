@@ -160,7 +160,7 @@ options:
               filename then it will be relative to the user's home directory.
     ssh_key_comment:
         required: false
-        default: ansible-generated
+        default: ansible-generated on $HOSTNAME
         version_added: "0.9"
         description:
             - Optionally define the comment for the SSH key.
@@ -199,6 +199,7 @@ import pwd
 import grp
 import syslog
 import platform
+import socket
 
 try:
     import spwd
@@ -1462,7 +1463,7 @@ def main():
             'bits': '2048',
             'type': 'rsa',
             'passphrase': None,
-            'comment': 'ansible-generated'
+            'comment': 'ansible-generated on %s' % socket.gethostname()
     }
     module = AnsibleModule(
         argument_spec = dict(
