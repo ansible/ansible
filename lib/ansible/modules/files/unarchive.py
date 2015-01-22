@@ -82,7 +82,7 @@ class UnarchiveError(Exception):
     pass
 
 # class to handle .zip files
-class ZipFile(object):
+class ZipArchive(object):
 
     def __init__(self, src, dest, module):
         self.src = src
@@ -123,7 +123,7 @@ class ZipFile(object):
 
 
 # class to handle gzipped tar files
-class TgzFile(object):
+class TgzArchive(object):
 
     def __init__(self, src, dest, module):
         self.src = src
@@ -196,29 +196,29 @@ class TgzFile(object):
 
 
 # class to handle tar files that aren't compressed
-class TarFile(TgzFile):
+class TarArchive(TgzArchive):
     def __init__(self, src, dest, module):
-        super(TarFile, self).__init__(src, dest, module)
+        super(TarArchive, self).__init__(src, dest, module)
         self.zipflag = ''
 
 
 # class to handle bzip2 compressed tar files
-class TarBzip(TgzFile):
+class TarBzipArchive(TgzArchive):
     def __init__(self, src, dest, module):
-        super(TarFile, self).__init__(src, dest, module)
+        super(TarBzipArchive, self).__init__(src, dest, module)
         self.zipflag = 'j'
 
 
 # class to handle xz compressed tar files
-class TarXz(TgzFile):
+class TarXzArchive(TgzArchive):
     def __init__(self, src, dest, module):
-        super(TarFile, self).__init__(src, dest, module)
+        super(TarXzArchive, self).__init__(src, dest, module)
         self.zipflag = 'J'
 
 
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, module):
-    handlers = [TgzFile, ZipFile, TarFile, TarBzip, TarXz]
+    handlers = [TgzArchive, ZipArchive, TarArchive, TarBzipArchive, TarXzArchive]
     for handler in handlers:
         obj = handler(src, dest, module)
         if obj.can_handle_archive():
