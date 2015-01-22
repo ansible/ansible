@@ -79,7 +79,6 @@ class ShellModule(object):
         return 'echo %s' % user_home_path
 
     def checksum(self, path, python_interp):
-        path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
         #
@@ -97,14 +96,14 @@ class ShellModule(object):
         # 0.  This logic is added to the end of the cmd at the bottom of this
         # function.
 
-        test = "rc=flag; [ -r \"%(p)s\" ] || rc=2; [ -f \"%(p)s\" ] || rc=1; [ -d \"%(p)s\" ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}  %(p)s\" && exit 0" % dict(p=path, i=python_interp)
+        test = "rc=flag; [ -r \'%(p)s\' ] || rc=2; [ -f \'%(p)s\' ] || rc=1; [ -d \'%(p)s\' ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}\"\'  %(p)s\' && exit 0" % dict(p=path, i=python_interp)
         csums = [
             "(%s -c 'import hashlib; print(hashlib.sha1(open(\"%s\", \"rb\").read()).hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python > 2.4 (including python3)
             "(%s -c 'import sha; print(sha.sha(open(\"%s\", \"rb\").read()).hexdigest())' 2>/dev/null)" % (python_interp, path),        # Python == 2.4
         ]
 
         cmd = " || ".join(csums)
-        cmd = "%s; %s || (echo \"0  %s\")" % (test, cmd, path)
+        cmd = "%s; %s || (echo \'0  %s\')" % (test, cmd, path)
         return cmd
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
