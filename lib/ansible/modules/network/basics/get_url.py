@@ -219,8 +219,29 @@ def main():
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
 
+    # Remove any non-alphanumeric characters, including the infamous
+    # Unicode zero-width space
+    stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
+
+    # Fail early if sha256 is not supported
+    if sha256sum != '' and not HAS_HASHLIB:
+        module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
+
     if not dest_is_dir and os.path.exists(dest):
-        if not force:
+        checksum_mismatch = False
+
+        # If the download is not forced and there is a checksum, allow
+        # checksum match to skip the download.
+        if not force and sha256sum != '':
+            destination_checksum = module.sha256(dest)
+
+            if stripped_sha256sum.lower() == destination_checksum:
+                module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+
+            checksum_mismatch = True
+
+        # Not forcing redownload, unless sha256sum has already failed
+        if not force and not checksum_mismatch:
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
         # If the file already exists, prepare the last modified time for the
@@ -283,15 +304,7 @@ def main():
     # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
     if sha256sum != '':
-        # Remove any non-alphanumeric characters, including the infamous
-        # Unicode zero-width space
-        stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
-
-        if not HAS_HASHLIB:
-            os.remove(dest)
-            module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
-        else:
-            destination_checksum = module.sha256(dest)
+        destination_checksum = module.sha256(dest)
 
         if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
