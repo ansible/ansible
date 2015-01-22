@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 
 # (c) 2013, Yeukhon Wong <yeukhon@acm.org>
+# (c) 2014, Nate Coraor <nate@bx.psu.edu>
 #
 # This module was originally inspired by Brad Olson's ansible-module-mercurial
 # <https://github.com/bradobro/ansible-module-mercurial>. This module tends
@@ -49,7 +50,7 @@ options:
             - Equivalent C(-r) option in hg command which could be the changeset, revision number,
               branch name or even tag.
         required: false
-        default: "default"
+        default: null
         aliases: [ version ]
     force:
         description:
@@ -128,7 +129,10 @@ class Hg(object):
         if not before:
             return False
 
-        (rc, out, err) = self._command(['update', '-C', '-R', self.dest])
+        args = ['update', '-C', '-R', self.dest]
+        if self.revision is not None:
+            args = args + ['-r', self.revision]
+        (rc, out, err) = self._command(args)
         if rc != 0:
             self.module.fail_json(msg=err)
 
@@ -170,13 +174,30 @@ class Hg(object):
             ['pull', '-R', self.dest, self.repo])
 
     def update(self):
+        if self.revision is not None:
+            return self._command(['update', '-r', self.revision, '-R', self.dest])
         return self._command(['update', '-R', self.dest])
 
     def clone(self):
-        return self._command(['clone', self.repo, self.dest, '-r', self.revision])
+        if self.revision is not None:
+            return self._command(['clone', self.repo, self.dest, '-r', self.revision])
+        return self._command(['clone', self.repo, self.dest])
 
-    def switch_version(self):
-        return self._command(['update', '-r', self.revision, '-R', self.dest])
+    @property
+    def at_revision(self):
+        """
+        There is no point in pulling from a potentially down/slow remote site
+        if the desired changeset is already the current changeset.
+        """
+        if self.revision is None or len(self.revision) < 7:
+            # Assume it's a rev number, tag, or branch
+            return False
+        (rc, out, err) = self._command(['--debug', 'id', '-i', '-R', self.dest])
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        if out.startswith(self.revision):
+            return True
+        return False
 
 # ===========================================
 
@@ -185,7 +206,7 @@ def main():
         argument_spec = dict(
             repo = dict(required=True, aliases=['name']),
             dest = dict(required=True),
-            revision = dict(default="default", aliases=['version']),
+            revision = dict(default=None, aliases=['version']),
             force = dict(default='yes', type='bool'),
             purge = dict(default='no', type='bool'),
             executable = dict(default=None),
@@ -212,6 +233,12 @@ def main():
         (rc, out, err) = hg.clone()
         if rc != 0:
             module.fail_json(msg=err)
+    elif hg.at_revision:
+        # no update needed, don't pull
+        before = hg.get_revision()
+
+        # but force and purge if desired
+        cleaned = hg.cleanup(force, purge)
     else:
         # get the current state before doing pulling
         before = hg.get_revision()
@@ -227,7 +254,6 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
 
-    hg.switch_version()
     after = hg.get_revision()
     if before != after or cleaned:
         changed = True

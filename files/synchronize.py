@@ -39,7 +39,7 @@ options:
     version_added: "1.5"
   mode:
     description:
-      - Specify the direction of the synchroniztion. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
+      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
@@ -145,15 +145,16 @@ options:
     required: false
     version_added: "1.6"
 notes:
+   - rsync must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
    - The remote user for the dest path will always be the remote_user, not
-     the sudo_user. 
+     the sudo_user.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - To exclude files and directories from being synchronized, you may add 
      C(.rsync-filter) files to the source directory.
-     
-     
+
+
 author: Timothy Appnel
 '''
 
@@ -180,7 +181,9 @@ local_action: synchronize src=some/relative/path dest=/some/absolute/path
 pull mode
 synchronize: mode=pull src=some/relative/path dest=/some/absolute/path
 
-# Synchronization of src on delegate host to dest on the current inventory host
+# Synchronization of src on delegate host to dest on the current inventory host.
+# If delegate_to is set to the current inventory host, this can be used to syncronize
+# two directories on that host. 
 synchronize: >
     src=some/relative/path dest=/some/absolute/path
     delegate_to: delegate.host
