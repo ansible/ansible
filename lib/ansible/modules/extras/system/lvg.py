@@ -135,7 +135,9 @@ def main():
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
 
-
+    # LVM always uses real paths not symlinks so replace symlinks with actual path
+    for idx, dev in enumerate(dev_list):
+        dev_list[idx] = os.path.realpath(dev)
 
     if state=='present':
         ### check given devices
