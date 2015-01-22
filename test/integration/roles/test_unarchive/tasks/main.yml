@@ -26,7 +26,7 @@
   shell: tar cvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
 
 - name: prep a zip file
-  shell: tar cvf test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
+  shell: zip test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
 
 - name: create our tar unarchive destination
   file: path={{output_dir}}/test-unarchive-tar state=directory
