@@ -136,3 +136,4 @@
 
 - name: remove our unarchive destination
   file: path=/tmp/foo-unarchive.txt state=absent
+
