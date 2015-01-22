@@ -28,12 +28,15 @@ DOCUMENTATION = """
 ---
 module: lineinfile
 author: Daniel Hokka Zakrisson, Ahti Kitsik
+extends_documentation_fragment: files
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
   - This module will search a file for a line, and ensure that it is present or absent.
-  - This is primarily useful when you want to change a single line in a
-    file only. For other cases, see the M(copy) or M(template) modules.
+  - This is primarily useful when you want to change a single line in
+    a file only. See the M(replace) module if you want to change
+    multiple, similar lines; for other cases, see the M(copy) or
+    M(template) modules.
 version_added: "0.7"
 options:
   dest:
@@ -127,7 +130,7 @@ options:
 """
 
 EXAMPLES = r"""
-- lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled
+- lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=enforcing
 
 - lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"
 
@@ -145,7 +148,7 @@ EXAMPLES = r"""
 
 - lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
 
-# Validate a the sudoers file before saving
+# Validate the sudoers file before saving
 - lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
 """
 
@@ -189,7 +192,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         destpath = os.path.dirname(dest)
-        if not os.path.exists(destpath):
+        if not os.path.exists(destpath) and not module.check_mode:
             os.makedirs(destpath)
         lines = []
     else:
@@ -278,6 +281,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if backup and os.path.exists(dest):
             backupdest = module.backup_local(dest)
         write_changes(module, lines, dest)
+
+    if module.check_mode and not os.path.exists(dest):
+        module.exit_json(changed=changed, msg=msg, backup=backupdest)
 
     msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg, backup=backupdest)

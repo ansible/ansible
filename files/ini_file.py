@@ -23,6 +23,7 @@ DOCUMENTATION = '''
 ---
 module: ini_file
 short_description: Tweak settings in INI files
+extends_documentation_fragment: files
 description:
      - Manage (add, remove, change) individual settings in an INI-style file without having
        to manage the file as a whole with, say, M(template) or M(assemble). Adds missing

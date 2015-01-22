@@ -27,7 +27,7 @@ module: copy
 version_added: "historical"
 short_description: Copies files to remote locations.
 description:
-     - The M(copy) module copies a file on the local box to remote locations.
+     - The M(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box.
 options:
   src:
     description:
@@ -167,8 +167,13 @@ def main():
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source %s not readable" % (src))
 
-    md5sum_src = module.md5(src)
-    md5sum_dest = None
+    checksum_src = module.sha1(src)
+    checksum_dest = None
+    # Backwards compat only.  This will be None in FIPS mode
+    try:
+        md5sum_src = module.md5(src)
+    except ValueError:
+        md5sum_src = None
 
     changed = False
 
@@ -176,7 +181,7 @@ def main():
     if original_basename and dest.endswith("/"):
         dest = os.path.join(dest, original_basename)
         dirname = os.path.dirname(dest)
-        if not os.path.exists(dirname):
+        if not os.path.exists(dirname) and '/' in dirname:
             (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
             os.makedirs(dirname)
             directory_args = module.load_file_common_arguments(module.params)
@@ -198,7 +203,7 @@ def main():
                 basename = original_basename
             dest = os.path.join(dest, basename)
         if os.access(dest, os.R_OK):
-            md5sum_dest = module.md5(dest)
+            checksum_dest = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):
             try:
@@ -215,7 +220,7 @@ def main():
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
-    if md5sum_src != md5sum_dest or os.path.islink(dest):
+    if checksum_src != checksum_dest or os.path.islink(dest):
         try:
             if backup:
                 if os.path.exists(dest):
@@ -238,7 +243,7 @@ def main():
         changed = False
 
     res_args = dict(
-        dest = dest, src = src, md5sum = md5sum_src, changed = changed
+        dest = dest, src = src, md5sum = md5sum_src, checksum = checksum_src, changed = changed
     )
     if backup_file:
         res_args['backup_file'] = backup_file
