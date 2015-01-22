@@ -22,7 +22,7 @@
   when: ansible_pkg_mgr  ==  'yum'
 
 - name: Ensure zip is present to create test archive (apt)
-  yum: name=zip state=latest
+  apt: name=zip state=latest
   when: ansible_pkg_mgr  ==  'apt'
 
 - name: prep our file
@@ -196,5 +196,34 @@
       - "unarchive07.changed == false"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=absent
+  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
 
+- name: create a directory with quotable chars
+  file: path="{{ output_dir }}/test-quotes~root" state=directory
+
+- name: unarchive into directory with quotable chars
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/test-quotes~root"
+    copy: no
+  register: unarchive08
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive08.changed == true"
+
+- name: unarchive into directory with quotable chars a second time
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/test-quotes~root"
+    copy: no
+  register: unarchive09
+
+- name: Test that unarchive did nothing
+  assert:
+    that:
+      - "unarchive09.changed == false"
+
+- name: remove quotable chars test
+  file: path="{{ output_dir }}/test-quotes~root" state=absent
