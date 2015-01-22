@@ -184,6 +184,9 @@ def union(a, b):
         c = unique(a + b)
     return c
 
+def to_list(a):
+    return type(a) == type([]) and a or [a]
+
 def min(a):
     _min = __builtins__.get('min')
     return _min(a);
@@ -311,6 +314,7 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+            'to_list': to_list,
             'min' : min,
             'max' : max,
 

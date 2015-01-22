@@ -131,6 +131,18 @@ class TestFilters(unittest.TestCase):
                                                       'a\\1')
         assert a == 'ansible'
 
+    def test_to_list_on_string(self):
+        a = ansible.runner.filter_plugins.core.to_list('ansible')
+        assert type(a) == type([])
+        assert a[0] == 'ansible'
+
+    def test_to_list_on_list(self):
+        a = ansible.runner.filter_plugins.core.to_list(['ansible', 'more stuff'])
+        assert type(a) == type([])
+        assert len(a) == 2
+        assert a[0] == 'ansible'
+        assert a[1] == 'more stuff'
+
     #def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.
