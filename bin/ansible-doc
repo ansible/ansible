@@ -34,7 +34,7 @@ import traceback
 MODULEDIR = C.DEFAULT_MODULE_PATH
 
 BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
-IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README" ]
+IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION"]
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD   = re.compile(r"B\(([^)]+)\)")
