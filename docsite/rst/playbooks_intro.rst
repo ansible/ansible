@@ -309,7 +309,7 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   Notify handlers are always run in the order written.
+   Notify handlers are always run in the order written in the handlers list.
 
 Roles are described later on.  It's worthwhile to point out that handlers are
 automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'
