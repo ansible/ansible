@@ -75,8 +75,8 @@ def main():
             # Sample output lines:
             # Process 'name'    Running
             # Process 'name'    Running - restart pending
-            parts = line.lower().split()
-            if len(parts) > 2 and parts[0] == 'process' and parts[1] == "'%s'" % name:
+            parts = line.split()
+            if len(parts) > 2 and parts[0] == 'Process' and parts[1] == "'%s'" % name:
                 return ' '.join(parts[2:])
         else:
             return ''
