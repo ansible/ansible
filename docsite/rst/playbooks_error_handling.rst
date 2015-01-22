@@ -84,6 +84,20 @@ does not cause handlers to fire::
         changed_when: False
 
 
+Error Codes
+```````````
+
+The Checksum function used by the template module and probably others returns
+the following error codes:
+
+    1: File not found
+    2: File not readable
+    3: Path is a directory not a file
+
+Example Message:
+    msg: failed to checksum remote file. Checksum error code: 3
+
+
 .. seealso::
 
    :doc:`playbooks`
