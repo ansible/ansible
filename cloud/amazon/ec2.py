@@ -64,7 +64,7 @@ options:
   tenancy:
     version_added: "1.9"
     description:
-      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC. Valid values are:"default" or "dedicated". NOTE: To use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances. 
+      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC. Valid values are "default" or "dedicated". Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
     required: false
     default: default
     aliases: []
