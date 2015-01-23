@@ -186,6 +186,11 @@ class TaskExecutor:
         # Now we do final validation on the task, which sets all fields to their final values
         self._task.post_validate(variables)
 
+        # And filter out any fields which were set to default(omit), and got the omit token value
+        omit_token = variables.get('omit')
+        if omit_token is not None:
+            self._task.args = dict(filter(lambda x: x[1] != omit_token, self._task.args.iteritems()))
+
         # Read some values from the task, so that we can modify them if need be
         retries = self._task.retries
         if retries <= 0:

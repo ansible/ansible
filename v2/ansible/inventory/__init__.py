@@ -455,12 +455,12 @@ class Inventory(object):
 
         return vars
 
-    def get_variables(self, hostname, update_cached=False, vault_password=None):
+    def get_vars(self, hostname, update_cached=False, vault_password=None):
 
         host = self.get_host(hostname)
         if not host:
             raise Exception("host not found: %s" % hostname)
-        return host.get_variables()
+        return host.get_vars()
 
     def get_host_variables(self, hostname, update_cached=False, vault_password=None):
 

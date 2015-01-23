@@ -139,6 +139,7 @@ def main(args):
 
     # create the inventory, and filter it based on the subset specified (if any)
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=options.inventory)
+    variable_manager.set_inventory(inventory)
 
     # Note: slightly wrong, this is written so that implicit localhost
     # (which is not returned in list_hosts()) is taken into account for

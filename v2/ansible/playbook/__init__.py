@@ -25,6 +25,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.play import Play
+from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins import push_basedir
 
 

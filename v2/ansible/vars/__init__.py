@@ -23,11 +23,16 @@ import os
 
 from collections import defaultdict
 
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
+
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
-
 from ansible.utils.debug import debug
+from ansible.vars.hostvars import HostVars
 
 CACHED_VARS = dict()
 
@@ -40,6 +45,9 @@ class VariableManager:
         self._extra_vars       = defaultdict(dict)
         self._host_vars_files  = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
+        self._inventory        = None
+
+        self._omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -65,6 +73,9 @@ class VariableManager:
         ''' ensures a clean copy of the extra_vars are used to set the value '''
         assert isinstance(value, dict)
         self._extra_vars = value.copy()
+
+    def set_inventory(self, inventory):
+        self._inventory = inventory
 
     def _merge_dicts(self, a, b):
         '''
@@ -177,8 +188,15 @@ class VariableManager:
 
         all_vars = self._merge_dicts(all_vars, self._extra_vars)
 
-        # FIXME: we need to move the special variables from the old runner
-        #        inject into here (HostVars?, groups, etc.)
+        # FIXME: make sure all special vars are here
+        # Finally, we create special vars
+
+        if host and self._inventory is not None:
+            hostvars = HostVars(vars_manager=self, inventory=self._inventory, loader=loader)
+            all_vars['hostvars'] = hostvars
+
+        # the 'omit' value alows params to be left out if the variable they are based on is undefined
+        all_vars['omit'] = self._omit_token
 
         CACHED_VARS[cache_entry] = all_vars
 
@@ -228,7 +246,6 @@ class VariableManager:
         if os.path.exists(path):
             (name, data) = self._load_inventory_file(path, loader)
             self._group_vars_files[name] = data
-
 
     def set_host_facts(self, host, facts):
         '''
