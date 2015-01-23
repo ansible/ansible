@@ -84,7 +84,7 @@ EXAMPLES = '''
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl: name=kernel.panic value=3 sysctl_file=/tmp/test_sysctl.conf reload=no
 
-# Set ip fowarding on in /proc and do not reload the sysctl file
+# Set ip forwarding on in /proc and do not reload the sysctl file
 - sysctl: name="net.ipv4.ip_forward" value=1 sysctl_set=yes
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
@@ -185,12 +185,20 @@ class SysctlModule(object):
     def _parse_value(self, value):
         if value is None:
             return ''
-        elif value.lower() in BOOLEANS_TRUE:
-            return '1'
-        elif value.lower() in BOOLEANS_FALSE:
-            return '0'
+        elif isinstance(value, bool):
+            if value:
+                return '1'
+            else:
+                return '0'
+        elif isinstance(value, basestring):
+            if value.lower() in BOOLEANS_TRUE:
+                return '1'
+            elif value.lower() in BOOLEANS_FALSE:
+                return '0'
+            else:
+                return value.strip()
         else:
-            return value.strip()
+            return value
 
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
@@ -278,10 +286,10 @@ class SysctlModule(object):
                 checked.append(k)
                 if k == self.args['name']:
                     if self.args['state'] == "present":
-                        new_line = "%s = %s\n" % (k, self.args['value'])
+                        new_line = "%s=%s\n" % (k, self.args['value'])
                         self.fixed_lines.append(new_line)                    
                 else:
-                    new_line = "%s = %s\n" % (k, v)
+                    new_line = "%s=%s\n" % (k, v)
                     self.fixed_lines.append(new_line)                    
 
         if self.args['name'] not in checked and self.args['state'] == "present":

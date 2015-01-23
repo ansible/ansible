@@ -36,10 +36,17 @@ options:
     aliases: []
   get_md5:
     description:
-      - Whether to return the md5 sum of the file
+      - Whether to return the md5 sum of the file.  Will return None if we're unable to use md5 (Common for FIPS-140 compliant systems)
     required: false
     default: yes
     aliases: []
+  get_checksum:
+    description:
+      - Whether to return a checksum of the file (currently sha1)
+    required: false
+    default: yes
+    aliases: []
+    version_added: "1.8"
 author: Bruce Pennypacker
 '''
 
@@ -51,12 +58,12 @@ EXAMPLES = '''
 - fail: msg="Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
-# Determine if a path exists and is a directory.  Note we need to test
+# Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
 - stat: path=/path/to/something
   register: p
 - debug: msg="Path exists and is a directory"
-  when: p.stat.isdir is defined and p.stat.isdir == true
+  when: p.stat.isdir is defined and p.stat.isdir
 
 # Don't do md5 checksum
 - stat: path=/path/to/myhugefile get_md5=no
@@ -66,13 +73,15 @@ import os
 import sys
 from stat import *
 import pwd
+import grp
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             path = dict(required=True),
             follow = dict(default='no', type='bool'),
-            get_md5 = dict(default='yes', type='bool')
+            get_md5 = dict(default='yes', type='bool'),
+            get_checksum = dict(default='yes', type='bool')
         ),
         supports_check_mode = True
     )
@@ -81,6 +90,7 @@ def main():
     path = os.path.expanduser(path)
     follow = module.params.get('follow')
     get_md5 = module.params.get('get_md5')
+    get_checksum = module.params.get('get_checksum')
 
     try:
         if follow:
@@ -99,6 +109,7 @@ def main():
     # back to ansible
     d = {
         'exists'   : True,
+        'path'     : path,
         'mode'    : "%04o" % S_IMODE(mode),
         'isdir'    : S_ISDIR(mode),
         'ischr'    : S_ISCHR(mode),
@@ -133,13 +144,23 @@ def main():
         d['lnk_source'] = os.path.realpath(path)
 
     if S_ISREG(mode) and get_md5 and os.access(path,os.R_OK):
-        d['md5']       = module.md5(path)
+        # Will fail on FIPS-140 compliant systems
+        try:
+            d['md5']       = module.md5(path)
+        except ValueError:
+            d['md5']       = None
+
+    if S_ISREG(mode) and get_checksum and os.access(path,os.R_OK):
+        d['checksum']       = module.sha1(path)
 
 
     try:
         pw = pwd.getpwuid(st.st_uid)
 
         d['pw_name']   = pw.pw_name
+
+        grp_info = grp.getgrgid(pw.pw_gid)
+        d['gr_name'] = grp_info.gr_name
     except:
         pass
 

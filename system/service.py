@@ -25,7 +25,8 @@ author: Michael DeHaan
 version_added: "0.1"
 short_description:  Manage services.
 description:
-    - Controls services on remote hosts.
+    - Controls services on remote hosts. Supported init systems include BSD init,
+      OpenRC, SysV, systemd, upstart.
 options:
     name:
         required: true
@@ -105,7 +106,12 @@ import select
 import time
 import string
 
-from distutils.version import LooseVersion
+# The distutils module is not shipped with SUNWPython on Solaris.
+# It's in the SUNWPython-devel package which also contains development files
+# that don't belong on production boxes.  Since our Solaris code doesn't
+# depend on LooseVersion, do not import it on Solaris.
+if platform.system() != 'SunOS':
+    from distutils.version import LooseVersion
 
 class Service(object):
     """
@@ -393,74 +399,43 @@ class LinuxService(Service):
         for binary in binaries:
             location[binary] = self.module.get_bin_path(binary)
 
-        def check_systemd(name):
-            # verify service is managed by systemd
-            if not location.get('systemctl', None):
+        for initdir in initpaths:
+            initscript = "%s/%s" % (initdir,self.name)
+            if os.path.isfile(initscript):
+                self.svc_initscript = initscript
+
+        def check_systemd():
+            # verify systemd is installed (by finding systemctl)
+            if not location.get('systemctl', False):
                 return False
 
-            # default to .service if the unit type is not specified
-            if name.find('.') > 0:
-                unit_name, unit_type = name.rsplit('.', 1)
-                if unit_type not in ("service", "socket", "device", "mount", "automount",
-                                     "swap", "target", "path", "timer", "snapshot"):
-                    name = "%s.service" % name
-            else:
-                name = "%s.service" % name
+            systemd_enabled = False
+            # Check if init is the systemd command, using comm as cmdline could be symlink
+            try:
+                f = open('/proc/1/comm', 'r')
+            except IOError, err:
+                # If comm doesn't exist, old kernel, no systemd
+                return False
 
-            rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
-
-            # adjust the service name to account for template service unit files
-            index = name.find('@')
-            if index != -1:
-                template_name = name[:index+1]
-            else:
-                template_name = name
-
-            self.__systemd_unit = None
-            for line in out.splitlines():
-                if line.startswith(template_name):
-                    self.__systemd_unit = name
+            for line in f:
+                if 'systemd' in line:
                     return True
+
             return False
 
-        # Locate a tool for enable options
-        if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
-            if check_systemd(self.name):
-                # service is managed by systemd
-                self.enable_cmd = location['systemctl']
-            else:
-                # we are using a standard SysV service
-                self.enable_cmd = location['chkconfig']
-        elif location.get('update-rc.d', None):
-            if check_systemd(self.name):
-                # service is managed by systemd
-                self.enable_cmd = location['systemctl']
-            elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
-                # service is managed by upstart
-                self.enable_cmd = location['initctl']
-            elif location['update-rc.d'] and os.path.exists("/etc/init.d/%s" % self.name):
-                # service is managed by with SysV init scripts, but with update-rc.d
-                self.enable_cmd = location['update-rc.d']
-            else:
-                self.module.fail_json(msg="service not found: %s" % self.name)
-        elif location.get('rc-service', None) and not location.get('systemctl', None):
-            # service is managed by OpenRC
-            self.svc_cmd = location['rc-service']
-            self.enable_cmd = location['rc-update']
-            return
-        elif check_systemd(self.name):
+        # Locate a tool to enable/disable a service
+        if location.get('systemctl',False) and check_systemd():
             # service is managed by systemd
+            self.__systemd_unit = self.name
+            self.svc_cmd = location['systemctl']
             self.enable_cmd = location['systemctl']
-        elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
+
+        elif location.get('initctl', False) and os.path.exists("/etc/init/%s.conf" % self.name):
             # service is managed by upstart
             self.enable_cmd = location['initctl']
-
-        # if this service is managed via upstart, get the current upstart version
-        if self.enable_cmd == location['initctl']:
-            # default the upstart version to something we can compare against
+            # set the upstart version based on the output of 'initctl version'
             self.upstart_version = LooseVersion('0.0.0')
             try:
-                # set the upstart version based on the output of 'initctl version'
                 version_re = re.compile(r'\(upstart (.*)\)')
                 rc,stdout,stderr = self.module.run_command('initctl version')
                 if rc == 0:
@@ -468,40 +443,72 @@ class LinuxService(Service):
                     if res:
                         self.upstart_version = LooseVersion(res.groups()[0])
             except:
-                # we'll use the default of 0.0.0 since we couldn't
-                # detect the current upstart version above
-                pass
+                pass  # we'll use the default of 0.0.0
 
-        # Locate a tool for runtime service management (start, stop etc.)
-        if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
-            # SysV init script
+            if location.get('start', False):
+                # upstart -- rather than being managed by one command, start/stop/restart are actual commands
+                self.svc_cmd = ''
+
+        elif location.get('rc-service', False):
+            # service is managed by OpenRC
+            self.svc_cmd = location['rc-service']
+            self.enable_cmd = location['rc-update']
+            return # already have service start/stop tool too!
+
+        elif self.svc_initscript:
+            # service is managed by with SysV init scripts
+            if location.get('update-rc.d', False):
+                # and uses update-rc.d
+                self.enable_cmd = location['update-rc.d']
+            elif location.get('chkconfig', False):
+                # and uses chkconfig
+                self.enable_cmd = location['chkconfig']
+
+        if self.enable_cmd is None:
+            self.module.fail_json(msg="no service or tool found for: %s" % self.name)
+
+        # If no service control tool selected yet, try to see if 'service' is available
+        if not self.svc_cmd and location.get('service', False):
             self.svc_cmd = location['service']
-        elif location.get('start', None) and os.path.exists("/etc/init/%s.conf" % self.name):
-            # upstart -- rather than being managed by one command, start/stop/restart are actual commands
-            self.svc_cmd = ''
-        else:
-            # still a SysV init script, but /sbin/service isn't installed
-            for initdir in initpaths:
-                initscript = "%s/%s" % (initdir,self.name)
-                if os.path.isfile(initscript):
-                    self.svc_initscript = initscript
 
-        # couldn't find anything yet, assume systemd
-        if self.svc_cmd is None and self.svc_initscript is None:
-            if location.get('systemctl'):
-                self.svc_cmd = location['systemctl']
-
+        # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
             self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
 
-        if location.get('initctl', None):
+        if location.get('initctl', False):
             self.svc_initctl = location['initctl']
 
     def get_systemd_status_dict(self):
         (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
         if rc != 0:
             self.module.fail_json(msg='failure %d running systemctl show for %r: %s' % (rc, self.__systemd_unit, err))
-        return dict(line.split('=', 1) for line in out.splitlines())
+        key = None
+        value_buffer = []
+        status_dict = {}
+        for line in out.splitlines():
+            if not key:
+                key, value = line.split('=', 1)
+                # systemd fields that are shell commands can be multi-line
+                # We take a value that begins with a "{" as the start of
+                # a shell command and a line that ends with "}" as the end of
+                # the command
+                if value.lstrip().startswith('{'):
+                    if value.rstrip().endswith('}'):
+                        status_dict[key] = value
+                        key = None
+                    else:
+                        value_buffer.append(value)
+                else:
+                    status_dict[key] = value
+                    key = None
+            else:
+                if line.rstrip().endswith('}'):
+                    status_dict[key] = '\n'.join(value_buffer)
+                    key = None
+                else:
+                    value_buffer.append(value)
+
+        return status_dict
 
     def get_systemd_service_status(self):
         d = self.get_systemd_status_dict()
@@ -592,10 +599,6 @@ class LinuxService(Service):
 
         self.changed = True
         action = None
-
-        # FIXME: we use chkconfig or systemctl
-        # to decide whether to run the command here but need something
-        # similar for upstart
 
         #
         # Upstart's initctl
@@ -796,9 +799,9 @@ class LinuxService(Service):
         (rc, out, err) = self.execute_command("%s %s %s" % args)
         if rc != 0:
             if err:
-                self.module.fail_json(msg=err)
+                self.module.fail_json(msg="Error when trying to %s %s: rc=%s %s" % (action, self.name, rc, err))
             else:
-                self.module.fail_json(msg=out)
+                self.module.fail_json(msg="Failure for %s %s: rc=%s %s" % (action, self.name, rc, out))
 
         return (rc, out, err)
 
