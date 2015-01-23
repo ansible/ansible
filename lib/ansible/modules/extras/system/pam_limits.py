@@ -96,7 +96,7 @@ def main():
 
     pam_items = [ 'core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks', 'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot' ]
 
-    pam_types = [ 'soft', 'hard' ]
+    pam_types = [ 'soft', 'hard', '-' ]
 
     limits_conf = '/home/slyce/limits.conf'
 
