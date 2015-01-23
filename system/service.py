@@ -106,7 +106,9 @@ import select
 import time
 import string
 
-from distutils.version import LooseVersion
+# The distutils module is not shipped with SUNWPython on Solaris.
+if platform.system() != 'SunOS':
+    from distutils.version import LooseVersion
 
 class Service(object):
     """
