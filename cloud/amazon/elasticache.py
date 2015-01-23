@@ -357,7 +357,9 @@ class ElastiCacheManager(object):
             'modifying': 'available',
             'deleting': 'gone'
         }
-
+        if self.status == awaited_status:
+            # No need to wait, we're already done
+            return
         if status_map[self.status] != awaited_status:
             msg = "Invalid awaited status. '%s' cannot transition to '%s'"
             self.module.fail_json(msg=msg % (self.status, awaited_status))
