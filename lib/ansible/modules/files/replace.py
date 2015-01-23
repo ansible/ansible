@@ -152,6 +152,8 @@ def main():
     if changed and not module.check_mode:
         if params['backup'] and os.path.exists(dest):
             module.backup_local(dest)
+        if params['follow'] and os.path.islink(dest):
+            dest = os.path.realpath(dest)
         write_changes(module, result[0], dest)
 
     msg, changed = check_file_attrs(module, changed, msg)
