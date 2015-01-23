@@ -71,7 +71,8 @@ class AnsibleJ2Vars:
 
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
-        if isinstance(variable, dict) and varname == "vars": # or isinstance(var, HostVars):
+        from ansible.vars.hostvars import HostVars
+        if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars):
             return variable
         else:
             return self._templar.template(variable)
