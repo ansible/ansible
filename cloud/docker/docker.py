@@ -96,7 +96,7 @@ options:
     version_added: "1.5"
   memory_limit:
     description:
-      - Set RAM allocated to container. It whould be passed as an amount of bytes. For example 1048576 = 1Gb
+      - Set RAM allocated to container. It will be passed as a number of bytes. For example 1048576 = 1Gb
     required: false
     default: null
     aliases: []
