@@ -128,7 +128,7 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
 def addRulesToLookup(rules, prefix, dict):
     for rule in rules:
         for grant in rule.grants:
-            dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = rule
+            dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
 
 
 def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
@@ -304,14 +304,13 @@ def main():
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
-            for rule in groupRules.itervalues() :
-                for grant in rule.grants:
-                    grantGroup = None
-                    if grant.group_id:
-                        grantGroup = groups[grant.group_id]
-                    if not module.check_mode:
-                        group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
-                    changed = True
+            for (rule, grant) in groupRules.itervalues() :
+                grantGroup = None
+                if grant.group_id:
+                    grantGroup = groups[grant.group_id]
+                if not module.check_mode:
+                    group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+                changed = True
 
         # Manage egress rules
         groupRules = {}
@@ -369,20 +368,19 @@ def main():
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules_egress:
-            for rule in groupRules.itervalues():
-                for grant in rule.grants:
-                    grantGroup = None
-                    if grant.group_id:
-                        grantGroup = groups[grant.group_id].id
-                    if not module.check_mode:
-                        ec2.revoke_security_group_egress(
-                                group_id=group.id,
-                                ip_protocol=rule.ip_protocol,
-                                from_port=rule.from_port,
-                                to_port=rule.to_port,
-                                src_group_id=grantGroup,
-                                cidr_ip=grant.cidr_ip)
-                    changed = True
+            for (rule, grant) in groupRules.itervalues():
+                grantGroup = None
+                if grant.group_id:
+                    grantGroup = groups[grant.group_id].id
+                if not module.check_mode:
+                    ec2.revoke_security_group_egress(
+                            group_id=group.id,
+                            ip_protocol=rule.ip_protocol,
+                            from_port=rule.from_port,
+                            to_port=rule.to_port,
+                            src_group_id=grantGroup,
+                            cidr_ip=grant.cidr_ip)
+                changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)
