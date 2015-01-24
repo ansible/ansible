@@ -19,6 +19,8 @@ TMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 
 VAULT_PASSWORD_FILE = vault-password
 
+CONSUL_RUNNING := $(shell python consul_running.py)
+
 all: parsing test_var_precedence unicode non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault
 
 parsing:
@@ -30,7 +32,7 @@ parsing:
 	ansible-playbook good_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 includes:
-	ansible-playbook test_includes.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS) 
+	ansible-playbook test_includes.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
 
 unicode:
 	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS)
@@ -118,6 +120,16 @@ rackspace: $(CREDENTIALS_FILE)
     RC=$$? ; \
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make rackspace_cleanup ; \
     exit $$RC;
+
+$(CONSUL_RUNNING):
+
+consul:
+ifeq ($(CONSUL_RUNNING), True)
+	ansible-playbook -i $(INVENTORY) consul.yml ; \
+	ansible-playbook -i ../../plugins/inventory/consul_io.py consul_inventory.yml
+else
+	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
+endif
 
 test_galaxy: test_galaxy_spec test_galaxy_yaml
 
