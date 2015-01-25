@@ -140,6 +140,9 @@ def set_publisher(module, params):
 
 
 def unset_publisher(module, publisher):
+    if not publisher in get_publishers(module):
+        module.exit_json()
+
     rc, out, err = module.run_command(
         ["pkg", "unset-publisher", publisher],
         check_rc=True
