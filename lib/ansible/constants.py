@@ -160,6 +160,7 @@ DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings',
 DEFAULT_CALLABLE_WHITELIST     = get_config(p, DEFAULTS, 'callable_whitelist', 'ANSIBLE_CALLABLE_WHITELIST', [], islist=True)
 COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'ANSIBLE_COMMAND_WARNINGS', False, boolean=True)
 DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, boolean=True)
+IGNORE_MISSING_SUBELEMENTS     = get_config(p, DEFAULTS, 'ignore_missing_subelements', 'IGNORE_MISSING_SUBELEMENTS', False, boolean=True)
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
