@@ -371,6 +371,8 @@ class AnsibleModule(object):
             return False
 
     def selinux_enabled(self):
+        if C.DEFAULT_SKIP_SELINUX:
+            return False
         if not HAVE_SELINUX:
             seenabled = self.get_bin_path('selinuxenabled')
             if seenabled is not None:
