@@ -121,6 +121,7 @@ Here are some examples::
 
          - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
+         # dnstxt lookup requires the Python dnspython package
          - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
