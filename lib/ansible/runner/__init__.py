@@ -326,7 +326,12 @@ class Runner(object):
             if type(enviro) != dict:
                 raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
 
-        return conn.shell.env_prefix(**enviro)
+        custom_ld_library_path = inject['hostvars'][inject['inventory_hostname']].get('ld_library_path', 'python')
+        if len(custom_ld_library_path) < 1:
+            custom_ld_library_path = C.DEFAULT_LD_LIBRARY_PATH
+        myenv = conn.shell.env_prefix(**enviro)
+        myenv += ' LD_LIBRARY_PATH=%s ' % custom_ld_library_path
+        return myenv
 
     # *****************************************************
 
