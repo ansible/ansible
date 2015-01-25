@@ -235,12 +235,12 @@ def main():
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
-            master_port=dict(default=None),
-            master_connect_retry=dict(default=None),
+            master_port=dict(default=None, type='int'),
+            master_connect_retry=dict(default=None, type='int'),
             master_log_file=dict(default=None),
-            master_log_pos=dict(default=None),
+            master_log_pos=dict(default=None, type='int'),
             relay_log_file=dict(default=None),
-            relay_log_pos=dict(default=None),
+            relay_log_pos=dict(default=None, type='int'),
             master_ssl=dict(default=False, type='bool'),
             master_ssl_ca=dict(default=None),
             master_ssl_capath=dict(default=None),
@@ -317,7 +317,6 @@ def main():
             module.fail_json(msg="Server is not configured as mysql slave")
 
     elif mode in "changemaster":
-        print "Change master"
         chm=[]
         chm_params = {}
         if master_host:
@@ -329,22 +328,22 @@ def main():
         if master_password:
             chm.append("MASTER_PASSWORD=%(master_password)s")
             chm_params['master_password'] = master_password
-        if master_port:
+        if master_port is not None:
             chm.append("MASTER_PORT=%(master_port)s")
             chm_params['master_port'] = master_port
-        if master_connect_retry:
+        if master_connect_retry is not None:
             chm.append("MASTER_CONNECT_RETRY=%(master_connect_retry)s")
             chm_params['master_connect_retry'] = master_connect_retry
         if master_log_file:
             chm.append("MASTER_LOG_FILE=%(master_log_file)s")
             chm_params['master_log_file'] = master_log_file
-        if master_log_pos:
+        if master_log_pos is not None:
             chm.append("MASTER_LOG_POS=%(master_log_pos)s")
             chm_params['master_log_pos'] = master_log_pos
         if relay_log_file:
             chm.append("RELAY_LOG_FILE=%(relay_log_file)s")
             chm_params['relay_log_file'] = relay_log_file
-        if relay_log_pos:
+        if relay_log_pos is not None:
             chm.append("RELAY_LOG_POS=%(relay_log_pos)s")
             chm_params['relay_log_pos'] = relay_log_pos
         if master_ssl:
