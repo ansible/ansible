@@ -108,7 +108,7 @@ DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
 DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      'en_US.UTF-8')
 DEFAULT_LD_LIBRARY_PATH   = get_config(p, DEFAULTS, 'ld_library_path',  'ANSIBLE_LD_LIBRARY_PATH',  '')
-DEFAULT_SKIP_SELINUX   	  = get_config(p, DEFAULTS, 'skip_selinux',     'ANSIBLE_SKIP_SELINUX',  '')
+DEFAULT_SKIP_SELINUX      = get_config(p, DEFAULTS, 'skip_selinux',     'ANSIBLE_SKIP_SELINUX',  '')
 DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10, integer=True)
 DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, integer=True)
 DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
