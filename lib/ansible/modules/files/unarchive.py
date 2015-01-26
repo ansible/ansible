@@ -129,7 +129,11 @@ class TgzArchive(object):
         self.src = src
         self.dest = dest
         self.module = module
-        self.cmd_path = self.module.get_bin_path('tar')
+        # Prefer gtar (GNU tar) as it supports the compression options -zjJ
+        self.cmd_path = self.module.get_bin_path('gtar', None)
+        if not self.cmd_path:
+            # Fallback to tar
+            self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'z'
         self._files_in_archive = []
 
