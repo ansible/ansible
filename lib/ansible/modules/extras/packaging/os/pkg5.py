@@ -45,6 +45,12 @@ EXAMPLES = '''
 
 # Remove finger daemon:
 - pkg5: name=service/network/finger state=absent
+
+# Install several packages at once:
+- pkg5:
+    name:
+      - /file/gnu-findutils
+      - /text/gnu-grep
 '''
 
 
