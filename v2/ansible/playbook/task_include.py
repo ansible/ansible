@@ -55,9 +55,7 @@ class TaskInclude(Base, Conditional, Taggable):
     _include   = FieldAttribute(isa='string')
     _loop      = FieldAttribute(isa='string', private=True)
     _loop_args = FieldAttribute(isa='list', private=True)
-    _tags      = FieldAttribute(isa='list', default=[])
     _vars      = FieldAttribute(isa='dict', default=dict())
-    _when      = FieldAttribute(isa='list', default=[])
 
     def __init__(self, block=None, role=None, task_include=None, use_handlers=False):
         self._block        = block
