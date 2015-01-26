@@ -169,6 +169,10 @@ class StrategyBase:
                 elif result[0] == 'notify_handler':
                     host         = result[1]
                     handler_name = result[2]
+
+                    if handler_name not in self._notified_handlers:
+                        self._notified_handlers[handler_name] = []
+
                     if host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(host)
 
