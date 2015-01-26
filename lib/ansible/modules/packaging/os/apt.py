@@ -608,7 +608,8 @@ def main():
 
         if p['state'] in ('latest', 'present', 'build-dep'):
             build_dep = p.get('build-dep', False)
-            result = install(module, packages, cache, upgrade=True,
+            upgrade = p.get('latest', False)
+            result = install(module, packages, cache, upgrade=upgrade,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options,
