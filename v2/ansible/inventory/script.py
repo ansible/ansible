@@ -22,7 +22,7 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.module_utils.basic import json_dict_unicode_to_bytes
+from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible import utils
 from ansible import errors
 import sys
