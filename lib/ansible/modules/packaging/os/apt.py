@@ -607,17 +607,17 @@ def main():
                 module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
         if p['state'] in ('latest', 'present', 'build-dep'):
-            upgrade = False
-            build_dep = False
+            state_upgrade = False
+            state_builddep = False
             if p['state'] == 'latest':
-                upgrade = True
+                state_upgrade = True
             if p['state'] == 'build-dep':
-                build_dep = True
-            result = install(module, packages, cache, upgrade=upgrade,
+                state_builddep = True
+            result = install(module, packages, cache, upgrade=state_upgrade,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options,
-                    build_dep=build_dep)
+                    build_dep=state_builddep)
             (success, retvals) = result
             if success:
                 module.exit_json(**retvals)
