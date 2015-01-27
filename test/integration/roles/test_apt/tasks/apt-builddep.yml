@@ -53,15 +53,3 @@
     that:
         - "dpkg_result.rc == 0"
   tags: ['test_apt_builddep']
-
-# ensure running build-dep again doesn't yield changes
-- name: install netcat build-dep with apt again
-  apt: pkg=netcat state=build-dep
-  register: apt_result
-  tags: ['test_apt_builddep']
-
-- name: verify build_dep of netcat did not change
-  assert:
-    that:
-        - "not apt_result.changed"
-  tags: ['test_apt_builddep']
