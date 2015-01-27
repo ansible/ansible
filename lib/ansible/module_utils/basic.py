@@ -251,6 +251,24 @@ def json_dict_unicode_to_bytes(d):
     else:
         return d
 
+def json_dict_bytes_to_unicode(d):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, str):
+        return unicode(d, 'utf-8')
+    elif isinstance(d, dict):
+        return dict(map(json_dict_bytes_to_unicode, d.iteritems()))
+    elif isinstance(d, list):
+        return list(map(json_dict_bytes_to_unicode, d))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_bytes_to_unicode, d))
+    else:
+        return d
+
 
 class AnsibleModule(object):
 
