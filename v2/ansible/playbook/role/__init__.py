@@ -39,8 +39,20 @@ from ansible.plugins import module_loader
 from ansible.utils.vars import combine_vars
 
 
-__all__ = ['Role', 'ROLE_CACHE']
+__all__ = ['Role', 'ROLE_CACHE', 'hash_params']
 
+# FIXME: this should be a utility function, but can't be a member of
+#        the role due to the fact that it would require the use of self
+#        in a static method. This is also used in the base class for
+#        strategies (ansible/plugins/strategies/__init__.py)
+def hash_params(params):
+    s = set()
+    for k,v in params.iteritems():
+        if isinstance(v, dict):
+            s.update((k, hash_params(v)))
+        else:
+            s.update((k, v))
+    return frozenset(s)
 
 # The role cache is used to prevent re-loading roles, which
 # may already exist. Keys into this cache are the SHA1 hash
@@ -84,7 +96,8 @@ class Role(Base, Conditional, Taggable):
             # specified for a role as the key and the Role() object itself.
             # We use frozenset to make the dictionary hashable.
 
-            hashed_params = frozenset(role_include.get_role_params().iteritems())
+            #hashed_params = frozenset(role_include.get_role_params().iteritems())
+            hashed_params = hash_params(role_include.get_role_params())
             if role_include.role in ROLE_CACHE:
                 for (entry, role_obj) in ROLE_CACHE[role_include.role].iteritems():
                     if hashed_params == entry:

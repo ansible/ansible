@@ -70,7 +70,10 @@ class PlaybookExecutor:
 
                     for batch in self._get_serialized_batches(new_play):
                         if len(batch) == 0:
-                            raise AnsibleError("No hosts matched the list specified in the play", obj=play._ds)
+                            self._tqm._callback.playbook_on_play_start(new_play.name)
+                            self._tqm._callback.playbook_on_no_hosts_matched()
+                            result = 0
+                            break
                         # restrict the inventory to the hosts in the serialized batch
                         self._inventory.restrict_to_hosts(batch)
                         # and run it...

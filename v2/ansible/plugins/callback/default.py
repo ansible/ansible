@@ -57,7 +57,7 @@ class CallbackModule(CallbackBase):
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
-        if self._display._verbosity > 0 or 'verbose_always' in result._result:
+        if (self._display._verbosity > 0 or 'verbose_always' in result._result) and result._task.action != 'setup':
             indent = None
             if 'verbose_always' in result._result:
                 indent = 4
@@ -97,7 +97,7 @@ class CallbackModule(CallbackBase):
         pass
 
     def playbook_on_no_hosts_matched(self):
-        pass
+        self._display.display("skipping: no hosts matched", color='cyan')
 
     def playbook_on_no_hosts_remaining(self):
         self._print_banner("NO MORE HOSTS LEFT")

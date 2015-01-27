@@ -108,15 +108,13 @@ def main(args):
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
             data = loader.load_from_file(extra_vars_opt[1:])
-            extra_vars = combine_vars(extra_vars, data)
         elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
-            data = loader.load(extra_vars)
-            extra_vars = combine_vars(extra_vars, data)
+            data = loader.load(extra_vars_opt)
         else:
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
-            extra_vars = combine_vars(extra_vars, data)
+        extra_vars = combine_vars(extra_vars, data)
 
     # FIXME: this should be moved inside the playbook executor code
     only_tags = options.tags.split(",")
