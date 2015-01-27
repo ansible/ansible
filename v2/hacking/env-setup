@@ -1,11 +1,15 @@
-# usage: source ./hacking/env-setup [-q]
+# usage: source hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
 # Default values for shell variables we use
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
 MANPATH=${MANPATH-""}
-VERBOSITY=${1-""}
+verbosity=${1-info} # Defaults to `info' if unspecified
+
+if [ "$verbosity" = -q ]; then
+    verbosity=silent
+fi
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
@@ -36,10 +40,10 @@ expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_M
 gen_egg_info()
 {
     python setup.py egg_info
-    if [ -e "$PREFIX_PYTHONPATH/ansible*.egg-info" ] ; then
-        rm -r "$PREFIX_PYTHONPATH/ansible*.egg-info"
+    if [ -e "$PREFIX_PYTHONPATH/ansible.egg-info" ] ; then
+        rm -r "$PREFIX_PYTHONPATH/ansible.egg-info"
     fi
-    mv "ansible*.egg-info" "$PREFIX_PYTHONPATH"
+    mv "ansible.egg-info" "$PREFIX_PYTHONPATH"
 }
 
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
@@ -48,29 +52,25 @@ else
     current_dir="$ANSIBLE_HOME"
 fi
 cd "$ANSIBLE_HOME"
-#if [ "$VERBOSITY" = "-q" ] ; then
-#    gen_egg_info 2>1 1> /dev/null
+#if [ "$verbosity" = silent ] ; then
+#    gen_egg_info > /dev/null 2>&1
 #else
 #    gen_egg_info
 #fi
 cd "$current_dir"
 
-#
-# Print out values unless -q is set
-#
-
-if [ "$VERBOSITY" != "-q" ] ; then
-    echo ""
-    echo "Setting up Ansible to run out of checkout..."
-    echo ""
-    echo "PATH=$PATH"
-    echo "PYTHONPATH=$PYTHONPATH"
-    echo "MANPATH=$MANPATH"
-    echo ""
-
-    echo "Remember, you may wish to specify your host file with -i"
-    echo ""
-    echo "Done!"
-    echo ""
+if [ "$verbosity" != silent ] ; then
+    cat <<- EOF
+	
+	Setting up Ansible to run out of checkout...
+	
+	PATH=$PATH
+	PYTHONPATH=$PYTHONPATH
+	MANPATH=$MANPATH
+	
+	Remember, you may wish to specify your host file with -i
+	
+	Done!
+	
+	EOF
 fi
-
