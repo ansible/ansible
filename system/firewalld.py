@@ -51,12 +51,16 @@ options:
     description:
       - "Should this configuration be in the running firewalld configuration or persist across reboots"
     required: true
-    default: true
+  immediate:
+    description:
+      - "Should this configuration be applied immediately, if set as permanent"
+    required: false
+    default: false
+    version_added: "1.9"
   state:
     description:
       - "Should this port accept(enabled) or reject(disabled) connections"
     required: true
-    default: enabled
   timeout:
     description:
       - "The amount of time the rule should be in effect for when non-permanent"
@@ -211,6 +215,7 @@ def main():
             rich_rule=dict(required=False,default=None),
             zone=dict(required=False,default=None),
             permanent=dict(type='bool',required=True),
+            immediate=dict(type='bool',default=False),
             state=dict(choices=['enabled', 'disabled'], required=True),
             timeout=dict(type='int',required=False,default=0),
         ),
@@ -241,6 +246,7 @@ def main():
 
     permanent = module.params['permanent']
     desired_state = module.params['state']
+    immediate = module.params['immediate']
     timeout = module.params['timeout']
 
     ## Check for firewalld running
@@ -281,7 +287,7 @@ def main():
 
                     set_service_disabled_permanent(zone, service)
                     changed=True
-        else:
+        if immediate or not permanent:
             is_enabled = get_service_enabled(zone, service)
             msgs.append('Non-permanent operation')
 
@@ -323,7 +329,7 @@ def main():
 
                     set_port_disabled_permanent(zone, port, protocol)
                     changed=True
-        else:
+        if immediate or not permanent:
             is_enabled = get_port_enabled(zone, [port,protocol])
             msgs.append('Non-permanent operation')
 
@@ -365,7 +371,7 @@ def main():
 
                     set_rich_rule_disabled_permanent(zone, rich_rule)
                     changed=True
-        else:
+        if immediate or not permanent:
             is_enabled = get_rich_rule_enabled(zone, rich_rule)
             msgs.append('Non-permanent operation')
 
