@@ -127,9 +127,8 @@ OPTIONS = {'chdir': None,
 #   the line is reached
 OPTIONS_REGEX = '|'.join(OPTIONS.keys())
 PARAM_REGEX = re.compile(
-    r'(^|\s)({options_regex})=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)'.format(
-        options_regex=OPTIONS_REGEX
-    )
+    r'(^|\s)(' + OPTIONS_REGEX +
+    r')=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)'
 )
 
 
