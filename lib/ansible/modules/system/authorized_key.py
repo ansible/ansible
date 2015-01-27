@@ -37,7 +37,7 @@ options:
     aliases: []
   key:
     description:
-      - The SSH public key, as a string
+      - The SSH public key(s), as a string or url (https://github.com/username.keys)
     required: true
     default: null
   path:
@@ -79,6 +79,9 @@ EXAMPLES = '''
 # Example using key data from a local file on the management machine
 - authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
+# Using github url as key source
+- authorized_key: user=charlie key=https://github.com/charlie.keys
+
 # Using alternate directory locations:
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
@@ -97,6 +100,7 @@ EXAMPLES = '''
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   key_options='no-port-forwarding,host="10.0.1.1"'
+
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
