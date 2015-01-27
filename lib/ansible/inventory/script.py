@@ -22,7 +22,7 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.module_utils.basic import json_dict_unicode_to_bytes
+from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible import utils
 from ansible import errors
 import sys
@@ -59,7 +59,7 @@ class InventoryScript(object):
 
         # not passing from_remote because data from CMDB is trusted
         self.raw  = utils.parse_json(self.data)
-        self.raw  = json_dict_unicode_to_bytes(self.raw)
+        self.raw  = json_dict_bytes_to_unicode(self.raw)
 
         all       = Group('all')
         groups    = dict(all=all)
