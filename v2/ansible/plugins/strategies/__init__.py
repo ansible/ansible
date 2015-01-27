@@ -28,7 +28,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 
 from ansible.playbook.helpers import compile_block_list
-from ansible.playbook.role import ROLE_CACHE
+from ansible.playbook.role import ROLE_CACHE, hash_params
 from ansible.plugins import module_loader
 from ansible.utils.debug import debug
 
@@ -149,7 +149,8 @@ class StrategyBase:
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
                         for (entry, role_obj) in ROLE_CACHE[task_result._task._role._role_name].iteritems():
-                            hashed_entry = frozenset(task_result._task._role._role_params.iteritems())
+                            #hashed_entry = frozenset(task_result._task._role._role_params.iteritems())
+                            hashed_entry = hash_params(task_result._task._role._role_params)
                             if entry == hashed_entry :
                                 role_obj._had_task_run = True
 
