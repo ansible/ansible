@@ -89,6 +89,11 @@ On the managed nodes, you only need Python 2.4 or later, but if you are running 
 
 Installing the Control Machine
 ``````````````````````````````
+There are several packages needed to install and run Ansible::
+
+- Python
+- Python Setup Tools
+- sshpass
 
 .. _from_source:
 
@@ -103,7 +108,7 @@ when they are implemented, and also easily contribute to the project. Because th
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
-To install from source.
+To install from source::
 
 .. code-block:: bash
 
@@ -111,7 +116,7 @@ To install from source.
     $ cd ./ansible
     $ source ./hacking/env-setup
 
-If you don't have pip installed in your version of Python, install pip::
+If you don't have pip installed in your version of Python, install pip (pip is included with python-setuptools)::
 
     $ sudo easy_install pip
 
@@ -138,7 +143,9 @@ other than /etc/ansible/hosts:
 
 You can read more about the inventory file in later parts of the manual.
 
-Now let's test things with a ping command:
+Now let's test things with a ping command. In order to perform this test you will need sshPass.
+
+You can now test your Ansible installation by running::
 
 .. code-block:: bash
 
