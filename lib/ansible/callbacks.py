@@ -27,6 +27,7 @@ import fcntl
 import constants
 import locale
 from ansible.color import stringc
+from ansible.module_utils import basic
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
@@ -456,8 +457,12 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         item = None
         if type(results) == dict:
             item = results.get('item', None)
+            if isinstance(item, unicode):
+                item = utils.to_bytes(item)
+            results = basic.json_dict_unicode_to_bytes(results)
+        else:
+            results = utils.to_bytes(results)
         host = utils.to_bytes(host)
-        results = utils.to_bytes(results)
         if item:
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
