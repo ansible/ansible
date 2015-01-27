@@ -148,7 +148,7 @@ class InventoryScript(object):
         if out.strip() == '':
             return dict()
         try:
-            return json_dict_unicode_to_bytes(utils.parse_json(out))
+            return json_dict_bytes_to_unicode(utils.parse_json(out))
         except ValueError:
             raise errors.AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
 
