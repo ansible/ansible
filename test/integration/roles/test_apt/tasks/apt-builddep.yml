@@ -31,7 +31,7 @@
 
 # install build-dep for netcat
 - name: install netcat build-dep with apt
-  apt: pkg=netcat build_dep=yes
+  apt: pkg=netcat state=build-dep
   register: apt_result
   tags: ['test_apt_builddep']
 
@@ -56,7 +56,7 @@
 
 # ensure running build-dep again doesn't yield changes
 - name: install netcat build-dep with apt again
-  apt: pkg=netcat build_dep=yes
+  apt: pkg=netcat state=build-dep
   register: apt_result
   tags: ['test_apt_builddep']
 
