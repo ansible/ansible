@@ -128,7 +128,7 @@ Here are some examples::
 
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
-         - debug: msg="{{item}}
+         - debug: msg="{{item}}"
            with_url:
                 - 'http://github.com/gremlin.keys'
 
