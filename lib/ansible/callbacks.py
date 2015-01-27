@@ -456,6 +456,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         item = None
         if type(results) == dict:
             item = results.get('item', None)
+        host = utils.to_bytes(host)
+        results = utils.to_bytes(results)
         if item:
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
