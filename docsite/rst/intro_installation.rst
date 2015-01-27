@@ -111,6 +111,10 @@ To install from source.
     $ cd ./ansible
     $ source ./hacking/env-setup
 
+If you want to suppress spurious warnings/errors, use:
+
+    $ source ./hacking/env-setup -q
+
 If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
