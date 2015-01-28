@@ -249,6 +249,18 @@ To install on a Mac, make sure you have Homebrew, then run:
     $ brew update
     $ brew install ansible
 
+.. _from_pkgutil:
+
+Latest Releases Via OpenCSW (Solaris)
++++++++++++++++++++++++++++++++++++++
+
+Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_.
+
+.. code-block:: bash
+
+    # pkgadd -d http://get.opencsw.org/now
+    # /opt/csw/bin/pkgutil -i ansible
+
 .. _from_pip:
 
 Latest Releases Via Pip
