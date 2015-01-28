@@ -226,21 +226,21 @@ options:
     required: false
     default: null
     aliases: []
-    version_added: 1.8
+    version_added: 1.9
   publicly_accessible:
     description:
       - explicitly set whether the resource should be publicly accessible or not. Used with command=create, command=replicate. Requires boto >= 2.26.0
     required: false
     default: null
     aliases: []
-    version_added: 1.8
+    version_added: 1.9
   tags:
     description:
       - tags dict to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
     required: false
     default: null
     aliases: []
-    version_added: 1.8
+    version_added: 1.9
 requirements: [ "boto" ]
 author: Bruce Pennypacker, Will Thames
 '''
