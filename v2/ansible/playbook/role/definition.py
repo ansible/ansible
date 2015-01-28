@@ -23,6 +23,7 @@ from six import iteritems, string_types
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -119,8 +120,18 @@ class RoleDefinition(Base, Conditional, Taggable):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
         else:
-            # FIXME: this should search in the configured roles path
-            role_search_paths = [os.path.join(self._loader.get_basedir(), 'roles'), './roles', '/etc/ansible/roles']
+            # we always start the search for roles in the base directory of the playbook
+            role_search_paths = [os.path.join(self._loader.get_basedir(), 'roles'), './roles']
+
+            # also search in the configured roles path
+            configured_paths = C.DEFAULT_ROLES_PATH
+            if ':' in configured_paths:
+                configured_paths = configured_paths.split(':')
+                role_search_paths.extend(configured_paths)
+            else:
+                role_search_paths.append(configured_paths)
+
+            print("role search paths are: %s" % role_search_paths)
             if self._role_basedir:
                 role_search_paths = [self._role_basedir] + role_search_paths
 
@@ -129,9 +140,8 @@ class RoleDefinition(Base, Conditional, Taggable):
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)
 
-        # FIXME: make the parser smart about list/string entries
-        #        in the yaml so the error line/file can be reported
-        #        here
+        # FIXME: make the parser smart about list/string entries in
+        #        the yaml so the error line/file can be reported here
 
         raise AnsibleError("the role '%s' was not found" % role_name)
 
