@@ -706,7 +706,15 @@ def main():
                         updated_cache_time = int(time.mktime(mtimestamp.timetuple()))
 
             if cache_valid is not True:
-                cache.update()
+                for retry in xrange(3):
+                    try:
+                        cache.update()
+                        break
+                    except apt.cache.FetchFailedException:
+                        pass
+                else:
+                    #out of retries, pass on the exception
+                    raise
                 cache.open(progress=None)
                 updated_cache = True
                 updated_cache_time = int(time.mktime(now.timetuple()))
