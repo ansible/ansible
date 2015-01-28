@@ -24,6 +24,7 @@ import random
 
 from ansible import constants as C
 from ansible.template import Templar
+from ansible.utils.boolean import boolean
 
 
 __all__ = ['ConnectionInformation']
@@ -54,6 +55,9 @@ class ConnectionInformation:
         self.verbosity   = 0
         self.only_tags   = set()
         self.skip_tags   = set()
+
+        self.no_log      = False
+        self.check_mode  = False
 
         if play:
             self.set_play(play)
@@ -97,6 +101,9 @@ class ConnectionInformation:
         if options.connection:
             self.connection = options.connection
 
+        if options.check:
+            self.check_mode = boolean(options.check)
+
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
         # options have the attribute, as it is not always added via the CLI
@@ -121,25 +128,36 @@ class ConnectionInformation:
         when merging in data from task overrides.
         '''
 
-        self.connection  = ci.connection
-        self.remote_user = ci.remote_user
-        self.password    = ci.password
-        self.port        = ci.port
-        self.su          = ci.su
-        self.su_user     = ci.su_user
-        self.su_pass     = ci.su_pass
-        self.sudo        = ci.sudo
-        self.sudo_user   = ci.sudo_user
-        self.sudo_pass   = ci.sudo_pass
-        self.verbosity   = ci.verbosity
+        #self.connection  = ci.connection
+        #self.remote_user = ci.remote_user
+        #self.password    = ci.password
+        #self.port        = ci.port
+        #self.su          = ci.su
+        #self.su_user     = ci.su_user
+        #self.su_pass     = ci.su_pass
+        #self.sudo        = ci.sudo
+        #self.sudo_user   = ci.sudo_user
+        #self.sudo_pass   = ci.sudo_pass
+        #self.verbosity   = ci.verbosity
 
         # other
-        self.no_log      = ci.no_log
-        self.environment = ci.environment
+        #self.no_log      = ci.no_log
+        #self.environment = ci.environment
 
         # requested tags
-        self.only_tags   = ci.only_tags.copy()
-        self.skip_tags   = ci.skip_tags.copy()
+        #self.only_tags   = ci.only_tags.copy()
+        #self.skip_tags   = ci.skip_tags.copy()
+
+        for field in self._get_fields():
+            value = getattr(ci, field, None)
+            if isinstance(value, dict):
+                setattr(self, field, value.copy())
+            elif isinstance(value, set):
+                setattr(self, field, value.copy())
+            elif isinstance(value, list):
+                setattr(self, field, value[:])
+            else:
+                setattr(self, field, value)
 
     def set_task_override(self, task):
         '''
@@ -180,6 +198,7 @@ class ConnectionInformation:
             pipes.quote('echo %s; %s' % (success_key, cmd))
         )
 
+        # FIXME: old code, can probably be removed as it's been commented out for a while
         #return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
         return (sudocmd, prompt, success_key)
 

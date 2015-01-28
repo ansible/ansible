@@ -301,7 +301,7 @@ class AnsibleModule(object):
 
         self.params = self._load_params()
 
-        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
         
         self.aliases = self._handle_aliases()
 
@@ -817,7 +817,7 @@ class AnsibleModule(object):
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
-            if k == 'CHECKMODE':
+            if k == '_ansible_check_mode':
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
                 if self.supports_check_mode:
@@ -825,13 +825,13 @@ class AnsibleModule(object):
 
     def _check_for_no_log(self):
         for (k,v) in self.params.iteritems():
-            if k == 'NO_LOG':
+            if k == '_ansible_no_log':
                 self.no_log = self.boolean(v)
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
             # these should be in legal inputs already
-            #if k in ('CHECKMODE', 'NO_LOG'):
+            #if k in ('_ansible_check_mode', '_ansible_no_log'):
             #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)

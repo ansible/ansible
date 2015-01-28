@@ -52,6 +52,8 @@ class ActionBase:
         self._module_loader   = module_loader
         self._shell           = self.get_shell()
 
+        self._supports_check_mode = True
+
     def get_shell(self):
 
         # FIXME: no more inject, get this from the host variables?
@@ -327,6 +329,16 @@ class ActionBase:
         if module_args is None:
             module_args = self._task.args
 
+        # set check mode in the module arguments, if required
+        if self._connection_info.check_mode and not self._task.always_run:
+            if not self._supports_check_mode:
+                raise AnsibleError("check mode is not supported for this operation")
+            module_args['_ansible_check_mode'] = True
+
+        # set no log in the module arguments, if required
+        if self._connection_info.no_log:
+            module_args['_ansible_no_log'] = True
+
         debug("in _execute_module (%s, %s)" % (module_name, module_args))
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args)
@@ -339,7 +351,7 @@ class ActionBase:
             tmp = self._make_tmp_path()
             remote_module_path = self._shell.join_path(tmp, module_name)
 
-        # FIXME: async stuff here
+        # FIXME: async stuff here?
         #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
         if remote_module_path:
             self._transfer_data(remote_module_path, module_data)
