@@ -84,12 +84,9 @@ options:
     state:
         required: false
         default: "present"
-        choices: [ present, absent, expired ]
+        choices: [ present, absent ]
         description:
-            - Whether the account should exist, and whether it is expired.
-              When C(absent), removes the user account.
-              When C(expired), the user will not be able to login through any means.
-              Expired state is only implemented for Linux.
+            - Whether the account should exist or not, taking action if the state is different from what is stated.
     createhome:
         required: false
         default: "yes"
@@ -97,7 +94,7 @@ options:
         description:
             - Unless set to C(no), a home directory will be made for the user
               when the account is created or if the home directory does not
-              exist. 
+              exist.
     move_home:
         required: false
         default: "no"
@@ -180,6 +177,13 @@ options:
         version_added: "1.3"
         description:
             - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+    expires:
+        version_added: "1.9"
+        required: false
+        default: "None"
+        description:
+            - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
+              Currently supported on Linux and FreeBSD.
 '''
 
 EXAMPLES = '''
@@ -194,6 +198,9 @@ EXAMPLES = '''
 
 # Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
 - user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048 ssh_key_file=.ssh/id_rsa
+
+# added a consultant who's account you want to expire
+- user: name=james18 shell=/bin/zsh groups=developers expires=1422403387
 '''
 
 import os
@@ -202,6 +209,7 @@ import grp
 import syslog
 import platform
 import socket
+import time
 
 try:
     import spwd
@@ -229,6 +237,7 @@ class User(object):
     platform = 'Generic'
     distribution = None
     SHADOWFILE = '/etc/shadow'
+    DATE_FORMAT = '%Y-%M-%d'
 
     def __new__(cls, *args, **kwargs):
         return load_platform_subclass(User, args, kwargs)
@@ -258,6 +267,14 @@ class User(object):
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
+        self.expires = None
+
+        if module.params['expires']:
+            try:
+                self.expires = time.gmtime(module.params['expires'])
+            except Exception,e:
+                module.fail_json("Invalid expires time %s: %s" %(self.expires, str(e)))
+
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
         else:
@@ -265,6 +282,7 @@ class User(object):
 
         # select whether we dump additional debug info through syslog
         self.syslogging = False
+
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None):
         if self.syslogging:
@@ -330,9 +348,9 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.state == 'expired':
+        if self.expires:
             cmd.append('--expiredate')
-            cmd.append('1')
+            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
             cmd.append('-p')
@@ -440,9 +458,9 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.state == 'expired':
+        if self.expires:
             cmd.append('--expiredate')
-            cmd.append('1')
+            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
@@ -548,7 +566,7 @@ class User(object):
         if not os.path.exists(info[5]):
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
-        ssh_dir = os.path.dirname(ssh_key_file) 
+        ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             try:
                 os.mkdir(ssh_dir, 0700)
@@ -637,7 +655,7 @@ class User(object):
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError, e:
             self.module.exit_json(failed=True, msg="%s" % e)
-           
+
 
 # ===========================================
 
@@ -714,9 +732,10 @@ class FreeBsdUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.state == 'expired':
+        if self.expires:
+            days =( time.mktime(self.expires) - time.time() ) / 86400
             cmd.append('-e')
-            cmd.append('1970-01-01')
+            cmd.append(str(int(days)))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -730,7 +749,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -741,7 +760,7 @@ class FreeBsdUser(User):
             self.module.get_bin_path('pw', True),
             'usermod',
             '-n',
-            self.name 
+            self.name
         ]
         cmd_len = len(cmd)
         info = self.user_info()
@@ -802,9 +821,10 @@ class FreeBsdUser(User):
                     new_groups = groups | set(current_groups)
                 cmd.append(','.join(new_groups))
 
-        if self.state == 'expired':
+        if self.expires:
+            days = ( time.mktime(self.expires) - time.time() ) / 86400
             cmd.append('-e')
-            cmd.append('1970-01-01')
+            cmd.append(str(int(days)))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -881,10 +901,6 @@ class OpenBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
-
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('1')
 
         if self.password is not None:
             cmd.append('-p')
@@ -980,10 +996,6 @@ class OpenBSDUser(User):
                 cmd.append('-L')
                 cmd.append(self.login_class)
 
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('1')
-
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
@@ -1056,10 +1068,6 @@ class NetBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
-
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('1')
 
         if self.password is not None:
             cmd.append('-p')
@@ -1143,10 +1151,6 @@ class NetBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('1')
-
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
@@ -1223,10 +1227,6 @@ class SunOS(User):
 
         if self.createhome:
             cmd.append('-m')
-
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('1/1/70')
 
         cmd.append(self.name)
 
@@ -1311,10 +1311,6 @@ class SunOS(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
-
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('1/1/70')
 
         if self.module.check_mode:
             return (0, '', '')
@@ -1405,10 +1401,6 @@ class AIX(User):
         if self.createhome:
             cmd.append('-m')
 
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('0101000070')
-
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -1477,10 +1469,6 @@ class AIX(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.state == 'expired':
-            cmd.append('-e')
-            cmd.append('0101000070')
-
         # skip if no changes to be made
         if len(cmd) == 1:
             (rc, out, err) = (None, '', '')
@@ -1516,7 +1504,7 @@ def main():
     }
     module = AnsibleModule(
         argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent', 'expired'], type='str'),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, aliases=['user'], type='str'),
             uid=dict(default=None, type='str'),
             non_unique=dict(default='no', type='bool'),
@@ -1543,7 +1531,8 @@ def main():
             ssh_key_file=dict(default=None, type='str'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
             ssh_key_passphrase=dict(default=None, type='str'),
-            update_password=dict(default='always',choices=['always','on_create'],type='str')
+            update_password=dict(default='always',choices=['always','on_create'],type='str'),
+            expires=dict(default=None, type='float'),
         ),
         supports_check_mode=True
     )
@@ -1571,10 +1560,7 @@ def main():
                 module.fail_json(name=user.name, msg=err, rc=rc)
             result['force'] = user.force
             result['remove'] = user.remove
-    elif user.state == 'expired' and user.platform != 'Generic':
-                module.fail_json(name=user.state,
-                        msg='expired state not yet support for {0} platform'.format(user.platform))
-    elif user.state == 'present' or user.state == 'expired':
+    elif user.state == 'present':
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
