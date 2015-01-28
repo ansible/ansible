@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -33,10 +35,10 @@ class PlaybookInclude(Base):
     _vars      = FieldAttribute(isa='dict', default=dict())
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None):
-        return PlaybookInclude().load_data(ds=data, variable_manager=variable_manager, loader=loader)
+    def load(data, basedir, variable_manager=None, loader=None):
+        return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, ds, variable_manager=None, loader=None):
+    def load_data(self, ds, basedir, variable_manager=None, loader=None):
         '''
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object
@@ -51,7 +53,12 @@ class PlaybookInclude(Base):
 
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
-        pb._load_playbook_data(file_name=new_obj.include, variable_manager=variable_manager)
+
+        file_name = new_obj.include
+        if not os.path.isabs(file_name):
+            file_name = os.path.join(basedir, file_name)
+
+        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
 
         # finally, playbook includes can specify a list of variables, which are simply
         # used to update the vars of each play in the playbook
