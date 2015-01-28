@@ -128,6 +128,10 @@ Here are some examples::
 
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
+         - debug: msg="{{item}}"
+           with_url:
+                - 'http://github.com/gremlin.keys'
+
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
 template)::
