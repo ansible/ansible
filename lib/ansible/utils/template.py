@@ -33,6 +33,7 @@ import ast
 import traceback
 
 from ansible.utils.string_functions import count_newlines_from_end
+from ansible.utils import to_bytes
 
 class Globals(object):
 
@@ -272,7 +273,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     managed_str = managed_default.format(
         host = vars['template_host'],
         uid  = vars['template_uid'],
-        file = vars['template_path']
+        file = to_bytes(vars['template_path'])
     )
     vars['ansible_managed'] = time.strftime(
         managed_str,
