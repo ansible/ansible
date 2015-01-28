@@ -72,7 +72,7 @@ class Playbook:
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
             if 'include' in entry:
-                pb = PlaybookInclude.load(entry, variable_manager=variable_manager, loader=self._loader)
+                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 self._entries.extend(pb._entries)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
