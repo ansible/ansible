@@ -21,19 +21,6 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        # FIXME: a lot of this should pretty much go away with module
-        #        args being stored within the task being run itself
-
-        #if self.runner.noop_on_check(inject):
-        #    if module_name in [ 'shell', 'command' ]:
-        #        return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
-        #    # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
-        #    # python modules for now
-        #    module_args += " CHECKMODE=True"
-
-        #if self.runner.no_log:
-        #    module_args += " NO_LOG=True"
-
         #vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
         return self._execute_module(tmp)
 
