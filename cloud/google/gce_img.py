@@ -18,26 +18,10 @@
 
 """An Ansible module to utilize GCE image resources."""
 
-import sys
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
-
-try:
-  from libcloud.compute.types import Provider
-  from libcloud.compute.providers import get_driver
-  from libcloud.common.google import GoogleBaseError
-  from libcloud.common.google import ResourceNotFoundError
-  _ = Provider.GCE
-except ImportError:
-  print('failed=True '
-        "msg='libcloud with GCE support is required for this module.'")
-  sys.exit(1)
-
 DOCUMENTATION = '''
 ---
 module: gce_img
+version_added: "1.9"
 short_description: utilize GCE image resources
 description:
     - This module can create and delete GCE private images from gzipped
@@ -46,7 +30,7 @@ description:
 options:
   name:
     description:
-      - the name of the image to create
+      - the name of the image to create or delete
     required: true
     default: null
     aliases: []
@@ -61,7 +45,7 @@ options:
       - desired state of the image
     required: false
     default: "present"
-    choices: ["active", "present", "absent", "deleted"]
+    choices: ["present", "absent"]
     aliases: []
   zone:
     description:
@@ -70,21 +54,18 @@ options:
     default: "us-central1-a"
     aliases: []
   service_account_email:
-    version_added: "1.6"
     description:
       - service account email
     required: false
     default: null
     aliases: []
   pem_file:
-    version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
     required: false
     default: null
     aliases: []
   project_id:
-    version_added: "1.6"
     description:
       - your GCE project ID
     required: false
@@ -103,12 +84,73 @@ EXAMPLES = '''
     zone: us-central1-a
     state: present
 
-# Delete an image named test-image in zone us-central1-a.
+# Create an image named test-image from a tarball in Google Cloud Storage.
 - gce_img:
     name: test-image
-    zone: us-central1-a
-    state: deleted
+    source: https://storage.googleapis.com/bucket/path/to/image.tgz
+    
+# Alternatively use the gs scheme
+- gce_img:
+    name: test-image
+    source: gs://bucket/path/to/image.tgz
+
+# Delete an image named test-image.
+- gce_img:
+    name: test-image
+    state: absent
 '''
+
+import sys
+
+try:
+  from libcloud.compute.types import Provider
+  from libcloud.compute.providers import get_driver
+  from libcloud.common.google import GoogleBaseError
+  from libcloud.common.google import ResourceNotFoundError
+  _ = Provider.GCE
+  has_libcloud = True
+except ImportError:
+  has_libcloud = False
+
+
+GCS_URI = 'https://storage.googleapis.com/'
+
+
+def create_image(gce, name, module):
+  """Create an image with the specified name."""
+  source = module.params.get('source')
+  zone = module.params.get('zone')
+
+  if not source:
+    module.fail_json(msg='Must supply a source', changed=False)
+
+  if source.startswith(GCS_URI):
+    # source is a Google Cloud Storage URI
+    volume = source
+  elif source.startswith('gs://'):
+    # libcloud only accepts https URI.
+    volume = source.replace('gs://', GCS_URI)
+  else:
+    try:
+      volume = gce.ex_get_volume(source, zone)
+    except ResourceNotFoundError:
+      module.fail_json(msg='Disk %s not found in zone %s' % (source, zone),
+                       changed=False)
+    except GoogleBaseError, e:
+      module.fail_json(msg=str(e), changed=False)
+
+  try:
+    gce.ex_create_image(name, volume)
+  except GoogleBaseError, e:
+    module.fail_json(msg=str(e), changed=False)
+
+
+def delete_image(gce, image, module):
+  """Delete a specific image resource."""
+  try:
+    gce.ex_delete_image(image)
+  except GoogleBaseError, e:
+    module.fail_json(msg=str(e), changed=False)
 
 
 def main():
@@ -116,7 +158,7 @@ def main():
       argument_spec=dict(
           name=dict(required=True),
           source=dict(),
-          state=dict(default='present'),
+          state=dict(default='present', choices=['present', 'absent']),
           zone=dict(default='us-central1-a'),
           service_account_email=dict(),
           pem_file=dict(),
@@ -124,51 +166,32 @@ def main():
       )
   )
 
+  if not has_libcloud:
+    module.fail_json(msg='libcloud with GCE support is required.')
+
   gce = gce_connect(module)
 
   name = module.params.get('name')
-  source = module.params.get('source')
   state = module.params.get('state')
-  zone = module.params.get('zone')
   changed = False
 
-  try:
-    image = gce.ex_get_image(name)
-  except GoogleBaseError, e:
-    module.fail_json(msg=str(e), changed=False)
+  image = gce.ex_get_image(name)
 
   # user wants to create an image.
-  if state in ['active', 'present'] and not image:
-    if not source:
-      module.fail_json(msg='Must supply a source', changed=False)
-
-    if source.startswith('https://storage.googleapis.com'):
-      # source is a Google Cloud Storage URI
-      volume = source
-    else:
-      try:
-        volume = gce.ex_get_volume(source, zone)
-      except ResourceNotFoundError:
-        module.fail_json(msg='Disk %s not found in zone %s' % (source, zone),
-                         changed=False)
-      except GoogleBaseError, e:
-        module.fail_json(msg=str(e), changed=False)
-
-    try:
-      image = gce.ex_create_image(name, volume)
-      changed = True
-    except GoogleBaseError, e:
-      module.fail_json(msg=str(e), changed=False)
+  if state == 'present' and not image:
+    create_image(gce, name, module)
+    changed = True
 
   # user wants to delete the image.
-  if state in ['absent', 'deleted'] and image:
-    try:
-      gce.ex_delete_image(image)
-      changed = True
-    except GoogleBaseError, e:
-      module.fail_json(msg=str(e), changed=False)
+  if state == 'absent' and image:
+    delete_image(gce, image, module)
+    changed = True
 
   module.exit_json(changed=changed, name=name)
   sys.exit(0)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.gce import *
 
 main()
