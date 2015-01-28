@@ -32,14 +32,8 @@ from ansible.inventory.dir import InventoryDirectory
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
+from ansible.utils.path import is_executable
 from ansible.utils.vars import combine_vars
-
-# FIXME: these defs need to be somewhere else
-def is_executable(path):
-    '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
-            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 class Inventory(object):
     """
@@ -108,7 +102,7 @@ class Inventory(object):
             if os.path.isdir(host_list):
                 # Ensure basedir is inside the directory
                 self.host_list = os.path.join(self.host_list, "")
-                self.parser = InventoryDirectory(filename=host_list)
+                self.parser = InventoryDirectory(loader=self._loader, filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
                 # check to see if the specified file starts with a
@@ -124,10 +118,9 @@ class Inventory(object):
                 except:
                     pass
 
-                # FIXME: utils is_executable
                 if is_executable(host_list):
                     try:
-                        self.parser = InventoryScript(filename=host_list)
+                        self.parser = InventoryScript(loader=self._loader, filename=host_list)
                         self.groups = self.parser.groups.values()
                     except:
                         if not shebang_present:

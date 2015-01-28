@@ -19,18 +19,21 @@
 #############################################
 
 import os
-import ansible.constants as C
+
+from ansible import constants as C
+from ansible.errors import *
+
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
-from ansible import utils
-from ansible import errors
+from ansible.utils.path import is_executable
+from ansible.utils.vars import combine_vars
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
         self.names = os.listdir(filename)
         self.names.sort()
         self.directory = filename
@@ -38,10 +41,12 @@ class InventoryDirectory(object):
         self.hosts = {}
         self.groups = {}
 
+        self._loader = loader
+
         for i in self.names:
 
             # Skip files that end with certain extensions or characters
-            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo")):
                 continue
             # Skip hidden files
             if i.startswith('.') and not i.startswith('./'):
@@ -51,9 +56,9 @@ class InventoryDirectory(object):
                 continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
-                parser = InventoryDirectory(filename=fullpath)
-            elif utils.is_executable(fullpath):
-                parser = InventoryScript(filename=fullpath)
+                parser = InventoryDirectory(loader=loader, filename=fullpath)
+            elif is_executable(fullpath):
+                parser = InventoryScript(loader=loader, filename=fullpath)
             else:
                 parser = InventoryParser(filename=fullpath)
             self.parsers.append(parser)
@@ -196,7 +201,7 @@ class InventoryDirectory(object):
                 self.groups[newparent.name].add_child_group(group)
 
         # variables
-        group.vars = utils.combine_vars(group.vars, newgroup.vars)
+        group.vars = combine_vars(group.vars, newgroup.vars)
 
     def _merge_hosts(self,host, newhost):
         """ Merge all of instance newhost into host """
@@ -218,7 +223,7 @@ class InventoryDirectory(object):
                 self.groups[newgroup.name].add_host(host)
 
         # variables
-        host.vars = utils.combine_vars(host.vars, newhost.vars)
+        host.vars = combine_vars(host.vars, newhost.vars)
 
     def get_host_variables(self, host):
         """ Gets additional host variables from all inventories """

@@ -66,7 +66,6 @@ class DataLoader():
         a JSON or YAML string. 
         '''
 
-        #print("in load, data is: %s (%s)" % (data, type(data)))
         try:
             # we first try to load this data as JSON
             return json.loads(data)
@@ -109,8 +108,6 @@ class DataLoader():
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-        #print("stream is: %s" % stream)
-        #print("file name is: %s" % file_name)
         loader = AnsibleLoader(stream, file_name)
         try:
             return loader.get_single_data()

@@ -19,19 +19,21 @@
 
 import os
 import subprocess
-import ansible.constants as C
+import sys
+
+from ansible import constants as C
+from ansible.errors import *
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
-from ansible import utils
-from ansible import errors
-import sys
 
 
-class InventoryScript(object):
+class InventoryScript:
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+
+        self._loader = loader
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
@@ -41,11 +43,11 @@ class InventoryScript(object):
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
-            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
 
         if sp.returncode != 0:
-            raise errors.AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
+            raise AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
 
         self.data = stdout
         # see comment about _meta below
@@ -58,7 +60,7 @@ class InventoryScript(object):
         all_hosts = {}
 
         # not passing from_remote because data from CMDB is trusted
-        self.raw  = utils.parse_json(self.data)
+        self.raw = self._loader.load(self.data)
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
         all       = Group('all')
@@ -68,7 +70,7 @@ class InventoryScript(object):
 
         if 'failed' in self.raw:
             sys.stderr.write(err + "\n")
-            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
+            raise AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
 
@@ -97,7 +99,7 @@ class InventoryScript(object):
 
             if 'hosts' in data:
                 if not isinstance(data['hosts'], list):
-                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
+                    raise AnsibleError("You defined a group \"%s\" with bad "
                         "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
@@ -108,7 +110,7 @@ class InventoryScript(object):
 
             if 'vars' in data:
                 if not isinstance(data['vars'], dict):
-                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
+                    raise AnsibleError("You defined a group \"%s\" with bad "
                         "data for variables:\n %s" % (group_name, data))
 
                 for k, v in data['vars'].iteritems():
@@ -143,12 +145,12 @@ class InventoryScript(object):
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
-            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, err) = sp.communicate()
         if out.strip() == '':
             return dict()
         try:
-            return json_dict_bytes_to_unicode(utils.parse_json(out))
+            return json_dict_bytes_to_unicode(self._loader.load(out))
         except ValueError:
-            raise errors.AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
+            raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
 

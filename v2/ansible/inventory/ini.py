@@ -34,7 +34,7 @@ class InventoryParser(object):
     """
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
-
+        self.filename = filename
         with open(filename) as fh:
             self.lines = fh.readlines()
             self.groups = {}
@@ -142,7 +142,7 @@ class InventoryParser(object):
                             try:
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
-                                raise AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
+                                raise AnsibleError("Invalid ini entry in %s: %s - %s" % (self.filename, t, str(e)))
                             if k == 'ansible_ssh_host':
                                 host.ipv4_address = self._parse_value(v)
                             else:
