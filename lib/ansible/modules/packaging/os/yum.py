@@ -123,6 +123,9 @@ EXAMPLES = '''
 - name: install the latest version of Apache from the testing repo
   yum: name=httpd enablerepo=testing state=present
 
+- name: install one specific version of Apache
+  yum: name=httpd-2.2.29-1.4.amzn1 state=present
+
 - name: upgrade all packages
   yum: name=* state=latest
 
