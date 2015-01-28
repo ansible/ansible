@@ -236,7 +236,27 @@ class VariableManager:
         basename of the file without the extension
         '''
 
-        data = loader.load_from_file(path)
+        if os.path.isdir(path):
+            data = dict()
+
+            try:
+                names = os.listdir(path)
+            except os.error, err:
+                raise AnsibleError("This folder cannot be listed: %s: %s." % (path, err.strerror))
+
+            # evaluate files in a stable order rather than whatever
+            # order the filesystem lists them.
+            names.sort()
+
+            # do not parse hidden files or dirs, e.g. .svn/
+            paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
+            for p in paths:
+                _found, results = self._load_inventory_file(path=p, loader=loader)
+                data = self._combine_vars(data, results)
+
+        else:
+            data = loader.load_from_file(path)
+
         name = self._get_inventory_basename(path)
         return (name, data)
 
