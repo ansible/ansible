@@ -251,7 +251,7 @@ EXAMPLES = '''
 # Basic mysql provisioning example
 - rds:
     command: create
-    instance_name: new_database
+    instance_name: new-database
     db_engine: MySQL
     size: 10
     instance_type: db.m1.small
@@ -262,9 +262,9 @@ EXAMPLES = '''
       Application: cms
 
 # Create a read-only replica and wait for it to become available
-- rds: 
+- rds:
     command: replicate
-    instance_name: new_database_replica
+    instance_name: new-database-replica
     source_instance: new_database
     wait: yes
     wait_timeout: 600
@@ -272,20 +272,20 @@ EXAMPLES = '''
 # Delete an instance, but create a snapshot before doing so
 - rds:
     command: delete
-    instance_name: new_database
+    instance_name: new-database
     snapshot: new_database_snapshot
 
 # Get facts about an instance
 - rds:
     command: facts
-    instance_name: new_database
+    instance_name: new-database
     register: new_database_facts
 
 # Rename an instance and wait for the change to take effect
 - rds:
     command: modify
-    instance_name: new_database
-    new_instance_name: renamed_database
+    instance_name: new-database
+    new_instance_name: renamed-database
     wait: yes
 '''
 
@@ -392,7 +392,7 @@ class RDSConnection:
     def promote_read_replica(self, instance_name, **params):
         try:
             result = self.connection.promote_read_replica(instance_name, **params)
-            return RDSInstance(result)
+            return RDSDBInstance(result)
         except boto.exception.BotoServerError, e:
             raise RDSException(e)
 
@@ -652,7 +652,7 @@ def create_db_instance(module, conn):
                     module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException, e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="failed to create instance: %s" % e.message)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -679,7 +679,7 @@ def replicate_db_instance(module, conn):
             result = conn.create_db_instance_read_replica(instance_name, source_instance, **params)
             changed = True
         except RDSException, e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="failed to create replica instance: %s " % e.message)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -715,7 +715,7 @@ def delete_db_instance_or_snapshot(module, conn):
         else:
             result = conn.delete_db_snapshot(snapshot)
     except RDSException, e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg="failed to delete instance: %s" % e.message)
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
