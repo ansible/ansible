@@ -286,14 +286,14 @@ def main():
     cmd = '%s %s' % (pip, state_map[state])
 
     # If there's a virtualenv we want things we install to be able to use other
-    # installations that exist as binaries within this virtualenv. Example: we 
-    # install cython and then gevent -- gevent needs to use the cython binary, 
-    # not just a python package that will be found by calling the right python. 
+    # installations that exist as binaries within this virtualenv. Example: we
+    # install cython and then gevent -- gevent needs to use the cython binary,
+    # not just a python package that will be found by calling the right python.
     # So if there's a virtualenv, we add that bin/ to the beginning of the PATH
     # in run_command by setting path_prefix here.
     path_prefix = None
     if env:
-        path_prefix="/".join(pip.split('/')[:-1])
+        path_prefix = "/".join(pip.split('/')[:-1])
 
     # Automatically apply -e option to extra_args when source is a VCS url. VCS
     # includes those beginning with svn+, git+, hg+ or bzr+
@@ -354,7 +354,8 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                     state=state, requirements=requirements, virtualenv=env, stdout=out, stderr=err)
+                     state=state, requirements=requirements, virtualenv=env,
+                     stdout=out, stderr=err)
 
 # import module snippets
 from ansible.module_utils.basic import *
