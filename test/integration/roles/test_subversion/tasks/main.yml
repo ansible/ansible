@@ -105,7 +105,7 @@
 
 - name: check for trunk
   stat: path={{ output_dir }}/svn-export/trunk
-  register: expoort_trunk
+  register: export_trunk
 
 - name: check for branches
   stat: path={{ output_dir }}/svn-export/branches
