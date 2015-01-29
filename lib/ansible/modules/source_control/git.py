@@ -93,13 +93,14 @@ options:
               An example value could be "refs/meta/config".
     force:
         required: false
-        default: "yes"
+        default: "no"
         choices: [ "yes", "no" ]
         version_added: "0.7"
         description:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
-              'yes' and could not be disabled.
+              'yes' and could not be disabled.  Prior to 1.9, the default was
+              `yes`
     depth:
         required: false
         default: null
@@ -611,7 +612,7 @@ def main():
             remote=dict(default='origin'),
             refspec=dict(default=None),
             reference=dict(default=None),
-            force=dict(default='yes', type='bool'),
+            force=dict(default='no', type='bool'),
             depth=dict(default=None, type='int'),
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
