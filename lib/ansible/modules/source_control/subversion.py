@@ -50,6 +50,7 @@ options:
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
+        Prior to 1.9 the default was `yes`.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
