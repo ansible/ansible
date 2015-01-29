@@ -53,7 +53,7 @@ class Conditional:
         False if any of them evaluate as such.
         '''
 
-        templar = Templar(loader=self._loader, variables=all_vars)
+        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
         for conditional in self.when:
             if not self._check_conditional(conditional, templar, all_vars):
                 return False
@@ -69,19 +69,14 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        # FIXME: is this required? there is no indication what it does
-        #conditional = conditional.replace("jinja2_compare ","")
-
+        # FIXME: this should be removable now, leaving it here just in case
         # allow variable names
         #if conditional in all_vars and '-' not in str(all_vars[conditional]):
         #    conditional = all_vars[conditional]
 
         conditional = templar.template(conditional, convert_bare=True)
-        if not isinstance(conditional, basestring):
+        if not isinstance(conditional, basestring) or conditional == "":
             return conditional
-
-        # FIXME: same as above
-        #original = str(conditional).replace("jinja2_compare ","")
 
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional

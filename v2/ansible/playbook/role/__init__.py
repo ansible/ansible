@@ -46,13 +46,21 @@ __all__ = ['Role', 'ROLE_CACHE', 'hash_params']
 #        in a static method. This is also used in the base class for
 #        strategies (ansible/plugins/strategies/__init__.py)
 def hash_params(params):
-    s = set()
-    for k,v in params.iteritems():
-        if isinstance(v, dict):
-            s.update((k, hash_params(v)))
-        else:
-            s.update((k, v))
-    return frozenset(s)
+    if not isinstance(params, dict):
+        return params
+    else:
+        s = set()
+        for k,v in params.iteritems():
+            if isinstance(v, dict):
+                s.update((k, hash_params(v)))
+            elif isinstance(v, list):
+                things = []
+                for item in v:
+                    things.append(hash_params(item))
+                s.update((k, tuple(things)))
+            else:
+                s.update((k, v))
+        return frozenset(s)
 
 # The role cache is used to prevent re-loading roles, which
 # may already exist. Keys into this cache are the SHA1 hash
