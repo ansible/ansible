@@ -29,6 +29,7 @@ import socket
 import struct
 import datetime
 import getpass
+import pwd
 import ConfigParser
 import StringIO
 
@@ -551,6 +552,12 @@ class Facts(object):
     # User
     def get_user_facts(self):
         self.facts['user_id'] = getpass.getuser()
+        pwent = pwd.getpwnam(getpass.getuser())
+        self.facts['user_uid'] = pwent.pw_uid
+        self.facts['user_gid'] = pwent.pw_gid
+        self.facts['user_gecos'] = pwent.pw_gecos
+        self.facts['user_dir'] = pwent.pw_dir
+        self.facts['user_shell'] = pwent.pw_shell
 
     def get_env_facts(self):
         self.facts['env'] = {}
