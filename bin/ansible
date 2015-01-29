@@ -155,6 +155,7 @@ class Cli(object):
             inventory=inventory_manager,
             timeout=options.timeout,
             private_key_file=options.private_key_file,
+            client_validation_cert=options.client_validation_cert,
             forks=options.forks,
             pattern=pattern,
             callbacks=self.callbacks,
@@ -212,4 +213,3 @@ if __name__ == '__main__':
         # Generic handler for ansible specific errors
         callbacks.display("ERROR: %s" % str(e), stderr=True, color='red')
         sys.exit(1)
-

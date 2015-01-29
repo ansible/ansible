@@ -1059,6 +1059,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
         help='use this file to authenticate the connection')
+    parser.add_option('--client-validation-cert', default=C.DEFAULT_VALIDATION_CERT, dest='client_validation_cert',
+        help='use this file to validate winrm connections')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
     parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',

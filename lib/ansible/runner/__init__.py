@@ -123,6 +123,7 @@ class Runner(object):
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
+        client_validation_cert=C.DEFAULT_VALIDATION_CERT, # cert to use to verify https winrm connections
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
@@ -200,6 +201,7 @@ class Runner(object):
         self.remote_pass      = remote_pass
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
+        self.client_validation_cert  = client_validation_cert
         self.background       = background
         self.sudo             = sudo
         self.sudo_user_var    = sudo_user
@@ -368,6 +370,8 @@ class Runner(object):
         delegate['user'] = self._compute_delegate_user(self.delegate_to, delegate['inject'])
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
         delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', self.private_key_file)
+        delegate['client_validation_cert'] = this_info.get('ansible_client_validation_cert', self.winrm_cert_file)
+
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
 
@@ -378,6 +382,12 @@ class Runner(object):
 
         if delegate['private_key_file'] is not None:
             delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
+
+        if delegate['client_validation_cert'] is None:
+            delegate['client_validation_cert'] = remote_inject.get('ansible_client_validation_cert', None)
+
+        if delegate['client_validation_cert'] is not None:
+            delegate['client_validation_cert'] = os.path.expanduser(delegate['client_validation_cert'])
 
         for i in this_info:
             if i.startswith("ansible_") and i.endswith("_interpreter"):
@@ -886,6 +896,8 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
+        actual_client_validation_cert = inject.get('ansible_client_validation_cert', self.client_validation_cert)
+        actual_client_validation_cert = template.template(self.basedir, self.client_validation_cert, inject, fail_on_undefined=True)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
         self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
@@ -903,6 +915,9 @@ class Runner(object):
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
+
+        if actual_client_validation_cert is not None:
+            actual_client_validation_cert = os.path.expanduser(actual_client_validation_cert)
 
         if self.accelerate and actual_transport != 'local':
             #Fix to get the inventory name of the host to accelerate plugin
@@ -932,6 +947,7 @@ class Runner(object):
             actual_user = delegate['user']
             actual_pass = delegate['pass']
             actual_private_key_file = delegate['private_key_file']
+            actual_client_validation_cert = delegate['client_validation_cert']
             self.sudo_pass = delegate['sudo_pass']
             inject = delegate['inject']
 
@@ -956,7 +972,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, actual_client_validation_cert)
             if self.delegate_to or host != actual_host:
                 conn.delegate = host
 
