@@ -59,7 +59,7 @@ galaxy_info:
   min_ansible_version: {{ min_ansible_version }}
   #
   # Below are all platforms currently available. Just uncomment
-  # the ones that apply to your role. If you don't see your 
+  # the ones that apply to your role. If you don't see your
   # platform on this list, let us know and we'll get it added!
   #
   #platforms:
@@ -139,7 +139,7 @@ SKIP_INFO_KEYS = ("platforms","readme_html", "related", "summary_fields", "avera
 
 def get_action(args):
     """
-    Get the action the user wants to execute from the 
+    Get the action the user wants to execute from the
     sys argv list.
     """
     for i in range(0,len(args)):
@@ -194,7 +194,7 @@ def build_option_parser(action):
         parser.set_usage("usage: %prog remove role1 role2 ...")
     elif action == "list":
         parser.set_usage("usage: %prog list [role_name]")
-        
+
     # options that apply to more than one action
     if action != "init":
         parser.add_option(
@@ -230,7 +230,7 @@ def get_opt(options, k, defval=""):
 
 def exit_without_ignore(options, rc=1):
     """
-    Exits with the specified return code unless the 
+    Exits with the specified return code unless the
     option --ignore-errors was specified
     """
 
@@ -290,8 +290,8 @@ def api_lookup_role_by_name(api_server, role_name, notify=True):
 def api_fetch_role_related(api_server, related, role_id):
     """
     Uses the Galaxy API to fetch the list of related items for
-    the given role. The url comes from the 'related' field of 
-    the role. 
+    the given role. The url comes from the 'related' field of
+    the role.
     """
 
     try:
@@ -414,7 +414,7 @@ def get_role_metadata(role_name, options):
         else:
             return None
     except:
-        return None    
+        return None
 
 def get_galaxy_install_info(role_name, options):
     """
@@ -432,7 +432,7 @@ def get_galaxy_install_info(role_name, options):
         else:
             return None
     except:
-        return None    
+        return None
 
 def write_galaxy_install_info(role_name, role_version, options):
     """
@@ -458,8 +458,8 @@ def write_galaxy_install_info(role_name, role_version, options):
 def remove_role(role_name, options):
     """
     Removes the specified role from the roles path. There is a
-    sanity check to make sure there's a meta/main.yml file at this 
-    path so the user doesn't blow away random directories 
+    sanity check to make sure there's a meta/main.yml file at this
+    path so the user doesn't blow away random directories
     """
     if get_role_metadata(role_name, options):
         role_path = get_role_path(role_name, options)
@@ -477,7 +477,7 @@ def fetch_role(role_name, target, role_data, options):
     # first grab the file and save it to a temp location
     if '://' in role_name:
         archive_url = role_name
-    else: 
+    else:
         archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], target)
     print "- downloading role from %s" % archive_url
 
@@ -491,7 +491,7 @@ def fetch_role(role_name, target, role_data, options):
         temp_file.close()
         return temp_file.name
     except Exception, e:
-        # TODO: better urllib2 error handling for error 
+        # TODO: better urllib2 error handling for error
         #       messages that are more exact
         print "- error: failed to download the file."
         return False
@@ -527,7 +527,7 @@ def install_role(role_name, role_version, role_filename, options):
                 return False
 
         # we strip off the top-level directory for all of the files contained within
-        # the tar file here, since the default is 'github_repo-target', and change it 
+        # the tar file here, since the default is 'github_repo-target', and change it
         # to the specified role's name
         role_path = os.path.join(get_opt(options, 'roles_path'), role_name)
         role_path = os.path.expanduser(role_path)
@@ -633,9 +633,9 @@ def execute_init(args, options, parser):
 
         # now create the main.yml file for that directory
         if dir == "meta":
-            # create a skeleton meta/main.yml with a valid galaxy_info 
-            # datastructure in place, plus with all of the available 
-            # tags/platforms included (but commented out) and the 
+            # create a skeleton meta/main.yml with a valid galaxy_info
+            # datastructure in place, plus with all of the available
+            # tags/platforms included (but commented out) and the
             # dependencies section
             platforms = []
             if not offline:
@@ -645,7 +645,7 @@ def execute_init(args, options, parser):
                 categories = api_get_list(api_server, "categories") or []
 
             # group the list of platforms from the api based
-            # on their names, with the release field being 
+            # on their names, with the release field being
             # appended to a list of versions
             platform_groups = defaultdict(list)
             for platform in platforms:
@@ -732,7 +732,7 @@ def execute_info(args, options, parser):
 
 def execute_install(args, options, parser):
     """
-    Executes the installation action. The args list contains the 
+    Executes the installation action. The args list contains the
     roles to be installed, unless -f was specified. The list of roles
     can be a name (which will be downloaded via the galaxy API and github),
     or it can be a local .tar.gz file.
@@ -811,7 +811,7 @@ def execute_install(args, options, parser):
                 if "version" not in role or role['version'] == '':
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
-                    # are no versions in the list, we'll grab the head 
+                    # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
                         loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
@@ -826,7 +826,7 @@ def execute_install(args, options, parser):
                         exit_without_ignore(options)
                         continue
 
-                # download the role. if --no-deps was specified, we stop here, 
+                # download the role. if --no-deps was specified, we stop here,
                 # otherwise we recursively grab roles and all of their deps.
                 tmp_file = fetch_role(role_src, role["version"], role_data, options)
         installed = False
@@ -883,8 +883,8 @@ def execute_remove(args, options, parser):
 
 def execute_list(args, options, parser):
     """
-    Executes the list action. The args list can contain zero 
-    or one role. If one is specified, only that role will be 
+    Executes the list action. The args list can contain zero
+    or one role. If one is specified, only that role will be
     shown, otherwise all roles in the specified directory will
     be shown.
     """
@@ -936,7 +936,7 @@ def execute_list(args, options, parser):
 # The main entry point
 #-------------------------------------------------------------------------------------
 
-def main():
+def ansible_galaxy():
     # parse the CLI options
     action = get_action(sys.argv)
     parser = build_option_parser(action)
@@ -949,6 +949,3 @@ def main():
     #except KeyError, e:
     #    print "- error: %s is not a valid action. Valid actions are: %s" % (action, ", ".join(VALID_ACTIONS))
     #    sys.exit(1)
-
-if __name__ == "__main__":
-    main()

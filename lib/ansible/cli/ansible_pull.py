@@ -232,7 +232,7 @@ def main(args):
 
     return rc
 
-if __name__ == '__main__':
+def ansible_pull():
     try:
         sys.exit(main(sys.argv[1:]))
     except KeyboardInterrupt, e:

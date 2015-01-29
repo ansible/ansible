@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
@@ -19,20 +17,8 @@
 
 ########################################################
 
-__requires__ = ['ansible']
-try:
-    import pkg_resources
-except Exception:
-    # Use pkg_resources to find the correct versions of libraries and set
-    # sys.path appropriately when there are multiversion installs.  But we
-    # have code that better expresses the errors in the places where the code
-    # is actually used (the deps are optional for many code paths) so we don't
-    # want to fail here.
-    pass
-
 import os
 import sys
-
 from ansible.runner import Runner
 import ansible.constants as C
 from ansible import utils
@@ -58,12 +44,12 @@ class Cli(object):
         ''' create an options parser for bin/ansible '''
 
         parser = utils.base_parser(
-            constants=C, 
-            runas_opts=True, 
-            subset_opts=True, 
+            constants=C,
+            runas_opts=True,
+            subset_opts=True,
             async_opts=True,
-            output_opts=True, 
-            connect_opts=True, 
+            output_opts=True,
+            connect_opts=True,
             check_opts=True,
             diff_opts=False,
             usage='%prog <host-pattern> [options]'
@@ -194,7 +180,7 @@ class Cli(object):
 
 ########################################################
 
-if __name__ == '__main__':
+def ansible_():
     callbacks.display("", log_only=True)
     callbacks.display(" ".join(sys.argv), log_only=True)
     callbacks.display("", log_only=True)
@@ -212,4 +198,3 @@ if __name__ == '__main__':
         # Generic handler for ansible specific errors
         callbacks.display("ERROR: %s" % str(e), stderr=True, color='red')
         sys.exit(1)
-
