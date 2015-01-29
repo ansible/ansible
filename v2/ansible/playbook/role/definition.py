@@ -30,6 +30,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
+from ansible.utils.path import unfrackpath
 
 
 __all__ = ['RoleDefinition']
@@ -113,30 +114,28 @@ class RoleDefinition(Base, Conditional, Taggable):
         append it to the default role path
         '''
 
-        # FIXME: this should use unfrackpath once the utils code has been sorted out
-        role_path = os.path.normpath(role_name)
+        role_path = unfrackpath(role_name)
 
         if self._loader.path_exists(role_path):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
         else:
             # we always start the search for roles in the base directory of the playbook
-            role_search_paths = [os.path.join(self._loader.get_basedir(), 'roles'), './roles']
+            role_search_paths = [os.path.join(self._loader.get_basedir(), 'roles'), './roles', './']
 
             # also search in the configured roles path
-            configured_paths = C.DEFAULT_ROLES_PATH
-            if ':' in configured_paths:
-                configured_paths = configured_paths.split(':')
+            if C.DEFAULT_ROLES_PATH:
+                configured_paths = C.DEFAULT_ROLES_PATH.split(os.pathsep)
                 role_search_paths.extend(configured_paths)
-            else:
-                role_search_paths.append(configured_paths)
 
-            print("role search paths are: %s" % role_search_paths)
+            # finally, append the roles basedir, if it was set, so we can
+            # search relative to that directory for dependent roles
             if self._role_basedir:
-                role_search_paths = [self._role_basedir] + role_search_paths
+                role_search_paths.append(self._role_basedir)
 
+            # now iterate through the possible paths and return the first one we find
             for path in role_search_paths:
-                role_path = os.path.join(path, role_name)
+                role_path = unfrackpath(os.path.join(path, role_name))
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)
 

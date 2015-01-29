@@ -18,9 +18,18 @@
 import os
 import stat
 
-__all__ = ['is_executable']
+__all__ = ['is_executable', 'unfrackpath']
 
 def is_executable(path):
     '''is the given path executable?'''
     return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+
+def unfrackpath(path):
+    '''
+    returns a path that is free of symlinks, environment
+    variables, relative path traversals and symbols (~)
+    example:
+    '$HOME/../../var/mail' becomes '/var/spool/mail'
+    '''
+    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
 
