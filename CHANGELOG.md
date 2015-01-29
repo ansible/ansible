@@ -6,6 +6,16 @@ Ansible Changes By Release
 in progress, details pending
 
 * Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+* Safety changes: several modules have force parameters that defaulted to true.
+  These have been changed to default to false so as not to accidentally lose
+  work.  Playbooks that depended on the former behaviour simply to add
+  force=True to the task that needs it.  Affected modules:
+
+  * subversion: When updating a checkout with local modifications, you now need
+    to add force so the module will revert the modifications before updating.
+  * git: When local modifications exist to a checkout, the git module will now
+    fail unless force is explictly specified.  Specifying force will allow the
+    module revert and overwrite local modifications to make git actions succeed.
 
 ## 1.8.1 "You Really Got Me" - Nov 26, 2014
 
