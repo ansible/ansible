@@ -108,6 +108,14 @@ options:
     required: false
     default: null
     aliases: []
+  disk_type:
+    version_added: "1.9"
+    description:
+      - type of disk provisioned
+    required: false
+    default: "pd-standard"
+    choices: ["pd-standard", "pd-ssd"]
+    aliases: []
 
 requirements: [ "libcloud" ]
 author: Eric Johnson <erjohnso@google.com>
@@ -144,6 +152,7 @@ def main():
             mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
+            disk_type = dict(default='pd-standard'),
             image = dict(),
             snapshot = dict(),
             state = dict(default='present'),
@@ -161,6 +170,7 @@ def main():
     mode = module.params.get('mode')
     name = module.params.get('name')
     size_gb = module.params.get('size_gb')
+    disk_type = module.params.get('disk_type')
     image = module.params.get('image')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
@@ -174,7 +184,7 @@ def main():
     disk = inst = None
     changed = is_attached = False
 
-    json_output = { 'name': name, 'zone': zone, 'state': state }
+    json_output = { 'name': name, 'zone': zone, 'state': state, 'disk_type': disk_type  }
     if detach_only:
         json_output['detach_only'] = True
         json_output['detached_from_instance'] = instance_name
@@ -233,7 +243,7 @@ def main():
             try:
                 disk = gce.create_volume(
                     size_gb, name, location=zone, image=lc_image,
-                    snapshot=lc_snapshot)
+                    snapshot=lc_snapshot, ex_disk_type=disk_type)
             except ResourceExistsError:
                 pass
             except QuotaExceededError:
