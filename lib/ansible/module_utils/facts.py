@@ -635,19 +635,19 @@ class LinuxHardware(Hardware):
                  memstats[key.lower()] = long(val) / 1024
         self.facts['memory_mb'] = {
                      'real' : {
-                         'total': memstats['memtotal'],
-                         'used': (memstats['memtotal'] - memstats['memfree']),
-                         'free': memstats['memfree']
+                         'total': memstats.get('memtotal', 0),
+                         'used': (memstats.get('memtotal', 0) - memstats.get('memfree', 0)),
+                         'free': memstats.get('memfree', 0)
                      },
                      'nocache' : {
-                         'free': memstats['cached'] + memstats['memfree'] + memstats['buffers'],
-                         'used': memstats['memtotal'] - (memstats['cached'] + memstats['memfree'] + memstats['buffers'])
+                         'free': memstats.get('cached', 0) + memstats.get('memfree', 0) + memstats.get('buffers', 0),
+                         'used': memstats.get('memtotal', 0) - (memstats.get('cached', 0) + memstats.get('memfree', 0) + memstats.get('buffers', 0))
                      },
                      'swap' : {
-                         'total': memstats['swaptotal'],
-                         'free': memstats['swapfree'],
-                         'used': memstats['swaptotal'] - memstats['swapfree'],
-                         'cached': memstats['swapcached']
+                         'total': memstats.get('swaptotal', 0),
+                         'free': memstats.get('swapfree', 0),
+                         'used': memstats.get('swaptotal', 0) - memstats.get('swapfree', 0),
+                         'cached': memstats.get('swapcached', 0)
                      }
                  }
 
