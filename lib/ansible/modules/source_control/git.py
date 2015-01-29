@@ -491,9 +491,19 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
+def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
     commands = [("set a new url %s for %s" % (repo, remote), [git_path, 'remote', 'set-url', remote, repo])]
+
+    for (label,command) in commands:
+        (rc,out,err) = module.run_command(command, cwd=dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
+
+def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
+    ''' updates repo from remote sources '''
+    set_remote_url(git_path, module, repo, dest, remote)
+    commands = []
 
     fetch_str = 'download remote objects and refs'
 
@@ -741,6 +751,7 @@ def main():
             if not module.check_mode:
                 reset(git_path, module, dest)
         # exit if already at desired sha version
+        set_remote_url(git_path, module, repo, dest, remote)
         remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
         if before == remote_head:
             if local_mods:
