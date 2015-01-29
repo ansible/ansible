@@ -141,7 +141,7 @@ def get_package_state(m, packages):
             installed_state[package] = False
 
     for package in packages:
-	if package not in installed_state:
+        if package not in installed_state:
             print package + ' was not returned by rpm \n'
             return None
 
