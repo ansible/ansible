@@ -81,13 +81,13 @@ def build_option_parser(action):
         parser.set_usage("usage: %prog encrypt [options] file_name")
     elif action == "rekey":
         parser.set_usage("usage: %prog rekey [options] file_name")
-    
+
     # done, return the parser
     return parser
 
 def get_action(args):
     """
-    Get the action the user wants to execute from the 
+    Get the action the user wants to execute from the
     sys argv list.
     """
     for i in range(0,len(args)):
@@ -116,7 +116,7 @@ def get_opt(options, k, defval=""):
 
 def execute_create(args, options, parser):
     if len(args) > 1:
-        raise errors.AnsibleError("'create' does not accept more than one filename")        
+        raise errors.AnsibleError("'create' does not accept more than one filename")
 
     if not options.password_file:
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
@@ -150,7 +150,7 @@ def execute_decrypt(args, options, parser):
 def execute_edit(args, options, parser):
 
     if len(args) > 1:
-        raise errors.AnsibleError("edit does not accept more than one filename")        
+        raise errors.AnsibleError("edit does not accept more than one filename")
 
     if not options.password_file:
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
@@ -166,9 +166,9 @@ def execute_edit(args, options, parser):
 def execute_view(args, options, parser):
 
     if len(args) > 1:
-        raise errors.AnsibleError("view does not accept more than one filename")        
+        raise errors.AnsibleError("view does not accept more than one filename")
 
-    if not options.password_file:        
+    if not options.password_file:
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
     else:
         password = utils.read_vault_file(options.password_file)
@@ -216,7 +216,7 @@ def execute_rekey(args, options, parser):
 # MAIN
 #-------------------------------------------------------------------------------------
 
-def main():
+def ansible_vault():
 
     action = get_action(sys.argv)
     parser = build_option_parser(action)
@@ -225,7 +225,7 @@ def main():
     if not len(args):
         raise errors.AnsibleError(
             "The '%s' command requires a filename as the first argument" % action
-        ) 
+        )
 
     # execute the desired action
     try:
@@ -236,6 +236,3 @@ def main():
             print traceback.format_exc()
         print "ERROR:",err
         sys.exit(1)
-
-if __name__ == "__main__":
-    main()

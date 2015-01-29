@@ -228,7 +228,7 @@ def find_modules(path, module_list):
             module = os.path.splitext(module)[0] # removes the extension
             module_list.append(module)
 
-def main():
+def ansible_doc():
 
     p = optparse.OptionParser(
         version=version("%prog"),
@@ -322,6 +322,3 @@ def main():
             # probably a quoting issue.
             sys.stderr.write("ERROR: module %s missing documentation (or could not parse documentation)\n" % module)
     pager(text)
-
-if __name__ == '__main__':
-    main()

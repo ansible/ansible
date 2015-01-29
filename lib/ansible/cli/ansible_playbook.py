@@ -338,7 +338,7 @@ def main(args):
     return 0
 
 
-if __name__ == "__main__":
+def ansible_playbook():
     display(" ", log_only=True)
     display(" ".join(sys.argv), log_only=True)
     display(" ", log_only=True)
