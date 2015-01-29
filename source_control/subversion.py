@@ -51,7 +51,7 @@ options:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
     required: false
-    default: "yes"
+    default: "no"
     choices: [ "yes", "no" ]
   username:
     description:
