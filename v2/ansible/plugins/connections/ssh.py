@@ -279,7 +279,7 @@ class Connection(ConnectionBase):
         #    ssh_cmd += ['-6']
         ssh_cmd += [self._host.ipv4_address]
 
-        if not (self._connection_info.sudo or self._connection_info.su) or not sudoable:
+        if not (self._connection_info.sudo or self._connection_info.su):
             prompt = None
             if executable:
                 ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))

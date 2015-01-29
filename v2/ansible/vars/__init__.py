@@ -210,6 +210,9 @@ class VariableManager:
             hostvars = HostVars(vars_manager=self, inventory=self._inventory, loader=loader)
             all_vars['hostvars'] = hostvars
 
+        if self._inventory is not None:
+            all_vars['inventory_dir'] = self._inventory.basedir()
+
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
 
