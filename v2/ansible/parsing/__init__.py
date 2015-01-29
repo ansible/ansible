@@ -26,11 +26,11 @@ from yaml import load, YAMLError
 
 from ansible.errors import AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
-
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+from ansible.utils.path import unfrackpath
 
 class DataLoader():
 
@@ -179,8 +179,7 @@ class DataLoader():
 
         basedir = os.path.dirname(role_path)
         if os.path.islink(basedir):
-            # FIXME: implement unfrackpath
-            #basedir = unfrackpath(basedir)
+            basedir = unfrackpath(basedir)
             template2 = os.path.join(basedir, dirname, source)
         else:
             template2 = os.path.join(basedir, '..', dirname, source)
