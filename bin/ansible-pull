@@ -151,7 +151,7 @@ def main(args):
         return 1
 
     now = datetime.datetime.now()
-    print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
+    print now.strftime("Starting ansible-pull at %F %T")
 
     # Attempt to use the inventory passed in as an argument
     # It might not yet have been downloaded so use localhost if note
@@ -194,7 +194,7 @@ def main(args):
 
     if rc != 0:
         if options.force:
-            print "Unable to update repository. Continuing with (forced) run of playbook."
+            print >>sys.stderr, "Unable to update repository. Continuing with (forced) run of playbook."
         else:
             return rc
     elif options.ifchanged and '"changed": true' not in out:
