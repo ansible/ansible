@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from subprocess import check_output
+from subprocess import Popen,PIPE
 
 try:
     import json
@@ -32,17 +32,17 @@ def get_hosts(host=None):
     returned = {}
     try:
         if host:
-            results = check_output([VBOX, 'showvminfo', host])
+            p = Popen([VBOX, 'showvminfo', host], stdout=PIPE)
         else:
             returned = { 'all': set(), '_metadata': {}  }
-            results = check_output([VBOX, 'list', '-l', 'vms'])
+            p = Popen([VBOX, 'list', '-l', 'vms'], stdout=PIPE)
     except:
         sys.exit(1)
 
     hostvars = {}
     prevkey = pref_k = ''
 
-    for line in results.splitlines():
+    for line in p.stdout.readlines():
 
         try:
             k,v = line.split(':',1)
@@ -58,9 +58,10 @@ def get_hosts(host=None):
                 curname = v
                 hostvars[curname] = {}
                 try: # try to get network info
-                    ip_info = check_output([VBOX, 'guestproperty', 'get', curname,"/VirtualBox/GuestInfo/Net/0/V4/IP"])
-                    if 'Value' in ip_info:
-                        a,ip = ip_info.split(':',1)
+                    x = Popen([VBOX, 'guestproperty', 'get', curname,"/VirtualBox/GuestInfo/Net/0/V4/IP"],stdout=PIPE)
+                    ipinfo = x.stdout.read()
+                    if 'Value' in ipinfo:
+                        a,ip = ipinfo.split(':',1)
                         hostvars[curname]['ansible_ssh_host'] = ip.strip()
                 except:
                     pass
