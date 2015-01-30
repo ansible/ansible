@@ -626,10 +626,7 @@ class LinuxHardware(Hardware):
         if not os.access("/proc/meminfo", os.R_OK):
             return
 
-        # No defaultdict in py2.4
-        memstat_keys = self.MEMORY_FACTS.union(
-                ('real:used', 'nocache:free', 'nocache:used', 'swap:used'))
-        memstats = dict(zip(memstat_keys, (None,) * len(memstat_keys)))
+        memstats = {}
         for line in open("/proc/meminfo").readlines():
             data = line.split(":", 1)
             key = data[0]
@@ -641,30 +638,30 @@ class LinuxHardware(Hardware):
                  val = data[1].strip().split(' ')[0]
                  memstats[key.lower()] = long(val) / 1024
 
-        if None not in (memstats['memtotal'], memstats['memfree']):
+        if None not in (memstats.get('memtotal'), memstats.get('memfree')):
             memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
-        if None not in (memstats['cached'], memstats['memfree'], memstats['buffers']):
+        if None not in (memstats.get('cached'), memstats.get('memfree'), memstats.get('buffers')):
             memstats['nocache:free'] = memstats['cached'] + memstats['memfree'] + memstats['buffers']
-        if None not in (memstats['memtotal'], memstats['nocache:free']):
+        if None not in (memstats.get('memtotal'), memstats.get('nocache:free')):
             memstats['nocache:used'] = memstats['memtotal'] - memstats['nocache:free']
-        if None not in (memstats['swaptotal'], memstats['swapfree']):
+        if None not in (memstats.get('swaptotal'), memstats.get('swapfree')):
             memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
 
         self.facts['memory_mb'] = {
                      'real' : {
-                         'total': memstats['memtotal'],
-                         'used': memstats['real:used'],
-                         'free': memstats['memfree'],
+                         'total': memstats.get('memtotal'),
+                         'used': memstats.get('real:used'),
+                         'free': memstats.get('memfree'),
                      },
                      'nocache' : {
-                         'free': memstats['nocache:free'],
-                         'used': memstats['nocache:used'],
+                         'free': memstats.get('nocache:free'),
+                         'used': memstats.get('nocache:used'),
                      },
                      'swap' : {
-                         'total': memstats['swaptotal'],
-                         'free': memstats['swapfree'],
-                         'used': memstats['swap:used'],
-                         'cached': memstats['swapcached'],
+                         'total': memstats.get('swaptotal'),
+                         'free': memstats.get('swapfree'),
+                         'used': memstats.get('swap:used'),
+                         'cached': memstats.get('swapcached'),
                      },
                  }
 
