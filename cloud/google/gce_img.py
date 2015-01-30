@@ -34,6 +34,12 @@ options:
     required: true
     default: null
     aliases: []
+  description:
+    description:
+      - an optional description
+    required: false
+    default: null
+    aliases: []
   source:
     description:
       - the source disk or the Google Cloud Storage URI to create the image from
@@ -106,6 +112,7 @@ try:
   from libcloud.compute.types import Provider
   from libcloud.compute.providers import get_driver
   from libcloud.common.google import GoogleBaseError
+  from libcloud.common.google import ResourceExistsError
   from libcloud.common.google import ResourceNotFoundError
   _ = Provider.GCE
   has_libcloud = True
@@ -120,6 +127,7 @@ def create_image(gce, name, module):
   """Create an image with the specified name."""
   source = module.params.get('source')
   zone = module.params.get('zone')
+  desc = module.params.get('description')
 
   if not source:
     module.fail_json(msg='Must supply a source', changed=False)
@@ -140,15 +148,21 @@ def create_image(gce, name, module):
       module.fail_json(msg=str(e), changed=False)
 
   try:
-    gce.ex_create_image(name, volume)
+    gce.ex_create_image(name, volume, desc, False)
+    return True
+  except ResourceExistsError:
+    return False
   except GoogleBaseError, e:
     module.fail_json(msg=str(e), changed=False)
 
 
-def delete_image(gce, image, module):
-  """Delete a specific image resource."""
+def delete_image(gce, name, module):
+  """Delete a specific image resource by name."""
   try:
-    gce.ex_delete_image(image)
+    gce.ex_delete_image(name)
+    return True
+  except ResourceNotFoundError:
+    return False
   except GoogleBaseError, e:
     module.fail_json(msg=str(e), changed=False)
 
@@ -157,6 +171,7 @@ def main():
   module = AnsibleModule(
       argument_spec=dict(
           name=dict(required=True),
+          description=dict(),
           source=dict(),
           state=dict(default='present', choices=['present', 'absent']),
           zone=dict(default='us-central1-a'),
@@ -175,17 +190,13 @@ def main():
   state = module.params.get('state')
   changed = False
 
-  image = gce.ex_get_image(name)
-
   # user wants to create an image.
-  if state == 'present' and not image:
-    create_image(gce, name, module)
-    changed = True
+  if state == 'present':
+    changed = create_image(gce, name, module)
 
   # user wants to delete the image.
-  if state == 'absent' and image:
-    delete_image(gce, image, module)
-    changed = True
+  if state == 'absent':
+    changed = delete_image(gce, name, module)
 
   module.exit_json(changed=changed, name=name)
   sys.exit(0)
