@@ -930,6 +930,8 @@ class Runner(object):
             actual_private_key_file = delegate['private_key_file']
             self.sudo_pass = delegate['sudo_pass']
             inject = delegate['inject']
+            # set resolved delegate_to into inject so modules can call _remote_checksum
+            inject['delegate_to'] = self.delegate_to
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
