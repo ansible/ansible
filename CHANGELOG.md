@@ -11,11 +11,20 @@ in progress, details pending
   work.  Playbooks that depended on the former behaviour simply to add
   force=True to the task that needs it.  Affected modules:
 
+  * bzr: When local modifications exist in a checkout, the bzr module used to
+    default to temoving the modifications on any operation.  Now the module
+    will not remove the modifications unless force=yes is specified.
+    Operations that depend on a clean working tree may fail unless force=yes is
+    added.
+  * git: When local modifications exist in a checkout, the git module will now
+    fail unless force is explictly specified.  Specifying force will allow the
+    module to revert and overwrite local modifications to make git actions
+    succeed.
+  * hg: When local modifications exist in a checkout, the hg module used to
+    default to removing the modifications on any operation.  Now the module
+    will not remove the modifications unless force=yes is specified.
   * subversion: When updating a checkout with local modifications, you now need
     to add force so the module will revert the modifications before updating.
-  * git: When local modifications exist to a checkout, the git module will now
-    fail unless force is explictly specified.  Specifying force will allow the
-    module revert and overwrite local modifications to make git actions succeed.
 
 ## 1.8.1 "You Really Got Me" - Nov 26, 2014
 
