@@ -737,6 +737,8 @@ class DockerManager(object):
                   'tty':          self.module.params.get('tty'),
                   'volumes_from': self.module.params.get('volumes_from'),
                   }
+        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
+            params['volumes_from'] = ""
 
         if params['volumes_from'] is not None:
             self.ensure_capability('volumes_from')
