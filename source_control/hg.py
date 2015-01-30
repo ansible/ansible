@@ -54,9 +54,10 @@ options:
         aliases: [ version ]
     force:
         description:
-            - Discards uncommitted changes. Runs C(hg update -C).
+            - Discards uncommitted changes. Runs C(hg update -C).  Prior to
+              1.9, the default was `yes`.
         required: false
-        default: "yes"
+        default: "no"
         choices: [ "yes", "no" ]
     purge:
         description:
@@ -207,7 +208,7 @@ def main():
             repo = dict(required=True, aliases=['name']),
             dest = dict(required=True),
             revision = dict(default=None, aliases=['version']),
-            force = dict(default='yes', type='bool'),
+            force = dict(default='no', type='bool'),
             purge = dict(default='no', type='bool'),
             executable = dict(default=None),
         ),
