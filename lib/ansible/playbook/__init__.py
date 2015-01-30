@@ -81,6 +81,7 @@ class PlayBook(object):
         su_pass          = False,
         vault_password   = False,
         force_handlers   = False,
+        retry_file       = None,
     ):
 
         """
@@ -102,6 +103,7 @@ class PlayBook(object):
         check:            don't change anything, just try to detect some potential changes
         any_errors_fatal: terminate the entire execution immediately when one of the hosts has failed
         force_handlers:   continue to notify and run handlers even if a task fails
+        retry_file:       filename of the retry file for failed hosts
         """
 
         self.SETUP_CACHE = SETUP_CACHE
@@ -152,6 +154,7 @@ class PlayBook(object):
         self.su_pass          = su_pass
         self.vault_password   = vault_password
         self.force_handlers   = force_handlers
+        self.retry_file       = retry_file
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -643,10 +646,13 @@ class PlayBook(object):
         buf = StringIO.StringIO()
         for x in replay_hosts:
             buf.write("%s\n" % x)
-        basedir = self.inventory.basedir()
-        filename = "%s.retry" % os.path.basename(self.filename)
-        filename = filename.replace(".yml","")
-        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
+        if self.retry_file is None:
+            basedir = self.inventory.basedir()
+            filename = "%s.retry" % os.path.basename(self.filename)
+            filename = filename.replace(".yml","")
+            filename = os.path.join(os.path.expandvars('$HOME/'), filename)
+        else:
+            filename = self.retry_file
 
         try:
             fd = open(filename, 'w')
