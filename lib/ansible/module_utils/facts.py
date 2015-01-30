@@ -609,9 +609,11 @@ class LinuxHardware(Hardware):
     """
 
     platform = 'Linux'
-    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
-    EXTRA_MEMORY_FACTS = ['Buffers', 'Cached', 'SwapCached']
 
+    # Originally only had these four as toplevelfacts
+    ORIGINAL_MEMORY_FACTS = frozenset(('MemTotal', 'SwapTotal', 'MemFree', 'SwapFree'))
+    # Now we have all of these in a dict structure
+    MEMORY_FACTS = ORIGINAL_MEMORY_FACTS.union(('Buffers', 'Cached', 'SwapCached'))
 
     def __init__(self):
         Hardware.__init__(self)
@@ -628,34 +630,46 @@ class LinuxHardware(Hardware):
         return self.facts
 
     def get_memory_facts(self):
-        memstats = {}
         if not os.access("/proc/meminfo", os.R_OK):
             return
+
+        memstats = {}
         for line in open("/proc/meminfo").readlines():
             data = line.split(":", 1)
             key = data[0]
-            if key in LinuxHardware.MEMORY_FACTS:
+            if key in self.ORIGINAL_MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
-            if key in LinuxHardware.MEMORY_FACTS or key in LinuxHardware.EXTRA_MEMORY_FACTS:
+
+            if key in self.MEMORY_FACTS:
                  val = data[1].strip().split(' ')[0]
                  memstats[key.lower()] = long(val) / 1024
+
+        if None not in (memstats.get('memtotal'), memstats.get('memfree')):
+            memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
+        if None not in (memstats.get('cached'), memstats.get('memfree'), memstats.get('buffers')):
+            memstats['nocache:free'] = memstats['cached'] + memstats['memfree'] + memstats['buffers']
+        if None not in (memstats.get('memtotal'), memstats.get('nocache:free')):
+            memstats['nocache:used'] = memstats['memtotal'] - memstats['nocache:free']
+        if None not in (memstats.get('swaptotal'), memstats.get('swapfree')):
+            memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
+
         self.facts['memory_mb'] = {
                      'real' : {
-                         'total': memstats['memtotal'],
-                         'used': (memstats['memtotal'] - memstats['memfree']),
-                         'free': memstats['memfree']
+                         'total': memstats.get('memtotal'),
+                         'used': memstats.get('real:used'),
+                         'free': memstats.get('memfree'),
                      },
                      'nocache' : {
-                         'free': memstats['cached'] + memstats['memfree'] + memstats['buffers'],
-                         'used': memstats['memtotal'] - (memstats['cached'] + memstats['memfree'] + memstats['buffers'])
+                         'free': memstats.get('nocache:free'),
+                         'used': memstats.get('nocache:used'),
                      },
                      'swap' : {
-                         'total': memstats['swaptotal'],
-                         'free': memstats['swapfree'],
-                         'used': memstats['swaptotal'] - memstats['swapfree'],
-                         'cached': memstats['swapcached']
-                     }
+                         'total': memstats.get('swaptotal'),
+                         'free': memstats.get('swapfree'),
+                         'used': memstats.get('swap:used'),
+                         'cached': memstats.get('swapcached'),
+                     },
                  }
 
     def get_cpu_facts(self):
