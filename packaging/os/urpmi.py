@@ -52,7 +52,8 @@ options:
     choices: [ "yes", "no" ]
   force:
     description:
-      - Corresponds to the C(--force) option for I(urpmi).
+      - Assume "yes" is the answer to any question urpmi has to ask.
+        Corresponds to the C(--force) option for I(urpmi).
     required: false
     default: yes
     choices: [ "yes", "no" ]
