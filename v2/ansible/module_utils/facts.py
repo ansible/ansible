@@ -29,6 +29,7 @@ import socket
 import struct
 import datetime
 import getpass
+import pwd
 import ConfigParser
 import StringIO
 
@@ -551,6 +552,12 @@ class Facts(object):
     # User
     def get_user_facts(self):
         self.facts['user_id'] = getpass.getuser()
+        pwent = pwd.getpwnam(getpass.getuser())
+        self.facts['user_uid'] = pwent.pw_uid
+        self.facts['user_gid'] = pwent.pw_gid
+        self.facts['user_gecos'] = pwent.pw_gecos
+        self.facts['user_dir'] = pwent.pw_dir
+        self.facts['user_shell'] = pwent.pw_shell
 
     def get_env_facts(self):
         self.facts['env'] = {}
@@ -602,7 +609,11 @@ class LinuxHardware(Hardware):
     """
 
     platform = 'Linux'
-    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+
+    # Originally only had these four as toplevelfacts
+    ORIGINAL_MEMORY_FACTS = frozenset(('MemTotal', 'SwapTotal', 'MemFree', 'SwapFree'))
+    # Now we have all of these in a dict structure
+    MEMORY_FACTS = ORIGINAL_MEMORY_FACTS.union(('Buffers', 'Cached', 'SwapCached'))
 
     def __init__(self):
         Hardware.__init__(self)
@@ -621,12 +632,45 @@ class LinuxHardware(Hardware):
     def get_memory_facts(self):
         if not os.access("/proc/meminfo", os.R_OK):
             return
+
+        memstats = {}
         for line in open("/proc/meminfo").readlines():
             data = line.split(":", 1)
             key = data[0]
-            if key in LinuxHardware.MEMORY_FACTS:
+            if key in self.ORIGINAL_MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
+
+            if key in self.MEMORY_FACTS:
+                 val = data[1].strip().split(' ')[0]
+                 memstats[key.lower()] = long(val) / 1024
+
+        if None not in (memstats.get('memtotal'), memstats.get('memfree')):
+            memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
+        if None not in (memstats.get('cached'), memstats.get('memfree'), memstats.get('buffers')):
+            memstats['nocache:free'] = memstats['cached'] + memstats['memfree'] + memstats['buffers']
+        if None not in (memstats.get('memtotal'), memstats.get('nocache:free')):
+            memstats['nocache:used'] = memstats['memtotal'] - memstats['nocache:free']
+        if None not in (memstats.get('swaptotal'), memstats.get('swapfree')):
+            memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
+
+        self.facts['memory_mb'] = {
+                     'real' : {
+                         'total': memstats.get('memtotal'),
+                         'used': memstats.get('real:used'),
+                         'free': memstats.get('memfree'),
+                     },
+                     'nocache' : {
+                         'free': memstats.get('nocache:free'),
+                         'used': memstats.get('nocache:used'),
+                     },
+                     'swap' : {
+                         'total': memstats.get('swaptotal'),
+                         'free': memstats.get('swapfree'),
+                         'used': memstats.get('swap:used'),
+                         'cached': memstats.get('swapcached'),
+                     },
+                 }
 
     def get_cpu_facts(self):
         i = 0
@@ -795,6 +839,13 @@ class LinuxHardware(Hardware):
                         size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
                     except OSError, e:
                         continue
+                    lsblkPath = module.get_bin_path("lsblk")
+                    rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
+
+                    if rc == 0:
+                        uuid = out.strip()
+                    else:
+                        uuid = 'NA'
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
@@ -804,6 +855,7 @@ class LinuxHardware(Hardware):
                          # statvfs data
                          'size_total': size_total,
                          'size_available': size_available,
+                         'uuid': uuid,
                          })
 
     def get_device_facts(self):
