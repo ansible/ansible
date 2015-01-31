@@ -165,7 +165,16 @@ def create_image(module, ec2):
 
         image_id = ec2.create_image(**params)
     except boto.exception.BotoServerError, e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        if e.error_code == 'InvalidAMIName.Duplicate':
+            images = ec2.get_all_images()
+            for img in images:
+                if img.name == name:
+                    module.exit_json(msg="AMI name already present", image_id=img.id, state=img.state, changed=False)
+                    sys.exit(0)
+            else:
+                module.fail_json(msg="Error in retrieving duplicate AMI details")
+        else:
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     # Wait until the image is recognized. EC2 API has eventual consistency,
     # such that a successful CreateImage API call doesn't guarantee the success
