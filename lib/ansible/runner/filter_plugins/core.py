@@ -30,6 +30,8 @@ import string
 import operator as py_operator
 from random import SystemRandom, shuffle
 import uuid
+import struct
+import socket
 
 import yaml
 from jinja2.filters import environmentfilter
@@ -304,6 +306,14 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def ip2int(ipstr):
+    ''' Convert IP from dot notation to long int '''
+    return struct.unpack('!I', socket.inet_aton(ipstr))[0]
+
+def int2ip(iplong):
+    ''' Convert IP from long int to dot notation '''
+    return socket.inet_ntoa(struct.pack('!I', iplong))
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -387,4 +397,8 @@ class FilterModule(object):
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+
+            # IP arithmetic
+            'ip2int': ip2int,
+            'int2ip': int2ip,
         }
