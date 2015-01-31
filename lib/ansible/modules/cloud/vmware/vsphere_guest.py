@@ -77,8 +77,20 @@ options:
   template_src:
     version_added: "1.9"
     description:
-     - Name of the source template to deploy from
-     default: None
+      - Name of the source template to deploy from
+    default: None
+  linked_clone:
+    version_added: "2.0"
+    description:
+      - Boolean. Creates a linked clone copy of the specified vm requires snapshot
+    required: false
+    default: false
+  snapshot:
+    version_added: "2.0"
+    description:
+      - Name of the snapshot you want to link clone from
+    required: false
+    default: none
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -523,7 +535,7 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, linked_clone, snapshot):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -607,9 +619,14 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     try:
         if vmTarget:
             changed = False
+        elif linked_clone and snapshot != None:
+            #Check linked_clone and snapshot value
+            vmTemplate.clone(guest, resourcepool=rpmor, linked=linked_clone, snapshot=snapshot)
+            changed = True
         else:
             vmTemplate.clone(guest, resourcepool=rpmor)
             changed = True
+
         vsphere_client.disconnect()
         module.exit_json(changed=changed)
     except Exception as e:
@@ -1211,9 +1228,11 @@ def main():
                     'reconfigured'
                 ],
                 default='present'),
-            vmware_guest_facts=dict(required=False, choices=BOOLEANS),
-            from_template=dict(required=False, choices=BOOLEANS),
+            vmware_guest_facts=dict(required=False, type='bool'),
+            from_template=dict(required=False, type='bool'),
             template_src=dict(required=False, type='str'),
+            linked_clone=dict(required=False, default=False, type='bool'),
+            snapshot=dict(required=False, default=None, type='str'),
             guest=dict(required=True, type='str'),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
@@ -1222,7 +1241,7 @@ def main():
             vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
-            force=dict(required=False, choices=BOOLEANS, default=False),
+            force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
 
 
@@ -1239,8 +1258,9 @@ def main():
                 'esxi'
             ],
             ['resource_pool', 'cluster'],
-            ['from_template', 'resource_pool', 'template_src']
+            ['from_template', 'resource_pool', 'template_src'],
         ],
+        required_if=[('linked_clone', True, ['snapshot'])],
     )
 
     if not HAS_PYSPHERE:
@@ -1263,6 +1283,9 @@ def main():
     cluster = module.params['cluster']
     template_src = module.params['template_src']
     from_template = module.params['from_template']
+    linked_clone = module.params['linked_clone']
+    snapshot = module.params['snapshot']
+
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1342,7 +1365,9 @@ def main():
                 guest=guest,
                 template_src=template_src,
                 module=module,
-                cluster_name=cluster
+                cluster_name=cluster,
+                linked_clone=linked_clone,
+                snapshot=snapshot
             )
         if state in ['restarted', 'reconfigured']:
             module.fail_json(
