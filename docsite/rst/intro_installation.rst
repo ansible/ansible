@@ -27,10 +27,10 @@ What Version To Pick?
 `````````````````````
 
 Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+machines, many users will actually track the development version.
 
 Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
+short release cycle, minor bugs will generally be fixed in the next release versus maintaining
 backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
 these are infrequent.
 
@@ -49,7 +49,7 @@ Control Machine Requirements
 Currently Ansible can be run from any machine with Python 2.6 installed (Windows isn't supported for the control machine).
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
-  
+
 .. _managed_node_requirements:
 
 Managed Node Requirements
@@ -57,7 +57,7 @@ Managed Node Requirements
 
 On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
-* ``python-simplejson`` 
+* ``python-simplejson``
 
 .. note::
 
@@ -77,12 +77,12 @@ On the managed nodes, you only need Python 2.4 or later, but if you are running 
 .. note::
 
    Python 3 is a slightly different language than Python 2 and most Python programs (including
-   Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
-   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
+   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X,
    using the 'raw' module will be able to do it remotely.
 
 .. _installing_the_control_machine:
@@ -111,6 +111,18 @@ To install from source.
     $ cd ./ansible
     $ source ./hacking/env-setup
 
+If you want to clone faster than normal, you may want to try this:
+
+.. code-block:: bash
+
+    $ git clone git://github.com/ansible/ansible.git --recursive  --depth=1
+    $ cd ./ansible
+    $ source ./hacking/env-setup
+
+
+
+
+
 If you want to suppress spurious warnings/errors, use:
 
     $ source ./hacking/env-setup -q
@@ -132,7 +144,7 @@ which point at Ansible's own modules (not the same kind of modules, alas).
     $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`)
 other than /etc/ansible/hosts:
 
 .. code-block:: bash
@@ -157,13 +169,13 @@ Latest Release Via Yum
 
 RPMs are available from yum for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
-Fedora distributions. 
+Fedora distributions.
 
 Ansible itself can manage earlier operating
 systems that contain Python 2.4 or higher (so also EL5).
 
 Fedora users can install Ansible directly, though if you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
-   
+
 .. code-block:: bash
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
@@ -300,4 +312,3 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
