@@ -162,10 +162,15 @@ def main():
             (rc, out, err) = package_uninstall(module, name)
             out = out[:75]
 
-    if rc is None:
-        result['changed'] = False
-    else:
+    if rc == 0:
         result['changed'] = True
+    else:
+        result['changed'] = False
+
+    if rc is not None and rc != 0:
+        result['failed'] = True
+    else:
+        result['failed'] = False
 
     if out:
         result['stdout'] = out
