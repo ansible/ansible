@@ -19,8 +19,13 @@ from ansible import errors
 
 try:
     import netaddr
-except Exception, e:
-    raise errors.AnsibleFilterError('python-netaddr package is not installed')
+except ImportError:
+    # in this case, we'll make the filters return error messages (see bottom)
+    netaddr = None
+else:
+    class mac_linux(netaddr.mac_unix):
+        pass
+    mac_linux.word_fmt = '%.2x'
 
 
 # ---- IP address and network filters ----
@@ -500,32 +505,33 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
 
     return False
 
-class mac_linux(netaddr.mac_unix): pass
-mac_linux.word_fmt = '%.2x'
-
-
 def macaddr(value, query = ''):
     return hwaddr(value, query, alias = 'macaddr')
 
+
+def _need_netaddr(*args, **kwargs):
+    raise errors.AnsibleFilterError('python-netaddr package is not installed')
 
 # ---- Ansible filters ----
 
 class FilterModule(object):
     ''' IP address and network manipulation filters '''
+    filter_map =  {
+        # IP addresses and networks
+        'ipaddr': ipaddr,
+        'ipwrap': ipwrap,
+        'ipv4': ipv4,
+        'ipv6': ipv6,
+        'ipsubnet': ipsubnet,
+
+        # MAC / HW addresses
+        'hwaddr': hwaddr,
+        'macaddr': macaddr
+    }
 
     def filters(self):
-        return {
-
-            # IP addresses and networks
-            'ipaddr': ipaddr,
-            'ipwrap': ipwrap,
-            'ipv4': ipv4,
-            'ipv6': ipv6,
-            'ipsubnet': ipsubnet,
-
-            # MAC / HW addresses
-            'hwaddr': hwaddr,
-            'macaddr': macaddr
-
-        }
-
+        if netaddr:
+            return self.filter_map
+        else:
+            # Need to install python-netaddr for these filters to work
+            return dict((f, _need_netaddr) for f in self.filter_map)
