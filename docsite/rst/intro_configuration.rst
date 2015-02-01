@@ -289,10 +289,7 @@ The valid values are either 'replace' (the default) or 'merge'.
 hostfile
 ========
 
-This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
-to talk to::
-
-    hostfile = /etc/ansible/hosts
+This is a deprecated setting since 1.9, please look at :ref:`inventory` for the new setting.
 
 .. _host_key_checking:
 
@@ -303,6 +300,18 @@ As described in :doc:`intro_getting_started`, host key checking is on by default
 implications and wish to disable it, you may do so here by setting the value to False::
 
     host_key_checking=True
+
+.. _inventory:
+
+inventory
+=========
+
+This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
+to talk to::
+
+    inventory = /etc/ansible/hosts
+
+It used to be called hostfile in Ansible before 1.9
 
 .. _jinja2_extensions:
 
