@@ -416,7 +416,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
             iplist = netaddr.IPSet([netaddr.IPNetwork(query)])
             query = 'cidr_lookup'
     except:
-        None
+        pass
 
     # This code checks if value maches the IP version the user wants, ie. if
     # it's any version ("ipaddr()"), IPv4 ("ipv4()") or IPv6 ("ipv6()")
