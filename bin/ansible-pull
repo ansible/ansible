@@ -40,7 +40,6 @@
 
 import os
 import shutil
-import subprocess
 import sys
 import datetime
 import socket
@@ -48,19 +47,19 @@ import random
 import time
 from ansible import utils
 from ansible.utils import cmd_functions
-from ansible import errors
-from ansible import inventory
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = {1: 'File does not exist',
-                    2: 'File is not readable'}
+                   2: 'File is not readable'}
 
-VERBOSITY=0
+VERBOSITY = 0
+
 
 def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
+
 
 def try_playbook(path):
     if not os.path.exists(path):
@@ -97,48 +96,7 @@ def select_playbook(path, args):
         return playbook
 
 
-def main(args):
-    """ Set up and run a local playbook """
-    usage = "%prog [options] [playbook.yml]"
-    parser = utils.SortedOptParser(usage=usage)
-    parser.add_option('--purge', default=False, action='store_true',
-                      help='purge checkout after playbook run')
-    parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
-                      help='only run the playbook if the repository has been updated')
-    parser.add_option('-s', '--sleep', dest='sleep', default=None,
-                      help='sleep for random interval (between 0 and n number of seconds) before starting. this is a useful way to disperse git requests')
-    parser.add_option('-f', '--force', dest='force', default=False,
-                      action='store_true',
-                      help='run the playbook even if the repository could '
-                           'not be updated')
-    parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='directory to checkout repository to')
-    #parser.add_option('-l', '--live', default=True, action='store_live',
-    #                  help='Print the ansible-playbook output while running')
-    parser.add_option('-U', '--url', dest='url', default=None,
-                      help='URL of the playbook repository')
-    parser.add_option('-C', '--checkout', dest='checkout',
-                      help='branch/tag/commit to checkout.  '
-                      'Defaults to behavior of repository module.')
-    parser.add_option('-i', '--inventory-file', dest='inventory',
-                      help="location of the inventory host file")
-    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-                      help="set additional variables as key=value or YAML/JSON", default=[])
-    parser.add_option('-v', '--verbose', default=False, action="callback",
-                      callback=increment_debug,
-                      help='Pass -vvvv to ansible-playbook')
-    parser.add_option('-m', '--module-name', dest='module_name',
-                      default=DEFAULT_REPO_TYPE,
-                      help='Module name used to check out repository.  '
-                      'Default is %s.' % DEFAULT_REPO_TYPE)
-    parser.add_option('--vault-password-file', dest='vault_password_file',
-                    help="vault password file")
-    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
-                      help='ask for sudo password')
-    parser.add_option('-t', '--tags', dest='tags', default=False,
-                      help='only run plays and tasks tagged with these values')
-    options, args = parser.parse_args(args)
-
+def run(parser, options, args):
     hostname = socket.getfqdn()
     if not options.dest:
         # use a hostname dependent directory, in case of $HOME on nfs
@@ -165,7 +123,7 @@ def main(args):
     if VERBOSITY == 0:
         base_opts = '-c local --limit "%s"' % limit_opts
     elif VERBOSITY > 0:
-        debug_level = ''.join([ "v" for x in range(0, VERBOSITY) ])
+        debug_level = ''.join(["v" for x in range(0, VERBOSITY)])
         base_opts = '-%s -c local --limit "%s"' % (debug_level, limit_opts)
 
     if options.checkout:
@@ -180,13 +138,13 @@ def main(args):
 
     if options.sleep:
         try:
-            secs = random.randint(0,int(options.sleep));
+            secs = random.randint(0, int(options.sleep))
         except ValueError:
             parser.error("%s is not a number." % options.sleep)
             return 1
 
         print >>sys.stderr, "Sleeping for %d seconds..." % secs
-        time.sleep(secs);
+        time.sleep(secs)
 
 
     # RUN THe CHECKOUT COMMAND
@@ -231,6 +189,132 @@ def main(args):
             print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
 
     return rc
+
+
+def start_server(interface, port, url, parser, options, args):
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    import threading
+
+    class PullHandler(BaseHTTPRequestHandler):
+        pull_in_progress = False
+
+        def _constant_time_compare(self, val1, val2):
+            """
+            Mitigate timing attacks on the URL.
+            """
+            if len(val1) != len(val2):
+                return False
+
+            result = 0
+            for x, y in zip(val1, val2):
+                result |= ord(x) ^ ord(y)
+            return result == 0
+
+        def _pull(self):
+            PullHandler.pull_in_progress = True
+            run(parser, options, args)
+            PullHandler.pull_in_progress = False
+
+        def do_GET(self):
+            if self._constant_time_compare(self.path, url):
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+
+                if PullHandler.pull_in_progress:
+                    self.wfile.write('{"status": "Another pull is already in progress."}')
+                else:
+                    self.wfile.write('{"status": "ok"}')
+                    t = threading.Thread(target=self._pull)
+                    t.daemon = True
+                    t.start()
+            else:
+                self.send_response(404)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                self.wfile.write("Page not found.")
+
+            return
+        do_POST = do_GET
+
+    server = HTTPServer((interface, port), PullHandler)
+    print "Starting server, to initiate a pull visit http://%s:%s%s" % (interface, port, url)
+    try:
+        server.serve_forever()
+    except:
+        server.socket.close()
+
+
+def main(args):
+    """ Set up and run a local playbook """
+    usage = "%prog [options] [playbook.yml]"
+    parser = utils.SortedOptParser(usage=usage)
+    parser.add_option('--purge', default=False, action='store_true',
+                      help='purge checkout after playbook run')
+    parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
+                      help='only run the playbook if the repository has been updated')
+    parser.add_option('-s', '--sleep', dest='sleep', default=None,
+                      help='sleep for random interval (between 0 and n number of seconds) before starting. this is a useful way to disperse git requests')
+    parser.add_option('-f', '--force', dest='force', default=False,
+                      action='store_true',
+                      help='run the playbook even if the repository could '
+                           'not be updated')
+    parser.add_option('-d', '--directory', dest='dest', default=None,
+                      help='directory to checkout repository to')
+    #parser.add_option('-l', '--live', default=True, action='store_live',
+    #                  help='Print the ansible-playbook output while running')
+    parser.add_option('-U', '--url', dest='url', default=None,
+                      help='URL of the playbook repository')
+    parser.add_option('-C', '--checkout', dest='checkout',
+                      help='branch/tag/commit to checkout.  '
+                      'Defaults to behavior of repository module.')
+    parser.add_option('-i', '--inventory-file', dest='inventory',
+                      help="location of the inventory host file")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+                      help="set additional variables as key=value or YAML/JSON", default=[])
+    parser.add_option('-v', '--verbose', default=False, action="callback",
+                      callback=increment_debug,
+                      help='Pass -vvvv to ansible-playbook')
+    parser.add_option('-m', '--module-name', dest='module_name',
+                      default=DEFAULT_REPO_TYPE,
+                      help='Module name used to check out repository.  '
+                      'Default is %s.' % DEFAULT_REPO_TYPE)
+    parser.add_option('--vault-password-file', dest='vault_password_file',
+                      help="vault password file")
+    parser.add_option('-S', '--server-mode', default=None, dest='server_mode', metavar="URL",
+                      help='run in server mode (listen on a port and deploy whenever a specific HTTP URL is hit), the URL parameter is http://<interface to listen on>:<port>/<secret path>')
+    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+                      help='ask for sudo password')
+    parser.add_option('-t', '--tags', dest='tags', default=False,
+                      help='only run plays and tasks tagged with these values')
+    options, args = parser.parse_args(args)
+
+    if options.server_mode:
+        try:
+            from urllib.parse import urlparse
+        except ImportError:
+            from urlparse import urlparse
+        try:
+            parsed_url = urlparse(options.server_mode)
+        except:
+            parser.error("Server mode URL invalid, please specify a URL in the form http://<interface to listen on>:<port>/<secret path>")
+
+        hostname = parsed_url.hostname
+        if not hostname:
+            hostname = "0.0.0.0"
+
+        port = parsed_url.port
+        if not port:
+            port = 48743
+
+        path = parsed_url.path
+        if not path:
+            path = "some path"
+
+        start_server(hostname, port, path, parser, options, args)
+    else:
+        return run(parser, options, args)
+
 
 if __name__ == '__main__':
     try:
