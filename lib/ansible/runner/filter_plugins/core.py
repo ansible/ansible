@@ -36,7 +36,7 @@ from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.utils import md5s, checksum_s
+from ansible.utils.hashing import md5s, checksum_s
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
