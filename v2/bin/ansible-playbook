@@ -106,7 +106,7 @@ def main(args):
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
-        extra_vars_opt = to_unicode(extra_vars_opt)
+        extra_vars_opt = to_unicode(extra_vars_opt, errors='strict')
         if extra_vars_opt.startswith(u"@"):
             # Argument is a YAML file (JSON is a subset of YAML)
             data = loader.load_from_file(extra_vars_opt[1:])
