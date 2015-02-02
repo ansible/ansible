@@ -46,7 +46,7 @@ options:
     description:
       - Description of a crontab entry.
     default: null
-    required: true
+    required: false
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -398,7 +398,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(required=True),
+            name=dict(required=False),
             user=dict(required=False),
             job=dict(required=False),
             cron_file=dict(required=False),
