@@ -35,6 +35,10 @@
         host_id: '{{item}}'
       with_sequence: start=1 end={{num_hosts}} format=%d
 
+    - name: 'A task with unicode extra vars'
+      debug: var=extra_var
+
+
 - name: 'A play for hosts in group: ĪīĬĭ'
   hosts: 'ĪīĬĭ'
   gather_facts: true

@@ -39,6 +39,7 @@ import ansible.utils.template
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
+from ansible.utils import to_unicode
 from ansible.color import ANSIBLE_COLOR, stringc
 from ansible.callbacks import display
 
@@ -136,10 +137,11 @@ def main(args):
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
-        if extra_vars_opt.startswith("@"):
+        extra_vars_opt = to_unicode(extra_vars_opt)
+        if extra_vars_opt.startswith(u"@"):
             # Argument is a YAML file (JSON is a subset of YAML)
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
-        elif extra_vars_opt and extra_vars_opt[0] in '[{':
+        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
             # Arguments as YAML
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
         else:
