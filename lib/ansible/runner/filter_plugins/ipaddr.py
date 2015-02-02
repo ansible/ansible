@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import errors
+from functools import partial
 
 try:
     import netaddr
@@ -26,6 +26,8 @@ else:
     class mac_linux(netaddr.mac_unix):
         pass
     mac_linux.word_fmt = '%.2x'
+
+from ansible import errors
 
 
 # ---- IP address and network query helpers ----
@@ -595,8 +597,9 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
 def macaddr(value, query = ''):
     return hwaddr(value, query, alias = 'macaddr')
 
-def _need_netaddr(*args, **kwargs):
-    raise errors.AnsibleFilterError('python-netaddr package is not installed')
+def _need_netaddr(f_name, *args, **kwargs):
+    raise errors.AnsibleFilterError('The {0} filter requires python-netaddr be'
+            ' installed on the ansible controller'.format(f_name))
 
 # ---- Ansible filters ----
 
@@ -620,4 +623,4 @@ class FilterModule(object):
             return self.filter_map
         else:
             # Need to install python-netaddr for these filters to work
-            return dict((f, _need_netaddr) for f in self.filter_map)
+            return dict((f, partial(_need_netaddr, f)) for f in self.filter_map)
