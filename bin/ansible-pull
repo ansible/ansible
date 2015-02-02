@@ -133,6 +133,8 @@ def main(args):
                       'Default is %s.' % DEFAULT_REPO_TYPE)
     parser.add_option('--vault-password-file', dest='vault_password_file',
                     help="vault password file")
+    parser.add_option('--private-key', dest='private_key',
+                    help='Specify an optional private key file to use for the checkout')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
                       help='ask for sudo password')
     parser.add_option('-t', '--tags', dest='tags', default=False,
@@ -170,6 +172,11 @@ def main(args):
 
     if options.checkout:
         repo_opts += ' version=%s' % options.checkout
+    if options.private_key and os.path.isfile(options.private_key):
+        repo_opts += ' key_file=%s' %options.private_key
+    elif options.private_key:
+        sys.stderr.write("Private key '%s' not found.\n" % options.private_key)
+        return 1
     path = utils.plugins.module_finder.find_plugin(options.module_name)
     if path is None:
         sys.stderr.write("module '%s' not found.\n" % options.module_name)
