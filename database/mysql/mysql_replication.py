@@ -54,6 +54,12 @@ options:
         description:
             - mysql host to connect
         required: False
+    login_port:
+        description:
+            - Port of the MySQL server. Requires login_host be defined as other then localhost if login_port is used
+        required: False
+        default: 3306
+        version_added: "1.9"
     login_unix_socket:
         description:
             - unix socket to connect mysql server
@@ -115,6 +121,9 @@ EXAMPLES = '''
 
 # Change master to master server 192.168.1.1 and use binary log 'mysql-bin.000009' with position 4578
 - mysql_replication: mode=changemaster master_host=192.168.1.1 master_log_file=mysql-bin.000009 master_log_pos=4578
+
+# Check slave status using port 3308
+- mysql_replication: mode=getslave login_host=ansible.example.com login_port=3308
 '''
 
 import ConfigParser
@@ -230,6 +239,7 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
+            login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
             master_host=dict(default=None),
@@ -252,6 +262,7 @@ def main():
     user = module.params["login_user"]
     password = module.params["login_password"]
     host = module.params["login_host"]
+    port = module.params["login_port"]
     mode = module.params["mode"]
     master_host = module.params["master_host"]
     master_user = module.params["master_user"]
@@ -293,8 +304,10 @@ def main():
     try:
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password)
+        elif module.params["login_port"] != "3306" and module.params["login_host"] == "localhost":
+            module.fail_json(msg="login_host is required when login_port is defined, login_host cannot be localhost when login_port is defined")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password)
+            db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     try:
