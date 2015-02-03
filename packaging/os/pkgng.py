@@ -63,6 +63,13 @@ options:
               for newer pkgng versions, specify a the name of a repository
               configured in /usr/local/etc/pkg/repos
         required: false
+    batch:
+        description:
+            - for packages with interactive prompts during installation,
+              this makes pkgng automatically accept all default options for
+              the installation of the package.
+        default: yes
+        required: false
 author: bleader
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
@@ -136,7 +143,7 @@ def remove_packages(module, pkgng_path, packages):
     return (False, "package(s) already absent")
 
 
-def install_packages(module, pkgng_path, packages, cached, pkgsite):
+def install_packages(module, pkgng_path, packages, cached, pkgsite, batch):
 
     install_c = 0
 
@@ -148,6 +155,11 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
             pkgsite = "PACKAGESITE=%s" % (pkgsite)
         else:
             pkgsite = "-r %s" % (pkgsite)
+
+    if batch == True:
+      batch_var = 'env BATCH=yes'
+    else:
+      batch_var = ''
 
     if not module.check_mode and not cached:
         if old_pkgng:
@@ -163,9 +175,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
 
         if not module.check_mode:
             if old_pkgng:
-                rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgng_path, package))
+                rc, out, err = module.run_command("%s %s %s install -g -U -y %s" % (batch_var, pkgsite, pkgng_path, package))
             else:
-                rc, out, err = module.run_command("%s install %s -g -U -y %s" % (pkgng_path, pkgsite, package))
+                rc, out, err = module.run_command("%s %s install %s -g -U -y %s" % (batch_var, pkgng_path, pkgsite, package))
 
         if not module.check_mode and not query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
@@ -264,7 +276,8 @@ def main():
                 name            = dict(aliases=["pkg"], required=True),
                 cached          = dict(default=False, type='bool'),
                 annotation      = dict(default="", required=False),
-                pkgsite         = dict(default="", required=False)),
+                pkgsite         = dict(default="", required=False),
+                batch           = dict(default=False, required=False, type='bool')),
             supports_check_mode = True)
 
     pkgng_path = module.get_bin_path('pkg', True)
@@ -277,7 +290,7 @@ def main():
     msgs = []
 
     if p["state"] == "present":
-        _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"])
+        _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], p["batch"])
         changed = changed or _changed
         msgs.append(_msg)
 
