@@ -27,6 +27,7 @@ import collections
 import crypt
 import hashlib
 import string
+from functools import partial
 import operator as py_operator
 from random import SystemRandom, shuffle
 import uuid
@@ -37,6 +38,7 @@ from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.utils.hashing import md5s, checksum_s
+from ansible.utils.unicode import unicode_wrap
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
@@ -310,8 +312,8 @@ class FilterModule(object):
     def filters(self):
         return {
             # base 64
-            'b64decode': base64.b64decode,
-            'b64encode': base64.b64encode,
+            'b64decode': partial(unicode_wrap, base64.b64decode),
+            'b64encode': partial(unicode_wrap, base64.b64encode),
 
             # uuid
             'to_uuid': to_uuid,
@@ -327,11 +329,11 @@ class FilterModule(object):
             'from_yaml': yaml.safe_load,
 
             # path
-            'basename': os.path.basename,
-            'dirname': os.path.dirname,
-            'expanduser': os.path.expanduser,
-            'realpath': os.path.realpath,
-            'relpath': os.path.relpath,
+            'basename': unicode_wrap(os.path.basename),
+            'dirname': unicode_wrap(os.path.dirname),
+            'expanduser': unicode_wrap(os.path.expanduser),
+            'realpath': unicode_wrap(os.path.realpath),
+            'relpath': unicode_wrap(os.path.relpath),
 
             # failure testing
             'failed'  : failed,
