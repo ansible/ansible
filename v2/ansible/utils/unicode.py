@@ -241,3 +241,8 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
     raise TypeError('nonstring value, %(param)s, is not set to a valid'
         ' action' % {'param': nonstring})
 
+
+# force the return value of a function to be unicode.  Use with partial to
+# ensure that a filter will return unicode values.
+def unicode_wrap(func, *args, **kwargs):
+    return to_unicode(func(*args, **kwargs), nonstring='passthru')
