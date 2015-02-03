@@ -24,12 +24,16 @@ import pipes
 import glob
 import re
 import collections
+from functools import partial
 import operator as py_operator
-from ansible import errors
-from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
 from random import SystemRandom, shuffle
 from jinja2.filters import environmentfilter
+from distutils.version import LooseVersion, StrictVersion
+
+from ansible import errors
+from ansible.utils.hashing import md5s, checksum_s
+from ansible.utils.unicode import unicode_wrap
 
 
 def to_nice_yaml(*a, **kw):
@@ -249,8 +253,8 @@ class FilterModule(object):
     def filters(self):
         return {
             # base 64
-            'b64decode': base64.b64decode,
-            'b64encode': base64.b64encode,
+            'b64decode': partial(unicode_wrap, base64.b64decode),
+            'b64encode': partial(unicode_wrap, base64.b64encode),
 
             # json
             'to_json': to_json,
@@ -263,11 +267,11 @@ class FilterModule(object):
             'from_yaml': yaml.safe_load,
 
             # path
-            'basename': os.path.basename,
-            'dirname': os.path.dirname,
-            'expanduser': os.path.expanduser,
-            'realpath': os.path.realpath,
-            'relpath': os.path.relpath,
+            'basename': unicode_wrap(os.path.basename),
+            'dirname': unicode_wrap(os.path.dirname),
+            'expanduser': unicode_wrap(os.path.expanduser),
+            'realpath': unicode_wrap(os.path.realpath),
+            'relpath': unicode_wrap(os.path.relpath),
 
             # failure testing
             'failed'  : failed,
