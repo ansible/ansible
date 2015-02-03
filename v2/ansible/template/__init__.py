@@ -126,7 +126,7 @@ class Templar:
                 result = variable
                 if self._contains_vars(variable):
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines)
-    
+
                     # if this looks like a dictionary or list, convert it to such using the safe_eval method
                     if (result.startswith("{") and not result.startswith("{{")) or result.startswith("["):
                         eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
@@ -203,10 +203,6 @@ class Templar:
     def _do_template(self, data, preserve_trailing_newlines=False):
 
         try:
-            # FIXME: is this even required? it seems to conflict with the lines
-            #        below which do the same thing?
-            #if isinstance(data, str):
-            #    data = unicode(data, 'utf-8')
 
             environment = Environment(trim_blocks=True, undefined=StrictUndefined, extensions=self._get_extensions(), finalize=self._finalize)
             environment.filters.update(self._get_filters())
@@ -219,13 +215,6 @@ class Templar:
             #    filesdir = os.path.abspath(os.path.join(basedir, '..', 'files'))
             #    if os.path.exists(filesdir):
             #        basedir = filesdir
-
-            # from issue #6227, make sure unicode is handled properly
-            if isinstance(data, unicode):
-                try:
-                    data = data.decode('utf-8')
-                except UnicodeEncodeError, e:
-                    pass
 
             try:
                 t = environment.from_string(data)
