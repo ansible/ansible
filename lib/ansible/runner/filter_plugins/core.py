@@ -267,11 +267,11 @@ class FilterModule(object):
             'from_yaml': yaml.safe_load,
 
             # path
-            'basename': unicode_wrap(os.path.basename),
-            'dirname': unicode_wrap(os.path.dirname),
-            'expanduser': unicode_wrap(os.path.expanduser),
-            'realpath': unicode_wrap(os.path.realpath),
-            'relpath': unicode_wrap(os.path.relpath),
+            'basename': partial(unicode_wrap, os.path.basename),
+            'dirname': partial(unicode_wrap, os.path.dirname),
+            'expanduser': partial(unicode_wrap, os.path.expanduser),
+            'realpath': partial(unicode_wrap, os.path.realpath),
+            'relpath': partial(unicode_wrap, os.path.relpath),
 
             # failure testing
             'failed'  : failed,
