@@ -128,7 +128,11 @@ class Play(object):
         if hosts is None:
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
-            hosts = ';'.join(hosts)
+            try:
+                hosts = ';'.join(hosts)
+            except TypeError,e:
+                raise errors.AnsibleError('improper host declaration: %s' % str(e))
+
         self.serial           = str(ds.get('serial', 0))
         self.hosts            = hosts
         self.name             = ds.get('name', self.hosts)
