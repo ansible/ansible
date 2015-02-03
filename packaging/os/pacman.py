@@ -42,7 +42,7 @@ options:
             - Desired state of the package.
         required: false
         default: "present"
-        choices: ["present", "absent"]
+        choices: ["present", "absent", "latest"]
 
     recurse:
         description:
@@ -67,6 +67,9 @@ EXAMPLES = '''
 # Install package foo
 - pacman: name=foo state=present
 
+# Upgrade package foo
+- pacman: name=foo state=latest update_cache=yes
+
 # Remove packages foo and bar
 - pacman: name=foo,bar state=absent
 
@@ -85,17 +88,37 @@ import sys
 
 PACMAN_PATH = "/usr/bin/pacman"
 
+def get_version(pacman_output):
+    """Take pacman -Qi or pacman -Si output and get the Version"""
+    lines = pacman_output.split('\n')
+    for line in lines:
+        if 'Version' in line:
+            return line.split(':')[1].strip()
+    return None
+
 def query_package(module, name, state="present"):
-    # pacman -Q returns 0 if the package is installed,
-    # 1 if it is not installed
+    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, and a second boolean to indicate if the package is up-to-date."""
     if state == "present":
-        cmd = "pacman -Q %s" % (name)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        lcmd = "pacman -Qi %s" % (name)
+        lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
+        if lrc != 0:
+            # package is not installed locally
+            return False, False
+        
+        # get the version installed locally (if any)
+        lversion = get_version(lstdout)
+        
+        rcmd = "pacman -Si %s" % (name)
+        rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
+        # get the version in the repository
+        rversion = get_version(rstdout)
 
-        if rc == 0:
-            return True
+        if rrc == 0:
+            # Return True to indicate that the package is installed locally, and the result of the version number comparison
+            # to determine if the package is up-to-date.
+            return True, (lversion == rversion)
 
-        return False
+        return False, False
 
 
 def update_package_db(module):
@@ -118,7 +141,8 @@ def remove_packages(module, packages):
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        if not query_package(module, package):
+        installed, updated = query_package(module, package)
+        if not installed:
             continue
 
         cmd = "pacman -%s %s --noconfirm" % (args, package)
@@ -136,11 +160,13 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, packages, package_files):
+def install_packages(module, state, packages, package_files):
     install_c = 0
 
     for i, package in enumerate(packages):
-        if query_package(module, package):
+        # if the package is installed and state == present or state == latest and is up-to-date then skip
+        installed, updated = query_package(module, package)
+        if installed and (state == 'present' or (state == 'latest' and updated)):
             continue
 
         if package_files[i]:
@@ -165,9 +191,10 @@ def install_packages(module, packages, package_files):
 def check_packages(module, packages, state):
     would_be_changed = []
     for package in packages:
-        installed = query_package(module, package)
-        if ((state == "present" and not installed) or
-                (state == "absent" and installed)):
+        installed, updated = query_package(module, package)
+        if ((state in ["present", "latest"] and not installed) or
+                (state == "absent" and installed) or
+                (state == "latest" and not updated)):
             would_be_changed.append(package)
     if would_be_changed:
         if state == "absent":
@@ -182,7 +209,7 @@ def main():
     module = AnsibleModule(
         argument_spec    = dict(
             name         = dict(aliases=['pkg']),
-            state        = dict(default='present', choices=['present', 'installed', 'absent', 'removed']),
+            state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             recurse      = dict(default='no', choices=BOOLEANS, type='bool'),
             update_cache = dict(default='no', aliases=['update-cache'], choices=BOOLEANS, type='bool')),
         required_one_of = [['name', 'update_cache']],
@@ -223,8 +250,8 @@ def main():
         if module.check_mode:
             check_packages(module, pkgs, p['state'])
 
-        if p['state'] == 'present':
-            install_packages(module, pkgs, pkg_files)
+        if p['state'] in ['present', 'latest']:
+            install_packages(module, p['state'], pkgs, pkg_files)
         elif p['state'] == 'absent':
             remove_packages(module, pkgs)
 
