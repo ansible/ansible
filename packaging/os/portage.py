@@ -132,8 +132,22 @@ options:
     default: null
     choices: [ "yes", "web" ]
 
+  getbinpkg:
+    description:
+      - Prefer packages specified at PORTAGE_BINHOST in make.conf
+    required: false
+    default: null
+    choices: [ "yes" ]
+
+  usepkgonly:
+    description:
+      - Merge only binaries (no compiling). This sets getbinpkg=yes.
+    required: false
+    deafult: null
+    choices: [ "yes" ]
+
 requirements: [ gentoolkit ]
-author: Yap Sok Ann
+author: Yap Sok Ann, Andrew Udvare
 notes:  []
 '''
 
@@ -146,6 +160,12 @@ EXAMPLES = '''
 
 # Update package foo to the "best" version
 - portage: package=foo update=yes
+
+# Install package foo using PORTAGE_BINHOST setup
+- portage: package=foo getbinpkg=yes
+
+# Re-install world from binary packages only and do not allow any compiling
+- portage: package=@world usepkgonly=yes
 
 # Sync repositories and update world
 - portage: package=@world update=yes deep=yes sync=yes
@@ -160,6 +180,7 @@ EXAMPLES = '''
 
 import os
 import pipes
+import re
 
 
 def query_package(module, package, action):
@@ -244,10 +265,16 @@ def emerge_packages(module, packages):
         'onlydeps': '--onlydeps',
         'quiet': '--quiet',
         'verbose': '--verbose',
+        'getbinpkg': '--getbinpkg',
+        'usepkgonly': '--usepkgonly',
     }
     for flag, arg in emerge_flags.iteritems():
         if p[flag]:
             args.append(arg)
+
+    # usepkgonly implies getbinpkg
+    if p['usepkgonly'] and not p['getbinpkg']:
+        args.append('--getbinpkg')
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
     if rc != 0:
@@ -256,9 +283,19 @@ def emerge_packages(module, packages):
             msg='Packages not installed.',
         )
 
+    # Check for SSH error with PORTAGE_BINHOST, since rc is still 0 despite
+    #   this error
+    if (p['usepkgonly'] or p['getbinpkg']) \
+            and 'Permission denied (publickey).' in err:
+        module.fail_json(
+            cmd=cmd, rc=rc, stdout=out, stderr=err,
+            msg='Please check your PORTAGE_BINHOST configuration in make.conf '
+                'and your SSH authorized_keys file',
+        )
+
     changed = True
     for line in out.splitlines():
-        if line.startswith('>>> Emerging (1 of'):
+        if re.match(r'(?:>+) Emerging (?:binary )?\(1 of', line):
             break
     else:
         changed = False
@@ -367,6 +404,8 @@ def main():
             quiet=dict(default=None, choices=['yes']),
             verbose=dict(default=None, choices=['yes']),
             sync=dict(default=None, choices=['yes', 'web']),
+            getbinpkg=dict(default=None, choices=['yes']),
+            usepkgonly=dict(default=None, choices=['yes']),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
         mutually_exclusive=[['nodeps', 'onlydeps'], ['quiet', 'verbose']],
