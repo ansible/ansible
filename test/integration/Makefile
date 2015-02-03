@@ -15,7 +15,7 @@ CREDENTIALS_ARG =
 endif
 
 # http://unix.stackexchange.com/questions/30091/fix-or-alternative-for-mktemp-in-os-x
-TMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
+MYTMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 
 VAULT_PASSWORD_FILE = vault-password
 
@@ -122,7 +122,7 @@ rackspace: $(CREDENTIALS_FILE)
 test_galaxy: test_galaxy_spec test_galaxy_yaml
 
 test_galaxy_spec:
-	mytmpdir=$(TMPDIR) ; \
+	mytmpdir=$(MYTMPDIR) ; \
 	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
@@ -131,7 +131,7 @@ test_galaxy_spec:
     exit $$RC
 
 test_galaxy_yaml:
-	mytmpdir=$(TMPDIR) ; \
+	mytmpdir=$(MYTMPDIR) ; \
 	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
