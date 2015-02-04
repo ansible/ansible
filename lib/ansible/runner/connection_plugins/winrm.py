@@ -143,7 +143,7 @@ class Connection(object):
             vvv("EXEC %s" % cmd, host=self.host)
         # For script/raw support.
         if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
-            script = powershell._build_file_cmd(cmd_parts)
+            script = powershell._build_file_cmd(cmd_parts, quote_args=False)
             cmd_parts = powershell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)

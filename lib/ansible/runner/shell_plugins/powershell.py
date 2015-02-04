@@ -53,9 +53,11 @@ def _encode_script(script, as_list=False):
         return cmd_parts
     return ' '.join(cmd_parts)
 
-def _build_file_cmd(cmd_parts):
+def _build_file_cmd(cmd_parts, quote_args=True):
     '''Build command line to run a file, given list of file name plus args.'''
-    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts])
+    if quote_args:
+        cmd_parts = ['"%s"' % x for x in cmd_parts]
+    return ' '.join(['&'] + cmd_parts)
 
 class ShellModule(object):
 
@@ -122,7 +124,7 @@ class ShellModule(object):
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]
-        script = _build_file_cmd(cmd_parts)
+        script = _build_file_cmd(cmd_parts, quote_args=False)
         if rm_tmp:
             rm_tmp = _escape(rm_tmp)
             script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)
