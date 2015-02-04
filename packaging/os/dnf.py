@@ -34,7 +34,7 @@ except:
 DOCUMENTATION = '''
 ---
 module: dnf
-version_added: historical
+version_added: 1.9
 short_description: Manages packages with the I(dnf) package manager
 description:
      - Installs, upgrade, removes, and lists packages and groups with the I(dnf) package manager.
@@ -43,21 +43,18 @@ options:
     description:
       - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update. You can also pass a url or a local path to a rpm file."
     required: true
-    version_added: "1.8"
     default: null
     aliases: []
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
     required: false
-    version_added: "1.8"
     default: null
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
     required: false
     choices: [ "present", "latest", "absent" ]
-    version_added: "1.8"
     default: "present"
   enablerepo:
     description:
@@ -65,17 +62,15 @@ options:
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
     required: false
-    version_added: "1.8"
     default: null
     aliases: []
-    
+
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
     required: false
-    version_added: "1.8"
     default: null
     aliases: []
 
@@ -83,7 +78,6 @@ options:
     description:
       - The remote dnf configuration file to use for the transaction.
     required: false
-    version_added: "1.8"
     default: null
     aliases: []
 
@@ -92,7 +86,6 @@ options:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
     required: false
-    version_added: "1.8"
     default: "no"
     choices: ["yes", "no"]
     aliases: []
