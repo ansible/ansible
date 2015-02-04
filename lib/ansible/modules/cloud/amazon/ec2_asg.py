@@ -412,15 +412,15 @@ def create_autoscaling_group(connection, module):
             for tag in asg_tags:
                 want_tags[tag.key] = [tag.value, tag.propagate_at_launch]
 
+            dead_tags = []
             for tag in as_group.tags:
                 have_tags[tag.key] = [tag.value, tag.propagate_at_launch]
-                dead_tags = []
                 if not tag.key in want_tags:
                     changed = True
                     dead_tags.append(tag)
 
-                if dead_tags != []:
-                    connection.delete_tags(dead_tags)
+            if dead_tags != []:
+                connection.delete_tags(dead_tags)
 
             if have_tags != want_tags:
                 changed = True
