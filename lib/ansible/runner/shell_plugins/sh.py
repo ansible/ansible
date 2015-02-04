@@ -99,7 +99,7 @@ class ShellModule(object):
         test = "rc=flag; [ -r \'%(p)s\' ] || rc=2; [ -f \'%(p)s\' ] || rc=1; [ -d \'%(p)s\' ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}\"\'  %(p)s\' && exit 0" % dict(p=path, i=python_interp)
         csums = [
             "(%s -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();\nafile = open(\"%s\", \"rb\")\nbuf = afile.read(BLOCKSIZE)\nwhile len(buf) > 0:\n\thasher.update(buf)\n\tbuf = afile.read(BLOCKSIZE)\nafile.close()\nprint(hasher.hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python > 2.4 (including python3)
-            "(%s -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha1();\nafile = open(\"%s\", \"rb\")\nbuf = afile.read(BLOCKSIZE)\nwhile len(buf) > 0:\n\thasher.update(buf)\n\tbuf = afile.read(BLOCKSIZE)\nafile.close()\nprint(hasher.hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python == 2.4
+            "(%s -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();\nafile = open(\"%s\", \"rb\")\nbuf = afile.read(BLOCKSIZE)\nwhile len(buf) > 0:\n\thasher.update(buf)\n\tbuf = afile.read(BLOCKSIZE)\nafile.close()\nprint(hasher.hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python == 2.4
         ]
 
         cmd = " || ".join(csums)
