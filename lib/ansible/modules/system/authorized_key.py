@@ -122,7 +122,6 @@ import os.path
 import tempfile
 import re
 import shlex
-import urllib2
 
 class keydict(dict):
 
@@ -337,18 +336,21 @@ def enforce_state(module, params):
     manage_dir  = params.get("manage_dir", True)
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
+    error_msg   = "Error getting key from: %s"
 
+    # if the key is a url, request it and use it as key source
     if key.startswith("http"):
-        try:
-        gh_key = urllib2.urlopen(key).read()
-    except urllib2.URLError, e:
-        module.fail_json(msg="no key found at: %s" % key)
-
-    key = gh_key
+	try:
+            resp, info = fetch_url(module, key)
+	    if info['status'] != 200:
+                module.fail_json(msg=error_msg % key)
+	    else:
+		key = resp.read()
+	except Exception:
+	    module.fail_json(msg=error_msg % key)
 
     # extract individual keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
-
 
     # check current state -- just get the filename, don't create file
     do_write = False
@@ -431,4 +433,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()
