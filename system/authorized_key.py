@@ -37,7 +37,7 @@ options:
     aliases: []
   key:
     description:
-      - The SSH public key, as a string
+      - The SSH public key(s), as a string or url (https://github.com/username.keys)
     required: true
     default: null
   path:
@@ -79,6 +79,9 @@ EXAMPLES = '''
 # Example using key data from a local file on the management machine
 - authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
+# Using github url as key source
+- authorized_key: user=charlie key=https://github.com/charlie.keys
+
 # Using alternate directory locations:
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
@@ -97,6 +100,7 @@ EXAMPLES = '''
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   key_options='no-port-forwarding,host="10.0.1.1"'
+
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -332,10 +336,21 @@ def enforce_state(module, params):
     manage_dir  = params.get("manage_dir", True)
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
+    error_msg   = "Error getting key from: %s"
+
+    # if the key is a url, request it and use it as key source
+    if key.startswith("http"):
+	try:
+            resp, info = fetch_url(module, key)
+	    if info['status'] != 200:
+                module.fail_json(msg=error_msg % key)
+	    else:
+		key = resp.read()
+	except Exception:
+	    module.fail_json(msg=error_msg % key)
 
     # extract individual keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
-
 
     # check current state -- just get the filename, don't create file
     do_write = False
@@ -418,4 +433,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()
