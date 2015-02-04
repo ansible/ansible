@@ -591,7 +591,9 @@ def get_instance_info(inst):
                      'root_device_type': inst.root_device_type,
                      'root_device_name': inst.root_device_name,
                      'state': inst.state,
-                     'hypervisor': inst.hypervisor}
+                     'hypervisor': inst.hypervisor,
+                     'tags': inst.tags,
+                     'groups': {group.id: group.name for group in inst.groups}}
     try:
         instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
     except AttributeError:
