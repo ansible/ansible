@@ -243,7 +243,7 @@ def main():
     if not socket:
         module.fail_json(msg="unable to locate haproxy socket")
 
-    ansible_haproxy = HAProxy(module, **module.params)
+    ansible_haproxy = HAProxy(module)
     ansible_haproxy.act()
 
 # import module snippets
