@@ -221,6 +221,7 @@ def max(a):
     return _max(a);
 
 def dictmap(l, d):
+    ''' Map the elements of a list using a dictionary '''
     return [d[k] for k in l]
 
 def version_compare(value, version, operator='eq', strict=False):
