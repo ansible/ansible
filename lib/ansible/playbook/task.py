@@ -222,12 +222,7 @@ class Task(object):
         self.failed_when = ds.get('failed_when', None)
 
         # combine the default and module vars here for use in templating
-        all_vars = self.default_vars.copy()
-        all_vars = utils.combine_vars(all_vars, self.play_vars)
-        all_vars = utils.combine_vars(all_vars, self.play_file_vars)
-        all_vars = utils.combine_vars(all_vars, self.role_vars)
-        all_vars = utils.combine_vars(all_vars, self.module_vars)
-        all_vars = utils.combine_vars(all_vars, self.role_params)
+        all_vars = self.combine_all_vars()
 
         self.async_seconds = ds.get('async', 0)  # not async by default
         self.async_seconds = template.template_from_string(play.basedir, self.async_seconds, all_vars)
@@ -321,3 +316,11 @@ class Task(object):
             if self.when:
                 new_conditions.append(self.when)
             self.when = new_conditions
+
+    def combine_all_vars(self):
+        all_vars = self.default_vars.copy()
+        all_vars = utils.combine_vars(all_vars, self.play_vars)
+        all_vars = utils.combine_vars(all_vars, self.play_file_vars)
+        all_vars = utils.combine_vars(all_vars, self.role_vars)
+        all_vars = utils.combine_vars(all_vars, self.module_vars)
+        return all_vars

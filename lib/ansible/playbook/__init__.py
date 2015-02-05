@@ -538,7 +538,8 @@ class PlayBook(object):
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
-                        handler_name = template(play.basedir, handler_name, task.module_vars)
+                        all_vars = task.combine_all_vars()
+                        handler_name = template(play.basedir, handler_name, all_vars)
                         if not isinstance(handler_name, basestring):
                             for item in handler_name:
                                 self._flag_handler(play, item, host)
