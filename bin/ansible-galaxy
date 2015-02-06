@@ -130,6 +130,40 @@ Author Information
 An optional section for the role authors to include contact information, or a website (HTML is not allowed).
 """
 
+default_wrapper_playbook = """
+---
+- name: "{{ rolename }} wrapper playbook for integration testing with kitchen/serverspec"
+  hosts: localhost
+  roles:
+    - {{ rolename }}
+
+"""
+
+default_spec = """
+require 'spec_helper'
+
+# if os[:family] == 'ubuntu'
+#   describe '/etc/lsb-release' do
+#     it "exists" do
+#         expect(file('/etc/lsb-release')).to be_file
+#     end
+#   end
+# end
+# if os[:family] == 'redhat'
+#   describe '/etc/redhat-release' do
+#     it "exists" do
+#         expect(file('/etc/redhat-release')).to be_file
+#     end
+#   end
+# end
+"""
+
+spec_helper = """
+require 'serverspec'
+
+set :backend, :exec
+"""
+
 #-------------------------------------------------------------------------------------
 # Utility functions for parsing actions/options
 #-------------------------------------------------------------------------------------
@@ -176,6 +210,9 @@ def build_option_parser(action):
             '-p', '--init-path', dest='init_path', default="./",
             help='The path in which the skeleton role will be created. '
                  'The default is the current working directory.')
+        parser.add_option(
+            '--serverspec', dest='serverspec', default=False, action='store_true',
+            help="Create scaffolding for serverspec integration testing")
         parser.add_option(
             '--offline', dest='offline', default=False, action='store_true',
             help="Don't query the galaxy API when creating roles")
@@ -587,6 +624,7 @@ def execute_init(args, options, parser):
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
     force      = get_opt(options, 'force', False)
     offline    = get_opt(options, 'offline', False)
+    serverspec = get_opt(options, 'serverspec', False)
 
     if not offline:
         api_config = api_get_config(api_server)
@@ -623,6 +661,33 @@ def execute_init(args, options, parser):
     f = open(readme_path, "wb")
     f.write(default_readme_template)
     f.close
+
+    # Create scaffolding for serverspec
+    if serverspec:
+        integration_path = os.path.join(init_path, role_name, 'test', 'integration')
+        serverspec_path = os.path.join(integration_path, 'default', 'serverspec')
+        specfiles_path = os.path.join(serverspec_path, 'localhost')
+        # create the directory structure if it doesn't exist already
+        if not os.path.exists(specfiles_path):
+            os.makedirs(specfiles_path)
+        # create a wrapper playbook to test this role
+        playbook_dict = dict(
+            rolename = role_name
+        )
+        rendered_playbook = Environment().from_string(default_wrapper_playbook).render(playbook_dict)
+        f = open(os.path.join(integration_path, 'default.yml'), 'w')
+        f.write(rendered_playbook)
+        f.close()
+
+        # create a spec_helper.rb
+        f = open(os.path.join(serverspec_path, 'spec_helper.rb'), 'w')
+        f.write(spec_helper)
+        f.close()
+
+        # create a default_spec.rb
+        f = open(os.path.join(specfiles_path, 'default_spec.rb'), 'w')
+        f.write(default_spec)
+        f.close()
 
     for dir in ROLE_DIRS:
         dir_path = os.path.join(init_path, role_name, dir)
