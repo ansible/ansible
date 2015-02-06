@@ -25,6 +25,10 @@ import re
 import optparse
 import datetime
 import subprocess
+import fcntl
+import termios
+import struct
+
 from ansible import utils
 from ansible.utils import module_docs
 import ansible.constants as C
@@ -167,7 +171,8 @@ def get_snippet_text(doc):
 def get_module_list_text(module_list):
     tty_size = 0
     if os.isatty(0):
-        tty_size = int(os.popen('stty size', 'r').read().split()[1])
+        tty_size = struct.unpack('HHHH',
+            fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0)))[1]
     columns = max(60, tty_size)
     displace = max(len(x) for x in module_list)
     linelimit = columns - displace - 5
