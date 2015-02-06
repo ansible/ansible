@@ -410,6 +410,11 @@ class UbuntuHostname(Hostname):
     distribution = 'Ubuntu'
     strategy_class = DebianStrategy
 
+class LinuxmintHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Linuxmint'
+    strategy_class = DebianStrategy
+
 class LinaroHostname(Hostname):
     platform = 'Linux'
     distribution = 'Linaro'
