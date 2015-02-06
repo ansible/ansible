@@ -328,7 +328,9 @@ class ElbManager(object):
                 'security_group_ids': check_elb.security_groups,
                 'status': self.status,
                 'subnets': self.subnets,
-                'scheme': check_elb.scheme
+                'scheme': check_elb.scheme,
+                'hosted_zone_name': check_elb.canonical_hosted_zone_name,
+                'hosted_zone_id': check_elb.canonical_hosted_zone_name_id
             }
 
             if check_elb.health_check:
