@@ -41,7 +41,9 @@ that will be used instead of the configured values if they are set:
 If errors are encountered during operation, this script will return an exit code of
 255; otherwise, it will return an exit code of 0.
 
-Tested against Ansible 1.6.6 and Collins 1.2.4.
+Collins attributes are accessable as variables in ansible via the COLLINS['attribute_name'].
+
+Tested against Ansible 1.8.2 and Collins 1.3.0.
 """
 
 # (c) 2014, Steve Salevan <steve.salevan@gmail.com>
@@ -305,6 +307,8 @@ class CollinsInventory(object):
             else:
                 ip_index = self.ip_address_index
 
+            asset['COLLINS'] = {}
+
             # Attempts to locate the asset's primary identifier (hostname or IP address),
             # which will be used to index the asset throughout the Ansible inventory.
             if self.prefer_hostnames and self._asset_has_attribute(asset, 'HOSTNAME'):
@@ -332,8 +336,8 @@ class CollinsInventory(object):
             if 'ATTRIBS' in asset:
                 for attrib_block in asset['ATTRIBS'].keys():
                     for attrib in asset['ATTRIBS'][attrib_block].keys():
-                        attrib_key = self.to_safe(
-                            '%s-%s' % (attrib, asset['ATTRIBS'][attrib_block][attrib]))
+                        asset['COLLINS'][attrib] = asset['ATTRIBS'][attrib_block][attrib]
+                        attrib_key = self.to_safe('%s-%s' % (attrib, asset['ATTRIBS'][attrib_block][attrib]))
                         self.push(self.inventory, attrib_key, asset_identifier)
 
             # Indexes asset by all built-in Collins attributes.
