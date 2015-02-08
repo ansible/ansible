@@ -482,6 +482,12 @@ class LinuxService(Service):
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']
 
+    def get_systemd_service_enabled(self):
+        (rc, out, err) = self.execute_command("%s is-enabled %s" % (self.enable_cmd, self.__systemd_unit,))
+        if rc == 0:
+            return True
+        return False
+
     def get_systemd_status_dict(self):
         (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
         if rc != 0:
@@ -696,12 +702,11 @@ class LinuxService(Service):
                 action = 'disable'
 
             # Check if we're already in the correct state
-            d = self.get_systemd_status_dict()
-            if "UnitFileState" in d:
-                if self.enable and d["UnitFileState"] == "enabled":
-                    self.changed = False
-                elif not self.enable and d["UnitFileState"] == "disabled":
-                    self.changed = False
+            service_enabled = self.get_systemd_service_enabled()
+            if self.enable and service_enabled:
+                self.changed = False
+            elif not self.enable and not service_enabled:
+                self.changed = False
             elif not self.enable:
                 self.changed = False
 
