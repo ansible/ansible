@@ -48,8 +48,13 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' handler for template operations '''
 
-        source = self._task.args.get('src', None)
-        dest   = self._task.args.get('dest', None)
+        source  = self._task.args.get('src', None)
+        dest    = self._task.args.get('dest', None)
+        context = self._task.args.get('context', None)
+
+        template_vars = task_vars
+        if context and isinstance(dict, context):
+            template_vars.update(context)
 
         if (source is None and 'first_available_file' not in task_vars) or dest is None:
             return dict(failed=True, msg="src and dest are required")
@@ -97,7 +102,7 @@ class ActionModule(ActionBase):
             dest = os.path.join(dest, base)
 
         # template the source data locally & get ready to transfer
-        templar = Templar(loader=self._loader, variables=task_vars)
+        templar = Templar(loader=self._loader, variables=template_vars)
         try:
             with open(source, 'r') as f:
                 template_data = f.read()
@@ -134,6 +139,8 @@ class ActionModule(ActionBase):
 
             # run the copy module
             new_module_args = self._task.args.copy()
+            if context:
+                del new_module_args['context']
             new_module_args.update(
                dict(
                    src=xfered,
@@ -165,6 +172,8 @@ class ActionModule(ActionBase):
             # original_basename to the template just in case the dest is
             # a directory.
             new_module_args = self._task.args.copy()
+            if context:
+                del new_module_args['context']
             new_module_args.update(
                 dict(
                     src=None,
