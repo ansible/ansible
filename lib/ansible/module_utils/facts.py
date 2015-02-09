@@ -1718,6 +1718,8 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
+            if os.path.exists(os.path.join(path,'device')):
+                interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path,'device')))
 
             # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
