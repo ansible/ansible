@@ -161,7 +161,9 @@ class ActionBase:
             tmp_mode = 'a+rx'
 
         cmd = self._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
+        debug("executing _low_level_execute_command to create the tmp path")
         result = self._low_level_execute_command(cmd, None, sudoable=False)
+        debug("done with creation of tmp path")
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -196,11 +198,13 @@ class ActionBase:
     def _remove_tmp_path(self, tmp_path):
         '''Remove a temporary path we created. '''
 
-        if "-tmp-" in tmp_path:
+        if tmp_path and "-tmp-" in tmp_path:
             cmd = self._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
+            debug("calling _low_level_execute_command to remove the tmp path")
             self._low_level_execute_command(cmd, None, sudoable=False)
+            debug("done removing the tmp path")
 
     def _transfer_data(self, remote_path, data):
         '''
@@ -213,14 +217,16 @@ class ActionBase:
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
         try:
-            if not isinstance(data, unicode):
-                #ensure the data is valid UTF-8
-                data = data.decode('utf-8')
-            else:
-                data = data.encode('utf-8')
+            # FIXME: is this still necessary?
+            #if not isinstance(data, unicode):
+            #    #ensure the data is valid UTF-8
+            #    data = data.decode('utf-8')
+            #else:
+            #    data = data.encode('utf-8')
             afo.write(data)
         except Exception, e:
-            raise AnsibleError("failure encoding into utf-8: %s" % str(e))
+            #raise AnsibleError("failure encoding into utf-8: %s" % str(e))
+            raise AnsibleError("failure writing module data to temporary file for transfer: %s" % str(e))
 
         afo.flush()
         afo.close()
@@ -238,7 +244,10 @@ class ActionBase:
         '''
 
         cmd = self._shell.chmod(mode, path)
-        return self._low_level_execute_command(cmd, tmp, sudoable=sudoable)
+        debug("calling _low_level_execute_command to chmod the remote path")
+        res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable)
+        debug("done with chmod call")
+        return res
 
     def _remote_checksum(self, tmp, path):
         '''
@@ -250,7 +259,9 @@ class ActionBase:
         #python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
         python_interp = 'python'
         cmd = self._shell.checksum(path, python_interp)
+        debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, tmp, sudoable=True)
+        debug("done getting the remote checksum")
         # FIXME: implement this function?
         #data2 = utils.last_non_blank_line(data['stdout'])
         try:
@@ -286,7 +297,9 @@ class ActionBase:
                 expand_path = '~%s' % self._connection_info.su_user
 
         cmd = self._shell.expand_user(expand_path)
+        debug("calling _low_level_execute_command to expand the remote user path")
         data = self._low_level_execute_command(cmd, tmp, sudoable=False)
+        debug("done expanding the remote user path")
         #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
 
@@ -354,7 +367,9 @@ class ActionBase:
         # FIXME: async stuff here?
         #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
         if remote_module_path:
+            debug("transfering module to remote")
             self._transfer_data(remote_module_path, module_data)
+            debug("done transfering module to remote")
 
         environment_string = self._compute_environment_string()
 
@@ -389,7 +404,9 @@ class ActionBase:
             # specified in the play, not the sudo_user
             sudoable = False
 
+        debug("calling _low_level_execute_command() for command %s" % cmd)
         res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable, in_data=in_data)
+        debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if (self._connection_info.sudo and self._connection_info.sudo_user != 'root') or (self._connection_info.su and self._connection_info.su_user != 'root'):
@@ -446,7 +463,7 @@ class ActionBase:
                 # FIXME: hard-coded sudo_exe here
                 cmd, prompt, success_key = self._connection_info.make_sudo_cmd('/usr/bin/sudo', executable, cmd)
 
-        debug("executing the command through the connection")
+        debug("executing the command %s through the connection" % cmd)
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data)
         debug("command execution done")
 

@@ -251,12 +251,6 @@ class ActionModule(ActionBase):
                     )
                 )
 
-                # FIXME: checkmode and no_log stuff
-                #if self.runner.noop_on_check(inject):
-                #    new_module_args['CHECKMODE'] = True
-                #if self.runner.no_log:
-                #    new_module_args['NO_LOG'] = True
-
                 module_return = self._execute_module(module_name='copy', module_args=new_module_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
@@ -279,11 +273,6 @@ class ActionModule(ActionBase):
                         original_basename=source_rel
                     )
                 )
-                # FIXME: checkmode and no_log stuff
-                #if self.runner.noop_on_check(inject):
-                #    new_module_args['CHECKMODE'] = True
-                #if self.runner.no_log:
-                #    new_module_args['NO_LOG'] = True
 
                 # Execute the file module.
                 module_return = self._execute_module(module_name='file', module_args=new_module_args, delete_remote_tmp=delete_remote_tmp)
@@ -296,18 +285,17 @@ class ActionModule(ActionBase):
             if module_return.get('changed') == True:
                 changed = True
 
+            # the file module returns the file path as 'path', but 
+            # the copy module uses 'dest', so add it if it's not there
+            if 'path' in module_return and 'dest' not in module_return:
+                module_return['dest'] = module_return['path']
+
         # Delete tmp path if we were recursive or if we did not execute a module.
-        if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) \
-            or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
+        if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self._remove_tmp_path(tmp)
 
-        # the file module returns the file path as 'path', but 
-        # the copy module uses 'dest', so add it if it's not there
-        if 'path' in module_return and 'dest' not in module_return:
-            module_return['dest'] = module_return['path']
-
         # TODO: Support detailed status/diff for multiple files
-        if len(source_files) == 1:
+        if module_executed and len(source_files) == 1:
             result = module_return
         else:
             result = dict(dest=dest, src=source, changed=changed)

@@ -76,7 +76,7 @@ class Display:
             if host is None:
                 self.display(msg, color='blue')
             else:
-                self.display("<%s> %s" % (host.name, msg), color='blue')
+                self.display("<%s> %s" % (host, msg), color='blue')
 
     def deprecated(self, msg, version, removed=False):
         ''' used to print out a deprecation message.'''

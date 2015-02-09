@@ -37,8 +37,8 @@ from ansible.plugins.connections import ConnectionBase
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
-    def __init__(self, host, connection_info, *args, **kwargs):
-        super(Connection, self).__init__(host, connection_info)
+    def __init__(self, connection_info, *args, **kwargs):
+        super(Connection, self).__init__(connection_info)
 
         # SSH connection specific init stuff
         self.HASHED_KEY_MAGIC = "|1|"
@@ -57,7 +57,7 @@ class Connection(ConnectionBase):
     def connect(self):
         ''' connect to the remote host '''
 
-        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._host)
+        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._connection_info.remote_addr)
 
         self._common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -277,7 +277,7 @@ class Connection(ConnectionBase):
         #        not sure if it's all working yet so this remains commented out
         #if self._ipv6:
         #    ssh_cmd += ['-6']
-        ssh_cmd += [self._host.ipv4_address]
+        ssh_cmd += [self._connection_info.remote_addr]
 
         if not (self._connection_info.sudo or self._connection_info.su):
             prompt = None
@@ -293,49 +293,11 @@ class Connection(ConnectionBase):
             sudo_cmd, prompt, success_key = self._connection_info.make_sudo_cmd('/usr/bin/sudo', executable, cmd)
             ssh_cmd.append(sudo_cmd)
 
-        self._display.vvv("EXEC %s" % ' '.join(ssh_cmd), host=self._host)
+        self._display.vvv("EXEC %s" % ' '.join(ssh_cmd), host=self._connection_info.remote_addr)
 
-        not_in_host_file = self.not_in_host_file(self._host.get_name())
+        not_in_host_file = self.not_in_host_file(self._connection_info.remote_addr)
 
         # FIXME: move the locations of these lock files, same as init above
-        #if C.HOST_KEY_CHECKING and not_in_host_file:
-        #    # lock around the initial SSH connectivity so the user prompt about whether to add 
-        #    # the host to known hosts is not intermingled with multiprocess output.
-        #    fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-        #    fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
-
-        # create process
-        (p, stdin) = self._run(ssh_cmd, in_data)
-
-        self._send_password()
-
-        no_prompt_out = ''
-        no_prompt_err = ''
-        # FIXME: su/sudo stuff
-        #if (self.runner.sudo and sudoable and self.runner.sudo_pass) or \
-        #        (self.runner.su and su and self.runner.su_pass):
-        #    # several cases are handled for sudo privileges with password
-        #    # * NOPASSWD (tty & no-tty): detect success_key on stdout
-        #    # * without NOPASSWD:
-        #    #   * detect prompt on stdout (tty)
-        #    #   * detect prompt on stderr (no-tty)
-        #    fcntl.fcntl(p.stdout, fcntl.F_SETFL,
-        #                fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-        #    fcntl.fcntl(p.stderr, fcntl.F_SETFL,
-        #                fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-        #    sudo_output = ''
-        #    sudo_errput = ''
-        #
-        #    while True:
-        #        if success_key in sudo_output or \
-        #            (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
-        #            (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
-        #            break
-        self._display.vvv("EXEC %s" % ' '.join(ssh_cmd), host=self._host)
-
-        not_in_host_file = self.not_in_host_file(self._host.get_name())
-
-        # FIXME: file locations
         #if C.HOST_KEY_CHECKING and not_in_host_file:
         #    # lock around the initial SSH connectivity so the user prompt about whether to add 
         #    # the host to known hosts is not intermingled with multiprocess output.
@@ -429,13 +391,13 @@ class Connection(ConnectionBase):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._host)
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         cmd = self._password_cmd()
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
-        host = self._host.ipv4_address
+        host = self._connection_info.remote_addr
 
         # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
         #        not sure if it's all working yet so this remains commented out
@@ -461,16 +423,16 @@ class Connection(ConnectionBase):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._host)
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
         cmd = self._password_cmd()
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
-        host = self._host.ipv4_address
+        host = self._connection_info.remote_addr
 
         # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
         #        not sure if it's all working yet so this remains commented out
         #if self._ipv6:
-        #    host = '[%s]' % self._host
+        #    host = '[%s]' % self._connection_info.remote_addr
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self._common_args

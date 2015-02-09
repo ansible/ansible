@@ -85,8 +85,8 @@ class StrategyBase:
     def get_hosts_remaining(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name not in self._tqm._failed_hosts and host.get_name() not in self._tqm._unreachable_hosts]
 
-    def get_failed_hosts(self):
-        return [host for host in self._inventory.get_hosts() if host.name in self._tqm._failed_hosts]
+    def get_failed_hosts(self, play):
+        return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
 
     def _queue_task(self, host, task, task_vars, connection_info):
         ''' handles queueing the task up to be sent to a worker '''
@@ -129,6 +129,7 @@ class StrategyBase:
                     task = task_result._task
                     if result[0] == 'host_task_failed':
                         if not task.ignore_errors:
+                            debug("marking %s as failed" % host.get_name())
                             self._tqm._failed_hosts[host.get_name()] = True
                         self._callback.runner_on_failed(task, task_result)
                     elif result[0] == 'host_unreachable':
@@ -284,7 +285,7 @@ class StrategyBase:
         result = True
 
         debug("getting failed hosts")
-        failed_hosts = self.get_failed_hosts()
+        failed_hosts = self.get_failed_hosts(iterator._play)
         if len(failed_hosts) == 0:
             debug("there are no failed hosts")
             return result
@@ -317,8 +318,9 @@ class StrategyBase:
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         task = iterator.get_next_task_for_host(host)
+                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
                         self._callback.playbook_on_cleanup_task_start(task.get_name())
-                        self._queue_task(iterator._play, host, task, connection_info)
+                        self._queue_task(host, task, task_vars, connection_info)
 
             self._process_pending_results()
 
@@ -352,8 +354,8 @@ class StrategyBase:
                 self._callback.playbook_on_handler_task_start(handler_name)
                 for host in self._notified_handlers[handler_name]:
                     if not handler.has_triggered(host):
-                        temp_data = handler.serialize()
-                        self._queue_task(iterator._play, host, handler, connection_info)
+                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
+                        self._queue_task(host, handler, task_vars, connection_info)
                         handler.flag_for_host(host)
 
                     self._process_pending_results()

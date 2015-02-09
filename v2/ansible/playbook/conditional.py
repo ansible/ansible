@@ -66,6 +66,7 @@ class Conditional:
         evaluation.
         '''
 
+        original = conditional
         if conditional is None or conditional == '':
             return True
 

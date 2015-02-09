@@ -219,7 +219,7 @@ class ModuleArgsParser:
         thing      = None
 
         action      = None
-        delegate_to = None
+        delegate_to = self._task_ds.get('delegate_to', None)
         args        = dict()
 
 
@@ -236,15 +236,12 @@ class ModuleArgsParser:
 
         # action
         if 'action' in self._task_ds:
-
             # an old school 'action' statement
             thing = self._task_ds['action']
-            delegate_to = None
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # local_action
         if 'local_action' in self._task_ds:
-
             # local_action is similar but also implies a delegate_to
             if action is not None:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
