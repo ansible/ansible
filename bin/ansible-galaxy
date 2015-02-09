@@ -380,7 +380,7 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         print "  in directory %s" % tempdir
         return False
 
-    shutil.rmtree(tempdir)
+    shutil.rmtree(tempdir, ignore_errors=True)
 
     return temp_file.name
 
