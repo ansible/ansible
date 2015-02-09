@@ -23,7 +23,9 @@ DOCUMENTATION = '''
 ---
 module: patch
 author: Luis Alberto Perez Lazaro, Jakub Jirutka
-version_added: 1.8
+version_added: 1.9
+description:
+    - Apply patch files using the GNU patch tool.
 short_description: Apply patch files using the GNU patch tool.
 options:
   basedir:
@@ -41,10 +43,16 @@ options:
     aliases: [ "originalfile" ]
   src:
     description:
-      - Path of the patch file on the remote machine as accepted by the GNU
-        patch tool.
+      - Path of the patch file as accepted by the GNU patch tool.
     required: true
     aliases: [ "patchfile" ]
+  remote_src:
+    description:
+      - If False, it will search for src at originating/master machine, if True it will
+        go to the remote/target machine for the src. Default is False.
+    choices: [ "True", "False" ]
+    required: false
+    default: "False"
   strip:
     description:
       - Number that indicates the smallest prefix containing leading slashes
@@ -110,7 +118,8 @@ def main():
             'src':     {'required': True, 'aliases': ['patchfile']},
             'dest':    {'aliases': ['originalfile']},
             'basedir': {},
-            'strip':   {'default': 0, 'type': 'int'}
+            'strip':   {'default': 0, 'type': 'int'},
+            'remote_src': {'default': False, 'type': 'bool'},
         },
         required_one_of=[['dest', 'basedir']],
         supports_check_mode=True
