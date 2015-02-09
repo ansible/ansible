@@ -31,6 +31,7 @@ from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
 from ansible.callbacks import display
 from ansible.module_utils.splitter import split_args, unquote
+from ansible.module_utils.basic import heuristic_log_sanitize
 import ansible.constants as C
 import ast
 import time
@@ -998,34 +999,18 @@ def sanitize_output(str):
 
     private_keys = ['password', 'login_password']
 
-    filter_re = [
-        # filter out things like user:pass@foo/whatever
-        # and http://username:pass@wherever/foo
-        re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'),
-    ]
+    parts = parse_kv(str)
+    output = []
+    for (k, v) in parts.items():
+        if k in private_keys:
+            output.append("%s=VALUE_HIDDEN" % k)
+            continue
+        else:
+            v = heuristic_log_sanitize(v)
+        output.append('%s=%s' % (k, v))
+    output = ' '.join(output)
+    return output
 
-    parts = str.split()
-    output = ''
-    for part in parts:
-        try:
-            (k,v) = part.split('=', 1)
-            if k in private_keys:
-                output += " %s=VALUE_HIDDEN" % k
-            else:
-                found = False
-                for filter in filter_re:
-                    m = filter.match(v)
-                    if m:
-                        d = m.groupdict()
-                        output += " %s=%s" % (k, d['before'] + "********" + d['after'])
-                        found = True
-                        break
-                if not found:
-                    output += " %s" % part
-        except:
-            output += " %s" % part
-
-    return output.strip()
 
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
