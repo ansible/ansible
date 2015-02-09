@@ -14,8 +14,10 @@ fi
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=$(dirname "$BASH_SOURCE")
-elif [ $(basename "$0") = "env-setup" ]; then
+elif [ $(basename -- "$0") = "env-setup" ]; then
     HACKING_DIR=$(dirname "$0")
+elif [ -n "$KSH_VERSION" ]; then
+    HACKING_DIR=$(dirname "${.sh.file}")
 else
     HACKING_DIR="$PWD/hacking"
 fi
