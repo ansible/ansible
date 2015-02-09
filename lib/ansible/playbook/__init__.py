@@ -736,7 +736,6 @@ class PlayBook(object):
                     continue
 
                 # only run the task if the requested tags match or has 'always' tag
-                should_run = False
                 if 'always' in task.tags:
                     should_run = True
                 else:
@@ -745,27 +744,32 @@ class PlayBook(object):
 
                     if 'all' in self.only_tags:
                         should_run = True
-                    elif 'tagged' in self.only_tags:
-                        if task_set != u:
-                            should_run = True
-                    elif 'untagged' in self.only_tags:
-                        if task_set == u:
-                            should_run = True
                     else:
-                        if len(set(task.tags).intersection(self.only_tags)) > 0:
-                            should_run = True
+                        should_run = False
+                        if  'tagged' in self.only_tags:
+                            if task_set != u:
+                                should_run = True
+                        elif 'untagged' in self.only_tags:
+                            if task_set == u:
+                                should_run = True
+                        else:
+                            if len(task_set.intersection(self.only_tags)) > 0:
+                                should_run = True
 
                     # Check for tags that we need to skip
-                    if 'tagged' in self.skip_tags:
-                        if task_set == u:
-                            should_run = False
-                    elif 'untagged' in self.only_tags:
-                        if task_set != u:
-                            should_run = False
+                    if 'all' in self.skip_tags:
+                        should_run = False
                     else:
-                        if should_run:
-                            if len(set(task.tags).intersection(self.skip_tags)) > 0:
+                        if 'tagged' in self.skip_tags:
+                            if task_set != u:
                                 should_run = False
+                        elif 'untagged' in self.skip_tags:
+                            if task_set == u:
+                                should_run = False
+                        else:
+                            if should_run:
+                                if len(task_set.intersection(self.skip_tags)) > 0:
+                                    should_run = False
 
                 if should_run:
 
