@@ -36,6 +36,7 @@ import pipes
 # holds all other variables about a host
 SETUP_CACHE = ansible.cache.FactCache()
 VARS_CACHE  = collections.defaultdict(dict)
+RESERVED_TAGS = ['all','tagged','untagged','always']
 
 
 class PlayBook(object):
@@ -314,6 +315,7 @@ class PlayBook(object):
             assert play is not None
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
+
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
 
@@ -332,10 +334,13 @@ class PlayBook(object):
         # the user can correct the arguments.
         unknown_tags = ((set(self.only_tags) | set(self.skip_tags)) -
                         (matched_tags_all | unmatched_tags_all))
-        unknown_tags.discard('all')
+
+        for t in RESERVED_TAGS:
+            unknown_tags.discard(t)
 
         if len(unknown_tags) > 0:
-            unmatched_tags_all.discard('all')
+            for t in RESERVED_TAGS:
+                unmatched_tags_all.discard(t)
             msg = 'tag(s) not found in playbook: %s.  possible values: %s'
             unknown = ','.join(sorted(unknown_tags))
             unmatched = ','.join(sorted(unmatched_tags_all))
@@ -730,19 +735,37 @@ class PlayBook(object):
                     # skip calling the handler till the play is finished
                     continue
 
-                # only run the task if the requested tags match
+                # only run the task if the requested tags match or has 'always' tag
                 should_run = False
-                for x in self.only_tags:
+                if 'always' in task.tags:
+                    should_run = True
+                else:
+                    u = set(['untagged'])
+                    task_set = set(task.tags)
 
-                    for y in task.tags:
-                        if x == y:
+                    if 'all' in self.only_tags:
+                        should_run = True
+                    elif 'tagged' in self.only_tags:
+                        if task_set != u:
                             should_run = True
-                            break
+                    elif 'untagged' in self.only_tags:
+                        if task_set == u:
+                            should_run = True
+                    else:
+                        if len(set(task.tags).intersection(self.only_tags)) > 0:
+                            should_run = True
 
-                # Check for tags that we need to skip
-                if should_run:
-                    if any(x in task.tags for x in self.skip_tags):
-                        should_run = False
+                    # Check for tags that we need to skip
+                    if 'tagged' in self.skip_tags:
+                        if task_set == u:
+                            should_run = False
+                    elif 'untagged' in self.only_tags:
+                        if task_set != u:
+                            should_run = False
+                    else:
+                        if should_run:
+                            if len(set(task.tags).intersection(self.skip_tags)) > 0:
+                                should_run = False
 
                 if should_run:
 

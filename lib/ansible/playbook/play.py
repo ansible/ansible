@@ -783,8 +783,27 @@ class Play(object):
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)
         tags_set = set(tags)
-        matched_tags = all_tags_set & tags_set
-        unmatched_tags = all_tags_set - tags_set
+
+        matched_tags = all_tags_set.intersection(tags_set)
+        unmatched_tags = all_tags_set.difference(tags_set)
+
+        a = set(['always'])
+        u = set(['untagged'])
+        if 'always' in all_tags_set:
+            matched_tags = matched_tags.union(a)
+            unmatched_tags = all_tags_set.difference(a)
+
+        if 'all' in tags_set:
+            matched_tags = matched_tags.union(all_tags_set)
+            unmatched_tags = set()
+
+        if 'tagged' in tags_set:
+            matched_tags = all_tags_set.difference(u)
+            unmatched_tags = u
+
+        if 'untagged' in tags_set and 'untagged' in all_tags_set:
+            matched_tags = matched_tags.union(u)
+            unmatched_tags = unmatched_tags.difference(u)
 
         return matched_tags, unmatched_tags
 
