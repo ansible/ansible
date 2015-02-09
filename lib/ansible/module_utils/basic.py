@@ -171,6 +171,7 @@ FILE_COMMON_ARGUMENTS=dict(
     directory_mode = dict(), # used by copy
 )
 
+PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -268,6 +269,65 @@ def json_dict_bytes_to_unicode(d):
         return tuple(map(json_dict_bytes_to_unicode, d))
     else:
         return d
+
+def heuristic_log_sanitize(data):
+    ''' Remove strings that look like passwords from log messages '''
+    # Currently filters:
+    # user:pass@foo/whatever and http://username:pass@wherever/foo
+    # This code has false positives and consumes parts of logs that are
+    # not passwds
+
+    # begin: start of a passwd containing string
+    # end: end of a passwd containing string
+    # sep: char between user and passwd
+    # prev_begin: where in the overall string to start a search for
+    #   a passwd
+    # sep_search_end: where in the string to end a search for the sep
+    output = []
+    begin = len(data)
+    prev_begin = begin
+    sep = 1
+    while sep:
+        # Find the potential end of a passwd
+        try:
+            end = data.rindex('@', 0, begin)
+        except ValueError:
+            # No passwd in the rest of the data
+            output.insert(0, data[0:begin])
+            break
+
+        # Search for the beginning of a passwd
+        sep = None
+        sep_search_end = end
+        while not sep:
+            # URL-style username+password
+            try:
+                begin = data.rindex('://', 0, sep_search_end)
+            except ValueError:
+                # No url style in the data, check for ssh style in the
+                # rest of the string
+                begin = 0
+            # Search for separator
+            try:
+                sep = data.index(':', begin + 3, end)
+            except ValueError:
+                # No separator; choices:
+                if begin == 0:
+                    # Searched the whole string so there's no password
+                    # here.  Return the remaining data
+                    output.insert(0, data[0:begin])
+                    break
+                # Search for a different beginning of the password field.
+                sep_search_end = begin
+                continue
+        if sep:
+            # Password was found; remove it.
+            output.insert(0, data[end:prev_begin])
+            output.insert(0, '********')
+            output.insert(0, data[begin:sep + 1])
+            prev_begin = begin
+
+    return ''.join(output)
 
 
 class AnsibleModule(object):
@@ -1019,65 +1079,6 @@ class AnsibleModule(object):
         params2.update(params)
         return (params2, args)
 
-    def _heuristic_log_sanitize(self, data):
-        ''' Remove strings that look like passwords from log messages '''
-        # Currently filters:
-        # user:pass@foo/whatever and http://username:pass@wherever/foo
-        # This code has false positives and consumes parts of logs that are
-        # not passwds
-
-        # begin: start of a passwd containing string
-        # end: end of a passwd containing string
-        # sep: char between user and passwd
-        # prev_begin: where in the overall string to start a search for
-        #   a passwd
-        # sep_search_end: where in the string to end a search for the sep
-        output = []
-        begin = len(data)
-        prev_begin = begin
-        sep = 1
-        while sep:
-            # Find the potential end of a passwd
-            try:
-                end = data.rindex('@', 0, begin)
-            except ValueError:
-                # No passwd in the rest of the data
-                output.insert(0, data[0:begin])
-                break
-
-            # Search for the beginning of a passwd
-            sep = None
-            sep_search_end = end
-            while not sep:
-                # URL-style username+password
-                try:
-                    begin = data.rindex('://', 0, sep_search_end)
-                except ValueError:
-                    # No url style in the data, check for ssh style in the
-                    # rest of the string
-                    begin = 0
-                # Search for separator
-                try:
-                    sep = data.index(':', begin + 3, end)
-                except ValueError:
-                    # No separator; choices:
-                    if begin == 0:
-                        # Searched the whole string so there's no password
-                        # here.  Return the remaining data
-                        output.insert(0, data[0:begin])
-                        break
-                    # Search for a different beginning of the password field.
-                    sep_search_end = begin
-                    continue
-            if sep:
-                # Password was found; remove it.
-                output.insert(0, data[end:prev_begin])
-                output.insert(0, '********')
-                output.insert(0, data[begin:sep + 1])
-                prev_begin = begin
-
-        return ''.join(output)
-
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
@@ -1100,7 +1101,7 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, unicode):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = self._heuristic_log_sanitize(param_val)
+                log_args[param] = heuristic_log_sanitize(param_val)
 
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = []
@@ -1444,27 +1445,27 @@ class AnsibleModule(object):
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
-        if isinstance(args, list):
-            clean_args = " ".join(pipes.quote(arg) for arg in args)
+        if isinstance(args, basestring):
+            to_clean_args = shlex.split(args.encode('utf-8'))
         else:
-            clean_args = args
+            to_clean_args = args
 
-        # all clean strings should return two match groups, 
-        # where the first is the CLI argument and the second 
-        # is the password/key/phrase that will be hidden
-        clean_re_strings = [
-            # this removes things like --password, --pass, --pass-wd, etc.
-            # optionally followed by an '=' or a space. The password can 
-            # be quoted or not too, though it does not care about quotes
-            # that are not balanced
-            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
-            r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
-            r'^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$', 
-            # TODO: add more regex checks here
-        ]
-        for re_str in clean_re_strings:
-            r = re.compile(re_str)
-            clean_args = r.sub(r'\1********', clean_args)
+        clean_args = []
+        is_passwd = False
+        for arg in to_clean_args:
+            if is_passwd:
+                is_passwd = False
+                clean_args.append('********')
+                continue
+            if PASSWD_ARG_RE.match(arg):
+                sep_idx = arg.find('=')
+                if sep_idx > -1:
+                    clean_args.append('%s=********' % arg[:sep_idx])
+                    continue
+                else:
+                    is_passwd = True
+            clean_args.append(heuristic_log_sanitize(arg))
+        clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
 
         if data:
             st_in = subprocess.PIPE
@@ -1549,7 +1550,7 @@ class AnsibleModule(object):
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
 
         if rc != 0 and check_rc:
-            msg = stderr.rstrip()
+            msg = heuristic_log_sanitize(stderr.rstrip())
             self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
