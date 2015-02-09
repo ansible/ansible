@@ -167,7 +167,7 @@ def get_snippet_text(doc):
 def get_module_list_text(module_list):
     tty_size = 0
     if os.isatty(0):
-        tty_size = int(os.popen('stty size', 'r').read().split()[1])
+        tty_size = int(os.popen('env PATH=/usr/ucb:$PATH stty size', 'r').read().split()[1])
     columns = max(60, tty_size)
     displace = max(len(x) for x in module_list)
     linelimit = columns - displace - 5
