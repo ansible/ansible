@@ -753,7 +753,7 @@ class PlayBook(object):
                             if task_set == u:
                                 should_run = True
                         else:
-                            if len(task_set.intersection(self.only_tags)) > 0:
+                            if task_set.intersection(self.only_tags):
                                 should_run = True
 
                     # Check for tags that we need to skip
@@ -768,7 +768,7 @@ class PlayBook(object):
                                 should_run = False
                         else:
                             if should_run:
-                                if len(task_set.intersection(self.skip_tags)) > 0:
+                                if task_set.intersection(self.skip_tags):
                                     should_run = False
 
                 if should_run:
