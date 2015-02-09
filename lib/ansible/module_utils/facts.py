@@ -2381,9 +2381,13 @@ class SunOSVirtual(Virtual):
 def get_file_content(path, default=None):
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
-        data = open(path).read().strip()
-        if len(data) == 0:
-            data = default
+        try:
+            datafile = open(path)
+            data = datafile.read().strip()
+            if len(data) == 0:
+                data = default
+        finally:
+            datafile.close()
     return data
 
 def ansible_facts(module):
