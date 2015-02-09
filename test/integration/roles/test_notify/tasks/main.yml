@@ -1,0 +1,4 @@
+---
+- name: notify with role default vars
+  command: echo
+  notify: '{{handlers_list}}'

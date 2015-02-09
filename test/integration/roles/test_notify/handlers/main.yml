@@ -1,0 +1,3 @@
+---
+- name: default_foo
+  command: echo

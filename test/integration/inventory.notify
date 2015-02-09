@@ -1,0 +1,5 @@
+A handlers_list='["foo", "bar"]'
+B handlers_list=scalar
+C handlers_list=notify_host_c
+D
+E
