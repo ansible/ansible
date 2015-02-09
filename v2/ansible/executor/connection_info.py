@@ -43,9 +43,11 @@ class ConnectionInformation:
         #        various different auth escalation methods (becomes, etc.)
 
         self.connection  = C.DEFAULT_TRANSPORT
+        self.remote_addr = None
         self.remote_user = 'root'
         self.password    = ''
         self.port        = 22
+        self.private_key_file = None
         self.su          = False
         self.su_user     = ''
         self.su_pass     = ''
@@ -64,6 +66,14 @@ class ConnectionInformation:
 
         if options:
             self.set_options(options)
+
+    def __repr__(self):
+        value = "CONNECTION INFO:\n"
+        fields = self._get_fields()
+        fields.sort()
+        for field in fields:
+            value += "%20s : %s\n" % (field, getattr(self, field))
+        return value
 
     def set_play(self, play):
         '''
@@ -127,26 +137,6 @@ class ConnectionInformation:
         Copies the connection info from another connection info object, used
         when merging in data from task overrides.
         '''
-
-        #self.connection  = ci.connection
-        #self.remote_user = ci.remote_user
-        #self.password    = ci.password
-        #self.port        = ci.port
-        #self.su          = ci.su
-        #self.su_user     = ci.su_user
-        #self.su_pass     = ci.su_pass
-        #self.sudo        = ci.sudo
-        #self.sudo_user   = ci.sudo_user
-        #self.sudo_pass   = ci.sudo_pass
-        #self.verbosity   = ci.verbosity
-
-        # other
-        #self.no_log      = ci.no_log
-        #self.environment = ci.environment
-
-        # requested tags
-        #self.only_tags   = ci.only_tags.copy()
-        #self.skip_tags   = ci.skip_tags.copy()
 
         for field in self._get_fields():
             value = getattr(ci, field, None)

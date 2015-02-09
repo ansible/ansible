@@ -65,7 +65,7 @@ class Connection(ConnectionBase):
 
         executable = executable.split()[0] if executable else None
 
-        self._display.vvv("%s EXEC %s" % (self._host, local_cmd))
+        self._display.vvv("%s EXEC %s" % (self._connection_info.remote_addr, local_cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
         debug("opening command with Popen()")
         p = subprocess.Popen(
@@ -115,7 +115,7 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to local '''
 
         #vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
-        self._display.vvv("%s PUT %s TO %s" % (self._host, in_path, out_path))
+        self._display.vvv("%s PUT %s TO %s" % (self._connection_info.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
             #raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
             raise AnsibleError("file or module does not exist: %s" % in_path)
@@ -130,7 +130,7 @@ class Connection(ConnectionBase):
 
     def fetch_file(self, in_path, out_path):
         #vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
-        self._display.vvv("%s FETCH %s TO %s" % (self._host, in_path, out_path))
+        self._display.vvv("%s FETCH %s TO %s" % (self._connection_info.remote_addr, in_path, out_path))
         ''' fetch a file from local to local -- for copatibility '''
         self.put_file(in_path, out_path)
 

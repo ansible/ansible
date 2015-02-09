@@ -119,6 +119,9 @@
 
 import os
 
+from jinja2.exceptions import UndefinedError
+
+from ansible.errors import AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
@@ -172,7 +175,11 @@ class LookupModule(LookupBase):
         templar = Templar(loader=self._loader, variables=variables)
         roledir = variables.get('roledir')
         for fn in total_search:
-            fn = templar.template(fn)
+            try:
+                fn = templar.template(fn)
+            except (AnsibleUndefinedVariable, UndefinedError), e:
+                continue
+
             if os.path.isabs(fn) and os.path.exists(fn):
                 return [fn]
             else:

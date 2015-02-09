@@ -39,14 +39,11 @@ def listify_lookup_plugin_terms(terms, variables, loader):
         #    with_items: {{ alist }}
 
         stripped = terms.strip()
-        if not (stripped.startswith('{') or stripped.startswith('[')) and \
-           not stripped.startswith("/") and \
-           not stripped.startswith('set([') and \
-           not LOOKUP_REGEX.search(terms):
+        templar = Templar(loader=loader, variables=variables)
+        if not (stripped.startswith('{') or stripped.startswith('[')) and not stripped.startswith("/") and not stripped.startswith('set([') and not LOOKUP_REGEX.search(terms):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                templar = Templar(loader=loader, variables=variables)
                 new_terms = templar.template("{{ %s }}" % terms)
                 if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass
@@ -54,6 +51,8 @@ def listify_lookup_plugin_terms(terms, variables, loader):
                     terms = new_terms
             except:
                 pass
+        else:
+            terms = templar.template(terms)
 
         if '{' in terms or '[' in terms:
             # Jinja2 already evaluated a variable to a list.

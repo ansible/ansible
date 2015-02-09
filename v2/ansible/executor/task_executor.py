@@ -172,7 +172,7 @@ class TaskExecutor:
         self._connection_info.post_validate(variables=variables, loader=self._loader)
 
         # get the connection and the handler for this execution
-        self._connection = self._get_connection()
+        self._connection = self._get_connection(variables)
         self._handler    = self._get_action_handler(connection=self._connection)
 
         # Evaluate the conditional (if any) for this task, which we do before running
@@ -203,6 +203,7 @@ class TaskExecutor:
         # make a copy of the job vars here, in case we need to update them
         # with the registered variable value later on when testing conditions
         vars_copy = variables.copy()
+
 
         debug("starting attempt loop")
         result = None
@@ -301,7 +302,7 @@ class TaskExecutor:
         else:
             return async_result
 
-    def _get_connection(self):
+    def _get_connection(self, variables):
         '''
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
@@ -310,13 +311,17 @@ class TaskExecutor:
         # FIXME: delegate_to calculation should be done here
         # FIXME: calculation of connection params/auth stuff should be done here
 
+        self._connection_info.remote_addr = self._host.ipv4_address
+        if self._task.delegate_to is not None:
+            self._compute_delegate(variables)
+
         # FIXME: add all port/connection type munging here (accelerated mode,
         #        fixing up options for ssh, etc.)? and 'smart' conversion
         conn_type = self._connection_info.connection
         if conn_type == 'smart':
             conn_type = 'ssh'
 
-        connection = connection_loader.get(conn_type, self._host, self._connection_info)
+        connection = connection_loader.get(conn_type, self._connection_info)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
@@ -350,3 +355,37 @@ class TaskExecutor:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
+
+    def _compute_delegate(self, variables):
+
+        # get the vars for the delegate by its name
+        try:
+            this_info = variables['hostvars'][self._task.delegate_to]
+        except:
+            # make sure the inject is empty for non-inventory hosts
+            this_info = {}
+
+        # get the real ssh_address for the delegate and allow ansible_ssh_host to be templated
+        #self._connection_info.remote_user      = self._compute_delegate_user(self.delegate_to, delegate['inject'])
+        self._connection_info.remote_addr      = this_info.get('ansible_ssh_host', self._task.delegate_to)
+        self._connection_info.port             = this_info.get('ansible_ssh_port', self._connection_info.port)
+        self._connection_info.password         = this_info.get('ansible_ssh_pass', self._connection_info.password)
+        self._connection_info.private_key_file = this_info.get('ansible_ssh_private_key_file', self._connection_info.private_key_file)
+        self._connection_info.connection       = this_info.get('ansible_connection', self._connection_info.connection)
+        self._connection_info.sudo_pass        = this_info.get('ansible_sudo_pass', self._connection_info.sudo_pass)
+
+        if self._connection_info.remote_addr in ('127.0.0.1', 'localhost'):
+             self._connection_info.connection = 'local'
+
+        # Last chance to get private_key_file from global variables.
+        # this is useful if delegated host is not defined in the inventory
+        #if delegate['private_key_file'] is None:
+        #    delegate['private_key_file'] = remote_inject.get('ansible_ssh_private_key_file', None)
+
+        #if delegate['private_key_file'] is not None:
+        #    delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
+
+        for i in this_info:
+            if i.startswith("ansible_") and i.endswith("_interpreter"):
+                variables[i] = this_info[i]
+

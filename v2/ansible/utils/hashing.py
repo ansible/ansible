@@ -43,6 +43,8 @@ def secure_hash_s(data, hash_func=sha1):
 
     digest = hash_func()
     try:
+        if not isinstance(data, basestring):
+            data = "%s" % data
         digest.update(data)
     except UnicodeEncodeError:
         digest.update(data.encode('utf-8'))

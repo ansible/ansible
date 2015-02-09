@@ -34,8 +34,7 @@ class ConnectionBase:
     A base class for connections to contain common code.
     '''
 
-    def __init__(self, host, connection_info, *args, **kwargs):
-        self._host = host
+    def __init__(self, connection_info, *args, **kwargs):
         self._connection_info = connection_info
         self._has_pipelining = False
         self._display = Display(connection_info)
