@@ -7,6 +7,7 @@ from nose.tools import timed
 
 from ansible import errors
 from ansible.module_common import ModuleReplacer
+from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.utils import checksum as utils_checksum
 
 TEST_MODULE_DATA = """
@@ -264,23 +265,23 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
 
     @timed(5)
     def test_log_sanitize_speed_many_url(self):
-        self.module._heuristic_log_sanitize(self.many_url)
+        heuristic_log_sanitize(self.many_url)
 
     @timed(5)
     def test_log_sanitize_speed_many_ssh(self):
-        self.module._heuristic_log_sanitize(self.many_ssh)
+        heuristic_log_sanitize(self.many_ssh)
 
     @timed(5)
     def test_log_sanitize_speed_one_url(self):
-        self.module._heuristic_log_sanitize(self.one_url)
+        heuristic_log_sanitize(self.one_url)
 
     @timed(5)
     def test_log_sanitize_speed_one_ssh(self):
-        self.module._heuristic_log_sanitize(self.one_ssh)
+        heuristic_log_sanitize(self.one_ssh)
 
     @timed(5)
     def test_log_sanitize_speed_zero_secrets(self):
-        self.module._heuristic_log_sanitize(self.zero_secrets)
+        heuristic_log_sanitize(self.zero_secrets)
 
     #
     # Test that the password obfuscation sanitizes somewhat cleanly.
@@ -290,8 +291,8 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         url_data = repr(self._gen_data(3, True, True, self.URL_SECRET))
         ssh_data = repr(self._gen_data(3, True, True, self.SSH_SECRET))
 
-        url_output = self.module._heuristic_log_sanitize(url_data)
-        ssh_output = self.module._heuristic_log_sanitize(ssh_data)
+        url_output = heuristic_log_sanitize(url_data)
+        ssh_output = heuristic_log_sanitize(ssh_data)
 
         # Basic functionality: Successfully hid the password
         try:
