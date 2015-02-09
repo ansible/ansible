@@ -25,7 +25,7 @@ Ansible or not) should begin with ``---``.  This is part of the YAML
 format and indicates the start of a document.
 
 All members of a list are lines beginning at the same indentation level starting
-with a ``"- "`` (dash and whitespace) character::
+with a ``"- "`` (a dash and a space)::
 
     ---
     # A list of tasty fruits
@@ -34,7 +34,7 @@ with a ``"- "`` (dash and whitespace) character::
     - Strawberry
     - Mango
 
-A dictionary is represented in a simple ``key: `` (colon and whitespace) and ``value`` form::
+A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
 
     ---
     # An employee record
