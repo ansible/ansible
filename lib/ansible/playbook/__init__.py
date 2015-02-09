@@ -456,6 +456,19 @@ class PlayBook(object):
         if len(contacted.keys()) == 0 and len(dark.keys()) == 0:
             return None
 
+        # flag which notify handlers need to be run
+        if len(task.notify) > 0:
+            for host, results in results.get('contacted',{}).iteritems():
+                if results.get('changed', False):
+                    combined_vars = runner.get_inject_vars(host)
+                    for handler_name in task.notify:
+                        handler_name = template(task.play.basedir, handler_name, combined_vars)
+                        if not isinstance(handler_name, basestring):
+                            for item in handler_name:
+                                self._flag_handler(task.play, item, host)
+                        else:
+                            self._flag_handler(task.play, handler_name, host)
+
         return results
 
     # *****************************************************
@@ -532,19 +545,6 @@ class PlayBook(object):
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
                 _register_play_vars(host, result)
-
-        # flag which notify handlers need to be run
-        if len(task.notify) > 0:
-            for host, results in results.get('contacted',{}).iteritems():
-                if results.get('changed', False):
-                    for handler_name in task.notify:
-                        all_vars = task.combine_all_vars()
-                        handler_name = template(play.basedir, handler_name, all_vars)
-                        if not isinstance(handler_name, basestring):
-                            for item in handler_name:
-                                self._flag_handler(play, item, host)
-                        else:
-                            self._flag_handler(play, handler_name, host)
 
         ansible.callbacks.set_task(self.callbacks, None)
         ansible.callbacks.set_task(self.runner_callbacks, None)
