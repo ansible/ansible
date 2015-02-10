@@ -22,7 +22,6 @@ __metaclass__ = type
 
 # from python and deps
 from cStringIO import StringIO
-import inspect
 import json
 import os
 import shlex
@@ -43,11 +42,8 @@ REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
 # specify an encoding for the python source file
 ENCODING_STRING = '# -*- coding: utf-8 -*-'
 
-# TODO: Is there a reason we don't use __file__ here?
-#       Will this fail if ansible is run from an egg/wheel?  Do we care?
-_THIS_FILE = inspect.getfile(inspect.currentframe())
 # we've moved the module_common relative to the snippets, so fix the path
-_SNIPPET_PATH = os.path.join(os.path.dirname(this_file), '..', 'module_utils')
+_SNIPPET_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
 
 # ******************************************************************************
 
