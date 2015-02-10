@@ -43,7 +43,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # can be inserted in any module source automatically by including
 # #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
 # of an ansible module. The source of this common code lives
-# in lib/ansible/module_common.py
+# in ansible/executor/module_common.py
 
 import locale
 import os
