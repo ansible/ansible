@@ -48,6 +48,9 @@ galaxy_info:
   author: {{ author }}
   description: {{description}}
   company: {{ company }}
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: {{ issue_tracker_url }}
   # Some suggested licenses:
   # - BSD (default)
   # - MIT
@@ -656,6 +659,7 @@ def execute_init(args, options, parser):
                 author = 'your name',
                 company = 'your company (optional)',
                 license = 'license (GPLv2, CC-BY, etc)',
+                issue_tracker_url = 'http://example.com/issue/tracker',
                 min_ansible_version = '1.2',
                 platforms = platform_groups,
                 categories = categories,
