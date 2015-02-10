@@ -70,12 +70,10 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        # FIXME: this should be removable now, leaving it here just in case
-        # allow variable names
-        #if conditional in all_vars and '-' not in str(all_vars[conditional]):
-        #    conditional = all_vars[conditional]
+        if conditional in all_vars and '-' not in unicode(all_vars[conditional]):
+            conditional = all_vars[conditional]
 
-        conditional = templar.template(conditional, convert_bare=True)
+        conditional = templar.template(conditional)
         if not isinstance(conditional, basestring) or conditional == "":
             return conditional
 
@@ -89,9 +87,9 @@ class Conditional:
             # variable was undefined. If we happened to be
             # looking for an undefined variable, return True,
             # otherwise fail
-            if "is undefined" in conditional:
+            if "is undefined" in original:
                 return True
-            elif "is defined" in conditional:
+            elif "is defined" in original:
                 return False
             else:
                 raise AnsibleError("error while evaluating conditional: %s" % original)
