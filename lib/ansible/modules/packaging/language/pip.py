@@ -113,6 +113,9 @@ EXAMPLES = '''
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
 
+# Install (MyApp) from local tarball
+- pip: name='file:///path/to/MyApp.tar.gz'
+
 # Install (Bottle) into the specified (virtualenv), inheriting none of the globally installed modules
 - pip: name=bottle virtualenv=/my_app/venv
 
