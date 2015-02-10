@@ -72,7 +72,10 @@ class Connection(object):
         if cache_key in _winrm_cache:
             vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
             return _winrm_cache[cache_key]
-        transport_schemes = [('plaintext', 'https'), ('plaintext', 'http')] # FIXME: ssl/kerberos
+        if self.user == 'ansible_kerberos' and self.password == 'ansible_kerberos':
+            transport_schemes = [('kerberos', 'https'), ('kerberos', 'http')]
+        else:
+            transport_schemes = [('plaintext', 'https'), ('plaintext', 'http')] # FIXME: ssl/kerberos
         if port == 5985:
             transport_schemes = reversed(transport_schemes)
         exc = None
