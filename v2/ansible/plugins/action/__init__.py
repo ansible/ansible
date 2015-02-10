@@ -29,7 +29,7 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.executor.module_common import ModuleReplacer
+from ansible.executor.module_common import modify_module
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins import shell_loader
 
@@ -78,7 +78,7 @@ class ActionBase:
     def _configure_module(self, module_name, module_args):
         '''
         Handles the loading and templating of the module code through the
-        ModuleReplacer class.
+        modify_module() function.
         '''
 
         # Search module path(s) for named module.
@@ -94,7 +94,7 @@ class ActionBase:
                                    "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = ModuleReplacer().modify_module(module_path, module_args)
+        (module_data, module_style, module_shebang) = modify_module(module_path, module_args)
 
         return (module_style, module_shebang, module_data)
 
