@@ -129,6 +129,8 @@ class CloudStackInventory(object):
     def get_host(self, name, project_id=''):
         hosts = self.cs.listVirtualMachines(projectid=project_id)
         data = {}
+        if not hosts:
+            return data
         for host in hosts['virtualmachine']:
             host_name = host['displayname']
             if name == host_name:
@@ -182,6 +184,8 @@ class CloudStackInventory(object):
                         }
 
         hosts = self.cs.listVirtualMachines(projectid=project_id)
+        if not hosts:
+            return data
         for host in hosts['virtualmachine']:
             host_name = host['displayname']
             data['all']['hosts'].append(host_name)
