@@ -210,7 +210,11 @@ def template_from_file(basedir, path, vars, vault_password=None):
 
     from ansible import utils
     realpath = utils.path_dwim(basedir, path)
-    loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
+    template_lookup_paths = [basedir, os.path.dirname(realpath)]
+    if C.DEFAULT_ROLES_PATH:
+        # role lookup should come after current template directory but before playbook path
+        template_lookup_paths.insert(1, C.DEFAULT_ROLES_PATH)
+    loader=jinja2.FileSystemLoader(template_lookup_paths)
 
     def my_lookup(*args, **kwargs):
         kwargs['vars'] = vars
