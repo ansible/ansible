@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible import constants as C
 from ansible import errors
 from ansible import utils
 from ansible.module_utils.splitter import split_args
@@ -138,15 +139,32 @@ class Task(object):
         self.no_log       = utils.boolean(ds.get('no_log', "false")) or self.play.no_log
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 
-        #Code to allow do until feature in a Task 
-        if 'until' in ds:
+        #Code to allow do until feature in a Task
+        if C.DEFAULT_DO_UNTIL_RETRIES_ENABLED:
+            default_delay = C.DEFAULT_DO_UNTIL_DELAY
+            default_retries = C.DEFAULT_DO_UNTIL_RETRIES
+            default_condition = C.DEFAULT_DO_UNTIL_CONDITION
+        else:
+            default_delay = 5
+            default_retries = 3
+
+        if 'until' in ds and ds['until'] is None:
+            pass
+        elif 'until' in ds:
             if not ds.get('register'):
                 raise errors.AnsibleError("register keyword is mandatory when using do until feature")
-            self.module_vars['delay']     = ds.get('delay', 5)
-            self.module_vars['retries']   = ds.get('retries', 3)
-            self.module_vars['register']  = ds.get('register', None)
-            self.until                    = ds.get('until')
-            self.module_vars['until']     = self.until
+            self.module_vars['register'] = ds.get('register')
+            self.until = ds.get('until')
+            self.module_vars['until'] = self.until
+            self.module_vars['delay'] = ds.get('delay', default_delay)
+            self.module_vars['retries'] = ds.get('retries', default_retries)
+        elif C.DEFAULT_DO_UNTIL_RETRIES_ENABLED:
+            self.register = ds.get('register', 'default_register')
+            self.module_vars['register'] = self.register
+            self.until = default_condition.format(register=self.register)
+            self.module_vars['until'] = self.until
+            self.module_vars['delay'] = ds.get('delay', default_delay)
+            self.module_vars['retries'] = ds.get('retries', default_retries)
 
         # rather than simple key=value args on the options line, these represent structured data and the values
         # can be hashes and lists, not just scalars
@@ -240,7 +258,7 @@ class Task(object):
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
         self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+
 
         self.ignore_errors = ds.get('ignore_errors', False)
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)

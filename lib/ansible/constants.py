@@ -144,6 +144,12 @@ DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       '
 DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins')
 DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 
+# When enabled do-until loops will automatically retry, this can be overridden on a task
+DEFAULT_DO_UNTIL_RETRIES_ENABLED = get_config(p, DEFAULTS, 'do_until_retries_enabled', 'ANSIBLE_DO_UNTIL_RETRIES_ENABLED', False, boolean=True)
+DEFAULT_DO_UNTIL_RETRIES         = get_config(p, DEFAULTS, 'do_until_retries', 'ANSIBLE_DO_UNTIL_RETRIES', 3, integer=True)
+DEFAULT_DO_UNTIL_DELAY           = get_config(p, DEFAULTS, 'do_until_delay', 'ANSIBLE_DO_UNTIL_DELAY', 5, integer=True)
+DEFAULT_DO_UNTIL_CONDITION       = get_config(p, DEFAULTS, 'do_until_condition', 'ANSIBLE_DO_UNTIL_CONDITION', '{register}|success')
+
 CACHE_PLUGIN                   = get_config(p, DEFAULTS, 'fact_caching', 'ANSIBLE_CACHE_PLUGIN', 'memory')
 CACHE_PLUGIN_CONNECTION        = get_config(p, DEFAULTS, 'fact_caching_connection', 'ANSIBLE_CACHE_PLUGIN_CONNECTION', None)
 CACHE_PLUGIN_PREFIX            = get_config(p, DEFAULTS, 'fact_caching_prefix', 'ANSIBLE_CACHE_PLUGIN_PREFIX', 'ansible_facts')
