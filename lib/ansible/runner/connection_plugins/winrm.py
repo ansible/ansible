@@ -37,13 +37,6 @@ try:
 except ImportError:
     raise errors.AnsibleError("winrm is not installed")
 
-HAVE_KERBEROS = False
-try:
-    import kerberos
-    HAVE_KERBEROS = True
-except ImportError:
-    pass
-
 _winrm_cache = {
     # 'user:pwhash@host:port': <protocol instance>
 }
@@ -53,11 +46,6 @@ def vvvvv(msg, host=None):
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
-
-    transport_schemes = {
-        'http': [('kerberos', 'http'), ('plaintext', 'http'), ('plaintext', 'https')],
-        'https': [('kerberos', 'https'), ('plaintext', 'http'), ('plaintext', 'https')],
-        }
 
     def __init__(self,  runner, host, port, user, password, *args, **kwargs):
         self.runner = runner
@@ -84,10 +72,11 @@ class Connection(object):
         if cache_key in _winrm_cache:
             vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
             return _winrm_cache[cache_key]
+        transport_schemes = [('plaintext', 'https'), ('plaintext', 'http')] # FIXME: ssl/kerberos
+        if port == 5985:
+            transport_schemes = reversed(transport_schemes)
         exc = None
-        for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
-            if transport == 'kerberos' and not HAVE_KERBEROS:
-                continue
+        for transport, scheme in transport_schemes:
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
             vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
                  host=self.host)
