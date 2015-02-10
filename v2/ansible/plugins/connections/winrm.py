@@ -46,7 +46,6 @@ def vvvvv(msg, host=None):
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
-
     def __init__(self,  runner, host, port, user, password, *args, **kwargs):
         self.runner = runner
         self.host = host

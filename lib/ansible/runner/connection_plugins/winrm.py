@@ -46,7 +46,6 @@ def vvvvv(msg, host=None):
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
-
     def __init__(self,  runner, host, port, user, password, *args, **kwargs):
         self.runner = runner
         self.host = host
@@ -59,11 +58,28 @@ class Connection(object):
         self.protocol = None
         self.shell_id = None
         self.delegate = None
+        self.cert = kwargs['client_validation_cert']
+
+    def configure_ssl_context(self):
+        ''' add certificate to the default ssl context '''
+        import ssl
+        context = ssl._create_default_https_context()
+        context.load_verify_locations(self.cert)
+
+        def _ansible_ssl_context(*args, **kargs):
+            return context
+
+        ssl._create_default_https_context = _ansible_ssl_context
+        vvvv('WINRM CONNECT Context: verification cert=%s' % (self.cert),
+            host=self.host)
 
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
+        if self.cert:
+            self.configure_ssl_context()
+
         port = self.port or 5986
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self.user, port, self.host), host=self.host)
@@ -80,6 +96,7 @@ class Connection(object):
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
             vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
                  host=self.host)
+
             protocol = Protocol(endpoint, transport=transport,
                                 username=self.user, password=self.password)
             try:
