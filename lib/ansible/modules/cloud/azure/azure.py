@@ -173,7 +173,20 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Basic_A1',
                     'Basic_A2',
                     'Basic_A3',
-                    'Basic_A4']
+                    'Basic_A4',
+                    'Standard_D1',
+                    'Standard_D2',
+                    'Standard_D3',
+                    'Standard_D4',
+                    'Standard_D11',
+                    'Standard_D12',
+                    'Standard_D13',
+                    'Standard_D14',
+                    'Standard_G1',
+                    'Standard_G2',
+                    'Sandard_G3',
+                    'Standard_G4',
+                    'Standard_G5']
 
 try:
     import azure as windows_azure
