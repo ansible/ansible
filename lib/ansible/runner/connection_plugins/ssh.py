@@ -29,6 +29,7 @@ import pwd
 import gettext
 import pty
 from hashlib import sha1
+from cStringIO import StringIO
 import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
@@ -140,51 +141,80 @@ class Connection(object):
             os.write(self.wfd, "%s\n" % self.password)
             os.close(self.wfd)
 
-    def _communicate(self, p, stdin, indata, su=False, sudoable=False, prompt=None):
-        fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-        fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-        # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        stdout = ''
-        stderr = ''
-        rpipes = [p.stdout, p.stderr]
-        if indata:
-            try:
-                stdin.write(indata)
-                stdin.close()
-            except:
-                raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
-        # Read stdout/stderr from process
-        while True:
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+    class CommunicateCallbacks(object):
+        def __init__(self, runner, indata, su=False, sudoable=False, prompt=None):
+            self.stdout = ''
+            self.stderr = ''
+            self.runner = runner
+            self.su = su
+            self.sudoable = sudoable
+            self.prompt = prompt
+            if isinstance(indata, basestring) and indata:
+                self.indata = StringIO(indata)
+            elif not indata: # None, False..
+                self.indata = StringIO('')
+            else:
+                self.indata = indata # file-like object
 
-            # fail early if the sudo/su password is wrong
-            if self.runner.sudo and sudoable:
+        def _check_for_su_sudo_fail(self, data):
+            if self.runner.sudo and self.sudoable:
                 if self.runner.sudo_pass:
                     incorrect_password = gettext.dgettext(
                         "sudo", "Sorry, try again.")
-                    if stdout.endswith("%s\r\n%s" % (incorrect_password,
-                                                     prompt)):
+                    if data.endswith("%s\r\n%s" % (incorrect_password,
+                                                   self.prompt)):
                         raise errors.AnsibleError('Incorrect sudo password')
 
-                if stdout.endswith(prompt):
+                if data.endswith(self.prompt):
                     raise errors.AnsibleError('Missing sudo password')
 
             if self.runner.su and su and self.runner.su_pass:
                 incorrect_password = gettext.dgettext(
                     "su", "Sorry")
-                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
+                if data.endswith("%s\r\n%s" % (incorrect_password, self.prompt)):
                     raise errors.AnsibleError('Incorrect su password')
+
+        def stdout_cb(self, data):
+            self.stdout += data
+            # fail early if the sudo/su password is wrong
+            self._check_for_su_sudo_fail(self.stdout)
+
+        def stderr_cb(self, data):
+            self.stderr += data
+
+        def stdin_cb(self, size):
+            return self.indata.read(size)
+
+    def _communicate(self, p, stdin, callbacks=(None, None, None)):
+        fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+        fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+        # We can't use p.communicate here because the ControlMaster may have stdout open as well
+        rpipes = [p.stdout, p.stderr]
+        wpipes = []
+        if callable(callbacks[0]):
+            wpipes = [stdin]
+        # Read stdout/stderr from process
+        while True:
+            rfd, wfd, efd = select.select(rpipes, wpipes, rpipes+wpipes, 1)
 
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
-                stdout += dat
+                callbacks[1](dat)
                 if dat == '':
                     rpipes.remove(p.stdout)
             if p.stderr in rfd:
                 dat = os.read(p.stderr.fileno(), 9000)
-                stderr += dat
+                callbacks[2](dat)
                 if dat == '':
                     rpipes.remove(p.stderr)
+            if stdin in wfd:
+                dat = callbacks[0](select.PIPE_BUF)
+                if dat != '':
+                    wrote = os.write(stdin.fileno(), dat)
+                    #assert len(dat) == wrote
+                else:
+                    wpipes.remove(stdin)
+                    stdin.close()
             # only break out if no pipes are left to read or
             # the pipes are completely read and
             # the process is terminated
@@ -201,7 +231,7 @@ class Connection(object):
         # close stdin after process is terminated and stdout/stderr are read
         # completely (see also issue #848)
         stdin.close()
-        return (p.returncode, stdout, stderr)
+        return p.returncode
 
     def not_in_host_file(self, host):
         if 'USER' in os.environ:
@@ -253,6 +283,63 @@ class Connection(object):
         if (hfiles_not_found == len(host_file_list)):
             vvv("EXEC previous known host file not found for %s" % host)
         return True
+
+    def send_su_sudo_password(self, p, stdin, success_key, sudoable, prompt):
+        # several cases are handled for sudo privileges with password
+        # * NOPASSWD (tty & no-tty): detect success_key on stdout
+        # * without NOPASSWD:
+        #   * detect prompt on stdout (tty)
+        #   * detect prompt on stderr (no-tty)
+        fcntl.fcntl(p.stdout, fcntl.F_SETFL,
+                    fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+        fcntl.fcntl(p.stderr, fcntl.F_SETFL,
+                    fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+        sudo_output = ''
+        sudo_errput = ''
+        no_prompt_out = ''
+        no_prompt_err = ''
+
+        while True:
+            if success_key in sudo_output or \
+                (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
+                (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
+                break
+
+            rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
+                                          [p.stdout], self.runner.timeout)
+            if p.stderr in rfd:
+                chunk = p.stderr.read()
+                if not chunk:
+                    raise errors.AnsibleError('ssh connection closed waiting for sudo or su password prompt')
+                sudo_errput += chunk
+                incorrect_password = gettext.dgettext(
+                    "sudo", "Sorry, try again.")
+                if sudo_errput.strip().endswith("%s%s" % (prompt, incorrect_password)):
+                    raise errors.AnsibleError('Incorrect sudo password')
+                elif sudo_errput.endswith(prompt):
+                    stdin.write(self.runner.sudo_pass + '\n')
+
+            if p.stdout in rfd:
+                chunk = p.stdout.read()
+                if not chunk:
+                    raise errors.AnsibleError('ssh connection closed waiting for sudo or su password prompt')
+                sudo_output += chunk
+
+            if not rfd:
+                # timeout. wrap up process communication
+                stdout = p.communicate()
+                raise errors.AnsibleError('ssh connection error waiting for sudo or su password prompt')
+
+        if success_key not in sudo_output:
+            if sudoable:
+                stdin.write(self.runner.sudo_pass + '\n')
+            elif su:
+                stdin.write(self.runner.su_pass + '\n')
+        else:
+            no_prompt_out += sudo_output
+            no_prompt_err += sudo_errput
+
+        return no_prompt_out, no_prompt_err
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
         ''' run a command on the remote host '''
@@ -306,67 +393,18 @@ class Connection(object):
         no_prompt_err = ''
         if (self.runner.sudo and sudoable and self.runner.sudo_pass) or \
                 (self.runner.su and su and self.runner.su_pass):
-            # several cases are handled for sudo privileges with password
-            # * NOPASSWD (tty & no-tty): detect success_key on stdout
-            # * without NOPASSWD:
-            #   * detect prompt on stdout (tty)
-            #   * detect prompt on stderr (no-tty)
-            fcntl.fcntl(p.stdout, fcntl.F_SETFL,
-                        fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL,
-                        fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-            sudo_output = ''
-            sudo_errput = ''
+            (no_prompt_out, no_prompt_err) = self.send_su_sudo_password(p, stdin, success_key, sudoable, prompt)
 
-            while True:
-                if success_key in sudo_output or \
-                    (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
-                    (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
-                    break
-
-                rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
-                                              [p.stdout], self.runner.timeout)
-                if p.stderr in rfd:
-                    chunk = p.stderr.read()
-                    if not chunk:
-                        raise errors.AnsibleError('ssh connection closed waiting for sudo or su password prompt')
-                    sudo_errput += chunk
-                    incorrect_password = gettext.dgettext(
-                        "sudo", "Sorry, try again.")
-                    if sudo_errput.strip().endswith("%s%s" % (prompt, incorrect_password)):
-                        raise errors.AnsibleError('Incorrect sudo password')
-                    elif sudo_errput.endswith(prompt):
-                        stdin.write(self.runner.sudo_pass + '\n')
-
-                if p.stdout in rfd:
-                    chunk = p.stdout.read()
-                    if not chunk:
-                        raise errors.AnsibleError('ssh connection closed waiting for sudo or su password prompt')
-                    sudo_output += chunk
-
-                if not rfd:
-                    # timeout. wrap up process communication
-                    stdout = p.communicate()
-                    raise errors.AnsibleError('ssh connection error waiting for sudo or su password prompt')
-
-            if success_key not in sudo_output:
-                if sudoable:
-                    stdin.write(self.runner.sudo_pass + '\n')
-                elif su:
-                    stdin.write(self.runner.su_pass + '\n')
-            else:
-                no_prompt_out += sudo_output
-                no_prompt_err += sudo_errput
-
-        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
+        com = self.CommunicateCallbacks(self.runner, in_data, su=su, sudoable=sudoable, prompt=prompt)
+        returncode = self._communicate(p, stdin, callbacks=(com.stdin_cb, com.stdout_cb, com.stderr_cb))
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-        controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or \
-                              'unknown configuration option: ControlPersist' in stderr
+        controlpersisterror = 'Bad configuration option: ControlPersist' in com.stderr or \
+                              'unknown configuration option: ControlPersist' in com.stderr
 
         if C.HOST_KEY_CHECKING:
             if ssh_cmd[0] == "sshpass" and p.returncode == 6:
@@ -377,7 +415,7 @@ class Connection(object):
         if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
-        return (p.returncode, '', no_prompt_out + stdout, no_prompt_err + stderr)
+        return (p.returncode, '', no_prompt_out + com.stdout, no_prompt_err + com.stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -402,10 +440,11 @@ class Connection(object):
 
         self._send_password()
 
-        (returncode, stdout, stderr) = self._communicate(p, stdin, indata)
+        com = self.CommunicateCallbacks(self.runner, indata)
+        returncode = self._communicate(p, stdin, callbacks=(com.stdin_cb, com.stdout_cb, com.stderr_cb))
 
         if returncode != 0:
-            raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
+            raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, com.stdout, com.stderr))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
