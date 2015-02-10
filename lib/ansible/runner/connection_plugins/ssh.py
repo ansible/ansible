@@ -335,7 +335,7 @@ class Connection(object):
                         "sudo", "Sorry, try again.")
                     if sudo_errput.strip().endswith("%s%s" % (prompt, incorrect_password)):
                         raise errors.AnsibleError('Incorrect sudo password')
-                    elif sudo_errput.endswith(prompt):
+                    elif prompt and sudo_errput.endswith(prompt):
                         stdin.write(self.runner.sudo_pass + '\n')
 
                 if p.stdout in rfd:
