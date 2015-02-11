@@ -199,7 +199,7 @@ EXAMPLES = '''
 # Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
 - user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048 ssh_key_file=.ssh/id_rsa
 
-# added a consultant who's account you want to expire
+# added a consultant whose account you want to expire
 - user: name=james18 shell=/bin/zsh groups=developers expires=1422403387
 '''
 
