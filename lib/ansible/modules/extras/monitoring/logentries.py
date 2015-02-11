@@ -39,7 +39,7 @@ options:
         description:
             - name of the log
         required: false
-    type:
+    logtype:
         description:
             - type of the log
         required: false
@@ -75,10 +75,10 @@ def follow_log(module, le_path, logs, name=None, logtype=None):
             module.exit_json(changed=True)
 
         cmd = [le_path, 'follow', log]
-        if name != None:
-            cmd.append('--name ' + str(name))
-        if logtype != None:
-            cmd.append('--type ' + str(logtype))
+        if name:
+            cmd.extend(['--name',name])
+        if logtype:
+            cmd.append(['--type',logtype])
         rc, out, err = module.run_command(' '.join(cmd))
 
         if not query_log_status(module, le_path, log):
@@ -121,8 +121,8 @@ def main():
         argument_spec = dict(
             path = dict(required=True),
             state = dict(default="present", choices=["present", "followed", "absent", "unfollowed"]),
-            name = dict(required=False, default=None),
-            type = dict(required=False, default=None)
+            name = dict(required=False, default=None, type='str'),
+            logtype = dict(required=False, default=None, type='str', aliases['type'])
         ),
         supports_check_mode=True
     )
@@ -136,7 +136,7 @@ def main():
     logs = filter(None, logs)
 
     if p["state"] in ["present", "followed"]:
-        follow_log(module, le_path, logs, name=p['name'], logtype=p['type'])
+        follow_log(module, le_path, logs, name=p['name'], logtype=p['logtype'])
 
     elif p["state"] in ["absent", "unfollowed"]:
         unfollow_log(module, le_path, logs)
