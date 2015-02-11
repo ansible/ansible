@@ -145,6 +145,7 @@ class ActionModule(object):
             # the module to follow links.  When doing that, we have to set
             # original_basename to the template just in case the dest is
             # a directory.
+            module_args = ''
             new_module_args = dict(
                 src=None,
                 original_basename=os.path.basename(source),
@@ -154,6 +155,6 @@ class ActionModule(object):
             # rely on the file module to report its changed status
             if self.runner.noop_on_check(inject):
                 new_module_args['CHECKMODE'] = True
-            module_args = utils.merge_module_args(module_args, new_module_args)
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+            options.update(new_module_args)
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=options)
 
