@@ -40,6 +40,10 @@ And you may also tag basic include statements::
 
 Both of these have the function of tagging every single task inside the include statement.
 
+New in version 1.7, the tag "all"  will cause the task to run even if not specified in ``--tags``, or
+before ``--start-at-task``. ``--skip-tags`` still applies.  This is useful for 
+modules such as "group_by" and "ec2_facts".
+
 .. seealso::
 
    :doc:`playbooks`

@@ -626,7 +626,8 @@ class PlaybookCallbacks(object):
                 if actual_name == self.start_at or fnmatch.fnmatch(actual_name, self.start_at):
                     del self.start_at
 
-        if hasattr(self, 'start_at'): # we still have start_at so skip the task
+        if hasattr(self, 'start_at') and 'all' not in self.task.tags:
+            # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
             if isinstance(name, str):
