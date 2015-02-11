@@ -441,6 +441,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # convert "foobar" to "bar"
     {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
 
+.. note:: If "regex_replace" filter is used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
+   then you need to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
