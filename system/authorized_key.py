@@ -353,14 +353,14 @@ def enforce_state(module, params):
 
     # if the key is a url, request it and use it as key source
     if key.startswith("http"):
-	try:
+        try:
             resp, info = fetch_url(module, key)
-	    if info['status'] != 200:
+            if info['status'] != 200:
                 module.fail_json(msg=error_msg % key)
-	    else:
-		key = resp.read()
-	except Exception:
-	    module.fail_json(msg=error_msg % key)
+            else:
+                key = resp.read()
+        except Exception:
+            module.fail_json(msg=error_msg % key)
 
     # extract individual keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
