@@ -37,7 +37,7 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
+    def __init__(self, runner, host, port, user, password, private_key_file, ssh_proxy, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.ipv6 = ':' in self.host
@@ -47,6 +47,7 @@ class Connection(object):
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
         self.has_pipelining = True
+        self.proxy = ssh_proxy
 
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
@@ -97,6 +98,9 @@ class Connection(object):
         if self.user != pwd.getpwuid(os.geteuid())[0]:
             self.common_args += ["-o", "User="+self.user]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
+
+        if self.proxy:
+            self.common_args += ['-o ProxyCommand=ssh -W %%h:%%p %s' % self.proxy]
 
         return self
 
