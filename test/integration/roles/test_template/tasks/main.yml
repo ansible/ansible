@@ -96,3 +96,42 @@
       - "dir_attrs.stat.uid != 0"
       - "dir_attrs.stat.pw_name == 'nobody'"
       - "dir_attrs.stat.mode == '0755'"
+
+- name: make a symlink to the templated file
+  file:
+    path: '{{ output_dir }}/foo.symlink'
+    src: '{{ output_dir }}/foo.templated'
+    state: link
+
+- name: check that templating the symlink results in the file being templated
+  template:
+    src: foo.j2
+    dest: '{{output_dir}}/foo.symlink'
+    mode: 0600
+    follow: True
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == True"
+
+- name: check that the file has the correct attributes
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
+  register: file_attrs
+
+- assert:
+    that:
+      - "file_attrs.stat.mode == '0600'"
+
+- name: check that templating the symlink again makes no changes
+  template:
+    src: foo.j2
+    dest: '{{output_dir}}/foo.symlink'
+    mode: 0600
+    follow: True
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == False"
+
