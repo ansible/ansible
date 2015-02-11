@@ -138,6 +138,12 @@ options:
     required: false
     default: null
     aliases: []
+  domainname:
+    description:
+      - Set container domain name
+    required: false
+    default: null
+    aliases: []
   env:
     description:
       - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
@@ -724,6 +730,7 @@ class DockerManager(object):
                   'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
                   'environment':  self.env,
                   'hostname':     self.module.params.get('hostname'),
+                  'domainname':   self.module.params.get('domainname'),
                   'detach':       self.module.params.get('detach'),
                   'name':         self.module.params.get('name'),
                   'stdin_open':   self.module.params.get('stdin_open'),
@@ -853,6 +860,7 @@ def main():
             email           = dict(),
             registry        = dict(),
             hostname        = dict(default=None),
+            domainname      = dict(default=None),
             env             = dict(type='dict'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
