@@ -70,7 +70,7 @@ Actions are pieces of code in ansible that enable things like module execution, 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
@@ -135,10 +135,12 @@ Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
 callback_plugins
 ================
 
+Callbacks are pieces of code in ansible that get called on specific events, permitting to trigger notifications.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = /usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -171,10 +173,12 @@ parameter string, like so::
 connection_plugins
 ==================
 
+Connections plugin permit to extend the channel used by ansible to transport commands and files.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    connection_plugins = /usr/share/ansible_plugins/connection_plugins
+    connection_plugins = ~/.ansible/plugins/connection_plugins/:/usr/share/ansible_plugins/connection_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -230,10 +234,12 @@ rare instances to /bin/bash in rare instances when sudo is constrained, but in m
 filter_plugins
 ==============
 
+Filters are specific functions that can be used to extend the template system.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    filter_plugins = /usr/share/ansible_plugins/filter_plugins
+    filter_plugins = ~/.ansible/plugins/filter_plugins/:/usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -359,7 +365,7 @@ lookup_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
+    lookup_plugins = ~/.ansible/plugins/lookup_plugins/:/usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -562,7 +568,7 @@ vars_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    vars_plugins = /usr/share/ansible_plugins/vars_plugins
+    vars_plugins = ~/.ansible/plugins/vars_plugins/:/usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
