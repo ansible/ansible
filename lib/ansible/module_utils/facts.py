@@ -190,7 +190,7 @@ class Facts(object):
                 # if that fails, skip it
                 rc, out, err = module.run_command(fn)
             else:
-                out = get_file_content(fn)
+                out = get_file_content(fn, default='')
 
             # load raw json
             fact = 'loading %s' % fact_base
@@ -1680,7 +1680,7 @@ class LinuxNetwork(Network):
             device = os.path.basename(path)
             interfaces[device] = { 'device': device }
             if os.path.exists(os.path.join(path, 'address')):
-                macaddress = get_file_content(os.path.join(path, 'address'))
+                macaddress = get_file_content(os.path.join(path, 'address'), default='')
                 if macaddress and macaddress != '00:00:00:00:00:00':
                     interfaces[device]['macaddress'] = macaddress
             if os.path.exists(os.path.join(path, 'mtu')):
@@ -1703,15 +1703,15 @@ class LinuxNetwork(Network):
                 interfaces[device]['type'] = 'bridge'
                 interfaces[device]['interfaces'] = [ os.path.basename(b) for b in glob.glob(os.path.join(path, 'brif', '*')) ]
                 if os.path.exists(os.path.join(path, 'bridge', 'bridge_id')):
-                    interfaces[device]['id'] = get_file_content(os.path.join(path, 'bridge', 'bridge_id'))
+                    interfaces[device]['id'] = get_file_content(os.path.join(path, 'bridge', 'bridge_id'), default='')
                 if os.path.exists(os.path.join(path, 'bridge', 'stp_state')):
                     interfaces[device]['stp'] = get_file_content(os.path.join(path, 'bridge', 'stp_state')) == '1'
             if os.path.exists(os.path.join(path, 'bonding')):
                 interfaces[device]['type'] = 'bonding'
-                interfaces[device]['slaves'] = get_file_content(os.path.join(path, 'bonding', 'slaves')).split()
-                interfaces[device]['mode'] = get_file_content(os.path.join(path, 'bonding', 'mode')).split()[0]
-                interfaces[device]['miimon'] = get_file_content(os.path.join(path, 'bonding', 'miimon')).split()[0]
-                interfaces[device]['lacp_rate'] = get_file_content(os.path.join(path, 'bonding', 'lacp_rate')).split()[0]
+                interfaces[device]['slaves'] = get_file_content(os.path.join(path, 'bonding', 'slaves'), default='').split()
+                interfaces[device]['mode'] = get_file_content(os.path.join(path, 'bonding', 'mode'), default='').split()[0]
+                interfaces[device]['miimon'] = get_file_content(os.path.join(path, 'bonding', 'miimon'), default='').split()[0]
+                interfaces[device]['lacp_rate'] = get_file_content(os.path.join(path, 'bonding', 'lacp_rate'), default='').split()[0]
                 primary = get_file_content(os.path.join(path, 'bonding', 'primary'))
                 if primary:
                     interfaces[device]['primary'] = primary
