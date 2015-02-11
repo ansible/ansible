@@ -120,6 +120,13 @@ class Facts(object):
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
+    # Like PKG_MGRS, place default firewall manager last. And if there is a
+    # ansible module, use this as the value for 'name' key.
+    FW_MGRS = [ { 'path' : '/usr/bin/firewall-cmd', 'name' : 'firewalld' },
+                { 'path' : '/usr/sbin/lokkit',      'name' : 'lokkit' },
+                { 'path' : '/usr/sbin/ufw',         'name' : 'ufw' },
+    ]
+
     def __init__(self):
         self.facts = {}
         self.get_platform_facts()
@@ -129,6 +136,7 @@ class Facts(object):
         self.get_selinux_facts()
         self.get_fips_facts()
         self.get_pkg_mgr_facts()
+        self.get_fw_mgr_facts()
         self.get_lsb_facts()
         self.get_date_time_facts()
         self.get_user_facts()
@@ -438,6 +446,12 @@ class Facts(object):
                 self.facts['pkg_mgr'] = pkg['name']
         if self.facts['system'] == 'OpenBSD':
                 self.facts['pkg_mgr'] = 'openbsd_pkg'
+
+    def get_fw_mgr_facts(self):
+        self.facts['fw_mgr'] = 'unknown'
+        for fw in Facts.FW_MGRS:
+            if os.path.exists(fw['path']):
+                self.facts['fw_mgr'] = fw['name']
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
