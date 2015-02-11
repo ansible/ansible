@@ -1,12 +1,3 @@
----
-- name: Check for required variables
-  assert:
-    that:
-      - resource_prefix is defined and resource_prefix
-      - rackspace_username is defined and rackspace_username
-      - rackspace_api_key is defined and rackspace_api_key
-      - rackspace_region is defined and rackspace_region
-
 # ============================================================
 - name: Test rax with no args
   rax:
@@ -63,7 +54,7 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
+    image: "{{ rackspace_image_id }}"
   ignore_errors: true
   register: rax
 
@@ -82,8 +73,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
   ignore_errors: true
   register: rax
 
@@ -102,8 +93,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-1"
   register: rax
 
@@ -123,8 +114,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-1"
     state: absent
     wait: true
@@ -146,8 +137,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-2"
     wait: true
   register: rax
@@ -168,8 +159,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-2"
     wait: true
   register: rax
@@ -189,8 +180,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-2"
     state: absent
     wait: true
@@ -214,8 +205,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-3"
     meta:
       foo: bar
@@ -239,8 +230,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-3"
     meta:
       foo: bar
@@ -262,8 +253,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-3"
     state: absent
     meta:
@@ -289,8 +280,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-4"
     count: 2
     wait: true
@@ -310,8 +301,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-4"
     count: 2
     wait: true
@@ -331,8 +322,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-4"
     count: 3
     wait: true
@@ -352,8 +343,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-4"
     count: 3
     state: absent
@@ -378,8 +369,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-5-%02d"
     count: 2
     group: "{{ resource_prefix }}-5"
@@ -401,8 +392,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-5-%02d"
     count: 2
     group: "{{ resource_prefix }}-5"
@@ -428,8 +419,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-6-%02d"
     count: 2
     group: "{{ resource_prefix }}-6"
@@ -451,8 +442,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-6-%02d"
     count: 2
     group: "{{ resource_prefix }}-6"
@@ -473,8 +464,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-6-%02d"
     count: 4
     group: "{{ resource_prefix }}-6"
@@ -500,8 +491,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-7-%02d"
     count: 2
     exact_count: true
@@ -524,8 +515,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-7-%02d"
     count: 2
     exact_count: true
@@ -547,8 +538,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-7-%02d"
     count: 4
     exact_count: true
@@ -572,8 +563,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-7-%02d"
     count: 0
     exact_count: true
@@ -599,8 +590,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-8"
     count: 2
     group: "{{ resource_prefix }}-8"
@@ -623,8 +614,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-8"
     count: 2
     group: "{{ resource_prefix }}-8"
@@ -651,8 +642,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-9"
     count: 2
     exact_count: true
@@ -675,8 +666,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-9"
     count: 0
     exact_count: true
@@ -702,8 +693,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-10-%03d"
     count: 2
     count_offset: 10
@@ -727,8 +718,8 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-10-%03d"
     count: 0
     count_offset: 10
@@ -755,13 +746,13 @@
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
-    name: "{{ resource_prefix }}-10-%03d"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    name: "{{ resource_prefix }}-11-%03d"
     count: 2
     count_offset: 10
     exact_count: true
-    group: "{{ resource_prefix }}-10"
+    group: "{{ resource_prefix }}-11"
     wait: true
   register: rax
 
@@ -773,24 +764,24 @@
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
-      - rax.instances|map(attribute='rax_name')|unique|list|sort == ['{{ resource_prefix }}-10-010', '{{ resource_prefix }}-10-011']
+      - rax.instances|map(attribute='rax_name')|unique|list|sort == ['{{ resource_prefix }}-11-010', '{{ resource_prefix }}-11-011']
 
-- name: "Test delete integration 10"
+- name: "Test delete integration 11"
   rax:
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"
     region: "{{ rackspace_region }}"
-    image: ubuntu-1204-lts-precise-pangolin
-    flavor: performance1-1
-    name: "{{ resource_prefix }}-10-%03d"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    name: "{{ resource_prefix }}-11-%03d"
     count: 0
     count_offset: 10
     exact_count: true
-    group: "{{ resource_prefix }}-10"
+    group: "{{ resource_prefix }}-11"
     wait: true
   register: rax
 
-- name: "Validate delete integration 10"
+- name: "Validate delete integration 11"
   assert:
     that:
       - rax|success
@@ -798,4 +789,51 @@
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax instance_ids absent 1 (create)
+  rax:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    name: "{{ resource_prefix }}-12"
+    wait: true
+  register: rax
+
+- name: Validate rax instance_ids absent 1 (create)
+  assert:
+    that:
+      - rax|success
+      - rax|changed
+      - rax.action == 'create'
+      - rax.instances|length == 1
+      - rax.instances[0].name == "{{ resource_prefix }}-12"
+      - rax.instances[0] == rax.success[0]
+      - rax.instances[0].rax_status == 'ACTIVE'
+
+- name: Test rax instance_ids absent 2 (delete)
+  rax:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    instance_ids:
+      - "{{ rax.success.0.rax_id }}"
+    state: absent
+    wait: true
+  register: rax2
+
+- name: Validate rax instance_ids absent 2 (delete)
+  assert:
+    that:
+      - rax2|success
+      - rax2|changed
+      - rax2.action == 'delete'
+      - rax2.success.0.rax_id == rax.success.0.rax_id
 # ============================================================
