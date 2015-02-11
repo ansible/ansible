@@ -136,10 +136,13 @@ def main():
             # install the requested path if necessary
             # (unsupported on the RedHat version)
             if path not in all_alternatives and os_family == "Debian":
-                module.run_command(
-                    [UPDATE_ALTERNATIVES, '--install', link, name, path, str(DEFAULT_LINK_PRIORITY)],
-                    check_rc=True
-                )
+                if link:
+                    module.run_command(
+                        [UPDATE_ALTERNATIVES, '--install', link, name, path, str(DEFAULT_LINK_PRIORITY)],
+                        check_rc=True
+                    )
+                else:
+                    module.fail_json("Needed to install the alternative, but unable to do so, as we are missking the link")
 
             # select the requested path
             module.run_command(
