@@ -96,6 +96,11 @@ options:
       - The jailed property.
     required: False
     choices: ['on','off']
+  listsnapshots:
+    description:
+      - the listsnapshots property.
+    required: False
+    choices: ['on','off']
   logbias:
     description:
       - The logbias property.
@@ -351,6 +356,7 @@ def main():
             # Not supported
             #'groupquota':      {'required': False},
             'jailed':          {'required': False, 'choices':['on', 'off']},
+            'listsnapshots':   {'required': False, 'choices':['on', 'off']},
             'logbias':         {'required': False, 'choices':['latency', 'throughput']},
             'mountpoint':      {'required': False},
             'nbmand':          {'required': False, 'choices':['on', 'off']},
