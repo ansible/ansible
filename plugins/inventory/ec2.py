@@ -253,6 +253,28 @@ class Ec2Inventory(object):
         else:
             self.nested_groups = False
 
+        # Configure which groups should be created.
+        group_by_options = [
+            'group_by_instance_id',
+            'group_by_region',
+            'group_by_availability_zone',
+            'group_by_ami_id',
+            'group_by_instance_type',
+            'group_by_key_pair',
+            'group_by_vpc_id',
+            'group_by_security_group',
+            'group_by_tag_keys',
+            'group_by_tag_none',
+            'group_by_route53_names',
+            'group_by_rds_engine',
+            'group_by_rds_parameter_group',
+        ]
+        for option in group_by_options:
+            if config.has_option('ec2', option):
+                setattr(self, option, config.getboolean('ec2', option))
+            else:
+                setattr(self, option, True)
+
         # Do we need to just include hosts that match a pattern?
         try:
             pattern_include = config.get('ec2', 'pattern_include')
@@ -273,11 +295,16 @@ class Ec2Inventory(object):
         except ConfigParser.NoOptionError, e:
             self.pattern_exclude = None
 
-        # Instance filters (see boto and EC2 API docs)
+        # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = defaultdict(list)
         if config.has_option('ec2', 'instance_filters'):
-            for x in config.get('ec2', 'instance_filters', '').split(','):
-                filter_key, filter_value = x.split('=')
+            for instance_filter in config.get('ec2', 'instance_filters', '').split(','):
+                instance_filter = instance_filter.strip()
+                if not instance_filter or '=' not in instance_filter:
+                    continue
+                filter_key, filter_value = [x.strip() for x in instance_filter.split('=', 1)]
+                if not filter_key:
+                    continue
                 self.ec2_instance_filters[filter_key].append(filter_value)
 
     def parse_cli_args(self):
@@ -409,60 +436,77 @@ class Ec2Inventory(object):
         self.index[dest] = [region, instance.id]
 
         # Inventory: Group by instance ID (always a group of 1)
-        self.inventory[instance.id] = [dest]
-        if self.nested_groups:
-            self.push_group(self.inventory, 'instances', instance.id)
+        if self.group_by_instance_id:
+            self.inventory[instance.id] = [dest]
+            if self.nested_groups:
+                self.push_group(self.inventory, 'instances', instance.id)
 
         # Inventory: Group by region
-        if self.nested_groups:
-            self.push_group(self.inventory, 'regions', region)
-        else:
+        if self.group_by_region:
             self.push(self.inventory, region, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'regions', region)
 
         # Inventory: Group by availability zone
-        self.push(self.inventory, instance.placement, dest)
-        if self.nested_groups:
-            self.push_group(self.inventory, region, instance.placement)
+        if self.group_by_availability_zone:
+            self.push(self.inventory, instance.placement, dest)
+            if self.nested_groups:
+                if self.group_by_region:
+                    self.push_group(self.inventory, region, instance.placement)
+                self.push_group(self.inventory, 'zones', instance.placement)
+
+        # Inventory: Group by Amazon Machine Image (AMI) ID
+        if self.group_by_ami_id:
+            ami_id = self.to_safe(instance.image_id)
+            self.push(self.inventory, ami_id, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'images', ami_id)
 
         # Inventory: Group by instance type
-        type_name = self.to_safe('type_' + instance.instance_type)
-        self.push(self.inventory, type_name, dest)
-        if self.nested_groups:
-            self.push_group(self.inventory, 'types', type_name)
+        if self.group_by_instance_type:
+            type_name = self.to_safe('type_' + instance.instance_type)
+            self.push(self.inventory, type_name, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'types', type_name)
 
         # Inventory: Group by key pair
-        if instance.key_name:
+        if self.group_by_key_pair and instance.key_name:
             key_name = self.to_safe('key_' + instance.key_name)
             self.push(self.inventory, key_name, dest)
             if self.nested_groups:
                 self.push_group(self.inventory, 'keys', key_name)
 
         # Inventory: Group by VPC
-        if instance.vpc_id:
-            self.push(self.inventory, self.to_safe('vpc_id_' + instance.vpc_id), dest)
+        if self.group_by_vpc_id and instance.vpc_id:
+            vpc_id_name = self.to_safe('vpc_id_' + instance.vpc_id)
+            self.push(self.inventory, vpc_id_name, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'vpcs', vpc_id_name)
 
         # Inventory: Group by security group
-        try:
-            for group in instance.groups:
-                key = self.to_safe("security_group_" + group.name)
-                self.push(self.inventory, key, dest)
-                if self.nested_groups:
-                    self.push_group(self.inventory, 'security_groups', key)
-        except AttributeError:
-            print 'Package boto seems a bit older.'
-            print 'Please upgrade boto >= 2.3.0.'
-            sys.exit(1)
+        if self.group_by_security_group:
+            try:
+                for group in instance.groups:
+                    key = self.to_safe("security_group_" + group.name)
+                    self.push(self.inventory, key, dest)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'security_groups', key)
+            except AttributeError:
+                print 'Package boto seems a bit older.'
+                print 'Please upgrade boto >= 2.3.0.'
+                sys.exit(1)
 
         # Inventory: Group by tag keys
-        for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
-            if self.nested_groups:
-                self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+        if self.group_by_tag_keys:
+            for k, v in instance.tags.iteritems():
+                key = self.to_safe("tag_" + k + "=" + v)
+                self.push(self.inventory, key, dest)
+                if self.nested_groups:
+                    self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                    self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
-        if self.route53_enabled:
+        if self.route53_enabled and self.group_by_route53_names:
             route53_names = self.get_instance_route53_names(instance)
             for name in route53_names:
                 self.push(self.inventory, name, dest)
@@ -470,9 +514,11 @@ class Ec2Inventory(object):
                     self.push_group(self.inventory, 'route53', name)
 
         # Global Tag: instances without tags
-        if len(instance.tags) == 0:
+        if self.group_by_tag_none and len(instance.tags) == 0:
             self.push(self.inventory, 'tag_none', dest)
-            
+            if self.nested_groups:
+                self.push_group(self.inventory, 'tags', 'tag_none')
+
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
 
@@ -488,10 +534,6 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address
-        #if instance.subnet_id:
-            #dest = getattr(instance, self.vpc_destination_variable)
-        #else:
-            #dest =  getattr(instance, self.destination_variable)
         dest = instance.endpoint[0]
 
         if not dest:
@@ -502,49 +544,64 @@ class Ec2Inventory(object):
         self.index[dest] = [region, instance.id]
 
         # Inventory: Group by instance ID (always a group of 1)
-        self.inventory[instance.id] = [dest]
-        if self.nested_groups:
-            self.push_group(self.inventory, 'instances', instance.id)
+        if self.group_by_instance_id:
+            self.inventory[instance.id] = [dest]
+            if self.nested_groups:
+                self.push_group(self.inventory, 'instances', instance.id)
 
         # Inventory: Group by region
-        if self.nested_groups:
-            self.push_group(self.inventory, 'regions', region)
-        else:
+        if self.group_by_region:
             self.push(self.inventory, region, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'regions', region)
 
         # Inventory: Group by availability zone
-        self.push(self.inventory, instance.availability_zone, dest)
-        if self.nested_groups:
-            self.push_group(self.inventory, region, instance.availability_zone)
+        if self.group_by_availability_zone:
+            self.push(self.inventory, instance.availability_zone, dest)
+            if self.nested_groups:
+                if self.group_by_region:
+                    self.push_group(self.inventory, region, instance.availability_zone)
+                self.push_group(self.inventory, 'zones', instance.availability_zone)
 
         # Inventory: Group by instance type
-        type_name = self.to_safe('type_' + instance.instance_class)
-        self.push(self.inventory, type_name, dest)
-        if self.nested_groups:
-            self.push_group(self.inventory, 'types', type_name)
+        if self.group_by_instance_type:
+            type_name = self.to_safe('type_' + instance.instance_class)
+            self.push(self.inventory, type_name, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'types', type_name)
+
+        # Inventory: Group by VPC
+        if self.group_by_vpc_id and instance.subnet_group and instance.subnet_group.vpc_id:
+            vpc_id_name = self.to_safe('vpc_id_' + instance.subnet_group.vpc_id)
+            self.push(self.inventory, vpc_id_name, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'vpcs', vpc_id_name)
 
         # Inventory: Group by security group
-        try:
-            if instance.security_group:
-                key = self.to_safe("security_group_" + instance.security_group.name)
-                self.push(self.inventory, key, dest)
-                if self.nested_groups:
-                    self.push_group(self.inventory, 'security_groups', key)
+        if self.group_by_security_group:
+            try:
+                if instance.security_group:
+                    key = self.to_safe("security_group_" + instance.security_group.name)
+                    self.push(self.inventory, key, dest)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'security_groups', key)
 
-        except AttributeError:
-            print 'Package boto seems a bit older.'
-            print 'Please upgrade boto >= 2.3.0.'
-            sys.exit(1)
+            except AttributeError:
+                print 'Package boto seems a bit older.'
+                print 'Please upgrade boto >= 2.3.0.'
+                sys.exit(1)
 
         # Inventory: Group by engine
-        self.push(self.inventory, self.to_safe("rds_" + instance.engine), dest)
-        if self.nested_groups:
-            self.push_group(self.inventory, 'rds_engines', self.to_safe("rds_" + instance.engine))
+        if self.group_by_rds_engine:
+            self.push(self.inventory, self.to_safe("rds_" + instance.engine), dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'rds_engines', self.to_safe("rds_" + instance.engine))
 
         # Inventory: Group by parameter group
-        self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
-        if self.nested_groups:
-            self.push_group(self.inventory, 'rds_parameter_groups', self.to_safe("rds_parameter_group_" + instance.parameter_group.name))
+        if self.group_by_rds_parameter_group:
+            self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'rds_parameter_groups', self.to_safe("rds_parameter_group_" + instance.parameter_group.name))
 
         # Global Tag: all RDS instances
         self.push(self.inventory, 'rds', dest)
