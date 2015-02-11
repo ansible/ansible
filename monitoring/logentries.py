@@ -35,11 +35,20 @@ options:
         choices: [ 'present', 'absent' ]
         required: false
         default: present
+    name:
+        description:
+            - name of the log
+        required: false
+    type:
+        description:
+            - type of the log
+        required: false
+
 notes:
     - Requires the LogEntries agent which can be installed following the instructions at logentries.com
 '''
 EXAMPLES = '''
-- logentries: path=/var/log/nginx/access.log state=present
+- logentries: path=/var/log/nginx/access.log state=present name=nginx-access-log
 - logentries: path=/var/log/nginx/error.log state=absent
 '''
 
@@ -53,7 +62,7 @@ def query_log_status(module, le_path, path, state="present"):
 
         return False
 
-def follow_log(module, le_path, logs):
+def follow_log(module, le_path, logs, name=None, logtype=None):
     """ Follows one or more logs if not already followed. """
 
     followed_count = 0
@@ -64,7 +73,13 @@ def follow_log(module, le_path, logs):
 
         if module.check_mode:
             module.exit_json(changed=True)
-        rc, out, err = module.run_command([le_path, 'follow', log])
+
+        cmd = [le_path, 'follow', log]
+        if name != None:
+            cmd.append('--name ' + str(name))
+        if logtype != None:
+            cmd.append('--type ' + str(logtype))
+        rc, out, err = module.run_command(' '.join(cmd))
 
         if not query_log_status(module, le_path, log):
             module.fail_json(msg="failed to follow '%s': %s" % (log, err.strip()))
@@ -104,8 +119,10 @@ def unfollow_log(module, le_path, logs):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path = dict(aliases=["name"], required=True),
-            state = dict(default="present", choices=["present", "followed", "absent", "unfollowed"])
+            path = dict(required=True),
+            state = dict(default="present", choices=["present", "followed", "absent", "unfollowed"]),
+            name = dict(required=False, default=None),
+            type = dict(required=False, default=None)
         ),
         supports_check_mode=True
     )
@@ -119,7 +136,7 @@ def main():
     logs = filter(None, logs)
 
     if p["state"] in ["present", "followed"]:
-        follow_log(module, le_path, logs)
+        follow_log(module, le_path, logs, name=p['name'], logtype=p['type'])
 
     elif p["state"] in ["absent", "unfollowed"]:
         unfollow_log(module, le_path, logs)
