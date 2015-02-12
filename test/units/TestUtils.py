@@ -512,15 +512,15 @@ class TestUtils(unittest.TestCase):
         self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
 
     def test_to_unicode(self):
-        uni = ansible.utils.to_unicode(u'ansible')
+        uni = ansible.utils.unicode.to_unicode(u'ansible')
         self.assertTrue(isinstance(uni, unicode))
         self.assertEqual(uni, u'ansible')
 
-        none = ansible.utils.to_unicode(None)
+        none = ansible.utils.unicode.to_unicode(None, nonstring='passthru')
         self.assertTrue(isinstance(none, type(None)))
         self.assertTrue(none is None)
 
-        utf8 = ansible.utils.to_unicode('ansible')
+        utf8 = ansible.utils.unicode.to_unicode('ansible')
         self.assertTrue(isinstance(utf8, unicode))
         self.assertEqual(utf8, u'ansible')
 

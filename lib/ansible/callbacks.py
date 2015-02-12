@@ -458,11 +458,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if type(results) == dict:
             item = results.get('item', None)
             if isinstance(item, unicode):
-                item = utils.to_bytes(item)
+                item = utils.unicode.to_bytes(item)
             results = basic.json_dict_unicode_to_bytes(results)
         else:
-            results = utils.to_bytes(results)
-        host = utils.to_bytes(host)
+            results = utils.unicode.to_bytes(results)
+        host = utils.unicode.to_bytes(host)
         if item:
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
@@ -610,13 +610,13 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_no_hosts_remaining')
 
     def on_task_start(self, name, is_conditional):
-        name = utils.to_bytes(name)
+        name = utils.unicode.to_bytes(name)
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
 
         if hasattr(self, 'start_at'):
-            self.start_at = utils.to_bytes(self.start_at)
+            self.start_at = utils.unicode.to_bytes(self.start_at)
             if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
                 # we found out match, we can get rid of this now
                 del self.start_at
@@ -630,7 +630,7 @@ class PlaybookCallbacks(object):
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
             if isinstance(name, str):
-                name = utils.to_unicode(name)
+                name = utils.unicode.to_unicode(name)
             msg = u'Perform task: %s (y/n/c): ' % name
             if sys.stdout.encoding:
                 msg = msg.encode(sys.stdout.encoding, errors='replace')
