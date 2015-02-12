@@ -384,6 +384,10 @@ Hash types available depend on the master system running ansible,
 Other Useful Filters
 --------------------
 
+To use one value on true and another on false::
+
+   {{ name == "John" | ternary('Mr','Ms') }}
+
 To concatenate a list into a string::
 
    {{ list | join(" ") }}
