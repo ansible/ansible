@@ -8,7 +8,7 @@ Thanks very much for your interest in Ansible.  It sincerely means a lot to us.
 On September 26, 2014, due to enormous levels of contribution to the project Ansible decided to reorganize module repos, making it easier
 for developers to work on the project and for us to more easily manage new contributions and tickets.
 
-We split modules from the main project off into two repos, http://github.com/ansible/ansible-modules-core and http://github.com/ansible/ansible-modules-extras
+We split modules from the main project off into two repos, https://github.com/ansible/ansible-modules-core and https://github.com/ansible/ansible-modules-extras
 
 If you would still like this ticket attended to, we will need your help in having it reopened in one of the two new repos, and instructions are provided below.
 
