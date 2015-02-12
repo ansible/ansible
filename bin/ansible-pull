@@ -40,7 +40,6 @@
 
 import os
 import shutil
-import subprocess
 import sys
 import datetime
 import socket
@@ -135,6 +134,12 @@ def main(args):
                     help="vault password file")
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
                       help='ask for sudo password')
+    parser.add_option('-t', '--tags', dest='tags', default=False,
+                      help='only run plays and tasks tagged with these values')
+    parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
+                      help='adds the hostkey for the repo url if not already added')
+    parser.add_option('--key-file', dest='key_file',
+                      help="Pass '-i <key_file>' to the SSH arguments used by git.")
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -149,7 +154,7 @@ def main(args):
         return 1
 
     now = datetime.datetime.now()
-    print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
+    print now.strftime("Starting ansible-pull at %F %T")
 
     # Attempt to use the inventory passed in as an argument
     # It might not yet have been downloaded so use localhost if note
@@ -168,6 +173,15 @@ def main(args):
 
     if options.checkout:
         repo_opts += ' version=%s' % options.checkout
+
+    # Only git module is supported
+    if options.module_name == DEFAULT_REPO_TYPE:
+        if options.accept_host_key:
+            repo_opts += ' accept_hostkey=yes'
+
+        if options.key_file:
+            repo_opts += ' key_file=%s' % options.key_file
+
     path = utils.plugins.module_finder.find_plugin(options.module_name)
     if path is None:
         sys.stderr.write("module '%s' not found.\n" % options.module_name)
@@ -175,6 +189,8 @@ def main(args):
     cmd = 'ansible localhost -i "%s" %s -m %s -a "%s"' % (
             inv_opts, base_opts, options.module_name, repo_opts
             )
+    for ev in options.extra_vars:
+        cmd += ' -e "%s"' % ev
 
     if options.sleep:
         try:
@@ -192,7 +208,7 @@ def main(args):
 
     if rc != 0:
         if options.force:
-            print "Unable to update repository. Continuing with (forced) run of playbook."
+            print >>sys.stderr, "Unable to update repository. Continuing with (forced) run of playbook."
         else:
             return rc
     elif options.ifchanged and '"changed": true' not in out:
@@ -214,6 +230,8 @@ def main(args):
         cmd += ' -e "%s"' % ev
     if options.ask_sudo_pass:
         cmd += ' -K'
+    if options.tags:
+        cmd += ' -t "%s"' % options.tags
     os.chdir(options.dest)
 
     # RUN THE PLAYBOOK COMMAND

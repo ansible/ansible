@@ -57,7 +57,7 @@ class Connection(object):
             else:
                 local_cmd = cmd
         else:
-            local_cmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            local_cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
         executable = executable.split()[0] if executable else None
 
         vvv("EXEC %s" % (local_cmd), host=self.host)

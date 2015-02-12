@@ -131,6 +131,11 @@ class TestFilters(unittest.TestCase):
                                                       'a\\1')
         assert a == 'ansible'
 
+    def test_to_uuid(self):
+        a = ansible.runner.filter_plugins.core.to_uuid('example.com')
+
+        assert a == 'ae780c3a-a3ab-53c2-bfb4-098da300b3fe'
+
     #def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.

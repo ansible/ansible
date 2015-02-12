@@ -29,8 +29,10 @@ from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
+from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum_s, md5, md5s
 from ansible.callbacks import display
 from ansible.module_utils.splitter import split_args, unquote
+from ansible.module_utils.basic import heuristic_log_sanitize
 import ansible.constants as C
 import ast
 import time
@@ -45,7 +47,6 @@ import warnings
 import traceback
 import getpass
 import sys
-import json
 import subprocess
 import contextlib
 
@@ -63,14 +64,10 @@ CODE_REGEX = re.compile(r'(?:{%|%})')
 
 
 try:
-    import json
-except ImportError:
+    # simplejson can be much faster if it's available
     import simplejson as json
-
-try:
-    from hashlib import md5 as _md5
 except ImportError:
-    from md5 import md5 as _md5
+    import json
 
 PASSLIB_AVAILABLE = False
 try:
@@ -362,7 +359,7 @@ def repo_url_to_role_name(repo_url):
     # gets the role name out of a repo like 
     # http://git.example.com/repos/repo.git" => "repo"
 
-    if '://' not in repo_url:
+    if '://' not in repo_url and '@' not in repo_url:
         return repo_url
     trailing_path = repo_url.split('/')[-1]
     if trailing_path.endswith('.git'):
@@ -387,15 +384,12 @@ def role_spec_parse(role_spec):
   
     role_spec = role_spec.strip()
     role_version = ''
+    default_role_versions = dict(git='master', hg='tip')
     if role_spec == "" or role_spec.startswith("#"):
         return (None, None, None, None)
 
     tokens = [s.strip() for s in role_spec.split(',')]
     
-    if not tokens[0].endswith('.tar.gz'): 
-        # pick a reasonable default branch
-        role_version = 'master'
-
     # assume https://github.com URLs are git+https:// URLs and not
     # tarballs unless they end in '.zip'
     if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
@@ -412,25 +406,53 @@ def role_spec_parse(role_spec):
         role_name = tokens[2]
     else:
         role_name = repo_url_to_role_name(tokens[0])
+    if scm and not role_version:
+        role_version = default_role_versions.get(scm, '')
     return dict(scm=scm, src=role_url, version=role_version, name=role_name)
 
 
 def role_yaml_parse(role):
-    if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-        role["src"] = "git+" + role["src"]
-    if '+' in role["src"]:
-        (scm, src) = role["src"].split('+')
-        role["scm"] = scm
-        role["src"] = src
-    if 'name' not in role:
-        role["name"] = repo_url_to_role_name(role["src"])
+    if 'role' in role:
+        # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+        role_info = role_spec_parse(role['role'])
+        if isinstance(role_info, dict):
+            # Warning: Slight change in behaviour here.  name may be being
+            # overloaded.  Previously, name was only a parameter to the role.
+            # Now it is both a parameter to the role and the name that
+            # ansible-galaxy will install under on the local system.
+            if 'name' in role and 'name' in role_info:
+                del role_info['name']
+            role.update(role_info)
+    else:
+        # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+        if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+            role["src"] = "git+" + role["src"]
+
+        if '+' in role["src"]:
+            (scm, src) = role["src"].split('+')
+            role["scm"] = scm
+            role["src"] = src
+
+        if 'name' not in role:
+            role["name"] = repo_url_to_role_name(role["src"])
+
+        if 'version' not in role:
+            role['version'] = ''
+
+        if 'scm' not in role:
+            role['scm'] = None
+
     return role
 
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
+    try:
+        loaded = json.loads(data)
+    except ValueError,e:
+        raise errors.AnsibleError("Unable to read provided data as JSON: %s" % str(e))
 
-    return json.loads(data)
+    return loaded
 
 def _clean_data(orig_data, from_remote=False, from_inventory=False):
     ''' remove jinja2 template tags from a string '''
@@ -738,6 +760,11 @@ def parse_yaml_from_file(path, vault_password=None):
 
     vault = VaultLib(password=vault_password)
     if vault.is_encrypted(data):
+        # if the file is encrypted and no password was specified,
+        # the decrypt call would throw an error, but we check first
+        # since the decrypt function doesn't know the file name
+        if vault_password is None:
+            raise errors.AnsibleError("A vault password must be specified to decrypt %s" % path)
         data = vault.decrypt(data)
         show_content = False
 
@@ -794,45 +821,16 @@ def merge_hash(a, b):
 
     return result
 
-def md5s(data):
-    ''' Return MD5 hex digest of data. '''
-
-    digest = _md5()
-    try:
-        digest.update(data)
-    except UnicodeEncodeError:
-        digest.update(data.encode('utf-8'))
-    return digest.hexdigest()
-
-def md5(filename):
-    ''' Return MD5 hex digest of local file, None if file is not present or a directory. '''
-
-    if not os.path.exists(filename) or os.path.isdir(filename):
-        return None
-    digest = _md5()
-    blocksize = 64 * 1024
-    try:
-        infile = open(filename, 'rb')
-        block = infile.read(blocksize)
-        while block:
-            digest.update(block)
-            block = infile.read(blocksize)
-        infile.close()
-    except IOError, e:
-        raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
-    return digest.hexdigest()
-
 def default(value, function):
     ''' syntactic sugar around lazy evaluation of defaults '''
     if value is None:
         return function()
     return value
 
-def _gitinfo():
+
+def _git_repo_info(repo_path):
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
-
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
@@ -842,7 +840,7 @@ def _gitinfo():
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
                 else:
-                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+                    repo_path = os.path.join(repo_path[:-4], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
@@ -853,22 +851,50 @@ def _gitinfo():
             f = open(branch_path)
             commit = f.readline()[:10]
             f.close()
-            date = time.localtime(os.stat(branch_path).st_mtime)
-            if time.daylight == 0:
-                offset = time.timezone
-            else:
-                offset = time.altzone
-            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+        else:
+            # detached HEAD
+            commit = branch[:10]
+            branch = 'detached HEAD'
+            branch_path = os.path.join(repo_path, "HEAD")
+
+        date = time.localtime(os.stat(branch_path).st_mtime)
+        if time.daylight == 0:
+            offset = time.timezone
+        else:
+            offset = time.altzone
+        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+            time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
     return result
+
+
+def _gitinfo():
+    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    repo_path = os.path.join(basedir, '.git')
+    result = _git_repo_info(repo_path)
+    submodules = os.path.join(basedir, '.gitmodules')
+    if not os.path.exists(submodules):
+       return result
+    f = open(submodules)
+    for line in f:
+        tokens = line.strip().split(' ')
+        if tokens[0] == 'path':
+            submodule_path = tokens[2]
+            submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
+            if not submodule_info:
+                submodule_info = ' not found - use git submodule update --init ' + submodule_path
+            result += "\n  {0}: {1}".format(submodule_path, submodule_info)
+    f.close()
+    return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
     gitinfo = _gitinfo()
     if gitinfo:
         result = result + " {0}".format(gitinfo)
+    result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
     return result
 
 def version_info(gitinfo=False):
@@ -911,34 +937,18 @@ def sanitize_output(str):
 
     private_keys = ['password', 'login_password']
 
-    filter_re = [
-        # filter out things like user:pass@foo/whatever
-        # and http://username:pass@wherever/foo
-        re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'),
-    ]
+    parts = parse_kv(str)
+    output = []
+    for (k, v) in parts.items():
+        if k in private_keys:
+            output.append("%s=VALUE_HIDDEN" % k)
+            continue
+        else:
+            v = heuristic_log_sanitize(v)
+        output.append('%s=%s' % (k, v))
+    output = ' '.join(output)
+    return output
 
-    parts = str.split()
-    output = ''
-    for part in parts:
-        try:
-            (k,v) = part.split('=', 1)
-            if k in private_keys:
-                output += " %s=VALUE_HIDDEN" % k
-            else:
-                found = False
-                for filter in filter_re:
-                    m = filter.match(v)
-                    if m:
-                        d = m.groupdict()
-                        output += " %s=%s" % (k, d['before'] + "********" + d['after'])
-                        found = True
-                        break
-                if not found:
-                    output += " %s" % part
-        except:
-            output += " %s" % part
-
-    return output.strip()
 
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
@@ -968,6 +978,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+        help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
@@ -1037,6 +1049,21 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
 
     return parser
+
+def parse_extra_vars(extra_vars_opts, vault_pass):
+    extra_vars = {}
+    for extra_vars_opt in extra_vars_opts:
+        extra_vars_opt = to_unicode(extra_vars_opt)
+        if extra_vars_opt.startswith(u"@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            extra_vars = combine_vars(extra_vars, parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
+        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+            # Arguments as YAML
+            extra_vars = combine_vars(extra_vars, parse_yaml(extra_vars_opt))
+        else:
+            # Arguments as Key-value
+            extra_vars = combine_vars(extra_vars, parse_kv(extra_vars_opt))
+    return extra_vars
 
 def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
 
@@ -1144,7 +1171,7 @@ def boolean(value):
     else:
         return False
 
-def make_sudo_cmd(sudo_user, executable, cmd):
+def make_sudo_cmd(sudo_exe, sudo_user, executable, cmd):
     """
     helper function for connection plugins to create sudo commands
     """
@@ -1159,7 +1186,7 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-        C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
+        sudo_exe, sudo_exe, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
@@ -1177,12 +1204,24 @@ def make_su_cmd(su_user, executable, cmd):
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
 
+# For v2, consider either using kitchen or copying my code from there for
+# to_unicode and to_bytes handling (TEK)
 _TO_UNICODE_TYPES = (unicode, type(None))
 
 def to_unicode(value):
+    # Use with caution -- this function is not encoding safe (non-utf-8 values
+    # will cause tracebacks if they contain bytes from 0x80-0xff inclusive)
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
+
+def to_bytes(value):
+    # Note: value is assumed to be a basestring to mirror to_unicode.  Better
+    # implementations (like kitchen.text.converters.to_bytes) bring that check
+    # into the function
+    if isinstance(value, str):
+        return value
+    return value.encode('utf-8')
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks

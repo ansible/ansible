@@ -18,8 +18,16 @@
 
 #######################################################
 
-#__requires__ = ['ansible']
-#import pkg_resources
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
 
 import sys
 import os
@@ -75,8 +83,6 @@ def main(args):
     )
     #parser.add_option('--vault-password', dest="vault_password",
     #    help="password for vault encrypted files")
-    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-        help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
@@ -134,17 +140,7 @@ def main(args):
     if not options.ask_vault_pass and options.vault_password_file:
         vault_pass = utils.read_vault_file(options.vault_password_file)
 
-    extra_vars = {}
-    for extra_vars_opt in options.extra_vars:
-        if extra_vars_opt.startswith("@"):
-            # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
-        elif extra_vars_opt and extra_vars_opt[0] in '[{':
-            # Arguments as YAML
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
-        else:
-            # Arguments as Key-value
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
+    extra_vars = utils.parse_extra_vars(options.extra_vars, vault_pass)
 
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
@@ -158,9 +154,23 @@ def main(args):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
-    inventory.subset(options.subset)
+
+    # Note: slightly wrong, this is written so that implicit localhost
+    # (which is not returned in list_hosts()) is taken into account for
+    # warning if inventory is empty.  But it can't be taken into account for
+    # checking if limit doesn't match any hosts.  Instead we don't worry about
+    # limit if only implicit localhost was in inventory to start with.
+    #
+    # Fix this in v2
+    no_hosts = False
     if len(inventory.list_hosts()) == 0:
-        raise errors.AnsibleError("provided hosts list is empty")
+        # Empty inventory
+        utils.warning("provided hosts list is empty, only localhost is available")
+        no_hosts = True
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0 and no_hosts is False:
+        # Invalid limit
+        raise errors.AnsibleError("Specified --limit does not match any hosts")
 
     # run all playbooks specified on the command line
     for playbook in args:
@@ -276,7 +286,7 @@ def main(args):
 
             retries = failed_hosts + unreachable_hosts
 
-            if len(retries) > 0:
+            if C.RETRY_FILES_ENABLED and len(retries) > 0:
                 filename = pb.generate_retry_inventory(retries)
                 if filename:
                     display("           to retry, use: --limit @%s\n" % filename)

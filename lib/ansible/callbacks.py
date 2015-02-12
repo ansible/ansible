@@ -27,6 +27,7 @@ import fcntl
 import constants
 import locale
 from ansible.color import stringc
+from ansible.module_utils import basic
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
@@ -411,7 +412,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            display("<job %s> polling, %ss remaining" % (jid, clock), runner=self.runner)
+            display("<job %s> polling on %s, %ss remaining" % (jid, host, clock), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
@@ -450,13 +451,18 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_unreachable(self, host, results):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         item = None
         if type(results) == dict:
             item = results.get('item', None)
+            if isinstance(item, unicode):
+                item = utils.to_bytes(item)
+            results = basic.json_dict_unicode_to_bytes(results)
+        else:
+            results = utils.to_bytes(results)
+        host = utils.to_bytes(host)
         if item:
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
@@ -465,9 +471,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -500,9 +505,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         item = host_result.get('item', None)
 
@@ -542,9 +546,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_skipped(self, host, item=None):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         if constants.DISPLAY_SKIPPED_HOSTS:
             msg = ''
@@ -607,11 +610,13 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_no_hosts_remaining')
 
     def on_task_start(self, name, is_conditional):
+        name = utils.to_bytes(name)
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
 
         if hasattr(self, 'start_at'):
+            self.start_at = utils.to_bytes(self.start_at)
             if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
                 # we found out match, we can get rid of this now
                 del self.start_at
@@ -624,7 +629,13 @@ class PlaybookCallbacks(object):
         if hasattr(self, 'start_at'): # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
-            msg = ('Perform task: %s (y/n/c): ' % name).encode(sys.stdout.encoding)
+            if isinstance(name, str):
+                name = utils.to_unicode(name)
+            msg = u'Perform task: %s (y/n/c): ' % name
+            if sys.stdout.encoding:
+                msg = msg.encode(sys.stdout.encoding, errors='replace')
+            else:
+                msg = msg.encode('utf-8')
             resp = raw_input(msg)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
@@ -674,7 +685,7 @@ class PlaybookCallbacks(object):
             result = prompt(msg, private)
 
         # if result is false and default is not None
-        if not result and default:
+        if not result and default is not None:
             result = default
 
 

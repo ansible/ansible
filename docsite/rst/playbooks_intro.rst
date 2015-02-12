@@ -151,8 +151,8 @@ Just `Control-C` to kill it and run it again with `-K`.
    These are deleted immediately after the command is executed.  This
    only occurs when sudoing from a user like 'bob' to 'timmy', not
    when going from 'bob' to 'root', or logging in directly as 'bob' or
-   'root'.  If this concerns you that this data is briefly readable
-   (not writable), avoid transferring uncrypted passwords with
+   'root'.  If it concerns you that this data is briefly readable
+   (not writable), avoid transferring unencrypted passwords with
    `sudo_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
@@ -196,7 +196,7 @@ it is recommended that you use the more conventional "module: options" format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
 
-Here is what a basic task looks like, as with most modules,
+Here is what a basic task looks like. As with most modules,
 the service module takes key=value arguments::
 
    tasks:

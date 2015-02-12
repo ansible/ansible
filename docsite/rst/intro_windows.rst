@@ -45,7 +45,7 @@ In group_vars/windows.yml, define the following inventory variables::
     # ansible-vault edit group_vars/windows.yml
 
     ansible_ssh_user: Administrator
-    ansible_ssh_pass: SekritPasswordGoesHere
+    ansible_ssh_pass: SecretPasswordGoesHere
     ansible_ssh_port: 5986
     ansible_connection: winrm
 

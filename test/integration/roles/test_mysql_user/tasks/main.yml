@@ -118,6 +118,34 @@
 
 - include: remove_user.yml user_name={{user_name_2}} user_password={{ user_password_1 }}
 
+- name: give user access to database via wildcard
+  mysql_user: name={{ user_name_1 }} priv=%db.*:SELECT append_privs=yes password={{ user_password_1 }}
+
+- name: show grants access for user1 on multiple database
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
+  register: result
+
+- name: assert grant access for user1 on multiple database
+  assert:
+    that:
+      - "'%db' in result.stdout"
+      - "'SELECT' in result.stdout"
+
+- name: change user access to database via wildcard
+  mysql_user: name={{ user_name_1 }} priv=%db.*:INSERT append_privs=yes password={{ user_password_1 }}
+
+- name: show grants access for user1 on multiple database
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
+  register: result
+
+- name: assert grant access for user1 on multiple database
+  assert:
+    that:
+      - "'%db' in result.stdout"
+      - "'INSERT' in result.stdout"
+
+- include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
+
 # ============================================================
 # Update user password for a user.
 # Assert the user password is updated and old password can no longer be used.
@@ -125,22 +153,22 @@
 - include: user_password_update_test.yml 
 
 # ============================================================
-# Assert create user with SELECT privileges, attemp to create database and update privileges to create database
+# Assert create user with SELECT privileges, attempt to create database and update privileges to create database
 #
 - include: test_privs.yml current_privilege=SELECT current_append_privs=no
 
 # ============================================================
-# Assert creating user with SELECT privileges, attemp to create database and append privileges to create database
+# Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege=DROP current_append_privs=yes
 
 # ============================================================
-# Assert create user with SELECT privileges, attemp to create database and update privileges to create database
+# Assert create user with SELECT privileges, attempt to create database and update privileges to create database
 #
 - include: test_privs.yml current_privilege='UPDATE,ALTER' current_append_privs=no
 
 # ============================================================
-# Assert creating user with SELECT privileges, attemp to create database and append privileges to create database
+# Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes
 

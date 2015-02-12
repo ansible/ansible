@@ -53,9 +53,11 @@ def _encode_script(script, as_list=False):
         return cmd_parts
     return ' '.join(cmd_parts)
 
-def _build_file_cmd(cmd_parts):
+def _build_file_cmd(cmd_parts, quote_args=True):
     '''Build command line to run a file, given list of file name plus args.'''
-    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts])
+    if quote_args:
+        cmd_parts = ['"%s"' % x for x in cmd_parts]
+    return ' '.join(['&'] + cmd_parts)
 
 class ShellModule(object):
 
@@ -84,12 +86,24 @@ class ShellModule(object):
         # FIXME: Support system temp path!
         return _encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
-    def md5(self, path):
+    def expand_user(self, user_home_path):
+        # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
+        # not seem to work remotely, though by default we are always starting
+        # in the user's home directory.
+        if user_home_path == '~':
+            script = 'Write-Host (Get-Location).Path'
+        elif user_home_path.startswith('~\\'):
+            script = 'Write-Host ((Get-Location).Path + "%s")' % _escape(user_home_path[1:])
+        else:
+            script = 'Write-Host "%s"' % _escape(user_home_path)
+        return _encode_script(script)
+
+    def checksum(self, path, python_interp):
         path = _escape(path)
         script = '''
             If (Test-Path -PathType Leaf "%(path)s")
             {
-                $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
+                $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
                 $fp = [System.IO.File]::Open("%(path)s", [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
                 [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
                 $fp.Dispose();
@@ -110,7 +124,7 @@ class ShellModule(object):
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]
-        script = _build_file_cmd(cmd_parts)
+        script = _build_file_cmd(cmd_parts, quote_args=False)
         if rm_tmp:
             rm_tmp = _escape(rm_tmp)
             script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)

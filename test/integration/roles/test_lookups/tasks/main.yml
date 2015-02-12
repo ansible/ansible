@@ -81,7 +81,7 @@
         - "wc_result.stdout == '9'"
         - "cat_result.stdout == newpass"
 
-# ENV LOOKUP        
+# ENV LOOKUP
 
 - name: get first environment var name
   shell: env | head -n1 | cut -d\= -f1
@@ -92,16 +92,16 @@
   register: known_var_value 
 
 - name: use env lookup to get known var
-  set_fact: 
+  set_fact:
     test_val: "{{ lookup('env', known_var_name.stdout) }}"
 
 - debug: var=known_var_name.stdout
 - debug: var=known_var_value.stdout
-- debug: var=test_val  
+- debug: var=test_val
 
 - name: compare values
   assert:
-    that: 
+    that:
         - "test_val == known_var_value.stdout"
 
 
@@ -109,11 +109,23 @@
 
 # https://github.com/ansible/ansible/issues/6550
 - name: confirm pipe lookup works with a single positional arg
-  debug: msg="{{ lookup('pipe', 'ls') }}"         
-
-# https://github.com/ansible/ansible/issues/6550
-- name: confirm pipe lookup works with multiple positional args
-  debug: msg="{{ lookup('pipe', 'ls -l /tmp') }}"         
+  debug: msg="{{ lookup('pipe', 'ls') }}"
 
 
+# LOOKUP TEMPLATING
+
+- name: use bare interpolation
+  debug: msg="got {{item}}"
+  with_items: things1
+  register: bare_var
+
+- name: verify that list was interpolated
+  assert:
+    that:
+        - "bare_var.results[0].item == 1"
+        - "bare_var.results[1].item == 2"
+
+- name: use list with undefined var in it
+  debug: msg={{item}}
+  with_items: things2
 

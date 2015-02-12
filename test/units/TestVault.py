@@ -36,6 +36,15 @@ except ImportError:
 
 class TestVaultLib(TestCase):
 
+    def _is_fips(self):
+        try:
+            data = open('/proc/sys/crypto/fips_enabled').read().strip()
+        except:
+            return False
+        if data != '1':
+            return False
+        return True
+
     def test_methods_exist(self):
         v = VaultLib('ansible')
         slots = ['is_encrypted',
@@ -77,6 +86,8 @@ class TestVaultLib(TestCase):
         assert v.version == "9.9"
 
     def test_encrypt_decrypt_aes(self):
+        if self._is_fips():
+            raise SkipTest('MD5 not available on FIPS enabled systems')
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         v = VaultLib('ansible')
@@ -84,7 +95,7 @@ class TestVaultLib(TestCase):
         enc_data = v.encrypt("foobar")
         dec_data = v.decrypt(enc_data)
         assert enc_data != "foobar", "encryption failed"
-        assert dec_data == "foobar", "decryption failed"           
+        assert dec_data == "foobar", "decryption failed"
 
     def test_encrypt_decrypt_aes256(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:

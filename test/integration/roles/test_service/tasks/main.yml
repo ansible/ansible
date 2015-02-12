@@ -6,7 +6,7 @@
   assert:
     that:
     - "install_result.dest == '/usr/sbin/ansible_test_service'"
-    - "install_result.md5sum == '9ad49eaf390b30b1206b793ec71200ed'"
+    - "install_result.checksum == 'baaa79448a976922c080f1971321d203c6df0961'"
     - "install_result.state == 'file'"
     - "install_result.mode == '0755'"
 
@@ -89,6 +89,16 @@
   assert:
     that:
     - "disable_result.enabled == false"
+
+- name: try to enable a broken service
+  service: name=ansible_broken_test enabled=yes
+  register: broken_enable_result
+  ignore_errors: True
+
+- name: assert that the broken test failed
+  assert:
+    that:
+    - "broken_enable_result.failed == True"
 
 - name: remove the test daemon script
   file: path=/usr/sbin/ansible_test_service state=absent

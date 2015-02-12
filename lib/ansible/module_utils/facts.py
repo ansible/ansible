@@ -29,6 +29,7 @@ import socket
 import struct
 import datetime
 import getpass
+import pwd
 import ConfigParser
 import StringIO
 
@@ -46,7 +47,7 @@ except ImportError:
     import simplejson as json
 
 # --------------------------------------------------------------
-# timeout function to make sure some fact gathering 
+# timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
 class TimeoutError(Exception):
@@ -82,19 +83,22 @@ class Facts(object):
     subclass Facts.
     """
 
-    _I386RE = re.compile(r'i[3456]86')
+    # i86pc is a Solaris and derivatives-ism
+    _I386RE = re.compile(r'i([3456]86|86pc)')
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
-    OSDIST_DICT = { '/etc/redhat-release': 'RedHat',
-                    '/etc/vmware-release': 'VMwareESX',
-                    '/etc/openwrt_release': 'OpenWrt',
-                    '/etc/system-release': 'OtherLinux',
-                    '/etc/alpine-release': 'Alpine',
-                    '/etc/release': 'Solaris',
-                    '/etc/arch-release': 'Archlinux',
-                    '/etc/SuSE-release': 'SuSE',
-                    '/etc/gentoo-release': 'Gentoo',
-                    '/etc/os-release': 'Debian' }
+    OSDIST_LIST = ( ('/etc/redhat-release', 'RedHat'),
+                    ('/etc/vmware-release', 'VMwareESX'),
+                    ('/etc/openwrt_release', 'OpenWrt'),
+                    ('/etc/system-release', 'OtherLinux'),
+                    ('/etc/alpine-release', 'Alpine'),
+                    ('/etc/release', 'Solaris'),
+                    ('/etc/arch-release', 'Archlinux'),
+                    ('/etc/SuSE-release', 'SuSE'),
+                    ('/etc/os-release', 'SuSE'),
+                    ('/etc/gentoo-release', 'Gentoo'),
+                    ('/etc/os-release', 'Debian'),
+                    ('/etc/lsb-release', 'Mandriva') )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -116,19 +120,23 @@ class Facts(object):
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
-    def __init__(self):
+    def __init__(self, load_on_init=True):
+
         self.facts = {}
-        self.get_platform_facts()
-        self.get_distribution_facts()
-        self.get_cmdline()
-        self.get_public_ssh_host_keys()
-        self.get_selinux_facts()
-        self.get_pkg_mgr_facts()
-        self.get_lsb_facts()
-        self.get_date_time_facts()
-        self.get_user_facts()
-        self.get_local_facts()
-        self.get_env_facts()
+
+        if load_on_init:
+            self.get_platform_facts()
+            self.get_distribution_facts()
+            self.get_cmdline()
+            self.get_public_ssh_host_keys()
+            self.get_selinux_facts()
+            self.get_fips_facts()
+            self.get_pkg_mgr_facts()
+            self.get_lsb_facts()
+            self.get_date_time_facts()
+            self.get_user_facts()
+            self.get_local_facts()
+            self.get_env_facts()
 
     def populate(self):
         return self.facts
@@ -185,7 +193,7 @@ class Facts(object):
                 # if that fails, skip it
                 rc, out, err = module.run_command(fn)
             else:
-                out = open(fn).read()
+                out = get_file_content(fn, default='')
 
             # load raw json
             fact = 'loading %s' % fact_base
@@ -230,6 +238,8 @@ class Facts(object):
             FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
         )
 
+        # TODO: Rewrite this to use the function references in a dict pattern
+        # as it's much cleaner than this massive if-else
         if self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
             rc, out, err = module.run_command("/usr/bin/oslevel")
@@ -268,54 +278,116 @@ class Facts(object):
             self.facts['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
-            for (path, name) in Facts.OSDIST_DICT.items():
-                if os.path.exists(path) and os.path.getsize(path) > 0:
-                    if self.facts['distribution'] == 'Fedora':
-                        pass
-                    elif name == 'RedHat':
-                        data = get_file_content(path)
-                        if 'Red Hat' in data:
+            for (path, name) in Facts.OSDIST_LIST:
+                if os.path.exists(path):
+                    if os.path.getsize(path) > 0:
+                        if self.facts['distribution'] in ('Fedora', ):
+                            # Once we determine the value is one of these distros
+                            # we trust the values are always correct
+                            break
+                        elif name == 'RedHat':
+                            data = get_file_content(path)
+                            if 'Red Hat' in data:
+                                self.facts['distribution'] = name
+                            else:
+                                self.facts['distribution'] = data.split()[0]
+                            break
+                        elif name == 'OtherLinux':
+                            data = get_file_content(path)
+                            if 'Amazon' in data:
+                                self.facts['distribution'] = 'Amazon'
+                                self.facts['distribution_version'] = data.split()[-1]
+                                break
+                        elif name == 'OpenWrt':
+                            data = get_file_content(path)
+                            if 'OpenWrt' in data:
+                                self.facts['distribution'] = name
+                                version = re.search('DISTRIB_RELEASE="(.*)"', data)
+                                if version:
+                                    self.facts['distribution_version'] = version.groups()[0]
+                                release = re.search('DISTRIB_CODENAME="(.*)"', data)
+                                if release:
+                                    self.facts['distribution_release'] = release.groups()[0]
+                                break
+                        elif name == 'Alpine':
+                            data = get_file_content(path)
                             self.facts['distribution'] = name
-                        else:
-                            self.facts['distribution'] = data.split()[0]
-                    elif name == 'OtherLinux':
-                        data = get_file_content(path)
-                        if 'Amazon' in data:
-                            self.facts['distribution'] = 'Amazon'
-                            self.facts['distribution_version'] = data.split()[-1]
-                    elif name == 'OpenWrt':
-                        data = get_file_content(path)
-                        if 'OpenWrt' in data:
-                            self.facts['distribution'] = name
-                        version = re.search('DISTRIB_RELEASE="(.*)"', data)
-                        if version:
-                            self.facts['distribution_version'] = version.groups()[0]
-                        release = re.search('DISTRIB_CODENAME="(.*)"', data)
-                        if release:
-                            self.facts['distribution_release'] = release.groups()[0]
-                    elif name == 'Alpine':
-                        data = get_file_content(path)
-                        self.facts['distribution'] = 'Alpine'
-                        self.facts['distribution_version'] = data
-                    elif name == 'Solaris':
-                        data = get_file_content(path).split('\n')[0]
-                        ora_prefix = ''
-                        if 'Oracle Solaris' in data:
-                            data = data.replace('Oracle ','')
-                            ora_prefix = 'Oracle '
-                        self.facts['distribution'] = data.split()[0]
-                        self.facts['distribution_version'] = data.split()[1]
-                        self.facts['distribution_release'] = ora_prefix + data
-                    elif name == 'SuSE':
-                        data = get_file_content(path).splitlines()
-                        for line in data:
-                            if '=' in line:
-                            	self.facts['distribution_release'] = line.split('=')[1].strip()
-                    elif name == 'Debian':
-                        data = get_file_content(path).split('\n')[0]
-                        release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
-                        if release:
-                            self.facts['distribution_release'] = release.groups()[0]
+                            self.facts['distribution_version'] = data
+                            break
+                        elif name == 'Solaris':
+                            data = get_file_content(path).split('\n')[0]
+                            if 'Solaris' in data:
+                                ora_prefix = ''
+                                if 'Oracle Solaris' in data:
+                                    data = data.replace('Oracle ','')
+                                    ora_prefix = 'Oracle '
+                                self.facts['distribution'] = data.split()[0]
+                                self.facts['distribution_version'] = data.split()[1]
+                                self.facts['distribution_release'] = ora_prefix + data
+                                break
+
+                            uname_rc, uname_out, uname_err = module.run_command(['uname', '-v'])
+                            distribution_version = None
+                            if 'SmartOS' in data:
+                                self.facts['distribution'] = 'SmartOS'
+                                if os.path.exists('/etc/product'):
+                                    product_data = dict([l.split(': ', 1) for l in get_file_content('/etc/product').split('\n') if ': ' in l])
+                                    if 'Image' in product_data:
+                                        distribution_version = product_data.get('Image').split()[-1]
+                            elif 'OpenIndiana' in data:
+                                self.facts['distribution'] = 'OpenIndiana'
+                            elif 'OmniOS' in data:
+                                self.facts['distribution'] = 'OmniOS'
+                                distribution_version = data.split()[-1]
+                            elif uname_rc == 0 and 'NexentaOS_' in uname_out:
+                                self.facts['distribution'] = 'Nexenta'
+                                distribution_version = data.split()[-1].lstrip('v')
+
+                            if self.facts['distribution'] in ('SmartOS', 'OpenIndiana', 'OmniOS', 'Nexenta'):
+                                self.facts['distribution_release'] = data.strip()
+                                if distribution_version is not None:
+                                    self.facts['distribution_version'] = distribution_version
+                                elif uname_rc == 0:
+                                    self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
+                                break
+
+                        elif name == 'SuSE':
+                            data = get_file_content(path)
+                            if 'suse' in data.lower():
+                                if path == '/etc/os-release':
+                                    release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+                                    distdata = get_file_content(path).split('\n')[0]
+                                    self.facts['distribution'] = distdata.split('=')[1]
+                                    if release:
+                                        self.facts['distribution_release'] = release.groups()[0]
+                                        break
+                                elif path == '/etc/SuSE-release':
+                                    data = data.splitlines()
+                                    distdata = get_file_content(path).split('\n')[0]
+                                    self.facts['distribution'] = distdata.split()[0]
+                                    for line in data:
+                                        release = re.search('CODENAME *= *([^\n]+)', line)
+                                        if release:
+                                            self.facts['distribution_release'] = release.groups()[0].strip()
+                                            break
+                        elif name == 'Debian':
+                            data = get_file_content(path)
+                            if 'Debian' in data:
+                                release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+                                if release:
+                                    self.facts['distribution_release'] = release.groups()[0]
+                                break
+                        elif name == 'Mandriva':
+                            data = get_file_content(path)
+                            if 'Mandriva' in data:
+                                version = re.search('DISTRIB_RELEASE="(.*)"', data)
+                                if version:
+                                    self.facts['distribution_version'] = version.groups()[0]
+                                release = re.search('DISTRIB_CODENAME="(.*)"', data)
+                                if release:
+                                    self.facts['distribution_release'] = release.groups()[0]
+                                self.facts['distribution'] = name
+                                break
                     else:
                         self.facts['distribution'] = name
 
@@ -394,20 +466,16 @@ class Facts(object):
                 self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
         elif lsb_path is None and os.path.exists('/etc/lsb-release'):
             self.facts['lsb'] = {}
-            f = open('/etc/lsb-release', 'r')
-            try:
-                for line in f.readlines():
-                    value = line.split('=',1)[1].strip()
-                    if 'DISTRIB_ID' in line:
-                        self.facts['lsb']['id'] = value
-                    elif 'DISTRIB_RELEASE' in line:
-                        self.facts['lsb']['release'] = value
-                    elif 'DISTRIB_DESCRIPTION' in line:
-                        self.facts['lsb']['description'] = value
-                    elif 'DISTRIB_CODENAME' in line:
-                        self.facts['lsb']['codename'] = value
-            finally:
-                f.close()
+            for line in get_file_lines('/etc/lsb-release'):
+                value = line.split('=',1)[1].strip()
+                if 'DISTRIB_ID' in line:
+                    self.facts['lsb']['id'] = value
+                elif 'DISTRIB_RELEASE' in line:
+                    self.facts['lsb']['release'] = value
+                elif 'DISTRIB_DESCRIPTION' in line:
+                    self.facts['lsb']['description'] = value
+                elif 'DISTRIB_CODENAME' in line:
+                    self.facts['lsb']['codename'] = value
         else:
             return self.facts
 
@@ -451,6 +519,13 @@ class Facts(object):
                 self.facts['selinux']['type'] = 'unknown'
 
 
+    def get_fips_facts(self):
+        self.facts['fips'] = False
+        data = get_file_content('/proc/sys/crypto/fips_enabled')
+        if data and data == '1':
+            self.facts['fips'] = True
+
+
     def get_date_time_facts(self):
         self.facts['date_time'] = {}
 
@@ -476,6 +551,12 @@ class Facts(object):
     # User
     def get_user_facts(self):
         self.facts['user_id'] = getpass.getuser()
+        pwent = pwd.getpwnam(getpass.getuser())
+        self.facts['user_uid'] = pwent.pw_uid
+        self.facts['user_gid'] = pwent.pw_gid
+        self.facts['user_gecos'] = pwent.pw_gecos
+        self.facts['user_dir'] = pwent.pw_dir
+        self.facts['user_shell'] = pwent.pw_shell
 
     def get_env_facts(self):
         self.facts['env'] = {}
@@ -527,7 +608,11 @@ class LinuxHardware(Hardware):
     """
 
     platform = 'Linux'
-    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+
+    # Originally only had these four as toplevelfacts
+    ORIGINAL_MEMORY_FACTS = frozenset(('MemTotal', 'SwapTotal', 'MemFree', 'SwapFree'))
+    # Now we have all of these in a dict structure
+    MEMORY_FACTS = ORIGINAL_MEMORY_FACTS.union(('Buffers', 'Cached', 'SwapCached'))
 
     def __init__(self):
         Hardware.__init__(self)
@@ -546,31 +631,95 @@ class LinuxHardware(Hardware):
     def get_memory_facts(self):
         if not os.access("/proc/meminfo", os.R_OK):
             return
-        for line in open("/proc/meminfo").readlines():
+
+        memstats = {}
+        for line in get_file_lines("/proc/meminfo"):
             data = line.split(":", 1)
             key = data[0]
-            if key in LinuxHardware.MEMORY_FACTS:
+            if key in self.ORIGINAL_MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
 
+            if key in self.MEMORY_FACTS:
+                 val = data[1].strip().split(' ')[0]
+                 memstats[key.lower()] = long(val) / 1024
+
+        if None not in (memstats.get('memtotal'), memstats.get('memfree')):
+            memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
+        if None not in (memstats.get('cached'), memstats.get('memfree'), memstats.get('buffers')):
+            memstats['nocache:free'] = memstats['cached'] + memstats['memfree'] + memstats['buffers']
+        if None not in (memstats.get('memtotal'), memstats.get('nocache:free')):
+            memstats['nocache:used'] = memstats['memtotal'] - memstats['nocache:free']
+        if None not in (memstats.get('swaptotal'), memstats.get('swapfree')):
+            memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
+
+        self.facts['memory_mb'] = {
+                     'real' : {
+                         'total': memstats.get('memtotal'),
+                         'used': memstats.get('real:used'),
+                         'free': memstats.get('memfree'),
+                     },
+                     'nocache' : {
+                         'free': memstats.get('nocache:free'),
+                         'used': memstats.get('nocache:used'),
+                     },
+                     'swap' : {
+                         'total': memstats.get('swaptotal'),
+                         'free': memstats.get('swapfree'),
+                         'used': memstats.get('swap:used'),
+                         'cached': memstats.get('swapcached'),
+                     },
+                 }
+
     def get_cpu_facts(self):
         i = 0
+        vendor_id_occurrence = 0
+        model_name_occurrence = 0
         physid = 0
         coreid = 0
         sockets = {}
         cores = {}
+
+        xen = False
+        xen_paravirt = False
+        try:
+            if os.path.exists('/proc/xen'):
+                xen = True
+            else:
+                for line in get_file_lines('/sys/hypervisor/type'):
+                    if line.strip() == 'xen':
+                        xen = True
+                    # Only interested in the first line
+                    break
+        except IOError:
+            pass
+
         if not os.access("/proc/cpuinfo", os.R_OK):
             return
         self.facts['processor'] = []
-        for line in open("/proc/cpuinfo").readlines():
+        for line in get_file_lines('/proc/cpuinfo'):
             data = line.split(":", 1)
             key = data[0].strip()
+
+            if xen:
+                if key == 'flags':
+                    # Check for vme cpu flag, Xen paravirt does not expose this.
+                    #   Need to detect Xen paravirt because it exposes cpuinfo
+                    #   differently than Xen HVM or KVM and causes reporting of
+                    #   only a single cpu core.
+                    if 'vme' not in data:
+                        xen_paravirt = True
+
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
             if key == 'model name' or key == 'Processor' or key == 'vendor_id':
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
                 self.facts['processor'].append(data[1].strip())
+                if key == 'vendor_id':
+                    vendor_id_occurrence += 1
+                if key == 'model name':
+                    model_name_occurrence += 1
                 i += 1
             elif key == 'physical id':
                 physid = data[1].strip()
@@ -586,13 +735,23 @@ class LinuxHardware(Hardware):
                 cores[coreid] = int(data[1].strip())
             elif key == '# processors':
                 self.facts['processor_cores'] = int(data[1].strip())
+
+        if vendor_id_occurrence == model_name_occurrence:
+            i = vendor_id_occurrence
+
         if self.facts['architecture'] != 's390x':
-            self.facts['processor_count'] = sockets and len(sockets) or i
-            self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
-            self.facts['processor_threads_per_core'] = ((cores.values() and
-                cores.values()[0] or 1) / self.facts['processor_cores'])
-            self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
-                self.facts['processor_count'] * self.facts['processor_cores'])
+            if xen_paravirt:
+                self.facts['processor_count'] = i
+                self.facts['processor_cores'] = i
+                self.facts['processor_threads_per_core'] = 1
+                self.facts['processor_vcpus'] = i
+            else:
+                self.facts['processor_count'] = sockets and len(sockets) or i
+                self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+                self.facts['processor_threads_per_core'] = ((cores.values() and
+                    cores.values()[0] or 1) / self.facts['processor_cores'])
+                self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+                    self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
@@ -683,6 +842,13 @@ class LinuxHardware(Hardware):
                         size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
                     except OSError, e:
                         continue
+                    lsblkPath = module.get_bin_path("lsblk")
+                    rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
+
+                    if rc == 0:
+                        uuid = out.strip()
+                    else:
+                        uuid = 'NA'
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
@@ -692,6 +858,7 @@ class LinuxHardware(Hardware):
                          # statvfs data
                          'size_total': size_total,
                          'size_available': size_available,
+                         'uuid': uuid,
                          })
 
     def get_device_facts(self):
@@ -1108,7 +1275,7 @@ class NetBSDHardware(Hardware):
         if not os.access("/proc/cpuinfo", os.R_OK):
             return
         self.facts['processor'] = []
-        for line in open("/proc/cpuinfo").readlines():
+        for line in get_file_lines("/proc/cpuinfo"):
             data = line.split(":", 1)
             key = data[0].strip()
             # model name is for Intel arch, Processor (mind the uppercase P)
@@ -1134,7 +1301,7 @@ class NetBSDHardware(Hardware):
     def get_memory_facts(self):
         if not os.access("/proc/meminfo", os.R_OK):
             return
-        for line in open("/proc/meminfo").readlines():
+        for line in get_file_lines("/proc/meminfo"):
             data = line.split(":", 1)
             key = data[0]
             if key in NetBSDHardware.MEMORY_FACTS:
@@ -1312,7 +1479,7 @@ class HPUX(Hardware):
                 self.facts['memtotal_mb'] = int(data) / 1024
             except AttributeError:
                 #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
-                #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
+                #adb output. Unfortunately /dev/kmem doesn't have world-read, so this only works as root.
                 if os.access("/dev/kmem", os.R_OK):
                     rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
                     if not err:
@@ -1516,44 +1683,44 @@ class LinuxNetwork(Network):
             device = os.path.basename(path)
             interfaces[device] = { 'device': device }
             if os.path.exists(os.path.join(path, 'address')):
-                macaddress = open(os.path.join(path, 'address')).read().strip()
+                macaddress = get_file_content(os.path.join(path, 'address'), default='')
                 if macaddress and macaddress != '00:00:00:00:00:00':
                     interfaces[device]['macaddress'] = macaddress
             if os.path.exists(os.path.join(path, 'mtu')):
-                interfaces[device]['mtu'] = int(open(os.path.join(path, 'mtu')).read().strip())
+                interfaces[device]['mtu'] = int(get_file_content(os.path.join(path, 'mtu')))
             if os.path.exists(os.path.join(path, 'operstate')):
-                interfaces[device]['active'] = open(os.path.join(path, 'operstate')).read().strip() != 'down'
+                interfaces[device]['active'] = get_file_content(os.path.join(path, 'operstate')) != 'down'
 #            if os.path.exists(os.path.join(path, 'carrier')):
-#                interfaces[device]['link'] = open(os.path.join(path, 'carrier')).read().strip() == '1'
+#                interfaces[device]['link'] = get_file_content(os.path.join(path, 'carrier')) == '1'
             if os.path.exists(os.path.join(path, 'device','driver', 'module')):
                 interfaces[device]['module'] = os.path.basename(os.path.realpath(os.path.join(path, 'device', 'driver', 'module')))
             if os.path.exists(os.path.join(path, 'type')):
-                type = open(os.path.join(path, 'type')).read().strip()
-                if type == '1':
+                _type = get_file_content(os.path.join(path, 'type'))
+                if _type == '1':
                     interfaces[device]['type'] = 'ether'
-                elif type == '512':
+                elif _type == '512':
                     interfaces[device]['type'] = 'ppp'
-                elif type == '772':
+                elif _type == '772':
                     interfaces[device]['type'] = 'loopback'
             if os.path.exists(os.path.join(path, 'bridge')):
                 interfaces[device]['type'] = 'bridge'
                 interfaces[device]['interfaces'] = [ os.path.basename(b) for b in glob.glob(os.path.join(path, 'brif', '*')) ]
                 if os.path.exists(os.path.join(path, 'bridge', 'bridge_id')):
-                    interfaces[device]['id'] = open(os.path.join(path, 'bridge', 'bridge_id')).read().strip()
+                    interfaces[device]['id'] = get_file_content(os.path.join(path, 'bridge', 'bridge_id'), default='')
                 if os.path.exists(os.path.join(path, 'bridge', 'stp_state')):
-                    interfaces[device]['stp'] = open(os.path.join(path, 'bridge', 'stp_state')).read().strip() == '1'
+                    interfaces[device]['stp'] = get_file_content(os.path.join(path, 'bridge', 'stp_state')) == '1'
             if os.path.exists(os.path.join(path, 'bonding')):
                 interfaces[device]['type'] = 'bonding'
-                interfaces[device]['slaves'] = open(os.path.join(path, 'bonding', 'slaves')).read().split()
-                interfaces[device]['mode'] = open(os.path.join(path, 'bonding', 'mode')).read().split()[0]
-                interfaces[device]['miimon'] = open(os.path.join(path, 'bonding', 'miimon')).read().split()[0]
-                interfaces[device]['lacp_rate'] = open(os.path.join(path, 'bonding', 'lacp_rate')).read().split()[0]
-                primary = open(os.path.join(path, 'bonding', 'primary')).read()
+                interfaces[device]['slaves'] = get_file_content(os.path.join(path, 'bonding', 'slaves'), default='').split()
+                interfaces[device]['mode'] = get_file_content(os.path.join(path, 'bonding', 'mode'), default='').split()[0]
+                interfaces[device]['miimon'] = get_file_content(os.path.join(path, 'bonding', 'miimon'), default='').split()[0]
+                interfaces[device]['lacp_rate'] = get_file_content(os.path.join(path, 'bonding', 'lacp_rate'), default='').split()[0]
+                primary = get_file_content(os.path.join(path, 'bonding', 'primary'))
                 if primary:
                     interfaces[device]['primary'] = primary
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
-                        interfaces[device]['all_slaves_active'] = open(path).read() == '1'
+                        interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
 
             # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
@@ -1561,7 +1728,7 @@ class LinuxNetwork(Network):
                 # The second byte indicates whether the interface is in promiscuous mode.
                 # 1 = promisc
                 # 0 = no promisc
-                data = int(open(os.path.join(path, 'flags')).read().strip(),16)
+                data = int(get_file_content(os.path.join(path, 'flags')),16)
                 promisc_mode = (data & 0x0100 > 0)
                 interfaces[device]['promisc'] = promisc_mode
 
@@ -2107,7 +2274,7 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_type'] = 'xen'
             self.facts['virtualization_role'] = 'guest'
             try:
-                for line in open('/proc/xen/capabilities'):
+                for line in get_file_lines('/proc/xen/capabilities'):
                     if "control_d" in line:
                         self.facts['virtualization_role'] = 'host'
             except IOError:
@@ -2123,7 +2290,11 @@ class LinuxVirtual(Virtual):
             return
 
         if os.path.exists('/proc/1/cgroup'):
-            for line in open('/proc/1/cgroup').readlines():
+            for line in get_file_lines('/proc/1/cgroup'):
+                if re.search('/docker/', line):
+                    self.facts['virtualization_type'] = 'docker'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
                 if re.search('/lxc/', line):
                     self.facts['virtualization_type'] = 'lxc'
                     self.facts['virtualization_role'] = 'guest'
@@ -2171,8 +2342,13 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
+        if sys_vendor == 'QEMU':
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         if os.path.exists('/proc/self/status'):
-            for line in open('/proc/self/status').readlines():
+            for line in get_file_lines('/proc/self/status'):
                 if re.match('^VxID: \d+', line):
                     self.facts['virtualization_type'] = 'linux_vserver'
                     if re.match('^VxID: 0', line):
@@ -2182,7 +2358,7 @@ class LinuxVirtual(Virtual):
                     return
 
         if os.path.exists('/proc/cpuinfo'):
-            for line in open('/proc/cpuinfo').readlines():
+            for line in get_file_lines('/proc/cpuinfo'):
                 if re.match('^model name.*QEMU Virtual CPU', line):
                     self.facts['virtualization_type'] = 'kvm'
                 elif re.match('^vendor_id.*User Mode Linux', line):
@@ -2215,7 +2391,7 @@ class LinuxVirtual(Virtual):
         # Beware that we can have both kvm and virtualbox running on a single system
         if os.path.exists("/proc/modules") and os.access('/proc/modules', os.R_OK):
             modules = []
-            for line in open("/proc/modules").readlines():
+            for line in get_file_lines("/proc/modules"):
                 data = line.split(" ", 1)
                 modules.append(data[0])
 
@@ -2326,13 +2502,27 @@ class SunOSVirtual(Virtual):
                     self.facts['virtualization_type'] = 'virtualbox'
                     self.facts['virtualization_role'] = 'guest'
 
-def get_file_content(path, default=None):
+def get_file_content(path, default=None, strip=True):
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
-        data = open(path).read().strip()
-        if len(data) == 0:
-            data = default
+        try:
+            datafile = open(path)
+            data = datafile.read()
+            if strip:
+                data = data.strip()
+            if len(data) == 0:
+                data = default
+        finally:
+            datafile.close()
     return data
+
+def get_file_lines(path):
+    '''file.readlines() that closes the file'''
+    datafile = open(path)
+    try:
+        return datafile.readlines()
+    finally:
+        datafile.close()
 
 def ansible_facts(module):
     facts = {}

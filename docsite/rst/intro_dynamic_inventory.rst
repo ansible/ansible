@@ -87,7 +87,7 @@ marking it executable::
 
     ansible -i ec2.py -u ubuntu us-east-1d -m ping
 
-The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini  <https://raw.github.com/ansible/ansible/devel/plugins/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
+The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini  <https://raw.githubusercontent.com/ansible/ansible/devel/plugins/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
 
 To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a `variety of methods <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_ available, but the simplest is just to export two environment variables::
 
@@ -189,7 +189,9 @@ To see the complete list of variables available for an instance, run the script 
     ./ec2.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
-explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter.
+explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter::
+
+    # ./ec2.py --refresh-cache
 
 .. _other_inventory_scripts:
 
@@ -222,6 +224,26 @@ Using Multiple Inventory Sources
 If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
+
+.. _static_groups_of_dynamic:
+
+Static Groups of Dynamic Groups
+```````````````````````````````
+
+When defining groups of groups in the static inventory file, the child groups
+must also be defined in the static inventory file, or ansible will return an
+error. If you want to define a static group of dynamic child groups, define
+the dynamic groups as empty in the static inventory file. For example::
+
+    [tag_Name_staging_foo]
+
+    [tag_Name_staging_bar]
+
+    [staging:children]
+    tag_Name_staging_foo
+    tag_Name_staging_bar
+
+
 
 .. seealso::
 
