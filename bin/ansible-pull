@@ -189,6 +189,8 @@ def main(args):
     cmd = 'ansible localhost -i "%s" %s -m %s -a "%s"' % (
             inv_opts, base_opts, options.module_name, repo_opts
             )
+    for ev in options.extra_vars:
+        cmd += ' -e "%s"' % ev
 
     if options.sleep:
         try:
