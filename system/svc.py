@@ -198,10 +198,12 @@ class Svc(object):
             self.module.fail_json(msg="failed to execute: %s" % str(e))
         return (rc, out, err)
 
-
     def report(self):
         self.get_status()
-        return {k: self.__dict__[k] for k in self.report_vars}
+        states = {}
+        for k in self.report_vars:
+            states[k] = self.__dict__[k]
+        return states
 
 # ===========================================
 # Main control flow
@@ -236,7 +238,7 @@ def main():
                     svc.enable()
                 else:
                     svc.disable()
-            except (OSError, IOError) as e:
+            except (OSError, IOError), e:
                 module.fail_json(msg="Could change service link: %s" % str(e))
 
     if state is not None and state != svc.state:
@@ -253,8 +255,8 @@ def main():
                     open(d_file, "a").close()
                 else:
                     os.unlink(d_file)
-            except (OSError, IOError) as e:
-                module.fail_json(msg="Could change downed file: %s "  % (str(e)))
+            except (OSError, IOError), e:
+                module.fail_json(msg="Could change downed file: %s " % (str(e)))
 
     module.exit_json(changed=changed, svc=svc.report())
 
