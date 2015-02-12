@@ -978,6 +978,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+        help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
@@ -1047,6 +1049,21 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
 
     return parser
+
+def parse_extra_vars(extra_vars_opts, vault_pass):
+    extra_vars = {}
+    for extra_vars_opt in extra_vars_opts:
+        extra_vars_opt = to_unicode(extra_vars_opt)
+        if extra_vars_opt.startswith(u"@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            extra_vars = combine_vars(extra_vars, parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
+        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+            # Arguments as YAML
+            extra_vars = combine_vars(extra_vars, parse_yaml(extra_vars_opt))
+        else:
+            # Arguments as Key-value
+            extra_vars = combine_vars(extra_vars, parse_kv(extra_vars_opt))
+    return extra_vars
 
 def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
 
