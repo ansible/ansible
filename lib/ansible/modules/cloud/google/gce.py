@@ -115,6 +115,13 @@ options:
     required: true
     default: "us-central1-a"
     aliases: []
+  ip_forward:
+    version_added: "1.9"
+    description:
+      - set to true if the instance can forward ip packets (useful for gateways)
+    required: false
+    default: "false"
+    aliases: []
 
 requirements: [ "libcloud" ]
 notes:
@@ -235,7 +242,7 @@ def get_instance_info(inst):
         'status': ('status' in inst.extra) and inst.extra['status'] or None,
         'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
         'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
-    })
+   })
 
 def create_instances(module, gce, instance_names):
     """Creates new instances. Attributes other than instance_names are picked
@@ -259,6 +266,7 @@ def create_instances(module, gce, instance_names):
     state = module.params.get('state')
     tags = module.params.get('tags')
     zone = module.params.get('zone')
+    ip_forward = module.params.get('ip_forward')
 
     new_instances = []
     changed = False
@@ -319,7 +327,7 @@ def create_instances(module, gce, instance_names):
         try:
             inst = gce.create_node(name, lc_machine_type, lc_image,
                     location=lc_zone, ex_network=network, ex_tags=tags,
-                    ex_metadata=metadata, ex_boot_disk=pd)
+                    ex_metadata=metadata, ex_boot_disk=pd, ex_can_ip_forward=ip_forward)
             changed = True
         except ResourceExistsError:
             inst = gce.ex_get_node(name, lc_zone)
@@ -409,6 +417,7 @@ def main():
             service_account_email = dict(),
             pem_file = dict(),
             project_id = dict(),
+            ip_forward = dict(type='bool', default=False),
         )
     )
 
@@ -424,6 +433,7 @@ def main():
     state = module.params.get('state')
     tags = module.params.get('tags')
     zone = module.params.get('zone')
+    ip_forward = module.params.get('ip_forward')
     changed = False
 
     inames = []
