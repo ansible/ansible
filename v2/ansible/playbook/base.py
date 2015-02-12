@@ -116,7 +116,7 @@ class Base:
         self.validate()
 
         # cache the datastructure internally
-        self._ds = ds
+        setattr(self, '_ds', ds)
 
         # return the constructed object
         return self
@@ -231,13 +231,14 @@ class Base:
         as field attributes.
         '''
 
-        #debug("starting serialization of %s" % self.__class__.__name__)
         repr = dict()
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
             repr[name] = getattr(self, name)
 
-        #debug("done serializing %s" % self.__class__.__name__)
+        # serialize the uuid field
+        repr['uuid'] = getattr(self, '_uuid')
+
         return repr
 
     def deserialize(self, data):
@@ -248,7 +249,6 @@ class Base:
         and extended.
         '''
 
-        #debug("starting deserialization of %s" % self.__class__.__name__)
         assert isinstance(data, dict)
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
@@ -256,7 +256,9 @@ class Base:
                 setattr(self, name, data[name])
             else:
                 setattr(self, name, attribute.default)
-        #debug("done deserializing %s" % self.__class__.__name__)
+
+        # restore the UUID field
+        setattr(self, '_uuid', data.get('uuid'))
 
     def __getattr__(self, needle):
 
