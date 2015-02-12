@@ -33,6 +33,7 @@ from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum
 from ansible.callbacks import display
 from ansible.module_utils.splitter import split_args, unquote
 from ansible.module_utils.basic import heuristic_log_sanitize
+from ansible.utils.unicode import to_bytes, to_unicode
 import ansible.constants as C
 import ast
 import time
@@ -1088,9 +1089,9 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
 
     # enforce no newline chars at the end of passwords
     if vault_pass:
-        vault_pass = vault_pass.strip()
+        vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
     if new_vault_pass:
-        new_vault_pass = new_vault_pass.strip()
+        new_vault_pass = to_bytes(new_vault_pass, errors='strict', nonstring='simplerepr').strip()
 
     return vault_pass, new_vault_pass
 
@@ -1104,20 +1105,31 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
 
     if ask_pass:
         sshpass = getpass.getpass(prompt="SSH password: ")
+        if sshpass:
+            sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
         sudo_prompt = "sudo password [defaults to SSH password]: "
+        su_prompt = "su password [defaults to SSH password]: "
 
     if ask_sudo_pass:
         sudopass = getpass.getpass(prompt=sudo_prompt)
         if ask_pass and sudopass == '':
             sudopass = sshpass
+        if sudopass:
+            sudopass = to_bytes(sudopass, errors='strict', nonstring='simplerepr')
 
     if ask_su_pass:
-        su_pass = getpass.getpass(prompt=su_prompt)
+        supass = getpass.getpass(prompt=su_prompt)
+        if ask_pass and supass == '':
+            supass = sshpass
+        if supass:
+            supass = to_bytes(supass, errors='strict', nonstring='simplerepr')
 
     if ask_vault_pass:
-        vault_pass = getpass.getpass(prompt="Vault password: ")
+        vaultpass = getpass.getpass(prompt="Vault password: ")
+        if vaultpass:
+            vaultpass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
 
-    return (sshpass, sudopass, su_pass, vault_pass)
+    return (sshpass, sudopass, supass, vaultpass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
@@ -1203,25 +1215,6 @@ def make_su_cmd(su_user, executable, cmd):
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), None, success_key)
-
-# For v2, consider either using kitchen or copying my code from there for
-# to_unicode and to_bytes handling (TEK)
-_TO_UNICODE_TYPES = (unicode, type(None))
-
-def to_unicode(value):
-    # Use with caution -- this function is not encoding safe (non-utf-8 values
-    # will cause tracebacks if they contain bytes from 0x80-0xff inclusive)
-    if isinstance(value, _TO_UNICODE_TYPES):
-        return value
-    return value.decode("utf-8")
-
-def to_bytes(value):
-    # Note: value is assumed to be a basestring to mirror to_unicode.  Better
-    # implementations (like kitchen.text.converters.to_bytes) bring that check
-    # into the function
-    if isinstance(value, str):
-        return value
-    return value.encode('utf-8')
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
