@@ -35,9 +35,30 @@
         host_id: '{{item}}'
       with_sequence: start=1 end={{num_hosts}} format=%d
 
+    - name: 'A task with unicode extra vars'
+      debug: var=extra_var
+
+
 - name: 'A play for hosts in group: ĪīĬĭ'
   hosts: 'ĪīĬĭ'
   gather_facts: true
   tasks:
     - debug: msg='Unicode is a good thing ™'
     - debug: msg=АБВГД
+
+# Run this test by adding to the CLI: -e start_at_task=True --start-at-task '*¶'
+- name: 'Show that we can skip to unicode named tasks'
+  hosts: localhost
+  gather_facts: false
+  vars:
+    flag: 'original'
+    start_at_task: False
+  tasks:
+    - name: 'Override flag var'
+      set_fact: flag='new'
+
+    - name: 'A unicode task at the end of the playbook: ¶'
+      assert:
+        that:
+          - 'flag == "original"'
+      when: start_at_task|bool

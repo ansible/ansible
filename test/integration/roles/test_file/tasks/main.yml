@@ -65,6 +65,29 @@
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
+- name: setup a tmp-like directory for ownership test
+  file: path=/tmp/worldwritable mode=1777 state=directory
+
+- name: Ask to create a file without enough perms to change ownership
+  file: path=/tmp/worldwritable/baz.txt state=touch owner=root
+  sudo: yes
+  sudo_user: nobody
+  register: chown_result
+  ignore_errors: True
+
+- name: Ask whether the new file exists
+  stat: path=/tmp/worldwritable/baz.txt
+  register: file_exists_result
+
+- name: Verify that the file doesn't exist on failure
+  assert:
+    that:
+      - "chown_result.failed == True"
+      - "file_exists_result.stat.exists == False"
+
+- name: clean up
+  file: path=/tmp/worldwritable state=absent
+
 - name: create soft link to file
   file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
   register: file5_result
@@ -82,6 +105,15 @@
   assert:
     that:
       - "file6_result.changed == true"
+
+- name: touch a hard link
+  file: src={{output_file}} dest={{output_dir}}/hard.txt state=touch
+  register: file6_touch_result  
+
+- name: verify that the hard link was touched
+  assert:
+    that:
+      - "file6_touch_result.changed == true"
 
 - name: create a directory
   file: path={{output_dir}}/foobar state=directory
@@ -165,7 +197,7 @@
       - "file11_result.uid == 1235"
 
 - name: fail to create soft link to non existent file
-  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=no
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=no
   register: file12_result
   ignore_errors: true
 
@@ -175,7 +207,7 @@
       - "file12_result.failed == true"
 
 - name: force creation soft link to non existent
-  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=yes
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=yes
   register: file13_result
 
 - name: verify that link was created
@@ -228,6 +260,43 @@
     that:
       - 'file17_result.failed == true'
       - 'file17_result.state == "directory"'
+
+- name: create soft link to directory using absolute path
+  file: src=/ dest={{output_dir}}/root state=link
+  register: file18_result
+
+- name: verify that the result was marked as changed
+  assert:
+    that:
+      - "file18_result.changed == true"
+
+- name: create another test sub-directory
+  file: dest={{output_dir}}/sub2 state=directory
+  register: file19_result
+
+- name: verify that the new directory was created
+  assert:
+    that:
+      - 'file19_result.changed == true'
+      - 'file19_result.state == "directory"'
+
+- name: create soft link to relative file
+  file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
+  register: file20_result
+
+- name: verify that the result was marked as changed
+  assert:
+    that:
+      - "file20_result.changed == true"
+
+- name: create soft link to relative directory
+  file: src=sub1 dest={{output_dir}}/sub1-link state=link
+  register: file21_result
+
+- name: verify that the result was marked as changed
+  assert:
+    that:
+      - "file21_result.changed == true"
 
 - name: test file creation with symbolic mode
   file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
@@ -382,3 +451,29 @@
     that:
     - result.mode == '0444'
 
+# test the file module using follow=yes, so that the target of a
+# symlink is modified, rather than the link itself
+
+- name: create a test file
+  copy: dest={{output_dir}}/test_follow content="this is a test file\n" mode=0666
+
+- name: create a symlink to the test file
+  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link
+
+- name: modify the permissions on the link using follow=yes
+  file: path={{output_dir}}/test_follow_link mode=0644 follow=yes
+  register: result
+
+- name: assert that the chmod worked
+  assert:
+    that:
+    - result.changed
+
+- name: stat the link target
+  stat: path={{output_dir}}/test_follow
+  register: result
+
+- name: assert that the link target was modified correctly
+  assert:
+    that:
+    - result.stat.mode == '0644'

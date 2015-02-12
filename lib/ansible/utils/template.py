@@ -33,6 +33,7 @@ import ast
 import traceback
 
 from ansible.utils.string_functions import count_newlines_from_end
+from ansible.utils import to_bytes
 
 class Globals(object):
 
@@ -86,47 +87,50 @@ JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 
 def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
-    vars = kwargs.get('vars', None)
+    tvars = kwargs.get('vars', None)
 
     if instance is not None:
-        # safely catch run failures per #5059
         try:
-            ran = instance.run(*args, inject=vars, **kwargs)
+            ran = instance.run(*args, inject=tvars, **kwargs)
+        except errors.AnsibleError:
+            raise
+        except jinja2.exceptions.UndefinedError, e:
+            raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
         except Exception, e:
-            ran = None
+            raise errors.AnsibleError('Unexpected error in during lookup: %s' % e)
         if ran:
             ran = ",".join(ran)
         return ran
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def template(basedir, varname, templatevars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
     from ansible import utils
 
     try:
         if convert_bare and isinstance(varname, basestring):
             first_part = varname.split(".")[0].split("[")[0]
-            if first_part in vars and '{{' not in varname and '$' not in varname:
+            if first_part in templatevars and '{{' not in varname and '$' not in varname:
                 varname = "{{%s}}" % varname
-    
+
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
-                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+                varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
 
                 if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
-                    eval_results = utils.safe_eval(varname, locals=vars, include_exceptions=True)
+                    eval_results = utils.safe_eval(varname, locals=templatevars, include_exceptions=True)
                     if eval_results[1] is None:
                         varname = eval_results[0]
 
             return varname
-    
+
         elif isinstance(varname, (list, tuple)):
-            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
+            return [template(basedir, v, templatevars, lookup_fatal, depth, expand_lists, convert_bare, fail_on_undefined, filter_fatal) for v in varname]
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
-                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
+                d[k] = template(basedir, v, templatevars, lookup_fatal, depth, expand_lists, convert_bare, fail_on_undefined, filter_fatal)
             return d
         else:
             return varname
@@ -166,6 +170,7 @@ class _jinja2_vars(object):
         return False
 
     def __getitem__(self, varname):
+        from ansible.runner import HostVars
         if varname not in self.vars:
             for i in self.extras:
                 if varname in i:
@@ -175,8 +180,9 @@ class _jinja2_vars(object):
             else:
                 raise KeyError("undefined variable: %s" % varname)
         var = self.vars[varname]
-        # HostVars is special, return it as-is
-        if isinstance(var, dict) and type(var) != dict:
+        # HostVars is special, return it as-is, as is the special variable
+        # 'vars', which contains the vars structure
+        if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
             return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
@@ -267,7 +273,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     managed_str = managed_default.format(
         host = vars['template_host'],
         uid  = vars['template_uid'],
-        file = vars['template_path']
+        file = to_bytes(vars['template_path'])
     )
     vars['ansible_managed'] = time.strftime(
         managed_str,
@@ -338,6 +344,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         try:
             t = environment.from_string(data)
+        except TemplateSyntaxError, e:
+            raise errors.AnsibleError("template error while templating string: %s" % str(e))
         except Exception, e:
             if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)

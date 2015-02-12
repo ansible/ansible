@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Copyright 2013 Google Inc.
 #
 # This file is part of Ansible
@@ -103,11 +103,13 @@ class GceInventory(object):
         # Just display data for specific host
         if self.args.host:
             print self.json_format_dict(self.node_to_dict(
-                    self.get_instance(self.args.host)))
+                    self.get_instance(self.args.host)),
+                    pretty=self.args.pretty)
             sys.exit(0)
 
         # Otherwise, assume user wants all instances grouped
-        print(self.json_format_dict(self.group_instances()))
+        print(self.json_format_dict(self.group_instances(),
+            pretty=self.args.pretty))
         sys.exit(0)
 
     def get_gce_driver(self):
@@ -187,6 +189,8 @@ class GceInventory(object):
                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
                            help='Get all information about an instance')
+        parser.add_argument('--pretty', action='store_true', default=False,
+                           help='Pretty format (default: False)')
         self.args = parser.parse_args()
 
 
@@ -229,8 +233,13 @@ class GceInventory(object):
     def group_instances(self):
         '''Group all instances'''
         groups = {}
+        meta = {}
+        meta["hostvars"] = {}
+
         for node in self.driver.list_nodes():
             name = node.name
+
+            meta["hostvars"][name] = self.node_to_dict(node)
 
             zone = node.extra['zone'].name
             if groups.has_key(zone): groups[zone].append(name)
@@ -259,6 +268,9 @@ class GceInventory(object):
             stat = 'status_%s' % status.lower()
             if groups.has_key(stat): groups[stat].append(name)
             else: groups[stat] = [name]
+
+        groups["_meta"] = meta
+
         return groups
 
     def json_format_dict(self, data, pretty=False):

@@ -77,4 +77,27 @@
     that:
         - "not apt_result.changed"
 
+# UNINSTALL AGAIN
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+  register: apt_result
+
+# INSTALL WITH VERSION WILDCARD
+- name: install hello with apt
+  apt: name=hello=2.* state=present
+  register: apt_result
+
+- name: check hello with wildcard with  dpkg
+  shell: dpkg --get-selections | fgrep hello
+  failed_when: False
+  register: dpkg_result
+
+- debug: var=apt_result
+- debug: var=dpkg_result
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
 

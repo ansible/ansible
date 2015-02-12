@@ -1,0 +1,5 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - debug: msg="the pubkey is {{lookup('file', '~/.ssh/id_rsa.pub')}}"

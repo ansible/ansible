@@ -70,7 +70,7 @@ Actions are pieces of code in ansible that enable things like module execution, 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
@@ -135,10 +135,12 @@ Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
 callback_plugins
 ================
 
+Callbacks are pieces of code in ansible that get called on specific events, permitting to trigger notifications.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = /usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -154,9 +156,9 @@ command module appear to be simplified by using a default Ansible module
 instead.  This can include reminders to use the 'git' module instead of
 shell commands to execute 'git'.  Using modules when possible over arbitrary
 shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks.
+also easier to maintain playbooks::
 
-    command_warnings=False
+    command_warnings = False
 
 These warnings can be silenced by adjusting the following
 setting or adding warn=yes or warn=no to the end of the command line
@@ -171,10 +173,12 @@ parameter string, like so::
 connection_plugins
 ==================
 
+Connections plugin permit to extend the channel used by ansible to transport commands and files.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    connection_plugins = /usr/share/ansible_plugins/connection_plugins
+    connection_plugins = ~/.ansible/plugins/connection_plugins/:/usr/share/ansible_plugins/connection_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -230,12 +234,23 @@ rare instances to /bin/bash in rare instances when sudo is constrained, but in m
 filter_plugins
 ==============
 
+Filters are specific functions that can be used to extend the template system.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    filter_plugins = /usr/share/ansible_plugins/filter_plugins
+    filter_plugins = ~/.ansible/plugins/filter_plugins/:/usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _force_color:
+
+force_color
+===========
+
+This options forces color mode even when running without a TTY::
+
+    force_color = 1
 
 .. _forks:
 
@@ -280,10 +295,7 @@ The valid values are either 'replace' (the default) or 'merge'.
 hostfile
 ========
 
-This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
-to talk to::
-
-    hostfile = /etc/ansible/hosts
+This is a deprecated setting since 1.9, please look at :ref:`inventory` for the new setting.
 
 .. _host_key_checking:
 
@@ -294,6 +306,18 @@ As described in :doc:`intro_getting_started`, host key checking is on by default
 implications and wish to disable it, you may do so here by setting the value to False::
 
     host_key_checking=True
+
+.. _inventory:
+
+inventory
+=========
+
+This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
+to talk to::
+
+    inventory = /etc/ansible/hosts
+
+It used to be called hostfile in Ansible before 1.9
 
 .. _jinja2_extensions:
 
@@ -341,7 +365,7 @@ lookup_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
+    lookup_plugins = ~/.ansible/plugins/lookup_plugins/:/usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -487,7 +511,7 @@ sudo_flags
 ==========
 
 Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the environment
-of the original user.  In some situations you may wish to add or remote flags, but in general most users
+of the original user.  In some situations you may wish to add or remove flags, but in general most users
 will not need to change this setting::
 
    sudo_flags=-H
@@ -544,9 +568,23 @@ vars_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    vars_plugins = /usr/share/ansible_plugins/vars_plugins
+    vars_plugins = ~/.ansible/plugins/vars_plugins/:/usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+
+.. _vault_password_file:
+
+vault_password_file
+===================
+
+.. versionadded:: 1.7
+
+Configures the path to the Vault password file as an alternative to specifying ``--vault-password-file`` on the command line::
+
+   vault_password_file = /path/to/vault_password_file
+
+As of 1.7 this file can also be a script. If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output. If your script needs to prompt for data, prompts can be sent to standard error.
 
 .. _paramiko_settings:
 
@@ -639,8 +677,8 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
 .. _accelerate_settings:
 
-Accelerate Mode Settings
-------------------------
+Accelerated Mode Settings
+-------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
@@ -653,7 +691,7 @@ accelerate_port
 
 .. versionadded:: 1.3
 
-This is the port to use for accelerate mode::
+This is the port to use for accelerated mode::
 
     accelerate_port = 5099
 

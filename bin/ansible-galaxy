@@ -48,6 +48,9 @@ galaxy_info:
   author: {{ author }}
   description: {{description}}
   company: {{ company }}
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: {{ issue_tracker_url }}
   # Some suggested licenses:
   # - BSD (default)
   # - MIT
@@ -135,6 +138,7 @@ An optional section for the role authors to include contact information, or a we
 #-------------------------------------------------------------------------------------
 
 VALID_ACTIONS = ("init", "info", "install", "list", "remove")
+SKIP_INFO_KEYS = ("platforms","readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
 
 def get_action(args):
     """
@@ -237,6 +241,7 @@ def exit_without_ignore(options, rc=1):
         print '- you can use --ignore-errors to skip failed roles.'
         sys.exit(rc)
 
+
 #-------------------------------------------------------------------------------------
 # Galaxy API functions
 #-------------------------------------------------------------------------------------
@@ -257,7 +262,7 @@ def api_get_config(api_server):
     except:
         return None
 
-def api_lookup_role_by_name(api_server, role_name):
+def api_lookup_role_by_name(api_server, role_name, notify=True):
     """
     Uses the Galaxy API to do a lookup on the role owner/name.
     """
@@ -268,7 +273,8 @@ def api_lookup_role_by_name(api_server, role_name):
         parts = role_name.split(".")
         user_name = ".".join(parts[0:-1])
         role_name = parts[-1]
-        print "- downloading role '%s', owned by %s" % (role_name, user_name)
+        if notify:
+            print "- downloading role '%s', owned by %s" % (role_name, user_name)
     except:
         parser.print_help()
         print "- invalid role name (%s). Specify role as format: username.rolename" % role_name
@@ -377,7 +383,7 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         print "  in directory %s" % tempdir
         return False
 
-    shutil.rmtree(tempdir)
+    shutil.rmtree(tempdir, ignore_errors=True)
 
     return temp_file.name
 
@@ -640,7 +646,7 @@ def execute_init(args, options, parser):
             categories = []
             if not offline:
                 categories = api_get_list(api_server, "categories") or []
-            
+
             # group the list of platforms from the api based
             # on their names, with the release field being 
             # appended to a list of versions
@@ -653,6 +659,7 @@ def execute_init(args, options, parser):
                 author = 'your name',
                 company = 'your company (optional)',
                 license = 'license (GPLv2, CC-BY, etc)',
+                issue_tracker_url = 'http://example.com/issue/tracker',
                 min_ansible_version = '1.2',
                 platforms = platform_groups,
                 categories = categories,
@@ -676,7 +683,56 @@ def execute_info(args, options, parser):
     from the galaxy API.
     """
 
-    pass
+    if len(args) == 0:
+        # the user needs to specify a role
+        parser.print_help()
+        print "- you must specify a user/role name"
+        sys.exit(1)
+
+    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
+    api_config = api_get_config(api_server)
+    roles_path = get_opt(options, "roles_path")
+
+    for role in args:
+
+        role_info = {}
+
+        install_info = get_galaxy_install_info(role, options)
+        if install_info:
+            if 'version' in install_info:
+                install_info['intalled_version'] = install_info['version']
+                del install_info['version']
+            role_info.update(install_info)
+
+        remote_data = api_lookup_role_by_name(api_server, role, False)
+        if remote_data:
+            role_info.update(remote_data)
+
+        metadata = get_role_metadata(role, options)
+        if metadata:
+            role_info.update(metadata)
+
+        role_spec = ansible.utils.role_spec_parse(role)
+        if role_spec:
+            role_info.update(role_spec)
+
+        if role_info:
+            print "- %s:" % (role)
+            for k in sorted(role_info.keys()):
+
+                if k in SKIP_INFO_KEYS:
+                    continue
+
+                if isinstance(role_info[k], dict):
+                    print "\t%s: " % (k)
+                    for key in sorted(role_info[k].keys()):
+                        if key in SKIP_INFO_KEYS:
+                            continue
+                        print "\t\t%s: %s" % (key, role_info[k][key])
+                else:
+                    print "\t%s: %s" % (k, role_info[k])
+        else:
+            print "- the role %s was not found" % role
 
 def execute_install(args, options, parser):
     """
@@ -687,30 +743,23 @@ def execute_install(args, options, parser):
     """
 
     role_file  = get_opt(options, "role_file", None)
-    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-    no_deps    = get_opt(options, "no_deps", False)
-    roles_path = get_opt(options, "roles_path")
 
-    if len(args) == 0 and not role_file:
+    if len(args) == 0 and role_file is None:
         # the user needs to specify one of either --role-file
         # or specify a single user/role name
         parser.print_help()
         print "- you must specify a user/role name or a roles file"
         sys.exit()
-    elif len(args) == 1 and role_file:
+    elif len(args) == 1 and not role_file is None:
         # using a role file is mutually exclusive of specifying
         # the role name on the command line
         parser.print_help()
         print "- please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
-    # error checking to ensure the specified roles path exists and is a directory
-    if not os.path.exists(roles_path):
-        print "- the specified role path %s does not exist" % roles_path
-        sys.exit(1)
-    elif not os.path.isdir(roles_path):
-        print "- the specified role path %s is not a directory" % roles_path
-        sys.exit(1)
+    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
+    no_deps    = get_opt(options, "no_deps", False)
+    roles_path = get_opt(options, "roles_path")
 
     roles_done = []
     if role_file:
@@ -759,10 +808,11 @@ def execute_install(args, options, parser):
                 role_data = api_lookup_role_by_name(api_server, role_src)
                 if not role_data:
                     print "- sorry, %s was not found on %s." % (role_src, api_server)
+                    exit_without_ignore(options)
                     continue
 
                 role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
-                if "version" not in role:
+                if "version" not in role or role['version'] == '':
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
                     # are no versions in the list, we'll grab the head 
@@ -787,7 +837,8 @@ def execute_install(args, options, parser):
         if tmp_file:
             installed = install_role(role.get("name"), role.get("version"), tmp_file, options)
             # we're done with the temp file, clean it up
-            os.unlink(tmp_file)
+            if tmp_file != role_src:
+                os.unlink(tmp_file)
             # install dependencies, if we want them
             if not no_deps and installed:
                 if not role_data:
@@ -809,8 +860,6 @@ def execute_install(args, options, parser):
                     else:
                         print '- dependency %s is already installed, skipping.' % dep["name"]
         if not tmp_file or not installed:
-            if tmp_file and installed:
-                os.unlink(tmp_file)
             print "- %s was NOT installed successfully." % role.get("name")
             exit_without_ignore(options)
     sys.exit(0)

@@ -28,9 +28,18 @@ sys.setdefaultencoding("utf8")
 
 class TestUtils(unittest.TestCase):
 
+    def _is_fips(self):
+        try:
+            data = open('/proc/sys/crypto/fips_enabled').read().strip()
+        except:
+            return False
+        if data != '1':
+            return False
+        return True
+
     def test_before_comment(self):
         ''' see if we can detect the part of a string before a comment.  Used by INI parser in inventory '''
- 
+
         input    = "before # comment"
         expected = "before "
         actual   = ansible.utils.before_comment(input)
@@ -357,13 +366,27 @@ class TestUtils(unittest.TestCase):
                dict(foo=dict(bar='qux')))
 
     def test_md5s(self):
+        if self._is_fips():
+            raise SkipTest('MD5 unavailable on FIPs enabled systems')
         self.assertEqual(ansible.utils.md5s('ansible'), '640c8a5376aa12fa15cf02130ce239a6')
         # Need a test that causes UnicodeEncodeError See 4221
 
     def test_md5(self):
+        if self._is_fips():
+            raise SkipTest('MD5 unavailable on FIPs enabled systems')
         self.assertEqual(ansible.utils.md5(os.path.join(os.path.dirname(__file__), 'ansible.cfg')),
                          'fb7b5b90ea63f04bde33e804b6fad42c')
         self.assertEqual(ansible.utils.md5(os.path.join(os.path.dirname(__file__), 'ansible.cf')),
+                         None)
+
+    def test_checksum_s(self):
+        self.assertEqual(ansible.utils.checksum_s('ansible'), 'bef45157a43c9e5f469d188810814a4a8ab9f2ed')
+        # Need a test that causes UnicodeEncodeError See 4221
+
+    def test_checksum(self):
+        self.assertEqual(ansible.utils.checksum(os.path.join(os.path.dirname(__file__), 'ansible.cfg')),
+                         '658b67c8ac7595adde7048425ff1f9aba270721a')
+        self.assertEqual(ansible.utils.checksum(os.path.join(os.path.dirname(__file__), 'ansible.cf')),
                          None)
 
     def test_default(self):
@@ -433,16 +456,18 @@ class TestUtils(unittest.TestCase):
         hash = ansible.utils.do_encrypt('ansible', 'sha256_crypt')
         self.assertTrue(passlib.hash.sha256_crypt.verify('ansible', hash))
 
-        hash = ansible.utils.do_encrypt('ansible', 'md5_crypt', salt_size=4)
-        self.assertTrue(passlib.hash.md5_crypt.verify('ansible', hash))
-
-
         try:
             ansible.utils.do_encrypt('ansible', 'ansible')
         except ansible.errors.AnsibleError:
             pass
         else:
             raise AssertionError('Incorrect exception, expected AnsibleError')
+
+    def test_do_encrypt_md5(self):
+        if self._is_fips():
+            raise SkipTest('MD5 unavailable on FIPS systems')
+        hash = ansible.utils.do_encrypt('ansible', 'md5_crypt', salt_size=4)
+        self.assertTrue(passlib.hash.md5_crypt.verify('ansible', hash))
 
     def test_last_non_blank_line(self):
         self.assertEqual(ansible.utils.last_non_blank_line('a\n\nb\n\nc'), 'c')
@@ -471,7 +496,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.boolean("foo"), False)
 
     def test_make_sudo_cmd(self):
-        cmd = ansible.utils.make_sudo_cmd('root', '/bin/sh', '/bin/ls')
+        cmd = ansible.utils.make_sudo_cmd(C.DEFAULT_SUDO_EXE, 'root', '/bin/sh', '/bin/ls')
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('-u root' in cmd[0])
@@ -541,10 +566,9 @@ class TestUtils(unittest.TestCase):
 
     def test_listify_lookup_plugin_terms(self):
         basedir = os.path.dirname(__file__)
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict()),
-                         ['things'])
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['one', 'two'])),
-                         ['one', 'two'])
+        # Straight lookups
+        #self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=[])), [])
+        #self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['one', 'two'])), ['one', 'two'])
 
     def test_deprecated(self):
         sys_stderr = sys.stderr
@@ -687,19 +711,13 @@ class TestUtils(unittest.TestCase):
         )
 
         # invalid quote detection
-        try:
-            with self.assertRaises(Exception):
-                split_args('hey I started a quote"')
-            with self.assertRaises(Exception):
-                split_args('hey I started a\' quote')
-        except TypeError:
-            # you must be on Python 2.6 still, FIXME
-            pass
+        self.assertRaises(Exception, split_args, 'hey I started a quote"')
+        self.assertRaises(Exception, split_args, 'hey I started a\' quote')
 
         # jinja2 loop blocks with lots of complexity
         _test_combo(
             # in memory of neighbors cat
-            # we preserve line breaks unless a line continuation character preceeds them
+            # we preserve line breaks unless a line continuation character precedes them
             'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip" \\\ndone\nand done',
             ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done\n', 'and', 'done']
         )
@@ -837,4 +855,68 @@ class TestUtils(unittest.TestCase):
             ]
         for (spec, result) in tests:
             self.assertEqual(ansible.utils.role_spec_parse(spec), result)
+
+    def test_role_yaml_parse(self):
+        tests = (
+                (
+                    # Old style
+                    {
+                        'role': 'debops.elasticsearch',
+                        'name': 'elks'
+                    },
+                    {
+                        'role': 'debops.elasticsearch',
+                        'name': 'elks',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '',
+                    }
+                ),
+                (
+                    {
+                        'role': 'debops.elasticsearch,1.0,elks',
+                        'my_param': 'foo'
+                    },
+                    {
+                        'role': 'debops.elasticsearch,1.0,elks',
+                        'name': 'elks',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '1.0',
+                        'my_param': 'foo',
+                    }
+                ),
+                (
+                    {
+                        'role': 'debops.elasticsearch,1.0',
+                        'my_param': 'foo'
+                    },
+                    {
+                        'role': 'debops.elasticsearch,1.0',
+                        'name': 'debops.elasticsearch',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '1.0',
+                        'my_param': 'foo',
+                    }
+                ),
+                # New style
+                (
+                    {
+                        'src': 'debops.elasticsearch',
+                        'name': 'elks',
+                        'my_param': 'foo'
+                    },
+                    {
+                        'name': 'elks',
+                        'scm': None,
+                        'src': 'debops.elasticsearch',
+                        'version': '',
+                        'my_param': 'foo'
+                    }
+                ),
+            )
+
+        for (role, result) in tests:
+            self.assertEqual(ansible.utils.role_yaml_parse(role), result)
 

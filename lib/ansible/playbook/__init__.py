@@ -21,6 +21,7 @@ import ansible.runner
 from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.callbacks
 import ansible.cache
 import os
@@ -209,12 +210,15 @@ class PlayBook(object):
         name and returns the merged vars along with the path
         '''
         new_vars = existing_vars.copy()
-        tokens = shlex.split(play_ds.get('include', ''))
+        tokens = split_args(play_ds.get('include', ''))
         for t in tokens[1:]:
-            (k,v) = t.split("=", 1)
-            new_vars[k] = template(basedir, v, new_vars)
+            try:
+                (k,v) = unquote(t).split("=", 1)
+                new_vars[k] = template(basedir, v, new_vars)
+            except ValueError, e:
+                raise errors.AnsibleError('included playbook variables must be in the form k=v, got: %s' % t)
 
-        return (new_vars, tokens[0])
+        return (new_vars, unquote(tokens[0]))
 
     # *****************************************************
 
@@ -395,6 +399,10 @@ class PlayBook(object):
             remote_user=task.remote_user,
             remote_port=task.play.remote_port,
             module_vars=task.module_vars,
+            play_vars=task.play_vars,
+            play_file_vars=task.play_file_vars,
+            role_vars=task.role_vars,
+            role_params=task.role_params,
             default_vars=task.default_vars,
             extra_vars=self.extra_vars,
             private_key_file=self.private_key_file,
@@ -496,7 +504,7 @@ class PlayBook(object):
         def _save_play_facts(host, facts):
             # saves play facts in SETUP_CACHE, unless the module executed was
             # set_fact, in which case we add them to the VARS_CACHE
-            if task.module_name == 'set_fact':
+            if task.module_name in ('set_fact', 'include_vars'):
                 utils.update_hash(self.VARS_CACHE, host, facts)
             else:
                 utils.update_hash(self.SETUP_CACHE, host, facts)
@@ -601,6 +609,9 @@ class PlayBook(object):
             transport=play.transport,
             is_playbook=True,
             module_vars=play.vars,
+            play_vars=play.vars,
+            play_file_vars=play.vars_file_vars,
+            role_vars=play.role_vars,
             default_vars=play.default_vars,
             check=self.check,
             diff=self.diff,
@@ -632,19 +643,28 @@ class PlayBook(object):
         buf = StringIO.StringIO()
         for x in replay_hosts:
             buf.write("%s\n" % x)
-        basedir = self.inventory.basedir()
+        basedir = C.shell_expand_path(C.RETRY_FILES_SAVE_PATH)
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
-        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
+        filename = os.path.join(basedir, filename)
 
         try:
+            if not os.path.exists(basedir):
+                os.makedirs(basedir)
+
             fd = open(filename, 'w')
             fd.write(buf.getvalue())
             fd.close()
-            return filename
         except:
-            pass
-        return None
+            ansible.callbacks.display(
+                "\nERROR: could not create retry file. Check the value of \n"
+                + "the configuration variable 'retry_files_save_path' or set \n"
+                + "'retry_files_enabled' to False to avoid this message.\n",
+                color='red'
+            )
+            return None
+
+        return filename
 
     # *****************************************************
 

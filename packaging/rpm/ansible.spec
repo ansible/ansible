@@ -95,7 +95,6 @@ cp examples/ansible.cfg %{buildroot}/etc/ansible/
 mkdir -p %{buildroot}/%{_mandir}/man1/
 cp -v docs/man/man1/*.1 %{buildroot}/%{_mandir}/man1/
 mkdir -p %{buildroot}/%{_datadir}/ansible
-cp -rv library/* %{buildroot}/%{_datadir}/ansible/
 
 %clean
 rm -rf %{buildroot}
@@ -105,15 +104,20 @@ rm -rf %{buildroot}
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
-%dir %{_datadir}/ansible/*
-%{_datadir}/ansible/*/*
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc examples/playbooks
-
 
 %changelog
+
+* Tue Nov 25 2014 Michael DeHaan <michael@ansible.com> - 1.8.0
+- Release 1.8.0
+
+* Wed Sep 24 2014 Michael DeHaan <michael@ansible.com> - 1.7.2
+- Release 1.7.2
+
+* Thu Aug 14 2014 Michael DeHaan <michael@ansible.com> - 1.7.1
+- Release 1.7.1
 
 * Wed Aug 06 2014 Michael DeHaan <michael@ansible.com> - 1.7.0
 - Release 1.7.0
