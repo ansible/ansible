@@ -50,14 +50,17 @@ class CallbackModule(CallbackBase):
 
     def runner_on_ok(self, task, result):
 
-        if result._result.get('changed', False):
+        if result._task.action == 'include':
+            msg = 'included: %s for %s' % (result._task.args.get('_raw_params'), result._host.name)
+            color = 'cyan'
+        elif result._result.get('changed', False):
             msg = "changed: [%s]" % result._host.get_name()
             color = 'yellow'
         else:
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
-        if (self._display._verbosity > 0 or 'verbose_always' in result._result) and result._task.action != 'setup':
+        if (self._display._verbosity > 0 or 'verbose_always' in result._result) and result._task.action not in ('setup', 'include'):
             indent = None
             if 'verbose_always' in result._result:
                 indent = 4

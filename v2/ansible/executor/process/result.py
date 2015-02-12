@@ -137,7 +137,12 @@ class ResultProcess(multiprocessing.Process):
                         result_items = [ result._result ]
 
                     for result_item in result_items:
-                        if 'add_host' in result_item:
+                        if 'include' in result_item:
+                            include_variables = result_item.get('include_variables', dict())
+                            if 'item' in result_item:
+                                include_variables['item'] = result_item['item']
+                            self._send_result(('include', result._host, result._task, result_item['include'], include_variables))
+                        elif 'add_host' in result_item:
                             # this task added a new host (add_host module)
                             self._send_result(('add_host', result_item))
                         elif 'add_group' in result_item:

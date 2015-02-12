@@ -92,7 +92,7 @@ class Conditional:
             elif "is defined" in original:
                 return False
             else:
-                raise AnsibleError("error while evaluating conditional: %s" % original)
+                raise AnsibleError("error while evaluating conditional: %s (%s)" % (original, presented))
         elif val == "True":
             return True
         elif val == "False":

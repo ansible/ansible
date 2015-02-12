@@ -63,8 +63,9 @@ class PlayState:
         self._parent_iterator = parent_iterator
         self._run_state       = ITERATING_SETUP
         self._failed_state    = FAILED_NONE
-        self._task_list       = parent_iterator._play.compile()
         self._gather_facts    = parent_iterator._play.gather_facts
+        #self._task_list       = parent_iterator._play.compile()
+        self._task_list       = parent_iterator._task_list[:]
         self._host            = host
 
         self._cur_block       = None
@@ -209,6 +210,19 @@ class PlayState:
         elif self._run_state == ITERATING_ALWAYS:
             self._failed_state = FAILED_ALWAYS
 
+    def add_tasks(self, task_list):
+        if self._run_state == ITERATING_TASKS:
+            before = self._task_list[:self._cur_task_pos]
+            after  = self._task_list[self._cur_task_pos:]
+            self._task_list = before + task_list + after
+        elif self._run_state == ITERATING_RESCUE:
+            before = self._cur_block.rescue[:self._cur_rescue_pos]
+            after  = self._cur_block.rescue[self._cur_rescue_pos:]
+            self._cur_block.rescue = before + task_list + after
+        elif self._run_state == ITERATING_ALWAYS:
+            before = self._cur_block.always[:self._cur_always_pos]
+            after  = self._cur_block.always[self._cur_always_pos:]
+            self._cur_block.always = before + task_list + after
 
 class PlayIterator:
 
@@ -235,6 +249,7 @@ class PlayIterator:
         new_play = play.copy()
         new_play.post_validate(all_vars, fail_on_undefined=False)
 
+        self._task_list = new_play.compile()
         for host in inventory.get_hosts(new_play.hosts):
             if self._first_host is None:
                 self._first_host = host
@@ -267,3 +282,22 @@ class PlayIterator:
 
         self._host_entries[host.get_name()].mark_failed()
 
+    def get_original_task(self, task):
+        '''
+        Finds the task in the task list which matches the UUID of the given task.
+        The executor engine serializes/deserializes objects as they are passed through
+        the different processes, and not all data structures are preserved. This method
+        allows us to find the original task passed into the executor engine.
+        '''
+
+        for t in self._task_list:
+            if t._uuid == task._uuid:
+                return t
+
+        return None
+
+    def add_tasks(self, host, task_list):
+        if host.name not in self._host_entries:
+            raise AnsibleError("invalid host (%s) specified for playbook iteration (expanding task list)" % host)
+
+        self._host_entries[host.name].add_tasks(task_list)

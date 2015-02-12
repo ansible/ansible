@@ -27,7 +27,8 @@ from ansible.errors import *
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 
-from ansible.playbook.helpers import compile_block_list
+from ansible.playbook.handler import Handler
+from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.playbook.role import ROLE_CACHE, hash_params
 from ansible.plugins import module_loader
 from ansible.utils.debug import debug
@@ -111,7 +112,7 @@ class StrategyBase:
             return
         debug("exiting _queue_task() for %s/%s" % (host, task))
 
-    def _process_pending_results(self):
+    def _process_pending_results(self, iterator):
         '''
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
@@ -155,6 +156,22 @@ class StrategyBase:
                             if entry == hashed_entry :
                                 role_obj._had_task_run = True
 
+                elif result[0] == 'include':
+                    host         = result[1]
+                    task         = result[2]
+                    include_file = result[3]
+                    include_vars = result[4]
+
+                    if isinstance(task, Handler):
+                        # FIXME: figure out how to make includes work for handlers
+                        pass
+                    else:
+                        original_task = iterator.get_original_task(task)
+                        if original_task._role:
+                            include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_file)
+                        new_tasks = self._load_included_file(original_task, include_file, include_vars)
+                        iterator.add_tasks(host, new_tasks)
+
                 elif result[0] == 'add_host':
                     task_result = result[1]
                     new_host_info = task_result.get('add_host', dict())
@@ -194,7 +211,7 @@ class StrategyBase:
             except Queue.Empty:
                 pass
 
-    def _wait_on_pending_results(self):
+    def _wait_on_pending_results(self, iterator):
         '''
         Wait for the shared counter to drop to zero, using a short sleep
         between checks to ensure we don't spin lock
@@ -202,7 +219,7 @@ class StrategyBase:
 
         while self._pending_results > 0 and not self._tqm._terminated:
             debug("waiting for pending results (%d left)" % self._pending_results)
-            self._process_pending_results()
+            self._process_pending_results(iterator)
             if self._tqm._terminated:
                 break
             time.sleep(0.01)
@@ -275,6 +292,33 @@ class StrategyBase:
         # and add the host to the group
         new_group.add_host(actual_host)
 
+    def _load_included_file(self, task, include_file, include_vars):
+        '''
+        Loads an included YAML file of tasks, applying the optional set of variables.
+        '''
+
+        data = self._loader.load_from_file(include_file)
+        if not isinstance(data, list):
+            raise AnsibleParsingError("included task files must contain a list of tasks", obj=ds)
+
+        is_handler = isinstance(task, Handler)
+
+        block_list = load_list_of_blocks(
+            data,
+            parent_block=task._block,
+            task_include=task,
+            role=task._role,
+            use_handlers=is_handler,
+            loader=self._loader
+        )
+
+
+        task_list = compile_block_list(block_list)
+        for t in task_list:
+            t.vars = include_vars.copy()
+
+        return task_list
+
     def cleanup(self, iterator, connection_info):
         '''
         Iterates through failed hosts and runs any outstanding rescue/always blocks
@@ -322,10 +366,10 @@ class StrategyBase:
                         self._callback.playbook_on_cleanup_task_start(task.get_name())
                         self._queue_task(host, task, task_vars, connection_info)
 
-            self._process_pending_results()
+            self._process_pending_results(iterator)
 
         # no more work, wait until the queue is drained
-        self._wait_on_pending_results()
+        self._wait_on_pending_results(iterator)
 
         return result
 
@@ -346,7 +390,7 @@ class StrategyBase:
             handler_name = handler.get_name()
 
             if handler_name in self._notified_handlers and len(self._notified_handlers[handler_name]):
-                if not len(self.get_hosts_remaining()):
+                if not len(self.get_hosts_remaining(iterator._play)):
                     self._callback.playbook_on_no_hosts_remaining()
                     result = False
                     break
@@ -358,9 +402,9 @@ class StrategyBase:
                         self._queue_task(host, handler, task_vars, connection_info)
                         handler.flag_for_host(host)
 
-                    self._process_pending_results()
+                    self._process_pending_results(iterator)
 
-                self._wait_on_pending_results()
+                self._wait_on_pending_results(iterator)
 
                 # wipe the notification list
                 self._notified_handlers[handler_name] = []

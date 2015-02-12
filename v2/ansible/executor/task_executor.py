@@ -186,6 +186,14 @@ class TaskExecutor:
         # Now we do final validation on the task, which sets all fields to their final values
         self._task.post_validate(variables)
 
+        # if this task is a TaskInclude, we just return now with a success code so the
+        # main thread can expand the task list for the given host
+        if self._task.action == 'include':
+            include_variables = self._task.args.copy()
+            include_file = include_variables.get('_raw_params')
+            del include_variables['_raw_params']
+            return dict(changed=True, include=include_file, include_variables=include_variables)
+
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
@@ -203,7 +211,6 @@ class TaskExecutor:
         # make a copy of the job vars here, in case we need to update them
         # with the registered variable value later on when testing conditions
         vars_copy = variables.copy()
-
 
         debug("starting attempt loop")
         result = None

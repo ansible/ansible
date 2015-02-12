@@ -25,7 +25,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.playbook.task_include import TaskInclude
 
 class Block(Base, Conditional, Taggable):
 
@@ -178,7 +177,8 @@ class Block(Base, Conditional, Taggable):
         serialize method
         '''
 
-        from ansible.playbook.task_include import TaskInclude
+        #from ansible.playbook.task_include import TaskInclude
+        from ansible.playbook.task import Task
 
         # unpack the when attribute, which is the only one we want
         self.when = data.get('when')
@@ -193,7 +193,7 @@ class Block(Base, Conditional, Taggable):
         # if there was a serialized task include, unpack it too
         ti_data = data.get('task_include')
         if ti_data:
-            ti = TaskInclude()
+            ti = Task()
             ti.deserialize(ti_data)
             self._task_include = ti
 

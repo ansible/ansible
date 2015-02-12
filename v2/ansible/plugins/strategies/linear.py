@@ -96,10 +96,10 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, connection_info)
 
-                    self._process_pending_results()
+                    self._process_pending_results(iterator)
 
                 debug("done queuing things up, now waiting for results queue to drain")
-                self._wait_on_pending_results()
+                self._wait_on_pending_results(iterator)
                 debug("results queue empty")
             except (IOError, EOFError), e:
                 debug("got IOError/EOFError in task loop: %s" % e)

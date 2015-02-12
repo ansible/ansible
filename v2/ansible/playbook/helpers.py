@@ -62,7 +62,7 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
-    from ansible.playbook.task_include import TaskInclude
+    #from ansible.playbook.task_include import TaskInclude
 
     assert type(ds) == list
 
@@ -71,26 +71,27 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
         if not isinstance(task, dict):
             raise AnsibleParserError("task/handler entries must be dictionaries (got a %s)" % type(task), obj=ds)
 
-        if 'include' in task:
-            cur_basedir = None
-            if isinstance(task, AnsibleBaseYAMLObject) and loader:
-                pos_info = task.get_position_info()
-                new_basedir = os.path.dirname(pos_info[0])
-                cur_basedir = loader.get_basedir()
-                loader.set_basedir(new_basedir)
+        #if 'include' in task:
+        #    cur_basedir = None
+        #    if isinstance(task, AnsibleBaseYAMLObject) and loader:
+        #        pos_info = task.get_position_info()
+        #        new_basedir = os.path.dirname(pos_info[0])
+        #        cur_basedir = loader.get_basedir()
+        #        loader.set_basedir(new_basedir)
 
-            t = TaskInclude.load(
-                task,
-                block=block,
-                role=role,
-                task_include=task_include,
-                use_handlers=use_handlers,
-                loader=loader
-            )
+        #    t = TaskInclude.load(
+        #        task,
+        #        block=block,
+        #        role=role,
+        #        task_include=task_include,
+        #        use_handlers=use_handlers,
+        #        loader=loader
+        #    )
 
-            if cur_basedir and loader:
-                loader.set_basedir(cur_basedir)
-        else:
+        #    if cur_basedir and loader:
+        #        loader.set_basedir(cur_basedir)
+        #else:
+        if True:
             if use_handlers:
                 t = Handler.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
             else:
