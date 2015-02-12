@@ -78,7 +78,7 @@ def follow_log(module, le_path, logs, name=None, logtype=None):
         if name:
             cmd.extend(['--name',name])
         if logtype:
-            cmd.append(['--type',logtype])
+            cmd.extend(['--type',logtype])
         rc, out, err = module.run_command(' '.join(cmd))
 
         if not query_log_status(module, le_path, log):
@@ -122,7 +122,7 @@ def main():
             path = dict(required=True),
             state = dict(default="present", choices=["present", "followed", "absent", "unfollowed"]),
             name = dict(required=False, default=None, type='str'),
-            logtype = dict(required=False, default=None, type='str', aliases['type'])
+            logtype = dict(required=False, default=None, type='str', aliases=['type'])
         ),
         supports_check_mode=True
     )
