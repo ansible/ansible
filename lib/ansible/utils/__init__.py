@@ -52,6 +52,11 @@ import contextlib
 
 from vault import VaultLib
 
+try:
+    import keyring
+except:
+    keyring = None
+
 VERBOSITY=0
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
@@ -1070,6 +1075,13 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
     vault_pass = None
     new_vault_pass = None
 
+    if keyring:
+        ring_pass = keyring.get_password("Ansible", "default-vault")
+        if ring_pass:
+            if not ask_new_vault_pass:
+                print "Using password from keyring"
+                return ring_pass, new_vault_pass
+
     if ask_vault_pass:
         vault_pass = getpass.getpass(prompt="Vault password: ")
 
@@ -1091,6 +1103,19 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         vault_pass = vault_pass.strip()
     if new_vault_pass:
         new_vault_pass = new_vault_pass.strip()
+
+    if keyring:
+        store_in_keyring = False
+        if confirm_vault or confirm_new:
+            # ask if the password should be stored in the keyring
+            store_in_keyring = (raw_input("Store password in keyring [Y/n]: ").lower() or 'y') == 'y'
+        if ask_new_vault_pass and ring_pass:
+            # an existing keyring password is stored, confirm it is to be replaced
+            store_in_keyring = (raw_input("A password for Ansible Vaults exists in the keyring, replace? [Y/n]: ").lower() or 'y') == 'y'
+        # first time, or changed password - store in keyring
+        if store_in_keyring:
+            ring_pass = new_vault_pass or vault_pass
+            keyring.set_password("Ansible", "default-vault", ring_pass)
 
     return vault_pass, new_vault_pass
 
@@ -1114,8 +1139,7 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
     if ask_su_pass:
         su_pass = getpass.getpass(prompt=su_prompt)
 
-    if ask_vault_pass:
-        vault_pass = getpass.getpass(prompt="Vault password: ")
+    vault_pass, __ =  ask_vault_passwords(ask_vault_pass=ask_vault_pass)
 
     return (sshpass, sudopass, su_pass, vault_pass)
 
