@@ -37,7 +37,7 @@ options:
     aliases: []
   key:
     description:
-      - The SSH public key(s), as a string or url (https://github.com/username.keys)
+      - The SSH public key(s), as a string or (since 1.9) url (https://github.com/username.keys)
     required: true
     default: null
   path:
