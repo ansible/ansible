@@ -173,10 +173,10 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git
+    $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
+    $ sudo rpm -Uvh ./rpmbuild/ansible-*.noarch.rpm
 
 .. _from_apt:
 
