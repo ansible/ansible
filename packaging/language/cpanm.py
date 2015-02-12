@@ -116,7 +116,7 @@ def main():
         from_path=dict(default=None, required=False),
         notest=dict(default=False, type='bool'),
         locallib=dict(default=None, required=False),
-        mirror=dict(default=None, required=False)
+        mirror=dict(default=None, required=False),
         mirror_only=dict(default=False, type='bool'),
     )
 
