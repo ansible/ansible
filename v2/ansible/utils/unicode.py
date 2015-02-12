@@ -116,12 +116,12 @@ def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
                     simple = obj.__str__()
                 except (UnicodeError, AttributeError):
                     simple = u''
-        if isbytestring(simple):
+        if isinstance(simple, str):
             return unicode(simple, encoding, errors)
         return simple
     elif nonstring in ('repr', 'strict'):
         obj_repr = repr(obj)
-        if isbytestring(obj_repr):
+        if isinstance(obj_repr, str):
             obj_repr = unicode(obj_repr, encoding, errors)
         if nonstring == 'repr':
             return obj_repr
@@ -221,7 +221,7 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
                 simple = obj.__unicode__()
             except (AttributeError, UnicodeError):
                 simple = ''
-        if isunicodestring(simple):
+        if isinstance(simple, unicode):
             simple = simple.encode(encoding, 'replace')
         return simple
     elif nonstring in ('repr', 'strict'):
@@ -229,7 +229,7 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
             obj_repr = obj.__repr__()
         except (AttributeError, UnicodeError):
             obj_repr = ''
-        if isunicodestring(obj_repr):
+        if isinstance(obj_repr, unicode):
             obj_repr =  obj_repr.encode(encoding, errors)
         else:
             obj_repr = str(obj_repr)
