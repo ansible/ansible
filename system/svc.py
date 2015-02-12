@@ -191,6 +191,9 @@ class Svc(object):
     def reload(self):
         return self.execute_command([self.svc_cmd, '-1', self.svc_full])
 
+    def restart(self):
+        return self.execute_command([self.svc_cmd, '-t', self.svc_full])
+
     def execute_command(self, cmd):
         try:
             (rc, out, err) = self.module.run_command(' '.join(cmd))
