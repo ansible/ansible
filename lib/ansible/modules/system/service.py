@@ -26,7 +26,7 @@ version_added: "0.1"
 short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
-      OpenRC, SysV, systemd, upstart.
+      OpenRC, SysV, Solaris SMF, systemd, upstart.
 options:
     name:
         required: true
