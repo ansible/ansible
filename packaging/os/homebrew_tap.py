@@ -63,8 +63,11 @@ def already_tapped(module, brew_path, tap):
         brew_path,
         'tap',
     ])
+
     taps = [tap_.strip().lower() for tap_ in out.split('\n') if tap_]
-    return tap.lower() in taps
+    tap_name = re.sub('homebrew-', '', tap.lower())
+
+    return tap_name in taps
 
 
 def add_tap(module, brew_path, tap):
