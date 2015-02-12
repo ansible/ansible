@@ -66,6 +66,13 @@ options:
     required: false
     default: null
     aliases: []
+  target_tags:
+    version_added: "1.9"
+    description:
+      - the target instance tags for creating a firewall rule
+    required: false
+    default: null
+    aliases: []
   state:
     description:
       - desired state of the persistent disk
@@ -158,6 +165,7 @@ def main():
             name = dict(),
             src_range = dict(type='list'),
             src_tags = dict(type='list'),
+            target_tags = dict(type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
             pem_file = dict(),
@@ -173,6 +181,7 @@ def main():
     name = module.params.get('name')
     src_range = module.params.get('src_range')
     src_tags = module.params.get('src_tags')
+    target_tags = module.params.get('target_tags')
     state = module.params.get('state')
 
     changed = False
@@ -218,7 +227,7 @@ def main():
 
             try:
                 gce.ex_create_firewall(fwname, allowed_list, network=name,
-                        source_ranges=src_range, source_tags=src_tags)
+                        source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
                 changed = True
             except ResourceExistsError:
                 pass
@@ -229,6 +238,7 @@ def main():
             json_output['allowed'] = allowed
             json_output['src_range'] = src_range
             json_output['src_tags'] = src_tags
+            json_output['target_tags'] = target_tags
 
     if state in ['absent', 'deleted']:
         if fwname:
