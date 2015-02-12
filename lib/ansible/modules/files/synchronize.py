@@ -152,6 +152,12 @@ options:
     default:
     required: false
     version_added: "1.6"
+  partial:
+    description:
+      - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
+    default: no
+    required: false
+    version_added: "1.9"
 notes:
    - `rsync` must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
@@ -237,6 +243,7 @@ def main():
             rsync_timeout = dict(type='int', default=0),
             rsync_opts = dict(type='list'),
             ssh_args = dict(type='str'),
+            partial = dict(default='no', type='bool'),
         ),
         supports_check_mode = True
     )
@@ -254,6 +261,7 @@ def main():
     compress = module.params['compress']
     existing_only = module.params['existing_only']
     dirs = module.params['dirs']
+    partial = module.params['partial']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
     links = module.params['links']
@@ -331,6 +339,9 @@ def main():
 
     if rsync_opts:
         cmd = cmd + " " +  " ".join(rsync_opts)
+
+    if partial:
+        cmd = cmd + " --partial"
 
     changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
