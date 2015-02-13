@@ -306,6 +306,9 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def aformat(item, str_fmt):
+    return str(str_fmt % item)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -389,4 +392,7 @@ class FilterModule(object):
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+
+            # alternative string format
+            'aformat': aformat,
         }
