@@ -5,7 +5,7 @@ DOCUMENTATION = '''
 module: add_host
 short_description: add a host (and alternatively a group) to the ansible-playbook in-memory inventory
 description:
-  - Use variables to create new hosts and groups in inventory for use in later plays of the same playbook. 
+  - Use variables to create new hosts and groups in inventory for use in later plays of the same playbook.
     Takes variables so you can define the new hosts more fully.
 version_added: "0.9"
 options:
@@ -13,12 +13,15 @@ options:
     aliases: [ 'hostname', 'host' ]
     description:
     - The hostname/ip of the host to add to the inventory, can include a colon and a port number.
-    required: true     
+    required: true
   groups:
     aliases: [ 'groupname', 'group' ]
     description:
     - The groups to add the hostname to, comma separated.
     required: false
+notes:
+    - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
+    to iterate use a with_ directive.
 author: Seth Vidal
 '''
 
