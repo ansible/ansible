@@ -347,7 +347,7 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         print "- scm %s is not currently supported" % scm
         return False
     tempdir = tempfile.mkdtemp()
-    clone_cmd = [scm, 'clone', role_url, role_name]
+    clone_cmd = [scm, 'clone'] + role_url.split() + [role_name]
     with open('/dev/null', 'w') as devnull:
         try:
             print "- executing: %s" % " ".join(clone_cmd)
