@@ -40,25 +40,38 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
     """ idempotently add a git url hostkey """
 
-    fqdn = get_fqdn(url)
+    if is_ssh_url(url):
 
-    if fqdn:
-        known_host = check_hostkey(module, fqdn)
-        if not known_host:
-            if accept_hostkey:
-                rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
-                if rc != 0:
-                    module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
-            else:
-                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
+        fqdn = get_fqdn(url)
+
+        if fqdn:
+            known_host = check_hostkey(module, fqdn)
+            if not known_host:
+                if accept_hostkey:
+                    rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
+                    if rc != 0:
+                        module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
+                else:
+                    module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
+
+def is_ssh_url(url):
+
+    """ check if url is ssh """
+
+    if "@" in url and "://" not in url:
+        return True
+    for scheme in "ssh://", "git+ssh://", "ssh+git://":
+        if url.startswith(scheme):
+            return True
+    return False
 
 def get_fqdn(repo_url):
 
-    """ chop the hostname out of a giturl """
+    """ chop the hostname out of a url """
 
     result = None
     if "@" in repo_url and "://" not in repo_url:
-        # most likely a git@ or ssh+git@ type URL
+        # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
         if ":" in repo_url:
             repo_url = repo_url.split(":")[0]
@@ -69,9 +82,6 @@ def get_fqdn(repo_url):
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
         parts = urlparse.urlparse(repo_url)
-        if 'ssh' not in parts[0] and 'git' not in parts[0]:
-            # don't try and scan a hostname that's not ssh
-            return None
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
