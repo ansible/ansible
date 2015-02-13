@@ -32,6 +32,7 @@ except Exception:
 import sys
 import os
 import stat
+import json
 
 # Augment PYTHONPATH to find Python modules relative to this file path
 # This is so that we can find the modules when running from a local checkout
@@ -47,6 +48,7 @@ import ansible.utils.template
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
+from ansible.runner import Runner
 from ansible.color import ANSIBLE_COLOR, stringc
 from ansible.callbacks import display
 
@@ -93,6 +95,8 @@ def main(args):
         help="list all tasks that would be executed")
     parser.add_option('--list-tags', dest='listtags', action='store_true',
         help="list all available tags")
+    parser.add_option('--list-vars', dest='listvars', action='store_true',
+        help="list all variables that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
@@ -213,7 +217,11 @@ def main(args):
             display(callbacks.banner("FLUSHING FACT CACHE"))
             pb.SETUP_CACHE.flush()
 
+<<<<<<< HEAD
         if options.listhosts or options.listtasks or options.syntax or options.listtags:
+=======
+        if options.listhosts or options.listtasks or options.listvars or options.syntax:
+>>>>>>> Add --list-vars options function
             print ''
             print 'playbook: %s' % playbook
             print ''
@@ -225,11 +233,12 @@ def main(args):
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
 
-                if options.listhosts:
+                if options.listhosts or options.listvars:
                     print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
                     for host in hosts:
                         print '    %s' % host
 
+<<<<<<< HEAD
                 if options.listtags or options.listtasks:
                     print '  play #%d (%s):\tTAGS: [%s]' % (playnum, label,','.join(sorted(set(play.tags))))
 
@@ -245,6 +254,56 @@ def main(args):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s\tTAGS: [%s]' % (task.name, ', '.join(sorted(set(task.tags).difference(['untagged']))))
+=======
+                        if options.listvars:
+                            runner = Runner(
+                                basedir=pb.basedir,
+                                pattern=play.hosts,
+                                module_name='setup',
+                                module_args={},
+                                inventory=pb.inventory,
+                                forks=pb.forks,
+                                module_path=pb.module_path,
+                                timeout=pb.timeout,
+                                remote_user=play.remote_user,
+                                remote_pass=pb.remote_pass,
+                                remote_port=play.remote_port,
+                                private_key_file=pb.private_key_file,
+                                setup_cache=pb.SETUP_CACHE,
+                                vars_cache=pb.VARS_CACHE,
+                                callbacks=pb.runner_callbacks,
+                                sudo=play.sudo,
+                                sudo_user=play.sudo_user,
+                                sudo_pass=pb.sudo_pass,
+                                su=play.su,
+                                su_user=play.su_user,
+                                su_pass=pb.su_pass,
+                                vault_pass=pb.vault_password,
+                                transport=play.transport,
+                                is_playbook=True,
+                                module_vars=play.vars,
+                                play_vars=play.vars,
+                                play_file_vars=play.vars_file_vars,
+                                role_vars=play.role_vars,
+                                default_vars=play.default_vars,
+                                check=pb.check,
+                                diff=pb.diff,
+                                accelerate=play.accelerate,
+                                accelerate_port=play.accelerate_port)
+                            inject = runner.get_inject_vars(host)
+                            json_text = json.dumps(
+                                ansible.utils.template.template(
+                                    pb.basedir,
+                                    str(inject),
+                                    inject),
+                                indent=4).replace('\n','\n   ')
+                            print ""
+                            print "    VARIABLES:"
+                            print "    %s" %json_text
+
+                if options.listtasks:
+                    print '  play #%d (%s):' % (playnum, label)
+>>>>>>> Add --list-vars options function
 
                 if options.listhosts or options.listtasks or options.listtags:
                     print ''
