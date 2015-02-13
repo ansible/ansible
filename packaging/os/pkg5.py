@@ -21,6 +21,7 @@ DOCUMENTATION = '''
 module: pkg5
 author: Peter Oliver
 short_description: Manages packages with the Solaris 11 Image Packaging System
+version_added: 1.9
 description:
   - IPS packages are the native packages in Solaris 11 and higher.
 notes:
