@@ -1098,7 +1098,7 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
 def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
     sshpass = None
     sudopass = None
-    su_pass = None
+    supass = None
     vault_pass = None
     sudo_prompt = "sudo password: "
     su_prompt = "su password: "
