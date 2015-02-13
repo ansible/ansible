@@ -102,6 +102,14 @@ EXAMPLES = '''
   register: acl_info
 '''
 
+RETURN = '''
+acl:
+    description: Current acl on provided path (after changes, if any)
+    returned: always
+    type: list
+    sample: [ "user::rwx", "group::rwx", "other::rwx" ]
+'''
+
 def normalize_permissions(p):
     perms = ['-','-','-']
     for char in p:

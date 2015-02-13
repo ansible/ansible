@@ -108,6 +108,68 @@ EXAMPLES = '''
 - copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
 '''
 
+RETURN = '''
+dest:
+    description: destination file/path
+    returned: always
+    type: string
+    sample: "/path/to/file.txt"
+src:
+    description: source file used for the copy on the target machine
+    returned: changed
+    type: string
+    sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+md5sum:
+    description: md5 checksum of the file after running copy
+    returned: when supported
+    type: string
+    sample: "2a5aeecc61dc98c4d780b14b330e3282",
+checksum:
+    description: checksum of the file after running copy
+    returned: always
+    type: string
+    sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
+backup_file:
+    description: name of backup file created
+    returned: changed and if backup=yes
+    type: string
+    sample: "/path/to/file.txt.2015-02-12@22:09~"
+gid:
+    description: group id of the file, after execution
+    returned: always
+    type: int
+    sample: 100
+group:
+    description: group of the file, after execution
+    returned: always
+    type: string
+    sample: "httpd"
+owner:
+    description: owner of the file, after execution
+    returned: always
+    type: string
+    sample: "httpd"
+uid: 100
+    description: owner id of the file, after execution
+    returned: always
+    type: int
+    sample: 100
+mode:
+    description: permissions of the target, after execution
+    returned: always
+    type: string
+    sample: "0644"
+size:
+    description: size of the target, after execution
+    returned: always
+    type: int
+    sample: 1220
+state:
+    description: permissions of the target, after execution
+    returned: always
+    type: string
+    sample: "file"
+'''
 
 def split_pre_existing_dir(dirname):
     '''
