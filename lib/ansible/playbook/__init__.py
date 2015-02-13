@@ -672,7 +672,53 @@ class PlayBook(object):
         return filename
 
     # *****************************************************
+    def tasks_to_run_in_play(self, play):
 
+        tasks = []
+
+        for task in play.tasks():
+            # only run the task if the requested tags match or has 'always' tag
+            u = set(['untagged'])
+            task_set = set(task.tags)
+
+            if 'always' in task.tags:
+                should_run = True
+            else:
+                if 'all' in self.only_tags:
+                    should_run = True
+                else:
+                    should_run = False
+                    if  'tagged' in self.only_tags:
+                        if task_set != u:
+                            should_run = True
+                    elif 'untagged' in self.only_tags:
+                        if task_set == u:
+                            should_run = True
+                    else:
+                        if task_set.intersection(self.only_tags):
+                            should_run = True
+
+            # Check for tags that we need to skip
+            if 'all' in self.skip_tags:
+                should_run = False
+            else:
+                if 'tagged' in self.skip_tags:
+                    if task_set != u:
+                        should_run = False
+                elif 'untagged' in self.skip_tags:
+                    if task_set == u:
+                        should_run = False
+                else:
+                    if should_run:
+                        if task_set.intersection(self.skip_tags):
+                            should_run = False
+
+            if should_run:
+                tasks.append(task)
+
+        return tasks
+
+    # *****************************************************
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
@@ -725,7 +771,7 @@ class PlayBook(object):
             play._play_hosts = self._trim_unavailable_hosts(on_hosts)
             self.inventory.also_restrict_to(on_hosts)
 
-            for task in play.tasks():
+            for task in self.tasks_to_run_in_play(play):
 
                 if task.meta is not None:
                     # meta tasks can force handlers to run mid-play
@@ -735,49 +781,11 @@ class PlayBook(object):
                     # skip calling the handler till the play is finished
                     continue
 
-                # only run the task if the requested tags match or has 'always' tag
-                if 'always' in task.tags:
-                    should_run = True
-                else:
-                    u = set(['untagged'])
-                    task_set = set(task.tags)
-
-                    if 'all' in self.only_tags:
-                        should_run = True
-                    else:
-                        should_run = False
-                        if  'tagged' in self.only_tags:
-                            if task_set != u:
-                                should_run = True
-                        elif 'untagged' in self.only_tags:
-                            if task_set == u:
-                                should_run = True
-                        else:
-                            if task_set.intersection(self.only_tags):
-                                should_run = True
-
-                    # Check for tags that we need to skip
-                    if 'all' in self.skip_tags:
-                        should_run = False
-                    else:
-                        if 'tagged' in self.skip_tags:
-                            if task_set != u:
-                                should_run = False
-                        elif 'untagged' in self.skip_tags:
-                            if task_set == u:
-                                should_run = False
-                        else:
-                            if should_run:
-                                if task_set.intersection(self.skip_tags):
-                                    should_run = False
-
-                if should_run:
-
-                    if not self._run_task(play, task, False):
-                        # whether no hosts matched is fatal or not depends if it was on the initial step.
-                        # if we got exactly no hosts on the first step (setup!) then the host group
-                        # just didn't match anything and that's ok
-                        return False
+                if not self._run_task(play, task, False):
+                    # whether no hosts matched is fatal or not depends if it was on the initial step.
+                    # if we got exactly no hosts on the first step (setup!) then the host group
+                    # just didn't match anything and that's ok
+                    return False
 
                 # Get a new list of what hosts are left as available, the ones that
                 # did not go fail/dark during the task
