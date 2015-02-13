@@ -75,7 +75,6 @@ def openstack_full_argument_spec(**kwargs):
         cloud=dict(default=None),
         auth_plugin=dict(default=None),
         auth=dict(default=None),
-        auth_token=dict(default=None),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
@@ -93,10 +92,6 @@ def openstack_module_kwargs(**kwargs):
     ret = dict(
         required_one_of=[
             ['cloud', 'auth'],
-        ],
-        mutually_exclusive=[
-            ['auth', 'auth_token'],
-            ['auth_plugin', 'auth_token'],
         ],
     )
     for key in ('mutually_exclusive', 'required_together', 'required_one_of'):
