@@ -63,6 +63,11 @@ options:
       - maximum number of seconds to wait for
     required: false
     default: 300
+  connect_timeout:
+    description:
+      - maximum number of seconds to wait for a connection to happen before closing and retrying
+    required: false
+    default: 5
   delay:
     description:
       - number of seconds to wait before starting to poll
