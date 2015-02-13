@@ -1099,7 +1099,7 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
     sshpass = None
     sudopass = None
     supass = None
-    vault_pass = None
+    vaultpass = None
     sudo_prompt = "sudo password: "
     su_prompt = "su password: "
 
