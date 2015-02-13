@@ -363,7 +363,10 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
     deps_to_install = []
     pkgs_to_install = []
     for deb_file in debs.split(','):
-        pkg = apt.debfile.DebPackage(deb_file)
+        try:
+            pkg = apt.debfile.DebPackage(deb_file)
+        except SystemError, e:
+            m.fail_json(msg="Error: %s\nSystem Error: %s" % (pkg._failure_string,str(e)))
 
         # Check if it's already installed
         if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
