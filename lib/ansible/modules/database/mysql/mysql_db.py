@@ -312,7 +312,7 @@ def main():
             module.fail_json(msg="with state=%s target is required" % (state))
         connect_to_db = db
     else:
-        connect_to_db = 'mysql'
+        connect_to_db = ''
     try:
         if socket:
             try:
