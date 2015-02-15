@@ -33,12 +33,13 @@ from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.utils.hashing import md5s, checksum_s
-from ansible.utils.unicode import unicode_wrap
+from ansible.utils.unicode import unicode_wrap, to_unicode
 
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
-    return yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
+    transformed = yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
+    return to_unicode(transformed)
 
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
