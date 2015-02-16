@@ -119,6 +119,7 @@ Here are some examples::
 
          - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
+         # redis_kv lookup requires the Python redis package
          - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
          # dnstxt lookup requires the Python dnspython package
