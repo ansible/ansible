@@ -121,6 +121,28 @@ def get_state(path):
 
     return 'absent'
 
+def recursive_set_attributes(module, path, follow, file_args):
+    changed = False
+    for root, dirs, files in os.walk(path):
+        for fsobj in dirs + files:
+            fsname = os.path.join(root, fsobj)
+            if not os.path.islink(fsname):
+                tmp_file_args = file_args.copy()
+                tmp_file_args['path']=fsname
+                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+            else:
+                tmp_file_args = file_args.copy()
+                tmp_file_args['path']=fsname
+                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                if follow:
+                    fsname = os.path.join(root, os.readlink(fsname))
+                    if os.path.isdir(fsname):
+                        changed |= recursive_set_attributes(module, fsname, follow, file_args)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=fsname
+                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+    return changed
+
 def main():
 
     module = AnsibleModule(
@@ -235,7 +257,6 @@ def main():
         module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
-
         if follow and prev_state == 'link':
             path = os.readlink(path)
             prev_state = get_state(path)
@@ -267,12 +288,7 @@ def main():
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
         if recurse:
-            for root,dirs,files in os.walk( file_args['path'] ):
-                for fsobj in dirs + files:
-                    fsname=os.path.join(root, fsobj)
-                    tmp_file_args = file_args.copy()
-                    tmp_file_args['path']=fsname
-                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
+            changed |= recursive_set_attributes(module, file_args['path'], follow, file_args)
 
         module.exit_json(path=path, changed=changed)
 
@@ -380,5 +396,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
 
