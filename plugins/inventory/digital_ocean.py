@@ -80,7 +80,7 @@ optional arguments:
   --list                List all active Droplets as Ansible inventory
                         (default: True)
   --host HOST           Get all Ansible inventory variables about a specific
-                        Droplet
+                        Droplet. Droplet names are assumed to be unique
   --all                 List all DigitalOcean information as JSON
   --droplets            List Droplets as JSON
   --regions             List Regions as JSON
@@ -212,7 +212,6 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         elif self.args.host:     json_data = self.load_droplet_variables_for_host()
         else:    # '--list' this is last to make it default
                                  json_data = self.inventory
-
         if self.args.pretty:
             print json.dumps(json_data, sort_keys=True, indent=2)
         else:
@@ -311,6 +310,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         self.index['image_to_name']   = self.build_index(self.data['images'], 'id', 'name')
         self.index['image_to_distro'] = self.build_index(self.data['images'], 'id', 'distribution')
         self.index['host_to_droplet'] = self.build_index(self.data['droplets'], 'ip_address', 'id', False)
+        self.index['name_to_droplet'] = self.build_index(self.data['droplets'], 'name', 'id', False)
 
         self.build_inventory()
 
@@ -370,27 +370,30 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
     def load_droplet_variables_for_host(self):
         '''Generate a JSON response to a --host call'''
         host = self.to_safe(str(self.args.host))
-
-        if not host in self.index['host_to_droplet']:
+        if not host in self.index['host_to_droplet'] and not host in self.index['name_to_droplet']:
             # try updating cache
             if not self.args.force_cache:
                 self.load_all_data_from_digital_ocean()
-            if not host in self.index['host_to_droplet']:
+            if not host in self.index['host_to_droplet'] and not host in self.index['name_to_droplet']:
                 # host might not exist anymore
                 return {}
 
         droplet = None
         if self.cache_refreshed:
             for drop in self.data['droplets']:
-                if drop['ip_address'] == host:
+                if drop['ip_address'] == host or drop['name'] == host:
                     droplet = self.sanitize_dict(drop)
                     break
         else:
             # Cache wasn't refreshed this run, so hit DigitalOcean API
             manager = DoManager(self.client_id, self.api_key)
-            droplet_id = self.index['host_to_droplet'][host]
+            if host in self.index['host_to_droplet']:
+                droplet_id = self.index['host_to_droplet'][host]
+            elif host in self.index['name_to_droplet']:
+                droplet_id = self.index['name_to_droplet'][host]
+            else:
+                droplet_id = None
             droplet = self.sanitize_dict(manager.show_droplet(droplet_id))
-       
         if not droplet:
             return {}
 
