@@ -1132,7 +1132,7 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
     if ask_vault_pass:
         vaultpass = getpass.getpass(prompt="Vault password: ")
         if vaultpass:
-            vaultpass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
+            vaultpass = to_bytes(vaultpass, errors='strict', nonstring='simplerepr').strip()
 
     return (sshpass, sudopass, supass, vaultpass)
 
