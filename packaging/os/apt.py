@@ -394,7 +394,7 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
         if m.check_mode:
             options += " --simulate"
         if force:
-            options += " --force-yes"
+            options += " --force-all"
 
         cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
         rc, out, err = m.run_command(cmd)
