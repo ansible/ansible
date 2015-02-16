@@ -181,7 +181,7 @@ def main():
     if original_basename and dest.endswith("/"):
         dest = os.path.join(dest, original_basename)
         dirname = os.path.dirname(dest)
-        if not os.path.exists(dirname) and '/' in dirname:
+        if not os.path.exists(dirname) and os.path.isabs(dirname):
             (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
             os.makedirs(dirname)
             directory_args = module.load_file_common_arguments(module.params)
