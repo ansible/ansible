@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 ########################################################################
 #
@@ -213,7 +213,7 @@ def build_option_parser(action):
 
     if action in ("init","install"):
         parser.add_option(
-            '-f', '--force', dest='force', action='store_true', default=False,
+            '-f', '--force', dest='force', action='store_true', default=C.GALAXY_FORCE,
             help='Force overwriting an existing role')
     # done, return the parser
     return parser
@@ -540,7 +540,7 @@ def install_role(role_name, role_version, role_filename, options):
                 if not os.path.isdir(role_path):
                     print "- error: the specified roles path exists and is not a directory."
                     return False
-                elif not get_opt(options, "force", False):
+                elif not get_opt(options, "force", C.GALAXY_FORCE):
                     print "- error: the specified role %s appears to already exist. Use --force to replace it." % role_name
                     return False
                 else:
@@ -588,7 +588,7 @@ def execute_init(args, options, parser):
 
     init_path  = get_opt(options, 'init_path', './')
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-    force      = get_opt(options, 'force', False)
+    force      = get_opt(options, 'force', C.GALAXY_FORCE)
     offline    = get_opt(options, 'offline', False)
 
     if not offline:

@@ -184,6 +184,9 @@ ACCELERATE_KEYS_FILE_PERMS     = get_config(p, 'accelerate', 'accelerate_keys_fi
 ACCELERATE_MULTI_KEY           = get_config(p, 'accelerate', 'accelerate_multi_key', 'ACCELERATE_MULTI_KEY', False, boolean=True)
 PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
+# GALAXY RELATED
+GALAXY_FORCE                   = get_config(p, 'galaxy', 'force', 'GALAXY_FORCE', False, boolean=False)
+
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
