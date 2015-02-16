@@ -231,7 +231,7 @@ class Facts(object):
             SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
             OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
             XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', SLES = 'Suse',
-            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
+            SLED = 'Suse', openSUSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
@@ -355,21 +355,46 @@ class Facts(object):
                             data = get_file_content(path)
                             if 'suse' in data.lower():
                                 if path == '/etc/os-release':
-                                    release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
-                                    distdata = get_file_content(path).split('\n')[0]
-                                    self.facts['distribution'] = distdata.split('=')[1]
-                                    if release:
-                                        self.facts['distribution_release'] = release.groups()[0]
-                                        break
+                                    for line in data.splitlines():
+                                        distribution = re.search("^NAME=(.*)", line)
+                                        if distribution:
+                                            self.facts['distribution'] = distribution.group(1).strip('"')
+                                        distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line) # example pattern are 13.04 13.0 13
+                                        if distribution_version:
+                                             self.facts['distribution_version'] = distribution_version.group(1)
+                                        if 'open' in data.lower():
+                                            release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
+                                            if release:
+                                                self.facts['distribution_release'] = release.groups()[0]
+                                        elif 'enterprise' in data.lower():
+                                             release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line) # SLES doesn't got funny release names
+                                             if release:
+                                                 release = release.group(1)
+                                             else:
+                                                 release = "0" # no minor number, so it is the first release
+                                             self.facts['distribution_release'] = release
+                                    break
                                 elif path == '/etc/SuSE-release':
-                                    data = data.splitlines()
-                                    distdata = get_file_content(path).split('\n')[0]
-                                    self.facts['distribution'] = distdata.split()[0]
-                                    for line in data:
-                                        release = re.search('CODENAME *= *([^\n]+)', line)
-                                        if release:
-                                            self.facts['distribution_release'] = release.groups()[0].strip()
-                                            break
+                                    if 'open' in data.lower():
+                                        data = data.splitlines()
+                                        distdata = get_file_content(path).split('\n')[0]
+                                        self.facts['distribution'] = distdata.split()[0]
+                                        for line in data:
+                                            release = re.search('CODENAME *= *([^\n]+)', line)
+                                            if release:
+                                                self.facts['distribution_release'] = release.groups()[0].strip()
+                                    elif 'enterprise' in data.lower():
+                                        lines = data.splitlines()
+                                        distribution = lines[0].split()[0]
+                                        if "Server" in data:
+                                            self.facts['distribution'] = "SLES"
+                                        elif "Desktop" in data:
+                                            self.facts['distribution'] = "SLED"
+                                        for line in lines:
+                                            release = re.search('PATCHLEVEL = ([0-9]+)', line) # SLES doesn't got funny release names
+                                            if release:
+                                                self.facts['distribution_release'] = release.group(1)
+                                                self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Debian':
                             data = get_file_content(path)
                             if 'Debian' in data:
