@@ -369,6 +369,7 @@ class Facts(object):
                                              else:
                                                  release = "0" # no minor number, so it is the first release
                                              self.facts['distribution_release'] = release
+                                    break
                                 elif path == '/etc/SuSE-release':
                                     if 'open' in data.lower():
                                         data = data.splitlines()
@@ -378,7 +379,6 @@ class Facts(object):
                                             release = re.search('CODENAME *= *([^\n]+)', line)
                                             if release:
                                                 self.facts['distribution_release'] = release.groups()[0].strip()
-                                                break
                                     elif 'enterprise' in data.lower():
                                         lines = data.splitlines()
                                         distribution = lines[0].split()[0]
@@ -391,7 +391,6 @@ class Facts(object):
                                             if release:
                                                 self.facts['distribution_release'] = release.group(1)
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
-                                                break
                         elif name == 'Debian':
                             data = get_file_content(path)
                             if 'Debian' in data:
