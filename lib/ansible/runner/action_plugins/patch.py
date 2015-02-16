@@ -34,8 +34,8 @@ class ActionModule(object):
         dest = options.get('dest', None)
         remote_src = utils.boolean(options.get('remote_src', 'yes'))
 
-        if src is None or dest is None:
-            result = dict(failed=True, msg="src and dest are required")
+        if src is None:
+            result = dict(failed=True, msg="src is required")
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
         if remote_src:
