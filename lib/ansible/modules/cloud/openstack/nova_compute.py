@@ -324,7 +324,7 @@ def _add_floating_ip_from_pool(module, nova, server):
             try:
                 new_ip = nova.floating_ips.create(pool)
             except Exception, e: 
-                module.fail_json(msg = "Unable to create floating ip")
+                module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
             pool_ips.append(new_ip.ip)
         # Add to the main list
         usable_floating_ips[pool] = pool_ips
