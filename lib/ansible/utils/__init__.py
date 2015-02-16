@@ -70,6 +70,11 @@ try:
 except ImportError:
     import json
 
+try:
+    from yaml import CSafeLoader as Loader
+except ImportError:
+    from yaml import SafeLoader as Loader
+
 PASSLIB_AVAILABLE = False
 try:
     import passlib.hash
@@ -594,7 +599,7 @@ def parse_yaml(data, path_hint=None):
                 raise errors.AnsibleError(str(ve))
     else:
         # else this is pretty sure to be a YAML document
-        loaded = yaml.safe_load(data)
+        loaded = yaml.load(data, Loader=Loader)
 
     return loaded
 
