@@ -701,9 +701,6 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 'destination_type': 'volume',
             }
             if image:
-                if boot_volume_size < 100:
-                    module.fail_json(msg='"boot_volume_size" must be greater '
-                                         'than or equal to 100')
                 mapping.update({
                     'uuid': image,
                     'source_type': 'image',
