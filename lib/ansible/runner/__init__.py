@@ -678,6 +678,7 @@ class Runner(object):
         temp_vars = utils.merge_hash(temp_vars, self.play_vars)
         temp_vars = utils.merge_hash(temp_vars, self.play_file_vars)
         temp_vars = utils.merge_hash(temp_vars, self.extra_vars)
+        temp_vars = utils.merge_hash(temp_vars, {'groups': inject['groups']})
 
         hostvars = HostVars(temp_vars, self.inventory, vault_password=self.vault_pass)
 
