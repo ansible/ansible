@@ -28,6 +28,12 @@ On a Linux control machine::
 
    pip install http://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
 
+If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host)::
+
+   pip install kerberos
+
+Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
+
 .. _windows_inventory:
 
 Inventory
@@ -50,6 +56,8 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_connection: winrm
 
 Notice that the ssh_port is not actually for SSH, but this is a holdover variable name from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
+
+If you have installed the ``kerberos`` module, Ansible will first attempt Kerberos authentication. *This uses the principal you are authenticated to Kerberos with on the control machine and not the ``ansible_ssh_user`` specified above*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
