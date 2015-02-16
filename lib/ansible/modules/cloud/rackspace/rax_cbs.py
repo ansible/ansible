@@ -108,9 +108,6 @@ except ImportError:
 
 def cloud_block_storage(module, state, name, description, meta, size,
                         snapshot_id, volume_type, wait, wait_timeout):
-    if size < 100:
-        module.fail_json(msg='"size" must be greater than or equal to 100')
-
     changed = False
     volume = None
     instance = {}
