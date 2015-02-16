@@ -57,11 +57,12 @@ options:
         description:
             - The name of the database to add/remove the user from
         required: true
-    user:
+    name:
         description:
             - The name of the user to add or remove
         required: true
         default: null
+        aliases: [ 'user' ]
     password:
         description:
             - The password to use for the user
@@ -178,7 +179,7 @@ def main():
             login_port=dict(default='27017'),
             replica_set=dict(default=None),
             database=dict(required=True, aliases=['db']),
-            user=dict(required=True, aliases=['name']),
+            name=dict(required=True, aliases=['user']),
             password=dict(aliases=['pass']),
             ssl=dict(default=False),
             roles=dict(default=None, type='list'),
@@ -195,7 +196,7 @@ def main():
     login_port = module.params['login_port']
     replica_set = module.params['replica_set']
     db_name = module.params['database']
-    user = module.params['user']
+    user = module.params['name']
     password = module.params['password']
     ssl = module.params['ssl']
     roles = module.params['roles']
