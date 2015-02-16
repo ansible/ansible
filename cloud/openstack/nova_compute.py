@@ -356,7 +356,7 @@ def _add_auto_floating_ip(module, nova, server):
     try:
         new_ip = nova.floating_ips.create()
     except Exception as e:
-        module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
+        module.fail_json(msg = "Unable to create floating ip: %s" % (e))
 
     try:
         server.add_floating_ip(new_ip)
