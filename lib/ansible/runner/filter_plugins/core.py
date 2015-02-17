@@ -32,7 +32,7 @@ from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.utils.hashing import md5s, checksum_s
+from ansible.utils import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
 
 
