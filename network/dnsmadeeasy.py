@@ -292,7 +292,7 @@ def main():
         if not "value" in new_record:
             if not current_record:
                 module.fail_json(
-                    msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, domain))
+                    msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))
             module.exit_json(changed=False, result=current_record)
 
         # create record as it does not exist
