@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 ########################################################################
 #
@@ -760,6 +760,7 @@ def execute_install(args, options, parser):
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
     no_deps    = get_opt(options, "no_deps", False)
     roles_path = get_opt(options, "roles_path")
+    force      = get_opt(options, "force")
 
     roles_done = []
     if role_file:
@@ -787,6 +788,17 @@ def execute_install(args, options, parser):
             options.roles_path = role_path
         else:
             options.roles_path = roles_path
+
+        # if operations are not forced do not re-install an existing role
+        if not force:
+            try:
+                galaxy_install_info = get_galaxy_install_info(role.get("name"), options)
+                if galaxy_install_info.get("version") == role.get("version"):
+                    print "- %s already installed in version %s" % (role.get('name'), role.get('version'))
+                    roles_done.append(role)
+                    continue
+            except:
+                pass
 
         if os.path.isfile(role_src):
             # installing a local tar.gz
