@@ -9,6 +9,7 @@ Active Development
 Released
 ++++++++
 
+1.8.3  "You Really Got Me" ---- 02-17-2015
 1.8.2  "You Really Got Me" ---- 12-04-2014
 1.8.1  "You Really Got Me" ---- 11-26-2014
 1.8    "You Really Got Me" ---- 11-25-2014

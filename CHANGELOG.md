@@ -1,6 +1,11 @@
 Ansible Changes By Release
 ==========================
 
+## 1.8.3 "You Really Got Me" - Feb 17, 2015
+
+* Fixing a security bug related to the default permissions set on a tempoary file created when using "ansible-vault view <filename>".
+* Many bug fixes, for both core code and core modules.
+
 ## 1.8.2 "You Really Got Me" - Dec 04, 2014
 
 * Various bug fixes for packaging issues related to modules.
