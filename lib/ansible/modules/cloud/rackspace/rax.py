@@ -240,6 +240,39 @@ except ImportError:
     HAS_PYRAX = False
 
 
+def rax_find_server_image(module, server, image, boot_volume):
+    if not image and boot_volume:
+        vol = rax_find_bootable_volume(module, pyrax, server,
+                                       exit=False)
+        if not vol:
+            return None
+        volume_image_metadata = vol.volume_image_metadata
+        vol_image_id = volume_image_metadata.get('image_id')
+        if vol_image_id:
+            server_image = rax_find_image(module, pyrax,
+                                          vol_image_id, exit=False)
+            if server_image:
+                server.image = dict(id=server_image)
+
+    # Match image IDs taking care of boot from volume
+    if image and not server.image:
+        vol = rax_find_bootable_volume(module, pyrax, server)
+        volume_image_metadata = vol.volume_image_metadata
+        vol_image_id = volume_image_metadata.get('image_id')
+        if not vol_image_id:
+            return None
+        server_image = rax_find_image(module, pyrax,
+                                      vol_image_id, exit=False)
+        if image != server_image:
+            return None
+
+        server.image = dict(id=server_image)
+    elif image and server.image['id'] != image:
+        return None
+
+    return server.image
+
+
 def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
            files={}, wait=True, wait_timeout=300, disk_config=None,
            group=None, nics=[], extra_create_args={}, user_data=None,
@@ -639,33 +672,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                     if server.status == 'DELETED':
                         continue
 
-                    if not image and boot_volume:
-                        vol = rax_find_bootable_volume(module, pyrax, server,
-                                                       exit=False)
-                        if not vol:
-                            continue
-                        volume_image_metadata = vol.volume_image_metadata
-                        vol_image_id = volume_image_metadata.get('image_id')
-                        if vol_image_id:
-                            server_image = rax_find_image(module, pyrax,
-                                                      vol_image_id, exit=False)
-                            if server_image:
-                                server.image = dict(id=server_image)
-
-                    # Match image IDs taking care of boot from volume
-                    if image and not server.image:
-                        vol = rax_find_bootable_volume(module, pyrax, server)
-                        volume_image_metadata = vol.volume_image_metadata
-                        vol_image_id = volume_image_metadata.get('image_id')
-                        if not vol_image_id:
-                            continue
-                        server_image = rax_find_image(module, pyrax,
-                                                      vol_image_id, exit=False)
-                        if image != server_image:
-                            continue
-
-                        server.image = dict(id=server_image)
-                    elif image and server.image['id'] != image:
+                    if not rax_find_server_image(module, server, image,
+                                                 boot_volume):
                         continue
 
                     # Ignore servers with non matching metadata
@@ -736,33 +744,8 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
                 if server.status == 'DELETED':
                     continue
 
-                if not image and boot_volume:
-                    vol = rax_find_bootable_volume(module, pyrax, server,
-                                                   exit=False)
-                    if not vol:
-                        continue
-                    volume_image_metadata = vol.volume_image_metadata
-                    vol_image_id = volume_image_metadata.get('image_id')
-                    if vol_image_id:
-                        server_image = rax_find_image(module, pyrax,
-                                                  vol_image_id, exit=False)
-                        if server_image:
-                            server.image = dict(id=server_image)
-
-                # Match image IDs taking care of boot from volume
-                if image and not server.image:
-                    vol = rax_find_bootable_volume(module, pyrax, server)
-                    volume_image_metadata = vol.volume_image_metadata
-                    vol_image_id = volume_image_metadata.get('image_id')
-                    if not vol_image_id:
-                        continue
-                    server_image = rax_find_image(module, pyrax,
-                                                  vol_image_id, exit=False)
-                    if image != server_image:
-                        continue
-
-                    server.image = dict(id=server_image)
-                elif image and server.image['id'] != image:
+                if not rax_find_server_image(module, server, image,
+                                             boot_volume):
                     continue
 
                 # Ignore servers with non matching metadata
