@@ -96,7 +96,6 @@
   assert:
     that:
       - "unarchive02c.changed == false"
-      - "unarchive02c.skipped == true"
 
 - name: unarchive a tar.gz file with creates over an existing file using complex_args
   unarchive:
@@ -110,7 +109,6 @@
   assert:
     that:
       - "unarchive02d.changed == false"
-      - "unarchive02d.skipped == true"
 
 - name: remove our tar.gz unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=absent
