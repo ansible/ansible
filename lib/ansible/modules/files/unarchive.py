@@ -23,14 +23,14 @@ DOCUMENTATION = '''
 ---
 module: unarchive
 version_added: 1.4
-short_description: Copies an archive to a remote location and unpack it
+short_description: Unpacks an archive after (optionally) copying it from the local machine.
 extends_documentation_fragment: files
 description:
-     - The M(unarchive) module copies an archive file from the local machine to a remote and unpacks it.
+     - The M(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set copy=no to unpack an archive which already exists on the target..
 options:
   src:
     description:
-      - Local path to archive file to copy to the remote server; can be absolute or relative.
+      - If copy=yes (default), local path to archive file to copy to the target server; can be absolute or relative. If copy=no, path on the target server to existing archive file to unpack.
     required: true
     default: null
   dest:
@@ -40,7 +40,7 @@ options:
     default: null
   copy:
     description:
-      - "if true, the file is copied from the 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine."
+      - "If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine."
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
