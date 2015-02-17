@@ -103,7 +103,6 @@
   assert:
     that:
       - rax_cbs|failed
-      - rax_cbs.msg == '"size" must be greater than or equal to 100'
 # ============================================================
 
 
