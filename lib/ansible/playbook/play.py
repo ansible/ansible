@@ -152,6 +152,7 @@ class Play(object):
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
         self.no_log           = utils.boolean(ds.get('no_log', 'false'))
+        self.environment      = ds.get('environment', {})
 
         # gather_facts is not a simple boolean, as None means  that a 'smart'
         # fact gathering mode will be used, so we need to be careful here as
@@ -822,7 +823,7 @@ class Play(object):
             """ Render the raw filename into 3 forms """
 
             # filename2 is the templated version of the filename, which will
-            # be fully rendered if any variables contained within it are 
+            # be fully rendered if any variables contained within it are
             # non-inventory related
             filename2 = template(self.basedir, filename, self.vars)
 

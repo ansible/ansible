@@ -138,7 +138,7 @@ class Task(object):
         self.no_log       = utils.boolean(ds.get('no_log', "false")) or self.play.no_log
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 
-        #Code to allow do until feature in a Task 
+        #Code to allow do until feature in a Task
         if 'until' in ds:
             if not ds.get('register'):
                 raise errors.AnsibleError("register keyword is mandatory when using do until feature")
@@ -240,7 +240,7 @@ class Task(object):
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
         self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+
 
         self.ignore_errors = ds.get('ignore_errors', False)
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
