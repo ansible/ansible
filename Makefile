@@ -151,6 +151,7 @@ clean:
 	rm -rf docs/js
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
+	find . -type f -name '*.pyc' -delete
 
 python:
 	$(PYTHON) setup.py build
