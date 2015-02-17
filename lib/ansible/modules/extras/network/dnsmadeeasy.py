@@ -275,7 +275,7 @@ def main():
     current_record = DME.getRecordByName(record_name)
     new_record = {'name': record_name}
     for i in ["record_value", "record_type", "record_ttl"]:
-        if module.params[i]:
+        if not module.params[i] is None:
             new_record[i[len("record_"):]] = module.params[i]
 
     # Compare new record against existing one
