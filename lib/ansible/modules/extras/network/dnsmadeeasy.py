@@ -264,7 +264,7 @@ def main():
     record_name = module.params["record_name"]
 
     # Follow Keyword Controlled Behavior
-    if not record_name:
+    if record_name is None:
         domain_records = DME.getRecords()
         if not domain_records:
             module.fail_json(
