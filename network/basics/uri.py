@@ -381,7 +381,7 @@ def main():
         # of uri executions.
         creates = os.path.expanduser(creates)
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since %s exists" % creates, skipped=True, changed=False, stderr=False, rc=0)
+            module.exit_json(stdout="skipped, since %s exists" % creates, changed=False, stderr=False, rc=0)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
@@ -389,7 +389,7 @@ def main():
         # of uri executions.
         v = os.path.expanduser(removes)
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since %s does not exist" % removes, skipped=True, changed=False, stderr=False, rc=0)
+            module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, stderr=False, rc=0)
 
 
     # httplib2 only sends authentication after the server asks for it with a 401.
