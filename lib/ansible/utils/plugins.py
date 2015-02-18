@@ -64,6 +64,7 @@ class PluginLoader(object):
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._extra_dirs = []
+        self._searched_paths = set()
 
     def print_paths(self):
         ''' Returns a string suitable for printing of the search path '''
@@ -167,22 +168,37 @@ class PluginLoader(object):
                 else:
                     suffixes = ['.py', '']
 
-        # loop over paths and then loop over suffixes to find plugin
-        for i in self._get_paths():
-            for suffix in suffixes:
-                full_name = '%s%s' % (name, suffix)
+        potential_names = frozenset('%s%s' % (name, s) for s in suffixes)
+        for full_name in potential_names:
+            if full_name in self._plugin_path_cache:
+                return self._plugin_path_cache[full_name]
 
+        found = None
+        for path in [p for p in self._get_paths() if p not in self._searched_paths]:
+            if os.path.isdir(path):
+                for potential_file in os.listdir(path):
+                    for suffix in suffixes:
+                        if potential_file.endswith(suffix):
+                            full_path = os.path.join(path, potential_file)
+                            full_name = os.path.basename(full_path)
+                            break
+                    else: # Yes, this is a for-else: http://bit.ly/1ElPkyg
+                        continue
+    
+                    if full_name not in self._plugin_path_cache:
+                        self._plugin_path_cache[full_name] = full_path
+    
+            self._searched_paths.add(path)
+            for full_name in potential_names:
                 if full_name in self._plugin_path_cache:
                     return self._plugin_path_cache[full_name]
 
-                path = os.path.join(i, full_name)
-                if os.path.isfile(path):
-                    self._plugin_path_cache[full_name] = path
-                    return path
-
         # if nothing is found, try finding alias/deprecated
         if not name.startswith('_'):
-            return self.find_plugin('_' + name, suffixes, transport)
+            for alias_name in ('_%s' % n for n in potential_names):
+                # We've already cached all the paths at this point
+                if alias_name in self._plugin_path_cache:
+                    return self._plugin_path_cache[alias_name]
 
         return None
 
