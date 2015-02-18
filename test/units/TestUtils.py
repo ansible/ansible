@@ -182,8 +182,8 @@ class TestUtils(unittest.TestCase):
     def test_jsonify(self):
         self.assertEqual(ansible.utils.jsonify(None), '{}')
         self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux'])), '{"baz": ["qux"], "foo": "bar"}')
-        expected = u'{\n    "baz": [\n        "qux"\n    ],\n    "foo": "bar"\n}'
-        self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux']), format=True), expected)
+        expected = u'{"baz":["qux"],"foo":"bar"}'
+        self.assertEqual("".join(ansible.utils.jsonify(dict(foo='bar', baz=['qux']), format=True).split()), expected)
 
     def test_is_failed(self):
         self.assertEqual(ansible.utils.is_failed(dict(rc=0)), False)
