@@ -162,15 +162,14 @@ def main():
             (rc, out, err) = package_uninstall(module, name)
             out = out[:75]
 
-    if rc == 0:
-        result['changed'] = True
-    else:
+    if rc is None:
+        # pkgutil was not executed because the package was already present/absent
         result['changed'] = False
-
-    if rc is not None and rc != 0:
+    elif rc == 0
+        result['changed'] = True
+    else
+        result['changed'] = False
         result['failed'] = True
-    else:
-        result['failed'] = False
 
     if out:
         result['stdout'] = out
