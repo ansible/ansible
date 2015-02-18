@@ -735,14 +735,10 @@ class DockerManager(object):
                   'name':         self.module.params.get('name'),
                   'stdin_open':   self.module.params.get('stdin_open'),
                   'tty':          self.module.params.get('tty'),
-                  'dns':          self.module.params.get('dns'),
                   'volumes_from': self.module.params.get('volumes_from'),
                   }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
             params['volumes_from'] = ""
-
-        if params['dns'] is not None:
-            self.ensure_capability('dns')
 
         if params['volumes_from'] is not None:
             self.ensure_capability('volumes_from')
