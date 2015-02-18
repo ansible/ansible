@@ -175,18 +175,19 @@ class PluginLoader(object):
 
         found = None
         for path in [p for p in self._get_paths() if p not in self._searched_paths]:
-            for potential_file in os.listdir(path):
-                for suffix in suffixes:
-                    if potential_file.endswith(suffix):
-                        full_path = os.path.join(path, potential_file)
-                        full_name = os.path.basename(full_path)
-                        break
-                else: # Yes, this is a for-else: http://bit.ly/1ElPkyg
-                    continue
-
-                if full_name not in self._plugin_path_cache:
-                    self._plugin_path_cache[full_name] = full_path
-
+            if os.path.isdir(path):
+                for potential_file in os.listdir(path):
+                    for suffix in suffixes:
+                        if potential_file.endswith(suffix):
+                            full_path = os.path.join(path, potential_file)
+                            full_name = os.path.basename(full_path)
+                            break
+                    else: # Yes, this is a for-else: http://bit.ly/1ElPkyg
+                        continue
+    
+                    if full_name not in self._plugin_path_cache:
+                        self._plugin_path_cache[full_name] = full_path
+    
             self._searched_paths.add(path)
             for full_name in potential_names:
                 if full_name in self._plugin_path_cache:
