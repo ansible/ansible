@@ -84,7 +84,7 @@ class Connection(object):
         self.port = port
 
     def connect(self, port=None):
-        ''' connect to the chroot; nothing to do here '''
+        ''' connect to the zone; nothing to do here '''
 
         vvv("THIS IS A LOCAL ZONE DIR", host=self.zone)
 
@@ -100,17 +100,15 @@ class Connection(object):
 
     #def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
-        ''' run a command on the chroot '''
+        ''' run a command on the zone '''
 
-        # XXX: TBD
         if su or su_user:
             raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # XXX: Allow doing stuff as -l <user>
-        # We enter chroot as root so sudo stuff can be ignored
+        # We enter zone as root so sudo stuff can be ignored
         if executable == '/bin/sh':
           executable = None
         local_cmd = self._generate_cmd(executable, cmd)
@@ -143,7 +141,7 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def put_file(self, in_path, out_path):
-        ''' transfer a file from local to chroot '''
+        ''' transfer a file from local to zone '''
 
         out_path = self._normalize_path(out_path, self.get_zone_path())
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
@@ -151,7 +149,7 @@ class Connection(object):
         self._copy_file(in_path, out_path)
 
     def fetch_file(self, in_path, out_path):
-        ''' fetch a file from chroot to local '''
+        ''' fetch a file from zone to local '''
 
         in_path = self._normalize_path(in_path, self.get_zone_path())
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
