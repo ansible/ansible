@@ -320,7 +320,7 @@ def main():
             if os.path.ismount(name):
                 if changed:
                     res,msg = mount(module, **args)
-            elif "bind" in args['opts']:
+            elif 'bind' in args.get('opts', []):
                 changed = True
                 cmd = 'mount -l'
                 rc, out, err = module.run_command(cmd)
