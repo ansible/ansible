@@ -103,6 +103,7 @@ DEFAULTS='defaults'
 # configurable things
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'inventory', 'ANSIBLE_INVENTORY', get_config(p, DEFAULTS,'hostfile','ANSIBLE_HOSTS', '/etc/ansible/hosts')))
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
+DEFAULT_ANSIBLE_CUSTOM_MODULES = shell_expand_path(get_config(p, DEFAULTS, 'custom_modules',          'ANSIBLE_CUSTOM_MODULES',          None))
 DEFAULT_ROLES_PATH        = shell_expand_path(get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles'))
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')

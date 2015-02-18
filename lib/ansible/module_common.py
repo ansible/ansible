@@ -119,7 +119,22 @@ class ModuleReplacer(object):
                 snippet_name = tokens[2].split()[0]
                 snippet_names.append(snippet_name)
                 output.write(self.slurp(os.path.join(self.snippet_path, snippet_name + ".py")))
-
+            elif line.startswith('from ansible.module_custom.'):
+                module_custom_path = C.DEFAULT_ANSIBLE_CUSTOM_MODULES
+                if module_custom_path is None:
+                    import_error = True
+                    raise errors.AnsibleError("ANSIBLE_CUSTOM_MODULES is None: %s" % C.DEFAULT_ANSIBLE_CUSTOM_MODULES)
+                tokens=line.split(".")
+                import_error = False
+                if len(tokens) != 3:
+                    import_error = True
+                if " import *" not in line:
+                    import_error = True
+                if import_error:
+                    raise errors.AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.basic import *'" % module_path)
+                snippet_name = tokens[2].split()[0]
+                snippet_names.append(snippet_name)
+                output.write(self.slurp(os.path.join(module_custom_path, snippet_name + ".py")))
             else:
                 if self.strip_comments and line.startswith("#") or line == '':
                     pass
