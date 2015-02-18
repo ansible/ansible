@@ -250,7 +250,7 @@ class MavenDownloader:
 
     def download(self, artifact, filename=None):
         filename = artifact.get_filename(filename)
-        if not artifact.version:
+        if not artifact.version or artifact.version == "latest":
             artifact = Artifact(artifact.group_id, artifact.artifact_id, self._find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
 
