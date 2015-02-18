@@ -24,9 +24,9 @@ version_added: "1.1"
 options:
   instance:
     description:
-      - instance ID if you wish to attach the volume. 
+      - instance ID if you wish to attach the volume. Since 1.9 you can set to None to detach.
     required: false
-    default: null 
+    default: null
     aliases: []
   name:
     description:
@@ -152,12 +152,12 @@ EXAMPLES = '''
     image: "{{ image }}"
     zone: YYYYYY
     id: my_instance
-    wait: yes 
+    wait: yes
     count: 1
     register: ec2
 
 - ec2_vol:
-    instance: "{{ item.id }}" 
+    instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
     with_items: ec2.instances
@@ -168,7 +168,7 @@ EXAMPLES = '''
     id: vol-XXXXXXXX
     state: absent
 
-# Detach a volume
+# Detach a volume (since 1.9)
 - ec2_vol:
     id: vol-XXXXXXXX
     instance: None
@@ -177,7 +177,7 @@ EXAMPLES = '''
 - ec2_vol:
     instance: i-XXXXXX
     state: list
-    
+
 # Create new volume using SSD storage
 - ec2_vol:
     instance: XXXXXX
