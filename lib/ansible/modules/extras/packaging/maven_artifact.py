@@ -349,8 +349,7 @@ def main():
 
     prev_state = "absent"
     if os.path.isdir(dest):
-        dest = dest + "/" + artifact_id + "-" + version + ".jar"
-            
+        dest = dest + "/" + artifact_id + "-" + version + "." + extension
     if os.path.lexists(dest):
         prev_state = "present"
     else:
