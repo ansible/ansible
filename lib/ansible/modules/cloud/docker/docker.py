@@ -511,12 +511,50 @@ class DockerManager(object):
 
         self.env = self.module.params.get('env', None)
 
-        # connect to docker server
-        docker_url = urlparse(module.params.get('docker_url'))
+        # Connect to the docker server using any configured host and TLS settings.
+
+        env_host = os.getenv('DOCKER_HOST')
+        env_cert_path = os.getenv('DOCKER_CERT_PATH')
+
+        docker_url = module.params.get('docker_url')
+        if not docker_url:
+            if env_host:
+                docker_url = env_host
+            else:
+                docker_url = 'unix://var/run/docker.sock'
+
+        docker_tls_cert = module.params.get('docker_tls_cert')
+        if not docker_tls_cert and env_cert_path:
+            docker_tls_cert = os.path.join(env_cert_path, 'cert.pem')
+
+        docker_tls_key = module.params.get('docker_tls_key')
+        if not docker_tls_key and env_cert_path:
+            docker_tls_key = os.path.join(env_cert_path, 'key.pem')
+
+        docker_tls_cacert = module.params.get('docker_tls_cacert')
+        if not docker_tls_cacert and env_cert_path:
+            docker_tls_cacert = os.path.join(env_cert_path, 'ca.pem')
+
         docker_api_version = module.params.get('docker_api_version')
         if not docker_api_version:
             docker_api_version=docker.client.DEFAULT_DOCKER_API_VERSION
-        self.client = docker.Client(base_url=docker_url.geturl(), version=docker_api_version)
+
+        tls_config = None
+        if docker_tls_cert or docker_tls_key or docker_tls_cacert:
+            # See https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
+            docker_url = docker_url.replace('tcp://', 'https://')
+            verify = docker_tls_cacert is not None
+
+            tls_config = docker.tls.TLSConfig(
+                client_cert=(docker_tls_cert, docker_tls_key),
+                ca_cert=docker_tls_cacert,
+                verify=verify,
+                assert_hostname=False
+            )
+
+        self.client = docker.Client(base_url=docker_url,
+                                    version=docker_api_version,
+                                    tls=tls_config)
 
         self.docker_py_versioninfo = get_docker_py_versioninfo()
 
@@ -1296,7 +1334,10 @@ def main():
             links           = dict(default=None, type='list'),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
-            docker_url      = dict(default='unix://var/run/docker.sock'),
+            docker_url      = dict(),
+            docker_tls_cert = dict(),
+            docker_tls_key  = dict(),
+            docker_tls_cacert = dict(),
             docker_api_version = dict(),
             username        = dict(default=None),
             password        = dict(),
