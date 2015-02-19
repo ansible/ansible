@@ -23,7 +23,6 @@ import types
 import pipes
 import glob
 import re
-import collections
 import crypt
 import hashlib
 import string
@@ -182,51 +181,6 @@ def ternary(value, true_val, false_val):
     else:
         return false_val
 
-def unique(a):
-    if isinstance(a,collections.Hashable):
-        c = set(a)
-    else:
-        c = []
-        for x in a:
-            if x not in c:
-                c.append(x)
-    return c
-
-def intersect(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
-        c = set(a) & set(b)
-    else:
-        c = unique(filter(lambda x: x in b, a))
-    return c
-
-def difference(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
-        c = set(a) - set(b)
-    else:
-        c = unique(filter(lambda x: x not in b, a))
-    return c
-
-def symmetric_difference(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
-        c = set(a) ^ set(b)
-    else:
-        c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
-    return c
-
-def union(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
-        c = set(a) | set(b)
-    else:
-        c = unique(a + b)
-    return c
-
-def min(a):
-    _min = __builtins__.get('min')
-    return _min(a);
-
-def max(a):
-    _max = __builtins__.get('max')
-    return _max(a);
 
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
@@ -386,14 +340,6 @@ class FilterModule(object):
             'ternary': ternary,
 
             # list
-            'unique' : unique,
-            'intersect': intersect,
-            'difference': difference,
-            'symmetric_difference': symmetric_difference,
-            'union': union,
-            'min' : min,
-            'max' : max,
-
             # version comparison
             'version_compare': version_compare,
 
