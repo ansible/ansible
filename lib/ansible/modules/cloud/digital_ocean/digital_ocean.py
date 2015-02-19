@@ -237,7 +237,8 @@ class Droplet(JsonfyMixIn):
     @classmethod
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
         private_networking_lower = str(private_networking).lower()
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled)
+        backups_enabled_lower = str(backups_enabled).lower()
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower)
         droplet = cls(json)
         return droplet
 
