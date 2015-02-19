@@ -34,6 +34,7 @@ import uuid
 import yaml
 from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
+from __future__ import absolute_import
 
 from ansible import errors
 from ansible.utils.hashing import md5s, checksum_s
