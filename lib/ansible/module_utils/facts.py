@@ -999,6 +999,10 @@ class SunOSHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_cpu_facts(self):
@@ -1058,6 +1062,17 @@ class SunOSHardware(Hardware):
         self.facts['swaptotal_mb'] = (free + used) / 1024
         self.facts['swap_allocated_mb'] = allocated / 1024
         self.facts['swap_reserved_mb'] = reserved / 1024
+
+    @timeout(10)
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        # For a detailed format description see mnttab(4)
+        #   special mount_point fstype options time
+        fstab = get_file_content('/etc/mnttab')
+        if fstab:
+            for line in fstab.split('\n'):
+                fields = line.rstrip('\n').split('\t')
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4]})
 
 class OpenBSDHardware(Hardware):
     """
