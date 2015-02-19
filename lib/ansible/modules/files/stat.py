@@ -82,7 +82,7 @@ stat:
             sample: True
         path:
             description: The full path of the file/object to get the facts of
-            returned: success
+            returned: success and if path exists
             type: boolean
             sample: '/path/to/file'
         mode:
@@ -160,7 +160,7 @@ stat:
             returned: success, path exists and user can read stats
             type: float
             sample: 1424348972.575
-        mtime: st.st_mtime,
+        mtime:
             description: Time of last modification
             returned: success, path exists and user can read stats
             type: float
@@ -215,6 +215,16 @@ stat:
             returned: success, path exists and user can read stats
             type: boolean
             sample: True
+        isuid:
+            description: Tells you if the invoking user's id matches the owner's id
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        isrid:
+            description: Tells you if the invoking user's group id matches the owner's group id
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
         lnk_source:
             description: Original path
             returned: success, path exists and user can read stats and the path is a symbolic link
@@ -236,7 +246,7 @@ stat:
             type: string
             sample: httpd
         gr_name:
-            description:
+            description: Group name of owner
             returned: success, path exists and user can read stats and installed python supports it
             type: string
             sample: www-data
