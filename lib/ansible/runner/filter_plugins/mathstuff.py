@@ -15,10 +15,56 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
+import collections
+from ansible import errors
 from __future__ import absolute_import
 
-import math
-from ansible import errors
+def unique(a):
+    if isinstance(a,collections.Hashable):
+        c = set(a)
+    else:
+        c = []
+        for x in a:
+            if x not in c:
+                c.append(x)
+    return c
+
+def intersect(a, b):
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) & set(b)
+    else:
+        c = unique(filter(lambda x: x in b, a))
+    return c
+
+def difference(a, b):
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) - set(b)
+    else:
+        c = unique(filter(lambda x: x not in b, a))
+    return c
+
+def symmetric_difference(a, b):
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) ^ set(b)
+    else:
+        c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
+    return c
+
+def union(a, b):
+    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+        c = set(a) | set(b)
+    else:
+        c = unique(a + b)
+    return c
+
+def min(a):
+    _min = __builtins__.get('min')
+    return _min(a);
+
+def max(a):
+    _max = __builtins__.get('max')
+    return _max(a);
 
 def isnotanumber(x):
     try:
@@ -61,9 +107,19 @@ class FilterModule(object):
         return {
             # general math
             'isnan': isnotanumber,
+            'min' : min,
+            'max' : max,
 
             # exponents and logarithms
             'log': logarithm,
             'pow': power,
             'root': inversepower,
+
+            # set theory
+            'unique' : unique,
+            'intersect': intersect,
+            'difference': difference,
+            'symmetric_difference': symmetric_difference,
+            'union': union,
+
         }
