@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import math
 import collections
 from ansible import errors
-from __future__ import absolute_import
 
 def unique(a):
     if isinstance(a,collections.Hashable):

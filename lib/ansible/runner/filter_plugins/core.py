@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import sys
 import base64
 import json
@@ -34,7 +36,6 @@ import uuid
 import yaml
 from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
-from __future__ import absolute_import
 
 from ansible import errors
 from ansible.utils.hashing import md5s, checksum_s
