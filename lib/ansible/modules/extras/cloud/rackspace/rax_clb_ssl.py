@@ -93,9 +93,6 @@ EXAMPLES = '''
     wait: true
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
-
 try:
     import pyrax
     HAS_PYRAX = True
@@ -280,5 +277,8 @@ def main():
         intermediate_certificate, secure_port, secure_traffic_only,
         https_redirect, wait, wait_timeout
     )
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
 
 main()
