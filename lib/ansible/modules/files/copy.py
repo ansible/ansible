@@ -111,7 +111,7 @@ EXAMPLES = '''
 RETURN = '''
 dest:
     description: destination file/path
-    returned: always
+    returned: success
     type: string
     sample: "/path/to/file.txt"
 src:
@@ -126,7 +126,7 @@ md5sum:
     sample: "2a5aeecc61dc98c4d780b14b330e3282",
 checksum:
     description: checksum of the file after running copy
-    returned: always
+    returned: success
     type: string
     sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
 backup_file:
@@ -136,37 +136,37 @@ backup_file:
     sample: "/path/to/file.txt.2015-02-12@22:09~"
 gid:
     description: group id of the file, after execution
-    returned: always
+    returned: success
     type: int
     sample: 100
 group:
     description: group of the file, after execution
-    returned: always
+    returned: success
     type: string
     sample: "httpd"
 owner:
     description: owner of the file, after execution
-    returned: always
+    returned: success
     type: string
     sample: "httpd"
 uid: 100
     description: owner id of the file, after execution
-    returned: always
+    returned: success
     type: int
     sample: 100
 mode:
     description: permissions of the target, after execution
-    returned: always
+    returned: success
     type: string
     sample: "0644"
 size:
     description: size of the target, after execution
-    returned: always
+    returned: success
     type: int
     sample: 1220
 state:
     description: permissions of the target, after execution
-    returned: always
+    returned: success
     type: string
     sample: "file"
 '''
