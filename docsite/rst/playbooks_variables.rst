@@ -216,6 +216,11 @@ To get the maximum value from a list of numbers::
 
     {{ [3, 4, 2] | max }}
 
+To map the items in a list using a dictionary:
+
+    {{ [3, 1] | dictmap ({ 1: "one", 2: "two", 3: "three" }) }}
+
+
 .. _set_theory_filters:
 
 Set Theory Filters

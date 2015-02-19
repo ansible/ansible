@@ -228,6 +228,10 @@ def max(a):
     _max = __builtins__.get('max')
     return _max(a);
 
+def dictmap(l, d):
+    ''' Map the elements of a list using a dictionary '''
+    return [d[k] for k in l]
+
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
     op_map = {
@@ -393,6 +397,7 @@ class FilterModule(object):
             'union': union,
             'min' : min,
             'max' : max,
+            'dictmap' : dictmap,
 
             # version comparison
             'version_compare': version_compare,
