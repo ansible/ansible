@@ -152,39 +152,39 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
         cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
     cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        gunzip_path = module.get_bin_path('gunzip')
-        if gunzip_path:
-            rc, stdout, stderr = module.run_command('%s %s' % (gunzip_path, target))
-            if rc != 0:
-                return rc, stdout, stderr
-            cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        gzip_path = module.get_bin_path('gzip')
+        if not gzip_path:
+            module.fail_json(msg="gzip command not found")
+        #gzip -d file (uncompress)
+        rc, stdout, stderr = module.run_command('%s -d %s' % (gzip_path, target))
+        if rc != 0:
+            return rc, stdout, stderr
+        #Import sql
+        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        try:
             rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
             if rc != 0:
                 return rc, stdout, stderr
-            gzip_path = module.get_bin_path('gzip')
-            if gzip_path:
-                rc, stdout, stderr = module.run_command('%s %s' % (gzip_path, os.path.splitext(target)[0]))
-            else:
-                module.fail_json(msg="gzip command not found")
-        else:
-            module.fail_json(msg="gunzip command not found")
+        finally:
+            #gzip file back up
+            module.run_command('%s %s' % (gzip_path, os.path.splitext(target)[0]))
     elif os.path.splitext(target)[-1] == '.bz2':
-        bunzip2_path = module.get_bin_path('bunzip2')
-        if bunzip2_path:
-            rc, stdout, stderr = module.run_command('%s %s' % (bunzip2_path, target))
-            if rc != 0:
-                return rc, stdout, stderr
-            cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        bzip2_path = module.get_bin_path('bzip2')
+        if not bzip2_path:
+            module.fail_json(msg="bzip2 command not found")
+        #bzip2 -d file (uncompress)
+        rc, stdout, stderr = module.run_command('%s -d %s' % (bzip2_path, target))
+        if rc != 0:
+            return rc, stdout, stderr
+        #Import sql
+        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        try:
             rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
             if rc != 0:
                 return rc, stdout, stderr
-            bzip2_path = module.get_bin_path('bzip2')
-            if bzip2_path:
-                rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
-            else:
-                module.fail_json(msg="bzip2 command not found")
-        else:
-            module.fail_json(msg="bunzip2 command not found")
+        finally:
+            #bzip2 file back up
+            rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
     else:
         cmd += " < %s" % pipes.quote(target)
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
