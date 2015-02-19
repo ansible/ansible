@@ -415,7 +415,10 @@ class Facts(object):
                                 break
                     else:
                         self.facts['distribution'] = name
-
+        machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
+        if machine_id:
+            machine_id = machine_id.split('\n')[0]
+            self.facts["machine_id"] = machine_id
         self.facts['os_family'] = self.facts['distribution']
         if self.facts['distribution'] in OS_FAMILY:
             self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
