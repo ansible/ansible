@@ -105,7 +105,7 @@ EXAMPLES = '''
 RETURN = '''
 acl:
     description: Current acl on provided path (after changes, if any)
-    returned: always
+    returned: success
     type: list
     sample: [ "user::rwx", "group::rwx", "other::rwx" ]
 '''

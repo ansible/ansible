@@ -69,6 +69,179 @@ EXAMPLES = '''
 - stat: path=/path/to/myhugefile get_md5=no
 '''
 
+RETURN = '''
+stat:
+    description: dictionary containing all the stat data
+    returned: success
+    type: dictionary
+    contains:
+        exists:
+            description: if the destination path actually exists or not
+            returned: success
+            type: boolean
+            sample: True
+        path:
+            description: The full path of the file/object to get the facts of
+            returned: success
+            type: boolean
+            sample: '/path/to/file'
+        mode:
+            description: Unix permissions of the file in octal
+            returned: success, path exists and user can read stats
+            type: octal
+            sample: 1755
+        isdir:
+            description: Tells you if the path is a directory
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        ischr:
+            description: Tells you if the path is a character device
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        isblk:
+            description: Tells you if the path is a block device
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        isreg:
+            description: Tells you if the path is a regular file
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        isfifo:
+            description: Tells you if the path is a named pipe
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        islnk:
+            description: Tells you if the path is a symbolic link
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        issock:
+            description: Tells you if the path is a unix domain socket
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        uid:
+            description: Numeric id representing the file owner
+            returned: success, path exists and user can read stats
+            type: int
+            sample: 1003
+        gid:
+            description: Numeric id representing the group of the owner
+            returned: success, path exists and user can read stats
+            type: int
+            sample: 1003
+        size:
+            description: Size in bytes for a plain file, ammount of data for some special files
+            returned: success, path exists and user can read stats
+            type: int
+            sample: 203
+        inode:
+            description: Inode number of the path
+            returned: success, path exists and user can read stats
+            type: int
+            sample: 12758
+        dev:
+            description: Device the inode resides on
+            returned: success, path exists and user can read stats
+            type: int
+            sample: 33
+        nlink:
+            description: Number of links to the inode (hard links)
+            returned: success, path exists and user can read stats
+            type: int
+            sample: 1
+        atime:
+            description: Time of last access
+            returned: success, path exists and user can read stats
+            type: float
+            sample: 1424348972.575
+        mtime: st.st_mtime,
+            description: Time of last modification
+            returned: success, path exists and user can read stats
+            type: float
+            sample: 1424348972.575
+        ctime:
+            description: Time of last metadata update or creation (depends on OS)
+            returned: success, path exists and user can read stats
+            type: float
+            sample: 1424348972.575
+        wusr:
+            description: Tells you if the owner has write permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        rusr:
+            description: Tells you if the owner has read permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        xusr:
+            description: Tells you if the owner has execute permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        wgrp:
+            description: Tells you if the owner's group has write permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        rgrp:
+            description: Tells you if the owner's group has read permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        xgrp:
+            description: Tells you if the owner's group has execute permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        woth:
+            description: Tells you if others have write permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: False
+        roth:
+            description: Tells you if others have read permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        xoth:
+            description: Tells you if others have execute permission
+            returned: success, path exists and user can read stats
+            type: boolean
+            sample: True
+        lnk_source:
+            description: Original path
+            returned: success, path exists and user can read stats and the path is a symbolic link
+            type: boolean
+            sample: True
+        md5:
+            description: md5 hash of the path
+            returned: success, path exists and user can read stats and path supports hashing and md5 is supported
+            type: boolean
+            sample: True
+        checksum:
+            description: hash of the path
+            returned: success, path exists and user can read stats and path supports hashing
+            type: boolean
+            sample: True
+        pw_name:
+            description: User name of owner
+            returned: success, path exists and user can read stats and installed python supports it
+            type: string
+            sample: httpd
+        gr_name:
+            description:
+            returned: success, path exists and user can read stats and installed python supports it
+            type: string
+            sample: www-data
+'''
+
 import os
 import sys
 from stat import *
