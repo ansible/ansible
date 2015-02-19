@@ -120,26 +120,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
 
     # Locate the load balancer.
 
-    clb = pyrax.cloud_loadbalancers
-    if not clb:
-        module.fail_json(msg='Failed to instantiate client. This '
-                             'typically indicates an invalid region or an '
-                             'incorrectly capitalized region name.')
-
-    balancers = []
-    for balancer in clb.list():
-        if loadbalancer == balancer.name or loadbalancer == str(balancer.id):
-            balancers.append(balancer)
-
-    if not balancers:
-        module.fail_json(msg='No load balancers matched your criteria. '
-                             'Use rax_clb to create the balancer first.')
-
-    if len(balancers) > 1:
-        module.fail_json(msg="%d load balancers were matched your criteria. Try"
-                             "using the balancer's id instead." % len(balancers))
-
-    balancer = balancers[0]
+    balancer = rax_find_loadbalancer(module, pyrax, loadbalancer)
     existing_ssl = balancer.get_ssl_termination()
 
     changed = False
