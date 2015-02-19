@@ -116,9 +116,6 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         else:
             certificate = certificate.strip()
 
-    if state not in ('present', 'absent'):
-        module.fail_json(msg="State must be either 'present' or 'absent'.")
-
     attempts = wait_timeout / 5
 
     # Locate the load balancer.
