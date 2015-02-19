@@ -6,6 +6,7 @@ import os.path
 import unittest, tempfile, shutil
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
+import ansible.runner.filter_plugins.mathstuff
 
 INVENTORY = inventory.Inventory(['localhost'])
 
@@ -182,9 +183,9 @@ class TestFilters(unittest.TestCase):
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))
 
     def test_min(self):
-        a = ansible.runner.filter_plugins.core.min([3, 2, 5, 4])
+        a = ansible.runner.filter_plugins.mathstuff.min([3, 2, 5, 4])
         assert a == 2
 
     def test_max(self):
-        a = ansible.runner.filter_plugins.core.max([3, 2, 5, 4])
+        a = ansible.runner.filter_plugins.mathstuff.max([3, 2, 5, 4])
         assert a == 5
