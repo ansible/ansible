@@ -23,7 +23,7 @@ description:
 - Set up, reconfigure, or remove SSL termination for an existing load balancer.
 version_added: "1.9"
 options:
-  balancer_name:
+  loadbalancer:
     description:
     - Name or ID of the load balancer on which to manage SSL termination.
     required: true
@@ -99,14 +99,11 @@ try:
 except ImportError:
     HAS_PYRAX = False
 
-def cloud_load_balancer_ssl(module, balancer_name, state, enabled, private_key,
+def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
                             certificate, intermediate_certificate, secure_port,
                             secure_traffic_only, https_redirect,
                             wait, wait_timeout):
     # Validate arguments.
-
-    if not balancer_name:
-        module.fail_json(msg='balancer_name is required.')
 
     if state == 'present':
         if not private_key:
@@ -134,7 +131,7 @@ def cloud_load_balancer_ssl(module, balancer_name, state, enabled, private_key,
 
     balancers = []
     for balancer in clb.list():
-        if balancer_name == balancer.name or balancer_name == str(balancer.id):
+        if loadbalancer == balancer.name or loadbalancer == str(balancer.id):
             balancers.append(balancer)
 
     if not balancers:
@@ -237,7 +234,7 @@ def cloud_load_balancer_ssl(module, balancer_name, state, enabled, private_key,
 def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(dict(
-        balancer_name=dict(type='str'),
+        loadbalancer=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
         enabled=dict(type='bool', default=True),
         private_key=dict(),
@@ -258,7 +255,7 @@ def main():
     if not HAS_PYRAX:
         module.fail_json(msg='pyrax is required for this module.')
 
-    balancer_name = module.params.get('balancer_name')
+    loadbalancer = module.params.get('loadbalancer')
     state = module.params.get('state')
     enabled = module.boolean(module.params.get('enabled'))
     private_key = module.params.get('private_key')
@@ -273,7 +270,7 @@ def main():
     setup_rax_module(module, pyrax)
 
     cloud_load_balancer_ssl(
-        module, balancer_name, state, enabled, private_key, certificate,
+        module, loadbalancer, state, enabled, private_key, certificate,
         intermediate_certificate, secure_port, secure_traffic_only,
         https_redirect, wait, wait_timeout
     )
