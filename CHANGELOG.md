@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+## 1.8.4 "You Really Got Me" - Feb 19, 2015
+
+* Fixed regressions in ec2 and mount modules, introduced in 1.8.3
+
 ## 1.8.3 "You Really Got Me" - Feb 17, 2015
 
 * Fixing a security bug related to the default permissions set on a tempoary file created when using "ansible-vault view <filename>".
