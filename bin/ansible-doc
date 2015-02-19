@@ -141,7 +141,11 @@ def get_man_text(doc):
             text.append("%s\n" % (ex['code']))
 
     if 'plainexamples' in doc and doc['plainexamples'] is not None:
+        text.append("EXAMPLES:")
         text.append(doc['plainexamples'])
+    if 'returndocs' in doc and doc['returndocs'] is not None:
+        text.append("RETURN VALUES:")
+        text.append(doc['returndocs'])
     text.append('')
 
     return "\n".join(text)
@@ -299,7 +303,7 @@ def main():
             continue
 
         try:
-            doc, plainexamples = module_docs.get_docstring(filename)
+            doc, plainexamples, returndocs = module_docs.get_docstring(filename)
         except:
             traceback.print_exc()
             sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
@@ -317,6 +321,7 @@ def main():
             doc['docuri']           = doc['module'].replace('_', '-')
             doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
             doc['plainexamples']    = plainexamples
+            doc['returndocs']       = returndocs
 
             if options.show_snippet:
                 text += get_snippet_text(doc)
