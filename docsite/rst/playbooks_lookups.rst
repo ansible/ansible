@@ -2,13 +2,15 @@ Using Lookups
 =============
 
 Lookup plugins allow access of data in Ansible from outside sources.  These plugins are evaluated on the Ansible control
-machine, and can include reading the filesystem but also contacting external datastores and services.  
+machine, and can include reading the filesystem but also contacting external datastores and services.
 These values are then made available using the standard templating system
 in Ansible, and are typically used to load variables or templates with information from those systems.
 
-.. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
+.. note:: This is considered an advanced feature, and many users will probably not rely on these features.
 
 .. note:: Lookups occur on the local computer, not on the remote computer.
+
+.. note:: Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
 
 .. contents:: Topics
 
