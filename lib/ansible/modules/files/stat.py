@@ -220,7 +220,7 @@ stat:
             returned: success, path exists and user can read stats
             type: boolean
             sample: False
-        isrid:
+        isgid:
             description: Tells you if the invoking user's group id matches the owner's group id
             returned: success, path exists and user can read stats
             type: boolean
