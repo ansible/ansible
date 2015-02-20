@@ -19,6 +19,7 @@
 ################################################
 
 import os
+import sys
 import stat
 import errno
 
@@ -44,7 +45,7 @@ class Connector(object):
                 if e.errno != errno.ENOENT: # file is missing, might be agent
                     raise(e)
 
-            if st is not None and st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
+            if sys.platform != 'cygwin' and st is not None and st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
                 raise AnsibleError("private_key_file (%s) is group-readable or world-readable and thus insecure - "
                                    "you will probably get an SSH failure"
                                    % (private_key_file,))
