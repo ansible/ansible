@@ -372,7 +372,13 @@ def main():
             break
 
     if command_in == 'get':
-        module.exit_json(changed=False, set=record)
+        if type_in == 'NS':
+            ns = record['values']
+        else:
+            # Retrieve name servers associated to the zone.
+            ns = conn.get_zone(zone_in).get_nameservers()
+
+        module.exit_json(changed=False, set=record, nameservers=ns)
 
     if command_in == 'delete' and not found_record:
         module.exit_json(changed=False)
