@@ -95,10 +95,6 @@ To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and
 More Lookups
 ````````````
 
-.. note:: This feature is very infrequently used in Ansible.  You may wish to skip this section.
-
-.. versionadded:: 0.8
-
 Various *lookup plugins* allow additional ways to iterate over data.  In :doc:`Loops <playbooks_loops>` you will learn
 how to use them to walk over collections of numerous types.  However, they can also be used to pull in data
 from remote sources, such as shell commands or even key value stores. This section will cover lookup
@@ -129,9 +125,17 @@ Here are some examples::
 
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
+         # The following lookups were added in 1.9
          - debug: msg="{{item}}"
            with_url:
                 - 'http://github.com/gremlin.keys'
+
+         # outputs the cartesian product of the supplied lists
+         - debug: msg="{{item}}"
+           with_cartesian:
+                - list1
+                - list2
+                - list3
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
