@@ -97,7 +97,6 @@ ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=api
 '''
 
 
-import json
 import base64
 import socket
 
