@@ -242,7 +242,10 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    ec2 = ec2_connect(module)
+    try:
+        ec2 = ec2_connect(module)
+    except Exception, e:
+        module.json_fail(msg="Error while connecting to aws: %s" % str(e))
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
