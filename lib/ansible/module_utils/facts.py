@@ -2498,6 +2498,27 @@ class SunOSVirtual(Virtual):
                 if 'VirtualBox' in line:
                     self.facts['virtualization_type'] = 'virtualbox'
                     self.facts['virtualization_role'] = 'guest'
+        # Detect domaining on Sparc hardware
+        if os.path.exists("/usr/sbin/virtinfo"):
+            # The output of virtinfo is different whether we are on a machine with logical
+            # domains ('LDoms') on a T-series or domains ('Domains') on a M-series. Try LDoms first.
+            rc, out, err = module.run_command("/usr/sbin/virtinfo -p")
+            # The output contains multiple lines with different keys like this:
+            #   DOMAINROLE|impl=LDoms|control=false|io=false|service=false|root=false
+            # The output may also be not formated and the returncode is set to 0 regardless of the error condition:
+            #   virtinfo can only be run from the global zone
+            for line in out.split('\n'):
+                fields = line.split('|')
+                if( fields[0] == 'DOMAINROLE' and fields[1] == 'impl=LDoms' ):
+                    self.facts['virtualization_type'] = 'ldom'
+                    self.facts['virtualization_role'] = 'guest'
+                    hostfeatures = []
+                    for field in fields[2:]:
+                        arg = field.split('=')
+                        if( arg[1] == 'true' ):
+                            hostfeatures.append(arg[0])
+                    if( len(hostfeatures) > 0 ):
+                        self.facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
 
 def get_file_content(path, default=None, strip=True):
     data = default
