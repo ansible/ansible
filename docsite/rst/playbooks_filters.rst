@@ -236,6 +236,28 @@ Square root, or the 5th::
 
 Note that jinja2 already provides some like abs() and round().
 
+.. _ipaddr_filter:
+
+IP address filter
+-----------------
+.. versionadded:: 1.9
+
+To test if a string is a valid IP address::
+
+  {{ myvar | ipaddr }}
+
+You can also require a specific IP protocol version::
+
+  {{ myvar | ipv4 }}
+  {{ myvar | ipv6 }}
+
+IP address filter can also be used to extract specific information from an IP
+address. For example, to get the IP address itself from a CIDR, you can use::
+
+  {{ '192.0.2.1/24' | ipaddr('address') }}
+
+More information about ``ipaddr`` filter and complete usage guide can be found
+in :doc:`playbooks_filters_ipaddr`.
 
 .. _hash_filters:
 
