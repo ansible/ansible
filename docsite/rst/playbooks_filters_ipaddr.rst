@@ -27,7 +27,15 @@ Basic tests
 
 ``ipaddr()`` is designed to return the input value if a query is True, and
 ``False`` if query is False. This way it can be very easily used in chained
-filters. Here are some example tests of various input strings::
+filters. To use the filter, pass a string to it::
+
+    {{ '192.0.2.0' | ipaddr }}
+
+You can also pass the values as variables::
+
+    {{ myvar | ipaddr }}
+
+Here are some example tests of various input strings::
 
     # These values are valid IP addresses or network ranges
     '192.168.0.1'       -> 192.168.0.1
@@ -46,8 +54,17 @@ filters. Here are some example tests of various input strings::
     'fe80:/10'          -> False
 
 Sometimes you need either IPv4 or IPv6 addresses. To filter only for particular
-type, ``ipaddr()`` filter has two "aliases", ``ipv4()`` and ``ipv6()``. Here's
-an example test to look for IPv4 addresses::
+type, ``ipaddr()`` filter has two "aliases", ``ipv4()`` and ``ipv6()``.
+
+Example us of an IPv4 filter::
+
+    {{ myvar | ipv4 }}
+
+And similar example of an IPv6 filter::
+
+    {{ myvar | ipv6 }}
+
+Here's an example test to look for IPv4 addresses::
 
     '192.168.0.1'       -> 192.168.0.1
     '192.168.32.0/24'   -> 192.168.32.0/24
