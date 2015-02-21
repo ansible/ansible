@@ -1,6 +1,8 @@
 Jinja2 'ipaddr()' filter
 ========================
 
+.. versionadded:: 1.9
+
 ``ipaddr()`` is a Jinja2 filter designed to provide an interface to `netaddr`_
 Python package from within Ansible. It can operate on strings or lists of
 items, test various data to check if they are valid IP addresses and manipulate
