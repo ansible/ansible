@@ -105,7 +105,7 @@ EXAMPLES = '''
 
 try:
     import bigsuds
-    from suds import MethodNotFound
+    from suds import MethodNotFound, WebFault
 except ImportError:
     bigsuds_found = False
 else:
@@ -1364,7 +1364,7 @@ def generate_dict(api_obj, fields):
         for field in fields:
             try:
                 api_response = getattr(api_obj, "get_" + field)()
-            except MethodNotFound:
+            except (MethodNotFound, WebFault):
                 pass
             else:
                 lists.append(api_response)
@@ -1380,7 +1380,7 @@ def generate_simple_dict(api_obj, fields):
     for field in fields:
         try:
             api_response = getattr(api_obj, "get_" + field)()
-        except MethodNotFound:
+        except (MethodNotFound, WebFault):
             pass
         else:
             result_dict[field] = api_response
