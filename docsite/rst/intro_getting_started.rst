@@ -11,10 +11,10 @@ Foreword
 Now that you've read :doc:`intro_installation` and installed Ansible, it's time to dig in and get
 started with some commands.  
 
-What we are showing first are not the powerful configuration/deployment/orchestration of Ansible, called playbooks.
-Playbooks are covered in a separate section.
+What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
+These features are handled by playbooks which are covered in a separate section.
 
-This section is about how to get going initially.  Once you have these concepts down, read :doc:`intro_adhoc` for some more
+This section is about how to initially get going.  Once you have these concepts down, read :doc:`intro_adhoc` for some more
 detail, and then you'll be ready to dive into playbooks and explore the most interesting parts!
 
 .. _remote_connection_information:
@@ -22,21 +22,20 @@ detail, and then you'll be ready to dive into playbooks and explore the most int
 Remote Connection Information
 `````````````````````````````
 
-Before we get started, it's important to understand how Ansible is communicating with remote
+Before we get started, it's important to understand how Ansible communicates with remote
 machines over SSH. 
 
 By default, Ansible 1.3 and later will try to use native 
-OpenSSH for remote communication  when possible.  This enables both ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  When using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), however, the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
+OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform -- or engage 'accelerated mode' in Ansible.  See :doc:`playbooks_acceleration`.
 
-In Ansible 1.2 and before, the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the configuration file.
+In releases up to and including Ansible 1.2, the default was strictly paramiko.  Native SSH had to be explicitly selected with the -c ssh option or set in the configuration file.
 
-Occasionally you'll encounter a device that doesn't do SFTP. This is rare, but if talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_configuration`.
+Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :doc:`intro_configuration`.
 
-When speaking with remote machines, Ansible will by default assume you are using SSH keys -- which we encourage -- but passwords are fine too.  To enable password auth, supply the option ``--ask-pass`` where needed.  If using sudo features and when sudo requires a password, also supply ``--ask-sudo-pass`` as appropriate.
+When speaking with remote machines, Ansible by default assumes you are using SSH keys.  SSH keys are encouraged but password authentication can also be used where needed by supplying the option ``--ask-pass``.  If using sudo features and when sudo requires a password, also supply ``--ask-sudo-pass``.
 
-While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If running in a cloud, consider running Ansible from a machine inside that cloud.  It will work better than on the open
-internet in most cases.
+While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud.  In most cases this will work better than on the open Internet.
 
 As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 
@@ -47,8 +46,8 @@ Your first commands
 
 Now that you've installed Ansible, it's time to get started with some basics.
 
-Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
-which you have your SSH key in ``authorized_keys``::
+Edit (or create) /etc/ansible/hosts and put one or more remote systems in it. Your
+public SSH key should be located in ``authorized_keys`` on those systems::
 
     192.168.1.50
     aserver.example.org
@@ -95,9 +94,9 @@ Now run a live command on all of your nodes:
 
    $ ansible all -a "/bin/echo hello"
 
-Congratulations.  You've just contacted your nodes with Ansible.  It's
-soon going to be time to read some of the more real-world :doc:`intro_adhoc`, and explore
-what you can do with different modules, as well as the Ansible
+Congratulations!  You've just contacted your nodes with Ansible.  It's
+soon going to be time to: read about some more real-world cases in :doc:`intro_adhoc`, 
+explore what you can do with different modules, and to learn about the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
 explore, but you already have a fully working infrastructure!
@@ -111,7 +110,7 @@ Ansible 1.2.1 and later have host key checking enabled by default.
 
 If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron.  You might not want this.
 
-If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
+If you understand the implications and wish to disable this behavior, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
 
     [defaults]
     host_key_checking = False
@@ -126,7 +125,7 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
 
 .. _a_note_about_logging:
 
-Ansible will log some information about module arguments on the remote system in the remote syslog, unless a task or play is marked with a "no_log: True" attribute, explained later.
+Ansible will log some information about module arguments on the remote system in the remote syslog, unless a task or play is marked with a "no_log: True" attribute. This is explained later.
 
 To enable basic logging on the control machine see :doc:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in :doc:`tower`.  Tower provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
 
