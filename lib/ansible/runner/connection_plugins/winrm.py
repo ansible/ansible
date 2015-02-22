@@ -56,7 +56,7 @@ class Connection(object):
 
     transport_schemes = {
         'http': [('kerberos', 'http'), ('plaintext', 'http'), ('plaintext', 'https')],
-        'https': [('kerberos', 'https'), ('plaintext', 'https'), ('plaintext', 'https')],
+        'https': [('kerberos', 'https'), ('plaintext', 'https')],
         }
 
     def __init__(self,  runner, host, port, user, password, *args, **kwargs):
