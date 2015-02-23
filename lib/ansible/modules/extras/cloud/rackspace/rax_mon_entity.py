@@ -161,8 +161,8 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(default='present'),
-            label=dict(),
+            state=dict(default='present', choices=['present', 'absent']),
+            label=dict(required=True),
             agent_id=dict(),
             named_ip_addresses=dict(type='dict', default={}),
             metadata=dict(type='dict', default={})

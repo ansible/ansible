@@ -271,9 +271,9 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            entity_id=dict(),
-            label=dict(),
-            check_type=dict(),
+            entity_id=dict(required=True),
+            label=dict(required=True),
+            check_type=dict(required=True),
             monitoring_zones_poll=dict(),
             target_hostname=dict(),
             target_alias=dict(),
@@ -282,7 +282,7 @@ def main():
             metadata=dict(type='dict', default={}),
             period=dict(type='int'),
             timeout=dict(type='int'),
-            state=dict(default='present')
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 
