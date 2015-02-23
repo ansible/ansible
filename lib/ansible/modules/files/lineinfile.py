@@ -245,8 +245,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             # Don't do backref expansion if not asked.
             new_line = line
 
-        if lines[index[0]] != new_line + os.linesep:
-            lines[index[0]] = new_line + os.linesep
+        if not new_line.endswith(os.linesep):
+            new_line += os.linesep
+
+        if lines[index[0]] != new_line:
+            lines[index[0]] = new_line
             msg = 'line replaced'
             changed = True
     elif backrefs:
