@@ -152,9 +152,9 @@ def _multicast_query(v, value):
         return value
 
 def _net_query(v):
-        if v.size > 1:
-            if v.ip == v.network:
-                return str(v.network) + '/' + str(v.prefixlen)
+    if v.size > 1:
+        if v.ip == v.network:
+            return str(v.network) + '/' + str(v.prefixlen)
 
 def _netmask_query(v):
     if v.size > 1:
