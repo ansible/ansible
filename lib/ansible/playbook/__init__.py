@@ -30,6 +30,7 @@ import collections
 from play import Play
 import StringIO
 import pipes
+import re
 
 # the setup cache stores all variables about a host
 # gathered during the setup step, while the vars cache
@@ -493,12 +494,39 @@ class PlayBook(object):
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
+        def _register_hash(var, key, result):
+            if var not in self.VARS_CACHE[host] or type(self.VARS_CACHE[host][var]) != dict:
+                self.VARS_CACHE[host][var] = {}
+            result_hash = self.VARS_CACHE[host][var]
+            result_hash[key] = result
+            return result_hash
+
+        def _register_list(var, result):
+            if var not in self.VARS_CACHE[host] or type(self.VARS_CACHE[host][var]) != list:
+                self.VARS_CACHE[host][var] = []
+            result_list = self.VARS_CACHE[host][var]
+            result_list.append(result)
+            return result_list
+
+
         def _register_play_vars(host, result):
             # when 'register' is used, persist the result in the vars cache
             # rather than the setup cache - vars should be transient between
             # playbook executions
             if 'stdout' in result and 'stdout_lines' not in result:
                 result['stdout_lines'] = result['stdout'].splitlines()
+
+            m = re.search('^(?P<name>\w+)\[(?P<key>\w+)\]$', task.register)
+            if m is not None:
+                task.register = m.group('name')
+                key = m.group('key')
+                result = _register_hash(task.register, key, result)
+
+            m = re.search('^(?P<name>\w+)\[\]$', task.register)
+            if m is not None:
+                task.register = m.group('name')
+                result = _register_list(task.register, result)
+
             utils.update_hash(self.VARS_CACHE, host, {task.register: result})
 
         def _save_play_facts(host, facts):
