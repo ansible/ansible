@@ -151,8 +151,8 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(default='present'),
-            label=dict(),
+            state=dict(default='present', choices=['present', 'absent']),
+            label=dict(required=True),
             critical_state=dict(type='list'),
             warning_state=dict(type='list'),
             ok_state=dict(type='list')

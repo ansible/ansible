@@ -154,10 +154,10 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(default='present'),
-            label=dict(),
-            notification_type=dict(),
-            details=dict(type='dict', default={})
+            state=dict(default='present', choices=['present', 'absent']),
+            label=dict(required=True),
+            notification_type=dict(required=True, choices=['webhook', 'email', 'pagerduty']),
+            details=dict(required=True, type='dict')
         )
     )
 
