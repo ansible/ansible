@@ -105,17 +105,6 @@ except ImportError:
 def alarm(module, state, label, entity_id, check_id, notification_plan_id, criteria,
           disabled, metadata):
 
-    # Verify the presence of required attributes.
-
-    required_attrs = {
-        "label": label, "entity_id": entity_id, "check_id": check_id,
-        "notification_plan_id": notification_plan_id
-    }
-
-    for (key, value) in required_attrs.iteritems():
-        if not value:
-            module.fail_json(msg=('%s is required for rax_mon_alarm' % key))
-
     if len(label) < 1 or len(label) > 255:
         module.fail_json(msg='label must be between 1 and 255 characters long')
 
@@ -173,12 +162,10 @@ def alarm(module, state, label, entity_id, check_id, notification_plan_id, crite
                                     criteria=criteria, disabled=disabled, label=label,
                                     metadata=metadata)
             changed = True
-    elif state == 'absent':
+    else:
         for a in existing:
             a.delete()
             changed = True
-    else:
-        module.fail_json(msg='state must be either present or absent.')
 
     if alarm:
         alarm_dict = {

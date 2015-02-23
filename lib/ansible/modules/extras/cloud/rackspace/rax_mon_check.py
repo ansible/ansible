@@ -141,16 +141,6 @@ def cloud_check(module, state, entity_id, label, check_type,
                 monitoring_zones_poll, target_hostname, target_alias, details,
                 disabled, metadata, period, timeout):
 
-    # Verify the presence of required attributes.
-
-    required_attrs = {
-        "entity_id": entity_id, "label": label, "check_type": check_type
-    }
-
-    for (key, value) in required_attrs.iteritems():
-        if not value:
-            module.fail_json(msg=('%s is required for rax_mon_check' % key))
-
     # Coerce attributes.
 
     if monitoring_zones_poll and not isinstance(monitoring_zones_poll, list):

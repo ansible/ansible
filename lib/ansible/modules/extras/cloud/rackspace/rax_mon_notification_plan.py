@@ -80,9 +80,6 @@ except ImportError:
 
 def notification_plan(module, state, label, critical_state, warning_state, ok_state):
 
-    if not label:
-        module.fail_json(msg='label is required for rax_mon_notification_plan')
-
     if len(label) < 1 or len(label) > 255:
         module.fail_json(msg='label must be between 1 and 255 characters long')
 
@@ -128,12 +125,10 @@ def notification_plan(module, state, label, critical_state, warning_state, ok_st
                                                             warning_state=warning_state,
                                                             ok_state=ok_state)
             changed = True
-    elif state == 'absent':
+    else:
         for np in existing:
             np.delete()
             changed = True
-    else:
-        module.fail_json(msg='state must be either "present" or "absent"')
 
     if notification_plan:
         notification_plan_dict = {
