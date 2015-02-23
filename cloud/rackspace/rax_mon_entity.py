@@ -83,8 +83,6 @@ except ImportError:
 
 def cloud_monitoring(module, state, label, agent_id, named_ip_addresses,
                      metadata):
-    if not label:
-        module.fail_json(msg='label is required for rax_mon_entity')
 
     if len(label) < 1 or len(label) > 255:
         module.fail_json(msg='label must be between 1 and 255 characters long')
@@ -139,13 +137,11 @@ def cloud_monitoring(module, state, label, agent_id, named_ip_addresses,
                                       ip_addresses=named_ip_addresses,
                                       metadata=metadata)
             changed = True
-    elif state == 'absent':
+    else:
         # Delete the existing Entities.
         for e in existing:
             e.delete()
             changed = True
-    else:
-        module.fail_json(msg='state must be present or absent')
 
     if entity:
         entity_dict = {
