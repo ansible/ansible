@@ -234,6 +234,8 @@ class Connection(object):
                 if line is None or " " not in line:
                     continue
                 tokens = line.split()
+                if not tokens:
+                    continue
                 if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
                     # this is a hashed known host entry
                     try:
