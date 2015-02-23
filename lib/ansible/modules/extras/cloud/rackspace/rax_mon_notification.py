@@ -76,17 +76,8 @@ except ImportError:
 
 def notification(module, state, label, notification_type, details):
 
-    if not label:
-        module.fail_json(msg='label is required for rax_mon_notification')
-
     if len(label) < 1 or len(label) > 255:
         module.fail_json(msg='label must be between 1 and 255 characters long')
-
-    if not notification_type:
-        module.fail_json(msg='you must provide a notification_type')
-
-    if not details:
-        module.fail_json(msg='notification details are required')
 
     changed = False
     notification = None
@@ -132,12 +123,10 @@ def notification(module, state, label, notification_type, details):
             notification = cm.create_notification(notification_type,
                                                   label=label, details=details)
             changed = True
-    elif state == 'absent':
+    else:
         for n in existing:
             n.delete()
             changed = True
-    else:
-        module.fail_json(msg='state must be either "present" or "absent"')
 
     if notification:
         notification_dict = {
