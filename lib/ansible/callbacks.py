@@ -28,6 +28,7 @@ import constants
 import locale
 from ansible.color import stringc
 from ansible.module_utils import basic
+from ansible.utils.unicode import to_unicode
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
@@ -661,7 +662,7 @@ class PlaybookCallbacks(object):
         else:
             msg = 'input for %s: ' % varname
 
-        def prompt(prompt, private):
+        def do_prompt(prompt, private):
             if sys.stdout.encoding:
                 msg = prompt.encode(sys.stdout.encoding)
             else:
@@ -676,13 +677,13 @@ class PlaybookCallbacks(object):
 
         if confirm:
             while True:
-                result = prompt(msg, private)
-                second = prompt("confirm " + msg, private)
+                result = do_prompt(msg, private)
+                second = do_prompt("confirm " + msg, private)
                 if result == second:
                     break
                 display("***** VALUES ENTERED DO NOT MATCH ****")
         else:
-            result = prompt(msg, private)
+            result = do_prompt(msg, private)
 
         # if result is false and default is not None
         if not result and default is not None:
@@ -690,8 +691,10 @@ class PlaybookCallbacks(object):
 
 
         if encrypt:
-            result = utils.do_encrypt(result,encrypt,salt_size,salt)
+            result = utils.do_encrypt(result, encrypt, salt_size, salt)
 
+        # handle utf-8 chars
+        result = to_unicode(result, error='strict')
         call_callback_module( 'playbook_on_vars_prompt', varname, private=private, prompt=prompt,
                                encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None, default=default
                             )
