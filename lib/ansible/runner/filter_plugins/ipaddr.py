@@ -555,6 +555,38 @@ def ipsubnet(value, query = '', index = 'x'):
 
     return False
 
+# Returns the nth host within a network described by value.
+# Usage:
+#
+#  - address or address/prefix | nthhost(nth)
+#      returns the nth host within the given network
+def nthhost(value, query=''):
+    ''' Get the nth host within a given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        value = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if not query:
+        return False
+
+    try:
+        vsize = ipaddr(v, 'size')
+        nth = int(query)
+        if value.size > nth:
+          return value[nth]
+
+    except ValueError:
+        return False
+
+    return False
+
 
 # ---- HWaddr / MAC address filters ----
 
@@ -612,6 +644,7 @@ class FilterModule(object):
         'ipv4': ipv4,
         'ipv6': ipv6,
         'ipsubnet': ipsubnet,
+        'nthhost': nthhost,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
