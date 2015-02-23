@@ -198,11 +198,11 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(default='present'),
-            label=dict(),
-            entity_id=dict(),
-            check_id=dict(),
-            notification_plan_id=dict(),
+            state=dict(default='present', choices=['present', 'absent']),
+            label=dict(required=True),
+            entity_id=dict(required=True),
+            check_id=dict(required=True),
+            notification_plan_id=dict(required=True),
             criteria=dict(),
             disabled=dict(type='bool', default=False),
             metadata=dict(type='dict')
