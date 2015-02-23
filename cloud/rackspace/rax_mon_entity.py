@@ -26,7 +26,7 @@ description:
   provide a convenient, centralized place to store IP addresses. Rackspace
   monitoring module flow | *rax_mon_entity* -> rax_mon_check ->
   rax_mon_notification -> rax_mon_notification_plan -> rax_mon_alarm
-version_added: "1.8.2"
+version_added: "1.9"
 options:
   label:
     description:
