@@ -97,9 +97,9 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 
     changed = False
     if (sys.version_info[0] == 2 and sys.version_info[1] >= 7) or sys.version_info[0] >= 3: 
-    	cp = ConfigParser.ConfigParser(allow_no_value=True)
+        cp = ConfigParser.ConfigParser(allow_no_value=True)
     else:
-    	cp = ConfigParser.ConfigParser()
+        cp = ConfigParser.ConfigParser()
     cp.optionxform = identity
 
     try:
@@ -126,7 +126,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
     if state == 'present':
 
         # DEFAULT section is always there by DEFAULT, so never try to add it.
-        if cp.has_section(section) == False and section.upper() != 'DEFAULT':
+        if not cp.has_section(section) and section.upper() != 'DEFAULT':
 
             cp.add_section(section)
             changed = True
@@ -144,7 +144,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                 cp.set(section, option, value)
                 changed = True
 
-    if changed:
+    if changed and not module.check_mode:
         if backup:
             module.backup_local(filename)
 
@@ -152,7 +152,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
             f = open(filename, 'w')
             cp.write(f)
         except:
-            module.fail_json(msg="Can't creat %s" % filename)
+            module.fail_json(msg="Can't create %s" % filename)
 
     return changed
 
@@ -183,7 +183,8 @@ def main():
             backup = dict(default='no', type='bool'),
             state = dict(default='present', choices=['present', 'absent'])
         ),
-        add_file_common_args = True
+        add_file_common_args = True,
+        supports_check_mode = True
     )
 
     info = dict()
