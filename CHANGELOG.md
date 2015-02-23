@@ -26,6 +26,9 @@ in progress, details pending
   * subversion: When updating a checkout with local modifications, you now need
     to add force so the module will revert the modifications before updating.
 
+* Optimize the plugin loader to cache available plugins much more efficiently.
+  For some use cases this can lead to dramatic improvements in startup time.
+
 ## 1.8.1 "You Really Got Me" - Nov 26, 2014
 
 * Various bug fixes in postgresql and mysql modules.
