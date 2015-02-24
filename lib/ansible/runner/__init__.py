@@ -102,7 +102,7 @@ class HostVars(dict):
         if host not in self.lookup:
             result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
             result.update(self.vars_cache.get(host, {}))
-            self.lookup[host] = template.template('.', result, self.vars_cache)
+            self.lookup[host] = results
         return self.lookup[host]
 
 
