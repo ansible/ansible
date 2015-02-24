@@ -33,3 +33,4 @@
     - { role: test_win_file, tags: test_win_file }
     - { role: test_win_copy, tags: test_win_copy }
     - { role: test_win_template, tags: test_win_template }
+    - { role: test_win_splat_filter, tags: test_win_splat_filter }

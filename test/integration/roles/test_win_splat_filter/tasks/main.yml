@@ -1,0 +1,47 @@
+# Test toPowershellHash filter
+# (c) 2015, Michael Perzel <michaelperzel@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Convert yaml dict to powershell hash
+  command: "echo '{{ test_powershell_hash_filter_value | toPowershellHash }}'"
+  register: powershell_hash
+  delegate_to: 127.0.0.1
+
+- name: Check that actual equals expected
+  assert:
+    that:
+      - "powershell_hash.rc == 0"
+      - "powershell_hash.stdout"
+      - "not powershell_hash.stderr"
+      - "not powershell_hash|failed"
+      - "powershell_hash|changed"
+      - "powershell_hash.stdout == test_powershell_hash_filter_expected"
+
+- name: Try to convert yaml dict to powershell hash for invalid data
+  shell: "echo '{{ test_powershell_hash_filter_value_invalid | toPowershellHash }}'"
+  delegate_to: 127.0.0.1
+  ignore_errors: yes
+  register: powershell_hash_invalid
+
+- name: check that filter ran but failed with errors
+  assert:
+    that:
+      - "powershell_hash_invalid.rc != 0"
+      - "not powershell_hash_invalid.stdout"
+      - "powershell_hash_invalid.stderr"
+      - "powershell_hash_invalid|failed"
+      - "powershell_hash_invalid|changed"
