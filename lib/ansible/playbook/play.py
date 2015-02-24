@@ -115,8 +115,8 @@ class Play(object):
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
 
-        temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
-        temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+        temp_vars = utils.combine_vars(self.vars, self.vars_file_vars)
+        temp_vars = utils.combine_vars(temp_vars, self.playbook.extra_vars)
 
         ds = template(basedir, ds, temp_vars)
         ds['tasks'] = _tasks
@@ -632,9 +632,9 @@ class Play(object):
                     dirname = os.path.dirname(original_file)
 
                 # temp vars are used here to avoid trampling on the existing vars structures
-                temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
-                temp_vars = utils.merge_hash(temp_vars, mv)
-                temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+                temp_vars = utils.combine_vars(self.vars, self.vars_file_vars)
+                temp_vars = utils.combine_vars(temp_vars, mv)
+                temp_vars = utils.combine_Vars(temp_vars, self.playbook.extra_vars)
                 include_file = template(dirname, tokens[0], temp_vars)
                 include_filename = utils.path_dwim(dirname, include_file)
 
