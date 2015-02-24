@@ -498,7 +498,7 @@ class PlayBook(object):
             if var not in self.VARS_CACHE[host] or type(self.VARS_CACHE[host][var]) != dict:
                 self.VARS_CACHE[host][var] = {}
             result_hash = self.VARS_CACHE[host][var]
-            result_hash[key] = result
+            result_hash[unquote(key)] = result
             return result_hash
 
         def _register_list(var, result):
@@ -516,16 +516,14 @@ class PlayBook(object):
             if 'stdout' in result and 'stdout_lines' not in result:
                 result['stdout_lines'] = result['stdout'].splitlines()
 
-            m = re.search('^(?P<name>\w+)\[(?P<key>\w+)\]$', task.register)
+            m = re.search('^(?P<name>\w+)\[(?P<key>.*?)\]$', task.register)
             if m is not None:
-                task.register = m.group('name')
                 key = m.group('key')
-                result = _register_hash(task.register, key, result)
-
-            m = re.search('^(?P<name>\w+)\[\]$', task.register)
-            if m is not None:
                 task.register = m.group('name')
-                result = _register_list(task.register, result)
+                if key:
+                    result = _register_hash(task.register, key, result)
+                else:
+                    result = _register_list(task.register, result)
 
             utils.update_hash(self.VARS_CACHE, host, {task.register: result})
 
