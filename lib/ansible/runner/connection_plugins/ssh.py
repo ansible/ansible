@@ -264,10 +264,7 @@ class Connection(object):
             # inside a tty automatically invokes the python interactive-mode but the modules are not
             # compatible with the interactive-mode ("unexpected indent" mainly because of empty lines)
             ssh_cmd += ["-tt"]
-        if utils.VERBOSITY > 3:
-            ssh_cmd += ["-vvv"]
-        else:
-            ssh_cmd += ["-q"]
+        ssh_cmd += ["-vvv"]
         ssh_cmd += self.common_args
 
         if self.ipv6:
@@ -376,6 +373,12 @@ class Connection(object):
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
         if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        if p.returncode == 255 and 'Host key verification failed' in stderr:
+            lines = stderr.splitlines()[-2:]
+            lines.append(
+                'It is sometimes useful to re-run the command using -vvvv, '
+                'which prints SSH debug output to help diagnose the issue.')
+            raise errors.AnsibleError('SSH Error: %s' % '\n'.join(lines))
 
         return (p.returncode, '', no_prompt_out + stdout, no_prompt_err + stderr)
 
