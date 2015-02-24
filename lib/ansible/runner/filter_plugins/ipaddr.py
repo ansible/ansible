@@ -152,9 +152,9 @@ def _multicast_query(v, value):
         return value
 
 def _net_query(v):
-        if v.size > 1:
-            if v.ip == v.network:
-                return str(v.network) + '/' + str(v.prefixlen)
+    if v.size > 1:
+        if v.ip == v.network:
+            return str(v.network) + '/' + str(v.prefixlen)
 
 def _netmask_query(v):
     if v.size > 1:
@@ -555,6 +555,38 @@ def ipsubnet(value, query = '', index = 'x'):
 
     return False
 
+# Returns the nth host within a network described by value.
+# Usage:
+#
+#  - address or address/prefix | nthhost(nth)
+#      returns the nth host within the given network
+def nthhost(value, query=''):
+    ''' Get the nth host within a given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        value = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if not query:
+        return False
+
+    try:
+        vsize = ipaddr(v, 'size')
+        nth = int(query)
+        if value.size > nth:
+          return value[nth]
+
+    except ValueError:
+        return False
+
+    return False
+
 
 # ---- HWaddr / MAC address filters ----
 
@@ -612,6 +644,7 @@ class FilterModule(object):
         'ipv4': ipv4,
         'ipv6': ipv6,
         'ipsubnet': ipsubnet,
+        'nthhost': nthhost,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
