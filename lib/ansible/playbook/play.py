@@ -634,7 +634,7 @@ class Play(object):
                 # temp vars are used here to avoid trampling on the existing vars structures
                 temp_vars = utils.combine_vars(self.vars, self.vars_file_vars)
                 temp_vars = utils.combine_vars(temp_vars, mv)
-                temp_vars = utils.combine_Vars(temp_vars, self.playbook.extra_vars)
+                temp_vars = utils.combine_vars(temp_vars, self.playbook.extra_vars)
                 include_file = template(dirname, tokens[0], temp_vars)
                 include_filename = utils.path_dwim(dirname, include_file)
 
