@@ -18,6 +18,7 @@
 
 NAME = ansible
 OS = $(shell uname -s)
+python = /usr/bin/python2
 
 # Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
