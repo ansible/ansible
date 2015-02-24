@@ -22,9 +22,49 @@ description:
     - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets, retrieving objects as files or strings and generating download links. This module has a dependency on python-boto.
 version_added: "1.1"
 options:
-  bucket:
+  aws_access_key:
     description:
-      - Bucket name.
+      - AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: ['ec2_secret_key', 'secret_key']
+  bucket:
+    description: Bucket name.
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - The destination file path when downloading an object/key with a GET operation.
+    required: false
+    aliases: []
+    version_added: "1.3"
+  encrypt:
+    description:
+      - When set for PUT mode, asks for server-side encryption
+    required: false
+    default: no
+  expiration:
+    description:
+      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
+    required: false
+    default: 600
+    aliases: []
+  metadata:
+    description:
+      - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
+    required: false
+    default: null
+    version_added: "1.6"
+  mode:
+    description:
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket) and delete (bucket).
     required: true
     default: null
     aliases: []
@@ -33,56 +73,36 @@ options:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
     required: false
     default: null
-    aliases: []
-    version_added: "1.3"
-  src:
-    description:
-      - The source file path when performing a PUT operation.
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.3"
-  dest:
-    description:
-      - The destination file path when downloading an object/key with a GET operation.
-    required: false
-    aliases: []
-    version_added: "1.3"
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
     required: false
     default: true
     version_added: "1.2"
-  mode:
-    description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket) and delete (bucket).
-    required: true
-    default: null
-    aliases: []
-  expiration:
-    description:
-      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
-    required: false
-    default: 600
-    aliases: []
-  s3_url:
-    description:
-        - "S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS"
-    default: null
-    aliases: [ S3_URL ]
-  metadata:
-    description:
-      - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
-    required: false
-    default: null
-    version_added: "1.6"
   region:
     description:
      - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect."
     required: false
     default: null
     version_added: "1.8"
+  retries:
+    description:
+     - On recoverable failure, how many times to retry before actually failing.
+    required: false
+    default: 0
+    version_added: "2.0"
+  s3_url:
+    description: S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
+    default: null
+    aliases: [ S3_URL ]
+  src:
+    description: The source file path when performing a PUT operation.
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.3"
+
+requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 extends_documentation_fragment: aws
 '''
@@ -205,7 +225,8 @@ def path_check(path):
     else:
         return False
 
-def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
+
+def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt):
     try:
         bucket = s3.lookup(bucket)
         key = bucket.new_key(obj)
@@ -213,7 +234,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
             for meta_key in metadata.keys():
                 key.set_metadata(meta_key, metadata[meta_key])
 
-        key.set_contents_from_filename(src)
+        key.set_contents_from_filename(src, encrypt_key=encrypt)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except s3.provider.storage_copy_error, e:
@@ -272,19 +293,21 @@ def is_walrus(s3_url):
     else:
         return False
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
             bucket         = dict(required=True),
-            object         = dict(),
-            src            = dict(),
             dest           = dict(default=None),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
+            encrypt        = dict(default=True, type='bool'),
             expiry         = dict(default=600, aliases=['expiration']),
-            s3_url         = dict(aliases=['S3_URL']),
-            overwrite      = dict(aliases=['force'], default=True, type='bool'),
             metadata       = dict(type='dict'),
+            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
+            object         = dict(),
+            overwrite      = dict(aliases=['force'], default='always'),
             retries        = dict(aliases=['retry'], type='int', default=0),
+            s3_url         = dict(aliases=['S3_URL']),
+            src            = dict(),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -293,16 +316,17 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     bucket = module.params.get('bucket')
-    obj = module.params.get('object')
-    src = module.params.get('src')
+    encrypt = module.params.get('encrypt')
+    expiry = int(module.params['expiry'])
     if module.params.get('dest'):
         dest = os.path.expanduser(module.params.get('dest'))
-    mode = module.params.get('mode')
-    expiry = int(module.params['expiry'])
-    s3_url = module.params.get('s3_url')
-    overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
+    mode = module.params.get('mode')
+    obj = module.params.get('object')
+    overwrite = module.params.get('overwrite')
     retries = module.params.get('retries')
+    s3_url = module.params.get('s3_url')
+    src = module.params.get('src')
 
     if overwrite not in  ['always', 'never', 'different']: 
         if module.boolean(overwrite): 
@@ -424,25 +448,25 @@ def main():
                 md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
                 if md5_local == md5_remote:
                     sum_matches = True
-                    if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+                    if overwrite == 'always':
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
                     else:
                         get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
-                    if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+                    if overwrite in ('always', 'different'):
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
                     else:
                         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:
             create_bucket(module, s3, bucket, location)
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
 
         # If bucket exists but key doesn't, just upload.
         if bucketrtn is True and pathrtn is True and keyrtn is False:
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
 
     # Support for deleting an object if we have both params.
     if mode == 'delete':
