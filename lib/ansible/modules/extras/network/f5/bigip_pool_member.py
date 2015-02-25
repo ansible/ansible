@@ -71,6 +71,22 @@ options:
         default: present
         choices: ['present', 'absent']
         aliases: []
+    session_state:
+        description:
+            - Set new session availability status for pool member
+        version_added: "1.9"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
+        aliases: []
+    monitor_state:
+        description:
+            - Set monitor availability status for pool member
+        version_added: "1.9"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
+        aliases: []
     pool:
         description:
             - Pool name. This pool must exist.
@@ -175,6 +191,34 @@ EXAMPLES = '''
       user=admin
       password=mysecret
       state=absent
+      pool=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
+
+
+  # The BIG-IP GUI doesn't map directly to the API calls for "Pool ->
+  # Members -> State". The following states map to API monitor
+  # and session states.
+  #
+  # Enabled (all traffic allowed):
+  # monitor_state=enabled, session_state=enabled
+  # Disabled (only persistent or active connections allowed):
+  # monitor_state=enabled, session_state=disabled
+  # Forced offline (only active connections allowed):
+  # monitor_state=disabled, session_state=disabled
+  #
+  # See https://devcentral.f5.com/questions/icontrol-equivalent-call-for-b-node-down
+
+  - name: Force pool member offline
+    local_action: >
+      bigip_pool_member
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      session_state=disabled
+      monitor_state=disabled
       pool=matthite-pool
       partition=matthite
       host="{{ ansible_default_ipv4["address"] }}"
@@ -290,6 +334,28 @@ def set_ratio(api, pool, address, port, ratio):
     members = [{'address': address, 'port': port}]
     api.LocalLB.Pool.set_member_ratio(pool_names=[pool], members=[members], ratios=[[ratio]])
 
+def set_member_session_enabled_state(api, pool, address, port, session_state):
+    members = [{'address': address, 'port': port}]
+    session_state = ["STATE_%s" % session_state.strip().upper()]
+    api.LocalLB.Pool.set_member_session_enabled_state(pool_names=[pool], members=[members], session_states=[session_state])
+
+def get_member_session_status(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    result = api.LocalLB.Pool.get_member_session_status(pool_names=[pool], members=[members])[0][0]
+    result = result.split("SESSION_STATUS_")[-1].lower()
+    return result
+
+def set_member_monitor_state(api, pool, address, port, monitor_state):
+    members = [{'address': address, 'port': port}]
+    monitor_state = ["STATE_%s" % monitor_state.strip().upper()]
+    api.LocalLB.Pool.set_member_monitor_state(pool_names=[pool], members=[members], monitor_states=[monitor_state])
+
+def get_member_monitor_status(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    result = api.LocalLB.Pool.get_member_monitor_status(pool_names=[pool], members=[members])[0][0]
+    result = result.split("MONITOR_STATUS_")[-1].lower()
+    return result
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -298,6 +364,8 @@ def main():
             password = dict(type='str', required=True),
             validate_certs = dict(default='yes', type='bool'),
             state = dict(type='str', default='present', choices=['present', 'absent']),
+            session_state = dict(type='str', choices=['enabled', 'disabled']),
+            monitor_state = dict(type='str', choices=['enabled', 'disabled']),
             pool = dict(type='str', required=True),
             partition = dict(type='str', default='Common'),
             host = dict(type='str', required=True, aliases=['address', 'name']),
@@ -318,6 +386,8 @@ def main():
     password = module.params['password']
     validate_certs = module.params['validate_certs']
     state = module.params['state']
+    session_state = module.params['session_state']
+    monitor_state = module.params['monitor_state']
     partition = module.params['partition']
     pool = "/%s/%s" % (partition, module.params['pool'])
     connection_limit = module.params['connection_limit']
@@ -366,6 +436,10 @@ def main():
                         set_rate_limit(api, pool, address, port, rate_limit)
                     if ratio is not None:
                         set_ratio(api, pool, address, port, ratio)
+                    if session_state is not None:
+                        set_member_session_enabled_state(api, pool, address, port, session_state)
+                    if monitor_state is not None:
+                        set_member_monitor_state(api, pool, address, port, monitor_state)
                 result = {'changed': True}
             else:
                 # pool member exists -- potentially modify attributes
@@ -385,6 +459,26 @@ def main():
                     if not module.check_mode:
                         set_ratio(api, pool, address, port, ratio)
                     result = {'changed': True}
+                if session_state is not None:
+                    session_status = get_member_session_status(api, pool, address, port)
+                    if session_state == 'enabled' and session_status == 'forced_disabled':
+                        if not module.check_mode:
+                            set_member_session_enabled_state(api, pool, address, port, session_state)
+                        result = {'changed': True}
+                    elif session_state == 'disabled' and session_status != 'force_disabled':
+                        if not module.check_mode:
+                            set_member_session_enabled_state(api, pool, address, port, session_state)
+                        result = {'changed': True}
+                if monitor_state is not None:
+                    monitor_status = get_member_monitor_status(api, pool, address, port)
+                    if monitor_state == 'enabled' and monitor_status == 'forced_down':
+                        if not module.check_mode:
+                            set_member_monitor_state(api, pool, address, port, monitor_state)
+                        result = {'changed': True}
+                    elif monitor_state == 'disabled' and monitor_status != 'forced_down':
+                        if not module.check_mode:
+                            set_member_monitor_state(api, pool, address, port, monitor_state)
+                        result = {'changed': True}
 
     except Exception, e:
         module.fail_json(msg="received exception: %s" % e)
