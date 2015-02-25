@@ -228,27 +228,29 @@ class Connection(object):
             else:
                 data = host_fh.read()
                 host_fh.close()
-                
+
             for line in data.split("\n"):
                 line = line.strip()
                 if line is None or " " not in line:
                     continue
+
                 tokens = line.split()
-                if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
-                    # this is a hashed known host entry
-                    try:
-                        (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
-                        hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
-                        hash.update(host)
-                        if hash.digest() == kn_host.decode('base64'):
+                if isinstance(tokens, list) and tokens: # skip invalid hostlines
+                    if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
+                        # this is a hashed known host entry
+                        try:
+                            (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
+                            hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
+                            hash.update(host)
+                            if hash.digest() == kn_host.decode('base64'):
+                                return False
+                        except:
+                            # invalid hashed host key, skip it
+                            continue
+                    else:
+                        # standard host file entry
+                        if host in tokens[0]:
                             return False
-                    except:
-                        # invalid hashed host key, skip it
-                        continue
-                else:
-                    # standard host file entry
-                    if host in tokens[0]:
-                        return False
 
         if (hfiles_not_found == len(host_file_list)):
             vvv("EXEC previous known host file not found for %s" % host)
