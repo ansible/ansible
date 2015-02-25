@@ -256,7 +256,11 @@ def main(args):
                             set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
-                                print '    %s' % task.name
+                                if task.role_name:
+                                    name = '[%s]  %s' % (task.role_name, task.name)
+                                else:
+                                    name = task.name
+                                print '    %s' % name
                 if options.listhosts or options.listtasks:
                     print ''
             continue
