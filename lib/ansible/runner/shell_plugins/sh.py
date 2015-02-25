@@ -96,6 +96,13 @@ class ShellModule(object):
         # 0.  This logic is added to the end of the cmd at the bottom of this
         # function.
 
+        # Return codes:
+        # checksum: success!
+        # 0: Unknown error
+        # 1: Remote file does not exist
+        # 2: No read permissions on the file
+        # 3: File is a directory
+        # 4: No python interpreter
         test = "rc=flag; [ -r \'%(p)s\' ] || rc=2; [ -f \'%(p)s\' ] || rc=1; [ -d \'%(p)s\' ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}\"\'  %(p)s\' && exit 0" % dict(p=path, i=python_interp)
         csums = [
             "(%s -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();\nafile = open(\"%s\", \"rb\")\nbuf = afile.read(BLOCKSIZE)\nwhile len(buf) > 0:\n\thasher.update(buf)\n\tbuf = afile.read(BLOCKSIZE)\nafile.close()\nprint(hasher.hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python > 2.4 (including python3)
