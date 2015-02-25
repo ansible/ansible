@@ -36,6 +36,7 @@ import pipes
 # holds all other variables about a host
 SETUP_CACHE = ansible.cache.FactCache()
 VARS_CACHE  = collections.defaultdict(dict)
+RESERVED_TAGS = ['all','tagged','untagged','always']
 
 
 class PlayBook(object):
@@ -314,6 +315,7 @@ class PlayBook(object):
             assert play is not None
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
+
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
 
@@ -332,10 +334,13 @@ class PlayBook(object):
         # the user can correct the arguments.
         unknown_tags = ((set(self.only_tags) | set(self.skip_tags)) -
                         (matched_tags_all | unmatched_tags_all))
-        unknown_tags.discard('all')
+
+        for t in RESERVED_TAGS:
+            unknown_tags.discard(t)
 
         if len(unknown_tags) > 0:
-            unmatched_tags_all.discard('all')
+            for t in RESERVED_TAGS:
+                unmatched_tags_all.discard(t)
             msg = 'tag(s) not found in playbook: %s.  possible values: %s'
             unknown = ','.join(sorted(unknown_tags))
             unmatched = ','.join(sorted(unmatched_tags_all))
@@ -667,7 +672,53 @@ class PlayBook(object):
         return filename
 
     # *****************************************************
+    def tasks_to_run_in_play(self, play):
 
+        tasks = []
+
+        for task in play.tasks():
+            # only run the task if the requested tags match or has 'always' tag
+            u = set(['untagged'])
+            task_set = set(task.tags)
+
+            if 'always' in task.tags:
+                should_run = True
+            else:
+                if 'all' in self.only_tags:
+                    should_run = True
+                else:
+                    should_run = False
+                    if  'tagged' in self.only_tags:
+                        if task_set != u:
+                            should_run = True
+                    elif 'untagged' in self.only_tags:
+                        if task_set == u:
+                            should_run = True
+                    else:
+                        if task_set.intersection(self.only_tags):
+                            should_run = True
+
+            # Check for tags that we need to skip
+            if 'all' in self.skip_tags:
+                should_run = False
+            else:
+                if 'tagged' in self.skip_tags:
+                    if task_set != u:
+                        should_run = False
+                elif 'untagged' in self.skip_tags:
+                    if task_set == u:
+                        should_run = False
+                else:
+                    if should_run:
+                        if task_set.intersection(self.skip_tags):
+                            should_run = False
+
+            if should_run:
+                tasks.append(task)
+
+        return tasks
+
+    # *****************************************************
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
@@ -720,7 +771,7 @@ class PlayBook(object):
             play._play_hosts = self._trim_unavailable_hosts(on_hosts)
             self.inventory.also_restrict_to(on_hosts)
 
-            for task in play.tasks():
+            for task in self.tasks_to_run_in_play(play):
 
                 if task.meta is not None:
                     # meta tasks can force handlers to run mid-play
@@ -730,27 +781,11 @@ class PlayBook(object):
                     # skip calling the handler till the play is finished
                     continue
 
-                # only run the task if the requested tags match
-                should_run = False
-                for x in self.only_tags:
-
-                    for y in task.tags:
-                        if x == y:
-                            should_run = True
-                            break
-
-                # Check for tags that we need to skip
-                if should_run:
-                    if any(x in task.tags for x in self.skip_tags):
-                        should_run = False
-
-                if should_run:
-
-                    if not self._run_task(play, task, False):
-                        # whether no hosts matched is fatal or not depends if it was on the initial step.
-                        # if we got exactly no hosts on the first step (setup!) then the host group
-                        # just didn't match anything and that's ok
-                        return False
+                if not self._run_task(play, task, False):
+                    # whether no hosts matched is fatal or not depends if it was on the initial step.
+                    # if we got exactly no hosts on the first step (setup!) then the host group
+                    # just didn't match anything and that's ok
+                    return False
 
                 # Get a new list of what hosts are left as available, the ones that
                 # did not go fail/dark during the task

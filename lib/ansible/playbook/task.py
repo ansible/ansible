@@ -129,7 +129,7 @@ class Task(object):
 
         # load various attributes
         self.name         = ds.get('name', None)
-        self.tags         = [ 'all' ]
+        self.tags         = [ 'untagged' ]
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.su           = utils.boolean(ds.get('su', play.su))
@@ -315,6 +315,9 @@ class Task(object):
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
+
+        if len(self.tags) > 1:
+            self.tags.remove('untagged')
 
         if additional_conditions:
             new_conditions = additional_conditions[:]
