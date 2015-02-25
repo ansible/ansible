@@ -252,7 +252,7 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _load_playbook_from_file(self, path, vars={}, vars_files=[]):
+    def _load_playbook_from_file(self, path, vars={}, vars_files=[], tags=None):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
@@ -277,10 +277,17 @@ class PlayBook(object):
                 play_vars = self._get_playbook_vars(play, vars)
                 play_vars_files = self._get_playbook_vars_files(play, vars_files)
                 inc_vars, inc_path = self._get_include_info(play, basedir, play_vars)
+
+                if not tags:
+                    inc_tags = set(play['tags'])
+                else:
+                    inc_tags = tags | set(play['tags'])
+
                 play_vars.update(inc_vars)
 
                 included_path = utils.path_dwim(basedir, template(basedir, inc_path, play_vars))
-                (plays, basedirs) = self._load_playbook_from_file(included_path, vars=play_vars, vars_files=play_vars_files)
+                (plays, basedirs) = self._load_playbook_from_file(included_path, vars=play_vars, vars_files=play_vars_files, tags=inc_tags)
+
                 for p in plays:
                     # support for parameterized play includes works by passing
                     # those variables along to the subservient play
@@ -294,6 +301,12 @@ class PlayBook(object):
             else:
 
                 # this is a normal (non-included play)
+                if tags:
+                    # Apply tags from includes to included play's tasks
+                    play_tags = set() if 'tags' not in play else set(play['tags'])
+                    new_tags = list(play_tags | tags)
+                    play['tags'] = new_tags
+
                 accumulated_plays.append(play)
                 play_basedirs.append(basedir)
 
