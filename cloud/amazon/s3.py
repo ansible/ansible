@@ -339,7 +339,8 @@ def main():
             module.fail_json(msg = str(e))
     else:
         try:
-            s3 = boto.connect_s3(aws_access_key, aws_secret_key)
+            from boto.s3.connection import OrdinaryCallingFormat
+            s3 = boto.s3.connect_to_region(location, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, is_secure=True, calling_format=OrdinaryCallingFormat())
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
  
