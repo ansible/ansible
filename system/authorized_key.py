@@ -76,7 +76,7 @@ options:
         authorized_keys file. Multiple keys can be specified in a single
         key= string value by separating them by newlines.
     required: false
-    choices: [ yes", "no" ]
+    choices: [ "yes", "no" ]
     default: "no"
     version_added: "1.9"
 description:
