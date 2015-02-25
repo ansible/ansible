@@ -30,6 +30,25 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
+    def get_checksum(self, conn, tmp, dest, inject, try_directory=False, source=None):
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+
+        if remote_checksum in ('0', '2', '3', '4'):
+            # Note: 1 means the file is not present which is fine; template
+            # will create it.  3 means directory was specified instead of file
+            if try_directory and remote_checksum == '3' and source:
+                base = os.path.basename(source)
+                dest = os.path.join(dest, base)
+                remote_checksum = self.get_checksum(conn, tmp, dest, inject, try_directory=False)
+                if remote_checksum not in ('0', '2', '3', '4'):
+                    return remote_checksum
+
+            result = dict(failed=True, msg="failed to checksum remote file."
+                        " Checksum error code: %s" % remote_checksum)
+            return ReturnData(conn=conn, comm_ok=True, result=result)
+
+        return remote_checksum
+
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for template operations '''
 
@@ -75,13 +94,6 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-        # Expand any user home dir specification
-        dest = self.runner._remote_expand_user(conn, dest, tmp)
-
-        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
         # template the source data locally & get ready to transfer
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass)
@@ -89,15 +101,17 @@ class ActionModule(object):
             result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        local_checksum = utils.checksum_s(resultant)
-        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+        # Expand any user home dir specification
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
 
-        if remote_checksum in ('0', '2', '3', '4'):
-            # Note: 1 means the file is not present which is fine; template
-            # will create it
-            result = dict(failed=True, msg="failed to checksum remote file."
-                        " Checksum error code: %s" % remote_checksum)
-            return ReturnData(conn=conn, comm_ok=True, result=result)
+        directory_prepended = False
+        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
+            directory_prepended = True
+            base = os.path.basename(source)
+            dest = os.path.join(dest, base)
+
+        local_checksum = utils.checksum_s(resultant)
+        remote_checksum = self.get_checksum(conn, tmp, dest, inject, not directory_prepended, source=source)
 
         if local_checksum != remote_checksum:
 
