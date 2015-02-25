@@ -669,20 +669,6 @@ class Play(object):
 
     # *************************************************
 
-    def _is_valid_tag(self, tag_list):
-        """
-        Check to see if the list of tags passed in is in the list of tags
-        we only want (playbook.only_tags), or if it is not in the list of
-        tags we don't want (playbook.skip_tags).
-        """
-        matched_skip_tags = set(tag_list) & set(self.playbook.skip_tags)
-        matched_only_tags = set(tag_list) & set(self.playbook.only_tags)
-        if len(matched_skip_tags) > 0 or (self.playbook.only_tags != ['all'] and len(matched_only_tags) == 0):
-            return False
-        return True
-
-    # *************************************************
-
     def tasks(self):
         ''' return task objects for this play '''
         return self._tasks
@@ -783,8 +769,27 @@ class Play(object):
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)
         tags_set = set(tags)
-        matched_tags = all_tags_set & tags_set
-        unmatched_tags = all_tags_set - tags_set
+
+        matched_tags = all_tags_set.intersection(tags_set)
+        unmatched_tags = all_tags_set.difference(tags_set)
+
+        a = set(['always'])
+        u = set(['untagged'])
+        if 'always' in all_tags_set:
+            matched_tags = matched_tags.union(a)
+            unmatched_tags = all_tags_set.difference(a)
+
+        if 'all' in tags_set:
+            matched_tags = matched_tags.union(all_tags_set)
+            unmatched_tags = set()
+
+        if 'tagged' in tags_set:
+            matched_tags = all_tags_set.difference(u)
+            unmatched_tags = u
+
+        if 'untagged' in tags_set and 'untagged' in all_tags_set:
+            matched_tags = matched_tags.union(u)
+            unmatched_tags = unmatched_tags.difference(u)
 
         return matched_tags, unmatched_tags
 
