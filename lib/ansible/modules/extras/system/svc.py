@@ -20,7 +20,8 @@ options:
         description:
             - C(Started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.  C(restarted) will always bounce the
-              svc (svc -t).  C(reloaded) will send a sigusr1 (svc -u).
+              svc (svc -t) and C(killed) will always bounce the svc (svc -k).
+              C(reloaded) will send a sigusr1 (svc -u).
               C(once) will run a normally downed svc once (svc -o), not really
               an idempotent operation.
     downed:
@@ -53,6 +54,9 @@ EXAMPLES = '''
 
 # Example action to stop svc dnscache, if running
  - svc: name=dnscache state=stopped
+
+# Example action to kill svc dnscache, in all cases
+ - svc : name=dnscache state=killed
 
 # Example action to restart svc dnscache, in all cases
  - svc : name=dnscache state=restarted
@@ -194,6 +198,9 @@ class Svc(object):
     def restart(self):
         return self.execute_command([self.svc_cmd, '-t', self.svc_full])
 
+    def kill(self):
+        return self.execute_command([self.svc_cmd, '-k', self.svc_full])
+
     def execute_command(self, cmd):
         try:
             (rc, out, err) = self.module.run_command(' '.join(cmd))
@@ -215,7 +222,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['started', 'stopped', 'restarted', 'reloaded', 'once']),
+            state = dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
             enabled = dict(required=False, type='bool', choices=BOOLEANS),
             downed = dict(required=False, type='bool', choices=BOOLEANS),
             dist = dict(required=False, default='daemontools'),
