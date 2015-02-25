@@ -118,7 +118,7 @@ EXAMPLES = """
 - mysql_user: name=bob password=12345 priv=*.*:ALL,GRANT state=present
 
 # Modifiy user Bob to require SSL connections. Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
-- mysql_user: name=bob append=true priv=*.*:REQUIRESSL state=present
+- mysql_user: name=bob append_privs=true priv=*.*:REQUIRESSL state=present
 
 # Ensure no user named 'sally' exists, also passing in the auth credentials.
 - mysql_user: login_user=root login_password=123456 name=sally state=absent
