@@ -103,6 +103,7 @@ import time
 try:
     import boto
     import boto.ec2
+    import boto.ec2.autoscale
     import boto.ec2.elb
     from boto.regioninfo import RegionInfo
     HAS_BOTO = True
@@ -254,6 +255,9 @@ class ElbManager:
                   for elb lookup instead of returning what elbs
                   are attached to self.instance_id"""
 
+        if not ec2_elbs:
+           ec2_elbs = self._get_auto_scaling_group_lbs()
+
         try:
             elb = connect_to_aws(boto.ec2.elb, self.region, 
                                  **self.aws_connect_params)
@@ -271,6 +275,32 @@ class ElbManager:
                     if self.instance_id == info.id:
                         lbs.append(lb)
         return lbs
+
+    def _get_auto_scaling_group_lbs(self):
+        """Returns a list of ELBs associated with self.instance_id
+           indirectly through its auto scaling group membership"""
+
+        try:
+           asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            self.module.fail_json(msg=str(e))
+
+        asg_instances = asg.get_all_autoscaling_instances([self.instance_id])
+        if len(asg_instances) > 1:
+           self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
+
+        if not asg_instances:
+           asg_elbs = []
+        else:
+           asg_name = asg_instances[0].group_name
+
+           asgs = asg.get_all_groups([asg_name])
+           if len(asg_instances) != 1:
+              self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
+
+           asg_elbs = asgs[0].load_balancers
+
+        return asg_elbs
 
     def _get_instance(self):
         """Returns a boto.ec2.InstanceObject for self.instance_id"""
