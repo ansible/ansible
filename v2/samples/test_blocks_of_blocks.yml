@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - block:
+    - block:
+      - block:
+        - block:
+          - debug: msg="are we there yet?"

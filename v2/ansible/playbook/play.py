@@ -198,13 +198,13 @@ class Play(Base, Taggable):
         the parent role R last. This is done for all roles in the Play.
         '''
 
-        task_list = []
+        block_list = []
 
         if len(self.roles) > 0:
             for r in self.roles:
-                task_list.extend(r.compile())
+                block_list.extend(r.compile())
 
-        return task_list
+        return block_list
 
     def compile(self):
         '''
@@ -213,14 +213,14 @@ class Play(Base, Taggable):
         tasks specified in the play.
         '''
 
-        task_list = []
+        block_list = []
 
-        task_list.extend(compile_block_list(self.pre_tasks))
-        task_list.extend(self._compile_roles())
-        task_list.extend(compile_block_list(self.tasks))
-        task_list.extend(compile_block_list(self.post_tasks))
+        block_list.extend(self.pre_tasks)
+        block_list.extend(self._compile_roles())
+        block_list.extend(self.tasks)
+        block_list.extend(self.post_tasks)
 
-        return task_list
+        return block_list
 
     def get_vars(self):
         return self.vars.copy()

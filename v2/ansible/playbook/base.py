@@ -273,7 +273,7 @@ class Base:
         if needle in self._attributes:
             return self._attributes[needle]
 
-        raise AttributeError("attribute not found: %s" % needle)
+        raise AttributeError("attribute not found in %s: %s" % (self.__class__.__name__, needle))
 
     def __getstate__(self):
         return self.serialize()

@@ -28,9 +28,9 @@ from ansible.playbook.taggable import Taggable
 
 class Block(Base, Conditional, Taggable):
 
-    _block  = FieldAttribute(isa='list')
-    _rescue = FieldAttribute(isa='list')
-    _always = FieldAttribute(isa='list')
+    _block  = FieldAttribute(isa='list', default=[])
+    _rescue = FieldAttribute(isa='list', default=[])
+    _always = FieldAttribute(isa='list', default=[])
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -41,6 +41,7 @@ class Block(Base, Conditional, Taggable):
         self._role         = role
         self._task_include = task_include
         self._use_handlers = use_handlers
+        self._dep_chain    = []
 
         super(Block, self).__init__()
 
@@ -141,6 +142,7 @@ class Block(Base, Conditional, Taggable):
     def copy(self):
         new_me = super(Block, self).copy()
         new_me._use_handlers = self._use_handlers
+        new_me._dep_chain = self._dep_chain[:]
 
         new_me._parent_block = None
         if self._parent_block:
@@ -163,6 +165,7 @@ class Block(Base, Conditional, Taggable):
         '''
 
         data = dict(when=self.when)
+        data['dep_chain'] = self._dep_chain
 
         if self._role is not None:
             data['role'] = self._role.serialize()
@@ -177,11 +180,11 @@ class Block(Base, Conditional, Taggable):
         serialize method
         '''
 
-        #from ansible.playbook.task_include import TaskInclude
         from ansible.playbook.task import Task
 
         # unpack the when attribute, which is the only one we want
         self.when = data.get('when')
+        self._dep_chain = data.get('dep_chain', [])
 
         # if there was a serialized role, unpack it too
         role_data = data.get('role')
@@ -198,6 +201,10 @@ class Block(Base, Conditional, Taggable):
             self._task_include = ti
 
     def evaluate_conditional(self, all_vars):
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                if not dep.evaluate_conditional(all_vars):
+                    return False
         if self._task_include is not None:
             if not self._task_include.evaluate_conditional(all_vars):
                 return False
@@ -211,6 +218,9 @@ class Block(Base, Conditional, Taggable):
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         result = False
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                result |= dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
         if self._parent_block is not None:
             result |= self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
         elif self._role is not None:
@@ -226,4 +236,7 @@ class Block(Base, Conditional, Taggable):
 
         if self._task_include:
             self._task_include.set_loader(loader)
+
+        for dep in self._dep_chain:
+            dep.set_loader(loader)
 

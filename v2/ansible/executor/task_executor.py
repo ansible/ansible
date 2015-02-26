@@ -132,12 +132,13 @@ class TaskExecutor:
             res = self._execute(variables=task_vars)
             (self._task, tmp_task) = (tmp_task, self._task)
 
-            # FIXME: we should be sending back a callback result for each item in the loop here
-
             # now update the result with the item info, and append the result
             # to the list of results
             res['item'] = item
             results.append(res)
+
+            # FIXME: we should be sending back a callback result for each item in the loop here
+            print(res)
 
         return results
 
