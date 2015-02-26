@@ -53,11 +53,6 @@ options:
     description:
       - Name of the availability zone.
     required: false
-  state:
-    description:
-      - Should the resource be present or absent.
-    choices: [present, absent]
-    default: present
   wait:
     description:
       - Should ansible wait until the requested resource is complete.

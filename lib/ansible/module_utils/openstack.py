@@ -77,7 +77,6 @@ def openstack_full_argument_spec(**kwargs):
         auth=dict(default=None),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
-        state=dict(default='present', choices=['absent', 'present']),
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
         endpoint_type=dict(
