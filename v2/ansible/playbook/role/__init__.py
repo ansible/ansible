@@ -304,25 +304,25 @@ class Role(Base, Conditional, Taggable):
         can correctly take their parent's tags/conditionals into account.
         '''
 
-        task_list = []
+        block_list = []
 
         # update the dependency chain here
         new_dep_chain = dep_chain + [self]
 
         deps = self.get_direct_dependencies()
         for dep in deps:
-            dep_tasks = dep.compile(dep_chain=new_dep_chain)
-            for dep_task in dep_tasks:
+            dep_blocks = dep.compile(dep_chain=new_dep_chain)
+            for dep_block in dep_blocks:
                 # since we're modifying the task, and need it to be unique,
                 # we make a copy of it here and assign the dependency chain
                 # to the copy, then append the copy to the task list.
-                new_dep_task = dep_task.copy()
-                new_dep_task._dep_chain = new_dep_chain
-                task_list.append(new_dep_task)
+                new_dep_block = dep_block.copy()
+                new_dep_block._dep_chain = new_dep_chain
+                block_list.append(new_dep_block)
 
-        task_list.extend(compile_block_list(self._task_blocks))
+        block_list.extend(self._task_blocks)
 
-        return task_list
+        return block_list
 
     def serialize(self, include_deps=True):
         res = super(Role, self).serialize()

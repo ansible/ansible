@@ -68,8 +68,8 @@ class StrategyBase:
         num_failed      = len(self._tqm._failed_hosts)
         num_unreachable = len(self._tqm._unreachable_hosts)
 
-        debug("running the cleanup portion of the play")
-        result &= self.cleanup(iterator, connection_info)
+        #debug("running the cleanup portion of the play")
+        #result &= self.cleanup(iterator, connection_info)
         debug("running handlers")
         result &= self.run_handlers(iterator, connection_info)
 
@@ -131,6 +131,7 @@ class StrategyBase:
                     if result[0] == 'host_task_failed':
                         if not task.ignore_errors:
                             debug("marking %s as failed" % host.get_name())
+                            iterator.mark_host_failed(host)
                             self._tqm._failed_hosts[host.get_name()] = True
                         self._callback.runner_on_failed(task, task_result)
                     elif result[0] == 'host_unreachable':
@@ -151,26 +152,25 @@ class StrategyBase:
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
                         for (entry, role_obj) in ROLE_CACHE[task_result._task._role._role_name].iteritems():
-                            #hashed_entry = frozenset(task_result._task._role._role_params.iteritems())
                             hashed_entry = hash_params(task_result._task._role._role_params)
                             if entry == hashed_entry :
                                 role_obj._had_task_run = True
 
-                elif result[0] == 'include':
-                    host         = result[1]
-                    task         = result[2]
-                    include_file = result[3]
-                    include_vars = result[4]
-
-                    if isinstance(task, Handler):
-                        # FIXME: figure out how to make includes work for handlers
-                        pass
-                    else:
-                        original_task = iterator.get_original_task(task)
-                        if original_task._role:
-                            include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_file)
-                        new_tasks = self._load_included_file(original_task, include_file, include_vars)
-                        iterator.add_tasks(host, new_tasks)
+                #elif result[0] == 'include':
+                #    host         = result[1]
+                #    task         = result[2]
+                #    include_file = result[3]
+                #    include_vars = result[4]
+                #
+                #    if isinstance(task, Handler):
+                #        # FIXME: figure out how to make includes work for handlers
+                #        pass
+                #    else:
+                #        original_task = iterator.get_original_task(host, task)
+                #        if original_task and original_task._role:
+                #            include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_file)
+                #        new_tasks = self._load_included_file(original_task, include_file, include_vars)
+                #        iterator.add_tasks(host, new_tasks)
 
                 elif result[0] == 'add_host':
                     task_result = result[1]
@@ -314,6 +314,8 @@ class StrategyBase:
 
 
         task_list = compile_block_list(block_list)
+
+        # set the vars for this task from those specified as params to the include
         for t in task_list:
             t.vars = include_vars.copy()
 
@@ -355,18 +357,21 @@ class StrategyBase:
                     iterator.mark_host_failed(host)
                     del self._tqm._failed_hosts[host_name]
 
-                if host_name not in self._tqm._unreachable_hosts and iterator.get_next_task_for_host(host, peek=True):
+                if host_name in self._blocked_hosts:
                     work_to_do = True
-                    # check to see if this host is blocked (still executing a previous task)
-                    if not host_name in self._blocked_hosts:
-                        # pop the task, mark the host blocked, and queue it
-                        self._blocked_hosts[host_name] = True
-                        task = iterator.get_next_task_for_host(host)
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        self._callback.playbook_on_cleanup_task_start(task.get_name())
-                        self._queue_task(host, task, task_vars, connection_info)
+                    continue
+                elif iterator.get_next_task_for_host(host, peek=True) and host_name not in self._tqm._unreachable_hosts:
+                    work_to_do = True
+
+                    # pop the task, mark the host blocked, and queue it
+                    self._blocked_hosts[host_name] = True
+                    task = iterator.get_next_task_for_host(host)
+                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                    self._callback.playbook_on_cleanup_task_start(task.get_name())
+                    self._queue_task(host, task, task_vars, connection_info)
 
             self._process_pending_results(iterator)
+            time.sleep(0.01)
 
         # no more work, wait until the queue is drained
         self._wait_on_pending_results(iterator)

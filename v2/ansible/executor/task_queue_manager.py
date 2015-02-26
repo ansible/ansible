@@ -26,7 +26,6 @@ import sys
 
 from ansible.errors import AnsibleError
 from ansible.executor.connection_info import ConnectionInformation
-#from ansible.executor.manager import AnsibleManager
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
@@ -35,7 +34,6 @@ from ansible.plugins import callback_loader, strategy_loader
 from ansible.utils.debug import debug
 
 __all__ = ['TaskQueueManager']
-
 
 class TaskQueueManager:
 
@@ -58,10 +56,6 @@ class TaskQueueManager:
 
         # a special flag to help us exit cleanly
         self._terminated = False
-
-        # create and start the multiprocessing manager
-        #self._manager = AnsibleManager()
-        #self._manager.start()
 
         # this dictionary is used to keep track of notified handlers
         self._notified_handlers = dict()
