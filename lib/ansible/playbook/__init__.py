@@ -476,13 +476,25 @@ class PlayBook(object):
         else:
             name = task.name
 
-        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        try:
+            # v1 HACK: we don't have enough information to template many names
+            # at this point.  Rather than making this work for all cases in
+            # v1, just make this degrade gracefully.  Will fix in v2
+            name = template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False)
+        except:
+            pass
+
+        self.callbacks.on_task_start(name, is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
 
         # template ignore_errors
+        # TODO: Is this needed here?  cond is templated again in
+        # check_conditional after some more manipulations.
+        # TODO: we don't have enough information here to template cond either
+        # (see note on templating name above)
         cond = template(play.basedir, task.ignore_errors, task.module_vars, expand_lists=False)
         task.ignore_errors =  utils.check_conditional(cond, play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
 
