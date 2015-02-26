@@ -321,7 +321,7 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
 To get the real path of a link (new in version 1.8)::
 
-   {{ path | readlink }}
+   {{ path | realpath }}
 
 To work with Base64 encoded strings::
 
