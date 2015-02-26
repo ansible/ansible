@@ -201,7 +201,7 @@ def main():
         if state in ['link','hard']:
             if follow and state == 'link':
                 # use the current target of the link as the source
-                src = os.readlink(path)
+                src = os.path.realpath(path)
             else:
                 module.fail_json(msg='src and dest are required for creating links')
 
@@ -245,7 +245,7 @@ def main():
         if state != prev_state:
             if follow and prev_state == 'link':
                 # follow symlink and operate on original
-                path = os.readlink(path)
+                path = os.path.realpath(path)
                 prev_state = get_state(path)
                 file_args['path'] = path
 
@@ -258,7 +258,7 @@ def main():
 
     elif state == 'directory':
         if follow and prev_state == 'link':
-            path = os.readlink(path)
+            path = os.path.realpath(path)
             prev_state = get_state(path)
 
         if prev_state == 'absent':
