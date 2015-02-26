@@ -938,20 +938,26 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
-def sanitize_output(str):
+def sanitize_output(arg_string):
     ''' strips private info out of a string '''
 
-    private_keys = ['password', 'login_password']
+    private_keys = ('password', 'login_password')
 
-    parts = parse_kv(str)
     output = []
-    for (k, v) in parts.items():
-        if k in private_keys:
-            output.append("%s=VALUE_HIDDEN" % k)
+    for part in arg_string.split():
+        try:
+            (k, v) = part.split('=', 1)
+        except ValueError:
+            v = heuristic_log_sanitize(part)
+            output.append(v)
             continue
+
+        if k in private_keys:
+            v = 'VALUE_HIDDEN'
         else:
             v = heuristic_log_sanitize(v)
         output.append('%s=%s' % (k, v))
+
     output = ' '.join(output)
     return output
 
