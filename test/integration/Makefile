@@ -21,7 +21,7 @@ VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
 
-all: parsing test_var_precedence unicode non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags
+all: parsing test_var_precedence unicode non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_templating_settings
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario1; [ $$? -eq 3 ]
@@ -39,8 +39,8 @@ unicode:
 	# Test the start-at-task flag #9571
 	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v --start-at-task '*¶' -e 'start_at_task=True' $(TEST_FLAGS)
 
-mine:
-	ansible-playbook mine.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+test_templating_settings:
+	ansible-playbook test_templating_settings.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 non_destructive:
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
