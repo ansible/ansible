@@ -1097,6 +1097,8 @@ class Runner(object):
                     if failed_when is not None and 'skipped' not in data:
                         data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
+            ignore_errors = utils.check_conditional(self.module_vars.get('ignore_errors', False), self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+            data['ignore_errors'] = ignore_errors
 
             if is_chained:
                 # no callbacks
@@ -1108,8 +1110,8 @@ class Runner(object):
                 data = utils.censor_unlogged_data(data)
 
             if not result.is_successful():
-                ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
+                
             else:
                 if self.diff:
                     self.callbacks.on_file_diff(conn.host, result.diff)

@@ -21,3 +21,7 @@
   register: failed
   ignore_errors: True
 
+- name: this will not stop the playbook
+  shell: /bin/false
+  register: failed
+  ignore_errors: test_bare

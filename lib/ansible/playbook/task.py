@@ -217,7 +217,7 @@ class Task(object):
             self.name = self.action
 
         # load various attributes
-        self.when    = ds.get('when', None)
+        self.when = ds.get('when', None)
         self.changed_when = ds.get('changed_when', None)
         self.failed_when = ds.get('failed_when', None)
 
