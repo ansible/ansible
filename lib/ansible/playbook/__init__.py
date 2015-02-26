@@ -22,6 +22,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.module_utils.splitter import split_args, unquote
+from itertools import groupby
 import ansible.callbacks
 import ansible.cache
 import os
@@ -476,7 +477,21 @@ class PlayBook(object):
         else:
             name = task.name
 
-        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        def get_module_vars():
+            task_vars = task.module_vars.copy()
+            cache_vars = []
+
+            for host, values in self.VARS_CACHE.items():
+                for key, value in values.items():
+                    cache_vars.append((key, host, value))
+
+            for k, g in groupby(cache_vars, lambda x: x[0]):
+                task_vars[k] = dict([(x[1],x[2]) for x in g])
+
+            return task_vars
+
+        self.callbacks.on_task_start(template(play.basedir, name, get_module_vars(), lookup_fatal=False, filter_fatal=False), is_handler)
+
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
