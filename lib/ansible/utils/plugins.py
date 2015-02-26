@@ -176,7 +176,8 @@ class PluginLoader(object):
         found = None
         for path in [p for p in self._get_paths() if p not in self._searched_paths]:
             if os.path.isdir(path):
-                for potential_file in os.listdir(path):
+                for potential_file in (f for f in os.listdir(path)
+                                       if os.path.isfile(os.path.join(path, f))):
                     for suffix in suffixes:
                         if potential_file.endswith(suffix):
                             full_path = os.path.join(path, potential_file)

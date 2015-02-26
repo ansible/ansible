@@ -11,8 +11,11 @@ import passlib.hash
 import string
 import StringIO
 import copy
+import tempfile
+import shutil
 
 from nose.plugins.skip import SkipTest
+from mock import patch
 
 import ansible.utils
 import ansible.errors
@@ -914,3 +917,29 @@ class TestUtils(unittest.TestCase):
         for (role, result) in tests:
             self.assertEqual(ansible.utils.role_yaml_parse(role), result)
 
+    @patch('ansible.utils.plugins.module_finder._get_paths')
+    def test_find_plugin(self, mock_get_paths):
+
+        tmp_path = tempfile.mkdtemp()
+        mock_get_paths.return_value = [tmp_path,]
+        right_module_1 = 'module.py'
+        right_module_2 = 'module_without_extension'
+        wrong_module_1 = 'folder'
+        wrong_module_2 = 'inexistent'
+        path_right_module_1 = os.path.join(tmp_path, right_module_1)
+        path_right_module_2 = os.path.join(tmp_path, right_module_2)
+        path_wrong_module_1 = os.path.join(tmp_path, wrong_module_1)
+        open(path_right_module_1, 'w').close()
+        open(path_right_module_2, 'w').close()
+        os.mkdir(path_wrong_module_1)
+
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(right_module_1),
+                         path_right_module_1)
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(right_module_2),
+                         path_right_module_2)
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(wrong_module_1),
+                         None)
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(wrong_module_2),
+                         None)
+
+        shutil.rmtree(tmp_path)
