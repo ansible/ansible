@@ -152,7 +152,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
             f = open(filename, 'w')
             cp.write(f)
         except:
-            module.fail_json(msg="Can't creat %s" % filename)
+            module.fail_json(msg="Can't create %s" % filename)
 
     return changed
 
