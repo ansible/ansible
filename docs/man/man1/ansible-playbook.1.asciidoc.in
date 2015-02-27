@@ -124,6 +124,9 @@ and 'local'.  'local' is mostly useful for crontab or kickstarts.
 
 Further limits the selected host/group patterns.
 
+*--list-hosts*::
+
+Outputs a list of matching hosts; does not execute anything else.
 
 ENVIRONMENT
 -----------
