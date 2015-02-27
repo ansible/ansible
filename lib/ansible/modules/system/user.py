@@ -797,8 +797,17 @@ class FreeBsdUser(User):
             cmd.append(self.shell)
 
         if self.login_class is not None:
-            cmd.append('-L')
-            cmd.append(self.login_class)
+            # find current login class
+            user_login_class = None
+            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+                for line in open(self.SHADOWFILE).readlines():
+                    if line.startswith('%s:' % self.name):
+                        user_login_class = line.split(':')[4]
+
+            # act only if login_class change
+            if self.login_class != user_login_class:
+                cmd.append('-L')
+                cmd.append(self.login_class)
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
