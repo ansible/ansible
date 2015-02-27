@@ -31,6 +31,7 @@ DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate
 version_added: "1.2"
+deprecated: Deprecated in 1.9. Use os_floating_ip instead
 short_description: Associate or disassociate a particular floating IP with an instance
 description:
    - Associates or disassociates a specific floating IP with a particular instance
