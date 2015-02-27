@@ -122,6 +122,10 @@ Further limits the selected host/group patterns.
 
 Further limits hosts with a regex pattern.
 
+*--list-hosts*::
+
+Outputs a list of matching hosts; does not execute anything else.
+
 INVENTORY
 ---------
 
