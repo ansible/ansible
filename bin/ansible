@@ -33,6 +33,11 @@ except Exception:
 import os
 import sys
 
+# Augment sys.path (PYTHONPATH) to find Python modules relative to the
+# executed python script.  This is so that we can find the modules when
+# running from a local checkout.
+sys.path.append(os.path.join(os.path.dirname(sys.argv[0]), '..', 'lib'))
+
 from ansible.runner import Runner
 import ansible.constants as C
 from ansible import utils
