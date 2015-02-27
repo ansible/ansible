@@ -92,6 +92,54 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
 To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
 
+.. _csvfile_lookup:
+
+The CSV File Lookup
+```````````````````
+.. versionadded:: 1.5
+
+The ``csvfile`` lookup reads the contents of a file in CSV (comma-separated value)
+format. The lookup looks for the row where the first column matches ``keyname``, and
+returns the value in the first column, unless a different column is specified.
+
+The example below shows the contents of a CSV file named elements.csv with information about the
+periodic table of elements::
+
+    Symbol,Atomic Number,Atomic Mass
+    H,1,1.008
+    He,2,4.0026
+    Li,3,6.94
+    Be,4,9.012
+    B,5,10.81
+
+
+We can use the ``csvfile`` plugin to look up the atomic number or atomic of Lithium by its symbol::
+
+    - debug: msg="The atomic number of Lithium is {{ lookup('csvfile', 'Li file=elements.csv delimiter=,') }}"
+    - debug: msg="The atomic mass of Lithium is {{ lookup('csvfile', 'Li file=elements.csv delimiter=, col=2') }}"
+
+
+The ``csvfile`` lookup supports several arguments. The format for passing
+arguments is::
+
+    lookup('csvfile', 'key arg1=val1 arg2=val2 ...')
+
+The first value in the argument is the ``key``, which must be an entry that
+appears exactly once in column 0 (the first column, 0-indexed) of the table. All other arguments are optional.
+
+
+==========   ============   =========================================================================================
+Field        Default        Description
+----------   ------------   -----------------------------------------------------------------------------------------
+file         ansible.csv    Name of the file to load
+delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
+col          1              The column to output, indexed by 0
+default      empty string   return value if the key is not in the csv file
+==========   ============   =========================================================================================
+
+.. note:: The default delimiter is TAB, *not* comma.
+
+
 .. _more_lookups:
 
 More Lookups
