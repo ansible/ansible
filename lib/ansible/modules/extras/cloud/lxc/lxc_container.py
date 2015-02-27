@@ -21,7 +21,7 @@
 
 DOCUMENTATION = """
 ---
-module: lxc-container
+module: lxc_container
 short_description: Manage LXC Containers
 version_added: 1.8.0
 description:
@@ -174,7 +174,7 @@ notes:
 
 EXAMPLES = """
 - name: Create a started container
-  lxc-container:
+  lxc_container:
     name: test-container-started
     container_log: true
     template: ubuntu
@@ -182,7 +182,7 @@ EXAMPLES = """
     template_options: --release trusty
 
 - name: Create a stopped container
-  lxc-container:
+  lxc_container:
     name: test-container-stopped
     container_log: true
     template: ubuntu
@@ -190,7 +190,7 @@ EXAMPLES = """
     template_options: --release trusty
 
 - name: Create a frozen container
-  lxc-container:
+  lxc_container:
     name: test-container-frozen
     container_log: true
     template: ubuntu
@@ -201,7 +201,7 @@ EXAMPLES = """
 
 # Create filesystem container, configure it, and archive it, and start it.
 - name: Create filesystem container
-  lxc-container:
+  lxc_container:
     name: test-container-config
     container_log: true
     template: ubuntu
@@ -217,7 +217,7 @@ EXAMPLES = """
 # configuration to it, create an archive of it, and finally leave the container
 # in a frozen state. The container archive will be compressed using bzip2
 - name: Create an lvm container
-  lxc-container:
+  lxc_container:
     name: test-container-lvm
     container_log: true
     template: ubuntu
@@ -242,7 +242,7 @@ EXAMPLES = """
   debug: var=lvm_container_info
 
 - name: Get information on a given container.
-  lxc-container:
+  lxc_container:
     name: test-container-config
   register: config_container_info
 
@@ -250,33 +250,33 @@ EXAMPLES = """
   debug: var=config_container_info
 
 - name: Run a command in a container and ensure its in a "stopped" state.
-  lxc-container:
+  lxc_container:
     name: test-container-started
     state: stopped
     container_command: |
       echo 'hello world.' | tee /opt/stopped
 
 - name: Run a command in a container and ensure its it in a "frozen" state.
-  lxc-container:
+  lxc_container:
     name: test-container-stopped
     state: frozen
     container_command: |
       echo 'hello world.' | tee /opt/frozen
 
 - name: Start a container.
-  lxc-container:
+  lxc_container:
     name: test-container-stopped
     state: started
 
 - name: Run a command in a container and then restart it.
-  lxc-container:
+  lxc_container:
     name: test-container-started
     state: restarted
     container_command: |
       echo 'hello world.' | tee /opt/restarted
 
 - name: Run a complex command within a "running" container.
-  lxc-container:
+  lxc_container:
     name: test-container-started
     container_command: |
       apt-get update
@@ -289,14 +289,14 @@ EXAMPLES = """
 # Create an archive of an existing container, save the archive to a defined
 # path and then destroy it.
 - name: Archive container
-  lxc-container:
+  lxc_container:
     name: test-container-started
     state: absent
     archive: true
     archive_path: /opt/archives
 
 - name: Destroy a container.
-  lxc-container:
+  lxc_container:
     name: "{{ item }}"
     state: absent
   with_items:
