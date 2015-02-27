@@ -140,9 +140,10 @@ class Cli(object):
             callbacks.display("No argument passed to %s module" % options.module_name, color='red', stderr=True)
             sys.exit(1)
 
-
         if options.su_user or options.ask_su_pass:
             options.su = True
+        elif options.sudo_user or options.ask_sudo_pass:
+            options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
         if options.tree:
