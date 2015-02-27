@@ -54,7 +54,7 @@ def gather_lldp():
         lldp_entries = output.split("\n")
 
         for entry in lldp_entries:
-            if entry:
+            if entry.startswith('lldp'):
                 path, value = entry.strip().split("=", 1)
                 path = path.split(".")
                 path_components, final = path[:-1], path[-1]
