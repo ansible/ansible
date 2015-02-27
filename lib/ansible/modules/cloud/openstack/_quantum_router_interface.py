@@ -27,6 +27,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_router_interface
+deprecated: Deprecated in 1.9. Use os_router_interface instead
 version_added: "1.2"
 short_description: Attach/Dettach a subnet's interface to a router
 description:
