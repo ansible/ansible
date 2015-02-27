@@ -31,6 +31,7 @@ from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
 from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum_s, md5, md5s
 from ansible.callbacks import display
+from ansible.config import get_config_file, load_config_file
 from ansible.module_utils.splitter import split_args, unquote
 from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.utils.unicode import to_bytes, to_unicode
@@ -901,6 +902,8 @@ def version(prog):
     if gitinfo:
         result = result + " {0}".format(gitinfo)
     result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
+    load_config_file()
+    result += "\n  config file = %s" % get_config_file()
     return result
 
 def version_info(gitinfo=False):
