@@ -901,6 +901,8 @@ def version(prog):
     if gitinfo:
         result = result + " {0}".format(gitinfo)
     result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
+    C.load_config_file()
+    result += "\n  config file = %s" % C.get_config_file()
     return result
 
 def version_info(gitinfo=False):

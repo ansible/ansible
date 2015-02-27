@@ -21,6 +21,9 @@ import sys
 import ConfigParser
 from string import ascii_letters, digits
 
+config_file = None
+
+
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
     if value is None:
@@ -60,6 +63,8 @@ def _get_config(p, section, key, env_var, default):
 def load_config_file():
     ''' Load Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
 
+    global config_file
+
     p = ConfigParser.ConfigParser()
 
     path0 = os.getenv("ANSIBLE_CONFIG", None)
@@ -76,8 +81,12 @@ def load_config_file():
             except ConfigParser.Error as e:
                 print "Error reading config file: \n%s" % e
                 sys.exit(1)
+            config_file = path
             return p
     return None
+
+def get_config_file():
+    return config_file
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
