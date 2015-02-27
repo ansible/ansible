@@ -58,14 +58,14 @@ options:
     description:
       - Indicates if this is an alias record.
     required: false
-    version_added: 1.8
+    version_added: 1.9
     default: False
     aliases: []
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
     required: false
-    version_added: 1.8
+    version_added: 1.9
     default: null
     aliases: []
   value:
