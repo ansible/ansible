@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 ---
 module: quantum_router_gateway
 version_added: "1.2"
+deprecated: Deprecated in 1.9. Use os_router_gateway instead
 short_description: set/unset a gateway interface for the router with the specified external network
 description:
    - Creates/Removes a gateway interface from the router, used to associate a external network with a router to route external traffic.

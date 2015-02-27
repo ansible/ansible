@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 ---
 module: nova_keypair
 version_added: "1.2"
+deprecated: Deprecated in 1.9. Use os_keypair instead
 short_description: Add/Delete key pair from nova
 description:
    - Add or Remove key pair from nova .

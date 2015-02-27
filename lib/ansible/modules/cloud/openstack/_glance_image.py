@@ -20,6 +20,7 @@ DOCUMENTATION = '''
 ---
 module: glance_image
 version_added: "1.2"
+deprecated: Deprecated in 1.9. Use os_image instead
 short_description: Add/Delete images from glance
 description:
    - Add or Remove images from the glance repository.
