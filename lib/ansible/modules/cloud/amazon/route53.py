@@ -98,6 +98,12 @@ options:
     required: false
     default: 500
     aliases: []
+  private_zone:
+    description:
+      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones. The default is to use the public zone.
+    required: false
+    default: false
+    version_added: "1.9"
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
@@ -202,6 +208,7 @@ def main():
             value                = dict(required=False),
             overwrite            = dict(required=False, type='bool'),
             retry_interval       = dict(required=False, default=500)
+            private_zone         = dict(required=False, type='bool', default=False),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -214,6 +221,7 @@ def main():
     value_in                = module.params.get('value')
     alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
     retry_interval_in       = module.params.get('retry_interval')
+    private_zone_in         = module.params.get('private_zone')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -250,8 +258,11 @@ def main():
     zones = {}
     results = conn.get_all_hosted_zones()
     for r53zone in results['ListHostedZonesResponse']['HostedZones']:
-        zone_id = r53zone['Id'].replace('/hostedzone/', '')
-        zones[r53zone['Name']] = zone_id
+        # only save this zone id if the private status of the zone matches
+        # the private_zone_in boolean specified in the params
+        if module.boolean(r53zone['Config']['PrivateZone']) == private_zone_in:
+            zone_id = r53zone['Id'].replace('/hostedzone/', '')
+            zones[r53zone['Name']] = zone_id
 
     # Verify that the requested zone is already defined in Route53
     if not zone_in in zones:
