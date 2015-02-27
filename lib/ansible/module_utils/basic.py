@@ -1297,8 +1297,8 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
+        # backups named basename-YYYY-MM-DD@HH:MM:SS~
+        ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
         backupdest = '%s.%s' % (fn, ext)
 
         try:
