@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
-from .. compat import unittest
+from ansible.compat.tests import unittest
 
 class TestBlock(unittest.TestCase):
 
@@ -37,43 +37,47 @@ class TestBlock(unittest.TestCase):
     def test_construct_block_with_role(self):
         pass
 
-    def test_block__load_list_of_tasks(self):
-        task = dict(action='test')
-        b = Block()
-        self.assertEqual(b._load_list_of_tasks([]), [])
-        res = b._load_list_of_tasks([task])
-        self.assertEqual(len(res), 1)
-        assert isinstance(res[0], Task)
-        res = b._load_list_of_tasks([task,task,task])
-        self.assertEqual(len(res), 3)
-
     def test_load_block_simple(self):
         ds = dict(
-           begin = [],
+           block = [],
            rescue = [],
-           end = [],
-           otherwise = [],
+           always = [],
+           #otherwise = [],
         )
         b = Block.load(ds)
-        self.assertEqual(b.begin, [])
+        self.assertEqual(b.block, [])
         self.assertEqual(b.rescue, [])
-        self.assertEqual(b.end, [])
-        self.assertEqual(b.otherwise, [])
+        self.assertEqual(b.always, [])
+        # not currently used
+        #self.assertEqual(b.otherwise, [])
 
     def test_load_block_with_tasks(self):
         ds = dict(
-           begin = [dict(action='begin')],
+           block = [dict(action='block')],
            rescue = [dict(action='rescue')],
-           end = [dict(action='end')],
-           otherwise = [dict(action='otherwise')],
+           always = [dict(action='always')],
+           #otherwise = [dict(action='otherwise')],
         )
         b = Block.load(ds)
-        self.assertEqual(len(b.begin), 1)
-        assert isinstance(b.begin[0], Task)
+        self.assertEqual(len(b.block), 1)
+        assert isinstance(b.block[0], Task)
         self.assertEqual(len(b.rescue), 1)
         assert isinstance(b.rescue[0], Task)
-        self.assertEqual(len(b.end), 1)
-        assert isinstance(b.end[0], Task)
-        self.assertEqual(len(b.otherwise), 1)
-        assert isinstance(b.otherwise[0], Task)
+        self.assertEqual(len(b.always), 1)
+        assert isinstance(b.always[0], Task)
+        # not currently used
+        #self.assertEqual(len(b.otherwise), 1)
+        #assert isinstance(b.otherwise[0], Task)
 
+    def test_load_implicit_block(self):
+        ds = [dict(action='foo')]
+        b = Block.load(ds)
+        self.assertEqual(len(b.block), 1)
+        assert isinstance(b.block[0], Task)
+
+    def test_block_compile(self):
+        ds = [dict(action='foo')]
+        b = Block.load(ds)
+        tasks = b.compile()
+        self.assertEqual(len(tasks), 1)
+        self.assertIsInstance(tasks[0], Task)

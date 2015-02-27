@@ -20,9 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six import iteritems, string_types
+from types import NoneType
 
 from ansible.errors import AnsibleParserError
-from ansible.plugins import module_finder
+from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv
 
 class ModuleArgsParser:
@@ -54,6 +55,15 @@ class ModuleArgsParser:
           src: a
           dest: b
 
+    # extra gross, but also legal. in this case, the args specified
+    # will act as 'defaults' and will be overriden by any args specified
+    # in one of the other formats (complex args under the action, or
+    # parsed from the k=v string
+    - command: 'pwd'
+      args:
+        chdir: '/tmp'
+
+
     This class has some of the logic to canonicalize these into the form
 
     - module: <module_name>
@@ -63,8 +73,9 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    def __init__(self, task=None):
-        self._task = task
+    def __init__(self, task_ds=dict()):
+        assert isinstance(task_ds, dict)
+        self._task_ds = task_ds
 
 
     def _split_module_string(self, str):
@@ -94,42 +105,47 @@ class ModuleArgsParser:
         if action not in ['shell', 'command']:
             return (action, args)
 
-        new_args = {}
-
         # the shell module really is the command module with an additional
         # parameter
         if action == 'shell':
             action = 'command'
-            new_args['_uses_shell'] = True
+            args['_uses_shell'] = True
 
-        # make sure the non-key-value params hop in the data
-        new_args['_raw_params'] = args['_raw_params']
+        return (action, args)
 
-        return (action, new_args)
-
-    def _normalize_parameters(self, thing, action=None):
+    def _normalize_parameters(self, thing, action=None, additional_args=dict()):
         '''
         arguments can be fuzzy.  Deal with all the forms.
         '''
 
-        args = dict()
+        # final args are the ones we'll eventually return, so first update
+        # them with any additional args specified, which have lower priority
+        # than those which may be parsed/normalized next
+        final_args = dict()
+        if additional_args:
+            final_args.update(additional_args)
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's an 'old style' invocation.
         # otherwise, it's not
 
         if action is not None:
-            args = self._normalize_old_style_args(thing)
+            args = self._normalize_old_style_args(thing, action)
         else:
             (action, args) = self._normalize_new_style_args(thing)
 
         # this can occasionally happen, simplify
-        if 'args' in args:
+        if args and 'args' in args:
             args = args['args']
 
-        return (action, args)
+        # finally, update the args we're going to return with the ones
+        # which were normalized above
+        if args:
+            final_args.update(args)
 
-    def _normalize_old_style_args(self, thing):
+        return (action, final_args)
+
+    def _normalize_old_style_args(self, thing, action):
         '''
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
@@ -147,9 +163,13 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
-            args = parse_kv(thing)
+            check_raw = action in ('command', 'shell', 'script')
+            args = parse_kv(thing, check_raw=check_raw)
+        elif isinstance(thing, NoneType):
+            # this can happen with modules which take no params, like ping:
+            args = None
         else:
-            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task)
+            raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
     def _normalize_new_style_args(self, thing):
@@ -180,64 +200,74 @@ class ModuleArgsParser:
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            args = parse_kv(args)
+            check_raw = action in ('command', 'shell', 'script')
+            args = parse_kv(args, check_raw=check_raw)
 
         else:
             # need a dict or a string, so giving up
-            raise AnsibleParsingError("unexpected parameter type in action: %s" % type(thing), obj=self._task)
+            raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
 
         return (action, args)
 
-    def parse(self, ds):
+    def parse(self):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
         task, dealing with all sorts of levels of fuzziness.
         '''
 
-        assert type(ds) == dict
-
         thing      = None
 
         action      = None
-        delegate_to = None
+        delegate_to = self._task_ds.get('delegate_to', None)
         args        = dict()
 
-        if 'action' in ds:
 
+        #
+        # We can have one of action, local_action, or module specified
+        #
+
+
+        # this is the 'extra gross' scenario detailed above, so we grab
+        # the args and pass them in as additional arguments, which can/will
+        # be overwritten via dict updates from the other arg sources below
+        # FIXME: add test cases for this
+        additional_args = self._task_ds.get('args', dict())
+
+        # action
+        if 'action' in self._task_ds:
             # an old school 'action' statement
-            thing = ds['action']
-            delegate_to = None
-            action, args = self._normalize_parameters(thing)
+            thing = self._task_ds['action']
+            action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
-        elif 'local_action' in ds:
-
+        # local_action
+        if 'local_action' in self._task_ds:
             # local_action is similar but also implies a delegate_to
             if action is not None:
-                raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task)
-            thing = ds.get('local_action', '')
+                raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
+            thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
-            action, args = self._normalize_parameters(thing)
+            action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
-        else:
+        # module: <stuff> is the more new-style invocation
 
-            # module: <stuff> is the more new-style invocation
-            if action is not None:
-                raise AnsibleParserError("conflicting action statements", obj=self._task)
-
-            # walk the input dictionary to see we recognize a module name
-            for (item, value) in iteritems(ds):
-                if item in module_finder:
-                    # finding more than one module name is a problem
-                    if action is not None:
-                        raise AnsibleParserError("conflicting action statements", obj=self._task)
-                    action = item
-                    thing = value
-                    action, args = self._normalize_parameters(value, action=action)
+        # walk the input dictionary to see we recognize a module name
+        for (item, value) in iteritems(self._task_ds):
+            if item in module_loader or item == 'meta' or item == 'include':
+                # finding more than one module name is a problem
+                if action is not None:
+                    raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
+                action = item
+                thing = value
+                action, args = self._normalize_parameters(value, action=action, additional_args=additional_args)
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            raise AnsibleParserError("no action detected in task", obj=self._task)
+            raise AnsibleParserError("no action detected in task", obj=self._task_ds)
+        # FIXME: disabled for now, as there are other places besides the shell/script modules where
+        #        having variables as the sole param for the module is valid (include_vars, add_host, and group_by?)
+        #elif args.get('_raw_params', '') != '' and action not in ('command', 'shell', 'script', 'include_vars'):
+        #    raise AnsibleParserError("this task has extra params, which is only allowed in the command, shell or script module.", obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)

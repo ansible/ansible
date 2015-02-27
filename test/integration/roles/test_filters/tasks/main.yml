@@ -22,6 +22,9 @@
 
 - debug: var=some_registered_var
 
+- name: Verify that we workaround a py26 json bug
+  template: src=py26json.j2 dest={{output_dir}}/py26json.templated mode=0644
+
 - name: fill in a basic template
   template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result

@@ -9,8 +9,9 @@ from ansible import __version__, __author__
 try:
     from setuptools import setup, find_packages
 except ImportError:
-    print "Ansible now needs setuptools in order to build. " \
-          "Install it using your package manager (usually python-setuptools) or via pip (pip install setuptools)."
+    print("Ansible now needs setuptools in order to build. Install it using"
+            " your package manager (usually python-setuptools) or via pip (pip"
+            " install setuptools).")
     sys.exit(1)
 
 setup(name='ansible',
@@ -24,7 +25,7 @@ setup(name='ansible',
       package_dir={ 'ansible': 'lib/ansible' },
       packages=find_packages('lib'),
       package_data={
-         '': ['module_utils/*.ps1'],
+         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1'],
       },
       scripts=[
          'bin/ansible',

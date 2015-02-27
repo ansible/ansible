@@ -15,6 +15,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Make sure we start fresh
+
+- name: Ensure zip is present to create test archive (yum)
+  yum: name=zip state=latest
+  when: ansible_pkg_mgr  ==  'yum'
+
+- name: Ensure zip is present to create test archive (apt)
+  apt: name=zip state=latest
+  when: ansible_pkg_mgr  ==  'apt'
 
 - name: prep our file
   copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
@@ -26,7 +35,7 @@
   shell: tar cvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
 
 - name: prep a zip file
-  shell: tar cvf test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
+  shell: zip test-unarchive.zip foo-unarchive.txt chdir={{output_dir}}
 
 - name: create our tar unarchive destination
   file: path={{output_dir}}/test-unarchive-tar state=directory
@@ -88,6 +97,19 @@
     that:
       - "unarchive02c.changed == false"
 
+- name: unarchive a tar.gz file with creates over an existing file using complex_args
+  unarchive:
+    src: "{{output_dir}}/test-unarchive.tar.gz"
+    dest: "{{output_dir | expanduser}}/test-unarchive-tar-gz"
+    copy: no
+    creates: "{{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive02d
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "unarchive02d.changed == false"
+
 - name: remove our tar.gz unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=absent
 
@@ -106,7 +128,7 @@
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
 
-- name: remove our tar unarchive destination
+- name: remove our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=absent
 
 - name: remove our test file for the archive
@@ -135,3 +157,71 @@
 
 - name: remove our unarchive destination
   file: path=/tmp/foo-unarchive.txt state=absent
+
+- name: create our unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+
+- name: unarchive and set mode
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
+    copy: no
+    mode: "u+rwX,g-rwx,o-rwx"
+  register: unarchive06
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ output_dir | expanduser }}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive06_stat
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "unarchive06.changed == true"
+      - "unarchive06_stat.stat.mode == '0600'"
+
+- name: unarchive and set mode
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
+    copy: no
+    mode: "u+rwX,g-rwx,o-rwx"
+  register: unarchive07
+
+- name: Test that the files were not changed
+  assert:
+    that:
+      - "unarchive07.changed == false"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+
+- name: create a directory with quotable chars
+  file: path="{{ output_dir }}/test-quotes~root" state=directory
+
+- name: unarchive into directory with quotable chars
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/test-quotes~root"
+    copy: no
+  register: unarchive08
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive08.changed == true"
+
+- name: unarchive into directory with quotable chars a second time
+  unarchive:
+    src: "{{ output_dir }}/test-unarchive.tar.gz"
+    dest: "{{ output_dir | expanduser }}/test-quotes~root"
+    copy: no
+  register: unarchive09
+
+- name: Test that unarchive did nothing
+  assert:
+    that:
+      - "unarchive09.changed == false"
+
+- name: remove quotable chars test
+  file: path="{{ output_dir }}/test-quotes~root" state=absent

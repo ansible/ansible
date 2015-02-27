@@ -11,8 +11,11 @@ import passlib.hash
 import string
 import StringIO
 import copy
+import tempfile
+import shutil
 
 from nose.plugins.skip import SkipTest
+from mock import patch
 
 import ansible.utils
 import ansible.errors
@@ -28,9 +31,18 @@ sys.setdefaultencoding("utf8")
 
 class TestUtils(unittest.TestCase):
 
+    def _is_fips(self):
+        try:
+            data = open('/proc/sys/crypto/fips_enabled').read().strip()
+        except:
+            return False
+        if data != '1':
+            return False
+        return True
+
     def test_before_comment(self):
         ''' see if we can detect the part of a string before a comment.  Used by INI parser in inventory '''
- 
+
         input    = "before # comment"
         expected = "before "
         actual   = ansible.utils.before_comment(input)
@@ -172,15 +184,9 @@ class TestUtils(unittest.TestCase):
 
     def test_jsonify(self):
         self.assertEqual(ansible.utils.jsonify(None), '{}')
-        self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux'])),
-               '{"baz": ["qux"], "foo": "bar"}')
-        expected = '''{
-    "baz": [
-        "qux"
-    ], 
-    "foo": "bar"
-}'''
-        self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux']), format=True), expected)
+        self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux'])), '{"baz": ["qux"], "foo": "bar"}')
+        expected = u'{"baz":["qux"],"foo":"bar"}'
+        self.assertEqual("".join(ansible.utils.jsonify(dict(foo='bar', baz=['qux']), format=True).split()), expected)
 
     def test_is_failed(self):
         self.assertEqual(ansible.utils.is_failed(dict(rc=0)), False)
@@ -357,13 +363,27 @@ class TestUtils(unittest.TestCase):
                dict(foo=dict(bar='qux')))
 
     def test_md5s(self):
+        if self._is_fips():
+            raise SkipTest('MD5 unavailable on FIPs enabled systems')
         self.assertEqual(ansible.utils.md5s('ansible'), '640c8a5376aa12fa15cf02130ce239a6')
         # Need a test that causes UnicodeEncodeError See 4221
 
     def test_md5(self):
+        if self._is_fips():
+            raise SkipTest('MD5 unavailable on FIPs enabled systems')
         self.assertEqual(ansible.utils.md5(os.path.join(os.path.dirname(__file__), 'ansible.cfg')),
                          'fb7b5b90ea63f04bde33e804b6fad42c')
         self.assertEqual(ansible.utils.md5(os.path.join(os.path.dirname(__file__), 'ansible.cf')),
+                         None)
+
+    def test_checksum_s(self):
+        self.assertEqual(ansible.utils.checksum_s('ansible'), 'bef45157a43c9e5f469d188810814a4a8ab9f2ed')
+        # Need a test that causes UnicodeEncodeError See 4221
+
+    def test_checksum(self):
+        self.assertEqual(ansible.utils.checksum(os.path.join(os.path.dirname(__file__), 'ansible.cfg')),
+                         '658b67c8ac7595adde7048425ff1f9aba270721a')
+        self.assertEqual(ansible.utils.checksum(os.path.join(os.path.dirname(__file__), 'ansible.cf')),
                          None)
 
     def test_default(self):
@@ -433,16 +453,18 @@ class TestUtils(unittest.TestCase):
         hash = ansible.utils.do_encrypt('ansible', 'sha256_crypt')
         self.assertTrue(passlib.hash.sha256_crypt.verify('ansible', hash))
 
-        hash = ansible.utils.do_encrypt('ansible', 'md5_crypt', salt_size=4)
-        self.assertTrue(passlib.hash.md5_crypt.verify('ansible', hash))
-
-
         try:
             ansible.utils.do_encrypt('ansible', 'ansible')
         except ansible.errors.AnsibleError:
             pass
         else:
             raise AssertionError('Incorrect exception, expected AnsibleError')
+
+    def test_do_encrypt_md5(self):
+        if self._is_fips():
+            raise SkipTest('MD5 unavailable on FIPS systems')
+        hash = ansible.utils.do_encrypt('ansible', 'md5_crypt', salt_size=4)
+        self.assertTrue(passlib.hash.md5_crypt.verify('ansible', hash))
 
     def test_last_non_blank_line(self):
         self.assertEqual(ansible.utils.last_non_blank_line('a\n\nb\n\nc'), 'c')
@@ -487,15 +509,15 @@ class TestUtils(unittest.TestCase):
         self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
 
     def test_to_unicode(self):
-        uni = ansible.utils.to_unicode(u'ansible')
+        uni = ansible.utils.unicode.to_unicode(u'ansible')
         self.assertTrue(isinstance(uni, unicode))
         self.assertEqual(uni, u'ansible')
 
-        none = ansible.utils.to_unicode(None)
+        none = ansible.utils.unicode.to_unicode(None, nonstring='passthru')
         self.assertTrue(isinstance(none, type(None)))
         self.assertTrue(none is None)
 
-        utf8 = ansible.utils.to_unicode('ansible')
+        utf8 = ansible.utils.unicode.to_unicode('ansible')
         self.assertTrue(isinstance(utf8, unicode))
         self.assertEqual(utf8, u'ansible')
 
@@ -541,19 +563,9 @@ class TestUtils(unittest.TestCase):
 
     def test_listify_lookup_plugin_terms(self):
         basedir = os.path.dirname(__file__)
-
         # Straight lookups
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict()),
-                         ['things'])
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['one', 'two'])),
-                         ['one', 'two'])
-
-        # Variable interpolation
-        self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['{{ foo }}', '{{ bar }}'], foo="hello", bar="world")),
-                         ['hello', 'world'])
-        with self.assertRaises(ansible.errors.AnsibleError) as ex:
-            ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['{{ foo }}', '{{ bar_typo }}'], foo="hello", bar="world"))
-        self.assertTrue("undefined variable in items: 'bar_typo'" in ex.exception.msg)
+        #self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=[])), [])
+        #self.assertEqual(ansible.utils.listify_lookup_plugin_terms('things', basedir, dict(things=['one', 'two'])), ['one', 'two'])
 
     def test_deprecated(self):
         sys_stderr = sys.stderr
@@ -702,7 +714,7 @@ class TestUtils(unittest.TestCase):
         # jinja2 loop blocks with lots of complexity
         _test_combo(
             # in memory of neighbors cat
-            # we preserve line breaks unless a line continuation character preceeds them
+            # we preserve line breaks unless a line continuation character precedes them
             'a {% if x %} y {%else %} {{meow}} {% endif %} "cookie\nchip" \\\ndone\nand done',
             ['a', '{% if x %}', 'y', '{%else %}', '{{meow}}', '{% endif %}', '"cookie\nchip"', 'done\n', 'and', 'done']
         )
@@ -905,3 +917,29 @@ class TestUtils(unittest.TestCase):
         for (role, result) in tests:
             self.assertEqual(ansible.utils.role_yaml_parse(role), result)
 
+    @patch('ansible.utils.plugins.module_finder._get_paths')
+    def test_find_plugin(self, mock_get_paths):
+
+        tmp_path = tempfile.mkdtemp()
+        mock_get_paths.return_value = [tmp_path,]
+        right_module_1 = 'module.py'
+        right_module_2 = 'module_without_extension'
+        wrong_module_1 = 'folder'
+        wrong_module_2 = 'inexistent'
+        path_right_module_1 = os.path.join(tmp_path, right_module_1)
+        path_right_module_2 = os.path.join(tmp_path, right_module_2)
+        path_wrong_module_1 = os.path.join(tmp_path, wrong_module_1)
+        open(path_right_module_1, 'w').close()
+        open(path_right_module_2, 'w').close()
+        os.mkdir(path_wrong_module_1)
+
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(right_module_1),
+                         path_right_module_1)
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(right_module_2),
+                         path_right_module_2)
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(wrong_module_1),
+                         None)
+        self.assertEqual(ansible.utils.plugins.module_finder.find_plugin(wrong_module_2),
+                         None)
+
+        shutil.rmtree(tmp_path)

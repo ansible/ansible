@@ -87,10 +87,19 @@ except ImportError:
 
 HAVE_HASHLIB=False
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1 as _sha1
     HAVE_HASHLIB=True
 except ImportError:
-    from md5 import md5 as _md5
+    from sha import sha as _sha1
+
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    try:
+        from md5 import md5 as _md5
+    except ImportError:
+        # MD5 unavailable.  Possibly FIPS mode
+        _md5 = None
 
 try:
     from hashlib import sha256 as _sha256
@@ -162,6 +171,7 @@ FILE_COMMON_ARGUMENTS=dict(
     directory_mode = dict(), # used by copy
 )
 
+PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -241,6 +251,83 @@ def json_dict_unicode_to_bytes(d):
         return tuple(map(json_dict_unicode_to_bytes, d))
     else:
         return d
+
+def json_dict_bytes_to_unicode(d):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, str):
+        return unicode(d, 'utf-8')
+    elif isinstance(d, dict):
+        return dict(map(json_dict_bytes_to_unicode, d.iteritems()))
+    elif isinstance(d, list):
+        return list(map(json_dict_bytes_to_unicode, d))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_bytes_to_unicode, d))
+    else:
+        return d
+
+def heuristic_log_sanitize(data):
+    ''' Remove strings that look like passwords from log messages '''
+    # Currently filters:
+    # user:pass@foo/whatever and http://username:pass@wherever/foo
+    # This code has false positives and consumes parts of logs that are
+    # not passwds
+
+    # begin: start of a passwd containing string
+    # end: end of a passwd containing string
+    # sep: char between user and passwd
+    # prev_begin: where in the overall string to start a search for
+    #   a passwd
+    # sep_search_end: where in the string to end a search for the sep
+    output = []
+    begin = len(data)
+    prev_begin = begin
+    sep = 1
+    while sep:
+        # Find the potential end of a passwd
+        try:
+            end = data.rindex('@', 0, begin)
+        except ValueError:
+            # No passwd in the rest of the data
+            output.insert(0, data[0:begin])
+            break
+
+        # Search for the beginning of a passwd
+        sep = None
+        sep_search_end = end
+        while not sep:
+            # URL-style username+password
+            try:
+                begin = data.rindex('://', 0, sep_search_end)
+            except ValueError:
+                # No url style in the data, check for ssh style in the
+                # rest of the string
+                begin = 0
+            # Search for separator
+            try:
+                sep = data.index(':', begin + 3, end)
+            except ValueError:
+                # No separator; choices:
+                if begin == 0:
+                    # Searched the whole string so there's no password
+                    # here.  Return the remaining data
+                    output.insert(0, data[0:begin])
+                    break
+                # Search for a different beginning of the password field.
+                sep_search_end = begin
+                continue
+        if sep:
+            # Password was found; remove it.
+            output.insert(0, data[end:prev_begin])
+            output.insert(0, '********')
+            output.insert(0, data[begin:sep + 1])
+            prev_begin = begin
+
+    return ''.join(output)
 
 
 class AnsibleModule(object):
@@ -569,14 +656,25 @@ class AnsibleModule(object):
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
-                if 'lchmod' in dir(os):
+                if hasattr(os, 'lchmod'):
                     os.lchmod(path, mode)
                 else:
-                    os.chmod(path, mode)
+                    if not os.path.islink(path):
+                        os.chmod(path, mode)
+                    else:
+                        # Attempt to set the perms of the symlink but be
+                        # careful not to change the perms of the underlying
+                        # file while trying
+                        underlying_stat = os.stat(path)
+                        os.chmod(path, mode)
+                        new_underlying_stat = os.stat(path)
+                        if underlying_stat.st_mode != new_underlying_stat.st_mode:
+                            os.chmod(path, stat.S_IMODE(underlying_stat.st_mode))
+                        q_stat = os.stat(path)
             except OSError, e:
                 if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
-                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                elif e.errno in (errno.ENOENT, errno.ELOOP): # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -992,65 +1090,6 @@ class AnsibleModule(object):
         params2.update(params)
         return (params2, args)
 
-    def _heuristic_log_sanitize(self, data):
-        ''' Remove strings that look like passwords from log messages '''
-        # Currently filters:
-        # user:pass@foo/whatever and http://username:pass@wherever/foo
-        # This code has false positives and consumes parts of logs that are
-        # not passwds
-
-        # begin: start of a passwd containing string
-        # end: end of a passwd containing string
-        # sep: char between user and passwd
-        # prev_begin: where in the overall string to start a search for
-        #   a passwd
-        # sep_search_end: where in the string to end a search for the sep
-        output = []
-        begin = len(data)
-        prev_begin = begin
-        sep = 1
-        while sep:
-            # Find the potential end of a passwd
-            try:
-                end = data.rindex('@', 0, begin)
-            except ValueError:
-                # No passwd in the rest of the data
-                output.insert(0, data[0:begin])
-                break
-
-            # Search for the beginning of a passwd
-            sep = None
-            sep_search_end = end
-            while not sep:
-                # URL-style username+password
-                try:
-                    begin = data.rindex('://', 0, sep_search_end)
-                except ValueError:
-                    # No url style in the data, check for ssh style in the
-                    # rest of the string
-                    begin = 0
-                # Search for separator
-                try:
-                    sep = data.index(':', begin + 3, end)
-                except ValueError:
-                    # No separator; choices:
-                    if begin == 0:
-                        # Searched the whole string so there's no password
-                        # here.  Return the remaining data
-                        output.insert(0, data[0:begin])
-                        break
-                    # Search for a different beginning of the password field.
-                    sep_search_end = begin
-                    continue
-            if sep:
-                # Password was found; remove it.
-                output.insert(0, data[end:prev_begin])
-                output.insert(0, '********')
-                output.insert(0, data[begin:sep + 1])
-                prev_begin = begin
-
-        return ''.join(output)
-
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
@@ -1073,7 +1112,7 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, unicode):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = self._heuristic_log_sanitize(param_val)
+                log_args[param] = heuristic_log_sanitize(param_val)
 
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = []
@@ -1095,12 +1134,11 @@ class AnsibleModule(object):
             msg = msg.encode('utf-8')
 
         if (has_journal):
-            journal_args = ["MESSAGE=%s %s" % (module, msg)]
-            journal_args.append("MODULE=%s" % os.path.basename(__file__))
+            journal_args = [("MODULE", os.path.basename(__file__))]
             for arg in log_args:
-                journal_args.append(arg.upper() + "=" + str(log_args[arg]))
+                journal_args.append((arg.upper(), str(log_args[arg])))
             try:
-                journal.sendv(*journal_args)
+                journal.send("%s %s" % (module, msg), **dict(journal_args))
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
@@ -1233,8 +1271,23 @@ class AnsibleModule(object):
         return digest.hexdigest()
 
     def md5(self, filename):
-        ''' Return MD5 hex digest of local file using digest_from_file(). '''
+        ''' Return MD5 hex digest of local file using digest_from_file().
+
+        Do not use this function unless you have no other choice for:
+            1) Optional backwards compatibility
+            2) Compatibility with a third party protocol
+
+        This function will not work on systems complying with FIPS-140-2.
+
+        Most uses of this function can use the module.sha1 function instead.
+        '''
+        if not _md5:
+            raise ValueError('MD5 not available.  Possibly running in FIPS mode')
         return self.digest_from_file(filename, _md5())
+
+    def sha1(self, filename):
+        ''' Return SHA1 hex digest of local file using digest_from_file(). '''
+        return self.digest_from_file(filename, _sha1())
 
     def sha256(self, filename):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
@@ -1244,8 +1297,8 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
+        # backups named basename-YYYY-MM-DD@HH:MM:SS~
+        ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
         backupdest = '%s.%s' % (fn, ext)
 
         try:
@@ -1338,7 +1391,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(dest, 0666 ^ umask)
+            os.chmod(dest, 0666 & ~umask)
             if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
@@ -1346,7 +1399,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1354,12 +1407,17 @@ class AnsibleModule(object):
         If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
         If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
-        - check_rc (boolean)  Whether to call fail_json in case of
-                              non zero RC.  Default is False.
-        - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is True.
-        - executable (string) See documentation for subprocess.Popen().
-                              Default is None.
+        - check_rc (boolean)    Whether to call fail_json in case of
+                                non zero RC.  Default is False.
+        - close_fds (boolean)   See documentation for subprocess.Popen().
+                                Default is True.
+        - executable (string)   See documentation for subprocess.Popen().
+                                Default is None.
+        - prompt_regex (string) A regex string (not a compiled regex) which
+                                can be used to detect prompts in the stdout
+                                which would otherwise cause the execution
+                                to hang (especially if no input data is
+                                specified)
         '''
 
         shell = False
@@ -1374,6 +1432,13 @@ class AnsibleModule(object):
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        prompt_re = None
+        if prompt_regex:
+            try:
+                prompt_re = re.compile(prompt_regex, re.MULTILINE)
+            except re.error:
+                self.fail_json(msg="invalid prompt regular expression given to run_command")
 
         # expand things like $HOME and ~
         if not shell:
@@ -1391,27 +1456,27 @@ class AnsibleModule(object):
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
-        if isinstance(args, list):
-            clean_args = " ".join(pipes.quote(arg) for arg in args)
+        if isinstance(args, basestring):
+            to_clean_args = shlex.split(args.encode('utf-8'))
         else:
-            clean_args = args
+            to_clean_args = args
 
-        # all clean strings should return two match groups, 
-        # where the first is the CLI argument and the second 
-        # is the password/key/phrase that will be hidden
-        clean_re_strings = [
-            # this removes things like --password, --pass, --pass-wd, etc.
-            # optionally followed by an '=' or a space. The password can 
-            # be quoted or not too, though it does not care about quotes
-            # that are not balanced
-            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
-            r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
-            r'^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$', 
-            # TODO: add more regex checks here
-        ]
-        for re_str in clean_re_strings:
-            r = re.compile(re_str)
-            clean_args = r.sub(r'\1********', clean_args)
+        clean_args = []
+        is_passwd = False
+        for arg in to_clean_args:
+            if is_passwd:
+                is_passwd = False
+                clean_args.append('********')
+                continue
+            if PASSWD_ARG_RE.match(arg):
+                sep_idx = arg.find('=')
+                if sep_idx > -1:
+                    clean_args.append('%s=********' % arg[:sep_idx])
+                    continue
+                else:
+                    is_passwd = True
+            clean_args.append(heuristic_log_sanitize(arg))
+        clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
 
         if data:
             st_in = subprocess.PIPE
@@ -1468,6 +1533,10 @@ class AnsibleModule(object):
                     stderr += dat
                     if dat == '':
                         rpipes.remove(cmd.stderr)
+                # if we're checking for prompts, do it now
+                if prompt_re:
+                    if prompt_re.search(stdout) and not data:
+                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated
@@ -1492,7 +1561,7 @@ class AnsibleModule(object):
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
 
         if rc != 0 and check_rc:
-            msg = stderr.rstrip()
+            msg = heuristic_log_sanitize(stderr.rstrip())
             self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd

@@ -19,3 +19,23 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import constants as C
+
+# FIXME: this object should be created upfront and passed through
+#        the entire chain of calls to here, as there are other things
+#        which may want to output display/logs too
+from ansible.utils.display import Display
+
+__all__ = ['ConnectionBase']
+
+
+class ConnectionBase:
+    '''
+    A base class for connections to contain common code.
+    '''
+
+    def __init__(self, connection_info, *args, **kwargs):
+        self._connection_info = connection_info
+        self._has_pipelining = False
+        self._display = Display(connection_info)
+

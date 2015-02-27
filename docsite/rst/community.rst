@@ -68,7 +68,7 @@ to see if the issue has already been reported.
 
 MODULE related bugs however should go to `ansible-modules-core <github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
 
-When filing a bug, please use the `issue template <https://raw2.github.com/ansible/ansible/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
+When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
 
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
@@ -115,7 +115,7 @@ github about any errors you spot or sections you would like to see added. For mo
 on creating pull requests, please refer to the
 `github help guide <https://help.github.com/articles/using-pull-requests>`_.
 
-For Current and Propspective Developers
+For Current and Prospective Developers
 =======================================
 
 I'd Like To Learn How To Develop on Ansible
@@ -146,7 +146,7 @@ to modify a pull request later.
 
 When submitting patches, be sure to run the unit tests first “make tests” and always use 
 “git rebase” vs “git merge” (aliasing git pull to git pull --rebase is a great idea) to 
-avoid merge commits in your submissions.  There are also integration tests that can be run in the "tests/integration" directory.  
+avoid merge commits in your submissions.  There are also integration tests that can be run in the "test/integration" directory.  
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that contain merge commits.  Use "git pull --rebase" vs "git pull" and "git rebase" vs "git merge". Also be sure to use topic branches to keep your additions on different branches, such that they won't pick up stray commits later.
 

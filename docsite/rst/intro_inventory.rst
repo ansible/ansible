@@ -19,7 +19,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI format and looks like this::
+The format for /etc/ansible/hosts is an INI-like format and looks like this::
 
     mail.example.com
 
@@ -184,7 +184,7 @@ variables. Note that this only works on Ansible 1.4 or later.
 
 Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
-directory will be loaded second.
+directory will override variables set in the inventory directory.
 
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
@@ -205,6 +205,8 @@ mentioned::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+    ansible_sudo
+      The boolean to decide if sudo should be used for this host. Defaults to false.
     ansible_sudo_pass
       The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
     ansible_sudo_exe (new in version 1.8)

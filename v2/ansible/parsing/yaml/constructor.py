@@ -23,6 +23,10 @@ from yaml.constructor import Constructor
 from ansible.parsing.yaml.objects import AnsibleMapping
 
 class AnsibleConstructor(Constructor):
+    def __init__(self, file_name=None):
+        self._ansible_file_name = file_name
+        super(AnsibleConstructor, self).__init__()
+
     def construct_yaml_map(self, node):
         data = AnsibleMapping()
         yield data
@@ -36,7 +40,16 @@ class AnsibleConstructor(Constructor):
         ret = AnsibleMapping(super(Constructor, self).construct_mapping(node, deep))
         ret._line_number   = node.__line__
         ret._column_number = node.__column__
-        ret._data_source   = node.__datasource__
+
+        # in some cases, we may have pre-read the data and then
+        # passed it to the load() call for YAML, in which case we
+        # want to override the default datasource (which would be
+        # '<string>') to the actual filename we read in
+        if self._ansible_file_name:
+            ret._data_source = self._ansible_file_name
+        else:
+            ret._data_source = node.__datasource__
+
         return ret
 
 AnsibleConstructor.add_constructor(

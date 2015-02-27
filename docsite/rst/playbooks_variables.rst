@@ -113,255 +113,8 @@ Jinja2 Filters
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to those, Ansible supplies many more.
-
-.. _filters_for_formatting_data:
-
-Filters For Formatting Data
----------------------------
-
-The following filters will take a data structure in a template and render it in a slightly different format.  These
-are occasionally useful for debugging::
-
-    {{ some_variable | to_nice_json }}
-    {{ some_variable | to_nice_yaml }}
-
-.. _filters_used_with_conditionals:
-
-Filters Often Used With Conditionals
-------------------------------------
-
-The following tasks are illustrative of how filters can be used with conditionals::
-
-    tasks:
-
-      - shell: /usr/bin/foo
-        register: result
-        ignore_errors: True
-
-      - debug: msg="it failed"
-        when: result|failed
-
-      # in most cases you'll want a handler, but if you want to do something right now, this is nice
-      - debug: msg="it changed"
-        when: result|changed
-
-      - debug: msg="it succeeded"
-        when: result|success
-
-      - debug: msg="it was skipped"
-        when: result|skipped
-
-.. _forcing_variables_to_be_defined:
-
-Forcing Variables To Be Defined
--------------------------------
-
-The default behavior from ansible and ansible.cfg is to fail if variables are undefined, but you can turn this off.
-
-This allows an explicit check with this feature off::
-
-    {{ variable | mandatory }}
-
-The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
-
-
-.. _defaulting_undefined_variables:
-
-Defaulting Undefined Variables
-------------------------------
-
-Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
-
-    {{ some_variable | default(5) }}
-
-In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
-being raised.
-
-
-.. _omitting_undefined_variables:
-
-Omitting Undefined Variables and Parameters
--------------------------------------------
-
-As of Ansible 1.8, it is possible to use the default filter to omit variables and module parameters using the special
-`omit` variable::
-
-    - name: touch files with an optional mode
-      file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
-      with_items:
-        - path: /tmp/foo
-        - path: /tmp/bar
-        - path: /tmp/baz
-          mode: "0444"
-
-For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
-parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
-
-
-.. _list_filters:
-
-List Filters
-------------
-
-These filters all operate on list variables.
-
-.. versionadded:: 1.8
-
-To get the minimum value from list of numbers::
-
-    {{ list1 | min }}
-
-To get the maximum value from a list of numbers::
-
-    {{ [3, 4, 2] | max }}
-
-.. _set_theory_filters:
-
-Set Theory Filters
-------------------
-All these functions return a unique set from sets or lists.
-
-.. versionadded:: 1.4
-
-To get a unique set from a list::
-
-    {{ list1 | unique }}
-
-To get a union of two lists::
-
-    {{ list1 | union(list2) }}
-
-To get the intersection of 2 lists (unique list of all items in both)::
-
-    {{ list1 | intersect(list2) }}
-
-To get the difference of 2 lists (items in 1 that don't exist in 2)::
-
-    {{ list1 | difference(list2) }}
-
-To get the symmetric difference of 2 lists (items exclusive to each list)::
-
-    {{ list1 | symmetric_difference(list2) }}
-
-.. _version_comparison_filters:
-
-Version Comparison Filters
---------------------------
-
-.. versionadded:: 1.6
-
-To compare a version number, such as checking if the ``ansible_distribution_version``
-version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
-
-The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
-
-    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
-
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
-
-The ``version_compare`` filter accepts the following operators::
-
-    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
-
-This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
-be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
-
-    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
-
-.. _random_filter:
-
-Random Number Filter
---------------------
-
-.. versionadded:: 1.6
-
-This filter can be used similar to the default jinja2 random filter (returning a random item from a sequence of
-items), but can also generate a random number based on a range.
-
-To get a random item from a list::
-
-    {{ ['a','b','c']|random }} => 'c'
-
-To get a random number from 0 to supplied end::
-
-    {{ 59 |random}} * * * * root /script/from/cron
-
-Get a random number from 0 to 100 but in steps of 10::
-
-    {{ 100 |random(step=10) }}  => 70
-
-Get a random number from 1 to 100 but in steps of 10::
-
-    {{ 100 |random(1, 10) }}    => 31
-    {{ 100 |random(start=1, step=10) }}    => 51
-
-
-.. _other_useful_filters:
-
-Other Useful Filters
---------------------
-
-To concatenate a list into a string::
-   
-   {{ list | join(" ") }}
-
-To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
-
-    {{ path | basename }} 
-
-To get the directory from a path::
-
-    {{ path | dirname }}
-
-To expand a path containing a tilde (`~`) character (new in version 1.5)::
-
-    {{ path | expanduser }}
-    
-To get the real path of a link (new in version 1.8)::
-
-   {{ path | readlink }}
-
-To work with Base64 encoded strings::
-
-    {{ encoded | b64decode }}
-    {{ decoded | b64encode }}
-
-To take an md5sum of a filename::
-
-    {{ filename | md5 }}
-
-To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
-doesn't know it is a boolean value::
-
-   - debug: msg=test
-     when: some_string_value | bool
-
-To match strings against a regex, use the "match" or "search" filter::
-
-    vars:
-      url: "http://example.com/users/foo/resources/bar"
-
-    tasks:
-        - shell: "msg='matched pattern 1'"
-          when: url | match("http://example.com/users/.*/resources/.*")
-
-        - debug: "msg='matched pattern 2'"
-          when: url | search("/users/.*/resources/.*")
-
-'match' will require a complete match in the string, while 'search' will require a match inside of the string.
-
-To replace text in a string with regex, use the "regex_replace" filter::
-
-    # convert "ansible" to "able"    
-    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
-
-    # convert "foobar" to "bar"
-    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
-
-A few useful filters are typically added with each new Ansible release.  The development documentation shows
-how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
-to be added to core so everyone can make use of them.
+In addition to those, Ansible supplies many more. See the :doc:`playbooks_filters` document
+for a list of available filters and example usage guide.
 
 .. _yaml_gotchas:
 
@@ -671,7 +424,7 @@ For instance, what if you want users to be able to control some aspect about how
 .. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
 If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
-ending in ".fact", can be YAML, JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
 
 For instance assume a /etc/ansible/facts.d/preferences.fact::
 
@@ -689,7 +442,7 @@ And you will see the following fact added::
     "ansible_local": {
             "preferences": {
                 "general": {
-                    "asdf" : "1", 
+                    "asdf" : "1",
                     "bar"  : "2"
                 }
             }
@@ -707,7 +460,7 @@ can allow that fact to be used during that particular play.  Otherwise, it will 
 Here is an example of what that might look like::
 
   - hosts: webservers
-    tasks: 
+    tasks:
       - name: create directory for ansible custom facts
         file: state=directory recurse=yes path=/etc/ansible/facts.d
       - name: install custom impi fact
@@ -744,10 +497,14 @@ the fact that they have not been communicated with in the current execution of /
 To configure fact caching, enable it in ansible.cfg as follows::
 
     [defaults]
+    gathering = smart
     fact_caching = redis
-    fact_caching_timeout = 86400 # seconds
+    fact_caching_timeout = 86400
+    # seconds
 
-At the time of writing, Redis is the only supported fact caching engine.  
+You might also want to change the 'gathering' setting to 'smart' or 'explicit' or set gather_facts to False in most plays.
+
+At the time of writing, Redis is the only supported fact caching engine.
 To get redis up and running, perform the equivalent OS commands::
 
     yum install redis
@@ -842,6 +599,7 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
    {% endfor %}
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
 
 Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
@@ -849,6 +607,8 @@ reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the 
 period, without the rest of the domain.
 
 *play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+
+*delegate_to* is the inventory hostname of the host that the current task has been delegated to using 'delegate_to'.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
@@ -893,7 +653,7 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. note::
    It's also possible to keep per-host and per-group variables in very
-   similar files, this is covered in :doc:`intro_patterns`.
+   similar files, this is covered in :ref:`splitting_out_vars`.
 
 .. _passing_variables_on_the_command_line:
 
@@ -952,9 +712,10 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they win in a certain order, which is::
 
-    * -e variables always win
-    * then comes "most everything else"
-    * then comes variables defined in inventory
+    * extra vars (-e in the command line) always win
+    * then comes connection variables defined in inventory (ansible_ssh_user, etc)
+    * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+    * then comes the rest of the variables defined in inventory
     * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
 
@@ -1071,6 +832,8 @@ how all of these things can work together.
        An introduction to playbooks
    :doc:`playbooks_conditionals`
        Conditional statements in playbooks
+   :doc:`playbooks_filters`
+       Jinja2 filters and their uses
    :doc:`playbooks_loops`
        Looping in playbooks
    :doc:`playbooks_roles`

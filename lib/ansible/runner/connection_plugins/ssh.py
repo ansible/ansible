@@ -65,7 +65,7 @@ class Connection(object):
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+                                 "-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         cp_in_use = False
         cp_path_set = False
@@ -76,7 +76,7 @@ class Connection(object):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
-            self.common_args += ["-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+            self.common_args += ["-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         if not C.HOST_KEY_CHECKING:
             self.common_args += ["-o", "StrictHostKeyChecking=no"]
@@ -230,9 +230,12 @@ class Connection(object):
                 host_fh.close()
                 
             for line in data.split("\n"):
+                line = line.strip()
                 if line is None or " " not in line:
                     continue
                 tokens = line.split()
+                if not tokens:
+                    continue
                 if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
                     # this is a hashed known host entry
                     try:
@@ -266,7 +269,7 @@ class Connection(object):
         if utils.VERBOSITY > 3:
             ssh_cmd += ["-vvv"]
         else:
-            ssh_cmd += ["-q"]
+            ssh_cmd += ["-v"]
         ssh_cmd += self.common_args
 
         if self.ipv6:
@@ -334,7 +337,7 @@ class Connection(object):
                         "sudo", "Sorry, try again.")
                     if sudo_errput.strip().endswith("%s%s" % (prompt, incorrect_password)):
                         raise errors.AnsibleError('Incorrect sudo password')
-                    elif sudo_errput.endswith(prompt):
+                    elif prompt and sudo_errput.endswith(prompt):
                         stdin.write(self.runner.sudo_pass + '\n')
 
                 if p.stdout in rfd:
@@ -375,6 +378,27 @@ class Connection(object):
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
         if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        if p.returncode == 255:
+            ip = None
+            port = None
+            for line in stderr.splitlines():
+                match = re.search(
+                    'Connecting to .*\[(\d+\.\d+\.\d+\.\d+)\] port (\d+)',
+                    line)
+                if match:
+                    ip = match.group(1)
+                    port = match.group(2)
+            if 'UNPROTECTED PRIVATE KEY FILE' in stderr:
+                lines = [line for line in stderr.splitlines()
+                         if 'ignore key:' in line]
+            else:
+                lines = stderr.splitlines()[-1:]
+            if ip and port:
+                lines.append('    while connecting to %s:%s' % (ip, port))
+            lines.append(
+                'It is sometimes useful to re-run the command using -vvvv, '
+                'which prints SSH debug output to help diagnose the issue.')
+            raise errors.AnsibleError('SSH Error: %s' % '\n'.join(lines))
 
         return (p.returncode, '', no_prompt_out + stdout, no_prompt_err + stderr)
 

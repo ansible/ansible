@@ -49,12 +49,32 @@ class ActionModule(object):
         source  = options.get('src', None)
         dest    = options.get('dest', None)
         copy    = utils.boolean(options.get('copy', 'yes'))
+        creates = options.get('creates', None)
 
         if source is None or dest is None:
             result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
-        dest = os.path.expanduser(dest) # CCTODO: Fix path for Windows hosts.
+        if creates:
+            # do not run the command if the line contains creates=filename
+            # and the filename already exists. This allows idempotence
+            # of command executions.
+            module_args_tmp = ""
+            complex_args_tmp = dict(path=creates, get_md5=False, get_checksum=False)
+            module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
+                                                        complex_args=complex_args_tmp, persist_files=True)
+            stat = module_return.result.get('stat', None)
+            if stat and stat.get('exists', False):
+                return ReturnData(
+                    conn=conn,
+                    comm_ok=True,
+                    result=dict(
+                        changed=False,
+                        msg=("skipped, since %s exists" % creates)
+                    )
+                )
+
+        dest = self.runner._remote_expand_user(conn, dest, tmp) # CCTODO: Fix path for Windows hosts.
         source = template.template(self.runner.basedir, os.path.expanduser(source), inject)
         if copy:
             if '_original_file' in inject:
@@ -62,8 +82,11 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
-        if remote_md5 != '3':
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+        if remote_checksum == '4':
+            result = dict(failed=True, msg="python isn't present on the system.  Unable to compute checksum")
+            return ReturnData(conn=conn, result=result)
+        if remote_checksum != '3':
             result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 

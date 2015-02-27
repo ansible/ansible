@@ -6,6 +6,7 @@ import os.path
 import unittest, tempfile, shutil
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
+import ansible.runner.filter_plugins.mathstuff
 
 INVENTORY = inventory.Inventory(['localhost'])
 
@@ -131,6 +132,11 @@ class TestFilters(unittest.TestCase):
                                                       'a\\1')
         assert a == 'ansible'
 
+    def test_to_uuid(self):
+        a = ansible.runner.filter_plugins.core.to_uuid('example.com')
+
+        assert a == 'ae780c3a-a3ab-53c2-bfb4-098da300b3fe'
+
     #def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.
@@ -177,9 +183,9 @@ class TestFilters(unittest.TestCase):
         self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))
 
     def test_min(self):
-        a = ansible.runner.filter_plugins.core.min([3, 2, 5, 4])
+        a = ansible.runner.filter_plugins.mathstuff.min([3, 2, 5, 4])
         assert a == 2
 
     def test_max(self):
-        a = ansible.runner.filter_plugins.core.max([3, 2, 5, 4])
+        a = ansible.runner.filter_plugins.mathstuff.max([3, 2, 5, 4])
         assert a == 5

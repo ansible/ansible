@@ -53,7 +53,7 @@ SU_PROMPT_LOCALIZATIONS = [
     '密碼',
 ]
 
-SU_PROMPT_LOCALIZATIONS_RE = re.compile("|".join([x + ' ?: ?' for x in SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
+SU_PROMPT_LOCALIZATIONS_RE = re.compile("|".join(['(\w+\'s )?' + x + ' ?: ?' for x in SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
 
 def check_su_prompt(data):
     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))

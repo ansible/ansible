@@ -1,7 +1,42 @@
 Ansible Changes By Release
 ==========================
 
-## 1.8 "You Really Got Me" - Active Development
+## 1.9 "Dancing In the Street" - ACTIVE DEVELOPMENT
+
+in progress, details pending
+
+* Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+* Safety changes: several modules have force parameters that defaulted to true.
+  These have been changed to default to false so as not to accidentally lose
+  work.  Playbooks that depended on the former behaviour simply to add
+  force=True to the task that needs it.  Affected modules:
+
+  * bzr: When local modifications exist in a checkout, the bzr module used to
+    default to temoving the modifications on any operation.  Now the module
+    will not remove the modifications unless force=yes is specified.
+    Operations that depend on a clean working tree may fail unless force=yes is
+    added.
+  * git: When local modifications exist in a checkout, the git module will now
+    fail unless force is explictly specified.  Specifying force will allow the
+    module to revert and overwrite local modifications to make git actions
+    succeed.
+  * hg: When local modifications exist in a checkout, the hg module used to
+    default to removing the modifications on any operation.  Now the module
+    will not remove the modifications unless force=yes is specified.
+  * subversion: When updating a checkout with local modifications, you now need
+    to add force so the module will revert the modifications before updating.
+
+* Optimize the plugin loader to cache available plugins much more efficiently.
+  For some use cases this can lead to dramatic improvements in startup time.
+
+## 1.8.1 "You Really Got Me" - Nov 26, 2014
+
+* Various bug fixes in postgresql and mysql modules.
+* Fixed a bug related to lookup plugins used within roles not finding files based on the relative paths to the roles files/ directory.
+* Fixed a bug related to vars specified in plays being templated too early, resulting in incorrect variable interpolation.
+* Fixed a bug related to git submodules in bare repos.
+
+## 1.8 "You Really Got Me" - Nov 25, 2014
 
 Major changes:
 
@@ -17,6 +52,9 @@ Major changes:
 * new omit value can be used to leave off a parameter when not set, like so module_name: a=1 b={{ c | default(omit) }}, would not pass value for b (not even an empty value) if c was not set.
 * developers: 'baby JSON' in module responses, originally intended for writing modules in bash, is removed as a feature to simplify logic, script module remains available for running bash scripts.
 * async jobs started in "fire & forget" mode can now be checked on at a later time.
+* added ability to subcategorize modules for docs.ansible.com
+* added ability for shipped modules to have aliases with symlinks
+* added ability to deprecate older modules by starting with "_" and including "deprecated: message why" in module docs
 
 New Modules:
 
@@ -33,6 +71,7 @@ New Modules:
 Some other notable changes:
 
 * added the ability to set "instance filters" in the ec2.ini to limit results from the inventory plugin.
+* upgrades for various variable precedence items and parsing related items
 * added a new "follow" parameter to the file and copy modules, which allows actions to be taken on the target of a symlink rather than the symlink itself.
 * if a module should ever traceback, it will return a standard error, catchable by ignore_errors, versus an 'unreachable'
 * ec2_lc: added support for multiple new parameters like kernel_id, ramdisk_id and ebs_optimized.
@@ -58,6 +97,18 @@ Some other notable changes:
 * ec2_ami_search: support for SSD and IOPS provisioned EBS images
 * can set ansible_sudo_exe as an inventory variable which allows specifying
   a different sudo (or equivalent) command
+* git module: Submodule handling has changed.  Previously if you used the
+  ``recursive`` parameter to handle submodules, ansible would track the
+  submodule upstream's head revision.  This has been changed to checkout the
+  version of the submodule specified in the superproject's git repository.
+  This is inline with what git submodule update does.  If you want the old
+  behaviour use the new module parameter track_submodules=yes
+* Checksumming of transferred files has been made more portable and now uses
+  the sha1 algorithm instead of md5 to be compatible with FIPS-140.
+  - As a small side effect, the fetch module no longer returns a useful value
+    in remote_md5.  If you need a replacement, switch to using remote_checksum
+    which returns the sha1sum of the remote file.
+* ansible-doc CLI tool contains various improvements for working with different terminals
 
 And various other bug fixes and improvements ...
 

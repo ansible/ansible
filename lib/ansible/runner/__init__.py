@@ -53,9 +53,9 @@ from ansible.utils import update_hash
 module_replacer = ModuleReplacer(strip_comments=False)
 
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1
 except ImportError:
-    from md5 import md5 as _md5
+    from sha import sha as sha1
 
 HAS_ATFORK=True
 try:
@@ -134,7 +134,11 @@ class Runner(object):
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
-        default_vars=None,                  # ditto
+        play_vars=None,                     #
+        play_file_vars=None,                #
+        role_vars=None,                     #
+        role_params=None,                   #
+        default_vars=None,                  #
         extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
@@ -176,6 +180,10 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.play_vars        = utils.default(play_vars, lambda: {})
+        self.play_file_vars   = utils.default(play_file_vars, lambda: {})
+        self.role_vars        = utils.default(role_vars, lambda: {})
+        self.role_params      = utils.default(role_params, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
         self.extra_vars       = utils.default(extra_vars, lambda: {})
 
@@ -209,7 +217,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
-        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+        self.omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
@@ -220,7 +228,10 @@ class Runner(object):
             # would prevent us from using ssh, and fallback to paramiko.
             # 'smart' is the default since 1.2.1/1.3
             self.transport = "ssh"
-            if sys.platform.startswith('darwin'):
+            if sys.platform.startswith('darwin') and self.remote_pass:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
                 self.transport = "paramiko"
             else:
                 # see if SSH can support ControlPersist if not use paramiko
@@ -253,6 +264,26 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
+    # *****************************************************
+
+    def _complex_args_hack(self, complex_args, module_args):
+        """
+        ansible-playbook both allows specifying key=value string arguments and complex arguments
+        however not all modules use our python common module system and cannot
+        access these.  An example might be a Bash module.  This hack allows users to still pass "args"
+        as a hash of simple scalars to those arguments and is short term.  We could technically
+        just feed JSON to the module, but that makes it hard on Bash consumers.  The way this is implemented
+        it does mean values in 'args' have LOWER priority than those on the key=value line, allowing
+        args to provide yet another way to have pluggable defaults.
+        """
+        if complex_args is None:
+            return module_args
+        if not isinstance(complex_args, dict):
+            raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
+        for (k,v) in complex_args.iteritems():
+            if isinstance(v, basestring):
+                module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
+        return module_args
 
     # *****************************************************
 
@@ -363,20 +394,20 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         thisuser = None
 
-        if host in inject['hostvars']:
-            if inject['hostvars'][host].get('ansible_ssh_user'):
-                # user for delegate host in inventory
-                thisuser = inject['hostvars'][host].get('ansible_ssh_user')
-        else:
-            # look up the variables for the host directly from inventory
-            try:
-                host_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
-                if 'ansible_ssh_user' in host_vars:
-                    thisuser = host_vars['ansible_ssh_user']
-            except Exception, e:
-                # the hostname was not found in the inventory, so
-                # we just ignore this and try the next method
-                pass
+        try:
+            if host in inject['hostvars']:
+                if inject['hostvars'][host].get('ansible_ssh_user'):
+                    # user for delegate host in inventory
+                    thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+                else:
+                    # look up the variables for the host directly from inventory
+                    host_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+                    if 'ansible_ssh_user' in host_vars:
+                        thisuser = host_vars['ansible_ssh_user']
+        except errors.AnsibleError, e:
+            # the hostname was not found in the inventory, so
+            # we just ignore this and try the next method
+            pass
 
         if thisuser is None and self.remote_user:
             # user defined by play/runner
@@ -606,10 +637,18 @@ class Runner(object):
         inject = utils.combine_vars(inject, host_variables)
         # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
-        # followed by vars (vars, vars_files, vars/main.yml)
-        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # next come variables from vars and vars files
+        inject = utils.combine_vars(inject, self.play_vars)
+        inject = utils.combine_vars(inject, self.play_file_vars)
+        # next come variables from role vars/main.yml files
+        inject = utils.combine_vars(inject, self.role_vars)
         # then come the module variables
         inject = utils.combine_vars(inject, module_vars)
+        # followed by vars_cache things (set_fact, include_vars, and
+        # vars_files which had host-specific templating done)
+        inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # role parameters next
+        inject = utils.combine_vars(inject, self.role_params)
         # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
         # and then special vars
@@ -628,8 +667,23 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
+        # We build the proper injected dictionary for all future
+        # templating operations in this run
         inject = self.get_inject_vars(host)
-        hostvars = HostVars(inject['combined_cache'], self.inventory, vault_password=self.vault_pass)
+
+        # Then we selectively merge some variable dictionaries down to a
+        # single dictionary, used to template the HostVars for this host
+        temp_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        temp_vars = utils.merge_hash(temp_vars, inject['combined_cache'])
+        temp_vars = utils.merge_hash(temp_vars, self.play_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.play_file_vars)
+        temp_vars = utils.merge_hash(temp_vars, self.extra_vars)
+        temp_vars = utils.merge_hash(temp_vars, {'groups': inject['groups']})
+
+        hostvars = HostVars(temp_vars, self.inventory, vault_password=self.vault_pass)
+
+        # and we save the HostVars in the injected dictionary so they
+        # may be referenced from playbooks/templates
         inject['hostvars'] = hostvars
 
         host_connection = inject.get('ansible_connection', self.transport)
@@ -680,22 +734,29 @@ class Runner(object):
                         result = utils.jsonify(dict(changed=False, skipped=True))
                         self.callbacks.on_skipped(host, None)
                         return ReturnData(host=host, result=result)
+            except errors.AnsibleError, e:
+                raise
+            except Exception, e:
+                raise errors.AnsibleError("Unexpected error while executing task: %s" % str(e))
 
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
             items = utils._clean_data_struct(items, from_remote=True)
-            if type(items) != list:
-                raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
+            if items is None:
+                items = []
+            else:
+                if type(items) != list:
+                    raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
-                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
-                use_these_items = []
-                for x in items:
-                    inject['item'] = x
-                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        use_these_items.append(x)
-                inject['item'] = ",".join(use_these_items)
-                items = None
+                if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
+                    # hack for apt, yum, and pkgng so that with_items maps back into a single module call
+                    use_these_items = []
+                    for x in items:
+                        inject['item'] = x
+                        if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                            use_these_items.append(x)
+                    inject['item'] = ",".join(use_these_items)
+                    items = None
 
         def _safe_template_complex_args(args, inject):
             # Ensure the complex args here are a dictionary, but
@@ -757,6 +818,10 @@ class Runner(object):
                      port,
                      complex_args=complex_args
                 )
+
+                if 'stdout' in result.result and 'stdout_lines' not in result.result:
+                    result.result['stdout_lines'] = result.result['stdout'].splitlines()
+
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -870,6 +935,8 @@ class Runner(object):
             actual_private_key_file = delegate['private_key_file']
             self.sudo_pass = delegate['sudo_pass']
             inject = delegate['inject']
+            # set resolved delegate_to into inject so modules can call _remote_checksum
+            inject['delegate_to'] = self.delegate_to
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
@@ -926,7 +993,7 @@ class Runner(object):
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
-            # that no variables inadvertantly (or maliciously) add params
+            # that no variables inadvertently (or maliciously) add params
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
@@ -970,7 +1037,7 @@ class Runner(object):
 
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                retries = self.module_vars.get('retries')
+                retries = template.template(self.basedir, self.module_vars.get('retries'), inject, expand_lists=False)
                 delay   = self.module_vars.get('delay')
                 for x in range(1, int(retries) + 1):
                     # template the delay, cast to float and sleep
@@ -1136,26 +1203,77 @@ class Runner(object):
 
     # *****************************************************
 
-    def _remote_md5(self, conn, tmp, path):
-        ''' takes a remote md5sum without requiring python, and returns 1 if no file '''
-        cmd = conn.shell.md5(path)
+    def _remote_expand_user(self, conn, path, tmp):
+        ''' takes a remote path and performs tilde expansion on the remote host '''
+        if not path.startswith('~'):
+            return path
+
+        split_path = path.split(os.path.sep, 1)
+        expand_path = split_path[0]
+        if expand_path == '~':
+            if self.sudo and self.sudo_user:
+                expand_path = '~%s' % self.sudo_user
+            elif self.su and self.su_user:
+                expand_path = '~%s' % self.su_user
+
+        cmd = conn.shell.expand_user(expand_path)
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, su=False)
+        initial_fragment = utils.last_non_blank_line(data['stdout'])
+
+        if not initial_fragment:
+            # Something went wrong trying to expand the path remotely.  Return
+            # the original string
+            return path
+
+        if len(split_path) > 1:
+            return conn.shell.join_path(initial_fragment, *split_path[1:])
+        else:
+            return initial_fragment
+
+    # *****************************************************
+
+    def _remote_checksum(self, conn, tmp, path, inject):
+        ''' takes a remote checksum and returns 1 if no file '''
+
+        # Lookup the python interp from the host or delegate
+
+        # host == inven_host when there is no delegate
+        host = inject['inventory_hostname']
+        if 'delegate_to' in inject:
+            delegate = inject['delegate_to']
+            if delegate:
+                # host == None when the delegate is not in inventory
+                host = None
+                # delegate set, check whether the delegate has inventory vars
+                delegate = template.template(self.basedir, delegate, inject)
+                if delegate in inject['hostvars']:
+                    # host == delegate if we need to lookup the
+                    # python_interpreter from the delegate's inventory vars
+                    host = delegate
+
+        if host:
+            python_interp = inject['hostvars'][host].get('ansible_python_interpreter', 'python')
+        else:
+            python_interp = 'python'
+
+        cmd = conn.shell.checksum(path, python_interp)
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
             if data2 == '':
                 # this may happen if the connection to the remote server
-                # failed, so just return "INVALIDMD5SUM" to avoid errors
-                return "INVALIDMD5SUM"
+                # failed, so just return "INVALIDCHECKSUM" to avoid errors
+                return "INVALIDCHECKSUM"
             else:
                 return data2.split()[0]
         except IndexError:
-            sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
-            sys.stderr.write("command: %s\n" % md5s)
+            sys.stderr.write("warning: Calculating checksum failed unusually, please report this to the list so it can be fixed\n")
+            sys.stderr.write("command: %s\n" % cmd)
             sys.stderr.write("----\n")
             sys.stderr.write("output: %s\n" % data)
             sys.stderr.write("----\n")
             # this will signal that it changed and allow things to keep going
-            return "INVALIDMD5SUM"
+            return "INVALIDCHECKSUM"
 
     # *****************************************************
 
@@ -1229,7 +1347,7 @@ class Runner(object):
 
         # Search module path(s) for named module.
         module_suffixes = getattr(conn, 'default_suffixes', None)
-        module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes, transport=self.transport)
+        module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes)
         if module_path is None:
             module_path2 = utils.plugins.module_finder.find_plugin('ping', module_suffixes)
             if module_path2 is not None:
@@ -1350,9 +1468,15 @@ class Runner(object):
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
             # We aren't iterating over all the hosts in this
-            # group. So, just pick the first host in our group to
+            # group. So, just choose the "delegate_to" host if that is defined and is
+            # one of the targeted hosts, otherwise pick the first host in our group to
             # construct the conn object with.
-            result_data = self._executor(hosts[0], None).result
+            if self.delegate_to is not None and self.delegate_to in hosts:
+                host = self.delegate_to
+            else:
+                host = hosts[0]
+
+            result_data = self._executor(host, None).result
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.

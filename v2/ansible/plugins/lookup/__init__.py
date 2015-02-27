@@ -19,3 +19,31 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+__all__ = ['LookupBase']
+
+class LookupBase:
+    def __init__(self, loader=None, **kwargs):
+        self._loader = loader
+
+    def _flatten(self, terms):
+        ret = []
+        for term in terms:
+            if isinstance(term, (list, tuple)):
+                ret.extend(term)
+            else:
+                ret.append(term)
+        return ret
+
+    def _combine(self, a, b):
+        results = []
+        for x in a:
+            for y in b:
+                results.append(self._flatten([x,y]))
+        return results
+
+    def _flatten_hash_to_list(self, terms):
+        ret = []
+        for key in terms:
+            ret.append({'key': key, 'value': terms[key]})
+        return ret
+

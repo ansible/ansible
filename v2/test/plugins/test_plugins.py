@@ -15,10 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import unittest
 
-from mock import mock_open, patch, MagicMock
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import os
+from ansible.compat.tests import unittest
+from ansible.compat.tests import BUILTINS
+
+from ansible.compat.tests.mock import mock_open, patch, MagicMock
 
 from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, _basedirs, push_basedir, PluginLoader
 
@@ -29,10 +35,6 @@ class TestErrors(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_push_basedir(self):
-        push_basedir('/root/foo/bar')
-        self.assertEqual(_basedirs, ['/root/foo/bar'])
 
     @patch.object(PluginLoader, '_get_paths')
     def test_print_paths(self, mock_method):
@@ -54,7 +56,7 @@ class TestErrors(unittest.TestCase):
         m = MagicMock()
         m.return_value.__file__ = '/path/to/my/test.py'
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('__builtin__.__import__', m):
+        with patch('{0}.__import__'.format(BUILTINS), m):
             self.assertEqual(pl._get_package_paths(), ['/path/to/my/bar/bam'])
 
     def test_plugins__get_paths(self):

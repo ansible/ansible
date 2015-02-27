@@ -1,0 +1,17 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - block:
+      - command: /bin/false
+      - debug: msg="you shouldn't see me"
+    rescue:
+      - debug: msg="this is the rescue"
+      - command: /bin/false
+      - debug: msg="you shouldn't see this either"
+    always:
+      - debug: msg="this is the always block, it will always be seen"
+    when: foo|default('') != "some value"
+    tags:
+      - foo
+      - bar

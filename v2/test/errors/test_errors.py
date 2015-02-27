@@ -19,17 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from .. compat import unittest
+from ansible.compat.tests import unittest
 
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.errors import AnsibleError
 
-from .. compat import BUILTINS, mock_open, patch
+from ansible.compat.tests import BUILTINS
+from ansible.compat.tests.mock import mock_open, patch
 
 class TestErrors(unittest.TestCase):
 
     def setUp(self):
-        self.message = 'this is the error message'
+        self.message = 'This is the error message'
 
         self.obj = AnsibleBaseYAMLObject()
 
@@ -38,36 +39,36 @@ class TestErrors(unittest.TestCase):
 
     def test_basic_error(self):
         e = AnsibleError(self.message)
-        self.assertEqual(e.message, self.message)
-        self.assertEqual(e.__repr__(), self.message)
+        self.assertEqual(e.message, 'ERROR! ' + self.message)
+        self.assertEqual(e.__repr__(), 'ERROR! ' + self.message)
 
-    @patch.object(AnsibleError, '_get_line_from_file')
+    @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_object(self, mock_method):
         self.obj._data_source   = 'foo.yml'
         self.obj._line_number   = 1
         self.obj._column_number = 1
 
-        mock_method.return_value = 'this is line 1\n'
+        mock_method.return_value = ('this is line 1\n', '')
         e = AnsibleError(self.message, self.obj)
 
-        self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 1 of the file foo.yml:\nthis is line 1\n^')
+        self.assertEqual(e.message, "ERROR! This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
 
-    def test_error_get_line_from_file(self):
+    def test_get_error_lines_from_file(self):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n']
 
-        with patch('__builtin__.open', m):
+        with patch('{0}.open'.format(BUILTINS), m):
             # this line will be found in the file
             self.obj._data_source   = 'foo.yml'
             self.obj._line_number   = 1
             self.obj._column_number = 1
             e = AnsibleError(self.message, self.obj)
-            self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 1 of the file foo.yml:\nthis is line 1\n^')
+            self.assertEqual(e.message, "ERROR! This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
 
             # this line will not be found, as it is out of the index range
             self.obj._data_source   = 'foo.yml'
             self.obj._line_number   = 2
             self.obj._column_number = 1
             e = AnsibleError(self.message, self.obj)
-            self.assertEqual(e.message, 'this is the error message\nThe error occurred on line 2 of the file foo.yml:\n\n(specified line no longer in file, maybe it changed?)')
+            self.assertEqual(e.message, "ERROR! This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
         

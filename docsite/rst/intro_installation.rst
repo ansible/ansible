@@ -111,13 +111,17 @@ To install from source.
     $ cd ./ansible
     $ source ./hacking/env-setup
 
+If you want to suppress spurious warnings/errors, use:
+
+    $ source ./hacking/env-setup -q
+
 If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
 
 Ansible also uses the following Python modules that need to be installed::
 
-    $ sudo pip install paramiko PyYAML jinja2 httplib2
+    $ sudo pip install paramiko PyYAML Jinja2 httplib2
 
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
 which point at Ansible's own modules (not the same kind of modules, alas).
@@ -169,10 +173,10 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 
 .. code-block:: bash
 
-    $ git clone git://github.com/ansible/ansible.git
+    $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
+    $ sudo rpm -Uvh ./rpmbuild/ansible-*.noarch.rpm
 
 .. _from_apt:
 
@@ -202,6 +206,24 @@ You may also wish to run from source to get the latest, which is covered above.
 
 .. _from_pkg:
 
+Latest Releases Via Portage (Gentoo)
+++++++++++++++++++++++++++++++++++++
+
+.. code-block:: bash
+
+    $ emerge -av app-admin/ansible
+
+To install the newest version, you may need to unmask the ansible package prior to emerging:
+
+.. code-block:: bash
+
+    $ echo 'app-admin/ansible' >> /etc/portage/package.accept_keywords
+
+.. note::
+
+   If you have Python 3 as a default Python slot on your Gentoo nodes (default setting), then you
+   must set ``ansible_python_interpreter = /usr/bin/python2`` in your group or inventory variables.
+
 Latest Releases Via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
@@ -226,6 +248,18 @@ To install on a Mac, make sure you have Homebrew, then run:
 
     $ brew update
     $ brew install ansible
+
+.. _from_pkgutil:
+
+Latest Releases Via OpenCSW (Solaris)
++++++++++++++++++++++++++++++++++++++
+
+Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_.
+
+.. code-block:: bash
+
+    # pkgadd -d http://get.opencsw.org/now
+    # /opt/csw/bin/pkgutil -i ansible
 
 .. _from_pip:
 

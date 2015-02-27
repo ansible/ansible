@@ -30,6 +30,25 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
+    def get_checksum(self, conn, tmp, dest, inject, try_directory=False, source=None):
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+
+        if remote_checksum in ('0', '2', '3', '4'):
+            # Note: 1 means the file is not present which is fine; template
+            # will create it.  3 means directory was specified instead of file
+            if try_directory and remote_checksum == '3' and source:
+                base = os.path.basename(source)
+                dest = os.path.join(dest, base)
+                remote_checksum = self.get_checksum(conn, tmp, dest, inject, try_directory=False)
+                if remote_checksum not in ('0', '2', '3', '4'):
+                    return remote_checksum
+
+            result = dict(failed=True, msg="failed to checksum remote file."
+                        " Checksum error code: %s" % remote_checksum)
+            return ReturnData(conn=conn, comm_ok=True, result=result)
+
+        return remote_checksum
+
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for template operations '''
 
@@ -75,11 +94,6 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-
-        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
         # template the source data locally & get ready to transfer
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass)
@@ -87,10 +101,19 @@ class ActionModule(object):
             result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        local_md5 = utils.md5s(resultant)
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+        # Expand any user home dir specification
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
 
-        if local_md5 != remote_md5:
+        directory_prepended = False
+        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
+            directory_prepended = True
+            base = os.path.basename(source)
+            dest = os.path.join(dest, base)
+
+        local_checksum = utils.checksum_s(resultant)
+        remote_checksum = self.get_checksum(conn, tmp, dest, inject, not directory_prepended, source=source)
+
+        if local_checksum != remote_checksum:
 
             # template is different from the remote value
 
@@ -133,15 +156,19 @@ class ActionModule(object):
             # when running the file module based on the template data, we do
             # not want the source filename (the name of the template) to be used,
             # since this would mess up links, so we clear the src param and tell
-            # the module to follow links
+            # the module to follow links.  When doing that, we have to set
+            # original_basename to the template just in case the dest is
+            # a directory.
+            module_args = ''
             new_module_args = dict(
                 src=None,
+                original_basename=os.path.basename(source),
                 follow=True,
             )
             # be sure to inject the check mode param into the module args and
             # rely on the file module to report its changed status
             if self.runner.noop_on_check(inject):
                 new_module_args['CHECKMODE'] = True
-            module_args = utils.merge_module_args(module_args, new_module_args)
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+            options.update(new_module_args)
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=options)
 

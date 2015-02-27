@@ -77,7 +77,7 @@ Create a file ``secrets.py`` looking like following, and put it in some folder w
 .. code-block:: python
 
     GCE_PARAMS = ('i...@project.googleusercontent.com', '/path/to/project.pem')
-    GCE_KEYWORD_PARAMS = {'project': 'project-name'}
+    GCE_KEYWORD_PARAMS = {'project': 'project_id'}
 
 Now the modules can be used as above, but the account information can be omitted.
 
@@ -133,7 +133,7 @@ For the following use case, let's use this small shell script as a wrapper.
 
 .. code-block:: bash
 
-  #!/bin/bash
+  #!/usr/bin/env bash
   PLAYBOOK="$1"
 
   if [[ -z $PLAYBOOK ]]; then

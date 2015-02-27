@@ -62,13 +62,24 @@ if ([Environment]::OSVersion.Version.Major -gt 6)
 
 $osminor = [environment]::OSVersion.Version.Minor
 
+$architecture = $ENV:PROCESSOR_ARCHITECTURE
+
+if ($architecture -eq "AMD64")
+{
+    $architecture = "x64"
+}  
+else
+{
+    $architecture = "x86" 
+} 
+
 if ($osminor -eq 1)
 {
-    $DownloadUrl = "http://download.microsoft.com/download/E/7/6/E76850B8-DA6E-4FF5-8CCE-A24FC513FD16/Windows6.1-KB2506143-x64.msu"
+    $DownloadUrl = "http://download.microsoft.com/download/E/7/6/E76850B8-DA6E-4FF5-8CCE-A24FC513FD16/Windows6.1-KB2506143-" + $architecture + ".msu"
 }
 elseif ($osminor -eq 0)
 {
-    $DownloadUrl = "http://download.microsoft.com/download/E/7/6/E76850B8-DA6E-4FF5-8CCE-A24FC513FD16/Windows6.0-KB2506146-x64.msu"
+    $DownloadUrl = "http://download.microsoft.com/download/E/7/6/E76850B8-DA6E-4FF5-8CCE-A24FC513FD16/Windows6.0-KB2506146-" + $architecture + ".msu"
 }
 else
 {

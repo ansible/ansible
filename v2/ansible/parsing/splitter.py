@@ -40,7 +40,20 @@ def parse_kv(args, check_raw=False):
         raw_params = []
         for x in vargs:
             if "=" in x:
-                k, v = x.split("=", 1)
+                pos = 0
+                try:
+                    while True:
+                        pos = x.index('=', pos + 1)
+                        if pos > 0 and x[pos - 1] != '\\':
+                            break
+                except ValueError:
+                    # ran out of string, but we must have some escaped equals,
+                    # so replace those and append this to the list of raw params
+                    raw_params.append(x.replace('\\=', '='))
+                    continue
+
+                k = x[:pos]
+                v = x[pos + 1:]
 
                 # only internal variables can start with an underscore, so
                 # we don't allow users to set them directy in arguments
