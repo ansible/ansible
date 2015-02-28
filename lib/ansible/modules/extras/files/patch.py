@@ -132,7 +132,7 @@ def main():
         module.fail_json(msg="src %s doesn't exist or not readable" % (p.src))
 
     if p.dest and not os.access(p.dest, W_OK):
-        module.fail_json(msg="dest %s doesn't exist or not writable" % (d.dest))
+        module.fail_json(msg="dest %s doesn't exist or not writable" % (p.dest))
 
     if p.basedir and not path.exists(p.basedir):
         module.fail_json(msg="basedir %s doesn't exist" % (p.basedir))
