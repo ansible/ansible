@@ -359,6 +359,19 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         print "  in directory %s" % tempdir
         return False
 
+    if scm == 'git':
+        if role_version:
+             checkout_cmd = ['git', 'checkout', role_version]
+             with open('/dev/null', 'w') as devnull:
+                 print "- executing: %s" % " ".join(checkout_cmd)
+                 popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, role_name),
+                                          stderr=devnull, stdout=devnull)
+                 rc = popen.wait()
+             if rc != 0:
+                 print "- command %s failed" % ' '.join(checkout_cmd)
+                 print "  in directory %s" % tempdir
+                 return False
+
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
     if scm == 'hg':
         archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
