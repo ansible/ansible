@@ -92,8 +92,6 @@ except ImportError:
           " see https://pypi.python.org/pypi/pyhcl'"
     sys.exit(1)
 
-import epdb
-
 
 def execute(module):
 
@@ -216,7 +214,6 @@ class Rules:
         return len(self.rules) > 0
 
     def to_json(self):
-        # import epdb; epdb.serve()
         rules = {}
         for key, rule in self.rules.iteritems():
             rules[key] = {'policy': rule.policy}
