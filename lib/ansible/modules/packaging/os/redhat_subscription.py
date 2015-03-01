@@ -54,6 +54,11 @@ options:
             - supply an activation key for use with registration
         required: False
         default: null
+    org_id:
+        description:
+            - Organisation ID to use in conjunction with activationkey
+        required: False
+        default: null
     pool:
         description:
             - Specify a subscription pool name to consume.  Regular expressions accepted.
@@ -197,7 +202,7 @@ class Rhsm(RegistrationBase):
         else:
             return False
 
-    def register(self, username, password, autosubscribe, activationkey):
+    def register(self, username, password, autosubscribe, activationkey, org_id):
         '''
             Register the current system to the provided RHN server
             Raises:
@@ -208,6 +213,8 @@ class Rhsm(RegistrationBase):
         # Generate command arguments
         if activationkey:
             args.extend(['--activationkey', activationkey])
+            if org_id:
+                args.extend(['--org', org_id])
         else:
             if autosubscribe:
                 args.append('--autosubscribe')
@@ -339,6 +346,7 @@ def main():
                     rhsm_baseurl = dict(default=rhn.config.get_option('rhsm.baseurl'), required=False),
                     autosubscribe = dict(default=False, type='bool'),
                     activationkey = dict(default=None, required=False),
+                    org_id = dict(default=None, required=False),
                     pool = dict(default='^$', required=False, type='str'),
                 )
             )
@@ -352,6 +360,7 @@ def main():
     rhsm_baseurl = module.params['rhsm_baseurl']
     autosubscribe = module.params['autosubscribe'] == True
     activationkey = module.params['activationkey']
+    org_id = module.params['org_id']
     pool = module.params['pool']
 
     # Ensure system is registered
@@ -370,7 +379,7 @@ def main():
             try:
                 rhn.enable()
                 rhn.configure(**module.params)
-                rhn.register(username, password, autosubscribe, activationkey)
+                rhn.register(username, password, autosubscribe, activationkey, org_id)
                 rhn.subscribe(pool)
             except Exception, e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
