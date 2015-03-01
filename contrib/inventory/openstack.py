@@ -2,7 +2,7 @@
 
 # Copyright (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
 # Copyright (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
-# Copyright (c) 2014, Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2015, Hewlett-Packard Development Company, L.P.
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,89 +46,105 @@ except:
 
 import os_client_config
 import shade
+import shade.inventory
+
+CONFIG_FILES = ['/etc/ansible/openstack.yaml']
 
 
-class OpenStackInventory(object):
+def get_groups_from_server(server_vars):
+    groups = []
 
-    def __init__(self, private=False, refresh=False):
-        config_files = os_client_config.config.CONFIG_FILES
-        config_files.append('/etc/ansible/openstack.yml')
-        self.openstack_config = os_client_config.config.OpenStackConfig(
-            config_files)
-        self.clouds = shade.openstack_clouds(self.openstack_config)
-        self.private = private
-        self.refresh = refresh
+    region = server_vars['region']
+    cloud = server_vars['cloud']
+    metadata = server_vars.get('metadata', {})
 
-        self.cache_max_age = self.openstack_config.get_cache_max_age()
-        cache_path = self.openstack_config.get_cache_path()
+    # Create a group for the cloud
+    groups.append(cloud)
 
-        # Cache related
-        if not os.path.exists(cache_path):
-            os.makedirs(cache_path)
-        self.cache_file = os.path.join(cache_path, "ansible-inventory.cache")
+    # Create a group on region
+    groups.append(region)
 
-    def is_cache_stale(self):
-        ''' Determines if cache file has expired, or if it is still valid '''
-        if os.path.isfile(self.cache_file):
-            mod_time = os.path.getmtime(self.cache_file)
-            current_time = time.time()
-            if (mod_time + self.cache_max_age) > current_time:
-                return False
-        return True
+    # And one by cloud_region
+    groups.append("%s_%s" % (cloud, region))
 
-    def get_host_groups(self):
-        if self.refresh or self.is_cache_stale():
-            groups = self.get_host_groups_from_cloud()
-            self.write_cache(groups)
-        else:
-            return json.load(open(self.cache_file, 'r'))
-        return groups
+    # Check if group metadata key in servers' metadata
+    if 'group' in metadata:
+        groups.append(metadata['group'])
 
-    def write_cache(self, groups):
-        with open(self.cache_file, 'w') as cache_file:
-            cache_file.write(self.json_format_dict(groups))
+    for extra_group in metadata.get('groups', '').split(','):
+        if extra_group:
+            groups.append(extra_group)
 
-    def get_host_groups_from_cloud(self):
-        groups = collections.defaultdict(list)
-        hostvars = collections.defaultdict(dict)
+    groups.append('instance-%s' % server_vars['id'])
+    groups.append(server_vars['name'])
 
-        for cloud in self.clouds:
-            cloud.private = cloud.private or self.private
+    for key in ('flavor', 'image'):
+        if 'name' in server_vars[key]:
+            groups.append('%s-%s' % (key, server_vars[key]['name']))
 
-            # Cycle on servers
-            for server in cloud.list_servers():
+    for key, value in iter(metadata.items()):
+        groups.append('meta-%s_%s' % (key, value))
 
-                meta = cloud.get_server_meta(server)
+    az = server_vars.get('az', None)
+    if az:
+        # Make groups for az, region_az and cloud_region_az
+        groups.append(az)
+        groups.append('%s_%s' % (region, az))
+        groups.append('%s_%s_%s' % (cloud, region, az))
+    return groups
 
-                if 'interface_ip' not in meta['server_vars']:
-                    # skip this host if it doesn't have a network address
-                    continue
 
-                server_vars = meta['server_vars']
-                hostvars[server.name][
-                    'ansible_ssh_host'] = server_vars['interface_ip']
-                hostvars[server.name]['openstack'] = server_vars
+def get_host_groups(inventory):
+    (cache_file, cache_expiration_time) = get_cache_settings()
+    if is_cache_stale(cache_file, cache_expiration_time):
+        groups = to_json(get_host_groups_from_cloud(inventory))
+        open(cache_file, 'w').write(groups)
+    else:
+        groups = open(cache_file, 'r').read()
+    return groups
 
-                for group in meta['groups']:
-                    groups[group].append(server.name)
 
-        if hostvars:
-            groups['_meta'] = {'hostvars': hostvars}
-        return groups
+def get_host_groups_from_cloud(inventory):
+    groups = collections.defaultdict(list)
+    hostvars = {}
+    for server in inventory.list_hosts():
 
-    def json_format_dict(self, data):
-        return json.dumps(data, sort_keys=True, indent=2)
+        if 'interface_ip' not in server:
+            continue
+        for group in get_groups_from_server(server):
+            groups[group].append(server['id'])
+        hostvars[server['id']] = dict(
+            ansible_ssh_host=server['interface_ip'],
+            openstack=server,
+        )
+    groups['_meta'] = {'hostvars': hostvars}
+    return groups
 
-    def list_instances(self):
-        groups = self.get_host_groups()
-        # Return server list
-        print(self.json_format_dict(groups))
 
-    def get_host(self, hostname):
-        groups = self.get_host_groups()
-        hostvars = groups['_meta']['hostvars']
-        if hostname in hostvars:
-            print(self.json_format_dict(hostvars[hostname]))
+def is_cache_stale(cache_file, cache_expiration_time):
+    ''' Determines if cache file has expired, or if it is still valid '''
+    if os.path.isfile(cache_file):
+        mod_time = os.path.getmtime(cache_file)
+        current_time = time.time()
+        if (mod_time + cache_expiration_time) > current_time:
+            return False
+    return True
+
+
+def get_cache_settings():
+    config = os_client_config.config.OpenStackConfig(
+        config_files=os_client_config.config.CONFIG_FILES + CONFIG_FILES)
+    # For inventory-wide caching
+    cache_expiration_time = config.get_cache_expiration_time()
+    cache_path = config.get_cache_path()
+    if not os.path.exists(cache_path):
+        os.makedirs(cache_path)
+    cache_file = os.path.join(cache_path, 'ansible-inventory.cache')
+    return (cache_file, cache_expiration_time)
+
+
+def to_json(in_dict):
+    return json.dumps(in_dict, sort_keys=True, indent=2)
 
 
 def parse_args():
@@ -138,21 +154,32 @@ def parse_args():
                         help='Use private address for ansible host')
     parser.add_argument('--refresh', action='store_true',
                         help='Refresh cached information')
+    parser.add_argument('--debug', action='store_true', default=False,
+                        help='Enable debug output')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--list', action='store_true',
                        help='List active servers')
     group.add_argument('--host', help='List details about the specific host')
+
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     try:
-        inventory = OpenStackInventory(args.private, args.refresh)
+        config_files = os_client_config.config.CONFIG_FILES + CONFIG_FILES
+        shade.simple_logging(debug=args.debug)
+        inventory = shade.inventory.OpenStackInventory(
+            refresh=args.refresh,
+            config_files=config_files,
+            private=args.private,
+        )
+
         if args.list:
-            inventory.list_instances()
+            output = get_host_groups(inventory)
         elif args.host:
-            inventory.get_host(args.host)
+            output = to_json(inventory.get_host(args.host))
+        print(output)
     except shade.OpenStackCloudException as e:
         sys.stderr.write('%s\n' % e.message)
         sys.exit(1)
