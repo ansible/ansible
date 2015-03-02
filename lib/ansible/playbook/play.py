@@ -192,7 +192,7 @@ class Play(object):
         role_vars = {}
         if type(orig_path) == dict:
             # what, not a path?
-            role_name = orig_path.get('role', None)
+            role_name = orig_path.get('role', orig_path.get('name', None))
             if role_name is None:
                 raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
             role_vars = orig_path
@@ -222,6 +222,12 @@ class Play(object):
 
         return (role_path, role_vars)
 
+    def _copy_vars(self, vars):
+        new_vars = vars.copy()
+        for item in ('role', 'src', 'scm', 'name', 'version', 'tags', 'when'):
+            new_vars.pop(item, None)
+        return new_vars
+
     def _build_role_dependencies(self, roles, dep_stack, passed_vars={}, level=0):
         # this number is arbitrary, but it seems sane
         if level > 20:
@@ -229,13 +235,8 @@ class Play(object):
         for role in roles:
             role_path,role_vars = self._get_role_path(role)
 
-            # save just the role params for this role, which exclude the special
-            # keywords 'role', 'tags', and 'when'.
-            role_params = role_vars.copy()
-            for item in ('role', 'tags', 'when'):
-                if item in role_params:
-                    del role_params[item]
-
+            # save just the role params for this role, which exclude the special keywords
+            role_params = self._copy_vars(role_vars)
             role_vars = utils.combine_vars(passed_vars, role_vars)
 
             vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
@@ -266,10 +267,7 @@ class Play(object):
                         (dep_path,dep_vars) = self._get_role_path(dep)
 
                         # save the dep params, just as we did above
-                        dep_params = dep_vars.copy()
-                        for item in ('role', 'tags', 'when'):
-                            if item in dep_params:
-                                del dep_params[item]
+                        dep_params = self._copy_vars(dep_vars)
 
                         meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'meta')))
                         if os.path.isfile(meta):
@@ -454,7 +452,7 @@ class Play(object):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, library))
 
             if isinstance(role, dict):
-                role_name = role['role']
+                role_name = role.get('role') or role['name']
             else:
                 role_name = utils.role_spec_parse(role)["name"]
 
@@ -827,7 +825,7 @@ class Play(object):
             """ Render the raw filename into 3 forms """
 
             # filename2 is the templated version of the filename, which will
-            # be fully rendered if any variables contained within it are 
+            # be fully rendered if any variables contained within it are
             # non-inventory related
             filename2 = template(self.basedir, filename, self.vars)
 
