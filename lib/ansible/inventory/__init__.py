@@ -20,7 +20,6 @@ import fnmatch
 import os
 import sys
 import re
-import subprocess
 
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
