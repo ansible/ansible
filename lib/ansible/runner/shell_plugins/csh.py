@@ -19,5 +19,8 @@ from ansible.runner.shell_plugins.sh import ShellModule as ShModule
 
 class ShellModule(ShModule):
 
+    # How to end lines in a python script one-liner
+    _SHELL_EMBEDDED_PY_EOL = '\\\n'
+
     def env_prefix(self, **kwargs):
         return 'env %s' % super(ShellModule, self).env_prefix(**kwargs)
