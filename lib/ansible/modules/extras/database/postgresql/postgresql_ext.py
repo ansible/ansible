@@ -54,7 +54,7 @@ options:
       - Database port to connect to.
     required: false
     default: 5432
-   state:
+  state:
     description:
       - The database extension state
     required: false
