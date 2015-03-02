@@ -359,6 +359,7 @@ class TaskExecutor:
             loader=self._loader,
             module_loader=self._module_loader,
         )
+
         if not handler:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
