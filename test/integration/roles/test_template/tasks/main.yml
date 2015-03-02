@@ -138,3 +138,39 @@
     that:
       - "template_result.changed == False"
 
+# Test strange filenames
+
+- name: Create a temp dir for filename tests
+  file:
+    state: directory
+    dest: '{{ output_dir }}/filename-tests'
+
+- name: create a file with an unusual filename
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == True"
+
+- name: check that the unusual filename was created
+  command: "ls {{ output_dir }}/filename-tests/"
+  register: unusual_results
+
+- assert:
+    that:
+      - "\"foo t'e~m\\plated\" in unusual_results.stdout_lines"
+      - "{{unusual_results.stdout_lines| length}} == 1"
+
+- name: check that the unusual filename can be checked for changes
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == False"
+
