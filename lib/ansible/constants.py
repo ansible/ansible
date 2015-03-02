@@ -163,6 +163,7 @@ DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings',
 DEFAULT_CALLABLE_WHITELIST     = get_config(p, DEFAULTS, 'callable_whitelist', 'ANSIBLE_CALLABLE_WHITELIST', [], islist=True)
 COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'ANSIBLE_COMMAND_WARNINGS', False, boolean=True)
 DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, boolean=True)
+ALLOW_EXECUTABLE_INVENTORY     = get_config(p, DEFAULTS, 'allow_executable_inventory', 'ALLOW_EXECUTABLE_INVENTORY', True, boolean=True)
 
 RETRY_FILES_ENABLED            = get_config(p, DEFAULTS, 'retry_files_enabled', 'ANSIBLE_RETRY_FILES_ENABLED', True, boolean=True)
 RETRY_FILES_SAVE_PATH          = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', '~/')

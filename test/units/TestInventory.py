@@ -4,6 +4,7 @@ from nose.tools import raises
 
 from ansible import errors
 from ansible.inventory import Inventory
+import ansible.constants as C
 
 class TestInventory(unittest.TestCase):
 
@@ -354,6 +355,14 @@ class TestInventory(unittest.TestCase):
         print "Expected: %s"%(expected_hosts)
         print "Got     : %s"%(hosts)
         assert sorted(hosts) == sorted(expected_hosts)
+
+    def test_script_not_allowed(self):
+        C.ALLOW_EXECUTABLE_INVENTORY = False
+
+        with self.assertRaises(errors.AnsibleError):
+            self.test_script()
+
+        C.ALLOW_EXECUTABLE_INVENTORY = True
 
     def test_script_all(self):
         inventory = self.script_inventory()

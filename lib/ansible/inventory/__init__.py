@@ -113,7 +113,7 @@ class Inventory(object):
                 except:
                     pass
 
-                if utils.is_executable(host_list):
+                if utils.is_executable(host_list) and C.ALLOW_EXECUTABLE_INVENTORY:
                     try:
                         self.parser = InventoryScript(filename=host_list)
                         self.groups = self.parser.groups.values()
