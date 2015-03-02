@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook.task import Task
+from ansible.plugins import action_loader
 from ansible.plugins.strategies import StrategyBase
 from ansible.utils.debug import debug
 
@@ -143,7 +144,16 @@ class StrategyModule(StrategyBase):
                     if not task:
                         continue
 
+                    run_once = False
                     work_to_do = True
+
+                    # test to see if the task across all hosts points to an action plugin which
+                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
+                    # will only send this task to the first host in the list.
+
+                    action = action_loader.get(task.action, class_only=True)
+                    if task.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
+                        run_once = True
 
                     debug("getting variables")
                     task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
@@ -182,6 +192,10 @@ class StrategyModule(StrategyBase):
                         self._queue_task(host, task, task_vars, connection_info)
 
                     self._process_pending_results(iterator)
+
+                    # if we're bypassing the host loop, break out now
+                    if run_once:
+                        break
 
                 debug("done queuing things up, now waiting for results queue to drain")
                 self._wait_on_pending_results(iterator)

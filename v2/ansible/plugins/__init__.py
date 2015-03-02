@@ -221,6 +221,9 @@ class PluginLoader:
         path = self.find_plugin(name)
         if path is None:
             return None
+        elif kwargs.get('class_only', False):
+            return getattr(self._module_cache[path], self.class_name)
+
         if path not in self._module_cache:
             self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
         return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
