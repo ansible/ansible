@@ -29,6 +29,23 @@ in progress, details pending
 * Optimize the plugin loader to cache available plugins much more efficiently.
   For some use cases this can lead to dramatic improvements in startup time.
 
+## 1.8.4 "You Really Got Me" - Feb 19, 2015
+
+* Fixed regressions in ec2 and mount modules, introduced in 1.8.3
+
+## 1.8.3 "You Really Got Me" - Feb 17, 2015
+
+* Fixing a security bug related to the default permissions set on a tempoary file created when using "ansible-vault view <filename>".
+* Many bug fixes, for both core code and core modules.
+
+## 1.8.2 "You Really Got Me" - Dec 04, 2014
+
+* Various bug fixes for packaging issues related to modules.
+* Various bug fixes for lookup plugins.
+* Various bug fixes for some modules (continued cleanup of postgresql issues, etc.).
+
+* Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+
 ## 1.8.1 "You Really Got Me" - Nov 26, 2014
 
 * Various bug fixes in postgresql and mysql modules.
