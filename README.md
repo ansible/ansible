@@ -17,6 +17,7 @@ If you want to download a tarball of a release, go to [releases.ansible.com](htt
 Design Principles
 =================
 
+   * Use JSON! 
    * Have a dead simple setup process and a minimal learning curve
    * Manage machines very quickly and in parallel
    * Avoid custom-agents and additional open ports, be agentless by leveraging the existing SSH daemon
