@@ -293,7 +293,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, __file__)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Syntax Error while loading' in e.msg)
+                self.assertTrue('Syntax Error while loading' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -304,7 +304,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, __file__)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Syntax Error while loading' in e.msg)
+                self.assertTrue('Syntax Error while loading' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -315,7 +315,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, __file__)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Check over' in e.msg)
+                self.assertTrue('Check over' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -326,7 +326,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, None)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Could not parse YAML.' in e.msg)
+                self.assertTrue('Could not parse YAML.' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -352,7 +352,7 @@ class TestUtils(unittest.TestCase):
         try:
             ansible.utils.parse_yaml_from_file(broken)
         except ansible.errors.AnsibleYAMLValidationFailed, e:
-            self.assertTrue('Syntax Error while loading' in e.msg)
+            self.assertTrue('Syntax Error while loading' in str(e))
         else:
             raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -594,8 +594,8 @@ class TestUtils(unittest.TestCase):
         try:
             ansible.utils.deprecated('Ack!', '0.0', True)
         except ansible.errors.AnsibleError, e:
-            self.assertTrue('0.0' not in e.msg)
-            self.assertTrue('[DEPRECATED]' in e.msg)
+            self.assertTrue('0.0' not in str(e))
+            self.assertTrue('[DEPRECATED]' in str(e))
         else:
             raise AssertionError("Incorrect exception, expected AnsibleError")
 
