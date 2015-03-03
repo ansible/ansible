@@ -2,11 +2,35 @@ ansible (1.9) unstable; urgency=low
 
   * 1.9 release (PENDING)
 
- -- Michael DeHaan <michael@ansible.com>  Wed, 21 Oct 2015 04:29:00 -0500
+ -- Ansible, Inc. <support@ansible.com>  Wed, 21 Oct 2015 04:29:00 -0500
 
-ansible (1.8) unstable; urgency=low
+ansible (1.8.4) unstable; urgency=low
 
-  * 1.8 release
+  * 1.8.4
+
+ -- Ansible, Inc. <support@ansible.com>  Thu, 19 Feb 2015 12:00:00 -0500
+
+ansible (1.8.3) unstable; urgency=low
+
+  * 1.8.3
+
+ -- Ansible, Inc. <support@ansible.com>  Tue, 17 Feb 2015 16:00:00 -0500
+
+ansible (1.8.2) unstable; urgency=low
+
+  * 1.8.2
+
+ -- Michael DeHaan <michael@ansible.com>  Thu, 04 Dec 2014 17:00:00 -0500
+
+ansible (1.8.1) unstable; urgency=low
+
+  * 1.8.1
+
+ -- Michael DeHaan <michael@ansible.com>  Wed, 26 Nov 2014 23:00:00 -0500
+
+ansible (1.8.0) unstable; urgency=low
+
+  * 1.8.0
 
  -- Michael DeHaan <michael@ansible.com>  Tue, 25 Nov 2014 17:00:00 -0500
 
