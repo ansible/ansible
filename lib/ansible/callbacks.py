@@ -694,7 +694,7 @@ class PlaybookCallbacks(object):
             result = utils.do_encrypt(result, encrypt, salt_size, salt)
 
         # handle utf-8 chars
-        result = to_unicode(result, error='strict')
+        result = to_unicode(result, errors='strict')
         call_callback_module( 'playbook_on_vars_prompt', varname, private=private, prompt=prompt,
                                encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None, default=default
                             )
