@@ -159,7 +159,8 @@ def main():
         output = parse_out(err)
         module.fail_json(msg=output)
     else:
-        output = parse_out(out)
+        # Composer version > 1.0.0-alpha9 now use stderr for standard notification messages
+        output = parse_out(out + err)
         module.exit_json(changed=has_changed(output), msg=output)
 
 # import module snippets
