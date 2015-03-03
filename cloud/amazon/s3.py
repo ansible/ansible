@@ -125,6 +125,8 @@ import os
 import urlparse
 import hashlib
 
+from boto.s3.connection import OrdinaryCallingFormat
+
 try:
     import boto
     from boto.s3.connection import Location
@@ -321,7 +323,6 @@ def main():
     if is_fakes3(s3_url):
         try:
             fakes3 = urlparse.urlparse(s3_url)
-            from boto.s3.connection import OrdinaryCallingFormat
             s3 = boto.connect_s3(
                 aws_access_key,
                 aws_secret_key,
@@ -339,21 +340,20 @@ def main():
             module.fail_json(msg = str(e))
     else:
         try:
-            from boto.s3.connection import OrdinaryCallingFormat
             s3 = boto.s3.connect_to_region(location, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, is_secure=True, calling_format=OrdinaryCallingFormat())
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
- 
+
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
-    
+
         # First, we check to see if the bucket exists, we get "bucket" returned.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is False:
             module.fail_json(msg="Target bucket cannot be found", failed=True)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
-        keyrtn = key_check(module, s3, bucket, obj)    
+        keyrtn = key_check(module, s3, bucket, obj)
         if keyrtn is False:
             module.fail_json(msg="Target key cannot be found", failed=True)
 
