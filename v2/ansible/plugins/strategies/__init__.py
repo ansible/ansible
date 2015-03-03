@@ -118,6 +118,8 @@ class StrategyBase:
         based on the result (executing callbacks, updating state, etc.).
         '''
 
+        ret_results = []
+
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
                 result = self._final_q.get(block=False)
@@ -155,6 +157,8 @@ class StrategyBase:
                             hashed_entry = hash_params(task_result._task._role._role_params)
                             if entry == hashed_entry :
                                 role_obj._had_task_run = True
+
+                    ret_results.append(task_result)
 
                 #elif result[0] == 'include':
                 #    host         = result[1]
@@ -211,18 +215,25 @@ class StrategyBase:
             except Queue.Empty:
                 pass
 
+        return ret_results
+
     def _wait_on_pending_results(self, iterator):
         '''
         Wait for the shared counter to drop to zero, using a short sleep
         between checks to ensure we don't spin lock
         '''
 
+        ret_results = []
+
         while self._pending_results > 0 and not self._tqm._terminated:
             debug("waiting for pending results (%d left)" % self._pending_results)
-            self._process_pending_results(iterator)
+            results = self._process_pending_results(iterator)
+            ret_results.extend(results)
             if self._tqm._terminated:
                 break
             time.sleep(0.01)
+
+        return ret_results
 
     def _add_host(self, host_info):
         '''
@@ -292,22 +303,21 @@ class StrategyBase:
         # and add the host to the group
         new_group.add_host(actual_host)
 
-    def _load_included_file(self, task, include_file, include_vars):
+    def _load_included_file(self, included_file):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
         '''
 
-        data = self._loader.load_from_file(include_file)
+        data = self._loader.load_from_file(included_file._filename)
         if not isinstance(data, list):
-            raise AnsibleParsingError("included task files must contain a list of tasks", obj=ds)
+            raise AnsibleParsingError("included task files must contain a list of tasks", obj=included_file._task._ds)
 
-        is_handler = isinstance(task, Handler)
-
+        is_handler = isinstance(included_file._task, Handler)
         block_list = load_list_of_blocks(
             data,
-            parent_block=task._block,
-            task_include=task,
-            role=task._role,
+            parent_block=included_file._task._block,
+            task_include=included_file._task,
+            role=included_file._task._role,
             use_handlers=is_handler,
             loader=self._loader
         )
@@ -317,7 +327,7 @@ class StrategyBase:
 
         # set the vars for this task from those specified as params to the include
         for t in task_list:
-            t.vars = include_vars.copy()
+            t.vars = included_file._args.copy()
 
         return task_list
 
