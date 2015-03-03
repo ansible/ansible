@@ -375,21 +375,21 @@ class ConsulCheck():
         if check_id:
             self.check_id = check_id
         self.script = script
-        self.interval = str(interval)
-
-        if not self.interval.endswith('m') or self.interval.endswith('s'):
-            self.interval += 'm'
-
-        self.ttl = ttl
+        self.interval = self.validate_duration('interval', interval)
+        self.ttl = self.validate_duration('ttl', ttl)
         self.notes = notes
         self.node = node
         self.host = host
 
-        if interval and interval <= 0:
-            raise Error('check interval must be positive')
+        
 
-        if ttl and ttl <= 0:
-            raise Error('check ttl value must be positive')
+    def validate_duration(self, name, duration):
+        if duration:
+            duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
+            if not any((duration.endswith(suffix) for suffix in duration_units)):
+                    raise Exception('Invalid %s %s you must specify units (%s)' %
+                        (name, duration, ', '.join(duration_units)))
+        return duration
 
     def register(self, consul_api):
         consul_api.agent.check.register(self.name, check_id=self.check_id,
@@ -434,7 +434,8 @@ def main():
             check_id=dict(required=False),
             check_name=dict(required=False),
             host=dict(default='localhost'),
-            interval=dict(required=False, default='1m'),
+            interval=dict(required=False, type='str'),
+            ttl=dict(required=False, type='str'),
             check_node=dict(required=False),
             check_host=dict(required=False),
             notes=dict(required=False),
