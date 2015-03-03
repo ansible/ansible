@@ -776,6 +776,8 @@ class LinuxService(Service):
                         self.module.fail_json(msg=err)
                     else:
                         self.module.fail_json(msg=out) % (self.enable_cmd, self.name, action)
+            else:
+                self.changed = False
 
             return
 
