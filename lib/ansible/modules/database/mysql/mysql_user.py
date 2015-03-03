@@ -424,7 +424,7 @@ def connect(module, login_user, login_password):
     if module.params["login_unix_socket"]:
         db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
     else:
-        db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], user=login_user, passwd=login_password, db="mysql")
     return db_connection.cursor()
 
 # ===========================================
@@ -437,7 +437,7 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
-            login_port=dict(default="3306"),
+            login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
