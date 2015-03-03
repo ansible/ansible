@@ -806,8 +806,7 @@ def create_instances(module, ec2, vpc, override_count=None):
             if type(group_id) == str:
                 group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
-            grp_item = grp_details[0]
-            group_name = [grp_item.name]
+            group_name = [grp_item.name for grp_item in grp_details]
     except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
 
