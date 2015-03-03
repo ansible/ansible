@@ -97,8 +97,8 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         before the last match of specified regular expression. A value is 
         available; C(BOF) for inserting the line at the beginning of the file.
-        If specified regular expresion has no matches, C(insertbefore) will be 
-        ignored. May not be used with C(backrefs).
+        If specified regular expresion has no matches, the line will be
+        inserted at the end of the file.  May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
