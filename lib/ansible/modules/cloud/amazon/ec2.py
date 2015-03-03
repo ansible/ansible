@@ -793,17 +793,13 @@ def create_instances(module, ec2, vpc, override_count=None):
                 grp_details = ec2.get_all_security_groups(filters={'vpc_id': vpc_id})
             else:
                 grp_details = ec2.get_all_security_groups()
-            if type(group_name) == list:
-                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
-            elif type(group_name) == str:
-                for grp in grp_details:
-                    if str(group_name) in str(grp):
-                        group_id = [str(grp.id)]
+            if isinstance(group_name, basestring):
                 group_name = [group_name]
+            group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
             #wrap the group_id in a list if it's not one already
-            if type(group_id) == str:
+            if isinstance(group_id, basestring):
                 group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             group_name = [grp_item.name for grp_item in grp_details]
