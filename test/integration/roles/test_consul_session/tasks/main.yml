@@ -14,7 +14,7 @@
   consul:
     check_name: session_check
     script: /usr/bin/true
-    interval: 15
+    interval: 15s
 
 - name: register a session with check
   consul_session:
