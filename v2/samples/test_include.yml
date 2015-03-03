@@ -1,9 +1,7 @@
-- hosts: localhost
+- hosts: all
   gather_facts: no
   tasks:
   - block:
-    - include: include.yml
-      when: 1 == 2
     - include: include.yml a=1
       when: 1 == 1
       notify: foo
@@ -12,10 +10,11 @@
       - foo
       - bar
       - bam
+    - include: "{{inventory_hostname}}_include.yml"
     - fail:
 
-    #rescue:
-    #- include: include.yml a=rescue
+    rescue:
+    - include: include.yml a=rescue
 
     always:
     - include: include.yml a=always

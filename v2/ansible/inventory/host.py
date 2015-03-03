@@ -36,6 +36,9 @@ class Host:
     def __setstate__(self, data):
         return self.deserialize(data)
 
+    def __eq__(self, other):
+        return self.name == other.name
+
     def serialize(self):
         groups = []
         for group in self.groups:

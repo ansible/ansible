@@ -39,6 +39,18 @@ class HostState:
         self.fail_state       = PlayIterator.FAILED_NONE
         self.pending_setup    = False
 
+    def __repr__(self):
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%d, fail_state=%d, pending_setup=%s" % (
+            self.cur_block,
+            self.cur_regular_task,
+            self.cur_rescue_task,
+            self.cur_always_task,
+            self.cur_role,
+            self.run_state,
+            self.fail_state,
+            self.pending_setup,
+        )
+
     def get_current_block(self):
         return self._blocks[self.cur_block]
 
@@ -55,6 +67,7 @@ class HostState:
         return new_state
 
 class PlayIterator:
+
     # the primary running states for the play iteration
     ITERATING_SETUP    = 0
     ITERATING_TASKS    = 1
@@ -193,7 +206,8 @@ class PlayIterator:
         the different processes, and not all data structures are preserved. This method
         allows us to find the original task passed into the executor engine.
         '''
-        for block in self._blocks:
+        s = self.get_host_state(host)
+        for block in s._blocks:
             if block.block:
                 for t in block.block:
                     if t._uuid == task._uuid:
@@ -208,20 +222,23 @@ class PlayIterator:
                         return t
         return None
 
-    def add_tasks(self, task_list):
-        if self._run_state == self.ITERATING_TASKS:
-            before = self._task_list[:self._cur_task_pos + self._tasks_added]
-            after  = self._task_list[self._cur_task_pos + self._tasks_added:]
-            self._task_list = before + task_list + after
-        elif self._run_state == self.ITERATING_RESCUE:
-            before = self._cur_block.rescue[:self._cur_rescue_pos + self._tasks_added]
-            after  = self._cur_block.rescue[self._cur_rescue_pos + self._tasks_added:]
-            self._cur_block.rescue = before + task_list + after
-        elif self._run_state == self.ITERATING_ALWAYS:
-            before = self._cur_block.always[:self._cur_always_pos + self._tasks_added]
-            after  = self._cur_block.always[self._cur_always_pos + self._tasks_added:]
-            self._cur_block.always = before + task_list + after
+    def add_tasks(self, host, task_list):
+        s = self.get_host_state(host)
+        target_block = s._blocks[s.cur_block].copy()
 
-        # set this internal flag now so we know if
-        self._tasks_added += len(task_list)
+        if s.run_state == self.ITERATING_TASKS:
+            before = target_block.block[:s.cur_regular_task]
+            after  = target_block.block[s.cur_regular_task:]
+            target_block.block = before + task_list + after
+        elif s.run_state == self.ITERATING_RESCUE:
+            before = target_block.rescue[:s.cur_rescue_task]
+            after  = target_block.rescue[s.cur_rescue_task:]
+            target_block.rescue = before + task_list + after
+        elif s.run_state == self.ITERATING_ALWAYS:
+            before = target_block.always[:s.cur_always_task]
+            after  = target_block.always[s.cur_always_task:]
+            target_block.always = before + task_list + after
+
+        s._blocks[s.cur_block] = target_block
+        self._host_states[host.name] = s
 

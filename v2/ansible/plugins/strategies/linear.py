@@ -139,6 +139,7 @@ class StrategyModule(StrategyBase):
                 callback_sent = False
                 work_to_do = False
 
+                host_results = []
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
                 for (host, task) in host_tasks:
                     if not task:
@@ -151,9 +152,14 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
-                    action = action_loader.get(task.action, class_only=True)
-                    if task.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
-                        run_once = True
+                    try:
+                        action = action_loader.get(task.action, class_only=True)
+                        if task.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
+                            run_once = True
+                    except KeyError:
+                        # we don't care here, because the action may simply not have a
+                        # corresponding action plugin
+                        pass
 
                     debug("getting variables")
                     task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
@@ -178,6 +184,7 @@ class StrategyModule(StrategyBase):
                         meta_action = task.args.get('_raw_params')
                         if meta_action == 'noop':
                             # FIXME: issue a callback for the noop here?
+                            print("%s => NOOP" % host)
                             continue
                         elif meta_action == 'flush_handlers':
                             self.run_handlers(iterator, connection_info)
@@ -191,18 +198,78 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, connection_info)
 
-                    self._process_pending_results(iterator)
+                    results = self._process_pending_results(iterator)
+                    host_results.extend(results)
 
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
 
                 debug("done queuing things up, now waiting for results queue to drain")
-                self._wait_on_pending_results(iterator)
+                results = self._wait_on_pending_results(iterator)
+                host_results.extend(results)
 
-                # FIXME: MAKE PENDING RESULTS RETURN RESULTS PROCESSED AND USE THEM
-                #        TO TAKE ACTION, ie. FOR INCLUDE STATEMENTS TO PRESERVE THE
-                #        LOCK STEP OPERATION
+                class IncludedFile:
+                    def __init__(self, filename, args, task):
+                        self._filename = filename
+                        self._args     = args
+                        self._task     = task
+                        self._hosts    = []
+                    def add_host(self, host):
+                        if host not in self._hosts:
+                            self._hosts.append(host)
+                    def __eq__(self, other):
+                        return other._filename == self._filename and other._args == self._args
+                    def __repr__(self):
+                        return "%s (%s): %s" % (self._filename, self._args, self._hosts)
+
+                included_files = []
+                for res in host_results:
+                    if res._task.action == 'include':
+                        if res._task.loop:
+                            include_results = res._result['results']
+                        else:
+                            include_results = [ res._result ]
+
+                        for include_result in include_results:
+                            original_task = iterator.get_original_task(res._host, res._task)
+                            if original_task and original_task._role:
+                                include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_file)
+                            else:
+                                include_file = self._loader.path_dwim(res._task.args.get('_raw_params'))
+
+                            include_variables = include_result.get('include_variables', dict())
+
+                            inc_file = IncludedFile(include_file, include_variables, original_task)
+
+                            try:
+                                pos = included_files.index(inc_file)
+                                inc_file = included_files[pos]
+                            except ValueError:
+                                included_files.append(inc_file)
+
+                            inc_file.add_host(res._host)
+
+                if len(included_files) > 0:
+                    noop_task = Task()
+                    noop_task.action = 'meta'
+                    noop_task.args['_raw_params'] = 'noop'
+                    noop_task.set_loader(iterator._play._loader)
+
+                    all_tasks = dict((host, []) for host in hosts_left)
+                    for included_file in included_files:
+                        # included hosts get the task list while those excluded get an equal-length
+                        # list of noop tasks, to make sure that they continue running in lock-step
+                        new_tasks = self._load_included_file(included_file)
+                        noop_tasks = [noop_task for t in new_tasks]
+                        for host in hosts_left:
+                            if host in included_file._hosts:
+                                all_tasks[host].extend(new_tasks)
+                            else:
+                                all_tasks[host].extend(noop_tasks)
+
+                    for host in hosts_left:
+                        iterator.add_tasks(host, all_tasks[host])
 
                 debug("results queue empty")
             except (IOError, EOFError), e:
