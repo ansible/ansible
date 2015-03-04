@@ -209,6 +209,7 @@ class StrategyModule(StrategyBase):
                 results = self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
+                # FIXME: this needs to be somewhere else
                 class IncludedFile:
                     def __init__(self, filename, args, task):
                         self._filename = filename
@@ -239,6 +240,8 @@ class StrategyModule(StrategyBase):
                                 include_file = self._loader.path_dwim(res._task.args.get('_raw_params'))
 
                             include_variables = include_result.get('include_variables', dict())
+                            if 'item' in include_result:
+                                include_variables['item'] = include_result['item']
 
                             inc_file = IncludedFile(include_file, include_variables, original_task)
 
