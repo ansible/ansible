@@ -28,7 +28,7 @@ import constants
 import locale
 from ansible.color import stringc
 from ansible.module_utils import basic
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
@@ -634,9 +634,9 @@ class PlaybookCallbacks(object):
                 name = utils.unicode.to_unicode(name)
             msg = u'Perform task: %s (y/n/c): ' % name
             if sys.stdout.encoding:
-                msg = msg.encode(sys.stdout.encoding, errors='replace')
+                msg = to_bytes(msg, sys.stdout.encoding)
             else:
-                msg = msg.encode('utf-8')
+                msg = to_bytes(msg)
             resp = raw_input(msg)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
