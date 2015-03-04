@@ -209,6 +209,13 @@ options:
     default: false
     aliases: []
     version_added: "1.8"
+  pid:
+    description:
+      - Set the PID namespace mode for the container (currently only supports 'host'). Requires docker-py >= 1.0.0 and docker >= 1.4.1.
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.8"
   registry:
     description:
       - The remote registry URL to use for pulling images.
@@ -790,6 +797,7 @@ class DockerManager(object):
             'privileged':   self.module.params.get('privileged'),
             'links': self.links,
             'network_mode': self.module.params.get('net'),
+            'pid_mode': self.module.params.get('pid'),
         }
 
         optionals = {}
@@ -872,6 +880,7 @@ def main():
             lxc_conf        = dict(default=None, type='list'),
             name            = dict(default=None),
             net             = dict(default=None),
+            pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
         )
     )
