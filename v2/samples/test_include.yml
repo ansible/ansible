@@ -20,6 +20,6 @@
     - include: include.yml a=always
 
   handlers:
-  - name: foo
-    include: include.yml a="this is a handler"
+  #- name: foo
+  #  include: include.yml a="this is a handler"
 
