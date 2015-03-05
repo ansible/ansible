@@ -81,7 +81,7 @@ To run a playbook that contains vault-encrypted data files, you must pass one of
 
     ansible-playbook site.yml --ask-vault-pass
 
-This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.  Currently this requires that all passwords be encrypted with the same password.
+This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.  Currently this requires that all files be encrypted with the same password.
 
 Alternatively, passwords can be specified with a file or a script, the script version will require Ansible 1.7 or later.  When using this flag, ensure permissions on the file are such that no one else can access your key and do not add your key to source control::
 
