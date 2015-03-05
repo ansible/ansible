@@ -111,7 +111,7 @@ EXAMPLES = '''
                   key_options='no-port-forwarding,host="10.0.1.1"'
 
 # Set up authorized_keys exclusively with one key
-- authorized_keys: user=root key=public_keys/doe-jane state=present
+- authorized_key: user=root key=public_keys/doe-jane state=present
                    exclusive=yes
 '''
 
