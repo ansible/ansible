@@ -264,6 +264,7 @@ class Ec2Inventory(object):
             'group_by_vpc_id',
             'group_by_security_group',
             'group_by_tag_keys',
+            'group_by_tag_values',
             'group_by_tag_none',
             'group_by_route53_names',
             'group_by_rds_engine',
@@ -311,11 +312,15 @@ class Ec2Inventory(object):
         self.group_by_tag_keys_whitelist = []
         if config.has_option('ec2', 'group_by_tag_keys_whitelist'):
             self.group_by_tag_keys_whitelist = config.get('ec2', 'group_by_tag_keys_whitelist').split(',')
-        
+
         # Group by tag prefix option
         self.group_by_tag_keys_prefix = 'tag_'
         if config.has_option('ec2', 'group_by_tag_keys_prefix'):
             self.group_by_tag_keys_prefix  = config.get('ec2', 'group_by_tag_keys_prefix')
+
+        self.group_by_tag_values_whitelist = []
+        if config.has_option('ec2', 'group_by_tag_values_whitelist'):
+            self.group_by_tag_values_whitelist = config.get('ec2', 'group_by_tag_values_whitelist').split(',')
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -515,6 +520,15 @@ class Ec2Inventory(object):
                     if self.nested_groups:
                         self.push_group(self.inventory, 'tags', self.to_safe(self.group_by_tag_keys_prefix + k))
                         self.push_group(self.inventory, self.to_safe(self.group_by_tag_keys_prefix + k), key)
+
+        # Inventory: Group by tag values
+        if self.group_by_tag_values:
+            for k, v in instance.tags.iteritems():
+                key = self.to_safe(v)
+                if (len(self.group_by_tag_values_whitelist) == 0 or k in self.group_by_tag_values_whitelist) and len(key) > 0:
+                    self.push(self.inventory, key, dest)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'tag_values', key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
