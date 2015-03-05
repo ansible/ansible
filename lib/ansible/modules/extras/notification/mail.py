@@ -189,9 +189,13 @@ def main():
         body = subject
 
     try:
-        smtp = smtplib.SMTP_SSL(host, port=int(port))
-    except (smtplib.SMTPException, ssl.SSLError):
-        smtp = smtplib.SMTP(host, port=int(port))
+        try:
+            smtp = smtplib.SMTP_SSL(host, port=int(port))
+        except (smtplib.SMTPException, ssl.SSLError):
+            smtp = smtplib.SMTP(host, port=int(port))
+    except Exception, e:
+        module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
+
     smtp.ehlo()
     if username and password:
         if smtp.has_extn('STARTTLS'):
