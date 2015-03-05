@@ -72,6 +72,17 @@ If you have existing files that you no longer want to keep encrypted, you can pe
 
     ansible-vault decrypt foo.yml bar.yml baz.yml
 
+.. _viewing_files:
+
+Viewing Encrypted Files
+```````````````````````
+
+_Available since Ansible 1.8_
+
+If you want to view the contents of an encrypted file without editing it, you can use the `ansible-vault view` command::
+
+    ansible-vault view foo.yml bar.yml baz.yml
+
 .. _running_a_playbook_with_vault:
 
 Running a Playbook With Vault
