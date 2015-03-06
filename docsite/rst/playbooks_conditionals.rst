@@ -11,6 +11,8 @@ whether the hosts match other criteria.   There are many options to control exec
 
 Let's dig into what they are.
 
+.. _the_when_statement:
+
 The When Statement
 ``````````````````
 

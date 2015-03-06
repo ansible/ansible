@@ -43,6 +43,8 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
+Also be aware that when combining `when` with `with_items` (or any other loop statement), the `when` statement is processed separately for each item. See :ref:`the_when_statement` for an example.
+
 .. _nested_loops:
 
 Nested Loops
