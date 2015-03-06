@@ -77,10 +77,14 @@ def openstack_full_argument_spec(**kwargs):
         auth=dict(default=None),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
+        verify=dict(default=True),
+        cacert=dict(default=None),
+        cert=dict(default=None),
+        key=dict(default=None),
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
         endpoint_type=dict(
-            default='publicURL', choices=['publicURL', 'internalURL']
+            default='public', choices=['public', 'internal', 'admin']
         )
     )
     spec.update(kwargs)
