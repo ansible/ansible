@@ -873,9 +873,13 @@ class Runner(object):
         for cond in self.conditional:
 
             if not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                result = utils.jsonify(dict(changed=False, skipped=True))
-                self.callbacks.on_skipped(host, inject.get('item',None))
-                return ReturnData(host=host, result=result)
+                result = dict(changed=False, skipped=True)
+                if self.no_log:
+                    result = utils.censor_unlogged_data(result)
+                    self.callbacks.on_skipped(host, result)
+                else:
+                    self.callbacks.on_skipped(host, inject.get('item',None))
+                return ReturnData(host=host, result=utils.jsonify(result))
 
         if getattr(handler, 'setup', None) is not None:
             handler.setup(module_name, inject)
