@@ -62,6 +62,18 @@ options:
     version_added: "1.4"
     required: false
     default: null
+  header:
+    description:
+      - A line to insert before the fragments
+    version_added: "2.2"
+    required: false
+    default: null
+  footer:
+    description:
+      - A line to insert after the fragments
+    version_added: "2.2"
+    required: false
+    default: null
   remote_src:
     description:
       - If False, it will search for src at originating/master machine, if True it will
@@ -103,18 +115,26 @@ EXAMPLES = '''
 - assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
 
 # Copy a new "sshd_config" file into place, after passing validation with sshd
-- assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='sshd -t -f %s'
+- assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='/usr/sbin/sshd -t -f %s'
+
+# Create a PHP configuration file with opening and closing PHP tags
+- assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.php header='<?php' footer='?>'
 '''
 
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, header=None, footer=None):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
     delimit_me = False
     add_newline = False
+
+    if header is not None:
+        if not header.endswith('\n'):
+            header += '\n'
+        tmp.write(header)
 
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
@@ -146,6 +166,13 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
         else:
             add_newline = True
 
+    if footer is not None:
+        if add_newline:  # last fragment did not end with \n
+            footer = '\n' + footer
+        if not footer.endswith('\n'):
+            footer += '\n'
+        tmp.write(footer)
+
     tmp.close()
     return temp_path
 
@@ -169,6 +196,8 @@ def main():
         argument_spec = dict(
             src = dict(required=True),
             delimiter = dict(required=False),
+            header = dict(required=False),
+            footer = dict(required=False),
             dest = dict(required=True),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
@@ -186,6 +215,8 @@ def main():
     dest      = os.path.expanduser(module.params['dest'])
     backup    = module.params['backup']
     delimiter = module.params['delimiter']
+    header    = module.params['header']
+    footer    = module.params['footer']
     regexp    = module.params['regexp']
     compiled_regexp = None
     ignore_hidden = module.params['ignore_hidden']
@@ -207,7 +238,7 @@ def main():
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, header, footer)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 
@@ -249,4 +280,3 @@ def main():
 from ansible.module_utils.basic import *
 
 main()
-
