@@ -17,6 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+# The OpenStack Inventory module uses os-client-config for configuation.
+# https://github.com/stackforge/os-client-config
+# This means it will either:
+#  - Respect normal OS_* environment variables like other OpenStack tools
+#  - Read values from a clouds.yaml file.
+# If you want to configure via clouds.yaml, you can put the file in:
+#  - Current directory
+#  - ~/.config/openstack/clouds.yaml
+#  - /etc/openstack/clouds.yaml
+#  - /etc/ansible/openstack.yml
+# The clouds.yaml file can contain entries for multiple clouds and multiple
+# regions of those clouds. If it does, this inventory module will connect to
+# all of them and present them as one contiguous inventory.
+#
+# See the adjacent openstack.yml file for an example config file
+
 import argparse
 import collections
 import os

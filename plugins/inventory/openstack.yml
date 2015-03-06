@@ -1,0 +1,28 @@
+clouds:
+  mordred:
+    cloud: hp
+    auth:
+      username: mordred@example.com
+      password: my-wonderful-password
+      project_name: mordred-tenant
+    region_name: region-b.geo-1
+  monty:
+    cloud: hp
+    auth:
+      username: monty.taylor@example.com
+      password: another-wonderful-password
+      project_name: monty.taylor@example.com-default-tenant
+    region_name: region-b.geo-1
+  rax:
+    cloud: rackspace
+    auth:
+      username: example
+      password: spectacular-password
+      project_id: 2352426
+    region_name: DFW,ORD,IAD
+  devstack:
+    auth:
+      auth_url: http://127.0.0.1:35357/v2.0/
+      username: stack
+      password: stack
+      project_name: stack
