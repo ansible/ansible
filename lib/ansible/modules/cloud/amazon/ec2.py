@@ -785,6 +785,8 @@ def create_instances(module, ec2, vpc, override_count=None):
 
     if vpc_subnet_id:
         vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+    else:
+        vpc_id = None
 
     try:
         # Here we try to lookup the group id from the security group name - if group is set.
