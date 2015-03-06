@@ -73,7 +73,7 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
 def openstack_full_argument_spec(**kwargs):
     spec = dict(
         cloud=dict(default=None),
-        auth_plugin=dict(default=None),
+        auth_type=dict(default=None),
         auth=dict(default=None),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
