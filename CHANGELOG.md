@@ -29,6 +29,8 @@ in progress, details pending
 * Optimize the plugin loader to cache available plugins much more efficiently.
   For some use cases this can lead to dramatic improvements in startup time.
 
+* Fix skipped tasks to not display their parameters if no_log is specified.
+
 ## 1.8.4 "You Really Got Me" - Feb 19, 2015
 
 * Fixed regressions in ec2 and mount modules, introduced in 1.8.3
