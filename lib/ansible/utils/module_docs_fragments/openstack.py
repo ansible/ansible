@@ -34,17 +34,13 @@ options:
         this param will need to contain whatever parameters that auth plugin
         requires. This parameter is not needed if a named cloud is provided.
     required: false
-  auth_plugin:
+  auth_type:
     description:
       - Name of the auth plugin to use. If the cloud uses something other than
         password authentication, the name of the plugin should be indicated here
         and the contents of the I(auth) parameter should be updated accordingly.
     required: false
     default: password
-  auth_token:
-    description:
-      - An auth token obtained previously. If I(auth_token) is given,
-        I(auth) and I(auth_plugin) are not needed.
   region_name:
     description:
       - Name of the region.
@@ -64,12 +60,30 @@ options:
       - How long should ansible wait for the requested resource.
     required: false
     default: 180
+  verify:
+    description:
+      - Whether or not SSL API requests should be verified.
+    required: false
+    default: True
+  cacert:
+    description:
+      - A path to a CA Cert bundle that can be used as part of verifying
+        SSL API requests.
+    required: false
+  cert:
+    description:
+      - A path to a client certificate to use as part of the SSL transaction
+    required: false
+  key:
+    description:
+      - A path to a client key to use as part of the SSL transaction
+    required: false
   endpoint_type:
     description:
       - Endpoint URL type to fetch from the service catalog.
-    choices: [publicURL, internalURL]
+    choices: [public, internal, admin]
     required: false
-    default: publicURL
+    default: public
 requirements:
   - shade
 notes:
