@@ -213,9 +213,9 @@ options:
     description:
       - Set the PID namespace mode for the container (currently only supports 'host'). Requires docker-py >= 1.0.0 and docker >= 1.4.1.
     required: false
-    default: false
+    default: None
     aliases: []
-    version_added: "1.8"
+    version_added: "1.9"
   registry:
     description:
       - The remote registry URL to use for pulling images.
