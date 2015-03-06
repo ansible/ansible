@@ -84,6 +84,7 @@ class LookupModule(object):
         self.end = None
         self.stride = 1
         self.format = "%d"
+        self.skip_with_empty_range = False
 
     def parse_kv_args(self, args):
         """parse key-value style arguments"""
@@ -99,8 +100,11 @@ class LookupModule(object):
                     "can't parse arg %s=%r as integer"
                         % (arg, arg_raw)
                 )
-            if 'format' in args:
-                self.format = args.pop("format")
+        if 'format' in args:
+            self.format = args.pop("format")
+        self.skip_with_empty_range = \
+            utils.boolean(args.pop('skip_with_empty_range', 'no'))
+
         if args:
             raise AnsibleError(
                 "unrecognized arguments to with_sequence: %r"
@@ -153,7 +157,7 @@ class LookupModule(object):
             # convert count to end
             self.end = self.start + self.count * self.stride - 1
             del self.count
-        if self.end < self.start:
+        if self.end < self.start and not self.skip_with_empty_range:
             raise AnsibleError("can't count backwards")
         if self.format.count('%') != 1:
             raise AnsibleError("bad formatting string: %s" % self.format)
