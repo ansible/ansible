@@ -152,8 +152,7 @@ class LookupModule(object):
         elif self.count is not None:
             # convert count to end
             self.end = self.start + self.count * self.stride - 1
-            del self.count
-        if self.end < self.start:
+        if self.count != 0 and self.end < self.start:
             raise AnsibleError("can't count backwards")
         if self.format.count('%') != 1:
             raise AnsibleError("bad formatting string: %s" % self.format)
