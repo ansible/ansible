@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 """
 Ansible module to manage the ssh known_hosts file.
@@ -28,15 +28,16 @@ description:
      If you have a very large number of host keys to manage, you will find the M(template) module more useful.
 version_added: "1.6"
 options:
-  host:
+  name:
+    aliases: [ 'host' ]
     description:
       - The host to add or remove (must match a host specified in key)
     required: true
     default: null
   key:
     description:
-      - The SSH public host key, as a string (optional if removing the host)
-    required: true
+      - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed)
+    required: false
     default: null
   path:
     description:
@@ -66,12 +67,15 @@ EXAMPLES = '''
 #
 # Arguments
 # =========
-#    host = hostname whose key should be added
+#    name = hostname whose key should be added (alias: host)
 #    key = line(s) to add to known_hosts file
 #    path = the known_hosts file to edit (default: ~/.ssh/known_hosts)
 #    state = absent|present (default: present)
 
-import os,os.path,tempfile,errno
+import os
+import os.path
+import tempfile
+import errno
 
 def enforce_state(module, params):
     """
@@ -83,9 +87,10 @@ def enforce_state(module, params):
     port = params.get("port",None)
     #expand the path parameter; otherwise module.add_path_info
     #(called by exit_json) unhelpfully says the unexpanded path is absent.
-    params["path"]=os.path.expanduser(params.get("path"))
-    path = params.get("path")
-    state = params.get("state","present")
+    path = os.path.expanduser(params.get("path"))
+    state = params.get("state")
+    #Find the ssh-keygen binary
+    sshkeygen = module.get_bin_path("ssh-keygen",True)
 
     #trailing newline in files gets lost, so re-add if necessary
     if key is not None and key[-1]!='\n':
@@ -94,9 +99,9 @@ def enforce_state(module, params):
     if key is None and state != "absent":
         module.fail_json(msg="No key specified when adding a host")
 
-    sanity_check(module,host,key)
+    sanity_check(module,host,key,sshkeygen)
 
-    current,replace=search_for_host_key(module,host,key,path)
+    current,replace=search_for_host_key(module,host,key,path,sshkeygen)
 
     #We will change state if current==True & state!="present"
     #or current==False & state=="present"
@@ -109,7 +114,7 @@ def enforce_state(module, params):
 
     #First, remove an extant entry if required
     if replace==True or (current==True and state=="absent"):
-        module.run_command(['ssh-keygen','-R',host,'-f',path],
+        module.run_command([sshkeygen,'-R',host,'-f',path],
                            check_rc=True)
         params['changed'] = True
     #Next, add a new (or replacing) entry
@@ -139,12 +144,13 @@ def enforce_state(module, params):
     
     return params
 
-def sanity_check(module,host,key):
+def sanity_check(module,host,key,sshkeygen):
     '''Check supplied key is sensible
 
     host and key are parameters provided by the user; If the host
     provided is inconsistent with the key supplied, then this function
     quits, providing an error to the user.
+    sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     #If no key supplied, we're doing a removal, and have nothing to check here.
     if key is None:
@@ -162,26 +168,27 @@ def sanity_check(module,host,key):
     except IOError,e:
         module.fail_json(msg="Failed to write to temporary file %s: %s" % \
                              (outf.name,str(e)))
-    rc,stdout,stderr=module.run_command(['ssh-keygen','-F',host,
+    rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,
                                          '-f',outf.name],
                                         check_rc=True)
     os.remove(outf.name)
     if stdout=='': #host not found
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
-def search_for_host_key(module,host,key,path):
-    '''search_for_host_key(module,host,key,path) -> (current,replace)
+def search_for_host_key(module,host,key,path,sshkeygen):
+    '''search_for_host_key(module,host,key,path,sshkeygen) -> (current,replace)
 
     Looks up host in the known_hosts file path; if it's there, looks to see
     if one of those entries matches key. Returns:
     current (Boolean): is host found in path?
     replace (Boolean): is the key in path different to that supplied by user?
     if current=False, then replace is always False.
+    sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     replace=False
     if os.path.exists(path)==False:
         return False, False
-    rc,stdout,stderr=module.run_command(['ssh-keygen','-F',host,'-f',path],
+    rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,'-f',path],
                                  check_rc=True)
     if stdout=='': #host not found
         return False, False
@@ -218,8 +225,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            host      = dict(required=True,  type='str'),
-            key       = dict(required=True,  type='str'),
+            name      = dict(required=True,  type='str', aliases=['host']),
+            key       = dict(required=False,  type='str'),
             path      = dict(default="~/.ssh/known_hosts", type='str'),
             state     = dict(default='present', choices=['absent','present']),
             ),
