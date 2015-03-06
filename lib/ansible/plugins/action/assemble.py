@@ -34,13 +34,18 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, header=None, footer=None):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
         tmp = os.fdopen(tmpfd,'w')
         delimit_me = False
         add_newline = False
+
+        if header is not None:
+            if not header.endswith('\n'):
+                header += '\n'
+            tmp.write(header)
 
         for f in sorted(os.listdir(src_path)):
             if compiled_regexp and not compiled_regexp.search(f):
@@ -72,6 +77,13 @@ class ActionModule(ActionBase):
             else:
                 add_newline = True
 
+        if footer is not None:
+            if add_newline:  # last fragment did not end with \n
+                footer = '\n' + footer
+            if not footer.endswith('\n'):
+                footer += '\n'
+            tmp.write(footer)
+
         tmp.close()
         return temp_path
 
@@ -83,6 +95,8 @@ class ActionModule(ActionBase):
         src        = self._task.args.get('src', None)
         dest       = self._task.args.get('dest', None)
         delimiter  = self._task.args.get('delimiter', None)
+        header     = self._task.args.get('header', None)
+        footer     = self._task.args.get('footer', None)
         remote_src = self._task.args.get('remote_src', 'yes')
         regexp     = self._task.args.get('regexp', None)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
@@ -104,7 +118,7 @@ class ActionModule(ActionBase):
             _re = re.compile(regexp)
 
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
+        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, header, footer)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest, tmp)
