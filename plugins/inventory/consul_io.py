@@ -212,7 +212,7 @@ class ConsulInventory(object):
     '''loads the data for a sinle node adding it to various groups based on
     metadata retrieved from the kv store and service availablity'''
 
-    index, node_data = self.consul_api.catalog.node(node, datacenter)
+    index, node_data = self.consul_api.catalog.node(node, dc=datacenter)
     node = node_data['Node']
     self.add_node_to_map(self.nodes, 'all', node)
     self.add_metadata(node_data, "consul_datacenter", datacenter)
@@ -260,6 +260,7 @@ class ConsulInventory(object):
     self.add_metadata(node_data, "consul_services", service_name, True)
 
     if self.is_service("ssh", service_name):
+      print 'here'
       self.add_metadata(node_data, "ansible_ssh_port", service['Port'])
 
     if self.config.has_config('servers_suffix'):
