@@ -91,3 +91,13 @@
     - "result.state == 'file'"
     - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
 
+- name: test assemble with a header and a footer
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled6" header="prefix" footer="suffix"
+  register: result
+
+- name: assert the fragments were assembled with a header and a footer
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == 'c5cca6452da7b193427ea17583188f7a17df3b60'"
+
