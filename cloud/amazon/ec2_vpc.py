@@ -506,6 +506,15 @@ def create_vpc(module, vpc_conn):
             'id': sn.id,
         })
 
+    # Sort subnets by the order they were listed in the play
+    order = {}
+    for idx, val in enumerate(subnets):
+        order[val['cidr']] = idx
+
+    # Number of subnets in the play
+    subnets_in_play = len(subnets)
+    returned_subnets.sort(key=lambda x: order.get(x['cidr'], subnets_in_play))
+
     return (vpc_dict, created_vpc_id, returned_subnets, changed)
 
 def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
