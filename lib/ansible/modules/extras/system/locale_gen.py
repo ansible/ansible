@@ -146,7 +146,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['present','absent'], required=True),
+            state = dict(choices=['present','absent'], default='present'),
         ),
         supports_check_mode=True
     )
