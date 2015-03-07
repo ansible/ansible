@@ -21,6 +21,7 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
    playbooks_intro
    playbooks_roles
    playbooks_variables
+   playbooks_filters
    playbooks_conditionals
    playbooks_loops
    playbooks_best_practices
