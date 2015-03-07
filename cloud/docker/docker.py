@@ -27,340 +27,306 @@ module: docker
 version_added: "1.4"
 short_description: manage docker containers
 description:
-     - Manage the life cycle of docker containers.
+- Manage the life cycle of docker containers.
 options:
   count:
     description:
-      - Set number of containers to run
-    required: False
+    - Number of matching containers that should be in the desired state.
     default: 1
-    aliases: []
   image:
     description:
-       - Set container image to use
+    - Container image used to match and launch containers.
     required: true
-    default: null
-    aliases: []
+  pull:
+    description:
+    - Control when container images are updated from the C(docker_url) registry.
+    - If "missing," images will be pulled only when missing from the host; if
+    - '"always," the registry will be checked for a newer version of the image'
+    - each time the task executes.
+    default: missing
+    choices: [ "missing", "always" ]
+    version_added: "1.9"
   command:
     description:
-       - Set command to run in a container on startup
-    required: false
+    - Command used to match and launch containers.
     default: null
-    aliases: []
   name:
     description:
-       - Set name for container (used to find single container or to provide links)
-    required: false
+    - Name used to match and uniquely name launched containers. Explicit names
+    - are used to uniquely identify a single container or to link among
+    - containers. Mutually exclusive with a "count" other than "1".
     default: null
-    aliases: []
     version_added: "1.5"
   ports:
     description:
-      - Set private to public port mapping specification using docker CLI-style syntax [([<host_interface>:[host_port]])|(<host_port>):]<container_port>[/udp]
-    required: false
+     - List containing private to public port mapping specification. Use docker
+     - 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000) where'
+     - 8000 is a container port, 9000 is a host port, and 0.0.0.0 is a host
+     - interface.
     default: null
-    aliases: []
     version_added: "1.5"
   expose:
     description:
-      - Set container ports to expose for port mappings or links. (If the port is already exposed using EXPOSE in a Dockerfile, you don't need to expose it again.)
-    required: false
+    - List of additional container ports to expose for port mappings or links.
+    - If the port is already exposed using EXPOSE in a Dockerfile, you don't
+    - need to expose it again.
     default: null
-    aliases: []
     version_added: "1.5"
   publish_all_ports:
     description:
-      - Publish all exposed ports to the host interfaces
-    required: false
+    - Publish all exposed ports to the host interfaces.
     default: false
-    aliases: []
     version_added: "1.5"
   volumes:
     description:
-      - Set volume(s) to mount on the container separated with a comma (,) and in the format "source:dest[:rights]"
-    required: false
+    - List of volumes to mount within the container using docker CLI-style
+    - 'syntax: C(/host:/container[:mode]) where "mode" may be "rw" or "ro".'
     default: null
-    aliases: []
   volumes_from:
     description:
-      - Set shared volume(s) from another container
-    required: false
+    - List of names of containers to mount volumes from.
     default: null
-    aliases: []
   links:
     description:
-      - Link container(s) to other container(s) (e.g. links=redis,postgresql:db)
-    required: false
+    - List of other containers to link within this container with an optional
+    - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
-    aliases: []
     version_added: "1.5"
   memory_limit:
     description:
-      - Set RAM allocated to container. It will be passed as a number of bytes. For example 1048576 = 1Gb
-    required: false
-    default: null
-    aliases: []
-    default: 262144
+    - RAM allocated to the container as a number of bytes or as a human-readable
+    - string like "512MB". Leave as "0" to specify no limit.
+    default: 0
   docker_url:
     description:
-      - URL of docker host to issue commands to
-    required: false
-    default: unix://var/run/docker.sock
-    aliases: []
+    - URL of the host running the docker daemon. This will default to the env
+    - var DOCKER_HOST if unspecified.
+    default: ${DOCKER_HOST} or unix://var/run/docker.sock
+  docker_tls_cert:
+    description:
+    - Path to a PEM-encoded client certificate to secure the Docker connection.
+    default: ${DOCKER_CERT_PATH}/cert.pem
+  docker_tls_key:
+    description:
+    - Path to a PEM-encoded client key to secure the Docker connection.
+    default: ${DOCKER_CERT_PATH}/key.pem
+  docker_tls_cacert:
+    description:
+    - Path to a PEM-encoded certificate authority to secure the Docker connection.
+    default: ${DOCKER_CERT_PATH}/ca.pem
   docker_api_version:
     description:
-      - Remote API version to use. This defaults to the current default as specified by docker-py.
-    required: false
+    - Remote API version to use. This defaults to the current default as
+    - specified by docker-py.
     default: docker-py default remote API version
-    aliases: []
     version_added: "1.8"
   username:
     description:
-      - Set remote API username
-    required: false
+    - Remote API username.
     default: null
-    aliases: []
   password:
     description:
-      - Set remote API password
-    required: false
+    - Remote API password.
     default: null
-    aliases: []
   email:
     description:
-      - Set remote API email
-    required: false
+    - Remote API email.
     default: null
-    aliases: []
   hostname:
     description:
-      - Set container hostname
-    required: false
+    - Container hostname.
     default: null
-    aliases: []
   domainname:
     description:
-      - Set container domain name
-    required: false
+    - Container domain name.
     default: null
-    aliases: []
   env:
     description:
-      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
-    required: false
+    - Pass a dict of environment variables to the container.
     default: null
-    aliases: []
   dns:
     description:
-      - Set custom DNS servers for the container
+    - List of custom DNS servers for the container.
     required: false
     default: null
-    aliases: []
   detach:
     description:
-      - Enable detached mode on start up, leaves container running in background
-    required: false
+    - Enable detached mode to leave the container running in background.
     default: true
-    aliases: []
   state:
     description:
-      - Set the state of the container
+    - Assert the container's desired state. "present" only asserts that the
+    - matching containers exist. "started" asserts that the matching containers
+    - both exist and are running, but takes no action if any configuration has
+    - changed. "reloaded" asserts that all matching containers are running and
+    - restarts any that have any images or configuration out of date. "restarted"
+    - unconditionally restarts (or starts) the matching containers. "stopped" and
+    - '"killed" stop and kill all matching containers. "absent" stops and then'
+    - removes any matching containers.
     required: false
-    default: present
-    choices: [ "present", "running", "stopped", "absent", "killed", "restarted" ]
-    aliases: []
+    default: started
+    choices:
+    - present
+    - started
+    - reloaded
+    - restarted
+    - stopped
+    - killed
+    - absent
   privileged:
     description:
-      - Set whether the container should run in privileged mode
-    required: false
+    - Whether the container should run in privileged mode or not.
     default: false
-    aliases: []
   lxc_conf:
     description:
-      - LXC config parameters,  e.g. lxc.aa_profile:unconfined
-    required: false
-    default:
-    aliases: []
-  name:
-    description:
-      - Set the name of the container (cannot use with count)
-    required: false
+    - LXC configuration parameters, such as C(lxc.aa_profile:unconfined).
     default: null
-    aliases: []
-    version_added: "1.5"
   stdin_open:
     description:
-      - Keep stdin open
-    required: false
+    - Keep stdin open after a container is launched.
     default: false
-    aliases: []
     version_added: "1.6"
   tty:
     description:
-      - Allocate a pseudo-tty
-    required: false
+    - Allocate a pseudo-tty within the container.
     default: false
-    aliases: []
     version_added: "1.6"
   net:
     description:
-      - Set Network mode for the container (bridge, none, container:<name|id>, host). Requires docker >= 0.11.
-    required: false
+    - 'Network mode for the launched container: bridge, none, container:<name|id>'
+    - or host. Requires docker >= 0.11.
     default: false
-    aliases: []
     version_added: "1.8"
   registry:
     description:
-      - The remote registry URL to use for pulling images.
-    required: false
-    default: ''
+    - Remote registry URL to pull images from.
+    default: DockerHub
     aliases: []
     version_added: "1.8"
   restart_policy:
     description:
-      - Set the container restart policy
-    required: false
-    default: false
-    aliases: []
+    - Container restart policy.
+    choices: ["no", "on-failure", "always"]
+    default: null
     version_added: "1.9"
   restart_policy_retry:
     description:
-      - Set the retry limit for container restart policy
-    required: false
-    default: false
-    aliases: []
+    - Maximum number of times to restart a container. Leave as "0" for unlimited
+    - retries.
+    default: 0
     version_added: "1.9"
   insecure_registry:
     description:
-      - Use insecure private registry by HTTP instead of HTTPS (needed for docker-py >= 0.5.0).
-    required: false
+    - Use insecure private registry by HTTP instead of HTTPS. Needed for
+    - docker-py >= 0.5.0.
     default: false
-    aliases: []
     version_added: "1.9"
 
-author: Cove Schneider, Joshua Conner, Pavel Antonov
+author: Cove Schneider, Joshua Conner, Pavel Antonov, Ash Wilson
 requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
 
 EXAMPLES = '''
-Start one docker container running tomcat in each host of the web group and bind tomcat's listening port to 8080
-on the host:
+# Containers are matched either by name (if provided) or by an exact match of
+# the image they were launched with and the command they're running. The module
+# can accept either a name to target a container uniquely, or a count to operate
+# on multiple containers at once when it makes sense to do so.
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080
+# Ensure that a data container with the name "mydata" exists. If no container
+# by this name exists, it will be created, but not started.
 
-The tomcat server's port is NAT'ed to a dynamic port on the host, but you can determine which port the server was
-mapped to using docker_containers:
+- name: data container
+  docker:
+    name: mydata
+    image: busybox
+    state: present
+    volumes:
+    - /data
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080 count=5
-  - name: Display IP address and port mappings for containers
-    debug: msg={{inventory_hostname}}:{{item['HostConfig']['PortBindings']['8080/tcp'][0]['HostPort']}}
-    with_items: docker_containers
+# Ensure that a Redis server is running, using the volume from the data
+# container. Expose the default Redis port.
 
-Just as in the previous example, but iterates over the list of docker containers with a sequence:
+- name: redis container
+  docker:
+    name: myredis
+    image: redis
+    command: redis-server --appendonly yes
+    state: started
+    expose:
+    - 6379
+    volumes_from:
+    - mydata
 
-- hosts: web
-  sudo: yes
-  vars:
-    start_containers_count: 5
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080 count={{start_containers_count}}
-  - name: Display IP address and port mappings for containers
-    debug: msg="{{inventory_hostname}}:{{docker_containers[{{item}}]['HostConfig']['PortBindings']['8080/tcp'][0]['HostPort']}}"
-    with_sequence: start=0 end={{start_containers_count - 1}}
+# Ensure that a container of your application server is running. This will:
+# - pull the latest version of your application image from DockerHub.
+# - ensure that a container is running with the specified name and exact image.
+#   If any configuration options have changed, the existing container will be
+#   stopped and removed, and a new one will be launched in its place.
+# - link this container to the existing redis container launched above with
+#   an alias.
+# - bind TCP port 9000 within the container to port 8080 on all interfaces
+#   on the host.
+# - bind UDP port 9001 within the container to port 8081 on the host, only
+#   listening on localhost.
+# - set the environment variable SECRET_KEY to "ssssh".
 
-Stop, remove all of the running tomcat containers and list the exit code from the stopped containers:
+- name: application container
+  docker:
+    name: myapplication
+    image: someuser/appimage
+    state: reloaded
+    pull: always
+    links:
+    - "myredis:aliasedredis"
+    ports:
+    - "8080:9000"
+    - "127.0.0.1:8081:9001/udp"
+    env:
+        SECRET_KEY: ssssh
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: stop tomcat servers
-    docker: image=centos command="service tomcat6 start" state=absent
-  - name: Display return codes from stopped containers
-    debug: msg="Returned {{inventory_hostname}}:{{item}}"
-    with_items: docker_containers
+# Ensure that exactly five containers of another server are running with this
+# exact image and command. If fewer than five are running, more will be launched;
+# if more are running, the excess will be stopped.
 
-Create a named container:
+- name: load-balanced containers
+  docker:
+    state: reloaded
+    count: 5
+    image: someuser/anotherappimage
+    command: sleep 1d
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat server
-    docker: image=centos name=tomcat command="service tomcat6 start" ports=8080
+# Unconditionally restart a service container. This may be useful within a
+# handler, for example.
 
-Create multiple named containers:
+- name: application service
+  docker:
+    name: myservice
+    image: someuser/serviceimage
+    state: restarted
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos name={{item}} command="service tomcat6 start" ports=8080
-    with_items:
-      - crookshank
-      - snowbell
-      - heathcliff
-      - felix
-      - sylvester
+# Stop all containers running the specified image.
 
-Create containers named in a sequence:
+- name: obsolete container
+  docker:
+    image: someuser/oldandbusted
+    state: stopped
 
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos name={{item}} command="service tomcat6 start" ports=8080
-    with_sequence: start=1 end=5 format=tomcat_%d.example.com
+# Stop and remove a container with the specified name.
 
-Create two linked containers:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: ensure redis container is running
-    docker: image=crosbymichael/redis name=redis
-
-  - name: ensure redis_ambassador container is running
-    docker: image=svendowideit/ambassador ports=6379:6379 links=redis:redis name=redis_ambassador_ansible
-
-Create containers with options specified as key-value pairs and lists:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  - docker:
-        image: namespace/image_name
-        links:
-          - postgresql:db
-          - redis:redis
-
-
-Create containers with options specified as strings and lists as comma-separated strings:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  docker: image=namespace/image_name links=postgresql:db,redis:redis
-
-Create a container with no networking:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  docker: image=namespace/image_name net=none
-
+- name: obsolete container
+  docker:
+    name: ohno
+    image: someuser/oldandbusted
+    state: absent
 '''
 
 HAS_DOCKER_PY = True
 
 import sys
+import json
+import re
+import os
+import shlex
 from urlparse import urlparse
 try:
     import docker.client
@@ -393,8 +359,10 @@ def _human_to_bytes(number):
     print "failed=True msg='Could not convert %s to integer'" % (number)
     sys.exit(1)
 
+
 def _ansible_facts(container_list):
     return {"docker_containers": container_list}
+
 
 def _docker_id_quirk(inspect):
     # XXX: some quirk in docker
@@ -421,6 +389,13 @@ def get_split_image_tag(image):
         resource = image
 
     return resource, tag
+
+
+def is_running(container):
+    '''Return True if an inspected container is in a state we consider "running."'''
+
+    return container['State']['Running'] == True and not container['State'].get('Ghost', False)
+
 
 def get_docker_py_versioninfo():
     if hasattr(docker, '__version__'):
@@ -451,6 +426,7 @@ def get_docker_py_versioninfo():
 
     return tuple(version)
 
+
 def check_dependencies(module):
     """
     Ensure `docker-py` >= 0.3.0 is installed, and call module.fail_json with a
@@ -466,8 +442,12 @@ def check_dependencies(module):
 
 class DockerManager(object):
 
-    counters = {'created':0, 'started':0, 'stopped':0, 'killed':0, 'removed':0, 'restarted':0, 'pull':0}
+    counters = dict(
+        created=0, started=0, stopped=0, killed=0, removed=0, restarted=0, pulled=0
+    )
+    reload_reasons = []
     _capabilities = set()
+
     # Map optional parameters to minimum (docker-py version, server APIVersion)
     # docker-py version is a tuple of ints because we have to compare them
     # server APIVersion is passed to a docker-py function that takes strings
@@ -494,7 +474,7 @@ class DockerManager(object):
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
-                # with bind mode 
+                # with bind mode
                 elif len(parts) == 3:
                     if parts[2] not in ['ro', 'rw']:
                         self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
@@ -527,12 +507,50 @@ class DockerManager(object):
 
         self.env = self.module.params.get('env', None)
 
-        # connect to docker server
-        docker_url = urlparse(module.params.get('docker_url'))
+        # Connect to the docker server using any configured host and TLS settings.
+
+        env_host = os.getenv('DOCKER_HOST')
+        env_cert_path = os.getenv('DOCKER_CERT_PATH')
+
+        docker_url = module.params.get('docker_url')
+        if not docker_url:
+            if env_host:
+                docker_url = env_host
+            else:
+                docker_url = 'unix://var/run/docker.sock'
+
+        docker_tls_cert = module.params.get('docker_tls_cert')
+        if not docker_tls_cert and env_cert_path:
+            docker_tls_cert = os.path.join(env_cert_path, 'cert.pem')
+
+        docker_tls_key = module.params.get('docker_tls_key')
+        if not docker_tls_key and env_cert_path:
+            docker_tls_key = os.path.join(env_cert_path, 'key.pem')
+
+        docker_tls_cacert = module.params.get('docker_tls_cacert')
+        if not docker_tls_cacert and env_cert_path:
+            docker_tls_cacert = os.path.join(env_cert_path, 'ca.pem')
+
         docker_api_version = module.params.get('docker_api_version')
         if not docker_api_version:
             docker_api_version=docker.client.DEFAULT_DOCKER_API_VERSION
-        self.client = docker.Client(base_url=docker_url.geturl(), version=docker_api_version)
+
+        tls_config = None
+        if docker_tls_cert or docker_tls_key or docker_tls_cacert:
+            # See https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
+            docker_url = docker_url.replace('tcp://', 'https://')
+            verify = docker_tls_cacert is not None
+
+            tls_config = docker.tls.TLSConfig(
+                client_cert=(docker_tls_cert, docker_tls_key),
+                ca_cert=docker_tls_cacert,
+                verify=verify,
+                assert_hostname=False
+            )
+
+        self.client = docker.Client(base_url=docker_url,
+                                    version=docker_api_version,
+                                    tls=tls_config)
 
         self.docker_py_versioninfo = get_docker_py_versioninfo()
 
@@ -590,7 +608,6 @@ class DockerManager(object):
 
         return processed_links
 
-
     def get_exposed_ports(self, expose_list):
         """
         Parse the ports and protocols (TCP/UDP) to expose in the docker-py `create_container` call from the docker CLI-style syntax.
@@ -608,7 +625,6 @@ class DockerManager(object):
             return exposed
         else:
             return None
-
 
     def get_port_bindings(self, ports):
         """
@@ -652,6 +668,37 @@ class DockerManager(object):
 
         return binds
 
+    def get_summary_message(self):
+        '''
+        Generate a message that briefly describes the actions taken by this
+        task, in English.
+        '''
+
+        parts = []
+        for k, v in self.counters.iteritems():
+            if v == 0:
+                continue
+
+            if v == 1:
+                plural = ""
+            else:
+                plural = "s"
+            parts.append("%s %d container%s" % (k, v, plural))
+
+        if parts:
+            return ", ".join(parts) + "."
+        else:
+            return "No action taken."
+
+    def get_reload_reason_message(self):
+        '''
+        Generate a message describing why any reloaded containers were reloaded.
+        '''
+
+        if self.reload_reasons:
+            return ", ".join(self.reload_reasons)
+        else:
+            return None
 
     def get_summary_counters_msg(self):
         msg = ""
@@ -670,6 +717,18 @@ class DockerManager(object):
 
         return False
 
+    def get_inspect_image(self):
+        image, tag = get_split_image_tag(self.module.params.get('image'))
+        if tag is None:
+            tag = 'latest'
+        resource = '%s:%s' % (image, tag)
+
+        matching_image = None
+        for image in self.client.images(name=image):
+            if resource in image.get('RepoTags', []):
+                matching_image = image
+        return matching_image
+
     def get_inspect_containers(self, containers):
         inspect = []
         for i in containers:
@@ -679,9 +738,281 @@ class DockerManager(object):
 
         return inspect
 
+    def get_differing_containers(self):
+        """
+        Inspect all matching, running containers, and return those that were
+        started with parameters that differ from the ones that are provided
+        during this module run. A list containing the differing
+        containers will be returned, and a short string describing the specific
+        difference encountered in each container will be appended to
+        reload_reasons.
+
+        This generates the set of containers that need to be stopped and
+        started with new parameters with state=reloaded.
+        """
+
+        running = self.get_running_containers()
+        current = self.get_inspect_containers(running)
+
+        image = self.get_inspect_image()
+        if image is None:
+            # The image isn't present. Assume that we're about to pull a new
+            # tag and *everything* will be restarted.
+            #
+            # This will give false positives if you untag an image on the host
+            # and there's nothing more to pull.
+            return current
+
+        differing = []
+
+        for container in current:
+
+            # IMAGE
+            # Compare the image by ID rather than name, so that containers
+            # will be restarted when new versions of an existing image are
+            # pulled.
+            if container['Image'] != image['Id']:
+                self.reload_reasons.append('image ({} => {})'.format(container['Image'], image['Id']))
+                differing.append(container)
+                continue
+
+            # COMMAND
+
+            expected_command = self.module.params.get('command')
+            if expected_command:
+                expected_command = shlex.split(expected_command)
+                actual_command = container["Config"]["Cmd"]
+
+                if actual_command != expected_command:
+                    self.reload_reasons.append('command ({} => {})'.format(actual_command, expected_command))
+                    differing.append(container)
+                    continue
+
+            # EXPOSED PORTS
+            # Note that ports that are bound at container run are also exposed
+            # implicitly.
+            expected_exposed_ports = set()
+            for p in (self.exposed_ports or []):
+                expected_exposed_ports.add("/".join(p))
+
+            actually_exposed_ports = set((container["Config"]["ExposedPorts"] or {}).keys())
+
+            if actually_exposed_ports != expected_exposed_ports:
+                self.reload_reasons.append('exposed_ports ({} => {})'.format(actually_exposed_ports, expected_exposed_ports))
+                differing.append(container)
+                continue
+
+            # VOLUMES
+            # not including bind modes.
+
+            expected_volume_keys = set()
+            if self.volumes:
+                for key, config in self.volumes.iteritems():
+                    if not config and key not in self.binds:
+                        expected_volume_keys.add(key)
+            actual_volume_keys = set((container['Config']['Volumes'] or {}).keys())
+
+            if actual_volume_keys != expected_volume_keys:
+                self.reload_reasons.append('volumes ({} => {})'.format(actual_volume_keys, expected_volume_keys))
+                differing.append(container)
+                continue
+
+            # MEM_LIMIT
+
+            expected_mem = _human_to_bytes(self.module.params.get('memory_limit'))
+            actual_mem = container['Config']['Memory']
+
+            if expected_mem and actual_mem != expected_mem:
+                self.reload_reasons.append('memory ({} => {})'.format(actual_mem, expected_mem))
+                differing.append(container)
+                continue
+
+            # ENVIRONMENT
+            # actual_env is likely to include environment variables injected by
+            # the Dockerfile.
+
+            expected_env = set()
+            if self.env:
+                for name, value in self.env.iteritems():
+                    expected_env.add("{}={}".format(name, value))
+            actual_env = set(container['Config']['Env'] or [])
+
+            if not actual_env.issuperset(expected_env):
+                # Don't include the environment difference in the output.
+                self.reload_reasons.append('environment')
+                differing.append(container)
+                continue
+
+            # HOSTNAME
+
+            expected_hostname = self.module.params.get('hostname')
+            actual_hostname = container['Config']['Hostname']
+            if expected_hostname and actual_hostname != expected_hostname:
+                self.reload_reasons.append('hostname ({} => {})'.format(actual_hostname, expected_hostname))
+                differing.append(container)
+                continue
+
+            # DOMAINNAME
+
+            expected_domainname = self.module.params.get('domainname')
+            actual_domainname = container['Config']['Domainname']
+            if expected_domainname and actual_domainname != expected_domainname:
+                self.reload_reasons.append('domainname ({} => {})'.format(actual_domainname, expected_domainname))
+                differing.append(container)
+                continue
+
+            # DETACH
+
+            # We don't have to check for undetached containers. If it wasn't
+            # detached, it would have stopped before the playbook continued!
+
+            # NAME
+
+            # We also don't have to check name, because this is one of the
+            # criteria that's used to determine which container(s) match in
+            # the first place.
+
+            # STDIN_OPEN
+
+            expected_stdin_open = self.module.params.get('stdin_open')
+            actual_stdin_open = container['Config']['AttachStdin']
+            if actual_stdin_open != expected_stdin_open:
+                self.reload_reasons.append('stdin_open ({} => {})'.format(actual_stdin_open, expected_stdin_open))
+                differing.append(container)
+                continue
+
+            # TTY
+
+            expected_tty = self.module.params.get('tty')
+            actual_tty = container['Config']['Tty']
+            if actual_tty != expected_tty:
+                self.reload_reasons.append('tty ({} => {})'.format(actual_tty, expected_tty))
+                differing.append(container)
+                continue
+
+            # -- "start" call differences --
+
+            # LXC_CONF
+
+            if self.lxc_conf:
+                expected_lxc = set(self.lxc_conf)
+                actual_lxc = set(container['HostConfig']['LxcConf'] or [])
+                if actual_lxc != expected_lxc:
+                    self.reload_reasons.append('lxc_conf ({} => {})'.format(actual_lxc, expected_lxc))
+                    differing.append(container)
+                    continue
+
+            # BINDS
+
+            expected_binds = set()
+            if self.binds:
+                for host_path, config in self.binds.iteritems():
+                    if isinstance(config, dict):
+                        container_path = config['bind']
+                        if config['ro']:
+                            mode = 'ro'
+                        else:
+                            mode = 'rw'
+                    else:
+                        container_path = config
+                        mode = 'rw'
+                    expected_binds.add("{}:{}:{}".format(host_path, container_path, mode))
+
+            actual_binds = set()
+            for bind in (container['HostConfig']['Binds'] or []):
+                if len(bind.split(':')) == 2:
+                    actual_binds.add(bind + ":rw")
+                else:
+                    actual_binds.add(bind)
+
+            if actual_binds != expected_binds:
+                self.reload_reasons.append('binds ({} => {})'.format(actual_binds, expected_binds))
+                differing.append(container)
+                continue
+
+            # PORT BINDINGS
+
+            expected_bound_ports = {}
+            if self.port_bindings:
+                for container_port, config in self.port_bindings.iteritems():
+                    if isinstance(container_port, int):
+                        container_port = "{}/tcp".format(container_port)
+                    bind = {}
+                    if len(config) == 1:
+                        bind['HostIp'] = "0.0.0.0"
+                        bind['HostPort'] = ""
+                    else:
+                        bind['HostIp'] = config[0]
+                        bind['HostPort'] = str(config[1])
+
+                    expected_bound_ports[container_port] = [bind]
+
+            actual_bound_ports = container['HostConfig']['PortBindings'] or {}
+
+            if actual_bound_ports != expected_bound_ports:
+                self.reload_reasons.append('port bindings ({} => {})'.format(actual_bound_ports, expected_bound_ports))
+                differing.append(container)
+                continue
+
+            # PUBLISHING ALL PORTS
+
+            # What we really care about is the set of ports that is actually
+            # published. That should be caught above.
+
+            # PRIVILEGED
+
+            expected_privileged = self.module.params.get('privileged')
+            actual_privileged = container['HostConfig']['Privileged']
+            if actual_privileged != expected_privileged:
+                self.reload_reasons.append('privileged ({} => {})'.format(actual_privileged, expected_privileged))
+                differing.append(container)
+                continue
+
+            # LINKS
+
+            expected_links = set()
+            for link, alias in (self.links or {}).iteritems():
+                expected_links.add("/{}:/running/{}".format(link, alias))
+
+            actual_links = set(container['HostConfig']['Links'] or [])
+            if actual_links != expected_links:
+                self.reload_reasons.append('links ({} => {})'.format(actual_links, expected_links))
+                differing.append(container)
+                continue
+
+            # NETWORK MODE
+
+            expected_netmode = self.module.params.get('net') or ''
+            actual_netmode = container['HostConfig']['NetworkMode']
+            if actual_netmode != expected_netmode:
+                self.reload_reasons.append('net ({} => {})'.format(actual_netmode, expected_netmode))
+                differing.append(container)
+                continue
+
+            # DNS
+
+            expected_dns = set(self.module.params.get('dns') or [])
+            actual_dns = set(container['HostConfig']['Dns'] or [])
+            if actual_dns != expected_dns:
+                self.reload_reasons.append('dns ({} => {})'.format(actual_dns, expected_dns))
+                differing.append(container)
+                continue
+
+            # VOLUMES_FROM
+
+            expected_volumes_from = set(self.module.params.get('volumes_from') or [])
+            actual_volumes_from = set(container['HostConfig']['VolumesFrom'] or [])
+            if actual_volumes_from != expected_volumes_from:
+                self.reload_reasons.append('volumes_from ({} => {})'.format(actual_volumes_from, expected_volumes_from))
+                differing.append(container)
+
+        return differing
+
     def get_deployed_containers(self):
-        """determine which images/commands are running already"""
-        image = self.module.params.get('image')
+        """
+        Return any matching containers that are already present.
+        """
+
         command = self.module.params.get('command')
         if command:
             command = command.strip()
@@ -690,37 +1021,76 @@ class DockerManager(object):
             name = '/' + name
         deployed = []
 
-        # if we weren't given a tag with the image, we need to only compare on the image name, as that
-        # docker will give us back the full image name including a tag in the container list if one exists.
-        image, tag = get_split_image_tag(image)
+        # "images" will be a collection of equivalent "name:tag" image names
+        # that map to the same Docker image.
+        inspected = self.get_inspect_image()
+        if inspected:
+            images = inspected.get('RepoTags', [])
+        else:
+            image, tag = get_split_image_tag(self.module.params.get('image'))
+            images = [':'.join([image, tag])]
 
         for i in self.client.containers(all=True):
-            running_image, running_tag = get_split_image_tag(i['Image'])
+            running_image = i['Image']
             running_command = i['Command'].strip()
+            match = False
 
-            name_matches = False
-            if i["Names"]:
-                name_matches = (name and name in i['Names'])
-            image_matches = (running_image == image)
-            tag_matches = (not tag or running_tag == tag)
-            # if a container has an entrypoint, `command` will actually equal
-            # '{} {}'.format(entrypoint, command)
-            command_matches = (not command or running_command.endswith(command))
+            if name:
+                matches = name in i.get('Names', [])
+            else:
+                image_matches = running_image in images
 
-            if name_matches or (name is None and image_matches and tag_matches and command_matches):
+                # if a container has an entrypoint, `command` will actually equal
+                # '{} {}'.format(entrypoint, command)
+                command_matches = (not command or running_command.endswith(command))
+
+                matches = image_matches and command_matches
+
+            if matches:
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
+
                 deployed.append(details)
 
         return deployed
 
     def get_running_containers(self):
-        running = []
-        for i in self.get_deployed_containers():
-            if i['State']['Running'] == True and i['State'].get('Ghost', False) == False:
-                running.append(i)
+        return [c for c in self.get_deployed_containers() if is_running(c)]
 
-        return running
+    def pull_image(self):
+        extra_params = {}
+        if self.module.params.get('insecure_registry'):
+            if self.ensure_capability('insecure_registry', fail=False):
+                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
+
+        resource = self.module.params.get('image')
+        image, tag = get_split_image_tag(resource)
+        if self.module.params.get('username'):
+            try:
+                self.client.login(
+                    self.module.params.get('username'),
+                    password=self.module.params.get('password'),
+                    email=self.module.params.get('email'),
+                    registry=self.module.params.get('registry')
+                )
+            except e:
+                self.module.fail_json(msg="failed to login to the remote registry, check your username/password.", error=repr(e))
+        try:
+            last = None
+            for line in self.client.pull(image, tag=tag, stream=True, **extra_params):
+                last = line
+            status = json.loads(last).get('status', '')
+            if status.startswith('Status: Image is up to date for'):
+                # Image is already up to date. Don't increment the counter.
+                pass
+            elif status.startswith('Status: Downloaded newer image for'):
+                # Image was updated. Increment the pull counter.
+                self.increment_counter('pulled')
+            else:
+                # Unrecognized status string.
+                self.module.fail_json(msg="Unrecognized status from pull.", status=status)
+        except e:
+            self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
     def create_containers(self, count=1):
         params = {'image':        self.module.params.get('image'),
@@ -743,11 +1113,6 @@ class DockerManager(object):
         if params['volumes_from'] is not None:
             self.ensure_capability('volumes_from')
 
-        extra_params = {}
-        if self.module.params.get('insecure_registry'):
-            if self.ensure_capability('insecure_registry', fail=False):
-                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
-
         def do_create(count, params):
             results = []
             for _ in range(count):
@@ -760,23 +1125,7 @@ class DockerManager(object):
         try:
             containers = do_create(count, params)
         except:
-            resource = self.module.params.get('image')
-            image, tag = get_split_image_tag(resource)
-            if self.module.params.get('username'):
-                try:
-                    self.client.login(
-                        self.module.params.get('username'),
-                        password=self.module.params.get('password'),
-                        email=self.module.params.get('email'),
-                        registry=self.module.params.get('registry')
-                    )
-                except:
-                    self.module.fail_json(msg="failed to login to the remote registry, check your username/password.")
-            try:
-                self.client.pull(image, tag=tag, **extra_params)
-            except:
-                self.module.fail_json(msg="failed to pull the specified image: %s" % resource)
-            self.increment_counter('pull')
+            self.pull_image()
             containers = do_create(count, params)
 
         return containers
@@ -787,7 +1136,7 @@ class DockerManager(object):
             'binds': self.binds,
             'port_bindings': self.port_bindings,
             'publish_all_ports': self.module.params.get('publish_all_ports'),
-            'privileged':   self.module.params.get('privileged'),
+            'privileged': self.module.params.get('privileged'),
             'links': self.links,
             'network_mode': self.module.params.get('net'),
         }
@@ -837,11 +1186,135 @@ class DockerManager(object):
             self.increment_counter('restarted')
 
 
+class ContainerSet:
+
+    def __init__(self, manager):
+        self.manager = manager
+        self.running = []
+        self.deployed = []
+        self.changed = []
+
+    def refresh(self):
+        '''
+        Update our view of the matching containers from the Docker daemon.
+        '''
+
+
+        self.deployed = self.manager.get_deployed_containers()
+        self.running = [c for c in self.deployed if is_running(c)]
+
+    def notice_changed(self, containers):
+        '''
+        Record a collection of containers as "changed".
+        '''
+
+        self.changed.extend(containers)
+
+
+def present(manager, containers, count, name):
+    '''Ensure that exactly `count` matching containers exist in any state.'''
+
+    containers.refresh()
+    delta = count - len(containers.deployed)
+
+    if delta > 0:
+        containers.notice_changed(manager.create_containers(delta))
+
+    if delta < 0:
+        # If both running and stopped containers exist, remove
+        # stopped containers first.
+        containers.deployed.sort(lambda cx, cy: cmp(is_running(cx), is_running(cy)))
+
+        to_stop = []
+        to_remove = []
+        for c in containers.deployed[0:-delta]:
+            if is_running(c):
+                to_stop.append(c)
+            to_remove.append(c)
+
+        manager.stop_containers(to_stop)
+        manager.remove_containers(to_remove)
+        containers.notice_changed(to_remove)
+
+def started(manager, containers, count, name):
+    '''Ensure that exactly `count` matching containers exist and are running.'''
+
+    containers.refresh()
+    delta = count - len(containers.running)
+
+    if delta > 0:
+        if name and containers.deployed:
+            # A stopped container exists with the requested name.
+            # Clean it up before attempting to start a new one.
+            manager.remove_containers(containers.deployed)
+
+        created = manager.create_containers(delta)
+        manager.start_containers(created)
+        containers.notice_changed(created)
+
+    if delta < 0:
+        excess = containers.running[0:-delta]
+        manager.stop_containers(excess)
+        manager.remove_containers(excess)
+        containers.notice_changed(excess)
+
+def reloaded(manager, containers, count, name):
+    '''
+    Ensure that exactly `count` matching containers exist and are
+    running. If any associated settings have been changed (volumes,
+    ports or so on), restart those containers.
+    '''
+
+    containers.refresh()
+
+    for container in manager.get_differing_containers():
+        manager.stop_containers([container])
+        manager.remove_containers([container])
+
+    started(manager, containers, count, name)
+
+def restarted(manager, containers, count, name):
+    '''
+    Ensure that exactly `count` matching containers exist and are
+    running. Unconditionally restart any that were already running.
+    '''
+
+    containers.refresh()
+
+    manager.restart_containers(containers.running)
+    started(manager, containers, count, name)
+
+def stopped(manager, containers, count, name):
+    '''Stop any matching containers that are running.'''
+
+    containers.refresh()
+
+    manager.stop_containers(containers.running)
+    containers.notice_changed(containers.running)
+
+def killed(manager, containers, count, name):
+    '''Kill any matching containers that are running.'''
+
+    containers.refresh()
+
+    manager.kill_containers(containers.running)
+    containers.notice_changed(containers.running)
+
+def absent(manager, containers, count, name):
+    '''Stop and remove any matching containers.'''
+
+    containers.refresh()
+
+    manager.stop_containers(containers.running)
+    manager.remove_containers(containers.deployed)
+    containers.notice_changed(containers.deployed)
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             count           = dict(default=1),
             image           = dict(required=True),
+            pull            = dict(required=False, default='missing', choices=['missing', 'always']),
             command         = dict(required=False, default=None),
             expose          = dict(required=False, default=None, type='list'),
             ports           = dict(required=False, default=None, type='list'),
@@ -851,7 +1324,10 @@ def main():
             links           = dict(default=None, type='list'),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
-            docker_url      = dict(default='unix://var/run/docker.sock'),
+            docker_url      = dict(),
+            docker_tls_cert = dict(),
+            docker_tls_key  = dict(),
+            docker_tls_cacert = dict(),
             docker_api_version = dict(),
             username        = dict(default=None),
             password        = dict(),
@@ -862,7 +1338,7 @@ def main():
             env             = dict(type='dict'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
-            state           = dict(default='running', choices=['absent', 'present', 'running', 'stopped', 'killed', 'restarted']),
+            state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent']),
             restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no']),
             restart_policy_retry = dict(default=0, type='int'),
             debug           = dict(default=False, type='bool'),
@@ -884,101 +1360,53 @@ def main():
         count = int(module.params.get('count'))
         name = module.params.get('name')
         image = module.params.get('image')
+        pull = module.params.get('pull')
 
         if count < 0:
             module.fail_json(msg="Count must be greater than zero")
+
         if count > 1 and name:
             module.fail_json(msg="Count and name must not be used together")
 
-        running_containers = manager.get_running_containers()
-        running_count = len(running_containers)
-        delta = count - running_count
-        deployed_containers = manager.get_deployed_containers()
-        facts = None
+        # Explicitly pull new container images, if requested.
+        # Do this before noticing running and deployed containers so that the image names will differ
+        # if a newer image has been pulled.
+        if pull == "always":
+            manager.pull_image()
+
+        containers = ContainerSet(manager)
         failed = False
-        changed = False
 
-        # start/stop containers
-        if state in [ "running", "present" ]:
+        if state == 'present':
+            present(manager, containers, count, name)
+        elif state == 'started':
+            started(manager, containers, count, name)
+        elif state == 'reloaded':
+            reloaded(manager, containers, count, name)
+        elif state == 'restarted':
+            restarted(manager, containers, count, name)
+        elif state == 'stopped':
+            stopped(manager, containers, count, name)
+        elif state == 'killed':
+            killed(manager, containers, count, name)
+        elif state == 'absent':
+            absent(manager, containers, count, name)
+        else:
+            module.fail_json(msg='Unrecognized state %s. Must be one of: '
+                                 'present; started; reloaded; restarted; '
+                                 'stopped; killed; absent.' % state)
 
-            # make sure a container with `name` exists, if not create and start it
-            if name:
-                # first determine if a container with this name exists
-                existing_container = None
-                for deployed_container in deployed_containers:
-                    if deployed_container.get('Name') == '/%s' % name:
-                        existing_container = deployed_container
-                        break
+        module.exit_json(changed=manager.has_changed(),
+                         msg=manager.get_summary_message(),
+                         summary=manager.counters,
+                         containers=containers.changed,
+                         reload_reasons=manager.get_reload_reason_message())
 
-                # the named container is running, but with a
-                # different image or tag, so we stop it first
-                if existing_container and existing_container.get('Config', dict()).get('Image') != image:
-                    manager.stop_containers([existing_container])
-                    manager.remove_containers([existing_container])
-                    running_containers = manager.get_running_containers()
-                    deployed_containers = manager.get_deployed_containers()
-                    existing_container = None
+    except DockerAPIError as e:
+        module.fail_json(changed=manager.has_changed(), msg="Docker API Error: %s" % e.explanation)
 
-                # if the container isn't running (or if we stopped the
-                # old version above), create and (maybe) start it up now
-                if not existing_container:
-                    containers = manager.create_containers(1)
-                    if state == "present": # otherwise it get (re)started later anyways..
-                        manager.start_containers(containers)
-                        running_containers = manager.get_running_containers()
-                    deployed_containers = manager.get_deployed_containers()
-
-            if state == "running":
-                # make sure a container with `name` is running
-                if name and "/" + name not in map(lambda x: x.get('Name'), running_containers):
-                    manager.start_containers(deployed_containers)
-
-                # start more containers if we don't have enough
-                elif delta > 0:
-                    containers = manager.create_containers(delta)
-                    manager.start_containers(containers)
-
-                # stop containers if we have too many
-                elif delta < 0:
-                    containers_to_stop = running_containers[0:abs(delta)]
-                    containers = manager.stop_containers(containers_to_stop)
-                    manager.remove_containers(containers_to_stop)
-
-                facts = manager.get_running_containers()
-            else:
-                facts = manager.get_deployed_containers()
-
-        # stop and remove containers
-        elif state == "absent":
-            facts = manager.stop_containers(deployed_containers)
-            manager.remove_containers(deployed_containers)
-
-        # stop containers
-        elif state == "stopped":
-            facts = manager.stop_containers(running_containers)
-
-        # kill containers
-        elif state == "killed":
-            manager.kill_containers(running_containers)
-
-        # restart containers
-        elif state == "restarted":
-            manager.restart_containers(running_containers)
-            facts = manager.get_inspect_containers(running_containers)
-
-        msg = "%s container(s) running image %s with command %s" % \
-                (manager.get_summary_counters_msg(), module.params.get('image'), module.params.get('command'))
-        changed = manager.has_changed()
-
-        module.exit_json(failed=failed, changed=changed, msg=msg, ansible_facts=_ansible_facts(facts))
-
-    except DockerAPIError, e:
-        changed = manager.has_changed()
-        module.exit_json(failed=True, changed=changed, msg="Docker API error: " + e.explanation)
-
-    except RequestException, e:
-        changed = manager.has_changed()
-        module.exit_json(failed=True, changed=changed, msg=repr(e))
+    except RequestException as e:
+        module.fail_json(changed=manager.has_changed(), msg=repr(e))
 
 # import module snippets
 from ansible.module_utils.basic import *
