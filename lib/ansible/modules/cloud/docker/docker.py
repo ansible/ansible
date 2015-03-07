@@ -27,178 +27,179 @@ module: docker
 version_added: "1.4"
 short_description: manage docker containers
 description:
-- Manage the life cycle of docker containers.
+  - Manage the life cycle of docker containers.
 options:
   count:
     description:
-    - Number of matching containers that should be in the desired state.
+      - Number of matching containers that should be in the desired state.
     default: 1
   image:
     description:
-    - Container image used to match and launch containers.
+      - Container image used to match and launch containers.
     required: true
   pull:
     description:
-    - Control when container images are updated from the C(docker_url) registry.
-    - If "missing," images will be pulled only when missing from the host; if
-    - '"always," the registry will be checked for a newer version of the image'
-    - each time the task executes.
+      - Control when container images are updated from the C(docker_url) registry.
+        If "missing," images will be pulled only when missing from the host;
+        if '"always," the registry will be checked for a newer version of the
+        image' each time the task executes.
     default: missing
     choices: [ "missing", "always" ]
     version_added: "1.9"
   command:
     description:
-    - Command used to match and launch containers.
+      - Command used to match and launch containers.
     default: null
   name:
     description:
-    - Name used to match and uniquely name launched containers. Explicit names
-    - are used to uniquely identify a single container or to link among
-    - containers. Mutually exclusive with a "count" other than "1".
+      - Name used to match and uniquely name launched containers. Explicit names
+        are used to uniquely identify a single container or to link among
+        containers. Mutually exclusive with a "count" other than "1".
     default: null
     version_added: "1.5"
   ports:
     description:
-     - List containing private to public port mapping specification. Use docker
-     - 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000) where'
-     - 8000 is a container port, 9000 is a host port, and 0.0.0.0 is a host
-     - interface.
+      - List containing private to public port mapping specification. Use docker
+      - 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'
+      - where  8000 is a container port, 9000 is a host port, and 0.0.0.0 is
+      - a host interface.
     default: null
     version_added: "1.5"
   expose:
     description:
-    - List of additional container ports to expose for port mappings or links.
-    - If the port is already exposed using EXPOSE in a Dockerfile, you don't
-    - need to expose it again.
+      - List of additional container ports to expose for port mappings or links.
+        If the port is already exposed using EXPOSE in a Dockerfile, you don't
+        need to expose it again.
     default: null
     version_added: "1.5"
   publish_all_ports:
     description:
-    - Publish all exposed ports to the host interfaces.
+      - Publish all exposed ports to the host interfaces.
     default: false
     version_added: "1.5"
   volumes:
     description:
-    - List of volumes to mount within the container using docker CLI-style
-    - 'syntax: C(/host:/container[:mode]) where "mode" may be "rw" or "ro".'
+      - List of volumes to mount within the container using docker CLI-style
+      - 'syntax: C(/host:/container[:mode]) where "mode" may be "rw" or "ro".'
     required: false
     default: null
   volumes_from:
     description:
-    - List of names of containers to mount volumes from.
+      - List of names of containers to mount volumes from.
     default: null
   links:
     description:
-    - List of other containers to link within this container with an optional
-    - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
+      - List of other containers to link within this container with an optional
+      - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
     version_added: "1.5"
   memory_limit:
     description:
-    - RAM allocated to the container as a number of bytes or as a human-readable
-    - string like "512MB". Leave as "0" to specify no limit.
+      - RAM allocated to the container as a number of bytes or as a human-readable
+        string like "512MB". Leave as "0" to specify no limit.
     required: false
     default: null
     aliases: []
     default: 256MB
   docker_url:
     description:
-    - URL of the host running the docker daemon. This will default to the env
-    - var DOCKER_HOST if unspecified.
+      - URL of the host running the docker daemon. This will default to the env
+        var DOCKER_HOST if unspecified.
     default: ${DOCKER_HOST} or unix://var/run/docker.sock
   docker_tls_cert:
     description:
-    - Path to a PEM-encoded client certificate to secure the Docker connection.
+      - Path to a PEM-encoded client certificate to secure the Docker connection.
     default: ${DOCKER_CERT_PATH}/cert.pem
   docker_tls_key:
     description:
-    - Path to a PEM-encoded client key to secure the Docker connection.
+      - Path to a PEM-encoded client key to secure the Docker connection.
     default: ${DOCKER_CERT_PATH}/key.pem
   docker_tls_cacert:
     description:
-    - Path to a PEM-encoded certificate authority to secure the Docker connection.
+      - Path to a PEM-encoded certificate authority to secure the Docker connection.
     default: ${DOCKER_CERT_PATH}/ca.pem
   docker_api_version:
     description:
-    - Remote API version to use. This defaults to the current default as
-    - specified by docker-py.
+      - Remote API version to use. This defaults to the current default as
+        specified by docker-py.
     default: docker-py default remote API version
     version_added: "1.8"
   username:
     description:
-    - Remote API username.
+      - Remote API username.
     default: null
   password:
     description:
-    - Remote API password.
+      - Remote API password.
     default: null
   email:
     description:
-    - Remote API email.
+      - Remote API email.
     default: null
   hostname:
     description:
-    - Container hostname.
+      - Container hostname.
     default: null
   domainname:
     description:
-    - Container domain name.
+      - Container domain name.
     default: null
   env:
     description:
-    - Pass a dict of environment variables to the container.
+      - Pass a dict of environment variables to the container.
     default: null
   dns:
     description:
-    - List of custom DNS servers for the container.
+      - List of custom DNS servers for the container.
     required: false
     default: null
   detach:
     description:
-    - Enable detached mode to leave the container running in background.
+      - Enable detached mode to leave the container running in background.
     default: true
   state:
     description:
-    - Assert the container's desired state. "present" only asserts that the
-    - matching containers exist. "started" asserts that the matching containers
-    - both exist and are running, but takes no action if any configuration has
-    - changed. "reloaded" asserts that all matching containers are running and
-    - restarts any that have any images or configuration out of date. "restarted"
-    - unconditionally restarts (or starts) the matching containers. "stopped" and
-    - '"killed" stop and kill all matching containers. "absent" stops and then'
-    - removes any matching containers.
+      - Assert the container's desired state. "present" only asserts that the
+        matching containers exist. "started" asserts that the matching
+        containers both exist and are running, but takes no action if any
+        configuration has changed. "reloaded" asserts that all matching
+        containers are running and restarts any that have any images or
+        configuration out of date. "restarted" unconditionally restarts (or
+        starts) the matching containers. "stopped" and '"killed" stop and kill
+        all matching containers. "absent" stops and then' removes any matching
+        containers.
     required: false
     default: started
     choices:
-    - present
-    - started
-    - reloaded
-    - restarted
-    - stopped
-    - killed
-    - absent
+      - present
+      - started
+      - reloaded
+      - restarted
+      - stopped
+      - killed
+      - absent
   privileged:
     description:
-    - Whether the container should run in privileged mode or not.
+      - Whether the container should run in privileged mode or not.
     default: false
   lxc_conf:
     description:
-    - LXC configuration parameters, such as C(lxc.aa_profile:unconfined).
+      - LXC configuration parameters, such as C(lxc.aa_profile:unconfined).
     default: null
   stdin_open:
     description:
-    - Keep stdin open after a container is launched.
+      - Keep stdin open after a container is launched.
     default: false
     version_added: "1.6"
   tty:
     description:
-    - Allocate a pseudo-tty within the container.
+      - Allocate a pseudo-tty within the container.
     default: false
     version_added: "1.6"
   net:
     description:
-    - 'Network mode for the launched container: bridge, none, container:<name|id>'
-    - or host. Requires docker >= 0.11.
+      - 'Network mode for the launched container: bridge, none, container:<name|id>'
+      - or host. Requires docker >= 0.11.
     default: false
     version_added: "1.8"
   pid:
@@ -210,26 +211,26 @@ options:
     version_added: "1.9"
   registry:
     description:
-    - Remote registry URL to pull images from.
+      - Remote registry URL to pull images from.
     default: DockerHub
     aliases: []
     version_added: "1.8"
   restart_policy:
     description:
-    - Container restart policy.
+      - Container restart policy.
     choices: ["no", "on-failure", "always"]
     default: null
     version_added: "1.9"
   restart_policy_retry:
     description:
-    - Maximum number of times to restart a container. Leave as "0" for unlimited
-    - retries.
+      - Maximum number of times to restart a container. Leave as "0" for unlimited
+        retries.
     default: 0
     version_added: "1.9"
   insecure_registry:
     description:
-    - Use insecure private registry by HTTP instead of HTTPS. Needed for
-    - docker-py >= 0.5.0.
+      - Use insecure private registry by HTTP instead of HTTPS. Needed for
+        docker-py >= 0.5.0.
     default: false
     version_added: "1.9"
 
