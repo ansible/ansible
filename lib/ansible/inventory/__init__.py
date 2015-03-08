@@ -100,40 +100,7 @@ class Inventory(object):
                 self.parser = InventoryDirectory(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
-                # check to see if the specified file starts with a
-                # shebang (#!/), so if an error is raised by the parser
-                # class we can show a more apropos error
-                shebang_present = False
-                try:
-                    inv_file = open(host_list)
-                    first_line = inv_file.readlines()[0]
-                    inv_file.close()
-                    if first_line.startswith('#!'):
-                        shebang_present = True
-                except:
-                    pass
-
-                if utils.is_executable(host_list) and C.ALLOW_EXECUTABLE_INVENTORY:
-                    try:
-                        self.parser = InventoryScript(filename=host_list)
-                        self.groups = self.parser.groups.values()
-                    except:
-                        if not shebang_present:
-                            raise errors.AnsibleError("The file %s is marked as executable, but failed to execute correctly. " % host_list + \
-                                                      "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % host_list)
-                        else:
-                            raise
-                else:
-                    try:
-                        self.parser = InventoryParser(filename=host_list)
-                        self.groups = self.parser.groups.values()
-                    except:
-                        if shebang_present:
-                            raise errors.AnsibleError("The file %s looks like it should be an executable inventory script, but is not marked executable. " % host_list + \
-                                                      "Perhaps you want to correct this with `chmod +x %s`?" % host_list)
-                        else:
-                            raise
-
+                self._load_from_file(host_list)
             utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
             raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
@@ -147,6 +114,43 @@ class Inventory(object):
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
             host.vars = utils.combine_vars(host.vars, self.get_host_variables(host.name, vault_password=self._vault_password))
+
+    def _load_from_script(self, path):
+        self.parser = InventoryScript(filename=path)
+        self.groups = self.parser.groups.values()
+
+    def _load_from_ini(self, path):
+        self.parser = InventoryParser(filename=path)
+        self.groups = self.parser.groups.values()
+
+    def _load_from_file(self, path):
+        exec_failed = False
+
+        if utils.is_executable(path) and C.ALLOW_EXECUTABLE_INVENTORY:
+            try:
+                return self._load_from_script(path)
+            except errors.AnsibleInvalidInventory as e:
+                raise errors.AnsibleInvalidInventory("Inventory Script %s executed successfully, but didn't produce a valid inventory JSON output.\n"
+                                                            "%s" % (path, e.message))
+            except Exception as e:
+                exec_failed = e
+                if utils.has_shebang(path):
+                    raise errors.AnsibleInvalidInventory("The inventory script %s failed to run successfully. If this file is not supposed "
+                                                         "to be a script, then remove the shebang (#!) from the beginning of the file. %s" % (path, e.message))
+
+        # Either we haven't tried to exec it, or else exec failed in an unknown way,
+        # so we will try and parse the file as INI:
+
+        try:
+            return self._load_from_ini(path)
+        except errors.AnsibleInvalidInventory as e:
+            if exec_failed:
+                raise errors.AnsibleInvalidInventory("The inventory file %s is marked executable, but failed to run, and also could not be parsed as a "
+                                                     "standard ansible INI file. \n%s" % (path, exec_failed))
+            if utils.has_shebang(path):
+                raise errors.AnsibleError("The file %s looks like it should be an executable inventory script, but is not marked executable. " % path + \
+                                          "Perhaps you want to correct this with `chmod +x %s`?" % path)
+            raise
 
 
     def _match(self, str, pattern_str):
@@ -520,14 +524,14 @@ class Inventory(object):
         if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._also_restriction = restriction
-    
+
     def subset(self, subset_pattern):
         """ 
         Limits inventory results to a subset of inventory that matches a given
         pattern, such as to select a given geographic of numeric slice amongst
         a previous 'hosts' selection that only select roles, or vice versa.  
         Corresponds to --limit parameter to ansible-playbook
-        """        
+        """
         if subset_pattern is None:
             self._subset = None
         else:
@@ -547,7 +551,7 @@ class Inventory(object):
     def lift_restriction(self):
         """ Do not restrict list operations """
         self._restriction = None
-    
+
     def lift_also_restriction(self):
         """ Clears the also restriction """
         self._also_restriction = None

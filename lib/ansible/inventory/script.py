@@ -58,7 +58,11 @@ class InventoryScript(object):
         all_hosts = {}
 
         # not passing from_remote because data from CMDB is trusted
-        self.raw  = utils.parse_json(self.data)
+        try:
+            self.raw  = utils.parse_json(self.data)
+        except ValueError as exep:
+            raise errors.AnsibleInvalidInventory("failed to read JSON from inventory script. %s" % exep.message)
+
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
         all       = Group('all')
@@ -68,7 +72,7 @@ class InventoryScript(object):
 
         if 'failed' in self.raw:
             sys.stderr.write(err + "\n")
-            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
+            raise errors.AnsibleInvalidInventory("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
 
@@ -97,7 +101,7 @@ class InventoryScript(object):
 
             if 'hosts' in data:
                 if not isinstance(data['hosts'], list):
-                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
+                    raise errors.AnsibleInvalidInventory("You defined a group \"%s\" with bad "
                         "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
@@ -108,7 +112,7 @@ class InventoryScript(object):
 
             if 'vars' in data:
                 if not isinstance(data['vars'], dict):
-                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
+                    raise errors.AnsibleInvalidInventory("You defined a group \"%s\" with bad "
                         "data for variables:\n %s" % (group_name, data))
 
                 for k, v in data['vars'].iteritems():
@@ -150,5 +154,5 @@ class InventoryScript(object):
         try:
             return json_dict_bytes_to_unicode(utils.parse_json(out))
         except ValueError:
-            raise errors.AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
+            raise errors.AnsibleInvalidInventory("could not parse post variable response: %s, %s" % (cmd, out))
 

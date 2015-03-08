@@ -146,7 +146,7 @@ class InventoryParser(object):
                             try:
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
-                                raise errors.AnsibleError("%s:%s: Invalid ini entry: %s - %s" % (self.filename, lineno + 1, t, str(e)))
+                                raise errors.AnsibleInvalidInventory("%s:%s: Invalid ini entry: %s - %s" % (self.filename, lineno + 1, t, str(e)))
                             host.set_variable(k, self._parse_value(v))
                     self.groups[active_group_name].add_host(host)
 
@@ -173,7 +173,7 @@ class InventoryParser(object):
             elif group:
                 kid_group = self.groups.get(line, None)
                 if kid_group is None:
-                    raise errors.AnsibleError("%s:%d: child group is not defined: (%s)" % (self.filename, lineno + 1, line))
+                    raise errors.AnsibleInvalidInventory("%s:%d: child group is not defined: (%s)" % (self.filename, lineno + 1, line))
                 else:
                     group.add_child_group(kid_group)
 
@@ -190,7 +190,7 @@ class InventoryParser(object):
                 line = line.replace("[","").replace(":vars]","")
                 group = self.groups.get(line, None)
                 if group is None:
-                    raise errors.AnsibleError("%s:%d: can't add vars to undefined group: %s" % (self.filename, lineno + 1, line))
+                    raise errors.AnsibleInvalidInventory("%s:%d: can't add vars to undefined group: %s" % (self.filename, lineno + 1, line))
             elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
@@ -199,7 +199,7 @@ class InventoryParser(object):
                 pass
             elif group:
                 if "=" not in line:
-                    raise errors.AnsibleError("%s:%d: variables assigned to group must be in key=value form" % (self.filename, lineno + 1))
+                    raise errors.AnsibleInvalidInventory("%s:%d: variables assigned to group must be in key=value form" % (self.filename, lineno + 1))
                 else:
                     (k, v) = [e.strip() for e in line.split("=", 1)]
                     group.set_variable(k, self._parse_value(v))

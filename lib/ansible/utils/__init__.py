@@ -292,6 +292,10 @@ def is_executable(path):
             or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
+def has_shebang(path):
+    ''' does the file at the given path start with a #! (shebang)? '''
+    return open(path).read(2) == '#!'
+
 def unfrackpath(path):
     '''
     returns a path that is free of symlinks, environment

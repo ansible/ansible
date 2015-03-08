@@ -18,11 +18,17 @@ class TestInventory(unittest.TestCase):
         self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
         self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
         self.inventory_dir              = os.path.join(self.test_dir, 'inventory_dir')
+        self.inventory_generated        = os.path.join(self.test_dir, '_test_generated')
 
         os.chmod(self.inventory_script, 0755)
+        os.chmod(self.inventory_file, 0644)
 
     def tearDown(self):
         os.chmod(self.inventory_script, 0644)
+        os.chmod(self.inventory_file, 0644)
+
+        if os.path.exists(self.inventory_generated):
+            os.unlink(self.inventory_generated)
 
     def compare(self, left, right, sort=True):
         if sort:
@@ -46,6 +52,9 @@ class TestInventory(unittest.TestCase):
 
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
+
+    def generated_inventory(self):
+        return Inventory(self.inventory_generated)
 
     def dir_inventory(self):
         return Inventory(self.inventory_dir)
@@ -363,6 +372,54 @@ class TestInventory(unittest.TestCase):
             self.test_script()
 
         C.ALLOW_EXECUTABLE_INVENTORY = True
+
+    def test_script_not_executable(self):
+        os.chmod(self.inventory_script, 0644)
+        with self.assertRaises(errors.AnsibleError):
+            self.test_script()
+
+    def test_script_without_shebang(self):
+        with open(self.inventory_generated, 'w') as f:
+            f.write('\n'.join(open(self.inventory_script).readlines()[1:]))
+
+        os.chmod(self.inventory_generated, 0755)
+
+        with self.assertRaisesRegexp(errors.AnsibleInvalidInventory, "failed to run, and also could not be parsed"):
+            self.generated_inventory()
+
+    def test_script_exec_fail(self):
+        with open(self.inventory_generated, 'w') as f:
+            f.write("#!/usr/bin/env python\n")
+            f.write("raise Exception")
+
+        os.chmod(self.inventory_generated, 0755)
+
+        with self.assertRaisesRegexp(errors.AnsibleInvalidInventory, 'failed to run'):
+            self.generated_inventory()
+
+    def test_script_produces_nonsense(self):
+        with open(self.inventory_generated, 'w') as f:
+            f.write("#!/usr/bin/env python\n")
+            f.write("print 'this should NOT work.'")
+
+        os.chmod(self.inventory_generated, 0755)
+
+        with self.assertRaisesRegexp(errors.AnsibleInvalidInventory, "didn't produce a valid inventory"):
+            self.generated_inventory()
+
+    def test_executable_ini(self):
+        os.chmod(self.inventory_file, 0755)
+        self.test_simple_all()
+
+    def test_executable_ini_with_shebang(self):
+        with open(self.inventory_generated, 'w') as f:
+            f.write("#!/usr/bin/env python\n")
+            f.write(open(self.inventory_file).read())
+
+        os.chmod(self.inventory_generated, 0755)
+
+        with self.assertRaisesRegexp(errors.AnsibleInvalidInventory, "remove the shebang"):
+            self.generated_inventory()
 
     def test_script_all(self):
         inventory = self.script_inventory()
