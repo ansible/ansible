@@ -37,7 +37,7 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
+    def __init__(self, runner, host, port, user, password, private_key_file, ssh_args, proxy_host, proxy_port, proxy_user, proxy_private_key_file, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.ipv6 = ':' in self.host
@@ -47,6 +47,11 @@ class Connection(object):
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
         self.has_pipelining = True
+        self.ssh_args = ssh_args
+        self.proxy_host = proxy_host
+        self.proxy_port = proxy_port
+        self.proxy_user = proxy_user
+        self.proxy_private_key_file = proxy_private_key_file
 
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
@@ -58,10 +63,35 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s" % self.user, host=self.host)
 
         self.common_args = []
-        extra_args = C.ANSIBLE_SSH_ARGS
-        if extra_args is not None:
+
+        if self.proxy_host is not None:
+            proxy_args = []
+            if self.proxy_port is not None:
+                proxy_args += ["-o", "Port=%d" % (self.proxy_port)]
+            if self.proxy_private_key_file is not None:
+                proxy_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.proxy_private_key_file)]
+            elif self.runner.proxy_private_key_file is not None:
+                proxy_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.proxy_private_key_file)]
+
+            if not C.HOST_KEY_CHECKING:
+                proxy_args += ["-o", "StrictHostKeyChecking=no"]
+
+            proxy_args += ["-o", "KbdInteractiveAuthentication=no",
+                           "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
+                           "-o", "PasswordAuthentication=no"
+            ]
+
+            if self.proxy_user is not None and self.proxy_user != pwd.getpwuid(os.geteuid())[0]:
+                proxy_args += ["-o", "User="+self.proxy_user]
+            proxy_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
+
+            self.common_args += ["-o", "ProxyCommand=ssh {proxy_host} {proxy_args} -W %h:%p".format(proxy_host=self.proxy_host, proxy_args=" ".join(proxy_args))]
+
+
+
+        if self.ssh_args is not None:
             # make sure there is no empty string added as this can produce weird errors
-            self.common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
+            self.common_args += [x.strip() for x in shlex.split(self.ssh_args) if x.strip()]
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
@@ -69,6 +99,7 @@ class Connection(object):
 
         cp_in_use = False
         cp_path_set = False
+
         for arg in self.common_args:
             if "ControlPersist" in arg:
                 cp_in_use = True
