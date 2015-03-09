@@ -673,7 +673,7 @@ class Runner(object):
 
         # Then we selectively merge some variable dictionaries down to a
         # single dictionary, used to template the HostVars for this host
-        temp_vars = inject['combined_cache']
+        temp_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
         temp_vars = utils.combine_vars(temp_vars, inject['combined_cache'] )
         temp_vars = utils.combine_vars(temp_vars, {'groups': inject['groups']})
         temp_vars = utils.combine_vars(temp_vars, self.play_vars)
