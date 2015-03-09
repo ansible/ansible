@@ -67,8 +67,8 @@ For starters, here's a playbook that contains just one play::
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
-      - name: ensure apache is running
-        service: name=httpd state=started
+      - name: ensure apache is running (and enable it at boot)
+        service: name=httpd state=started enabled=yes
       handlers:
         - name: restart apache
           service: name=httpd state=restarted
