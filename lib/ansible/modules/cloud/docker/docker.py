@@ -729,16 +729,24 @@ class DockerManager(object):
         return False
 
     def get_inspect_image(self):
+        try:
+            return self.client.inspect_image(self.module.params.get('image'))
+        except DockerAPIError as e:
+            if e.response.status_code == 404:
+                return None
+            else:
+                raise e
+
+    def get_image_repo_tags(self):
         image, tag = get_split_image_tag(self.module.params.get('image'))
         if tag is None:
             tag = 'latest'
         resource = '%s:%s' % (image, tag)
 
-        matching_image = None
         for image in self.client.images(name=image):
             if resource in image.get('RepoTags', []):
-                matching_image = image
-        return matching_image
+                return image['RepoTags']
+        return None
 
     def get_inspect_containers(self, containers):
         inspect = []
@@ -1036,10 +1044,10 @@ class DockerManager(object):
         # that map to the same Docker image.
         inspected = self.get_inspect_image()
         if inspected:
-            images = inspected.get('RepoTags', [])
+            repo_tags = self.get_image_repo_tags()
         else:
             image, tag = get_split_image_tag(self.module.params.get('image'))
-            images = [':'.join([image, tag])]
+            repo_tags = [':'.join([image, tag])]
 
         for i in self.client.containers(all=True):
             running_image = i['Image']
@@ -1049,7 +1057,7 @@ class DockerManager(object):
             if name:
                 matches = name in i.get('Names', [])
             else:
-                image_matches = running_image in images
+                image_matches = running_image in repo_tags
 
                 # if a container has an entrypoint, `command` will actually equal
                 # '{} {}'.format(entrypoint, command)
