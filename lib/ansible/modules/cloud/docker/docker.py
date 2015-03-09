@@ -820,13 +820,11 @@ class DockerManager(object):
                 continue
 
             # VOLUMES
-            # not including bind modes.
 
             expected_volume_keys = set((image['ContainerConfig']['Volumes'] or {}).keys())
             if self.volumes:
-                for key, config in self.volumes.iteritems():
-                    if not config and key not in self.binds:
-                        expected_volume_keys.add(key)
+                expected_volume_keys.update(self.volumes.keys())
+
             actual_volume_keys = set((container['Config']['Volumes'] or {}).keys())
 
             if actual_volume_keys != expected_volume_keys:
