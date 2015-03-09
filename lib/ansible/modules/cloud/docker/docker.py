@@ -846,11 +846,20 @@ class DockerManager(object):
             # actual_env is likely to include environment variables injected by
             # the Dockerfile.
 
-            expected_env = set(image['ContainerConfig']['Env'] or [])
+            expected_env = {}
+
+            for image_env in image['ContainerConfig']['Env'] or []:
+                name, value = image_env.split('=', 1)
+                expected_env[name] = value
+
             if self.env:
                 for name, value in self.env.iteritems():
-                    expected_env.add("{}={}".format(name, value))
-            actual_env = set(container['Config']['Env'] or [])
+                    expected_env[name] = value
+
+            actual_env = {}
+            for container_env in container['Config']['Env'] or []:
+                name, value = container_env.split('=', 1)
+                actual_env[name] = value
 
             if actual_env != expected_env:
                 # Don't include the environment difference in the output.
