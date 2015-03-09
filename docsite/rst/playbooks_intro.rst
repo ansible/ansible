@@ -212,7 +212,7 @@ them work as simply as you would expect::
        command: /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
-whose successful exit code is not zero, you may wish to explicitely tell it
+whose successful exit code is not zero, you may wish to explicitly tell it
 that it should ignore the return code:
 
    tasks:
