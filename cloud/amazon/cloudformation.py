@@ -54,6 +54,12 @@ options:
     required: false
     default: null
     aliases: []
+  notification_arns:
+    description:
+      - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
+    required: false
+    default: null
+    version_added: "2.0"
   stack_policy:
     description:
       - the path of the cloudformation stack policy
@@ -228,6 +234,7 @@ def main():
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=False),
+            notification_arns=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
@@ -263,6 +270,8 @@ def main():
             module.fail_json(msg='yaml format only supported for local templates')
         else:
             template_body = json.dumps(yaml.load(template_body), indent=2)
+
+    notification_arns = module.params['notification_arns']
 
     if module.params['stack_policy'] is not None:
         stack_policy_body = open(module.params['stack_policy'], 'r').read()
@@ -304,6 +313,7 @@ def main():
         try:
             cfn.create_stack(stack_name, parameters=template_parameters_tup,
                              template_body=template_body,
+                             notification_arns=notification_arns,
                              stack_policy_body=stack_policy_body,
                              template_url=template_url,
                              disable_rollback=disable_rollback,
@@ -326,6 +336,7 @@ def main():
         try:
             cfn.update_stack(stack_name, parameters=template_parameters_tup,
                              template_body=template_body,
+                             notification_arns=notification_arns,
                              stack_policy_body=stack_policy_body,
                              disable_rollback=disable_rollback,
                              template_url=template_url,
