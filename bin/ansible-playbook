@@ -91,6 +91,8 @@ def main(args):
         help="perform a syntax check on the playbook, but do not execute it")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
         help="list all tasks that would be executed")
+    parser.add_option('--list-tags', dest='listtags', action='store_true',
+        help="list all available tags")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
@@ -123,7 +125,7 @@ def main(args):
 
     options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
 
-    if options.listhosts or options.syntax or options.listtasks:
+    if options.listhosts or options.syntax or options.listtasks or options.listtags:
         (_, _, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
     else:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
@@ -215,7 +217,7 @@ def main(args):
             display(callbacks.banner("FLUSHING FACT CACHE"))
             pb.SETUP_CACHE.flush()
 
-        if options.listhosts or options.listtasks or options.syntax:
+        if options.listhosts or options.listtasks or options.syntax or options.listtags:
             print ''
             print 'playbook: %s' % playbook
             print ''
@@ -232,14 +234,23 @@ def main(args):
                     for host in hosts:
                         print '    %s' % host
 
-                if options.listtasks:
-                    print '  play #%d (%s):' % (playnum, label)
+                if options.listtags or options.listtasks:
+                    print '  play #%d (%s):\tTAGS: [%s]' % (playnum, label,','.join(sorted(set(play.tags))))
 
-                    for task in pb.tasks_to_run_in_play(play):
-                        if getattr(task, 'name', None) is not None:
-                            # meta tasks have no names
-                            print '    %s' % task.name
-                if options.listhosts or options.listtasks:
+                    if options.listtags:
+                        tags = []
+                        for task in pb.tasks_to_run_in_play(play):
+                            tags.extend(task.tags)
+                        print '    TASK TAGS: [%s]' % (', '.join(sorted(set(tags).difference(['untagged']))))
+
+                    if options.listtasks:
+
+                        for task in pb.tasks_to_run_in_play(play):
+                            if getattr(task, 'name', None) is not None:
+                                # meta tasks have no names
+                                print '    %s\tTAGS: [%s]' % (task.name, ', '.join(sorted(set(task.tags).difference(['untagged']))))
+
+                if options.listhosts or options.listtasks or options.listtags:
                     print ''
             continue
 
