@@ -854,7 +854,7 @@ class DockerManager(object):
 
             if self.env:
                 for name, value in self.env.iteritems():
-                    expected_env[name] = value
+                    expected_env[name] = str(value)
 
             actual_env = {}
             for container_env in container['Config']['Env'] or []:
@@ -863,7 +863,7 @@ class DockerManager(object):
 
             if actual_env != expected_env:
                 # Don't include the environment difference in the output.
-                self.reload_reasons.append('environment')
+                self.reload_reasons.append('environment {0} => {1}'.format(actual_env, expected_env))
                 differing.append(container)
                 continue
 
@@ -996,7 +996,7 @@ class DockerManager(object):
 
             expected_links = set()
             for link, alias in (self.links or {}).iteritems():
-                expected_links.add("/{0}:/running/{1}".format(link, alias))
+                expected_links.add("/{0}:{1}/{2}".format(link, container["Name"], alias))
 
             actual_links = set(container['HostConfig']['Links'] or [])
             if actual_links != expected_links:
