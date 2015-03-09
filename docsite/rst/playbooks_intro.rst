@@ -212,19 +212,31 @@ them work as simply as you would expect::
        command: /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
-whose successful exit code is not zero, you may wish to do this::
+whose successful exit code is not zero, you may wish to explicitely tell it
+that it should ignore return code:
 
    tasks:
-     - name: run this command and ignore the result
-       shell: /usr/bin/somecommand || /bin/true
+     - name: run this command and ignore the return code
+       command: /usr/bin/somecommand
+       failed_when: False
 
-Or this::
+The `failed_when` statement accepts a boolean expression and you can make it fail
+on different conditions::
 
    tasks:
-     - name: run this command and ignore the result
-       shell: /usr/bin/somecommand
-       ignore_errors: True
+     - name: run this command and fail when return code is greater than 5
+       command: /usr/bin/somecommand
+       register: cmd
+       failed_when: cmd.rc > 5
 
+There is also a `changed_when` statement that you can use to influence when a task
+causes a real change. Since `command` and `shell` modules assume that every command
+indicates a change, you can override this default behaviour:
+
+   tasks:
+     - name: run this command and indicate there is no change
+       command: /bin/hostname
+       changed_when: False
 
 If the action line is getting too long for comfort you can break it on
 a space and indent any continuation lines::
