@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ module: iam_policy
 short_description: Manage IAM policies for users, groups, and roles
 description:
      - Allows uploading or removing IAM policies for IAM users, groups or roles.
-version_added: "1.9"
+version_added: "2.0"
 options:
   iam_type:
     description:
@@ -69,11 +69,11 @@ options:
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
 
-
 requirements: [ "boto" ]
 notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will not work removing/adding managed policies.'
-author: Jonathan I. Davila and Paul Seiffert
+author: Jonathan I. Davila
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
