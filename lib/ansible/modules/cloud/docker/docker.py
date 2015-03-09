@@ -808,9 +808,7 @@ class DockerManager(object):
                     continue
 
             # EXPOSED PORTS
-            # Note that ports that are bound at container run are also exposed
-            # implicitly.
-            expected_exposed_ports = set()
+            expected_exposed_ports = set((image['ContainerConfig']['ExposedPorts'] or {}).keys())
             for p in (self.exposed_ports or []):
                 expected_exposed_ports.add("/".join(p))
 
@@ -824,7 +822,7 @@ class DockerManager(object):
             # VOLUMES
             # not including bind modes.
 
-            expected_volume_keys = set()
+            expected_volume_keys = set((image['ContainerConfig']['Volumes'] or {}).keys())
             if self.volumes:
                 for key, config in self.volumes.iteritems():
                     if not config and key not in self.binds:
@@ -850,13 +848,13 @@ class DockerManager(object):
             # actual_env is likely to include environment variables injected by
             # the Dockerfile.
 
-            expected_env = set()
+            expected_env = set(image['ContainerConfig']['Env'] or [])
             if self.env:
                 for name, value in self.env.iteritems():
                     expected_env.add("{}={}".format(name, value))
             actual_env = set(container['Config']['Env'] or [])
 
-            if not actual_env.issuperset(expected_env):
+            if actual_env != expected_env:
                 # Don't include the environment difference in the output.
                 self.reload_reasons.append('environment')
                 differing.append(container)
