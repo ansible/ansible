@@ -213,7 +213,7 @@ them work as simply as you would expect::
 
 The command and shell module care about return codes, so if you have a command
 whose successful exit code is not zero, you may wish to explicitely tell it
-that it should ignore return code:
+that it should ignore the return code:
 
    tasks:
      - name: run this command and ignore the return code
