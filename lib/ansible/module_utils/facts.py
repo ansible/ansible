@@ -1972,6 +1972,7 @@ class AIX(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_vgs_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -2080,6 +2081,22 @@ class AIX(Hardware):
                                       }
                             self.facts['vgs'][m.group(1)].append(pv_info)
 
+
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        # AIX does not have mtab but mount command is only source of info (or to use
+        # api calls to get same info)
+        mount_path = module.get_bin_path('mount')
+        rc, mount_out, err = module.run_command(mount_path)
+        if mount_out:
+            for line in mount_out.split('\n'):
+                fields = line.split()
+                if len(fields) != 0 and re.match('^/', fields[0]):
+                    self.facts['mounts'].append({'mount': fields[1],
+                                             'device': fields[0],
+                                             'fstype' : fields[2],
+                                             'options': fields[6],
+                                             'time': '%s %s %s' % ( fields[3], fields[4], fields[5])})
 
 class HPUX(Hardware):
     """
