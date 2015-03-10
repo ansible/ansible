@@ -42,6 +42,7 @@ deb-build
 credentials.yml
 # test output
 .coverage
+.tox
 results.xml
 coverage.xml
 /test/units/cover-html

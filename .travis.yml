@@ -1,0 +1,11 @@
+sudo: false
+language: python
+env:
+  - TOXENV=py26
+  - TOXENV=py27
+install:
+  - pip install tox
+script:
+  - tox
+after_success:
+  - coveralls
