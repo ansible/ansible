@@ -24,26 +24,24 @@ import sys
 
 class Task(object):
 
-    __slots__ = [
-        'name', 'meta', 'action', 'when', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars', 'play_vars', 'play_file_vars', 'role_vars', 'role_params', 'default_vars',
-        'play', 'notified_by', 'tags', 'register', 'role_name',
-        'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-        'su', 'su_user', 'su_pass', 'no_log', 'run_once',
+    _t_common = [
+        'action', 'always_run', 'any_errors_fatal', 'args', 'become', 'become_method', 'become_pass',
+        'become_user', 'changed_when', 'delay', 'delegate_to', 'environment', 'failed_when',
+        'first_available_file', 'ignore_errors', 'local_action', 'meta', 'name', 'no_log',
+        'notify', 'register', 'remote_user', 'retries', 'run_once', 'su', 'su_pass', 'su_user',
+        'sudo', 'sudo_pass', 'sudo_user', 'tags', 'transport', 'until', 'when',
     ]
 
+    __slots__ = [
+        'async_poll_interval', 'async_seconds', 'default_vars', 'first_available_file',
+        'items_lookup_plugin', 'items_lookup_terms', 'module_args', 'module_name', 'module_vars',
+        'notified_by', 'play', 'play_file_vars', 'play_vars', 'role_name', 'role_params', 'role_vars',
+    ] + _t_common
+
     # to prevent typos and such
-    VALID_KEYS = frozenset((
-         'name', 'meta', 'action', 'when', 'async', 'poll', 'notify',
-         'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
-         'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-         'su', 'su_user', 'su_pass', 'no_log', 'run_once',
-    ))
+    VALID_KEYS = frozenset([
+        'async', 'connection', 'include', 'poll',
+    ] + _t_common)
 
     def __init__(self, play, ds, module_vars=None, play_vars=None, play_file_vars=None, role_vars=None, role_params=None, default_vars=None, additional_conditions=None, role_name=None):
         ''' constructor loads from a task or handler datastructure '''
@@ -131,14 +129,12 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'untagged' ]
         self.register     = ds.get('register', None)
-        self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
-        self.su           = utils.boolean(ds.get('su', play.su))
         self.environment  = ds.get('environment', play.environment)
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false")) or self.play.no_log
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 
-        #Code to allow do until feature in a Task 
+        #Code to allow do until feature in a Task
         if 'until' in ds:
             if not ds.get('register'):
                 raise errors.AnsibleError("register keyword is mandatory when using do until feature")
@@ -160,24 +156,36 @@ class Task(object):
         else:
             self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
 
-        self.sudo_user    = None
-        self.sudo_pass    = None
-        self.su_user      = None
-        self.su_pass      = None
+        # Fail out if user specifies privilege escalation params in conflict
+        if (ds.get('become') or ds.get('become_user') or ds.get('become_pass')) and (ds.get('sudo') or ds.get('sudo_user') or ds.get('sudo_pass')):
+            raise errors.AnsibleError('incompatible parameters ("become", "become_user", "become_pass") and sudo params "sudo", "sudo_user", "sudo_pass" in task: %s' % self.name)
 
-        if self.sudo:
-            self.sudo_user    = ds.get('sudo_user', play.sudo_user)
-            self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
-        elif self.su:
-            self.su_user      = ds.get('su_user', play.su_user)
-            self.su_pass      = ds.get('su_pass', play.playbook.su_pass)
+        if (ds.get('become') or ds.get('become_user') or ds.get('become_pass')) and (ds.get('su') or ds.get('su_user') or ds.get('su_pass')):
+            raise errors.AnsibleError('incompatible parameters ("become", "become_user", "become_pass") and su params "su", "su_user", "sudo_pass" in task: %s' % self.name)
 
-        # Fail out if user specifies a sudo param with a su param in a given play
-        if (ds.get('sudo') or ds.get('sudo_user') or ds.get('sudo_pass')) and \
-                (ds.get('su') or ds.get('su_user') or ds.get('su_pass')):
-            raise errors.AnsibleError('sudo params ("sudo", "sudo_user", "sudo_pass") '
-                                      'and su params "su", "su_user", "su_pass") '
-                                      'cannot be used together')
+        if (ds.get('sudo') or ds.get('sudo_user') or ds.get('sudo_pass')) and (ds.get('su') or ds.get('su_user') or ds.get('su_pass')):
+            raise errors.AnsibleError('incompatible parameters ("su", "su_user", "su_pass") and sudo params "sudo", "sudo_user", "sudo_pass" in task: %s' % self.name)
+
+        self.become        = utils.boolean(ds.get('become', play.become))
+        self.become_method = ds.get('become_method', play.become_method)
+        self.become_user   = ds.get('become_user', play.become_user)
+        self.become_pass   = ds.get('become_pass', play.playbook.become_pass)
+
+        # set only if passed in current task data
+        if 'sudo' in ds or 'sudo_user' in ds:
+            self.become=ds['sudo']
+            self.become_method='sudo'
+            if 'sudo_user' in ds:
+                self.become_user = ds['sudo_user']
+            if 'sudo_pass' in ds:
+                self.become_pass = ds['sudo_pass']
+        if 'su' in ds or 'su_user' in ds:
+            self.become=ds['su']
+            self.become_method='su'
+            if 'su_user' in ds:
+                self.become_user = ds['su_user']
+            if 'su_pass' in ds:
+                self.become_pass = ds['su_pass']
 
         # Both are defined
         if ('action' in ds) and ('local_action' in ds):

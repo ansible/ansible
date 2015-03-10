@@ -18,6 +18,9 @@ class FakeRunner(object):
         self.remote_user = None
         self.private_key_file = None
         self.check = False
+        self.become = False
+        self.become_method = False
+        self.become_user = False
 
     def _execute_module(self, conn, tmp, module_name, args,
         async_jid=None, async_module=None, async_limit=None, inject=None, 
@@ -76,7 +79,7 @@ class TestSynchronize(unittest.TestCase):
         """ verify the synchronize action plugin unsets and then sets sudo """ 
 
         runner = FakeRunner()
-        runner.sudo = True
+        runner.become = True
         runner.remote_user = "root"
         runner.transport = "ssh"
         conn = FakeConn()
@@ -97,7 +100,7 @@ class TestSynchronize(unittest.TestCase):
         assert runner.executed_complex_args == {'dest':'root@el6.lab.net:/tmp/bar',
                                                 'src':'/tmp/foo',
                                                 'rsync_path':'"sudo rsync"'}, "wrong args used"
-        assert runner.sudo == True, "sudo was not reset to True" 
+        assert runner.become == True, "sudo was not reset to True"
 
 
     def test_synchronize_action_local(self):
