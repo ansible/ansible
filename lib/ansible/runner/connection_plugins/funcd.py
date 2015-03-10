@@ -63,7 +63,7 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        vvv("EXEC %s" % (cmd), host=self.host)
+        vvv("EXEC %s" % (cmd), host=self.host, runner=self.runner)
         p = self.client.command.run(cmd)[self.host]
         return (p[0], '', p[1], p[2])
 
@@ -77,14 +77,14 @@ class Connection(object):
         ''' transfer a file from local to remote '''
 
         out_path = self._normalize_path(out_path, '/')
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         self.client.local.copyfile.send(in_path, out_path)
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
 
         in_path = self._normalize_path(in_path, '/')
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         # need to use a tmp dir due to difference of semantic for getfile
         # ( who take a # directory as destination) and fetch_file, who
         # take a file directly

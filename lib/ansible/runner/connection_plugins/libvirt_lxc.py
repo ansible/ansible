@@ -54,7 +54,7 @@ class Connection(object):
     def connect(self, port=None):
         ''' connect to the lxc; nothing to do here '''
 
-        vvv("THIS IS A LOCAL LXC DIR", host=self.lxc)
+        vvv("THIS IS A LOCAL LXC DIR", host=self.lxc, runner=self.runner)
 
         return self
 
@@ -77,7 +77,7 @@ class Connection(object):
         # We enter lxc as root so sudo stuff can be ignored
         local_cmd = self._generate_cmd(executable, cmd)
 
-        vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        vvv("EXEC %s" % (local_cmd), host=self.lxc, runner=self.runner)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
@@ -96,10 +96,10 @@ class Connection(object):
         ''' transfer a file from local to lxc '''
 
         out_path = self._normalize_path(out_path, '/')
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.lxc)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.lxc, runner=self.runner)
         
         local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/tee', out_path]
-        vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        vvv("EXEC %s" % (local_cmd), host=self.lxc, runner=self.runner)
 
         p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
@@ -110,10 +110,10 @@ class Connection(object):
         ''' fetch a file from lxc to local '''
 
         in_path = self._normalize_path(in_path, '/')
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.lxc)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.lxc, runner=self.runner)
 
         local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/cat', in_path]
-        vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        vvv("EXEC %s" % (local_cmd), host=self.lxc, runner=self.runner)
 
         p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,

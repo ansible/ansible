@@ -55,7 +55,7 @@ class Connection(object):
     def connect(self):
         ''' connect to the remote host '''
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.user, host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s" % self.user, host=self.host, runner=self.runner)
 
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -253,7 +253,7 @@ class Connection(object):
                         return False
 
         if (hfiles_not_found == len(host_file_list)):
-            vvv("EXEC previous known host file not found for %s" % host)
+            vvv("EXEC previous known host file not found for %s" % host, runner=self.runner)
         return True
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
@@ -289,7 +289,7 @@ class Connection(object):
             sudocmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
-        vvv("EXEC %s" % ' '.join(ssh_cmd), host=self.host)
+        vvv("EXEC %s" % ' '.join(ssh_cmd), host=self.host, runner=self.runner)
 
         not_in_host_file = self.not_in_host_file(self.host)
 
@@ -404,7 +404,7 @@ class Connection(object):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         cmd = self._password_cmd()
@@ -432,7 +432,7 @@ class Connection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         cmd = self._password_cmd()
 
         host = self.host

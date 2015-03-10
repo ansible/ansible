@@ -79,7 +79,7 @@ class Connection(object):
     def connect(self, port=None):
         ''' connect to the chroot; nothing to do here '''
 
-        vvv("THIS IS A LOCAL CHROOT DIR", host=self.jail)
+        vvv("THIS IS A LOCAL CHROOT DIR", host=self.jail, runner=self.runner)
 
         return self
 
@@ -103,7 +103,7 @@ class Connection(object):
         # We enter chroot as root so sudo stuff can be ignored
         local_cmd = self._generate_cmd(executable, cmd)
 
-        vvv("EXEC %s" % (local_cmd), host=self.jail)
+        vvv("EXEC %s" % (local_cmd), host=self.jail, runner=self.runner)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
@@ -134,7 +134,7 @@ class Connection(object):
         ''' transfer a file from local to chroot '''
 
         out_path = self._normalize_path(out_path, self.get_jail_path())
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail, runner=self.runner)
 
         self._copy_file(in_path, out_path)
 
@@ -142,7 +142,7 @@ class Connection(object):
         ''' fetch a file from chroot to local '''
 
         in_path = self._normalize_path(in_path, self.get_jail_path())
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail, runner=self.runner)
 
         self._copy_file(in_path, out_path)
 

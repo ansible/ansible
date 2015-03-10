@@ -102,7 +102,7 @@ class Connection(object):
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))
         else:
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
-        vvvv("attempting to start up the accelerate daemon...")
+        vvvv("attempting to start up the accelerate daemon...", runner=self.runner)
         self.ssh.connect()
         tmp_path = self.runner._make_tmp_path(self.ssh)
         return self.runner._execute_module(self.ssh, tmp_path, 'accelerate', args, inject=inject)
@@ -116,20 +116,20 @@ class Connection(object):
                 tries = 3
                 self.conn = socket.socket()
                 self.conn.settimeout(constants.ACCELERATE_CONNECT_TIMEOUT)
-                vvvv("attempting connection to %s via the accelerated port %d" % (self.host,self.accport))
+                vvvv("attempting connection to %s via the accelerated port %d" % (self.host,self.accport), runner=self.runner)
                 while tries > 0:
                     try:
                         self.conn.connect((self.host,self.accport))
                         break
                     except socket.error:
-                        vvvv("connection to %s failed, retrying..." % self.host)
+                        vvvv("connection to %s failed, retrying..." % self.host, runner=self.runner)
                         time.sleep(0.1)
                         tries -= 1
                 if tries == 0:
-                    vvv("Could not connect via the accelerated connection, exceeded # of tries")
+                    vvv("Could not connect via the accelerated connection, exceeded # of tries", runner=self.runner)
                     raise AnsibleError("FAILED")
                 elif wrong_user:
-                    vvv("Restarting daemon with a different remote_user")
+                    vvv("Restarting daemon with a different remote_user", runner=self.runner)
                     raise AnsibleError("WRONG_USER")
 
                 self.conn.settimeout(constants.ACCELERATE_TIMEOUT)
@@ -143,9 +143,9 @@ class Connection(object):
         except AnsibleError, e:
             if allow_ssh:
                 if "WRONG_USER" in e:
-                    vvv("Switching users, waiting for the daemon on %s to shutdown completely..." % self.host)
+                    vvv("Switching users, waiting for the daemon on %s to shutdown completely..." % self.host, runner=self.runner)
                     time.sleep(5)
-                vvv("Falling back to ssh to startup accelerated mode")
+                vvv("Falling back to ssh to startup accelerated mode", runner=self.runner)
                 res = self._execute_accelerate_module()
                 if not res.is_successful():
                     raise AnsibleError("Failed to launch the accelerated daemon on %s (reason: %s)" % (self.host,res.result.get('msg')))
@@ -163,25 +163,25 @@ class Connection(object):
         header_len = 8 # size of a packed unsigned long long
         data = b""
         try:
-            vvvv("%s: in recv_data(), waiting for the header" % self.host)
+            vvvv("%s: in recv_data(), waiting for the header" % self.host, runner=self.runner)
             while len(data) < header_len:
                 d = self.conn.recv(header_len - len(data))
                 if not d:
-                    vvvv("%s: received nothing, bailing out" % self.host)
+                    vvvv("%s: received nothing, bailing out" % self.host, runner=self.runner)
                     return None
                 data += d
-            vvvv("%s: got the header, unpacking" % self.host)
+            vvvv("%s: got the header, unpacking" % self.host, runner=self.runner)
             data_len = struct.unpack('!Q',data[:header_len])[0]
             data = data[header_len:]
-            vvvv("%s: data received so far (expecting %d): %d" % (self.host,data_len,len(data)))
+            vvvv("%s: data received so far (expecting %d): %d" % (self.host,data_len,len(data)), runner=self.runner)
             while len(data) < data_len:
                 d = self.conn.recv(data_len - len(data))
                 if not d:
-                    vvvv("%s: received nothing, bailing out" % self.host)
+                    vvvv("%s: received nothing, bailing out" % self.host, runner=self.runner)
                     return None
-                vvvv("%s: received %d bytes" % (self.host, len(d)))
+                vvvv("%s: received %d bytes" % (self.host, len(d)), runner=self.runner)
                 data += d
-            vvvv("%s: received all of the data, returning" % self.host)
+            vvvv("%s: received all of the data, returning" % self.host, runner=self.runner)
             return data
         except socket.timeout:
             raise AnsibleError("timed out while waiting to receive data")
@@ -193,7 +193,7 @@ class Connection(object):
         daemon to exit if they don't match
         '''
 
-        vvvv("%s: sending request for validate_user" % self.host)
+        vvvv("%s: sending request for validate_user" % self.host, runner=self.runner)
         data = dict(
             mode='validate_user',
             username=self.user,
@@ -203,7 +203,7 @@ class Connection(object):
         if self.send_data(data):
             raise AnsibleError("Failed to send command to %s" % self.host)
 
-        vvvv("%s: waiting for validate_user response" % self.host)
+        vvvv("%s: waiting for validate_user response" % self.host, runner=self.runner)
         while True:
             # we loop here while waiting for the response, because a
             # long running command may cause us to receive keepalive packets
@@ -215,10 +215,10 @@ class Connection(object):
             response = utils.parse_json(response)
             if "pong" in response:
                 # it's a keepalive, go back to waiting
-                vvvv("%s: received a keepalive packet" % self.host)
+                vvvv("%s: received a keepalive packet" % self.host, runner=self.runner)
                 continue
             else:
-                vvvv("%s: received the validate_user response: %s" % (self.host, response))
+                vvvv("%s: received the validate_user response: %s" % (self.host, response), runner=self.runner)
                 break
 
         if response.get('failed'):
@@ -241,7 +241,7 @@ class Connection(object):
         if self.runner.sudo and sudoable and sudo_user:
             cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
 
-        vvv("EXEC COMMAND %s" % cmd)
+        vvv("EXEC COMMAND %s" % cmd, runner=self.runner)
 
         data = dict(
             mode='command',
@@ -265,10 +265,10 @@ class Connection(object):
             response = utils.parse_json(response)
             if "pong" in response:
                 # it's a keepalive, go back to waiting
-                vvvv("%s: received a keepalive packet" % self.host)
+                vvvv("%s: received a keepalive packet" % self.host, runner=self.runner)
                 continue
             else:
-                vvvv("%s: received the response" % self.host)
+                vvvv("%s: received the response" % self.host, runner=self.runner)
                 break
 
         return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
@@ -276,7 +276,7 @@ class Connection(object):
     def put_file(self, in_path, out_path):
 
         ''' transfer a file from local to remote '''
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
 
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -284,10 +284,10 @@ class Connection(object):
         fd = file(in_path, 'rb')
         fstat = os.stat(in_path)
         try:
-            vvv("PUT file is %d bytes" % fstat.st_size)
+            vvv("PUT file is %d bytes" % fstat.st_size, runner=self.runner)
             last = False
             while fd.tell() <= fstat.st_size and not last:
-                vvvv("file position currently %ld, file size is %ld" % (fd.tell(), fstat.st_size))
+                vvvv("file position currently %ld, file size is %ld" % (fd.tell(), fstat.st_size), runner=self.runner)
                 data = fd.read(CHUNK_SIZE)
                 if fd.tell() >= fstat.st_size:
                     last = True
@@ -310,7 +310,7 @@ class Connection(object):
                     raise AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
-            vvvv("waiting for final response after PUT")
+            vvvv("waiting for final response after PUT", runner=self.runner)
             response = self.recv_data()
             if not response:
                 raise AnsibleError("Failed to get a response from %s" % self.host)
@@ -322,7 +322,7 @@ class Connection(object):
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
 
         data = dict(mode='fetch', in_path=in_path)
         data = utils.jsonify(data)
@@ -358,7 +358,7 @@ class Connection(object):
             # point in the future or we may just have the put/fetch
             # operations not send back a final response at all
             response = self.recv_data()
-            vvv("FETCH wrote %d bytes to %s" % (bytes, out_path))
+            vvv("FETCH wrote %d bytes to %s" % (bytes, out_path), runner=self.runner)
             fh.close()
 
     def close(self):

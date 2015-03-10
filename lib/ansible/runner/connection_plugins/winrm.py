@@ -48,8 +48,8 @@ _winrm_cache = {
     # 'user:pwhash@host:port': <protocol instance>
 }
 
-def vvvvv(msg, host=None):
-    verbose(msg, host=host, caplevel=4)
+def vvvvv(msg, host=None, runner=None):
+    verbose(msg, host=host, caplevel=4, runner=runner)
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -78,11 +78,11 @@ class Connection(object):
         '''
         port = self.port or 5986
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
-            (self.user, port, self.host), host=self.host)
+            (self.user, port, self.host), host=self.host, runner=self.runner)
         netloc = '%s:%d' % (self.host, port)
         cache_key = '%s:%s@%s:%d' % (self.user, hashlib.md5(self.password).hexdigest(), self.host, port)
         if cache_key in _winrm_cache:
-            vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
+            vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host, runner=self.runner)
             return _winrm_cache[cache_key]
         exc = None
         for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
@@ -90,7 +90,7 @@ class Connection(object):
                 continue
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
             vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
-                 host=self.host)
+                 host=self.host, runner=self.runner)
             protocol = Protocol(endpoint, transport=transport,
                                 username=self.user, password=self.password)
             try:
@@ -109,16 +109,16 @@ class Connection(object):
                     elif code == 411:
                         _winrm_cache[cache_key] = protocol
                         return protocol
-                vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host)
+                vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host, runner=self.runner)
                 continue
         if exc:
             raise errors.AnsibleError(str(exc))
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
-            vvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
+            vvvv("WINRM EXEC %r %r" % (command, args), host=self.host, runner=self.runner)
         else:
-            vvvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
+            vvvvv("WINRM EXEC %r %r" % (command, args), host=self.host, runner=self.runner)
         if not self.protocol:
             self.protocol = self._winrm_connect()
         if not self.shell_id:
@@ -128,11 +128,11 @@ class Connection(object):
             command_id = self.protocol.run_command(self.shell_id, command, args)
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
-                vvvv('WINRM RESULT %r' % response, host=self.host)
+                vvvv('WINRM RESULT %r' % response, host=self.host, runner=self.runner)
             else:
-                vvvvv('WINRM RESULT %r' % response, host=self.host)
-            vvvvv('WINRM STDOUT %s' % response.std_out, host=self.host)
-            vvvvv('WINRM STDERR %s' % response.std_err, host=self.host)
+                vvvvv('WINRM RESULT %r' % response, host=self.host, runner=self.runner)
+            vvvvv('WINRM STDOUT %s' % response.std_out, host=self.host, runner=self.runner)
+            vvvvv('WINRM STDERR %s' % response.std_err, host=self.host, runner=self.runner)
             return response
         finally:
             if command_id:
@@ -149,9 +149,9 @@ class Connection(object):
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
             decoded_cmd = base64.b64decode(encoded_cmd)
-            vvv("EXEC %s" % decoded_cmd, host=self.host)
+            vvv("EXEC %s" % decoded_cmd, host=self.host, runner=self.runner)
         else:
-            vvv("EXEC %s" % cmd, host=self.host)
+            vvv("EXEC %s" % cmd, host=self.host, runner=self.runner)
         # For script/raw support.
         if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
             script = powershell._build_file_cmd(cmd_parts, quote_args=False)
@@ -164,7 +164,7 @@ class Connection(object):
         return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
 
     def put_file(self, in_path, out_path):
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         with open(in_path) as in_file:
@@ -192,7 +192,7 @@ class Connection(object):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
                     script = script_template % (powershell._escape(out_path), offset, b64_data, in_size)
-                    vvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self.host)
+                    vvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self.host, runner=self.runner)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
@@ -203,7 +203,7 @@ class Connection(object):
 
     def fetch_file(self, in_path, out_path):
         out_path = out_path.replace('\\', '/')
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host, runner=self.runner)
         buffer_size = 2**19 # 0.5MB chunks
         if not os.path.exists(os.path.dirname(out_path)):
             os.makedirs(os.path.dirname(out_path))
@@ -233,7 +233,7 @@ class Connection(object):
                             Exit 1;
                         }
                     ''' % dict(buffer_size=buffer_size, path=powershell._escape(in_path), offset=offset)
-                    vvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self.host)
+                    vvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self.host, runner=self.runner)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:

@@ -88,7 +88,7 @@ class ActionModule(object):
                          ", ".join(self.PAUSE_TYPES))
 
         vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" % \
-                (self.pause_type, self.duration_unit, self.seconds, self.prompt))
+                (self.pause_type, self.duration_unit, self.seconds, self.prompt), runner=self.runner)
 
         ########################################################################
         # Begin the hard work!
