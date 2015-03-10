@@ -1,5 +1,6 @@
 %define name ansible
 %define ansible_version $VERSION
+%define ansible_release $RELEASE
 
 %if 0%{?rhel} == 5
 %define __python /usr/bin/python26
@@ -7,7 +8,7 @@
 
 Name:      %{name}
 Version:   %{ansible_version}
-Release:   1%{?dist}
+Release:   %{ansible_release}%{?dist}
 Url:       http://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3
