@@ -2179,35 +2179,40 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                     self.parse_inet6_line(words, current_if, ips)
                 else:
                     self.parse_unknown_line(words, current_if, ips)
+            uname_path = module.get_bin_path('uname')
+            if uname_path:
+                rc, out, err = module.run_command([uname_path, '-W'])
+                # don't bother with wpars it does not work
+                # zero means not in wpar
+                if out.split()[0] == '0':
+                    if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
+                        entstat_path = module.get_bin_path('entstat')
+                        if entstat_path:
+                            rc, out, err = module.run_command([entstat_path, current_if['device'] ])
+                            if rc != 0:
+                                break
+                            for line in out.split('\n'):
+                                if not line:
+                                    pass
+                                buff = re.match('^Hardware Address: (.*)', line)
+                                if buff:
+                                    current_if['macaddress'] = buff.group(1)
 
-            rc, out, err = module.run_command(['/usr/bin/uname', '-W'])
-            # don't bother with wpars it does not work
-            # zero means not in wpar
-            if out.split()[0] == '0':
-                if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
-                    rc, out, err = module.run_command(['/usr/bin/entstat', current_if['device'] ])
-                    if rc != 0:
-                        break
-                    for line in out.split('\n'):
-                        if not line:
-                            pass
-                        buff = re.match('^Hardware Address: (.*)', line)
-                        if buff:
-                            current_if['macaddress'] = buff.group(1)
-
-                        buff = re.match('^Device Type:', line)
-                        if buff and re.match('.*Ethernet', line):
-                            current_if['type'] = 'ether'
-                # device must have mtu attribute in ODM
-                if 'mtu' not in current_if:
-                    rc, out, err = module.run_command(['/usr/sbin/lsattr','-El', current_if['device'] ])
-                    if rc != 0:
-                        break
-                    for line in out.split('\n'):
-                        if line:
-                            words = line.split()
-                            if words[0] == 'mtu':
-                                current_if['mtu'] = words[1]
+                                buff = re.match('^Device Type:', line)
+                                if buff and re.match('.*Ethernet', line):
+                                    current_if['type'] = 'ether'
+                    # device must have mtu attribute in ODM
+                    if 'mtu' not in current_if:
+                        lsattr_path = module.get_bin_path('lsattr')
+                        if lsattr_path:
+                            rc, out, err = module.run_command([lsattr_path,'-El', current_if['device'] ])
+                            if rc != 0:
+                                break
+                            for line in out.split('\n'):
+                                if line:
+                                    words = line.split()
+                                    if words[0] == 'mtu':
+                                        current_if['mtu'] = words[1]
         return interfaces, ips
 
     # AIX 'ifconfig -a' does not inform about MTU, so remove current_if['mtu'] here
