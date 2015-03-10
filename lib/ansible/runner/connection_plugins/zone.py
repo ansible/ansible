@@ -26,6 +26,7 @@ import subprocess
 from subprocess import Popen,PIPE
 from ansible import errors
 from ansible.callbacks import vvv
+import ansible.constants as C
 
 class Connection(object):
     ''' Local zone based connections '''
@@ -68,6 +69,7 @@ class Connection(object):
         self.runner = runner
         self.host = host
         self.has_pipelining = False
+        self.become_methods_supported=C.BECOME_METHODS
 
         if os.geteuid() != 0:
             raise errors.AnsibleError("zone connection requires running as root")
@@ -98,17 +100,16 @@ class Connection(object):
             local_cmd = '%s "%s" %s' % (self.zlogin_cmd, self.zone, cmd)
         return local_cmd
 
-    #def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
         ''' run a command on the zone '''
 
-        if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We enter zone as root so sudo stuff can be ignored
+        # We happily ignore privelege escalation
         if executable == '/bin/sh':
           executable = None
         local_cmd = self._generate_cmd(executable, cmd)

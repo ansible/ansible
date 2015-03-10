@@ -24,6 +24,7 @@ import subprocess
 from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
+import ansible.constants as C
 
 class Connection(object):
     ''' Local chroot based connections '''
@@ -31,6 +32,7 @@ class Connection(object):
     def __init__(self, runner, host, port, *args, **kwargs):
         self.chroot = host
         self.has_pipelining = False
+        self.become_methods_supported=C.BECOME_METHODS
 
         if os.geteuid() != 0:
             raise errors.AnsibleError("chroot connection requires running as root")
@@ -60,16 +62,16 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the chroot '''
 
-        if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We enter chroot as root so sudo stuff can be ignored
+        # We enter chroot as root so we ignore privlege escalation?
 
         if executable:
             local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]

@@ -78,7 +78,7 @@ class ActionModule(object):
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
-        if remote_checksum in ('1', '2') or self.runner.sudo:
+        if remote_checksum in ('1', '2') or self.runner.become:
             slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
             if slurpres.is_successful():
                 if slurpres.result['encoding'] == 'base64':
