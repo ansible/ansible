@@ -314,7 +314,11 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
                                              block_device_mapping_v2=bdmv2,
                                              **extra_create_args))
     except Exception, e:
-        module.fail_json(msg='%s' % e.message)
+        if e.message:
+            msg = str(e.message)
+        else:
+            msg = repr(e)
+        module.fail_json(msg=msg)
     else:
         changed = True
 
