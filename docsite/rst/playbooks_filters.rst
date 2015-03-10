@@ -299,7 +299,7 @@ Hash types available depend on the master system running ansible,
 Other Useful Filters
 --------------------
 
-To use one value on true and another on false::
+To use one value on true and another on false (since 1.9)::
 
    {{ name == "John" | ternary('Mr','Ms') }}
 
