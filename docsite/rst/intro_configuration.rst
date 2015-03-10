@@ -272,9 +272,9 @@ gathering
 
 New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
 
-The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play.  The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
+The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play.  The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play. The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.  This option can be useful for those wishing to save fact gathering time.
 
-The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.  This option can be useful for those wishing to save fact gathering time.
+New in 1.8, 'gather_facts' supports True, False, and 'force'. Fact gathering is governed by both the default gathering configuration (mentioned immediately above) as well as any play-specific 'gather_facts' declarations. In the case of 'gather_facts: True' (the default), facts will be gathered according to the default gathering policy. Inversely, 'gather_facts: False' will disable fact gathering for the play.  'gather_facts: force' is useful in cases where --limit or --tags are applied to a play. In this case, facts will be gathered for all hosts (again, in accordance with the default gathering policy), not just the subset of hosts limited by those two command line arguments.
 
 hash_behaviour
 ==============
@@ -665,7 +665,7 @@ pipelining
 ==========
 
 Enabling pipelining reduces the number of SSH operations required to
-execute a module on the remote server, by executing many ansible modules without actual file transfer. 
+execute a module on the remote server, by executing many ansible modules without actual file transfer.
 This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
 first disable 'requiretty' in /etc/sudoers on all managed hosts.
 
@@ -680,7 +680,7 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 Accelerated Mode Settings
 -------------------------
 
-Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
+Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
 not needed if you can.
 
