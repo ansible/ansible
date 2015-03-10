@@ -895,7 +895,7 @@ class Runner(object):
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
         self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
         self.sudo_user = inject.get('ansible_sudo_user', self.sudo_user)
-        self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
+        self.sudo_pass = str(inject.get('ansible_sudo_pass', self.sudo_pass))
         self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
         self.sudo_exe = inject.get('ansible_sudo_exe', self.sudo_exe)
