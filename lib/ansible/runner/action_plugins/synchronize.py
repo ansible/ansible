@@ -182,7 +182,10 @@ class ActionModule(object):
                 # src is a local path, dest is a remote path: <user>@<host>
                 src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(dest_host, dest, user)
-
+        
+        else:
+            src = self._get_absolute_path(src)
+        
         options['src'] = src
         options['dest'] = dest
         if 'mode' in options:
