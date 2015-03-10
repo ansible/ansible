@@ -19,3 +19,8 @@ License
 =======
 
 As with Ansible, modules distributed with Ansible are GPLv3 licensed. User generated modules not part of this project can be of any license.
+
+Installation
+============
+
+There should be no need to install this repo separately as it should be included in any Ansible install using the official documented methods.
