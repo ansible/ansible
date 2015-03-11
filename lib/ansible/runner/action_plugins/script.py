@@ -118,7 +118,7 @@ class ActionModule(object):
             sudoable = False
         else:
             chmod_mode = '+rx'
-        self.runner._remote_chmod(conn, chmod_mode, tmp_src, tmp, sudoable=sudoable, su=self.runner.su)
+        self.runner._remote_chmod(conn, chmod_mode, tmp_src, tmp, sudoable=sudoable, become=self.runner.become)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self.runner._compute_environment_string(conn, inject)
