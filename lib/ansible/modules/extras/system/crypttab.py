@@ -24,7 +24,7 @@ module: crypttab
 short_description: Encrypted Linux block devices
 description:
   - Control Linux encrypted block devices that are set up during system boot in C(/etc/crypttab).
-version_added: "1.8"
+version_added: "1.9"
 options:
   name:
     description:
