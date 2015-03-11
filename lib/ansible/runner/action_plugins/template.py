@@ -133,7 +133,7 @@ class ActionModule(object):
             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
             # fix file permissions when the copy is done as a different user
-            if self.runner.become and self.runner.become_user != 'root' or self.runner.su and self.runner.su_user != 'root':
+            if self.runner.become and self.runner.become_user != 'root':
                 self.runner._remote_chmod(conn, 'a+r', xfered, tmp)
 
             # run the copy module
