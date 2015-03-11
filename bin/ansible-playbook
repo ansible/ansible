@@ -121,7 +121,7 @@ def main(args):
     options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
 
     if options.listhosts or options.syntax or options.listtasks or options.listtags:
-        (_, _, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
+        (_, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
     else:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
