@@ -377,8 +377,8 @@ def main():
                 if overwrite is True:
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=False)
-        
+                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
+
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
         if sum_matches is True and overwrite is False:
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
@@ -388,8 +388,8 @@ def main():
             download_s3file(module, s3, bucket, obj, dest)
 
         # If sum does not match but the destination exists, we 
-               
-    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...        
+
+    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
 
         # Use this snippet to debug through conditionals:
@@ -400,7 +400,7 @@ def main():
         pathrtn = path_check(src)
         if pathrtn is False:
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
-        
+
         # Lets check to see if bucket exists to get ground truth.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is True:
@@ -421,7 +421,7 @@ def main():
                     if overwrite is True:
                         upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
-                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
+                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:
