@@ -173,19 +173,34 @@ class Task(object):
 
         # set only if passed in current task data
         if 'sudo' in ds or 'sudo_user' in ds:
-            self.become=ds['sudo']
             self.become_method='sudo'
+
+            if 'sudo' in ds:
+                self.become=ds['sudo']
+                del ds['sudo']
+            else:
+                self.become=True
             if 'sudo_user' in ds:
                 self.become_user = ds['sudo_user']
+                del ds['sudo_user']
             if 'sudo_pass' in ds:
                 self.become_pass = ds['sudo_pass']
-        if 'su' in ds or 'su_user' in ds:
-            self.become=ds['su']
+                del ds['sudo_pass']
+
+        elif 'su' in ds or 'su_user' in ds:
             self.become_method='su'
+
+            if 'su' in ds:
+                self.become=ds['su']
+            else:
+                self.become=True
+                del ds['su']
             if 'su_user' in ds:
                 self.become_user = ds['su_user']
+                del ds['su_user']
             if 'su_pass' in ds:
                 self.become_pass = ds['su_pass']
+                del ds['su_pass']
 
         # Both are defined
         if ('action' in ds) and ('local_action' in ds):

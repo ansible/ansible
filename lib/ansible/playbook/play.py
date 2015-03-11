@@ -583,29 +583,6 @@ class Play(object):
                     included_become_vars[k] = become_vars[k]
                     x[k] = become_vars[k]
 
-            ## backwards compat with old sudo/su directives
-            if 'sudo' in x or 'sudo_user' in x:
-                included_become_vars['become'] = x['sudo']
-                x['become'] = x['sudo']
-                x['become_method'] = 'sudo'
-                del x['sudo']
-
-                if x.get('sudo_user', False):
-                    included_become_vars['become_user'] = x['sudo_user']
-                    x['become_user'] = x['sudo_user']
-                    del x['sudo_user']
-
-            elif 'su' in x or 'su_user' in x:
-                included_become_vars['become'] = x['su']
-                x['become'] = x['su']
-                x['become_method'] = 'su'
-                del x['su']
-
-                if x.get('su_user', False):
-                    included_become_vars['become_user'] = x['su_user']
-                    x['become_user'] = x['su_user']
-                    del x['su_user']
-
             if 'meta' in x:
                 if x['meta'] == 'flush_handlers':
                     results.append(Task(self, x))
