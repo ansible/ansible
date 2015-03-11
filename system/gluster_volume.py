@@ -262,8 +262,11 @@ def main():
     def set_volume_option(name, option, parameter):
         run_gluster([ 'volume', 'set', name, option, parameter ])
 
-    def add_brick(name, brick):
-        run_gluster([ 'volume', 'add-brick', name, brick ])
+    def add_brick(name, brick, force):
+        args = [ 'volume', 'add-brick', name, brick ]
+        if force:
+            args.append('force')
+        run_gluster(args)
 
     def rebalance(name):
         run_gluster(['volume', 'rebalance', name, 'start'])
@@ -363,7 +366,7 @@ def main():
                     removed_bricks.append(brick)
 
             for brick in new_bricks:
-                add_brick(volume_name, brick)
+                add_brick(volume_name, brick, force)
                 changed = True
 
             # handle quotas
