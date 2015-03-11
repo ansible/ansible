@@ -83,6 +83,11 @@ options:
     required: false
     description:
       - Quota value for limit-usage (be sure to use 10.0MB instead of 10MB, see quota list)
+  force:
+    required: false
+    description:
+      - If brick is being created in the root partition, module will fail.
+        Set force to true to override this behaviour
 notes:
   - "Requires cli tools for GlusterFS on servers"
   - "Will add new bricks, but not remove them"
@@ -91,7 +96,7 @@ author: Taneli Leppä
 
 EXAMPLES = """
 - name: create gluster volume
-  gluster_volume: state=present name=test1 brick=/bricks/brick1/g1 rebalance=yes hosts:"{{ play_hosts }}"
+  gluster_volume: state=present name=test1 brick=/bricks/brick1/g1 rebalance=yes cluster:"{{ play_hosts }}"
   run_once: true
 
 - name: tune
@@ -231,7 +236,7 @@ def main():
                 if myhostname != host:
                     probe(host)
 
-    def create_volume(name, stripe, replica, transport, hosts, brick):
+    def create_volume(name, stripe, replica, transport, hosts, brick, force):
         args = [ 'volume', 'create' ]
         args.append(name)
         if stripe:
@@ -244,6 +249,8 @@ def main():
         args.append(transport)
         for host in hosts:
             args.append(('%s:%s' % (host, brick)))
+        if force:
+            args.append('force')
         run_gluster(args)
 
     def start_volume(name):
@@ -281,10 +288,11 @@ def main():
             transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
             brick=dict(required=False, default=None),
             start_on_create=dict(required=False, default=True, type='bool'),
-            rebalance=dict(required=False, default=False, taype='bool'),
+            rebalance=dict(required=False, default=False, type='bool'),
             options=dict(required=False, default=None, type='dict'),
             quota=dict(required=False),
             directory=dict(required=False, default=None),
+            force=dict(required=False, default=False, type='bool'),
             )
         )
 
@@ -300,13 +308,14 @@ def main():
     replicas = module.params['replicas']
     transport = module.params['transport']
     myhostname = module.params['host']
-    start_volume = module.boolean(module.params['start_on_create'])
+    start_on_create = module.boolean(module.params['start_on_create'])
     rebalance = module.boolean(module.params['rebalance'])
+    force = module.boolean(module.params['force'])
 
     if not myhostname:
         myhostname = socket.gethostname()
 
-    options = module.params['options']
+    options = module.params['options'] or {}
     quota = module.params['quota']
     directory = module.params['directory']
 
@@ -329,11 +338,12 @@ def main():
 
         # create if it doesn't exist
         if volume_name not in volumes:
-            create_volume(volume_name, stripes, replicas, transport, cluster, brick_path)
+            create_volume(volume_name, stripes, replicas, transport, cluster, brick_path, force)
+            volumes = get_volumes()
             changed = True
 
         if volume_name in volumes:
-            if volumes[volume_name]['status'].lower() != 'started' and start_volume:
+            if volumes[volume_name]['status'].lower() != 'started' and start_on_create:
                 start_volume(volume_name)
                 changed = True
 
