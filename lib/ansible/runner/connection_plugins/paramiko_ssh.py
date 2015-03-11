@@ -246,7 +246,7 @@ class Connection(object):
 
                         if success_key in become_output or \
                             (prompt and become_output.endswith(prompt)) or \
-                            utils.su_prompts.check_su_prompt(become_output)):
+                            utils.su_prompts.check_su_prompt(become_output):
                             break
                         chunk = chan.recv(bufsize)
 
