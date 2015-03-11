@@ -163,18 +163,17 @@ class Connection(object):
 
             # fail early if the become password is wrong
             if self.runner.become and sudoable:
-                if self.runner.become_pass:
-                    incorrect_password = gettext.dgettext(
-                        "Privilege Escalation", "Sorry, try again.")
-                    if stdout.endswith("%s\r\n%s" % (incorrect_password,
-                                                     prompt)):
-                        raise errors.AnsibleError('Incorrect become password')
+                incorrect_password = gettext.dgettext(self.runner.become_method, C.BECOME_ERROR_STRINGS[self.runner.become_method])
 
                 if prompt:
+                    if self.runner.become_pass:
+                        if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
+                            raise errors.AnsibleError('Incorrect become password')
+
                     if stdout.endswith(prompt):
                         raise errors.AnsibleError('Missing become password')
                     elif stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
-                        raise errors.AnsibleError('Incorrect becom password')
+                        raise errors.AnsibleError('Incorrect become password')
 
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
