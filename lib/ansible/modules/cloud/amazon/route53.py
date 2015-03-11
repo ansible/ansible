@@ -260,7 +260,7 @@ def main():
     for r53zone in results['ListHostedZonesResponse']['HostedZones']:
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
-        if module.boolean(r53zone['Config']['PrivateZone']) == private_zone_in:
+        if module.boolean(r53zone['Config'].get('PrivateZone', False)) == private_zone_in:
             zone_id = r53zone['Id'].replace('/hostedzone/', '')
             zones[r53zone['Name']] = zone_id
 
