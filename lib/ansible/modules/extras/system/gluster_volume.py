@@ -292,7 +292,7 @@ def main():
             brick=dict(required=False, default=None),
             start_on_create=dict(required=False, default=True, type='bool'),
             rebalance=dict(required=False, default=False, type='bool'),
-            options=dict(required=False, default=None, type='dict'),
+            options=dict(required=False, default={}, type='dict'),
             quota=dict(required=False),
             directory=dict(required=False, default=None),
             force=dict(required=False, default=False, type='bool'),
@@ -318,7 +318,7 @@ def main():
     if not myhostname:
         myhostname = socket.gethostname()
 
-    options = module.params['options'] or {}
+    options = module.params['options']
     quota = module.params['quota']
     directory = module.params['directory']
 
