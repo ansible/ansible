@@ -2091,12 +2091,22 @@ class AIX(Hardware):
         if mount_out:
             for line in mount_out.split('\n'):
                 fields = line.split()
-                if len(fields) != 0 and re.match('^/', fields[0]):
-                    self.facts['mounts'].append({'mount': fields[1],
-                                             'device': fields[0],
-                                             'fstype' : fields[2],
-                                             'options': fields[6],
-                                             'time': '%s %s %s' % ( fields[3], fields[4], fields[5])})
+                if len(fields) != 0 and re.match('^/.*|^[a-zA-Z].*(!node)|^[0-9].*', fields[0]):
+                    if re.match('^/', fields[0]):
+                        # normal mount
+                        self.facts['mounts'].append({'mount': fields[1],
+                                                 'device': fields[0],
+                                                 'fstype' : fields[2],
+                                                 'options': fields[6],
+                                                 'time': '%s %s %s' % ( fields[3], fields[4], fields[5])})
+                    else:
+                        # nfs or cifs based mount
+                        # in case of nfs no mount options are provided on command line...
+                        self.facts['mounts'].append({'mount': fields[2],
+                                                 'device': '%s:%s' % (fields[0], fields[1]),
+                                                 'fstype' : fields[3],
+                                                 'options': '',
+                                                 'time': '%s %s %s' % ( fields[4], fields[5], fields[6])})
 
 class HPUX(Hardware):
     """
