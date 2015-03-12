@@ -27,6 +27,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
+from ansible.utils.unicode import to_unicode
 
 class InventoryParser(object):
     """
@@ -53,7 +54,7 @@ class InventoryParser(object):
     def _parse_value(v):
         if "#" not in v:
             try:
-                return ast.literal_eval(v)
+                v = ast.literal_eval(v)
             # Using explicit exceptions.
             # Likely a string that literal_eval does not like. We wil then just set it.
             except ValueError:
@@ -62,7 +63,7 @@ class InventoryParser(object):
             except SyntaxError:
                 # Is this a hash with an equals at the end?
                 pass
-        return v
+        return to_unicode(v, nonstring='passthru', errors='strict')
 
     # [webservers]
     # alpha
