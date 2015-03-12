@@ -19,7 +19,7 @@ class FakeRunner(object):
         self.private_key_file = None
         self.check = False
         self.become = False
-        self.become_method = False
+        self.become_method = 'sudo'
         self.become_user = False
 
     def _execute_module(self, conn, tmp, module_name, args,
@@ -97,9 +97,9 @@ class TestSynchronize(unittest.TestCase):
         x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
 
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
-        #assert runner.executed_complex_args == {'dest':'root@el6.lab.net:/tmp/bar',
-        #                                        'src':'/tmp/foo',
-        #                                        'rsync_path':'"sudo rsync"'}, "wrong args used"
+        assert runner.executed_complex_args == {'dest':'root@el6.lab.net:/tmp/bar',
+                                                'src':'/tmp/foo',
+                                                'rsync_path':'"sudo rsync"'}, "wrong args used"
         assert runner.become == True, "sudo was not reset to True"
 
 
