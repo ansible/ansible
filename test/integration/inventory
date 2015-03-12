@@ -15,6 +15,7 @@ invenoverride ansible_ssh_host=127.0.0.1 ansible_connection=local
 [all:vars]
 extra_var_override=FROM_INVENTORY
 inven_var=inventory_var
+unicode_host_var=CaféEñyei
 
 [inven_overridehosts:vars]
 foo=foo
