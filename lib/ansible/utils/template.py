@@ -33,7 +33,7 @@ import ast
 import traceback
 
 from ansible.utils.string_functions import count_newlines_from_end
-from ansible.utils import to_bytes
+from ansible.utils import to_bytes, to_unicode
 
 class Globals(object):
 
@@ -184,6 +184,7 @@ class _jinja2_vars(object):
         var = self.vars[varname]
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
+        var = to_unicode(var, nonstring="passthru")
         if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
