@@ -44,7 +44,7 @@ class ActionModule(object):
         module_args = r.sub("", module_args)
 
         result = self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable,
-                                                     su=self.runner.su)
+                                                     become=self.runner.become)
         # for some modules (script, raw), the sudo success key
         # may leak into the stdout due to the way the sudo/su
         # command is constructed, so we filter that out here
