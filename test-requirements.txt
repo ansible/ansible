@@ -1,0 +1,7 @@
+#
+# Test requirements
+#
+
+nose
+mock
+passlib
