@@ -321,7 +321,7 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         # the password we can tell some things about the beginning and end of
         # the data, though:
         self.assertTrue(ssh_output.startswith("{'"))
-        self.assertTrue(ssh_output.endswith("'}}}}"))
+        self.assertTrue(ssh_output.endswith("}"))
         try:
             self.assertIn(":********@foo.com/data',", ssh_output)
         except AttributeError:
