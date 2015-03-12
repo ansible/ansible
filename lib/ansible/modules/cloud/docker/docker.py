@@ -546,6 +546,7 @@ class DockerManager(object):
 
         env_host = os.getenv('DOCKER_HOST')
         env_cert_path = os.getenv('DOCKER_CERT_PATH')
+        env_docker_hostname = os.getenv('DOCKER_TLS_HOSTNAME')
 
         docker_url = module.params.get('docker_url')
         if not docker_url:
@@ -573,11 +574,14 @@ class DockerManager(object):
         if tls_ca_cert:
             tls_hostname = module.params.get('tls_hostname')
             if tls_hostname is None:
-                parsed_url = urlparse(docker_url)
-                if ':' in parsed_url.netloc:
-                    tls_hostname = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
+                if env_docker_hostname:
+                    tls_hostname = env_docker_hostname
                 else:
-                    tls_hostname = parsed_url
+                    parsed_url = urlparse(docker_url)
+                    if ':' in parsed_url.netloc:
+                        tls_hostname = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
+                    else:
+                        tls_hostname = parsed_url
             if not tls_hostname:
                 tls_hostname = True
 
@@ -585,8 +589,9 @@ class DockerManager(object):
         # no: Do not use tls
         # encrypt: Use tls.  We may do client auth.  We will not verify the server
         # verify: Use tls.  We may do client auth.  We will verify the server
-        # None: Only use tls if client auth is specified.  We may do client
-        #   auth.  We will not verify the server.
+        # None: Only use tls if the parameters for client auth were specified
+        #   or tls_ca_cert (which requests verifying the server with
+        #   a specific ca certificate)
         use_tls = module.params.get('use_tls')
         if use_tls == 'no':
             tls_config = None
@@ -601,7 +606,7 @@ class DockerManager(object):
                 params['client_cert'] = (tls_client_cert, tls_client_key)
 
             # We're allowed to verify the connection to the server
-            if use_tls == 'verify':
+            if use_tls == 'verify' or (use_tls is None and tls_ca_cert):
                 if tls_ca_cert:
                     params['ca_cert'] = tls_ca_cert
                     params['verify'] = True
