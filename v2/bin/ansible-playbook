@@ -15,6 +15,7 @@ from ansible.playbook.task import Task
 from ansible.utils.cli import base_parser
 from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import combine_vars
+from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
 # Implement an ansible.utils.warning() function later
@@ -34,8 +35,8 @@ def main(args):
         check_opts=True,
         diff_opts=True
     )
-    #parser.add_option('--vault-password', dest="vault_password",
-    #    help="password for vault encrypted files")
+    parser.add_option('--vault-password', dest="vault_password",
+        help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -61,47 +62,14 @@ def main(args):
         parser.print_help(file=sys.stderr)
         return 1
 
-    #---------------------------------------------------------------------------------------------------
-    # FIXME: su/sudo stuff needs to be generalized
-    # su and sudo command line arguments need to be mutually exclusive
-    #if (options.su or options.su_user or options.ask_su_pass) and \
-    #            (options.sudo or options.sudo_user or options.ask_sudo_pass):
-    #        parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-    #                     "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
-    #                     "mutually exclusive")
-    #
-    #if (options.ask_vault_pass and options.vault_password_file):
-    #        parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
-    #
-    #sshpass = None
-    #sudopass = None
-    #su_pass = None
-    #vault_pass = None
-    #
-    #options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
-    #
-    #if options.listhosts or options.syntax or options.listtasks:
-    #    (_, _, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
-    #else:
-    #    options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
-    #    # Never ask for an SSH password when we run with local connection
-    #    if options.connection == "local":
-    #        options.ask_pass = False
-    #    options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-    #    options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-    #    (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
-    #    options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-    #    options.su_user = options.su_user or C.DEFAULT_SU_USER
-    #
-    ## read vault_pass from a file
-    #if not options.ask_vault_pass and options.vault_password_file:
-    #    vault_pass = utils.read_vault_file(options.vault_password_file)
-    # END FIXME 
-    #---------------------------------------------------------------------------------------------------
+    vault_pass = None
+    if options.ask_vault_pass:
+        # FIXME: prompt here
+        pass
+    elif options.vault_password_file:
+        # read vault_pass from a file
+        vault_pass = read_vault_file(options.vault_password_file)
 
-    # FIXME: this hard-coded value will be removed after fixing the removed block
-    #        above, which dealt wtih asking for passwords during runtime
-    vault_pass = 'testing'
     loader = DataLoader(vault_password=vault_pass)
 
     extra_vars = {}

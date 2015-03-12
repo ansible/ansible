@@ -224,6 +224,7 @@ class StrategyModule(StrategyBase):
                     def __repr__(self):
                         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
+                # FIXME: this should also be moved to the base class in a method
                 included_files = []
                 for res in host_results:
                     if res._task.action == 'include':
@@ -253,6 +254,9 @@ class StrategyModule(StrategyBase):
 
                             inc_file.add_host(res._host)
 
+                # FIXME: should this be moved into the iterator class? Main downside would be
+                #        that accessing the TQM's callback member would be more difficult, if
+                #        we do want to send callbacks from here
                 if len(included_files) > 0:
                     noop_task = Task()
                     noop_task.action = 'meta'
@@ -263,7 +267,14 @@ class StrategyModule(StrategyBase):
                     for included_file in included_files:
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
-                        new_tasks = self._load_included_file(included_file)
+                        try:
+                            new_tasks = self._load_included_file(included_file)
+                        except AnsibleError, e:
+                            for host in included_file._hosts:
+                                iterator.mark_host_failed(host)
+                            # FIXME: callback here?
+                            print(e)
+
                         noop_tasks = [noop_task for t in new_tasks]
                         for host in hosts_left:
                             if host in included_file._hosts:
