@@ -1153,7 +1153,7 @@ class DockerManager(object):
                     email=self.module.params.get('email'),
                     registry=self.module.params.get('registry')
                 )
-            except e:
+            except Exception as e:
                 self.module.fail_json(msg="failed to login to the remote registry, check your username/password.", error=repr(e))
         try:
             last = None
@@ -1169,7 +1169,7 @@ class DockerManager(object):
             else:
                 # Unrecognized status string.
                 self.module.fail_json(msg="Unrecognized status from pull.", status=status)
-        except e:
+        except Exception as e:
             self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
     def create_containers(self, count=1):
