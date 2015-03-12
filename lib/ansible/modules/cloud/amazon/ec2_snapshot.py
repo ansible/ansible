@@ -136,7 +136,7 @@ def main():
             instance_id = dict(),
             snapshot_id = dict(),
             device_name = dict(),
-            wait = dict(type='bool', default='false'),
+            wait = dict(type='bool', default=True),
             wait_timeout = dict(type='int', default=0),
             snapshot_max_age = dict(type='int', default=0),
             snapshot_tags = dict(type='dict', default=dict()),
