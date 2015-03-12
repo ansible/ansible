@@ -184,8 +184,7 @@ class _jinja2_vars(object):
         var = self.vars[varname]
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
-        if type(var) == str:
-            var = to_unicode(var)
+        var = to_unicode(var, nonstring="passthru")
         if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
