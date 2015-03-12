@@ -51,14 +51,14 @@ options:
     default: null
   dump:
     description:
-      - dump (see fstab(8))
+      - "dump (see fstab(8)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
     required: false
-    default: null
+    default: 0
   passno:
     description:
-      - passno (see fstab(8))
+      - "passno (see fstab(8)), Note that if nulled, C(state=present) will cease to work and duplicate entries will be made with subsequent runs."
     required: false
-    default: null
+    default: 0
   state:
     description:
       - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
