@@ -274,7 +274,7 @@ def create_autoscaling_group(connection, module):
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
         try:
             ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             module.fail_json(msg=str(e))
     elif vpc_zone_identifier:
         vpc_zone_identifier = ','.join(vpc_zone_identifier)
@@ -326,6 +326,8 @@ def create_autoscaling_group(connection, module):
         for attr in ASG_ATTRIBUTES:
             if module.params.get(attr):
                 module_attr = module.params.get(attr)
+                if attr == 'vpc_zone_identifier':
+                    module_attr = ','.join(module_attr)
                 group_attr = getattr(as_group, attr)
                 # we do this because AWS and the module may return the same list
                 # sorted differently

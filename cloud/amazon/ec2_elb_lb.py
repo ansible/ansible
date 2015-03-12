@@ -328,7 +328,9 @@ class ElbManager(object):
                 'security_group_ids': check_elb.security_groups,
                 'status': self.status,
                 'subnets': self.subnets,
-                'scheme': check_elb.scheme
+                'scheme': check_elb.scheme,
+                'hosted_zone_name': check_elb.canonical_hosted_zone_name,
+                'hosted_zone_id': check_elb.canonical_hosted_zone_name_id
             }
 
             if check_elb.health_check:
@@ -341,7 +343,7 @@ class ElbManager(object):
                 }
 
             if check_elb.listeners:
-                info['listeners'] = [l.get_complex_tuple()
+                info['listeners'] = [self._api_listener_as_tuple(l)
                                      for l in check_elb.listeners]
             elif self.status == 'created':
                 # When creating a new ELB, listeners don't show in the
@@ -375,7 +377,7 @@ class ElbManager(object):
         try:
             return connect_to_aws(boto.ec2.elb, self.region,
                                   **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
 
     def _delete_elb(self):
@@ -431,7 +433,7 @@ class ElbManager(object):
                 # Since ELB allows only one listener on each incoming port, a
                 # single match on the incomping port is all we're looking for
                 if existing_listener[0] == listener['load_balancer_port']:
-                    existing_listener_found = existing_listener.get_complex_tuple()
+                    existing_listener_found = self._api_listener_as_tuple(existing_listener)
                     break
 
             if existing_listener_found:
@@ -451,7 +453,7 @@ class ElbManager(object):
         # Check for any extraneous listeners we need to remove, if desired
         if self.purge_listeners:
             for existing_listener in self.elb.listeners:
-                existing_listener_tuple = existing_listener.get_complex_tuple()
+                existing_listener_tuple = self._api_listener_as_tuple(existing_listener)
                 if existing_listener_tuple in listeners_to_remove:
                     # Already queued for removal
                     continue
@@ -467,6 +469,13 @@ class ElbManager(object):
 
         if listeners_to_add:
             self._create_elb_listeners(listeners_to_add)
+
+    def _api_listener_as_tuple(self, listener):
+        """Adds ssl_certificate_id to ELB API tuple if present"""
+        base_tuple = listener.get_complex_tuple()
+        if listener.ssl_certificate_id and len(base_tuple) < 5:
+            return base_tuple + (listener.ssl_certificate_id,)
+        return base_tuple
 
     def _listener_as_tuple(self, listener):
         """Formats listener as a 4- or 5-tuples, in the order specified by the

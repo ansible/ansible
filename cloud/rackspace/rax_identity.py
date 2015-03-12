@@ -55,10 +55,6 @@ except ImportError:
 
 
 def cloud_identity(module, state, identity):
-    for arg in (state, identity):
-        if not arg:
-            module.fail_json(msg='%s is required for rax_identity' % arg)
-
     instance = dict(
         authenticated=identity.authenticated,
         credentials=identity._creds_file
@@ -79,7 +75,7 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            state=dict(default='present', choices=['present', 'absent'])
+            state=dict(default='present', choices=['present'])
         )
     )
 
@@ -95,7 +91,7 @@ def main():
 
     setup_rax_module(module, pyrax)
 
-    if pyrax.identity is None:
+    if not pyrax.identity:
         module.fail_json(msg='Failed to instantiate client. This '
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
@@ -106,5 +102,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
-### invoke the module
+# invoke the module
 main()

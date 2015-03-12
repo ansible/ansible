@@ -69,11 +69,13 @@ options:
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
+    version_added: "1.9"
     description:
       - Specifies if the VM should be deployed from a template (cannot be ran with state)
     default: no
     choices: ['yes', 'no']
   template_src:
+    version_added: "1.9"
     description:
       - Name of the source template to deploy from
     default: None
@@ -684,7 +686,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     hfmor = dcprops.hostFolder._obj
 
     # virtualmachineFolder managed object reference
-    if vm_extra_config['folder']:
+    if vm_extra_config.get('folder'):
         if vm_extra_config['folder'] not in vsphere_client._get_managed_objects(MORTypes.Folder).values():
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find folder named: %s" % vm_extra_config['folder'])

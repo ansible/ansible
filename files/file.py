@@ -57,7 +57,7 @@ options:
         or M(template) module if you want that behavior.  If C(link), the symbolic
         link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
-        If C(touch) (new in 1.4), an empty file will be created if the c(path) does not
+        If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way `touch` works from the command line).
     required: false
@@ -88,6 +88,7 @@ options:
 '''
 
 EXAMPLES = '''
+# change file ownership, group and mode. When specifying mode using octal numbers, first digit should always be 0.
 - file: path=/etc/foo.conf owner=foo group=foo mode=0644
 - file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 - file: src=/tmp/{{ item.path }} dest={{ item.dest }} state=link
@@ -102,6 +103,45 @@ EXAMPLES = '''
 - file: path=/etc/foo.conf state=touch mode="u+rw,g-wx,o-rwx"
 
 '''
+
+
+def get_state(path):
+    ''' Find out current state '''
+
+    if os.path.lexists(path):
+        if os.path.islink(path):
+            return 'link'
+        elif os.path.isdir(path):
+            return 'directory'
+        elif os.stat(path).st_nlink > 1:
+            return 'hard'
+        else:
+            # could be many other things, but defaulting to file
+            return 'file'
+
+    return 'absent'
+
+def recursive_set_attributes(module, path, follow, file_args):
+    changed = False
+    for root, dirs, files in os.walk(path):
+        for fsobj in dirs + files:
+            fsname = os.path.join(root, fsobj)
+            if not os.path.islink(fsname):
+                tmp_file_args = file_args.copy()
+                tmp_file_args['path']=fsname
+                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+            else:
+                tmp_file_args = file_args.copy()
+                tmp_file_args['path']=fsname
+                changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+                if follow:
+                    fsname = os.path.join(root, os.readlink(fsname))
+                    if os.path.isdir(fsname):
+                        changed |= recursive_set_attributes(module, fsname, follow, file_args)
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path']=fsname
+                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed)
+    return changed
 
 def main():
 
@@ -143,18 +183,7 @@ def main():
             pass
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
-    # Find out current state
-    prev_state = 'absent'
-    if os.path.lexists(path):
-        if os.path.islink(path):
-            prev_state = 'link'
-        elif os.path.isdir(path):
-            prev_state = 'directory'
-        elif os.stat(path).st_nlink > 1:
-            prev_state = 'hard'
-        else:
-            # could be many other things, but defaulting to file
-            prev_state = 'file'
+    prev_state = get_state(path)
 
     # state should default to file, but since that creates many conflicts,
     # default to 'current' when it exists.
@@ -172,7 +201,7 @@ def main():
         if state in ['link','hard']:
             if follow and state == 'link':
                 # use the current target of the link as the source
-                src = os.readlink(path)
+                src = os.path.realpath(path)
             else:
                 module.fail_json(msg='src and dest are required for creating links')
 
@@ -212,7 +241,15 @@ def main():
             module.exit_json(path=path, changed=False)
 
     elif state == 'file':
+
         if state != prev_state:
+            if follow and prev_state == 'link':
+                # follow symlink and operate on original
+                path = os.path.realpath(path)
+                prev_state = get_state(path)
+                file_args['path'] = path
+
+        if prev_state not in ['file','hard']:
             # file is not absent and any other state is a conflict
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
@@ -220,6 +257,10 @@ def main():
         module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
+        if follow and prev_state == 'link':
+            path = os.path.realpath(path)
+            prev_state = get_state(path)
+
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
@@ -247,12 +288,7 @@ def main():
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
         if recurse:
-            for root,dirs,files in os.walk( file_args['path'] ):
-                for fsobj in dirs + files:
-                    fsname=os.path.join(root, fsobj)
-                    tmp_file_args = file_args.copy()
-                    tmp_file_args['path']=fsname
-                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
+            changed |= recursive_set_attributes(module, file_args['path'], follow, file_args)
 
         module.exit_json(path=path, changed=changed)
 
@@ -336,13 +372,13 @@ def main():
                     open(path, 'w').close()
                 except OSError, e:
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % str(e))
-            elif prev_state in ['file', 'directory']:
+            elif prev_state in ['file', 'directory', 'hard']:
                 try:
                     os.utime(path, None)
                 except OSError, e:
                     module.fail_json(path=path, msg='Error while touching existing target: %s' % str(e))
             else:
-                module.fail_json(msg='Cannot touch other than files and directories')
+                module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
                 module.set_fs_attributes_if_different(file_args, True)
             except SystemExit, e:
@@ -360,5 +396,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
 

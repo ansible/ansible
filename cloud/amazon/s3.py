@@ -125,6 +125,8 @@ import os
 import urlparse
 import hashlib
 
+from boto.s3.connection import OrdinaryCallingFormat
+
 try:
     import boto
     from boto.s3.connection import Location
@@ -321,7 +323,6 @@ def main():
     if is_fakes3(s3_url):
         try:
             fakes3 = urlparse.urlparse(s3_url)
-            from boto.s3.connection import OrdinaryCallingFormat
             s3 = boto.connect_s3(
                 aws_access_key,
                 aws_secret_key,
@@ -339,20 +340,20 @@ def main():
             module.fail_json(msg = str(e))
     else:
         try:
-            s3 = boto.connect_s3(aws_access_key, aws_secret_key)
+            s3 = boto.s3.connect_to_region(location, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, is_secure=True, calling_format=OrdinaryCallingFormat())
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
- 
+
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
-    
+
         # First, we check to see if the bucket exists, we get "bucket" returned.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is False:
             module.fail_json(msg="Target bucket cannot be found", failed=True)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
-        keyrtn = key_check(module, s3, bucket, obj)    
+        keyrtn = key_check(module, s3, bucket, obj)
         if keyrtn is False:
             module.fail_json(msg="Target key cannot be found", failed=True)
 
@@ -376,8 +377,8 @@ def main():
                 if overwrite is True:
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
-        
+                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
+
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
         if sum_matches is True and overwrite is False:
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
@@ -387,8 +388,8 @@ def main():
             download_s3file(module, s3, bucket, obj, dest)
 
         # If sum does not match but the destination exists, we 
-               
-    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...        
+
+    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
 
         # Use this snippet to debug through conditionals:
@@ -399,7 +400,7 @@ def main():
         pathrtn = path_check(src)
         if pathrtn is False:
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
-        
+
         # Lets check to see if bucket exists to get ground truth.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is True:
@@ -420,7 +421,7 @@ def main():
                     if overwrite is True:
                         upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
-                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
+                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:

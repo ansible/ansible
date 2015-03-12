@@ -85,8 +85,9 @@ options:
     default: EOF
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        after the specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file.
+        after the last match of specified regular expression. A special value is
+        available; C(EOF) for inserting the line at the end of the file. 
+        If specified regular expresion has no matches, EOF will be used instead.
         May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
@@ -94,9 +95,10 @@ options:
     version_added: "1.1"
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        before the specified regular expression. A value is available;
-        C(BOF) for inserting the line at the beginning of the file.
-        May not be used with C(backrefs).
+        before the last match of specified regular expression. A value is 
+        available; C(BOF) for inserting the line at the beginning of the file.
+        If specified regular expresion has no matches, the line will be
+        inserted at the end of the file.  May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
@@ -256,9 +258,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         msg = 'line added'
         changed = True
     # Add it to the end of the file if requested or
-    # if insertafter=/insertbefore didn't match anything
+    # if insertafter/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
-    elif insertafter == 'EOF':
+    elif insertafter == 'EOF' or index[1] == -1:
 
         # If the file is not empty then ensure there's a newline before the added line
         if len(lines)>0 and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
@@ -267,9 +269,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True
-    # Do nothing if insert* didn't match
-    elif index[1] == -1:
-        pass
     # insert* matched, but not the regexp
     else:
         lines.insert(index[1], line + os.linesep)

@@ -140,10 +140,6 @@ except ImportError:
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                         vip_type, timeout, wait, wait_timeout, vip_id):
-    for arg in (state, name, port, protocol, vip_type):
-        if not arg:
-            module.fail_json(msg='%s is required for rax_clb' % arg)
-
     if int(timeout) < 30:
         module.fail_json(msg='"timeout" must be greater than or equal to 30')
 
@@ -156,7 +152,14 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                              'typically indicates an invalid region or an '
                              'incorrectly capitalized region name.')
 
-    for balancer in clb.list():
+    balancer_list = clb.list()
+    while balancer_list:
+        retrieved = clb.list(marker=balancer_list.pop().id)
+        balancer_list.extend(retrieved)
+        if len(retrieved) < 2:
+            break
+
+    for balancer in balancer_list:
         if name != balancer.name and name != balancer.id:
             continue
 
@@ -257,7 +260,7 @@ def main():
             algorithm=dict(choices=CLB_ALGORITHMS,
                            default='LEAST_CONNECTIONS'),
             meta=dict(type='dict', default={}),
-            name=dict(),
+            name=dict(required=True),
             port=dict(type='int', default=80),
             protocol=dict(choices=CLB_PROTOCOLS, default='HTTP'),
             state=dict(default='present', choices=['present', 'absent']),

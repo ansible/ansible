@@ -102,6 +102,7 @@ EXAMPLES = '''
 import ConfigParser
 import os
 import pipes
+import stat
 try:
     import MySQLdb
 except ImportError:
@@ -128,7 +129,7 @@ def db_dump(module, host, user, password, db_name, target, port, socket=None):
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
     else:
-        cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
+        cmd += " --host=%s --port=%i" % (pipes.quote(host), port)
     cmd += " %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
         cmd = cmd + ' | gzip > ' + pipes.quote(target)
@@ -148,42 +149,42 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
     else:
-        cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
+        cmd += " --host=%s --port=%i" % (pipes.quote(host), port)
     cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        gunzip_path = module.get_bin_path('gunzip')
-        if gunzip_path:
-            rc, stdout, stderr = module.run_command('%s %s' % (gunzip_path, target))
-            if rc != 0:
-                return rc, stdout, stderr
-            cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        gzip_path = module.get_bin_path('gzip')
+        if not gzip_path:
+            module.fail_json(msg="gzip command not found")
+        #gzip -d file (uncompress)
+        rc, stdout, stderr = module.run_command('%s -d %s' % (gzip_path, target))
+        if rc != 0:
+            return rc, stdout, stderr
+        #Import sql
+        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        try:
             rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
             if rc != 0:
                 return rc, stdout, stderr
-            gzip_path = module.get_bin_path('gzip')
-            if gzip_path:
-                rc, stdout, stderr = module.run_command('%s %s' % (gzip_path, os.path.splitext(target)[0]))
-            else:
-                module.fail_json(msg="gzip command not found")
-        else:
-            module.fail_json(msg="gunzip command not found")
+        finally:
+            #gzip file back up
+            module.run_command('%s %s' % (gzip_path, os.path.splitext(target)[0]))
     elif os.path.splitext(target)[-1] == '.bz2':
-        bunzip2_path = module.get_bin_path('bunzip2')
-        if bunzip2_path:
-            rc, stdout, stderr = module.run_command('%s %s' % (bunzip2_path, target))
-            if rc != 0:
-                return rc, stdout, stderr
-            cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        bzip2_path = module.get_bin_path('bzip2')
+        if not bzip2_path:
+            module.fail_json(msg="bzip2 command not found")
+        #bzip2 -d file (uncompress)
+        rc, stdout, stderr = module.run_command('%s -d %s' % (bzip2_path, target))
+        if rc != 0:
+            return rc, stdout, stderr
+        #Import sql
+        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        try:
             rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
             if rc != 0:
                 return rc, stdout, stderr
-            bzip2_path = module.get_bin_path('bzip2')
-            if bzip2_path:
-                rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
-            else:
-                module.fail_json(msg="bzip2 command not found")
-        else:
-            module.fail_json(msg="bunzip2 command not found")
+        finally:
+            #bzip2 file back up
+            rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
     else:
         cmd += " < %s" % pipes.quote(target)
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
@@ -265,7 +266,7 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
-            login_port=dict(default="3306"),
+            login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             name=dict(required=True, aliases=['db']),
             encoding=dict(default=""),
@@ -283,6 +284,10 @@ def main():
     collation = module.params["collation"]
     state = module.params["state"]
     target = module.params["target"]
+    socket = module.params["login_unix_socket"]
+    login_port = module.params["login_port"]
+    if login_port < 0 or login_port > 65535:
+        module.fail_json(msg="login_port must be a valid unix port number (0-65535)")
 
     # make sure the target path is expanded for ~ and $HOME
     if target is not None:
@@ -310,21 +315,27 @@ def main():
             module.fail_json(msg="with state=%s target is required" % (state))
         connect_to_db = db
     else:
-        connect_to_db = 'mysql'
+        connect_to_db = ''
     try:
-        if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db=connect_to_db)
-        elif module.params["login_port"] != "3306" and module.params["login_host"] == "localhost":
+        if socket:
+            try:
+                socketmode = os.stat(socket).st_mode
+                if not stat.S_ISSOCK(socketmode):
+                    module.fail_json(msg="%s, is not a socket, unable to connect" % socket)
+            except OSError:
+                module.fail_json(msg="%s, does not exist, unable to connect" % socket)
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=socket, user=login_user, passwd=login_password, db=connect_to_db)
+        elif login_port != 3306 and module.params["login_host"] == "localhost":
             module.fail_json(msg="login_host is required when login_port is defined, login_host cannot be localhost when login_port is defined")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password, db=connect_to_db)
+            db_connection = MySQLdb.connect(host=module.params["login_host"], port=login_port, user=login_user, passwd=login_password, db=connect_to_db)
         cursor = db_connection.cursor()
     except Exception, e:
         if "Unknown database" in str(e):
                 errno, errstr = e.args
                 module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+                module.fail_json(msg="unable to connect, check login credentials (login_user, and login_password, which can be defined in ~/.my.cnf), check that mysql socket exists and mysql server is running")
 
     changed = False
     if db_exists(cursor, db):
@@ -336,7 +347,7 @@ def main():
         elif state == "dump":
             rc, stdout, stderr = db_dump(module, login_host, login_user, 
                                         login_password, db, target, 
-                                        port=module.params['login_port'],
+                                        port=login_port,
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
@@ -345,7 +356,7 @@ def main():
         elif state == "import":
             rc, stdout, stderr = db_import(module, login_host, login_user, 
                                         login_password, db, target, 
-                                        port=module.params['login_port'],
+                                        port=login_port,
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)

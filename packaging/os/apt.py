@@ -34,10 +34,10 @@ options:
     default: null
   state:
     description:
-      - Indicates the desired package state. C(latest) ensures that the latest version is installed.
+      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies are installed.
     required: false
     default: present
-    choices: [ "latest", "absent", "present" ]
+    choices: [ "latest", "absent", "present", "build-dep" ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
@@ -133,6 +133,9 @@ EXAMPLES = '''
 
 # Install a .deb package
 - apt: deb=/tmp/mypackage.deb
+
+# Install the build dependencies for package "foo"
+- apt: pkg=foo state=build-dep
 '''
 
 
@@ -144,6 +147,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 import os
 import datetime
 import fnmatch
+import itertools
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -173,6 +177,24 @@ def package_split(pkgspec):
     else:
         return parts[0], None
 
+def package_versions(pkgname, pkg, pkg_cache):
+    try:
+        versions = set(p.version for p in pkg.versions)
+    except AttributeError:
+        # assume older version of python-apt is installed
+        # apt.package.Package#versions require python-apt >= 0.7.9.
+        pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
+        pkg_versions = (p.VersionList for p in pkg_cache_list)
+        versions = set(p.VerStr for p in itertools.chain(*pkg_versions))
+
+    return versions
+
+def package_version_compare(version, other_version):
+    try:
+        return apt_pkg.version_compare(version, other_version)
+    except AttributeError:
+        return apt_pkg.VersionCompare(version, other_version)
+
 def package_status(m, pkgname, version, cache, state):
     try:
         # get the package from the cache, as well as the
@@ -183,9 +205,14 @@ def package_status(m, pkgname, version, cache, state):
         ll_pkg = cache._cache[pkgname] # the low-level package object
     except KeyError:
         if state == 'install':
-            if cache.get_providing_packages(pkgname):
+            try:
+                if cache.get_providing_packages(pkgname):
+                    return False, True, False
+                m.fail_json(msg="No package matching '%s' is available" % pkgname)
+            except AttributeError:
+                # python-apt version too old to detect virtual packages
+                # mark as upgradable and let apt-get install deal with it
                 return False, True, False
-            m.fail_json(msg="No package matching '%s' is available" % pkgname)
         else:
             return False, False, False
     try:
@@ -206,7 +233,8 @@ def package_status(m, pkgname, version, cache, state):
             package_is_installed = pkg.isInstalled
 
     if version:
-        avail_upgrades = fnmatch.filter((p.version for p in pkg.versions), version)
+        versions = package_versions(pkgname, pkg, cache._cache)
+        avail_upgrades = fnmatch.filter(versions, version)
 
         if package_is_installed:
             try:
@@ -220,7 +248,7 @@ def package_status(m, pkgname, version, cache, state):
             # Only claim the package is upgradable if a candidate matches the version
             package_is_upgradable = False
             for candidate in avail_upgrades:
-                if pkg.versions[candidate] > pkg.installed:
+                if package_version_compare(candidate, installed_version) > 0:
                     package_is_upgradable = True
                     break
         else:
@@ -274,13 +302,18 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=True, force=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
+            build_dep=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
+        if build_dep:
+            # Let apt decide what to install
+            pkg_list.append("'%s'" % package)
+            continue
         if not installed or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
         if installed and upgradable and version:
@@ -307,7 +340,10 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         for (k,v) in APT_ENV_VARS.iteritems():
             os.environ[k] = v
 
-        cmd = "%s -y %s %s %s install %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
+        if build_dep:
+            cmd = "%s -y %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
+        else:
+            cmd = "%s -y %s %s %s install %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -316,7 +352,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            return (False, dict(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err))
+            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err))
         else:
             return (True, dict(changed=True, stdout=out, stderr=err))
     else:
@@ -327,7 +363,10 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
     deps_to_install = []
     pkgs_to_install = []
     for deb_file in debs.split(','):
-        pkg = apt.debfile.DebPackage(deb_file)
+        try:
+            pkg = apt.debfile.DebPackage(deb_file)
+        except SystemError, e:
+            m.fail_json(msg="Error: %s\nSystem Error: %s" % (pkg._failure_string,str(e)))
 
         # Check if it's already installed
         if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
@@ -358,7 +397,7 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
         if m.check_mode:
             options += " --simulate"
         if force:
-            options += " --force-yes"
+            options += " --force-all"
 
         cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
         rc, out, err = m.run_command(cmd)
@@ -462,7 +501,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present']),
+            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
             update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
@@ -570,20 +609,18 @@ def main():
             if latest and '=' in package:
                 module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
-        if p['state'] == 'latest':
-            result = install(module, packages, cache, upgrade=True,
+        if p['state'] in ('latest', 'present', 'build-dep'):
+            state_upgrade = False
+            state_builddep = False
+            if p['state'] == 'latest':
+                state_upgrade = True
+            if p['state'] == 'build-dep':
+                state_builddep = True
+            result = install(module, packages, cache, upgrade=state_upgrade,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
-                    force=force_yes, dpkg_options=dpkg_options)
-            (success, retvals) = result
-            if success:
-                module.exit_json(**retvals)
-            else:
-                module.fail_json(**retvals)
-        elif p['state'] ==  'present':
-            result = install(module, packages, cache, default_release=p['default_release'],
-                      install_recommends=install_recommends,force=force_yes,
-                      dpkg_options=dpkg_options)
+                    force=force_yes, dpkg_options=dpkg_options,
+                    build_dep=state_builddep)
             (success, retvals) = result
             if success:
                 module.exit_json(**retvals)
@@ -594,6 +631,8 @@ def main():
 
     except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
+    except apt.cache.FetchFailedException:
+        module.fail_json(msg="Could not fetch updated apt files")
 
 # import module snippets
 from ansible.module_utils.basic import *

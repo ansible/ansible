@@ -173,7 +173,20 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Basic_A1',
                     'Basic_A2',
                     'Basic_A3',
-                    'Basic_A4']
+                    'Basic_A4',
+                    'Standard_D1',
+                    'Standard_D2',
+                    'Standard_D3',
+                    'Standard_D4',
+                    'Standard_D11',
+                    'Standard_D12',
+                    'Standard_D13',
+                    'Standard_D14',
+                    'Standard_G1',
+                    'Standard_G2',
+                    'Sandard_G3',
+                    'Standard_G4',
+                    'Standard_G5']
 
 try:
     import azure as windows_azure
@@ -281,6 +294,7 @@ def create_virtual_machine(module, azure):
         network_config = ConfigurationSetInputEndpoints()
         network_config.configuration_set_type = 'NetworkConfiguration'
         network_config.subnet_names = []
+        network_config.public_ips = None
         for port in endpoints:
             network_config.input_endpoints.append(ConfigurationSetInputEndpoint(name='TCP-%s' % port,
                                                                                 protocol='TCP',
@@ -442,6 +456,8 @@ def main():
             module.fail_json(msg='location parameter is required for new instance')
         if not module.params.get('storage_account'):
             module.fail_json(msg='storage_account parameter is required for new instance')
+        if not module.params.get('password'):
+            module.fail_json(msg='password parameter is required for new instance')
         (changed, public_dns_name, deployment) = create_virtual_machine(module, azure)
 
     module.exit_json(changed=changed, public_dns_name=public_dns_name, deployment=json.loads(json.dumps(deployment, default=lambda o: o.__dict__)))
