@@ -783,6 +783,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
         sys.exit(1)
 
+    vpc_id = None
     if vpc_subnet_id:
         vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
     else:
