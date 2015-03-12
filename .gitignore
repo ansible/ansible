@@ -48,6 +48,7 @@ coverage.xml
 # Development
 /test/develop
 venv
+.venv/
 Vagrantfile
 .vagrant
 ansible.egg-info/
