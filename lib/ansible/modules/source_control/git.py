@@ -601,12 +601,26 @@ def submodule_update(git_path, module, dest, track_submodules):
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
     return (rc, out, err)
 
+def set_remote_branch(git_path, module, dest, remote, version, depth):
+    cmd = "%s remote set-branches %s %s" % (git_path, remote, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to set remote branch: %s" % version)
+    cmd = "%s fetch --depth=%s %s %s" % (git_path, depth, remote, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to fetch branch from remote: %s" % version)
 
 def switch_version(git_path, module, dest, remote, version, verify_commit):
     cmd = ''
     if version != 'HEAD':
         if is_remote_branch(git_path, module, dest, remote, version):
             if not is_local_branch(git_path, module, dest, version):
+                depth = module.params['depth']
+                if depth:
+                    # git clone --depth implies --single-branch, which makes
+                    # the checkout fail if the version changes
+                    set_remote_branch(git_path, module, dest, remote, version, depth)
                 cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
             else:
                 (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
