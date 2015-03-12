@@ -106,18 +106,41 @@ options:
       - URL of the host running the docker daemon. This will default to the env
         var DOCKER_HOST if unspecified.
     default: ${DOCKER_HOST} or unix://var/run/docker.sock
-  docker_tls_cert:
+  use_tls:
     description:
-      - Path to a PEM-encoded client certificate to secure the Docker connection.
+      - Whether to use tls to connect to the docker server.  "no" means not to
+        use tls (and ignore any other tls related parameters). "encrypt" means
+        to use tls to encrypt the connection to the server.  "verify" means to
+        also verify that the server's certificate is valid for the server
+        (this both verifies the certificate against the CA and that the
+        certificate was issued for that host. If this is unspecified, tls will
+        only be used if one of the other tls options require it.
+    choices: [ "no", "encrypt", "verify" ]
+    version_added: "1.9"
+  tls_client_cert:
+    description:
+      - Path to the PEM-encoded certificate used to authenticate docker client.
+        If specified tls_client_key must be valid
     default: ${DOCKER_CERT_PATH}/cert.pem
-  docker_tls_key:
+    version_added: "1.9"
+  tls_client_key:
     description:
-      - Path to a PEM-encoded client key to secure the Docker connection.
+      - Path to the PEM-encoded key used to authenticate docker client. If
+        specified tls_client_cert must be valid
     default: ${DOCKER_CERT_PATH}/key.pem
-  docker_tls_cacert:
+    version_added: "1.9"
+  tls_ca_cert:
     description:
       - Path to a PEM-encoded certificate authority to secure the Docker connection.
+        This has no effect if use_tls is encrypt.
     default: ${DOCKER_CERT_PATH}/ca.pem
+    version_added: "1.9"
+  tls_hostname:
+    description:
+      - A hostname to check matches what's supplied in the docker server's
+        certificate.  If unspecified, the hostname is taken from the docker_url.
+    default: Taken from docker_url
+    version_added: "1.9"
   docker_api_version:
     description:
       - Remote API version to use. This defaults to the current default as
@@ -531,34 +554,66 @@ class DockerManager(object):
             else:
                 docker_url = 'unix://var/run/docker.sock'
 
-        docker_tls_cert = module.params.get('docker_tls_cert')
-        if not docker_tls_cert and env_cert_path:
-            docker_tls_cert = os.path.join(env_cert_path, 'cert.pem')
-
-        docker_tls_key = module.params.get('docker_tls_key')
-        if not docker_tls_key and env_cert_path:
-            docker_tls_key = os.path.join(env_cert_path, 'key.pem')
-
-        docker_tls_cacert = module.params.get('docker_tls_cacert')
-        if not docker_tls_cacert and env_cert_path:
-            docker_tls_cacert = os.path.join(env_cert_path, 'ca.pem')
-
         docker_api_version = module.params.get('docker_api_version')
         if not docker_api_version:
             docker_api_version=docker.client.DEFAULT_DOCKER_API_VERSION
 
-        tls_config = None
-        if docker_tls_cert or docker_tls_key or docker_tls_cacert:
-            # See https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
-            docker_url = docker_url.replace('tcp://', 'https://')
-            verify = docker_tls_cacert is not None
+        tls_client_cert = module.params.get('tls_client_cert', None)
+        if not tls_client_cert and env_cert_path:
+            tls_client_cert = os.path.join(env_cert_path, 'cert.pem')
 
-            tls_config = docker.tls.TLSConfig(
-                client_cert=(docker_tls_cert, docker_tls_key),
-                ca_cert=docker_tls_cacert,
-                verify=verify,
-                assert_hostname=False
-            )
+        tls_client_key = module.params.get('tls_client_key', None)
+        if not tls_client_key and env_cert_path:
+            tls_client_key = os.path.join(env_cert_path, 'key.pem')
+
+        tls_ca_cert = module.params.get('tls_ca_cert')
+        if not tls_ca_cert and env_cert_path:
+            tls_ca_cert = os.path.join(env_cert_path, 'ca.pem')
+
+        if tls_ca_cert:
+            tls_hostname = module.params.get('tls_hostname')
+            if tls_hostname is None:
+                parsed_url = urlparse(docker_url)
+                if ':' in parsed_url.netloc:
+                    tls_hostname = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
+                else:
+                    tls_hostname = parsed_url
+            if not tls_hostname:
+                tls_hostname = True
+
+        # use_tls can be one of four values:
+        # no: Do not use tls
+        # encrypt: Use tls.  We may do client auth.  We will not verify the server
+        # verify: Use tls.  We may do client auth.  We will verify the server
+        # None: Only use tls if client auth is specified.  We may do client
+        #   auth.  We will not verify the server.
+        use_tls = module.params.get('use_tls')
+        if use_tls == 'no':
+            tls_config = None
+        else:
+            # If this stays True, we'll do encryption.  If something overrides
+            # it, then we'll have a TLSConfig obj instead
+            tls_config = True
+            params = {}
+
+            # Setup client auth
+            if tls_client_cert and tls_client_key:
+                params['client_cert'] = (tls_client_cert, tls_client_key)
+
+            # We're allowed to verify the connection to the server
+            if use_tls == 'verify':
+                if tls_ca_cert:
+                    params['ca_cert'] = tls_ca_cert
+                    params['verify'] = True
+                    params['assert_hostname'] = tls_hostname
+                else:
+                    params['verify'] = True
+                    params['assert_hostname'] = tls_hostname
+
+            if params or use_tls == 'encrypt':
+                # See https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
+                docker_url = docker_url.replace('tcp://', 'https://')
+                tls_config = docker.tls.TLSConfig(**params)
 
         self.client = docker.Client(base_url=docker_url,
                                     version=docker_api_version,
@@ -1357,9 +1412,11 @@ def main():
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(),
-            docker_tls_cert = dict(),
-            docker_tls_key  = dict(),
-            docker_tls_cacert = dict(),
+            use_tls         = dict(default=None, choices=['no', 'encrypt', 'verify']),
+            tls_client_cert = dict(required=False, default=None, type='str'),
+            tls_client_key  = dict(required=False, default=None, type='str'),
+            tls_ca_cert     = dict(required=False, default=None, type='str'),
+            tls_hostname    = dict(required=False, type='str', default=None),
             docker_api_version = dict(),
             username        = dict(default=None),
             password        = dict(),
@@ -1382,7 +1439,10 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
-        )
+        ),
+        required_together = (
+            ['tls_client_cert', 'tls_client_key'],
+        ),
     )
 
     check_dependencies(module)
