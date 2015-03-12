@@ -571,19 +571,18 @@ class DockerManager(object):
         if not tls_ca_cert and env_cert_path:
             tls_ca_cert = os.path.join(env_cert_path, 'ca.pem')
 
-        if tls_ca_cert:
-            tls_hostname = module.params.get('tls_hostname')
-            if tls_hostname is None:
-                if env_docker_hostname:
-                    tls_hostname = env_docker_hostname
+        tls_hostname = module.params.get('tls_hostname')
+        if tls_hostname is None:
+            if env_docker_hostname:
+                tls_hostname = env_docker_hostname
+            else:
+                parsed_url = urlparse(docker_url)
+                if ':' in parsed_url.netloc:
+                    tls_hostname = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
                 else:
-                    parsed_url = urlparse(docker_url)
-                    if ':' in parsed_url.netloc:
-                        tls_hostname = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
-                    else:
-                        tls_hostname = parsed_url
-            if not tls_hostname:
-                tls_hostname = True
+                    tls_hostname = parsed_url
+        if not tls_hostname:
+            tls_hostname = True
 
         # use_tls can be one of four values:
         # no: Do not use tls
@@ -614,8 +613,10 @@ class DockerManager(object):
                 else:
                     params['verify'] = True
                     params['assert_hostname'] = tls_hostname
+            elif use_tls == 'encrpyt':
+                params['verify'] = False
 
-            if params or use_tls == 'encrypt':
+            if params:
                 # See https://github.com/docker/docker-py/blob/d39da11/docker/utils/utils.py#L279-L296
                 docker_url = docker_url.replace('tcp://', 'https://')
                 tls_config = docker.tls.TLSConfig(**params)
