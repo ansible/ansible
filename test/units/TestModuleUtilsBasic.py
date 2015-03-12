@@ -323,10 +323,10 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         self.assertTrue(ssh_output.startswith("{'"))
         self.assertTrue(ssh_output.endswith("}"))
         try:
-            self.assertIn(":********@foo.com/data',", ssh_output)
+            self.assertIn(":********@foo.com/data'", ssh_output)
         except AttributeError:
             # python2.6 or less's unittest
-            self.assertTrue(":********@foo.com/data'," in ssh_output, '%s is not present in %s' % (":********@foo.com/data',", ssh_output))
+            self.assertTrue(":********@foo.com/data'" in ssh_output, '%s is not present in %s' % (":********@foo.com/data'", ssh_output))
 
         # The overzealous-ness here may lead to us changing the algorithm in
         # the future.  We could make it consume less of the data (with the
