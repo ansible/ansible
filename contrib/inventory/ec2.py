@@ -162,6 +162,8 @@ class Ec2Inventory(object):
         # and availability zones
         self.inventory = self._empty_inventory()
 
+        self.aws_account_id = None
+
         # Index of hostname (address) to instance ID
         self.index = {}
 
@@ -420,6 +422,7 @@ class Ec2Inventory(object):
             'group_by_elasticache_cluster',
             'group_by_elasticache_parameter_group',
             'group_by_elasticache_replication_group',
+            'group_by_aws_account',
         ]
         for option in group_by_options:
             if config.has_option('ec2', option):
@@ -554,6 +557,9 @@ class Ec2Inventory(object):
             tags_by_instance_id = defaultdict(dict)
             for tag in tags:
                 tags_by_instance_id[tag.res_id][tag.name] = tag.value
+
+            if (not self.aws_account_id) and reservations:
+                self.aws_account_id = reservations[0].owner_id
 
             for reservation in reservations:
                 for instance in reservation.instances:
@@ -862,6 +868,12 @@ class Ec2Inventory(object):
             except AttributeError:
                 self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
+
+        # Inventory: Group by AWS account ID
+        if self.group_by_aws_account:
+            self.push(self.inventory, self.aws_account_id, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'accounts', self.aws_account_id)
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
@@ -1334,6 +1346,8 @@ class Ec2Inventory(object):
                 #print key
                 #print type(value)
                 #print value
+
+        instance_vars[self.to_safe('ec2_account_id')] = self.aws_account_id
 
         return instance_vars
 
