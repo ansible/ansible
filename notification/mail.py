@@ -74,12 +74,13 @@ options:
       - If SMTP requires username
     default: null
     required: false
-    version_added: "1.6"
+    version_added: "1.9"
   password:
+    description:
       - If SMTP requires password
     default: null
     required: false
-    version_added: "1.6"
+    version_added: "1.9"
   host:
     description:
       - The mail server
