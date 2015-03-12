@@ -544,13 +544,13 @@ class DockerManager(object):
         self.volumes = None
         if self.module.params.get('volumes'):
             self.binds = {}
-            self.volumes = {}
+            self.volumes = []
             vols = self.module.params.get('volumes')
             for vol in vols:
                 parts = vol.split(":")
                 # regular volume
                 if len(parts) == 1:
-                    self.volumes[parts[0]] = {}
+                    self.volumes.append(parts[0])
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
                 elif 2 <= len(parts) <= 3:
                     # default to read-write
