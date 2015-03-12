@@ -62,7 +62,7 @@ class ActionModule(object):
             module_args_tmp = ""
             complex_args_tmp = dict(path=creates, get_md5=False, get_checksum=False)
             module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
-                                                        complex_args=complex_args_tmp, persist_files=True)
+                                                        complex_args=complex_args_tmp, delete_remote_tmp=False)
             stat = module_return.result.get('stat', None)
             if stat and stat.get('exists', False):
                 return ReturnData(
