@@ -1423,7 +1423,7 @@ def main():
             env             = dict(type='dict'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
-            state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent']),
+            state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
             restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no']),
             restart_policy_retry = dict(default=0, type='int'),
             debug           = dict(default=False, type='bool'),
@@ -1445,11 +1445,15 @@ def main():
 
     try:
         manager = DockerManager(module)
-        state = module.params.get('state')
         count = int(module.params.get('count'))
         name = module.params.get('name')
         image = module.params.get('image')
         pull = module.params.get('pull')
+
+        state = module.params.get('state')
+        if state == 'running':
+            # Renamed running to started in 1.9
+            state = 'started'
 
         if count < 0:
             module.fail_json(msg="Count must be greater than zero")
