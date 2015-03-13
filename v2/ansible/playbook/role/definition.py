@@ -88,7 +88,7 @@ class RoleDefinition(Base, Conditional, Taggable):
         self._ds = ds
 
         # and return the cleaned-up data structure
-        return new_ds
+        return super(RoleDefinition, self).munge(new_ds)
 
     def _load_role_name(self, ds):
         '''

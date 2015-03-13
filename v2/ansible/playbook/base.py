@@ -72,6 +72,11 @@ class Base:
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
+        for base_class in self.__class__.__bases__:
+            method = getattr(self, ("_munge_%s" % base_class.__name__).lower(), None)
+            if method:
+                ds = method(ds)
+
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None):

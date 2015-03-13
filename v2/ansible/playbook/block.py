@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+#from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
@@ -80,7 +81,8 @@ class Block(Base, Conditional, Taggable):
                 return dict(block=ds)
             else:
                 return dict(block=[ds])
-        return ds
+
+        return super(Block, self).munge(ds)
 
     def _load_block(self, attr, ds):
         return load_list_of_tasks(
