@@ -3,8 +3,9 @@ Common Return Values
 
 .. contents:: Topics
 
-Ansible modules normally return a data structure that can be registered into a variable,
-or seen directly when using the `ansible` program as output.
+Ansible modules normally return a data structure that can be registered into a variable, or seen directly when using
+the `ansible` program as output. Here we document the values common to all modules, each module can optionally document
+it's own unique returns. If these docs exist they will be visible through ansible-doc and https://docs.ansible.com.
 
 .. _facts:
 
