@@ -490,6 +490,7 @@ class DockerManager(object):
             'dns': ((0, 3, 0), '1.10'),
             'volumes_from': ((0, 3, 0), '1.10'),
             'restart_policy': ((0, 5, 0), '1.14'),
+            'pid_mode': ((1, 0, 0), '1.17'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -1231,11 +1232,11 @@ class DockerManager(object):
             'privileged': self.module.params.get('privileged'),
             'links': self.links,
             'network_mode': self.module.params.get('net'),
-            'pid_mode': self.module.params.get('pid'),
         }
 
         optionals = {}
-        for optional_param in ('dns', 'volumes_from', 'restart_policy', 'restart_policy_retry'):
+        for optional_param in ('dns', 'volumes_from', 'restart_policy',
+                'restart_policy_retry', 'pid_mode'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['dns'] is not None:
@@ -1251,6 +1252,10 @@ class DockerManager(object):
             params['restart_policy'] = { 'Name': optionals['restart_policy'] }
             if params['restart_policy']['Name'] == 'on-failure':
                 params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
+
+        if optionals['pid_mode'] is not None:
+            self.ensure_capability('pid_mode')
+            params['pid_mode'] = optionals['pid_mode']
 
         for i in containers:
             self.client.start(i['Id'], **params)
