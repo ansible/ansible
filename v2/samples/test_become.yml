@@ -2,6 +2,5 @@
   gather_facts: no
   tasks:
   - command: whoami
-    become: yes
-    become_user: jamesc
+    become_user: testing
     become_method: su

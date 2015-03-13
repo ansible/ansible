@@ -100,7 +100,6 @@ class Play(Base, Taggable, Become):
     @staticmethod
     def load(data, variable_manager=None, loader=None):
         p = Play()
-        print("in play load, become is: %s" % getattr(p, 'become'))
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def munge(self, ds):

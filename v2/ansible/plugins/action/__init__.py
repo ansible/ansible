@@ -454,7 +454,7 @@ class ActionBase:
         success_key = None
 
         if sudoable:
-            cmd, prompt, success_key = self._connection_info.make_become_cmd(executable, cmd)
+            cmd, prompt, success_key = self._connection_info.make_become_cmd(cmd, executable)
 
         debug("executing the command %s through the connection" % cmd)
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data)
