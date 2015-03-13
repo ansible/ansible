@@ -5,3 +5,5 @@
 nose
 mock
 passlib
+coverage
+coveralls
