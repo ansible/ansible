@@ -227,7 +227,7 @@ options:
     version_added: "1.8"
   pid:
     description:
-      - Set the PID namespace mode for the container (currently only supports 'host'). Requires docker-py >= 1.0.0 and docker >= 1.4.1.
+      - Set the PID namespace mode for the container (currently only supports 'host'). Requires docker-py >= 1.0.0 and docker >= 1.5.0
     required: false
     default: None
     aliases: []
@@ -490,7 +490,7 @@ class DockerManager(object):
             'dns': ((0, 3, 0), '1.10'),
             'volumes_from': ((0, 3, 0), '1.10'),
             'restart_policy': ((0, 5, 0), '1.14'),
-            'pid_mode': ((1, 0, 0), '1.17'),
+            'pid': ((1, 0, 0), '1.17'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -1236,7 +1236,7 @@ class DockerManager(object):
 
         optionals = {}
         for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid_mode'):
+                'restart_policy_retry', 'pid'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['dns'] is not None:
@@ -1253,9 +1253,9 @@ class DockerManager(object):
             if params['restart_policy']['Name'] == 'on-failure':
                 params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
 
-        if optionals['pid_mode'] is not None:
-            self.ensure_capability('pid_mode')
-            params['pid_mode'] = optionals['pid_mode']
+        if optionals['pid'] is not None:
+            self.ensure_capability('pid')
+            params['pid_mode'] = optionals['pid']
 
         for i in containers:
             self.client.start(i['Id'], **params)
