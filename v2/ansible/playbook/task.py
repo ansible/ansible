@@ -29,6 +29,7 @@ from ansible.plugins import module_loader, lookup_loader
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
@@ -36,7 +37,7 @@ from ansible.playbook.taggable import Taggable
 
 __all__ = ['Task']
 
-class Task(Base, Conditional, Taggable):
+class Task(Base, Conditional, Taggable, Become):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -86,12 +87,6 @@ class Task(Base, Conditional, Taggable):
     _remote_user          = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
-    _su                   = FieldAttribute(isa='bool')
-    _su_pass              = FieldAttribute(isa='string')
-    _su_user              = FieldAttribute(isa='string')
-    _sudo                 = FieldAttribute(isa='bool')
-    _sudo_user            = FieldAttribute(isa='string')
-    _sudo_pass            = FieldAttribute(isa='string')
     _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
     _vars                 = FieldAttribute(isa='dict', default=dict())
@@ -172,6 +167,7 @@ class Task(Base, Conditional, Taggable):
         args_parser = ModuleArgsParser(task_ds=ds)
         (action, args, delegate_to) = args_parser.parse()
 
+
         new_ds['action']      = action
         new_ds['args']        = args
         new_ds['delegate_to'] = delegate_to
@@ -186,7 +182,7 @@ class Task(Base, Conditional, Taggable):
             else:
                 new_ds[k] = v
 
-        return new_ds
+        return super(Task, self).munge(new_ds)
 
     def post_validate(self, all_vars=dict(), fail_on_undefined=True):
         '''

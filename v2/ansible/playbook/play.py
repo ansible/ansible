@@ -23,6 +23,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.become import Become
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles, compile_block_list
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
@@ -33,7 +34,7 @@ from ansible.utils.vars import combine_vars
 __all__ = ['Play']
 
 
-class Play(Base, Taggable):
+class Play(Base, Taggable, Become):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -47,21 +48,19 @@ class Play(Base, Taggable):
 
     # =================================================================================
     # Connection-Related Attributes
+
+    # TODO: generalize connection
     _accelerate          = FieldAttribute(isa='bool', default=False)
     _accelerate_ipv6     = FieldAttribute(isa='bool', default=False)
-    _accelerate_port     = FieldAttribute(isa='int', default=5099)
+    _accelerate_port     = FieldAttribute(isa='int', default=5099) # should be alias of port
+
+    # Connection
     _connection          = FieldAttribute(isa='string', default='smart')
     _gather_facts        = FieldAttribute(isa='string', default='smart')
     _hosts               = FieldAttribute(isa='list', default=[], required=True)
     _name                = FieldAttribute(isa='string', default='<no name specified>')
     _port                = FieldAttribute(isa='int', default=22)
     _remote_user         = FieldAttribute(isa='string', default='root')
-    _su                  = FieldAttribute(isa='bool', default=False)
-    _su_user             = FieldAttribute(isa='string', default='root')
-    _su_pass             = FieldAttribute(isa='string')
-    _sudo                = FieldAttribute(isa='bool', default=False)
-    _sudo_user           = FieldAttribute(isa='string', default='root')
-    _sudo_pass           = FieldAttribute(isa='string')
 
     # Variable Attributes
     _vars                = FieldAttribute(isa='dict', default=dict())
@@ -101,6 +100,7 @@ class Play(Base, Taggable):
     @staticmethod
     def load(data, variable_manager=None, loader=None):
         p = Play()
+        print("in play load, become is: %s" % getattr(p, 'become'))
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def munge(self, ds):
@@ -122,7 +122,7 @@ class Play(Base, Taggable):
             ds['remote_user'] = ds['user']
             del ds['user']
 
-        return ds
+        return super(Play, self).munge(ds)
 
     def _load_vars(self, attr, ds):
         '''
@@ -187,7 +187,7 @@ class Play(Base, Taggable):
             roles.append(Role.load(ri))
         return roles
 
-    # FIXME: post_validation needs to ensure that su/sudo are not both set
+    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
 
     def _compile_roles(self):
         '''

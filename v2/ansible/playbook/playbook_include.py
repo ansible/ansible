@@ -98,7 +98,7 @@ class PlaybookInclude(Base):
                         raise AnsibleParserError("vars for include statements must be specified as a dictionary", obj=ds)
                 new_ds[k] = v
 
-        return new_ds
+        return super(PlaybookInclude, self).munge(new_ds)
 
     def _munge_include(self, ds, new_ds, k, v):
         '''

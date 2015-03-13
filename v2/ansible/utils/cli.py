@@ -59,6 +59,8 @@ def base_parser(usage="", output_opts=False, runas_opts=False,
         help='ask for sudo password')
     parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
         help='ask for su password')
+    parser.add_option('--ask-become-pass', default=False, dest='ask_become_pass', action='store_true',
+        help='ask for privlege escalation password')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
         help='ask for vault password')
     parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
@@ -84,6 +86,10 @@ def base_parser(usage="", output_opts=False, runas_opts=False,
             help='log output to this directory')
 
     if runas_opts:
+        parser.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true",
+            dest='become', help="run operations with become (nopasswd implied)")
+        parser.add_option('-B', '--become-user', help='run operations with as this '
+                                                  'user (default=%s)' % C.DEFAULT_BECOME_USER)
         parser.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
@@ -100,6 +106,9 @@ def base_parser(usage="", output_opts=False, runas_opts=False,
         parser.add_option('-c', '--connection', dest='connection',
                           default=C.DEFAULT_TRANSPORT,
                           help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+        parser.add_option('--become-method', dest='become_method',
+                          default=C.DEFAULT_BECOME_METHOD,
+                          help="privlege escalation method to use (default=%s)" % C.DEFAULT_BECOME_METHOD)
 
     if async_opts:
         parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',

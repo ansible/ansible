@@ -44,8 +44,8 @@ class Connection(ConnectionBase):
 
         debug("in local.exec_command()")
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
-        if self._connection_info.su:
-            raise AnsibleError("Internal Error: this module does not support running commands via su")
+        #if self._connection_info.su:
+        #    raise AnsibleError("Internal Error: this module does not support running commands via su")
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -57,7 +57,7 @@ class Connection(ConnectionBase):
         #    else:
         #        local_cmd = cmd
         #else:
-        #    local_cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
+        #    local_cmd, prompt, success_key = utils.make_become_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
         if executable:
             local_cmd = executable.split() + ['-c', cmd]
         else:

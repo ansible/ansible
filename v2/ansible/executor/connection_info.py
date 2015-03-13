@@ -48,15 +48,15 @@ class ConnectionInformation:
         self.password    = ''
         self.port        = 22
         self.private_key_file = None
-        self.su          = False
-        self.su_user     = ''
-        self.su_pass     = ''
-        self.sudo        = False
-        self.sudo_user   = ''
-        self.sudo_pass   = ''
         self.verbosity   = 0
         self.only_tags   = set()
         self.skip_tags   = set()
+
+        # privilege escalation
+        self.become        = False
+        self.become_method = C.DEFAULT_BECOME_METHOD
+        self.become_user   = ''
+        self.become_pass   = ''
 
         self.no_log      = False
         self.check_mode  = False
@@ -84,15 +84,13 @@ class ConnectionInformation:
         if play.connection:
             self.connection = play.connection
 
-        self.remote_user = play.remote_user
-        self.password    = ''
-        self.port        = int(play.port) if play.port else 22
-        self.su          = play.su
-        self.su_user     = play.su_user
-        self.su_pass     = play.su_pass
-        self.sudo        = play.sudo
-        self.sudo_user   = play.sudo_user
-        self.sudo_pass   = play.sudo_pass
+        self.remote_user   = play.remote_user
+        self.password      = ''
+        self.port          = int(play.port) if play.port else 22
+        self.become        = play.become
+        self.become_method = play.become_method
+        self.become_user   = play.become_user
+        self.become_pass   = play.become_pass
 
         # non connection related
         self.no_log      = play.no_log
@@ -158,7 +156,7 @@ class ConnectionInformation:
         new_info = ConnectionInformation()
         new_info.copy(self)
 
-        for attr in ('connection', 'remote_user', 'su', 'su_user', 'su_pass', 'sudo', 'sudo_user', 'sudo_pass', 'environment', 'no_log'):
+        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val:
@@ -166,31 +164,58 @@ class ConnectionInformation:
 
         return new_info
 
-    def make_sudo_cmd(self, sudo_exe, executable, cmd):
-        """
-        Helper function for wrapping commands with sudo.
+    def make_become_cmd(self, cmd, shell, become_settings=None):
 
-        Rather than detect if sudo wants a password this time, -k makes
-        sudo always ask for a password if one is required. Passing a quoted
-        compound command to sudo (or sudo -s) directly doesn't work, so we
-        shellquote it with pipes.quote() and pass the quoted string to the
-        user's shell.  We loop reading output until we see the randomly-
-        generated sudo prompt set with the -p option.
+        """
+        helper function to create privilege escalation commands
         """
 
-        randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-        prompt = '[sudo via ansible, key=%s] password: ' % randbits
-        success_key = 'SUDO-SUCCESS-%s' % randbits
+        # FIXME: become settings should probably be stored in the connection info itself
+        if become_settings is None:
+            become_settings = {}
 
-        sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-            sudo_exe, sudo_exe, C.DEFAULT_SUDO_FLAGS, prompt,
-            self.sudo_user, executable or '$SHELL',
-            pipes.quote('echo %s; %s' % (success_key, cmd))
-        )
+        randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+        success_key = 'BECOME-SUCCESS-%s' % randbits
+        prompt      = None
+        becomecmd   = None
 
-        # FIXME: old code, can probably be removed as it's been commented out for a while
-        #return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
-        return (sudocmd, prompt, success_key)
+        shell = shell or '$SHELL'
+
+        if self.become_method == 'sudo':
+            # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
+            # a password if one is required. Passing a quoted compound command to sudo (or sudo -s)
+            # directly doesn't work, so we shellquote it with pipes.quote() and pass the quoted
+            # string to the user's shell.  We loop reading output until we see the randomly-generated
+            # sudo prompt set with the -p option.
+            prompt = '[sudo via ansible, key=%s] password: ' % randbits
+            exe = become_settings.get('sudo_exe', C.DEFAULT_SUDO_EXE)
+            flags = become_settings.get('sudo_flags', C.DEFAULT_SUDO_FLAGS)
+            becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c "%s"' % \
+                (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, shell, 'echo %s; %s' % (success_key, cmd))
+
+        elif self.become_method == 'su':
+            exe = become_settings.get('su_exe', C.DEFAULT_SU_EXE)
+            flags = become_settings.get('su_flags', C.DEFAULT_SU_FLAGS)
+            becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, shell, pipes.quote('echo %s; %s' % (success_key, cmd)))
+
+        elif self.become_method == 'pbrun':
+            exe = become_settings.get('pbrun_exe', 'pbrun')
+            flags = become_settings.get('pbrun_flags', '')
+            becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, self.become_user, 'echo %s; %s' % (success_key,cmd))
+
+        elif self.become_method == 'pfexec':
+            exe = become_settings.get('pfexec_exe', 'pbrun')
+            flags = become_settings.get('pfexec_flags', '')
+            # No user as it uses it's own exec_attr to figure it out
+            becomecmd = '%s %s "%s"' % (exe, flags, 'echo %s; %s' % (success_key,cmd))
+        elif self.become:
+            raise errors.AnsibleError("Privilege escalation method not found: %s" % method)
+
+        return (('%s -c ' % shell) + pipes.quote(becomecmd), prompt, success_key)
+
+    def check_become_success(self, output, become_settings):
+        #TODO: implement
+        pass
 
     def _get_fields(self):
         return [i for i in self.__dict__.keys() if i[:1] != '_']
@@ -204,4 +229,3 @@ class ConnectionInformation:
         for field in self._get_fields():
             value = templar.template(getattr(self, field))
             setattr(self, field, value)
-

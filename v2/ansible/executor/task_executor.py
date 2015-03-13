@@ -33,6 +33,7 @@ __all__ = ['TaskExecutor']
 
 import json
 import time
+import pipes
 
 class TaskExecutor:
 
