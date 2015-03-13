@@ -414,10 +414,9 @@ def get_role_metadata(role_name, options):
             f.close()
             return meta_data
         else:
-            print '- WARN: role %s does not contain a meta/main.yml' % role_name
             return None
     except:
-        print '- WARN: cannot access or parse role %s meta/main.yml' % role_name
+        ansible.utils.warning('cannot access or parse meta/main.yml for role %s' % role_name)
         return None
 
 def get_galaxy_install_info(role_name, options):
@@ -515,20 +514,6 @@ def install_role(role_name, role_version, role_filename, options):
         # verify the role's meta file
         meta_file = None
         members = role_tar_file.getmembers()
-        # next find the metadata file
-        for member in members:
-            if "/meta/main.yml" in member.name:
-                meta_file = member
-                break
-        if not meta_file:
-            print "- error: this role does not appear to have a meta/main.yml file."
-            return False
-        else:
-            try:
-                meta_file_data = yaml.safe_load(role_tar_file.extractfile(meta_file))
-            except:
-                print "- error: this role does not appear to have a valid meta/main.yml file."
-                return False
 
         # we strip off the top-level directory for all of the files contained within
         # the tar file here, since the default is 'github_repo-target', and change it 
@@ -547,7 +532,7 @@ def install_role(role_name, role_version, role_filename, options):
                 else:
                     # using --force, remove the old path
                     if not remove_role(role_name, options):
-                        print "- error: %s doesn't appear to contain a role." % role_path
+                        print "- error: %s doesn't appear to contain a role with meta/main.yml." % role_path
                         print "  please remove this directory manually if you really want to put the role here."
                         return False
             else:
@@ -575,7 +560,7 @@ def install_role(role_name, role_version, role_filename, options):
 
         # return the parsed yaml metadata
         print "- %s was installed successfully" % role_name
-        return meta_file_data
+        return True
 
 #-------------------------------------------------------------------------------------
 # Action functions
@@ -847,8 +832,6 @@ def execute_install(args, options, parser):
                     if not role_data:
                         role_dependencies = []
                     else:
-                        if role_data.get('dependencies') is None:
-                            print '- WARN: %s meta/main.yml does not contain a dependencies list' % role.get('name')
                         # cater for `dependencies: `
                         role_dependencies = role_data.get('dependencies') or []
                 else:
