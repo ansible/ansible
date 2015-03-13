@@ -414,9 +414,11 @@ def get_role_metadata(role_name, options):
             f.close()
             return meta_data
         else:
+            print '- WARN: role %s does not contain a meta/main.yml' % role_name
             return None
     except:
-        return None    
+        print '- WARN: cannot access or parse role %s meta/main.yml' % role_name
+        return None
 
 def get_galaxy_install_info(role_name, options):
     """
@@ -842,9 +844,16 @@ def execute_install(args, options, parser):
             if not no_deps and installed:
                 if not role_data:
                     role_data = get_role_metadata(role.get("name"), options)
-                    role_dependencies = role_data['dependencies']
+                    if not role_data:
+                        role_dependencies = []
+                    else:
+                        if role_data.get('dependencies') is None:
+                            print '- WARN: %s meta/main.yml does not contain a dependencies list' % role.get('name')
+                        # cater for `dependencies: `
+                        role_dependencies = role_data.get('dependencies') or []
                 else:
                     role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+
                 for dep in role_dependencies:
                     if isinstance(dep, basestring):
                         dep = ansible.utils.role_spec_parse(dep)
