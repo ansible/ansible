@@ -1,8 +1,26 @@
 import collections
 import mock
 import os
+import re
 
-from nose import tools
+from nose.tools import eq_
+try:
+    from nose.tools import assert_raises_regexp
+except ImportError:
+    # Python < 2.7
+    def assert_raises_regexp(expected, regexp, callable, *a, **kw):
+        try:
+            callable(*a, **kw)
+        except expected as e:
+            if isinstance(regexp, basestring):
+                regexp = re.compile(regexp)
+            if not regexp.search(str(e)):
+                raise Exception('"%s" does not match "%s"' %
+                                (regexp.pattern, str(e)))
+        else:
+            if hasattr(expected,'__name__'): excName = expected.__name__
+            else: excName = str(expected)
+            raise AssertionError("%s not raised" % excName)
 
 from ansible.module_utils.database import (
     pg_quote_identifier,
@@ -70,34 +88,31 @@ class TestQuotePgIdentifier(object):
     }
 
     def check_valid_quotes(self, identifier, quoted_identifier):
-        tools.eq_(pg_quote_identifier(identifier, 'table'), quoted_identifier)
+        eq_(pg_quote_identifier(identifier, 'table'), quoted_identifier)
 
     def test_valid_quotes(self):
         for identifier in self.valid:
             yield self.check_valid_quotes, identifier, self.valid[identifier]
 
     def check_invalid_quotes(self, identifier, id_type, msg):
-        if hasattr(tools, 'assert_raises_regexp'):
-            tools.assert_raises_regexp(SQLParseError, msg, pg_quote_identifier, *(identifier, id_type))
-        else:
-            tools.assert_raises(SQLParseError, pg_quote_identifier, *(identifier, id_type))
+        assert_raises_regexp(SQLParseError, msg, pg_quote_identifier, *(identifier, id_type))
 
     def test_invalid_quotes(self):
         for test in self.invalid:
             yield self.check_invalid_quotes, test[0], test[1], self.invalid[test]
 
     def test_how_many_dots(self):
-        tools.eq_(pg_quote_identifier('role', 'role'), '"role"')
-        tools.assert_raises_regexp(SQLParseError, "PostgreSQL does not support role with more than 1 dots", pg_quote_identifier, *('role.more', 'role'))
+        eq_(pg_quote_identifier('role', 'role'), '"role"')
+        assert_raises_regexp(SQLParseError, "PostgreSQL does not support role with more than 1 dots", pg_quote_identifier, *('role.more', 'role'))
 
-        tools.eq_(pg_quote_identifier('db', 'database'), '"db"')
-        tools.assert_raises_regexp(SQLParseError, "PostgreSQL does not support database with more than 1 dots", pg_quote_identifier, *('db.more', 'database'))
+        eq_(pg_quote_identifier('db', 'database'), '"db"')
+        assert_raises_regexp(SQLParseError, "PostgreSQL does not support database with more than 1 dots", pg_quote_identifier, *('db.more', 'database'))
 
-        tools.eq_(pg_quote_identifier('db.schema', 'schema'), '"db"."schema"')
-        tools.assert_raises_regexp(SQLParseError, "PostgreSQL does not support schema with more than 2 dots", pg_quote_identifier, *('db.schema.more', 'schema'))
+        eq_(pg_quote_identifier('db.schema', 'schema'), '"db"."schema"')
+        assert_raises_regexp(SQLParseError, "PostgreSQL does not support schema with more than 2 dots", pg_quote_identifier, *('db.schema.more', 'schema'))
 
-        tools.eq_(pg_quote_identifier('db.schema.table', 'table'), '"db"."schema"."table"')
-        tools.assert_raises_regexp(SQLParseError, "PostgreSQL does not support table with more than 3 dots", pg_quote_identifier, *('db.schema.table.more', 'table'))
+        eq_(pg_quote_identifier('db.schema.table', 'table'), '"db"."schema"."table"')
+        assert_raises_regexp(SQLParseError, "PostgreSQL does not support table with more than 3 dots", pg_quote_identifier, *('db.schema.table.more', 'table'))
 
-        tools.eq_(pg_quote_identifier('db.schema.table.column', 'column'), '"db"."schema"."table"."column"')
-        tools.assert_raises_regexp(SQLParseError, "PostgreSQL does not support column with more than 4 dots", pg_quote_identifier, *('db.schema.table.column.more', 'column'))
+        eq_(pg_quote_identifier('db.schema.table.column', 'column'), '"db"."schema"."table"."column"')
+        assert_raises_regexp(SQLParseError, "PostgreSQL does not support column with more than 4 dots", pg_quote_identifier, *('db.schema.table.column.more', 'column'))
