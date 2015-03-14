@@ -4,7 +4,10 @@ Ansible Changes By Release
 ## 2.0 "TBD" - ACTIVE DEVELOPMENT
 
 Major Changes:
-    big_ip modules now support turning off ssl certificate validation (use only for self signed)
+    - big_ip modules now support turning off ssl certificate validation (use only for self signed)
+
+    - template code now retains types for bools and Numbers instead of turning them into strings
+      - If you need the old behaviour, quote the value and it will get passed around as a string
 
 New Modules:
     cloudtrail
