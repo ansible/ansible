@@ -17,9 +17,9 @@
 DOCUMENTATION = '''
 ---
 module: s3
-short_description: S3 module putting a file into S3.
+short_description: manage objects in S3.
 description:
-    - This module allows the user to dictate the presence of a given file in an S3 bucket. If or once the key (file) exists in the bucket, it returns a time-expired download URL. This module has a dependency on python-boto.
+    - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets, retrieving objects as files or strings and generating download links. This module has a dependency on python-boto.
 version_added: "1.1"
 options:
   bucket:
