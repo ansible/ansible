@@ -334,23 +334,24 @@ class Ec2Inventory(object):
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
 
+    def connect(self, region):
+        ''' create connection to api server'''
+        if self.eucalyptus:
+            conn = boto.connect_euca(host=self.eucalyptus_host)
+            conn.APIVersion = '2010-08-31'
+        else:
+            conn = ec2.connect_to_region(region)
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+        if conn is None:
+            raise Exception("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+        return conn
 
     def get_instances_by_region(self, region):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
 
         try:
-            if self.eucalyptus:
-                conn = boto.connect_euca(host=self.eucalyptus_host)
-                conn.APIVersion = '2010-08-31'
-            else:
-                conn = ec2.connect_to_region(region)
-
-            # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
-            if conn is None:
-                print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
-                sys.exit(1)
-
+            conn = self.connect(region)
             reservations = []
             if self.ec2_instance_filters:
                 for filter_key, filter_values in self.ec2_instance_filters.iteritems():
@@ -363,6 +364,9 @@ class Ec2Inventory(object):
                     self.add_instance(instance, region)
 
         except boto.exception.BotoServerError, e:
+            if e.error_code == 'AuthFailure':
+                self.display_auth_error()
+
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
             print e
@@ -379,23 +383,33 @@ class Ec2Inventory(object):
                 for instance in instances:
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError, e:
+            if e.error_code == 'AuthFailure':
+                self.display_auth_error()
+
             if not e.reason == "Forbidden":
                 print "Looks like AWS RDS is down: "
                 print e
                 sys.exit(1)
 
-    def get_instance(self, region, instance_id):
-        ''' Gets details about a specific instance '''
-        if self.eucalyptus:
-            conn = boto.connect_euca(self.eucalyptus_host)
-            conn.APIVersion = '2010-08-31'
+    def display_auth_error(self):
+        ''' Raise an error with an informative message if there is an issue authenticating'''
+        errors = ["Authentication error retrieving ec2 inventory."]
+        if None in [os.environ.get('AWS_ACCESS_KEY_ID'), os.environ.get('AWS_SECRET_ACCESS_KEY')]:
+            errors.append(' - No AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY environment vars found')
         else:
-            conn = ec2.connect_to_region(region)
+            errors.append(' - AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment vars found but may not be correct')
 
-        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
-        if conn is None:
-            print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
-            sys.exit(1)
+        boto_paths = ['/etc/boto.cfg', '~/.boto', '~/.aws/credentials']
+        boto_config_found = list(p for p in boto_paths if os.path.isfile(os.path.expanduser(p)))
+        if len(boto_config_found) > 0:
+            errors.append(" - Boto configs found at '%s', but the credentials contained may not be correct" % ', '.join(boto_config_found))
+        else:
+            errors.append(" - No Boto config found at any expected location '%s'" % ', '.join(boto_paths))
+
+        raise Exception('\n'.join(errors))
+
+    def get_instance(self, region, instance_id):
+        conn = self.connect(region)
 
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
@@ -785,4 +799,3 @@ class Ec2Inventory(object):
 
 # Run the script
 Ec2Inventory()
-
