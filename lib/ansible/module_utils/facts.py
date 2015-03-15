@@ -652,6 +652,7 @@ class LinuxHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
+        self.get_lvm_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -989,6 +990,36 @@ class LinuxHardware(Hardware):
                         d['holders'].append(folder)
 
             self.facts['devices'][diskname] = d
+
+    def get_lvm_facts(self):
+        """ Get LVM Facts if running as root and lvm utils are available """
+
+        if os.getuid() == 0 and module.get_bin_path('vgs'):
+            lvm_util_options = '--noheadings --nosuffix --units g'
+
+            #vgs fields: VG #PV #LV #SN Attr VSize VFree
+            vgs={}
+            rc, vg_lines, err = module.run_command(
+                'vgs %s' % lvm_util_options)
+            for vg_line in vg_lines.splitlines():
+                items = vg_line.split()
+                vgs[items[0]] = {'size_g':items[-2],
+                                 'free_g':items[-1],
+                                 'num_lvs': items[2],
+                                 'num_pvs': items[1]}
+
+            #lvs fields:
+            #LV VG Attr LSize Pool Origin Data% Move Log Copy% Convert
+            lvs = {}
+            rc, lv_lines, err = module.run_command(
+                'lvs %s' % lvm_util_options)
+            for lv_line in lv_lines.splitlines():
+                items = lv_line.split()
+                lvs[items[0]] = {'size_g': items[3],
+                                 'vg': items[1]}
+
+            self.facts['lvm'] = {'lvs': lvs,
+                                 'vgs': vgs}
 
 
 class SunOSHardware(Hardware):
