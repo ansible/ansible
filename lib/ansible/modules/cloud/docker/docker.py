@@ -593,12 +593,8 @@ class DockerManager(object):
         #   or tls_ca_cert (which requests verifying the server with
         #   a specific ca certificate)
         use_tls = module.params.get('use_tls')
-        if use_tls == 'no':
-            tls_config = None
-        else:
-            # If this stays True, we'll do encryption.  If something overrides
-            # it, then we'll have a TLSConfig obj instead
-            tls_config = True
+        tls_config = None
+        if use_tls != 'no':
             params = {}
 
             # Setup client auth
