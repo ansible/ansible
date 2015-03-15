@@ -1159,9 +1159,11 @@ class DockerManager(object):
             except Exception as e:
                 self.module.fail_json(msg="failed to login to the remote registry, check your username/password.", error=repr(e))
         try:
-            last = None
-            for line in self.client.pull(image, tag=tag, stream=True, **extra_params):
-                last = line
+            changes = list(self.client.pull(image, tag=tag, stream=True, **extra_params))
+            try:
+                last = changes[-1]
+            except IndexError:
+                last = '{}'
             status = json.loads(last).get('status', '')
             if status.startswith('Status: Image is up to date for'):
                 # Image is already up to date. Don't increment the counter.
@@ -1171,7 +1173,7 @@ class DockerManager(object):
                 self.increment_counter('pulled')
             else:
                 # Unrecognized status string.
-                self.module.fail_json(msg="Unrecognized status from pull.", status=status)
+                self.module.fail_json(msg="Unrecognized status from pull.", status=status, changes=changes)
         except Exception as e:
             self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
