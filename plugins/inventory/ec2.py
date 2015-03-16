@@ -198,6 +198,14 @@ class Ec2Inventory(object):
         if self.eucalyptus and config.has_option('ec2', 'eucalyptus_host'):
             self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
 
+        # aws key and secret
+        self.aws_access_key_id = None
+        self.aws_secret_access_key = None
+        if config.has_option('ec2', 'aws_access_key_id'):
+            self.aws_access_key_id = config.get('ec2', 'aws_access_key_id')
+        if config.has_option('ec2', 'aws_secret_access_key'):
+            self.aws_secret_access_key = config.get('ec2', 'aws_secret_access_key')
+
         # Regions
         self.regions = []
         configRegions = config.get('ec2', 'regions')
@@ -344,7 +352,9 @@ class Ec2Inventory(object):
                 conn = boto.connect_euca(host=self.eucalyptus_host)
                 conn.APIVersion = '2010-08-31'
             else:
-                conn = ec2.connect_to_region(region)
+                conn = ec2.connect_to_region(region,
+                                             aws_access_key_id=self.aws_access_key_id,
+                                             aws_secret_access_key=self.aws_secret_access_key)
 
             # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
             if conn is None:
@@ -373,7 +383,9 @@ class Ec2Inventory(object):
         region '''
 
         try:
-            conn = rds.connect_to_region(region)
+            conn = rds.connect_to_region(region,
+                                         aws_access_key_id=self.aws_access_key_id,
+                                         aws_secret_access_key=self.aws_secret_access_key)
             if conn:
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
@@ -390,7 +402,9 @@ class Ec2Inventory(object):
             conn = boto.connect_euca(self.eucalyptus_host)
             conn.APIVersion = '2010-08-31'
         else:
-            conn = ec2.connect_to_region(region)
+            conn = ec2.connect_to_region(region,
+                                         aws_access_key_id=self.aws_access_key_id,
+                                         aws_secret_access_key=self.aws_secret_access_key)
 
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
