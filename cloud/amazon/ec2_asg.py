@@ -47,15 +47,15 @@ options:
     required: false
   min_size:
     description:
-      - Minimum number of instances in group
+      - Minimum number of instances in group, if unspecified then the current group value will be used.
     required: false
   max_size:
     description:
-      - Maximum number of instances in group
+      - Maximum number of instances in group, if unspecified then the current group value will be used.
     required: false
   desired_capacity:
     description:
-      - Desired number of instances in group
+      - Desired number of instances in group, if unspecified then the current group value will be used.
     required: false
   replace_all_instances:
     description:
@@ -449,6 +449,13 @@ def replace(connection, module):
         changed = False
         return(changed, props)
         
+    #check if min_size/max_size/desired capacity have been specified and if not use ASG values
+    if min_size is None:
+        min_size = as_group.min_size
+    if max_size is None:
+        max_size = as_group.max_size
+    if desired_capacity is None:
+        desired_capacity = as_group.desired_capacity
     # set temporary settings and wait for them to be reached
     as_group.max_size = max_size + batch_size
     as_group.min_size = min_size + batch_size
