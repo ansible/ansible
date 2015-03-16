@@ -343,7 +343,7 @@ class Ec2Inventory(object):
             conn = ec2.connect_to_region(region)
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
-            raise Exception("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+            self.fail_with_error("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
         return conn
 
     def get_instances_by_region(self, region):
@@ -365,12 +365,11 @@ class Ec2Inventory(object):
 
         except boto.exception.BotoServerError, e:
             if e.error_code == 'AuthFailure':
-                self.display_auth_error()
-
-            if  not self.eucalyptus:
-                print "Looks like AWS is down again:"
-            print e
-            sys.exit(1)
+                error = self.get_auth_error_message()
+            else:
+                backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
+                error = "Error connecting to %s backend.\n%s" % (backend, e.message)
+            self.fail_with_error(error)
 
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
@@ -384,15 +383,13 @@ class Ec2Inventory(object):
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError, e:
             if e.error_code == 'AuthFailure':
-                self.display_auth_error()
-
+                error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
-                print "Looks like AWS RDS is down: "
-                print e
-                sys.exit(1)
+                error = "Looks like AWS RDS is down:\n%s" % e.message
+            self.fail_with_error(error)
 
-    def display_auth_error(self):
-        ''' Raise an error with an informative message if there is an issue authenticating'''
+    def get_auth_error_message(self):
+        ''' create an informative error message if there is an issue authenticating'''
         errors = ["Authentication error retrieving ec2 inventory."]
         if None in [os.environ.get('AWS_ACCESS_KEY_ID'), os.environ.get('AWS_SECRET_ACCESS_KEY')]:
             errors.append(' - No AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY environment vars found')
@@ -406,7 +403,12 @@ class Ec2Inventory(object):
         else:
             errors.append(" - No Boto config found at any expected location '%s'" % ', '.join(boto_paths))
 
-        raise Exception('\n'.join(errors))
+        return '\n'.join(errors)
+        
+    def fail_with_error(self, err_msg):
+        '''log an error to std err for ansible-playbook to consume and exit'''
+        sys.stderr.write(err_msg)
+        sys.exit(1)
 
     def get_instance(self, region, instance_id):
         conn = self.connect(region)
@@ -506,9 +508,8 @@ class Ec2Inventory(object):
                     if self.nested_groups:
                         self.push_group(self.inventory, 'security_groups', key)
             except AttributeError:
-                print 'Package boto seems a bit older.'
-                print 'Please upgrade boto >= 2.3.0.'
-                sys.exit(1)
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                                            'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
@@ -601,9 +602,9 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'security_groups', key)
 
             except AttributeError:
-                print 'Package boto seems a bit older.'
-                print 'Please upgrade boto >= 2.3.0.'
-                sys.exit(1)
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                                            'Please upgrade boto >= 2.3.0.']))
+
 
         # Inventory: Group by engine
         if self.group_by_rds_engine:
