@@ -7,11 +7,21 @@ EC2 external inventory script
 Generates inventory that Ansible can understand by making API request to
 AWS EC2 using the Boto library.
 
-NOTE: This script assumes Ansible is being executed where the environment
-variables needed for Boto have already been set:
+NOTE: This script assumes Ansible is being executed where AWS credentials
+are in a place where boto (the python interface to AWS) knows to find
+them. There are a variety of methods available
+(http://boto.readthedocs.org/en/latest/boto_config_tut.html#credentials),
+but the simplest is just to export two environment variables:
+
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
+Alternatively, credentials can also be specified in then ec2.ini, in
+which case they will take the highest precedence:
+
+    aws_access_key_id = ABS123
+    aws_secret_access_key = abc123
+    
 This script also assumes there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
@@ -190,6 +200,12 @@ class Ec2Inventory(object):
         ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
         config.read(ec2_ini_path)
 
+        self.connect_args = {'aws_access_key_id': None,
+                             'aws_secret_access_key': None}
+        for key in self.connect_args.keys():
+            if config.has_option('ec2', key):
+                self.connect_args[key] = config.get('ec2', key)
+        
         # is eucalyptus?
         self.eucalyptus_host = None
         self.eucalyptus = False
@@ -204,7 +220,7 @@ class Ec2Inventory(object):
         configRegions_exclude = config.get('ec2', 'regions_exclude')
         if (configRegions == 'all'):
             if self.eucalyptus_host:
-                self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name)
+                self.regions.append(self.ec2_connect().region.name)
             else:
                 for regionInfo in ec2.regions():
                     if regionInfo.name not in configRegions_exclude:
@@ -339,18 +355,9 @@ class Ec2Inventory(object):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
 
+        conn = self.ec2_connect(region)
+        
         try:
-            if self.eucalyptus:
-                conn = boto.connect_euca(host=self.eucalyptus_host)
-                conn.APIVersion = '2010-08-31'
-            else:
-                conn = ec2.connect_to_region(region)
-
-            # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
-            if conn is None:
-                print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
-                sys.exit(1)
-
             reservations = []
             if self.ec2_instance_filters:
                 for filter_key, filter_values in self.ec2_instance_filters.iteritems():
@@ -373,7 +380,7 @@ class Ec2Inventory(object):
         region '''
 
         try:
-            conn = rds.connect_to_region(region)
+            conn = rds.connect_to_region(region, **self.connect_args)
             if conn:
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
@@ -386,17 +393,7 @@ class Ec2Inventory(object):
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
-        if self.eucalyptus:
-            conn = boto.connect_euca(self.eucalyptus_host)
-            conn.APIVersion = '2010-08-31'
-        else:
-            conn = ec2.connect_to_region(region)
-
-        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
-        if conn is None:
-            print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
-            sys.exit(1)
-
+        conn = self.ec2_connect(region)
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
             for instance in reservation.instances:
@@ -613,7 +610,8 @@ class Ec2Inventory(object):
         ''' Get and store the map of resource records to domain names that
         point to them. '''
 
-        r53_conn = route53.Route53Connection()
+        r53_conn = route53.Route53Connection(self.connect_args['aws_access_key_id'],
+                                             self.connect_args['aws_secret_access_key'])
         all_zones = r53_conn.get_zones()
 
         route53_zones = [ zone for zone in all_zones if zone.name[:-1]
@@ -782,7 +780,29 @@ class Ec2Inventory(object):
         else:
             return json.dumps(data)
 
+    def ec2_connect(self, region):
+        try:
+            if self.eucalyptus:
+                conn = boto.connect_euca(host=self.eucalyptus_host, **self.connect_args)
+                conn.APIVersion = '2010-08-31'
+            else:
+                conn = ec2.connect_to_region(region, **self.connect_args)
+
+            # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+            if conn is None:
+                print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+                sys.exit(1)
+
+            return conn
+        
+        except boto.exception.BotoServerError, e:
+            if  not self.eucalyptus:
+                print "Unable to connect with AWS:"
+            print e
+            sys.exit(1)
+    
 
 # Run the script
-Ec2Inventory()
+if __name__ == '__main__':
+    Ec2Inventory()
 
