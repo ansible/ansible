@@ -71,7 +71,7 @@ datadog_event: title="Testing from ansible" text="Test!" priority="low"
 # Post an event with several tags
 datadog_event: title="Testing from ansible" text="Test!"
                api_key="6873258723457823548234234234"
-               tags=aa,bb,cc
+               tags=aa,bb,#host:{{ inventory_hostname }}
 '''
 
 import socket
