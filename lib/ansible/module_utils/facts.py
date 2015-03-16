@@ -652,6 +652,7 @@ class LinuxHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
+        self.get_uptime_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -990,6 +991,9 @@ class LinuxHardware(Hardware):
 
             self.facts['devices'][diskname] = d
 
+    def get_uptime_facts(self):
+        uptime_seconds_string = get_file_content('/proc/uptime').split(' ')[0]
+        self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
 
 class SunOSHardware(Hardware):
     """
@@ -1588,6 +1592,7 @@ class Darwin(Hardware):
         self.get_mac_facts()
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_uptime_facts()
         return self.facts
 
     def get_sysctl(self):
@@ -1634,6 +1639,12 @@ class Darwin(Hardware):
         rc, out, err = module.run_command("sysctl hw.usermem")
         if rc == 0:
             self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
+
+    def get_uptime_facts(self):
+        kern_boottime = self.sysctl['kern.boottime']
+        boottime = datetime.datetime.strptime(kern_boottime, "%a %b %d %H:%M:%S %Y")
+        delta = datetime.datetime.now() - boottime
+        self.facts['uptime_seconds'] = int(delta.total_seconds())
 
 class Network(Facts):
     """
