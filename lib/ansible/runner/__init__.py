@@ -1412,6 +1412,7 @@ class Runner(object):
                 raise Exception("internal error, host not set")
             if result.communicated_ok():
                 results2["contacted"][host] = result.result
+                results2["contacted"][host].update({'diff': result.diff})
             else:
                 results2["dark"][host] = result.result
 
