@@ -306,7 +306,7 @@ class Connection(object):
 
         no_prompt_out = ''
         no_prompt_err = ''
-        if self.runner.become and sudoable and self.runner.become_pass:
+        if sudoable and self.runner.become and self.runner.become_pass:
             # several cases are handled for escalated privileges with password
             # * NOPASSWD (tty & no-tty): detect success_key on stdout
             # * without NOPASSWD:
@@ -319,11 +319,10 @@ class Connection(object):
             become_output = ''
             become_errput = ''
 
-            while success_key not in become_output:
-
-                if prompt and become_output.endswith(prompt):
-                    break
-                if utils.su_prompts.check_su_prompt(become_output):
+            while True:
+                if success_key in become_output or \
+                    (prompt and become_output.endswith(prompt)) or \
+                    utils.su_prompts.check_su_prompt(become_output):
                     break
 
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
@@ -351,12 +350,11 @@ class Connection(object):
                     stdout = p.communicate()
                     raise errors.AnsibleError('ssh connection error while waiting for %s password prompt' % self.runner.become_method)
 
-            if success_key not in become_output:
-                if sudoable:
-                    stdin.write(self.runner.become_pass + '\n')
-            else:
+            if success_key in become_output:
                 no_prompt_out += become_output
                 no_prompt_err += become_errput
+            elif sudoable:
+                stdin.write(self.runner.become_pass + '\n')
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable, prompt=prompt)
 

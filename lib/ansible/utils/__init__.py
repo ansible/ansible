@@ -1241,8 +1241,8 @@ def make_become_cmd(cmd, user, shell, method, flags=None, exe=None):
         # sudo prompt set with the -p option.
         prompt = '[sudo via ansible, key=%s] password: ' % randbits
         exe = exe or C.DEFAULT_SUDO_EXE
-        becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c "%s"' % \
-            (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, user, shell, 'echo %s; %s' % (success_key, cmd))
+        becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % \
+            (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, user, shell, pipes.quote('echo %s; %s' % (success_key, cmd)))
 
     elif method == 'su':
         exe = exe or C.DEFAULT_SU_EXE
@@ -1252,13 +1252,13 @@ def make_become_cmd(cmd, user, shell, method, flags=None, exe=None):
     elif method == 'pbrun':
         exe = exe or 'pbrun'
         flags = flags or ''
-        becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, 'echo %s; %s' % (success_key,cmd))
+        becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, pipes.quote('echo %s; %s' % (success_key,cmd)))
 
     elif method == 'pfexec':
         exe = exe or 'pfexec'
         flags = flags or ''
         # No user as it uses it's own exec_attr to figure it out
-        becomecmd = '%s %s "%s"' % (exe, flags, 'echo %s; %s' % (success_key,cmd))
+        becomecmd = '%s %s "%s"' % (exe, flags, pipes.quote('echo %s; %s' % (success_key,cmd)))
 
     if becomecmd is None:
         raise errors.AnsibleError("Privilege escalation method not found: %s" % method)
