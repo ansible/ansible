@@ -1592,6 +1592,7 @@ class Darwin(Hardware):
         self.get_mac_facts()
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_uptime_facts()
         return self.facts
 
     def get_sysctl(self):
@@ -1639,6 +1640,17 @@ class Darwin(Hardware):
         if rc == 0:
             self.facts['memfree_mb'] = long(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
+    def get_uptime_facts(self):
+        kern_boottime = self.sysctl['kern.boottime']
+        match = re.search('(Mon|Tue|Wed|Thu|Fri|Sat|Sun).*$', kern_boottime)
+        if match:
+            boottime_string = match.group(0)
+            try:
+                boottime = datetime.datetime.strptime(boottime_string, "%a %b %d %H:%M:%S %Y")
+                delta = datetime.datetime.now() - boottime
+                self.facts['uptime_seconds'] = int(delta.total_seconds())
+            except ValueError:
+                pass
 
 class Network(Facts):
     """
