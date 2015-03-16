@@ -359,15 +359,14 @@ HAS_DOCKER_PY = True
 
 import sys
 import json
-import re
 import os
 import shlex
 from urlparse import urlparse
 try:
     import docker.client
     import docker.utils
-    from requests.exceptions import *
-except ImportError, e:
+    from requests.exceptions import RequestException
+except ImportError:
     HAS_DOCKER_PY = False
 
 if HAS_DOCKER_PY:
@@ -1120,7 +1119,6 @@ class DockerManager(object):
         for i in self.client.containers(all=True):
             running_image = i['Image']
             running_command = i['Command'].strip()
-            match = False
 
             if name:
                 matches = name in i.get('Names', [])
@@ -1464,7 +1462,6 @@ def main():
         manager = DockerManager(module)
         count = int(module.params.get('count'))
         name = module.params.get('name')
-        image = module.params.get('image')
         pull = module.params.get('pull')
 
         state = module.params.get('state')
@@ -1485,7 +1482,6 @@ def main():
             manager.pull_image()
 
         containers = ContainerSet(manager)
-        failed = False
 
         if state == 'present':
             present(manager, containers, count, name)
