@@ -546,6 +546,7 @@ class DockerManager(object):
         # Connect to the docker server using any configured host and TLS settings.
 
         env_host = os.getenv('DOCKER_HOST')
+        env_docker_verify = os.getenv('DOCKER_TLS_VERIFY')
         env_cert_path = os.getenv('DOCKER_CERT_PATH')
         env_docker_hostname = os.getenv('DOCKER_TLS_HOSTNAME')
 
@@ -593,6 +594,9 @@ class DockerManager(object):
         #   or tls_ca_cert (which requests verifying the server with
         #   a specific ca certificate)
         use_tls = module.params.get('use_tls')
+        if use_tls is None and env_docker_verify is not None:
+            use_tls = 'verify'
+
         tls_config = None
         if use_tls != 'no':
             params = {}
