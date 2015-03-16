@@ -117,6 +117,7 @@ except ImportError, e:
     see http://python-consul.readthedocs.org/en/latest/#installation'"""
     sys.exit(1)
 
+from requests.exceptions import ConnectionError
 
 def execute(module):
 
@@ -227,11 +228,12 @@ def main():
 
     try:
         execute(module)
-    except IOError, e:
-        error = e.read()
-        if not error:
-            error = str(e)
-        module.fail_json(msg=error)
+    except ConnectionError, e:
+        module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
+                            module.params.get('host'), module.params.get('port'), str(e)))
+    except Exception, e:
+        module.fail_json(msg=str(e))
+
 
 # import module snippets
 from ansible.module_utils.basic import *
