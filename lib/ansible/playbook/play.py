@@ -172,6 +172,7 @@ class Play(object):
         elif 'su' in ds:
             self.become=True
             self.become=ds['su']
+            self.become_method='su'
             if 'su_user' in ds:
                 self.become_user=ds['su_user']
 
