@@ -21,19 +21,13 @@
   shell: "docker ps | grep busybox | awk '{ print $1 }'"
   register: container_id
 
-- debug: var=container_id
-
 - name: Get the docker container ip
   shell: "docker inspect {{ container_id.stdout_lines[0] }} | grep IPAddress | awk -F '\"' '{ print $4 }'"
   register: container_ip
 
-- debug: var=container_ip
-
 - name: Try to access the server
   shell: "echo 'world' | nc {{ container_ip.stdout_lines[0] }} 2000"
   register: docker_output
-
-- debug: var=docker_output
 
 - name: check that the script ran
   assert:
