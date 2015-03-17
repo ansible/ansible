@@ -1247,7 +1247,12 @@ def make_become_cmd(cmd, user, shell, method, flags=None, exe=None):
     elif method == 'su':
         exe = exe or C.DEFAULT_SU_EXE
         flags = flags or C.DEFAULT_SU_FLAGS
-        becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, user, shell, pipes.quote('echo %s; %s' % (success_key, cmd)))
+        becomecmd = '%s %s %s -s %s -c %s' % (exe, flags, user, shell, pipes.quote('echo %s; %s' % (success_key, cmd)))
+
+    elif method == 'bsdsu':
+        exe = exe or C.DEFAULT_SU_EXE
+        flags = flags or C.DEFAULT_SU_FLAGS
+        becomecmd = "%s %s %s '%s -c %s'" % (exe, flags, user, shell, pipes.quote('echo %s; %s' % (success_key, cmd)))
 
     elif method == 'pbrun':
         exe = exe or 'pbrun'

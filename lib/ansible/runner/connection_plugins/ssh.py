@@ -49,8 +49,7 @@ class Connection(object):
         self.HASHED_KEY_MAGIC = "|1|"
         self.has_pipelining = True
 
-        # TODO: add pbrun, pfexec
-        self.become_methods_supported=['sudo', 'su', 'pbrun']
+        self.become_methods_supported=['sudo', 'su','bsdsu', 'pbrun', 'pfexec']
 
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)

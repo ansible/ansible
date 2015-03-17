@@ -126,7 +126,7 @@ class Connection(object):
         self.has_pipelining = False
 
         # TODO: add pbrun, pfexec
-        self.become_methods_supported=['sudo', 'su', 'pbrun']
+        self.become_methods_supported=['sudo', 'su', 'pbrun', 'bsdsu', 'pfexec']
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
