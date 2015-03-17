@@ -1,0 +1,4 @@
+- name: Install docker packages (yum)
+  yum:
+    state: present
+    name: docker,docker-registry,python-docker-py,nmap-ncat
