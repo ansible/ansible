@@ -36,7 +36,12 @@ class ActionModule(object):
         if remote_checksum in ('0', '2', '3', '4'):
             # Note: 1 means the file is not present which is fine; template
             # will create it.  3 means directory was specified instead of file
+            # which requires special handling
             if try_directory and remote_checksum == '3' and source:
+                # If the user specified a directory name as their dest then we
+                # have to check the checksum of dest/basename(src).  This is
+                # the same behaviour as cp foo.txt /var/tmp/ so users expect
+                # it to work.
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
                 remote_checksum = self.get_checksum(conn, tmp, dest, inject, try_directory=False)
