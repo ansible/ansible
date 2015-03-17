@@ -33,7 +33,7 @@ description:
 options:
   allowed:
     description:
-      - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800')
+      - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
     required: false
     default: null
     aliases: []
@@ -136,9 +136,8 @@ except ImportError:
             "msg='libcloud with GCE support required for this module.'")
     sys.exit(1)
 
-
-def format_allowed(allowed):
-    """Format the 'allowed' value so that it is GCE compatible."""
+def format_allowed_section(allowed):
+    """Format each section of the allowed list"""
     if allowed.count(":") == 0:
         protocol = allowed
         ports = []
@@ -153,8 +152,18 @@ def format_allowed(allowed):
     return_val = {"IPProtocol": protocol}
     if ports:
         return_val["ports"] = ports
-    return [return_val]
+    return return_val
 
+def format_allowed(allowed):
+    """Format the 'allowed' value so that it is GCE compatible."""
+    return_value = []
+    if allowed.count(";") == 0:
+        return [format_allowed_section(allowed)]
+    else:
+        sections = allowed.split(";")
+        for section in sections:
+            return_value.append(format_allowed_section(section))
+    return return_value
 
 def main():
     module = AnsibleModule(
