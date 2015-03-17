@@ -14,5 +14,10 @@
   # Add other distributions as the proper packages become available
   when: ansible_distribution in ['Fedora']
 
-- include: docker-tests.yml
-  when: ansible_distribution in ['RedHat', 'CentOS'] and ansible_lsb.major_release|int == 6
+#- include: docker-tests.yml
+#  when: ansible_distribution in ['RedHat', 'CentOS'] and ansible_lsb.major_release|int == 6
+
+- include: registry-tests.yml
+  # Add other distributions as the proper packages become available
+  when: ansible_distribution in ['Fedora']
+
