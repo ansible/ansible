@@ -883,10 +883,12 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
+
         self.become = utils.boolean(inject.get('ansible_become', inject.get('ansible_sudo', inject.get('ansible_su', self.become))))
         self.become_user = inject.get('ansible_become_user', inject.get('ansible_sudo_user', inject.get('ansible_su_user',self.become_user)))
         self.become_pass = inject.get('ansible_become_pass', inject.get('ansible_sudo_pass', inject.get('ansible_su_pass', self.become_pass)))
         self.become_exe = inject.get('ansible_become_exe', inject.get('ansible_sudo_exe', self.become_exe))
+        self.become_method = inject.get('ansible_become_method', self.become_method)
 
         # select default root user in case self.become requested
         # but no user specified; happens e.g. in host vars when
