@@ -1623,10 +1623,12 @@ def _load_vars_from_folder(folder_path, results, vault_password=None):
 
 def update_hash(hash, key, new_value):
     ''' used to avoid nested .update calls on the parent '''
-
     value = hash.get(key, {})
-    value.update(new_value)
-    hash[key] = value
+    if(isinstance(value, dict)) and (isinstance(new_value, dict)):
+        hash[key] = merge_hash(value, new_value)
+    else:
+        value.update(new_value)
+        hash[key] = value
 
 def censor_unlogged_data(data):
     '''
