@@ -26,8 +26,6 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-
-
     def get_checksum(self, tmp, dest, try_directory=False, source=None):
         remote_checksum = self._remote_checksum(tmp, dest)
 
@@ -92,7 +90,9 @@ class ActionModule(ActionBase):
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest, tmp)
 
+        directory_prepended = False
         if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
+            directory_prepended = True
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
 
@@ -105,7 +105,7 @@ class ActionModule(ActionBase):
         except Exception, e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 
-        local_checksum = utils.checksum_s(resultant)
+        local_checksum = checksum_s(resultant)
         remote_checksum = self.get_checksum(tmp, dest, not directory_prepended, source=source)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
@@ -129,7 +129,7 @@ class ActionModule(ActionBase):
             xfered = self._transfer_data(self._shell.join_path(tmp, 'source'), resultant)
 
             # fix file permissions when the copy is done as a different user
-            if self._connection_info.sudo and self._connection_info.sudo_user != 'root' or self._connection_info.su and self._connection_info.su_user != 'root':
+            if self._connection_info.become and self._connection_info.become_user != 'root':
                 self._remote_chmod('a+r', xfered, tmp)
 
             # run the copy module

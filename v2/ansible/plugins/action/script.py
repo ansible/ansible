@@ -74,8 +74,7 @@ class ActionModule(ActionBase):
 
         sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if ((self._connection_info.sudo and self._connection_info.sudo_user != 'root') or
-            (self._connection_info.su and self._connection_info.su_user != 'root')):
+        if self._connection_info.become and self._connection_info.become_user != 'root':
             chmod_mode = 'a+rx'
             sudoable = False
         else:

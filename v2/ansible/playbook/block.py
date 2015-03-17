@@ -21,13 +21,13 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-#from ansible.playbook.become import Become
+from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
-class Block(Base, Conditional, Taggable):
+class Block(Base, Become, Conditional, Taggable):
 
     _block  = FieldAttribute(isa='list', default=[])
     _rescue = FieldAttribute(isa='list', default=[])
@@ -71,16 +71,18 @@ class Block(Base, Conditional, Taggable):
         If a simple task is given, an implicit block for that single task
         is created, which goes in the main portion of the block
         '''
+
         is_block = False
         for attr in ('block', 'rescue', 'always'):
             if attr in ds:
                 is_block = True
                 break
+
         if not is_block:
             if isinstance(ds, list):
-                return dict(block=ds)
+                return super(Block, self).munge(dict(block=ds))
             else:
-                return dict(block=[ds])
+                return super(Block, self).munge(dict(block=[ds]))
 
         return super(Block, self).munge(ds)
 
@@ -166,7 +168,11 @@ class Block(Base, Conditional, Taggable):
         a task we don't want to include the attribute list of tasks.
         '''
 
-        data = dict(when=self.when)
+        data = dict()
+        for attr in self._get_base_attributes():
+            if attr not in ('block', 'rescue', 'always'):
+                data[attr] = getattr(self, attr)
+
         data['dep_chain'] = self._dep_chain
 
         if self._role is not None:
@@ -184,8 +190,12 @@ class Block(Base, Conditional, Taggable):
 
         from ansible.playbook.task import Task
 
-        # unpack the when attribute, which is the only one we want
-        self.when = data.get('when')
+        # we don't want the full set of attributes (the task lists), as that
+        # would lead to a serialize/deserialize loop
+        for attr in self._get_base_attributes():
+            if attr in data and attr not in ('block', 'rescue', 'always'):
+                setattr(self, attr, data.get(attr))
+
         self._dep_chain = data.get('dep_chain', [])
 
         # if there was a serialized role, unpack it too
