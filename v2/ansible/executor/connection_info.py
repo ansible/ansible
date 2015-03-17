@@ -194,8 +194,8 @@ class ConnectionInformation:
                 prompt = '[sudo via ansible, key=%s] password: ' % randbits
                 exe = become_settings.get('sudo_exe', C.DEFAULT_SUDO_EXE)
                 flags = become_settings.get('sudo_flags', C.DEFAULT_SUDO_FLAGS)
-                becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c "%s"' % \
-                    (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, 'echo %s; %s' % (success_key, cmd))
+                becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % \
+                    (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, pipes.quote('echo %s; %s' % (success_key, cmd)))
 
             elif self.become_method == 'su':
                 exe = become_settings.get('su_exe', C.DEFAULT_SU_EXE)
@@ -205,13 +205,13 @@ class ConnectionInformation:
             elif self.become_method == 'pbrun':
                 exe = become_settings.get('pbrun_exe', 'pbrun')
                 flags = become_settings.get('pbrun_flags', '')
-                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, self.become_user, 'echo %s; %s' % (success_key,cmd))
+                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, pipes.quote('echo %s; %s' % (success_key, cmd)))
 
             elif self.become_method == 'pfexec':
                 exe = become_settings.get('pfexec_exe', 'pbrun')
                 flags = become_settings.get('pfexec_flags', '')
                 # No user as it uses it's own exec_attr to figure it out
-                becomecmd = '%s %s "%s"' % (exe, flags, 'echo %s; %s' % (success_key,cmd))
+                becomecmd = '%s %s "%s"' % (exe, flags, pipes.quote('echo %s; %s' % (success_key, cmd)))
 
             else:
                 raise errors.AnsibleError("Privilege escalation method not found: %s" % method)
