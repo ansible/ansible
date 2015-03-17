@@ -382,7 +382,7 @@ class TaskExecutor:
         self._connection_info.password         = this_info.get('ansible_ssh_pass', self._connection_info.password)
         self._connection_info.private_key_file = this_info.get('ansible_ssh_private_key_file', self._connection_info.private_key_file)
         self._connection_info.connection       = this_info.get('ansible_connection', self._connection_info.connection)
-        self._connection_info.sudo_pass        = this_info.get('ansible_sudo_pass', self._connection_info.sudo_pass)
+        self._connection_info.become_pass      = this_info.get('ansible_sudo_pass', self._connection_info.become_pass)
 
         if self._connection_info.remote_addr in ('127.0.0.1', 'localhost'):
              self._connection_info.connection = 'local'

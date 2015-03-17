@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self._connection_info.sudo and self._connection_info.sudo_user != 'root' or self._connection_info.su and self._connection_info.su_user != 'root':
+            if self._connection_info.become and self._connection_info.become_user != 'root':
                 # FIXME: noop stuff needs to be reworked
                 #if not self.runner.noop_on_check(task_vars):
                 #    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)

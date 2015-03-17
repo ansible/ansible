@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 #from ansible.utils.display import deprecated
@@ -84,5 +85,13 @@ class Become:
                 del ds['su_user']
 
             #deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
+
+        # if we are becoming someone else, but some fields are unset,
+        # make sure they're initialized to the default config values
+        if ds.get('become', False):
+            if ds.get('become_method', None) is None:
+                ds['become_method'] = C.DEFAULT_BECOME_METHOD
+            if ds.get('become_user', None) is None:
+                ds['become_user'] = C.DEFAULT_BECOME_USER
 
         return ds

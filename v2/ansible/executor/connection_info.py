@@ -157,10 +157,13 @@ class ConnectionInformation:
         new_info.copy(self)
 
         for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
+            attr_val = None
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
-                if attr_val:
-                    setattr(new_info, attr, attr_val)
+            if task._block and hasattr(task._block, attr) and not attr_val:
+                attr_val = getattr(task._block, attr)
+            if attr_val:
+                setattr(new_info, attr, attr_val)
 
         return new_info
 

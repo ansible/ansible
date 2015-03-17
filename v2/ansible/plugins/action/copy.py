@@ -231,7 +231,7 @@ class ActionModule(ActionBase):
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                if (self._connection_info.sudo and self._connection_info.sudo_user != 'root' or self._connection_info.su and self._connection_info.su_user != 'root') and not raw:
+                if (self._connection_info.become and self._connection_info.become_user != 'root':
                     self._remote_chmod('a+r', tmp_src, tmp)
 
                 if raw:

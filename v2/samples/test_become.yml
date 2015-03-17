@@ -3,4 +3,6 @@
   tasks:
   - command: whoami
     become_user: testing
-    become_method: su
+  - block:
+    - command: whoami
+    become_user: testing
