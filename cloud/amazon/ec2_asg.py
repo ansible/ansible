@@ -324,7 +324,7 @@ def create_autoscaling_group(connection, module):
         as_group = as_groups[0]
         changed = False
         for attr in ASG_ATTRIBUTES:
-            if module.params.get(attr):
+            if module.params.get(attr, None) is not None:
                 module_attr = module.params.get(attr)
                 if attr == 'vpc_zone_identifier':
                     module_attr = ','.join(module_attr)
