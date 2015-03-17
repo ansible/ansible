@@ -53,7 +53,10 @@ def symmetric_difference(a, b):
     return c
 
 def union(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+    if isinstance(a, dict) and isinstance(b, dict):
+        c = a.copy()
+        c.update(b)
+    elif isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
         c = set(a) | set(b)
     else:
         c = unique(a + b)
