@@ -113,6 +113,12 @@ options:
     required: false
     default: null
     version_added: '1.4'
+  no_password_changes:
+    description:
+      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make password changes as necessary.
+    required: false
+    default: 'yes'
+    choices: [ "yes", "no" ]
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -201,7 +207,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
     cursor.execute(query, query_password_data)
     return True
 
-def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires):
+def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
@@ -215,7 +221,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             return False
 
     # Handle passwords.
-    if password is not None or role_attr_flags is not None:
+    if not no_password_changes and (password is not None or role_attr_flags is not None):
         # Select password and all flag-like columns in order to verify changes.
         query_password_data = dict(password=password, expires=expires)
         select = "SELECT * FROM pg_authid where rolname=%(user)s"
@@ -471,6 +477,7 @@ def main():
             fail_on_user=dict(type='bool', default='yes'),
             role_attr_flags=dict(default=''),
             encrypted=dict(type='bool', default='no'),
+            no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None)
         ),
         supports_check_mode = True
@@ -485,6 +492,7 @@ def main():
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
     port = module.params["port"]
+    no_password_changes = module.params.get("no_password_changes", False)
     try:
         role_attr_flags = parse_role_attrs(module.params["role_attr_flags"])
     except InvalidFlagsError, e:
@@ -529,7 +537,7 @@ def main():
     if state == "present":
         if user_exists(cursor, user):
             try:
-                changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires)
+                changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes)
             except SQLParseError, e:
                 module.fail_json(msg=str(e))
         else:
