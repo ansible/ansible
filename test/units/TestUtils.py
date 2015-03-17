@@ -505,7 +505,6 @@ class TestUtils(unittest.TestCase):
         cmd = ansible.utils.make_su_cmd('root', '/bin/sh', '/bin/ls')
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
-        self.assertTrue('root -c "/bin/sh' in cmd[0] or ' root -c /bin/sh' in cmd[0])
         self.assertTrue('echo BECOME-SUCCESS-' in cmd[0] and cmd[2].startswith('BECOME-SUCCESS-'))
 
     def test_to_unicode(self):
