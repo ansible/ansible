@@ -1,0 +1,63 @@
+# test users privs for postgresql_privs module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Verify postgresql_privs successfully grants privileges to the correct user
+#
+- include: create_db.yml database_name={{db_name1}} table_name={{db_table}} user_name={{db_user1}}
+
+- include: create_db.yml database_name={{db_name2}} table_name={{db_table}} user_name={{db_user2}}
+
+- name: grant user1 select and insert privileges to the table object in database1 (expect changed=true)
+  sudo: yes
+  sudo_user: postgres
+  postgresql_privs: db={{ db_name1 }} state=present priv=select,insert type=table objs={{db_table}} roles={{db_user1}} 
+  register: result
+
+- include: assert_privs.yml output={{result}} database_name={{db_name1}} changed=true privileges='{{db_user1}}=ar'
+
+- name: insert data in database1 with user1
+  command: psql -c "insert into employee values ('Joe')" -d {{ db_name1 }} -U {{ db_user1 }}
+
+- name: query data from database1 with user1
+  command: psql -c "select  * from employee;" -d {{db_name1}} -U {{ db_user1 }}
+  register: result  
+
+- name: assert user1 successfully query data from database1
+  assert: { that: "'Joe' in result.stdout" }
+
+- name: insert data in database2 with user1
+  command: psql -c "insert into employee values ('Joe')" -d {{ db_name2 }} -U {{ db_user1 }}
+  ignore_errors: true 
+  register: result
+
+- name: assert user1 is not authorized to insert data
+  assert: { that: "'permission denied for relation employee' in result.stderr" }
+
+- name: query data from database1 with user2
+  command: psql -c "select  * from employee;" -d {{db_name1}} -U {{ db_user2 }}
+  register: result 
+  ignore_errors: true
+
+- name: assert user2 is not authorized to query data
+  assert: { that: "'permission denied for relation employee' in result.stderr" }
+
+- include: remove_db.yml database_name={{db_name1}} user_name={{db_user1}}
+
+- include: remove_db.yml database_name={{db_name2}} user_name={{db_user2}}
+
