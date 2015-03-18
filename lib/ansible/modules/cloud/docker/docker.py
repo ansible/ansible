@@ -661,9 +661,9 @@ class DockerManager(object):
                 ' docker-py: %s, docker server apiversion %s; found'
                 ' docker-py: %s, server: %s' % (
                     capability,
-                    '.'.join(self._cap_ver_req[capability][0]),
+                    '.'.join(map(str, self._cap_ver_req[capability][0])),
                     self._cap_ver_req[capability][1],
-                    '.'.join(self.docker_py_versioninfo),
+                    '.'.join(map(str, self.docker_py_versioninfo)),
                     api_version))
 
     def get_links(self, links):
