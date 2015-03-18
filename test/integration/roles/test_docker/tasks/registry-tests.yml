@@ -14,26 +14,27 @@
   register: image_id
 
 - name: Tag docker image into the local registry
-  shell: "docker tag {{ image_id.stdout_lines[0] }} localhost:5000/mine"
+  command: "docker tag {{ image_id.stdout_lines[0] }} localhost:5000/mine"
 
 - name: Push docker image into the private registry
-  shell: "docker push localhost:5000/mine"
+  command: "docker push localhost:5000/mine"
 
 - name: Remove the busybox image from the local docker
-  shell: "docker rmi -f busybox"
+  command: "docker rmi -f busybox"
 
 - name: Remove the new image from the local docker
-  shell: "docker rmi -f localhost:5000/mine"
+  command: "docker rmi -f localhost:5000/mine"
 
 - name: Get number of images in docker
-  shell: "docker images |wc -l"
+  command: "docker images"
   register: docker_output
 
+- debug: var=docker_output
 # docker prints a header so the header should be all that's present
 - name: Check that there are no images in docker
   assert:
     that:
-      - "'1' in docker_output.stdout_lines"
+      - "{{ docker_output.stdout_lines| length }} <= 1 "
 
 - name: Retrieve the image from private docker registry
   docker:
@@ -69,16 +70,17 @@
       - "'hello world' in docker_output.stdout_lines"
 
 - name: Remove the new image from the local docker
-  shell: "docker rmi -f localhost:5000/mine"
+  command: "docker rmi -f localhost:5000/mine"
 
 - name: Get number of images in docker
-  shell: "docker images |wc -l"
+  command: "docker images"
   register: docker_output
 
+- debug: var=docker_output
 - name: Check that there are no images in docker
   assert:
     that:
-      - "'1' in docker_output.stdout_lines"
+      - "{{ docker_output.stdout_lines| length }} <= 1"
 
 - name: Setup nginx with a user/password
   copy:
@@ -152,7 +154,7 @@
       - "'hello world' in docker_output.stdout_lines"
 
 - name: Remove the private repo image from the local docker
-  shell: "docker rmi -f dockertest.ansible.com:8080/mine"
+  command: "docker rmi -f dockertest.ansible.com:8080/mine"
 
 - name: Remove domain name to hosts
   lineinfile:
