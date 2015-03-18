@@ -52,6 +52,11 @@ options:
        Only usable with the C(downtime) action.
     required: false
     default: Ansible
+  comment:
+    description:
+     - Comment for C(downtime) action.
+    required: false
+    default: Scheduling downtime
   minutes:
     description:
       - Minutes to schedule downtime for.
@@ -88,6 +93,10 @@ EXAMPLES = '''
 
 # schedule an hour of HOST downtime
 - nagios: action=downtime minutes=60 service=host host={{ inventory_hostname }}
+
+# schedule an hour of HOST downtime, with a comment describing the reason
+- nagios: action=downtime minutes=60 service=host host={{ inventory_hostname }}
+          comment='This host needs disciplined'
 
 # schedule downtime for ALL services on HOST
 - nagios: action=downtime minutes=45 service=all host={{ inventory_hostname }}
@@ -189,6 +198,7 @@ def main():
         argument_spec=dict(
             action=dict(required=True, default=None, choices=ACTION_CHOICES),
             author=dict(default='Ansible'),
+            comment=dict(default='Scheduling downtime'),
             host=dict(required=False, default=None),
             servicegroup=dict(required=False, default=None),
             minutes=dict(default=30),
@@ -288,6 +298,7 @@ class Nagios(object):
         self.module = module
         self.action = kwargs['action']
         self.author = kwargs['author']
+        self.comment = kwargs['comment']
         self.host = kwargs['host']
         self.servicegroup = kwargs['servicegroup']
         self.minutes = int(kwargs['minutes'])
@@ -324,7 +335,7 @@ class Nagios(object):
                                   cmdfile=self.cmdfile)
 
     def _fmt_dt_str(self, cmd, host, duration, author=None,
-                    comment="Scheduling downtime", start=None,
+                    comment=None, start=None,
                     svc=None, fixed=1, trigger=0):
         """
         Format an external-command downtime string.
@@ -356,6 +367,9 @@ class Nagios(object):
 
         if not author:
             author = self.author
+
+        if not comment:
+            comment = self.comment
 
         if svc is not None:
             dt_args = [svc, str(start), str(end), str(fixed), str(trigger),
