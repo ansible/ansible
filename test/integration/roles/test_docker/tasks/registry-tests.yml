@@ -20,7 +20,7 @@
   command: "docker push localhost:5000/mine"
 
 - name: Remove the busybox image from the local docker
-  command: "docker rmi -f busybox"
+  command: "docker rmi -f {{ image_id.stdout_lines[0] }}"
 
 - name: Remove the new image from the local docker
   command: "docker rmi -f localhost:5000/mine"
