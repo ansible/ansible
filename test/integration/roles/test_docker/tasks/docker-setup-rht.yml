@@ -1,7 +1,7 @@
 - name: Install docker packages (yum)
   yum:
     state: present
-    name: docker-io,docker-registry,python-docker-py
+    name: docker-io,docker-registry,python-docker-py,nginx
 
 - name: Install netcat
   yum:

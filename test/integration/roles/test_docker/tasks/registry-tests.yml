@@ -3,18 +3,24 @@
     name: docker-registry
     state: started
 
+- name: Retrieve busybox image from docker hub
+  docker:
+    image: busybox
+    state: present
+    pull: missing
+
 - name: Get busybox image id
   shell: "docker images | grep busybox | awk '{ print $3 }'"
   register: image_id
 
-- name: Tag docker image into the local repository
+- name: Tag docker image into the local registry
   shell: "docker tag {{ image_id.stdout_lines[0] }} localhost:5000/mine"
 
-- name: Push docker image into the local repository
+- name: Push docker image into the private registry
   shell: "docker push localhost:5000/mine"
 
 - name: Remove the busybox image from the local docker
-  shell: "docker rmi -f {{ image_id.stdout_lines[0] }}"
+  shell: "docker rmi -f busybox"
 
 - name: Remove the new image from the local docker
   shell: "docker rmi -f localhost:5000/mine"
@@ -23,12 +29,13 @@
   shell: "docker images |wc -l"
   register: docker_output
 
+# docker prints a header so the header should be all that's present
 - name: Check that there are no images in docker
   assert:
     that:
       - "'1' in docker_output.stdout_lines"
 
-- name: Retrieve the image from private docker server
+- name: Retrieve the image from private docker registry
   docker:
     image: "localhost:5000/mine"
     state: present
@@ -60,3 +67,96 @@
   assert:
     that:
       - "'hello world' in docker_output.stdout_lines"
+
+- name: Remove the new image from the local docker
+  shell: "docker rmi -f localhost:5000/mine"
+
+- name: Get number of images in docker
+  shell: "docker images |wc -l"
+  register: docker_output
+
+- name: Check that there are no images in docker
+  assert:
+    that:
+      - "'1' in docker_output.stdout_lines"
+
+- name: Setup nginx with a user/password
+  copy:
+    src: docker-registry.htpasswd
+    dest:  /etc/nginx/docker-registry.htpasswd
+
+- name: Setup nginx with a config file
+  copy:
+    src: nginx-docker-registry.conf
+    dest:  /etc/nginx/conf.d/nginx-docker-registry.conf
+
+- name: Setup nginx docker cert
+  copy:
+    src: dockertest.ansible.com.crt
+    dest: /etc/pki/tls/certs/dockertest.ansible.com.crt
+
+- name: Setup nginx docker key
+  copy:
+    src: dockertest.ansible.com.key
+    dest: /etc/pki/tls/private/dockertest.ansible.com.key
+
+- name: Setup the ca keys
+  copy:
+    src: devdockerCA.crt
+    dest: /etc/pki/ca-trust/source/anchors/devdockerCA.crt
+
+- name: Update the ca bundle
+  command: update-ca-trust extract
+
+- name: Restart docker daemon
+  service:
+    name: docker
+    state: restarted
+
+- name: Start nginx
+  service:
+    name: nginx
+    state: restarted
+
+- name: Add domain name to hosts
+  lineinfile:
+    line: "127.0.0.1  dockertest.ansible.com"
+    dest: /etc/hosts
+    state: present
+
+- name: Start a container after getting it from a secured private registry
+  docker:
+    image: dockertest.ansible.com:8080/mine
+    registry: dockertest.ansible.com:8080
+    username: "testdocker"
+    password: "testdocker"
+    state: running
+    command: "nc -l -p 2000 -e xargs -n1 echo hello"
+    detach: True
+
+- name: Get the docker container id
+  shell: "docker ps | grep mine | awk '{ print $1 }'"
+  register: container_id
+
+- name: Get the docker container ip
+  shell: "docker inspect {{ container_id.stdout_lines[0] }} | grep IPAddress | awk -F '\"' '{ print $4 }'"
+  register: container_ip
+
+- name: Try to access the server
+  shell: "echo 'world' | nc {{ container_ip.stdout_lines[0] }} 2000"
+  register: docker_output
+
+- name: check that the script ran
+  assert:
+    that:
+      - "'hello world' in docker_output.stdout_lines"
+
+- name: Remove the private repo image from the local docker
+  shell: "docker rmi -f dockertest.ansible.com:8080/mine"
+
+- name: Remove domain name to hosts
+  lineinfile:
+    line: "127.0.0.1  dockertest.ansible.com"
+    dest: /etc/hosts
+    state: absent
+
