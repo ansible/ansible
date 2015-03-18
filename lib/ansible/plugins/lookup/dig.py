@@ -24,6 +24,7 @@ import socket
 try:
     import dns.resolver
     import dns.reversename
+    import dns.rdataclass
     from dns.rdatatype import (A, AAAA, CNAME, DLV, DNAME, DNSKEY, DS, HINFO, LOC,
             MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
     import dns.exception
@@ -119,19 +120,20 @@ class LookupModule(LookupBase):
             raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
 
         # Create Resolver object so that we can set NS if necessary
-        myres = dns.resolver.Resolver()
+        myres = dns.resolver.Resolver(configure=True)
         edns_size = 4096
         myres.use_edns(0, ednsflags=dns.flags.DO, payload=edns_size)
 
         domain = None
         qtype  = 'A'
         flat   = True
+        rdclass = dns.rdataclass.from_text('IN')
 
         for t in terms:
             if t.startswith('@'):       # e.g. "@10.0.1.2,192.0.2.1" is ok.
                 nsset = t[1:].split(',')
-                nameservers = []
                 for ns in nsset:
+                    nameservers = []
                     # Check if we have a valid IP address. If so, use that, otherwise
                     # try to resolve name to address using system's resolver. If that
                     # fails we bail out.
@@ -156,6 +158,11 @@ class LookupModule(LookupBase):
                     qtype = arg.upper()
                 elif opt == 'flat':
                     flat = int(arg)
+                elif opt == 'class':
+                    try:
+                        rdclass = dns.rdataclass.from_text(arg)
+                    except Exception, e:
+                        raise errors.AnsibleError("dns lookup illegal CLASS: ", str(e))
 
                 continue
 
@@ -167,7 +174,7 @@ class LookupModule(LookupBase):
             else:
                 domain = t
 
-        # print "--- domain = {0} qtype={1}".format(domain, qtype)
+        # print "--- domain = {0} qtype={1} rdclass={2}".format(domain, qtype, rdclass)
 
         ret = []
 
@@ -181,7 +188,7 @@ class LookupModule(LookupBase):
                 raise AnsibleError("dns.reversename unhandled exception", str(e))
 
         try:
-            answers = myres.query(domain, qtype)
+            answers = myres.query(domain, qtype, rdclass=rdclass)
             for rdata in answers:
                 s = rdata.to_text()
                 if qtype.upper() == 'TXT':
@@ -195,6 +202,7 @@ class LookupModule(LookupBase):
                         rd['owner']     = answers.canonical_name.to_text()
                         rd['type']      = dns.rdatatype.to_text(rdata.rdtype)
                         rd['ttl']       = answers.rrset.ttl
+                        rd['class']     = dns.rdataclass.to_text(rdata.rdclass)
 
                         ret.append(rd)
                     except Exception as e:
