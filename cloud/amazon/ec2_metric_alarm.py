@@ -190,7 +190,7 @@ def create_metric_alarm(connection, module):
         for keys in dim1:
             if not isinstance(dim1[keys], list):
                 dim1[keys] = [dim1[keys]]
-            if dim1[keys] != dim2[keys]:
+            if keys not in dim2 or dim1[keys] != dim2[keys]:
                 changed=True
                 setattr(alarm, 'dimensions', dim1)
 
