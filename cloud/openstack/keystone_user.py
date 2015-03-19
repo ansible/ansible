@@ -7,7 +7,6 @@ DOCUMENTATION = '''
 ---
 module: keystone_user
 version_added: "1.2"
-deprecated: Deprecated in 1.9. Use os_keystone_user instead
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
 description:
    - Manage users,tenants, roles from OpenStack.
