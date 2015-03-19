@@ -83,6 +83,12 @@ options:
     required: false
     default: null
     aliases: []
+  tags:
+    description:
+      - a hash/dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
+    default: null
+    aliases: []
 
 author: Evan Duffield <eduffield@iacquire.com>
 extends_documentation_fragment: aws
@@ -98,6 +104,9 @@ EXAMPLES = '''
     instance_id: i-xxxxxx
     wait: yes
     name: newtest
+    tags:
+      Name: newtest
+      Service: TestService
   register: instance
 
 # Basic AMI Creation, without waiting
@@ -155,6 +164,7 @@ def create_image(module, ec2):
     wait_timeout = int(module.params.get('wait_timeout'))
     description = module.params.get('description')
     no_reboot = module.params.get('no_reboot')
+    tags =  module.params.get('tags')
 
     try:
         params = {'instance_id': instance_id,
@@ -189,6 +199,12 @@ def create_image(module, ec2):
     if wait and wait_timeout <= time.time():
         # waiting took too long
         module.fail_json(msg = "timed out waiting for image to be created")
+
+    if tags:
+        try:
+            ec2.create_tags(image_id, tags)
+        except boto.exception.EC2ResponseError, e:
+            module.fail_json(msg = "Image tagging failed => %s: %s" % (e.error_code, e.error_message))
 
     module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
 
@@ -241,6 +257,8 @@ def main():
             description = dict(default=""),
             no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
+            tags = dict(type='dict'),
+
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
