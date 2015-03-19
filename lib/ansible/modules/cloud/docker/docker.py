@@ -1170,7 +1170,8 @@ class DockerManager(object):
             if status.startswith('Status: Image is up to date for'):
                 # Image is already up to date. Don't increment the counter.
                 pass
-            elif status.startswith('Status: Downloaded newer image for'):
+            elif (status.startswith('Status: Downloaded newer image for') or
+                    status.startswith('Download complete')):
                 # Image was updated. Increment the pull counter.
                 self.increment_counter('pulled')
             else:
