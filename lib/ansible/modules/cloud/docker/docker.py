@@ -613,7 +613,7 @@ class DockerManager(object):
                 else:
                     params['verify'] = True
                     params['assert_hostname'] = tls_hostname
-            elif use_tls == 'encrpyt':
+            elif use_tls == 'encrypt':
                 params['verify'] = False
 
             if params:
