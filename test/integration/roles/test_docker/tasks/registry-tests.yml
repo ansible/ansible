@@ -90,6 +90,20 @@
     that:
       - "{{ docker_output.stdout_lines| length }} <= 1"
 
+#
+# Private registry secured with an SSL proxy
+#
+
+- name: Set selinux to allow docker to connect to nginx
+  seboolean:
+    name: docker_connect_any
+    state: yes
+
+- name: Set selinux to allow nginx to connect to docker
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+
 - name: Setup nginx with a user/password
   copy:
     src: docker-registry.htpasswd
