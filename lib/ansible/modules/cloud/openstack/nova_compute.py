@@ -33,7 +33,6 @@ DOCUMENTATION = '''
 ---
 module: nova_compute
 version_added: "1.2"
-deprecated: Deprecated in 1.9. Use os_server instead
 short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.
