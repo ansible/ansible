@@ -19,17 +19,16 @@
 - name: Push docker image into the private registry
   command: "docker push localhost:5000/mine"
 
-- name: Remove the busybox image from the local docker
-  command: "docker rmi -f {{ image_id.stdout_lines[0] }}"
+- name: Remove containers
+  shell: "docker rm $(docker ps -aq)"
 
-- name: Remove the new image from the local docker
-  command: "docker rmi -f localhost:5000/mine"
+- name: Remove all images from the local docker
+  shell: "docker rmi -f $(docker images -q)"
 
 - name: Get number of images in docker
   command: "docker images"
   register: docker_output
 
-- debug: var=docker_output
 # docker prints a header so the header should be all that's present
 - name: Check that there are no images in docker
   assert:
@@ -42,6 +41,7 @@
     state: present
     pull: missing
     insecure_registry: True
+    docker_api_version: "1.14"
 
 - name: Run a small script in the new image
   docker:
@@ -51,6 +51,7 @@
     command: "nc -l -p 2000 -e xargs -n1 echo hello"
     detach: True
     insecure_registry: True
+    docker_api_version: "1.14"
 
 - name: Get the docker container id
   shell: "docker ps | grep mine | awk '{ print $1 }'"
@@ -59,6 +60,10 @@
 - name: Get the docker container ip
   shell: "docker inspect {{ container_id.stdout_lines[0] }} | grep IPAddress | awk -F '\"' '{ print $4 }'"
   register: container_ip
+
+- name: Pause a few moments because docker is not reliable
+  pause:
+    seconds: 40
 
 - name: Try to access the server
   shell: "echo 'world' | nc {{ container_ip.stdout_lines[0] }} 2000"
@@ -69,14 +74,17 @@
     that:
       - "'hello world' in docker_output.stdout_lines"
 
-- name: Remove the new image from the local docker
-  command: "docker rmi -f localhost:5000/mine"
+
+- name: Remove containers
+  shell: "docker rm $(docker ps -aq)"
+
+- name: Remove all images from the local docker
+  shell: "docker rmi -f $(docker images -q)"
 
 - name: Get number of images in docker
   command: "docker images"
   register: docker_output
 
-- debug: var=docker_output
 - name: Check that there are no images in docker
   assert:
     that:
@@ -135,6 +143,7 @@
     state: running
     command: "nc -l -p 2000 -e xargs -n1 echo hello"
     detach: True
+    docker_api_version: "1.14"
 
 - name: Get the docker container id
   shell: "docker ps | grep mine | awk '{ print $1 }'"
@@ -143,6 +152,10 @@
 - name: Get the docker container ip
   shell: "docker inspect {{ container_id.stdout_lines[0] }} | grep IPAddress | awk -F '\"' '{ print $4 }'"
   register: container_ip
+
+- name: Pause a few moments because docker is not reliable
+  pause:
+    seconds: 40
 
 - name: Try to access the server
   shell: "echo 'world' | nc {{ container_ip.stdout_lines[0] }} 2000"
@@ -153,8 +166,11 @@
     that:
       - "'hello world' in docker_output.stdout_lines"
 
-- name: Remove the private repo image from the local docker
-  command: "docker rmi -f dockertest.ansible.com:8080/mine"
+- name: Remove containers
+  shell: "docker rm $(docker ps -aq)"
+
+- name: Remove all images from the local docker
+  shell: "docker rmi -f $(docker images -q)"
 
 - name: Remove domain name to hosts
   lineinfile:
