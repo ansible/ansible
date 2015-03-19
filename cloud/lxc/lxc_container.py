@@ -616,7 +616,7 @@ class LxcContainerManagement(object):
         # TODO(cloudnull) adjust import when issue has been resolved.
         import ast
         options_dict = ast.literal_eval(_container_config)
-        parsed_options = [i.split('=') for i in options_dict]
+        parsed_options = [i.split('=', 1) for i in options_dict]
 
         config_change = False
         for key, value in parsed_options:
