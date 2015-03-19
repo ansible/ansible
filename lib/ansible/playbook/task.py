@@ -84,11 +84,6 @@ class Task(object):
             elif x.startswith("with_"):
                 if isinstance(ds[x], basestring):
                     param = ds[x].strip()
-                    # Only a variable, no logic
-                    if (param.startswith('{{') and
-                        param.find('}}') == len(ds[x]) - 2 and
-                        param.find('|') == -1):
-                        utils.warning("It is unnecessary to use '{{' in loops, leave variables in loop expressions bare.")
 
                 plugin_name = x.replace("with_","")
                 if plugin_name in utils.plugins.lookup_loader:
