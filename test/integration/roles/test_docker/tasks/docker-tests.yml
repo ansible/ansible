@@ -72,5 +72,8 @@
     that:
       - "'hello world' in docker_output.stdout_lines"
 
-- name: Remove the busybox image from the local docker
+- name: Remove containers
+  shell: "docker rm $(docker ps -aq)"
+
+- name: Remove all images from the local docker
   shell: "docker rmi -f $(docker images -q)"
