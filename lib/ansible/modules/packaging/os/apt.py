@@ -523,6 +523,7 @@ def main():
             module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True, check_rc=True)
             global apt, apt_pkg
             import apt
+            import apt.debfile
             import apt_pkg
         except ImportError:
             module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
