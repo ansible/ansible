@@ -29,7 +29,6 @@ DOCUMENTATION = '''
 ---
 module: quantum_subnet
 version_added: "1.2"
-deprecated: Deprecated in 1.9. Use os_subnet instead
 short_description: Add/remove subnet from a network
 description:
    - Add/remove subnet from a network

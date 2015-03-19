@@ -26,12 +26,11 @@ except ImportError:
     print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
 DOCUMENTATION = '''
 ---
-module: quantum_router_interface
-deprecated: Deprecated in 1.9. Use os_router_interface instead
+module: quantum_router_gateway
 version_added: "1.2"
-short_description: Attach/Dettach a subnet's interface to a router
+short_description: set/unset a gateway interface for the router with the specified external network
 description:
-   - Attach/Dettach a subnet interface to a router, to provide a gateway for the subnet.
+   - Creates/Removes a gateway interface from the router, used to associate a external network with a router to route external traffic.
 options:
    login_username:
      description:
@@ -65,36 +64,25 @@ options:
      default: present
    router_name:
      description:
-        - Name of the router to which the subnet's interface should be attached.
+        - Name of the router to which the gateway should be attached.
      required: true
      default: None
-   subnet_name:
+   network_name:
      description:
-        - Name of the subnet to whose interface should be attached to the router.
+        - Name of the external network which should be attached to the router.
      required: true
      default: None
-   tenant_name:
-     description:
-        - Name of the tenant whose subnet has to be attached.
-     required: false
-     default: None
-requirements: ["quantumclient", "keystoneclient"]
+requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Attach tenant1's subnet to the external router
-- quantum_router_interface: state=present login_username=admin
-                            login_password=admin
-                            login_tenant_name=admin
-                            tenant_name=tenant1
-                            router_name=external_route
-                            subnet_name=t1subnet
+# Attach an external network with a router to allow flow of external traffic
+- quantum_router_gateway: state=present login_username=admin login_password=admin
+                          login_tenant_name=admin router_name=external_router
+                          network_name=external_network
 '''
 
-
 _os_keystone = None
-_os_tenant_id = None
-
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
@@ -129,52 +117,35 @@ def _get_neutron_client(module, kwargs):
         module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
     return neutron
 
-def _set_tenant_id(module):
-    global _os_tenant_id
-    if not module.params['tenant_name']:
-        login_tenant_name = module.params['login_tenant_name']
-    else:
-        login_tenant_name = module.params['tenant_name']
-
-    for tenant in _os_keystone.tenants.list():
-        if tenant.name == login_tenant_name:
-            _os_tenant_id = tenant.id
-            break
-    if not _os_tenant_id:
-        module.fail_json(msg = "The tenant id cannot be found, please check the parameters")
-
-
 def _get_router_id(module, neutron):
     kwargs = {
-        'name': module.params['router_name'],
+            'name': module.params['router_name'],
     }
     try:
         routers = neutron.list_routers(**kwargs)
     except Exception, e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
-        return None
+            return None
     return routers['routers'][0]['id']
 
-
-def _get_subnet_id(module, neutron):
-    subnet_id = None
+def _get_net_id(neutron, module):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'name': module.params['subnet_name'],
+        'name':            module.params['network_name'],
+        'router:external': True
     }
     try:
-        subnets = neutron.list_subnets(**kwargs)
+        networks = neutron.list_networks(**kwargs)
     except Exception, e:
-        module.fail_json( msg = " Error in getting the subnet list:%s " % e.message)
-    if not subnets['subnets']:
+        module.fail_json("Error in listing neutron networks: %s" % e.message)
+    if not networks['networks']:
         return None
-    return subnets['subnets'][0]['id']
+    return networks['networks'][0]['id']
 
-def _get_port_id(neutron, module, router_id, subnet_id):
+def _get_port_id(neutron, module, router_id, network_id):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'device_id': router_id,
+        'device_id': router_id,
+        'network_id': network_id,
     }
     try:
         ports = neutron.list_ports(**kwargs)
@@ -182,65 +153,57 @@ def _get_port_id(neutron, module, router_id, subnet_id):
         module.fail_json( msg = "Error in listing ports: %s" % e.message)
     if not ports['ports']:
         return None
-    for port in  ports['ports']:
-        for subnet in port['fixed_ips']:
-            if subnet['subnet_id'] == subnet_id:
-                return port['id']
-    return None
+    return ports['ports'][0]['id']
 
-def _add_interface_router(neutron, module, router_id, subnet_id):
+def _add_gateway_router(neutron, module, router_id, network_id):
     kwargs = {
-        'subnet_id': subnet_id
+        'network_id': network_id
     }
     try:
-        neutron.add_interface_router(router_id, kwargs)
+        neutron.add_gateway_router(router_id, kwargs)
     except Exception, e:
-        module.fail_json(msg = "Error in adding interface to router: %s" % e.message)
+        module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
     return True
 
-def  _remove_interface_router(neutron, module, router_id, subnet_id):
-    kwargs = {
-        'subnet_id': subnet_id
-    }
+def  _remove_gateway_router(neutron, module, router_id):
     try:
-        neutron.remove_interface_router(router_id, kwargs)
+        neutron.remove_gateway_router(router_id)
     except Exception, e:
-        module.fail_json(msg="Error in removing interface from router: %s" % e.message)
+        module.fail_json(msg = "Error in removing gateway to router: %s" % e.message)
     return True
 
 def main():
+
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            router_name                     = dict(required=True),
-            subnet_name                     = dict(required=True),
-            tenant_name                     = dict(default=None),
-            state                           = dict(default='present', choices=['absent', 'present']),
+            router_name        = dict(required=True),
+            network_name       = dict(required=True),
+            state              = dict(default='present', choices=['absent', 'present']),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
     neutron = _get_neutron_client(module, module.params)
-    _set_tenant_id(module)
-
     router_id = _get_router_id(module, neutron)
+
     if not router_id:
         module.fail_json(msg="failed to get the router id, please check the router name")
 
-    subnet_id = _get_subnet_id(module, neutron)
-    if not subnet_id:
-        module.fail_json(msg="failed to get the subnet id, please check the subnet name")
+    network_id = _get_net_id(neutron, module)
+    if not network_id:
+        module.fail_json(msg="failed to get the network id, please check the network name and make sure it is external")
 
     if module.params['state'] == 'present':
-        port_id = _get_port_id(neutron, module, router_id, subnet_id)
+        port_id = _get_port_id(neutron, module, router_id, network_id)
         if not port_id:
-            _add_interface_router(neutron, module, router_id, subnet_id)
-            module.exit_json(changed=True, result="created", id=port_id)
-        module.exit_json(changed=False, result="success", id=port_id)
+            _add_gateway_router(neutron, module, router_id, network_id)
+            module.exit_json(changed=True, result="created")
+        module.exit_json(changed=False, result="success")
 
     if module.params['state'] == 'absent':
-        port_id = _get_port_id(neutron, module, router_id, subnet_id)
+        port_id = _get_port_id(neutron, module, router_id, network_id)
         if not port_id:
-            module.exit_json(changed = False, result = "Success")
-        _remove_interface_router(neutron, module, router_id, subnet_id)
+            module.exit_json(changed=False, result="Success")
+        _remove_gateway_router(neutron, module, router_id)
         module.exit_json(changed=True, result="Deleted")
 
 # this is magic, see lib/ansible/module.params['common.py

@@ -29,7 +29,6 @@ DOCUMENTATION = '''
 ---
 module: quantum_network
 version_added: "1.4"
-deprecated: Deprecated in 1.9. Use os_network instead
 short_description: Creates/Removes networks from OpenStack
 description:
    - Add or Remove network from OpenStack.
