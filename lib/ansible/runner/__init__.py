@@ -1243,7 +1243,13 @@ class Runner(object):
             python_interp = 'python'
 
         cmd = conn.shell.checksum(path, python_interp)
-        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+
+        #TODO: remove this horrible hack and find way to get checksum to work with other privilege escalation methods
+        if self.become_method == 'sudo':
+            sudoable = True
+        else:
+            sudoable = False
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
             if data2 == '':
