@@ -106,10 +106,6 @@ YAML dictionaries to supply the modules with their key=value arguments.::
             name: httpd
             state: restarted
 
-.. note::
-
-    The above example using YAML dictionaries for module arguments can also be accomplished using the YAML multiline string syntax with the `>` character but this can lead to string quoting errors.
-
 Below, we'll break down what the various features of the playbook language are.
 
 .. _playbook_basics:
