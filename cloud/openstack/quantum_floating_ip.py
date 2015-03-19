@@ -31,7 +31,6 @@ DOCUMENTATION = '''
 ---
 module: quantum_floating_ip
 version_added: "1.2"
-deprecated: Deprecated in 1.9. Use os_floating_ip instead
 short_description: Add/Remove floating IP from an instance
 description:
    - Add or Remove a floating IP to an instance
