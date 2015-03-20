@@ -47,7 +47,10 @@ class ActionModule(object):
         else:
             src = utils.path_dwim(self.runner.basedir, src)
 
-        tmp_src = tmp + src
+        if tmp is None or "-tmp-" not in tmp:
+            tmp = self.runner._make_tmp_path(conn)
+
+        tmp_src = conn.shell.join_path(tmp, os.path.basename(src))
         conn.put_file(src, tmp_src)
 
         if self.runner.become and self.runner.become_user != 'root':
