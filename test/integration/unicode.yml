@@ -41,13 +41,6 @@
     - name: 'A task with unicode host vars'
       debug: var=unicode_host_var
 
-
-- name: 'A play for hosts in group: ĪīĬĭ'
-  hosts: 'ĪīĬĭ'
-  gather_facts: false
-  tasks:
-    - debug: var=hostvars[inventory_hostname]
-
 - name: 'A play for hosts in group: ĪīĬĭ'
   hosts: 'ĪīĬĭ'
   gather_facts: true
