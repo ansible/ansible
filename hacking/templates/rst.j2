@@ -111,18 +111,57 @@ Examples
 Return Values
 -------------
 
-Common return values are documented here ::doc::`common_return_values`, the following are the fields unique to this module:
+Common return values are documented here :doc:`common_return_values`, the following are the fields unique to this module:
 
 .. raw:: html
 
-    <p>
-    <pre>
-    @{ returndocs }@
-    </pre>
-    </p>
+    <table border=1 cellpadding=4>
+    <tr>
+    <th class="head">name</th>
+    <th class="head">despcription</th>
+    <th class="head">returned</th>
+    <th class="head">type</th>
+    <th class="head">sample</th>
+    </tr>
 
-::
+    {% for entry in returndocs %}
+    <tr>
+        <td> @{ entry }@ </td>
+        <td> @{ returndocs[entry].description }@ </td>
+        <td align=center> @{ returndocs[entry].returned }@ </td>
+        <td align=center> @{ returndocs[entry].type }@ </td>
+        <td align=center> @{ returndocs[entry].sample}@ </td>
+    </tr>
+    {% if returndocs[entry].type == 'dictionary' %}
+    <tr><td>contains: </td>
+    <td colspan=4>
+        <table border=1 cellpadding=2>
+        <tr>
+        <th class="head">name</th>
+        <th class="head">despcription</th>
+        <th class="head">returned</th>
+        <th class="head">type</th>
+        <th class="head">sample</th>
+        </tr>
 
+        {% for sub in returndocs[entry].contains %}
+        <tr>
+        <td> @{ sub }@ </td>
+        <td> @{ returndocs[entry].contains[sub].description }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].returned }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].type }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].sample}@ </td>
+        </tr>
+        {% endfor %}
+
+        </table>
+    </td></tr>
+
+    {% endif %}
+    {% endfor %}
+
+    </table>
+    </br></br>
 {% endif %}
 
 {% if notes %}
