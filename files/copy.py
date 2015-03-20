@@ -123,7 +123,7 @@ md5sum:
     description: md5 checksum of the file after running copy
     returned: when supported
     type: string
-    sample: "2a5aeecc61dc98c4d780b14b330e3282",
+    sample: "2a5aeecc61dc98c4d780b14b330e3282"
 checksum:
     description: checksum of the file after running copy
     returned: success
@@ -149,7 +149,7 @@ owner:
     returned: success
     type: string
     sample: "httpd"
-uid: 100
+uid:
     description: owner id of the file, after execution
     returned: success
     type: int
