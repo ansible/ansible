@@ -272,7 +272,7 @@ def wait_for_elb(asg_connection, module, group_name):
             elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg=str(e))
-        
+
         wait_timeout = time.time() + wait_timeout
         healthy_instances = {}
 
@@ -462,7 +462,7 @@ def delete_autoscaling_group(connection, module):
 
         group.delete()
         while len(connection.get_all_groups(names=[group_name])):
-                time.sleep(5)
+            time.sleep(5)
         changed=True
         return changed
     else:
