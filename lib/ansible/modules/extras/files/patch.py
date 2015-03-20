@@ -145,6 +145,9 @@ def main():
         module.fail_json(msg="patch command not found")
     patch_func = lambda opts: module.run_command("%s %s" % (patch_bin, ' '.join(opts)))
 
+    # patch need an absolute file name
+    p.src = os.path.abspath(p.src)
+    
     changed = False
     if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip):
         try:
