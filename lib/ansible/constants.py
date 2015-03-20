@@ -137,8 +137,8 @@ DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHER
 DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 
 #TODO: get rid of ternary chain mess
-BECOME_METHODS            = ['sudo','su','pbrun','pfexec','runas']
-BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'runas': ''}
+BECOME_METHODS            = ['sudo','su','bsdsu','pbrun','pfexec','runas']
+BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'runas': '', 'bsdsu':  'Authentication failure'}
 DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',True if DEFAULT_SUDO or DEFAULT_SU else False, boolean=True)
 DEFAULT_BECOME_METHOD     = get_config(p, 'privilege_escalation', 'become_method', 'ANSIBLE_BECOME_METHOD','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo' ).lower()
 DEFAULT_BECOME_USER       = get_config(p, 'privilege_escalation', 'become_user', 'ANSIBLE_BECOME_USER',DEFAULT_SUDO_USER if DEFAULT_SUDO else DEFAULT_SU_USER if DEFAULT_SU else 'root')
