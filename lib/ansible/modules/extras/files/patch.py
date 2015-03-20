@@ -141,6 +141,8 @@ def main():
         p.basedir = path.dirname(p.dest)
 
     patch_bin = module.get_bin_path('patch')
+    if patch_bin is None:
+        module.fail_json(msg="patch command not found")
     patch_func = lambda opts: module.run_command("%s %s" % (patch_bin, ' '.join(opts)))
 
     changed = False
