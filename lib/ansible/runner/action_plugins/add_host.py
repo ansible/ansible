@@ -69,12 +69,6 @@ class ActionModule(object):
             inventory._hosts_cache[new_name] = new_host
             allgroup.add_host(new_host)
 
-        # Add any variables to the new_host
-        for k in args.keys():
-            if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
-                new_host.set_variable(k, args[k])
-
-
         groupnames = args.get('groupname', args.get('groups', args.get('group', '')))
         # add it to the group if that was specified
         if groupnames:
@@ -99,6 +93,11 @@ class ActionModule(object):
 
         # actually load host vars
         new_host.vars = inventory.get_host_variables(new_name, update_cached=True, vault_password=inventory._vault_password)
+
+        # Add any passed variables to the new_host
+        for k in args.keys():
+            if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
+                new_host.set_variable(k, args[k])
 
         result['new_host'] = new_name
 
