@@ -117,6 +117,16 @@ EXAMPLES = '''
 # Example playbook sending mail to root
 - local_action: mail msg='System {{ ansible_hostname }} has been successfully provisioned.'
 
+# Sending an e-mail using Gmail SMTP servers
+- local_action: mail
+                host='smtp.gmail.com'
+                port=587
+                username=username@gmail.com
+                password='mysecret'
+                to="John Smith <john.smith@example.com>"
+                subject='Ansible-report'
+                msg='System {{ ansible_hostname }} has been successfully provisioned.'
+
 # Send e-mail to a bunch of users, attaching files
 - local_action: mail
                 host='127.0.0.1'
