@@ -44,6 +44,12 @@
 
 - name: 'A play for hosts in group: ĪīĬĭ'
   hosts: 'ĪīĬĭ'
+  gather_facts: false
+  tasks:
+    - debug: var=hostvars[inventory_hostname]
+
+- name: 'A play for hosts in group: ĪīĬĭ'
+  hosts: 'ĪīĬĭ'
   gather_facts: true
   tasks:
     - debug: msg='Unicode is a good thing ™'
