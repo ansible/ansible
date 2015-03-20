@@ -65,6 +65,7 @@ import pwd
 import platform
 import errno
 import tempfile
+from itertools import imap, repeat
 
 try:
     import json
@@ -234,7 +235,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     return super(cls, subclass).__new__(subclass)
 
 
-def json_dict_unicode_to_bytes(d):
+def json_dict_unicode_to_bytes(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -242,17 +243,17 @@ def json_dict_unicode_to_bytes(d):
     '''
 
     if isinstance(d, unicode):
-        return d.encode('utf-8')
+        return d.encode(encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+        return dict(imap(json_dict_unicode_to_bytes, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_unicode_to_bytes, d))
+        return list(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_unicode_to_bytes, d))
+        return tuple(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     else:
         return d
 
-def json_dict_bytes_to_unicode(d):
+def json_dict_bytes_to_unicode(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -260,13 +261,13 @@ def json_dict_bytes_to_unicode(d):
     '''
 
     if isinstance(d, str):
-        return unicode(d, 'utf-8')
+        return unicode(d, encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_bytes_to_unicode, d.iteritems()))
+        return dict(imap(json_dict_bytes_to_unicode, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_bytes_to_unicode, d))
+        return list(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_bytes_to_unicode, d))
+        return tuple(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     else:
         return d
 
@@ -1189,13 +1190,17 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1", "unicode_escape"):
+        for encoding in ("utf-8", "latin-1"):
             try:
                 return json.dumps(data, encoding=encoding)
-            # Old systems using simplejson module does not support encoding keyword.
-            except TypeError, e:
-                return json.dumps(data)
-            except UnicodeDecodeError, e:
+            # Old systems using old simplejson module does not support encoding keyword.
+            except TypeError:
+                try:
+                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+                except UnicodeDecodeError:
+                    continue
+                return json.dumps(new_data)
+            except UnicodeDecodeError:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
 
