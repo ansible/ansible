@@ -43,7 +43,9 @@ options:
     aliases: [ "originalfile" ]
   src:
     description:
-      - Path of the patch file as accepted by the GNU patch tool.
+      - Path of the patch file as accepted by the GNU patch tool. If
+        C(remote_src) is False, the patch source file is looked up from the
+        module's "files" directory.
     required: true
     aliases: [ "patchfile" ]
   remote_src:
