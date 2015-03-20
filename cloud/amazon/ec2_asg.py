@@ -224,6 +224,16 @@ def enforce_required_arguments(module):
 
 def get_properties(autoscaling_group):
     properties = dict((attr, getattr(autoscaling_group, attr)) for attr in ASG_ATTRIBUTES)
+
+    # Ugly hack to make this JSON-serializable.  We take a list of boto Tag
+    # objects and replace them with a dict-representation.  Needed because the
+    # tags are included in ansible's return value (which is jsonified)
+    if 'tags' in properties and isinstance(properties['tags'], list):
+        serializable_tags = {}
+        for tag in properties['tags']:
+            serializable_tags[tag.key] = [tag.value, tag.propagate_at_launch]
+        properties['tags'] = serializable_tags
+
     properties['healthy_instances'] = 0
     properties['in_service_instances'] = 0
     properties['unhealthy_instances'] = 0
@@ -326,18 +336,12 @@ def create_autoscaling_group(connection, module):
 
     asg_tags = []
     for tag in set_tags:
-        if tag.has_key('key') and tag.has_key('value'):  # this block is to support depricated form
-            asg_tags.append(Tag(key=tag.get('key'),
-                value=tag.get('value'),
-                propagate_at_launch=bool(tag.get('propagate_at_launch', True)),
-                resource_id=group_name))
-        else:
-            for k,v in tag.iteritems():
-                if k !='propagate_at_launch':
-                    asg_tags.append(Tag(key=k,
-                         value=v,
-                         propagate_at_launch=bool(tag.get('propagate_at_launch', True)),
-                         resource_id=group_name))
+        for k,v in tag.iteritems():
+            if k !='propagate_at_launch':
+                asg_tags.append(Tag(key=k,
+                     value=v,
+                     propagate_at_launch=bool(tag.get('propagate_at_launch', True)),
+                     resource_id=group_name))
 
     if not as_groups:
         if not vpc_zone_identifier and not availability_zones:
@@ -393,30 +397,25 @@ def create_autoscaling_group(connection, module):
                     setattr(as_group, attr, module_attr)
 
         if len(set_tags) > 0:
-            existing_tags = as_group.tags
-            existing_tag_map = dict((tag.key, tag) for tag in existing_tags)
-            for tag in set_tags:
-                if tag.has_key('key') and tag.has_key('value'):  # this is to support deprecated method
-                    if 'key' not in tag:
-                        continue
-                    if ( not tag['key'] in existing_tag_map or
-                        existing_tag_map[tag['key']].value != tag['value'] or
-                        ('propagate_at_launch' in tag and
-                        existing_tag_map[tag['key']].propagate_at_launch != tag['propagate_at_launch']) ):
-                        changed = True
-                        continue
-                else:
-                    for k,v in tag.iteritems():
-                        if k !='propagate_at_launch':
-                            if ( not k in existing_tag_map or
-                                existing_tag_map[k].value != v or
-                                ('propagate_at_launch' in tag and
-                                existing_tag_map[k].propagate_at_launch != tag['propagate_at_launch']) ):
-                                changed = True
-                                continue
-            if changed:
+            have_tags = {}
+            want_tags = {}
+
+            for tag in asg_tags:
+                want_tags[tag.key] = [tag.value, tag.propagate_at_launch]
+
+            dead_tags = []
+            for tag in as_group.tags:
+                have_tags[tag.key] = [tag.value, tag.propagate_at_launch]
+                if not tag.key in want_tags:
+                    changed = True
+                    dead_tags.append(tag)
+
+            if dead_tags != []:
+                connection.delete_tags(dead_tags)
+
+            if have_tags != want_tags:
+                changed = True
                 connection.create_or_update_tags(asg_tags)
-                as_group.tags = asg_tags
 
         # handle loadbalancers separately because None != []
         load_balancers = module.params.get('load_balancers') or []
