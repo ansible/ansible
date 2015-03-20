@@ -20,7 +20,7 @@ import ansible
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
-from ansible.utils import parse_kv
+from ansible.utils import parse_kv, combine_vars
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 
@@ -92,7 +92,7 @@ class ActionModule(object):
 
 
         # actually load host vars
-        new_host.vars = inventory.get_host_variables(new_name, update_cached=True, vault_password=inventory._vault_password)
+        new_host.vars = combine_vars(new_host.vars, inventory.get_host_variables(new_name, update_cached=True, vault_password=inventory._vault_password))
 
         # Add any passed variables to the new_host
         for k in args.keys():
