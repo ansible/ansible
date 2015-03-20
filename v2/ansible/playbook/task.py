@@ -210,20 +210,21 @@ class Task(Base, Conditional, Taggable, Become):
             del all_vars['when']
         return all_vars
 
-    def compile(self):
-        '''
-        For tasks, this is just a dummy method returning an array
-        with 'self' in it, so we don't have to care about task types
-        further up the chain.
-        '''
+    # no longer used, as blocks are the lowest level of compilation now
+    #def compile(self):
+    #    '''
+    #    For tasks, this is just a dummy method returning an array
+    #    with 'self' in it, so we don't have to care about task types
+    #    further up the chain.
+    #    '''
+    #
+    #    return [self]
 
-        return [self]
-
-    def copy(self):
+    def copy(self, exclude_block=False):
         new_me = super(Task, self).copy()
 
         new_me._block = None
-        if self._block:
+        if self._block and not exclude_block:
             new_me._block = self._block.copy()
 
         new_me._role = None
@@ -308,4 +309,13 @@ class Task(Base, Conditional, Taggable, Become):
             self._block.set_loader(loader)
         if self._task_include:
             self._task_include.set_loader(loader)
+
+    def _get_parent_attribute(self, attr):
+        '''
+        Generic logic to get the attribute or parent attribute for a task value.
+        '''
+        value = self._attributes[attr]
+        if not value and self._block:
+            value = getattr(self._block, attr)
+        return value
 

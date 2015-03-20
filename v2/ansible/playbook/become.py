@@ -95,3 +95,41 @@ class Become:
                 ds['become_user'] = C.DEFAULT_BECOME_USER
 
         return ds
+
+    def _get_attr_become(self):
+        '''
+        Override for the 'become' getattr fetcher, used from Base.
+        '''
+        if hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become')
+        else:
+            return self._attributes['become']
+
+    def _get_attr_become_method(self):
+        '''
+        Override for the 'become_method' getattr fetcher, used from Base.
+        '''
+        if hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become_method')
+        else:
+            return self._attributes['become_method']
+
+    def _get_attr_become_user(self):
+        '''
+        Override for the 'become_user' getattr fetcher, used from Base.
+        '''
+        if hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become_user')
+        else:
+            return self._attributes['become_user']
+
+    def _get_attr_become_password(self):
+        '''
+        Override for the 'become_password' getattr fetcher, used from Base.
+        '''
+        if hasattr(self, '_get_parent_attribute'):
+            return self._get_parent_attribute('become_password')
+        else:
+            return self._attributes['become_password']
+
+

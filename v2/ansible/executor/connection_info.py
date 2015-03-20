@@ -157,13 +157,10 @@ class ConnectionInformation:
         new_info.copy(self)
 
         for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
-            attr_val = None
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
-            if task._block and hasattr(task._block, attr) and not attr_val:
-                attr_val = getattr(task._block, attr)
-            if attr_val:
-                setattr(new_info, attr, attr_val)
+                if attr_val:
+                    setattr(new_info, attr, attr_val)
 
         return new_info
 
@@ -184,6 +181,7 @@ class ConnectionInformation:
 
         executable = executable or '$SHELL'
 
+        success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
         if self.become:
             if self.become_method == 'sudo':
                 # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
@@ -195,23 +193,23 @@ class ConnectionInformation:
                 exe = become_settings.get('sudo_exe', C.DEFAULT_SUDO_EXE)
                 flags = become_settings.get('sudo_flags', C.DEFAULT_SUDO_FLAGS)
                 becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % \
-                    (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, pipes.quote('echo %s; %s' % (success_key, cmd)))
+                    (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'su':
                 exe = become_settings.get('su_exe', C.DEFAULT_SU_EXE)
                 flags = become_settings.get('su_flags', C.DEFAULT_SU_FLAGS)
-                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, pipes.quote('echo %s; %s' % (success_key, cmd)))
+                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'pbrun':
                 exe = become_settings.get('pbrun_exe', 'pbrun')
                 flags = become_settings.get('pbrun_flags', '')
-                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, pipes.quote('echo %s; %s' % (success_key, cmd)))
+                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, success_cmd)
 
             elif self.become_method == 'pfexec':
                 exe = become_settings.get('pfexec_exe', 'pbrun')
                 flags = become_settings.get('pfexec_flags', '')
                 # No user as it uses it's own exec_attr to figure it out
-                becomecmd = '%s %s "%s"' % (exe, flags, pipes.quote('echo %s; %s' % (success_key, cmd)))
+                becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
             else:
                 raise errors.AnsibleError("Privilege escalation method not found: %s" % method)

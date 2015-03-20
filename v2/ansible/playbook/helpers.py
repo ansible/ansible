@@ -37,6 +37,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
     assert type(ds) in (list, NoneType)
 
     block_list = []
+    print("in load list of blocks, ds is: %s" % ds)
     if ds:
         for block in ds:
             b = Block.load(
@@ -50,6 +51,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
             )
             block_list.append(b)
 
+    print("-> returning block list: %s" % block_list)
     return block_list
 
 

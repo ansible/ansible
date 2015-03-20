@@ -219,6 +219,7 @@ class Play(Base, Taggable, Become):
         block_list.extend(self.tasks)
         block_list.extend(self.post_tasks)
 
+        print("block list is: %s" % block_list)
         return block_list
 
     def get_vars(self):
