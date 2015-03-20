@@ -32,7 +32,7 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
-        remote_src = utils.boolean(options.get('remote_src', 'yes'))
+        remote_src = utils.boolean(options.get('remote_src', 'no'))
 
         if src is None:
             result = dict(failed=True, msg="src is required")
