@@ -106,6 +106,64 @@ Examples
 {% endif %}
 {% endif %}
 
+
+{% if returndocs %}
+Return Values
+-------------
+
+Common return values are documented here :doc:`common_return_values`, the following are the fields unique to this module:
+
+.. raw:: html
+
+    <table border=1 cellpadding=4>
+    <tr>
+    <th class="head">name</th>
+    <th class="head">despcription</th>
+    <th class="head">returned</th>
+    <th class="head">type</th>
+    <th class="head">sample</th>
+    </tr>
+
+    {% for entry in returndocs %}
+    <tr>
+        <td> @{ entry }@ </td>
+        <td> @{ returndocs[entry].description }@ </td>
+        <td align=center> @{ returndocs[entry].returned }@ </td>
+        <td align=center> @{ returndocs[entry].type }@ </td>
+        <td align=center> @{ returndocs[entry].sample}@ </td>
+    </tr>
+    {% if returndocs[entry].type == 'dictionary' %}
+    <tr><td>contains: </td>
+    <td colspan=4>
+        <table border=1 cellpadding=2>
+        <tr>
+        <th class="head">name</th>
+        <th class="head">despcription</th>
+        <th class="head">returned</th>
+        <th class="head">type</th>
+        <th class="head">sample</th>
+        </tr>
+
+        {% for sub in returndocs[entry].contains %}
+        <tr>
+        <td> @{ sub }@ </td>
+        <td> @{ returndocs[entry].contains[sub].description }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].returned }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].type }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].sample}@ </td>
+        </tr>
+        {% endfor %}
+
+        </table>
+    </td></tr>
+
+    {% endif %}
+    {% endfor %}
+
+    </table>
+    </br></br>
+{% endif %}
+
 {% if notes %}
 {% for note in notes %}
 .. note:: @{ note | convert_symbols_to_format }@
@@ -120,7 +178,7 @@ This is a Core Module
 ---------------------
 
 This source of this module is hosted on GitHub in the `ansible-modules-core <http://github.com/ansible/ansible-modules-core>`_ repo.
-  
+
 If you believe you have found a bug in this module, and are already running the latest stable or development version of Ansible, first look in the `issue tracker at github.com/ansible/ansible-modules-core <http://github.com/ansible/ansible-modules-core>`_ to see if a bug has already been filed.  If not, we would be grateful if you would file one.
 
 Should you have a question rather than a bug report, inquries are welcome on the `ansible-project google group <https://groups.google.com/forum/#!forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.   Development oriented topics should instead use the similar `ansible-devel google group <https://groups.google.com/forum/#!forum/ansible-devel>`_.
@@ -135,7 +193,7 @@ This is an Extras Module
 ------------------------
 
 This source of this module is hosted on GitHub in the `ansible-modules-extras <http://github.com/ansible/ansible-modules-extras>`_ repo.
-  
+
 If you believe you have found a bug in this module, and are already running the latest stable or development version of Ansible, first look in the `issue tracker at github.com/ansible/ansible-modules-extras <http://github.com/ansible/ansible-modules-extras>`_ to see if a bug has already been filed.  If not, we would be grateful if you would file one.
 
 Should you have a question rather than a bug report, inquries are welcome on the `ansible-project google group <https://groups.google.com/forum/#!forum/ansible-project>` or on Ansible's "#ansible" channel, located on irc.freenode.net.   Development oriented topics should instead use the similar `ansible-devel google group <https://groups.google.com/forum/#!forum/ansible-devel>`_.
