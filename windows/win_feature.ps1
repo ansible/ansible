@@ -28,7 +28,7 @@ $result = New-Object PSObject -Property @{
 }
 
 If ($params.name) {
-    $name = $params.name
+    $name = $params.name -split ',' | % { $_.Trim() }
 }
 Else {
     Fail-Json $result "mising required argument: name"
