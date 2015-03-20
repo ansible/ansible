@@ -225,19 +225,10 @@ def enforce_required_arguments(module):
 def get_properties(autoscaling_group):
     properties = dict((attr, getattr(autoscaling_group, attr)) for attr in ASG_ATTRIBUTES)
 
-    #
-    # Ansible output is serialized to JSON but our
-    # tag list is sometimes a list of Tag-objects
-    # (as received by Boto).
-    #
-    # Since we can not easily teach python to serialize
-    # such a list we replace it with a dict-representation
-    # in those cases.
-    #
-    # Yes, this is an ugly hack. But at least it works,
-    # unlike the even uglier hack that was here previously...
-    #
-    if 'tags' in properties and properties['tags'] is list:
+    # Ugly hack to make this JSON-serializable.  We take a list of boto Tag
+    # objects and replace them with a dict-representation.  Needed because the
+    # tags are included in ansible's return value (which is jsonified)
+    if 'tags' in properties and isinstance(properties['tags'], list):
         serializable_tags = {}
         for tag in properties['tags']:
             serializable_tags[tag.key] = [tag.value, tag.propagate_at_launch]
