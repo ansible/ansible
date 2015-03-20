@@ -1,0 +1,2 @@
+- debug: msg="this is test_become_r2"
+- command: whoami

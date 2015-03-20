@@ -131,22 +131,23 @@ class Block(Base, Become, Conditional, Taggable):
     #        use_handlers=self._use_handlers,
     #    )
 
-    def compile(self):
-        '''
-        Returns the task list for this object
-        '''
-
-        task_list = []
-        for task in self.block:
-            # FIXME: evaulate task tags/conditionals here
-            task_list.extend(task.compile())
-
-        return task_list
-
     def copy(self):
+        def _dupe_task_list(task_list, new_block):
+            new_task_list = []
+            for task in task_list:
+                new_task = task.copy(exclude_block=True)
+                new_task._block = new_block
+                new_task_list.append(new_task)
+            return new_task_list
+
         new_me = super(Block, self).copy()
         new_me._use_handlers = self._use_handlers
         new_me._dep_chain = self._dep_chain[:]
+
+        new_me.block  = _dupe_task_list(self.block or [], new_me)
+        new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
+        new_me.always = _dupe_task_list(self.always or [], new_me)
+        print("new block tasks are: %s" % new_me.block)
 
         new_me._parent_block = None
         if self._parent_block:
@@ -251,4 +252,25 @@ class Block(Base, Become, Conditional, Taggable):
 
         for dep in self._dep_chain:
             dep.set_loader(loader)
+
+    def _get_parent_attribute(self, attr):
+        '''
+        Generic logic to get the attribute or parent attribute for a block value.
+        '''
+
+        value = self._attributes[attr]
+        if not value:
+            if self._parent_block:
+                value = getattr(self._block, attr)
+            elif self._role:
+                value = getattr(self._role, attr)
+                if not value and len(self._dep_chain):
+                    reverse_dep_chain = self._dep_chain[:]
+                    reverse_dep_chain.reverse()
+                    for dep in reverse_dep_chain:
+                        value = getattr(dep, attr)
+                        if value:
+                            break
+
+        return value
 

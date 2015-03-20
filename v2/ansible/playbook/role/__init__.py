@@ -30,6 +30,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
 from ansible.playbook.role.include import RoleInclude
@@ -69,7 +70,7 @@ def hash_params(params):
 ROLE_CACHE = dict()
 
 
-class Role(Base, Conditional, Taggable):
+class Role(Base, Become, Conditional, Taggable):
 
     def __init__(self):
         self._role_name        = None
@@ -136,6 +137,12 @@ class Role(Base, Conditional, Taggable):
         if parent_role:
             self.add_parent(parent_role)
 
+        # copy over all field attributes, except for when and tags, which
+        # are special cases and need to preserve pre-existing values
+        for (attr_name, _) in iteritems(self._get_base_attributes()):
+            if attr_name not in ('when', 'tags'):
+                setattr(self, attr_name, getattr(role_include, attr_name))
+
         current_when = getattr(self, 'when')[:]
         current_when.extend(role_include.when)
         setattr(self, 'when', current_when)
@@ -143,10 +150,6 @@ class Role(Base, Conditional, Taggable):
         current_tags = getattr(self, 'tags')[:]
         current_tags.extend(role_include.tags)
         setattr(self, 'tags', current_tags)
-
-        # save the current base directory for the loader and set it to the current role path
-        #cur_basedir = self._loader.get_basedir()
-        #self._loader.set_basedir(self._role_path)
 
         # load the role's files, if they exist
         library = os.path.join(self._role_path, 'library')
@@ -178,9 +181,6 @@ class Role(Base, Conditional, Taggable):
             raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
         elif self._default_vars is None:
             self._default_vars = dict()
-
-        # and finally restore the previous base directory
-        #self._loader.set_basedir(cur_basedir)
 
     def _load_role_yaml(self, subdir):
         file_path = os.path.join(self._role_path, subdir)
@@ -313,9 +313,6 @@ class Role(Base, Conditional, Taggable):
         for dep in deps:
             dep_blocks = dep.compile(dep_chain=new_dep_chain)
             for dep_block in dep_blocks:
-                # since we're modifying the task, and need it to be unique,
-                # we make a copy of it here and assign the dependency chain
-                # to the copy, then append the copy to the task list.
                 new_dep_block = dep_block.copy()
                 new_dep_block._dep_chain = new_dep_chain
                 block_list.append(new_dep_block)

@@ -72,11 +72,20 @@ class Base:
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
-        for base_class in self.__class__.__bases__:
-            method = getattr(self, ("_munge_%s" % base_class.__name__).lower(), None)
-            if method:
-                ds = method(ds)
+        def _get_base_classes_munge(target_class):
+            base_classes = list(target_class.__bases__[:])
+            for base_class in target_class.__bases__:
+                base_classes.extend( _get_base_classes_munge(base_class))
+            return base_classes
 
+        base_classes = list(self.__class__.__bases__[:])
+        for base_class in self.__class__.__bases__:
+            base_classes.extend(_get_base_classes_munge(base_class))
+
+        for base_class in base_classes:
+            method = getattr(self, "_munge_%s" % base_class.__name__.lower(), None)
+            if method:
+                return method(ds)
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None):
@@ -271,14 +280,20 @@ class Base:
         # optionally allowing masking by accessors
 
         if not needle.startswith("_"):
-            method = "get_%s" % needle
-            if method in self.__dict__:
-                return method(self)
+            method = "_get_attr_%s" % needle
+            if method in dir(self):
+                return getattr(self, method)()
 
         if needle in self._attributes:
             return self._attributes[needle]
 
         raise AttributeError("attribute not found in %s: %s" % (self.__class__.__name__, needle))
+
+    def __setattr__(self, needle, value):
+        if hasattr(self, '_attributes') and needle in self._attributes:
+            self._attributes[needle] = value
+        else:
+            super(Base, self).__setattr__(needle, value)
 
     def __getstate__(self):
         return self.serialize()
