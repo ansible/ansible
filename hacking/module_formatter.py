@@ -289,7 +289,10 @@ def process_module(module, options, env, template, outputname, module_map, alias
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
-    doc['returndocs']       = returndocs
+    if returndocs:
+        doc['returndocs']       = yaml.safe_load(returndocs)
+    else:
+        doc['returndocs']       = None
 
     # here is where we build the table of contents...
 
