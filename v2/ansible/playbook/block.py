@@ -147,7 +147,6 @@ class Block(Base, Become, Conditional, Taggable):
         new_me.block  = _dupe_task_list(self.block or [], new_me)
         new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
         new_me.always = _dupe_task_list(self.always or [], new_me)
-        print("new block tasks are: %s" % new_me.block)
 
         new_me._parent_block = None
         if self._parent_block:
