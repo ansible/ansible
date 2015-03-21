@@ -24,9 +24,11 @@ import optparse
 import os
 import time
 import yaml
+import getpass
 
 from ansible import __version__
 from ansible import constants as C
+from ansible.utils.unicode import to_bytes
 
 # FIXME: documentation for methods here, which have mostly been
 #        copied directly over from the old utils/__init__.py
@@ -230,6 +232,51 @@ def _gitinfo():
             result += "\n  {0}: {1}".format(submodule_path, submodule_info)
     f.close()
     return result
+
+
+def ask_passwords(options):
+    sshpass = None
+    becomepass = None
+    vaultpass = None
+    become_prompt = ''
+
+    if options.ask_pass:
+        sshpass = getpass.getpass(prompt="SSH password: ")
+        become_prompt = "%s password[defaults to SSH password]: " % options.become_method.upper()
+        if sshpass:
+            sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
+    else:
+        become_prompt = "%s password: " % options.become_method.upper()
+
+    if options.become_ask_pass:
+        becomepass = getpass.getpass(prompt=become_prompt)
+        if options.ask_pass and becomepass == '':
+            becomepass = sshpass
+        if becomepass:
+            becomepass = to_bytes(becomepass)
+
+    if options.ask_vault_pass:
+        vaultpass = getpass.getpass(prompt="Vault password: ")
+        if vaultpass:
+            vaultpass = to_bytes(vaultpass, errors='strict', nonstring='simplerepr').strip()
+
+    return (sshpass, becomepass, vaultpass)
+
+
+def normalize_become_options(options):
+    ''' this keeps backwards compatibility with sudo/su options '''
+    options.become_ask_pass = options.become_ask_pass or options.ask_sudo_pass or options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
+    options.become_user = options.become_user or options.sudo_user or options.su_user or C.DEFAULT_BECOME_USER
+
+    if options.become:
+        pass
+    elif options.sudo:
+        options.become = True
+        options.become_method = 'sudo'
+    elif options.su:
+        options.become = True
+        options.become_method = 'su'
+
 
 def validate_conflicts(parser, options):
 
