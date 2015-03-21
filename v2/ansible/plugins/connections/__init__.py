@@ -34,8 +34,18 @@ class ConnectionBase:
     A base class for connections to contain common code.
     '''
 
+    has_pipelining = False
+    become_methods = C.BECOME_METHODS
+
     def __init__(self, connection_info, *args, **kwargs):
         self._connection_info = connection_info
-        self._has_pipelining = False
         self._display = Display(connection_info)
 
+
+    def _become_method_supported(self, become_method):
+        ''' Checks if the current class supports this privilege escalation method '''
+
+        if become_method in self.__class__.become_methods:
+            return True
+
+        raise errors.AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
