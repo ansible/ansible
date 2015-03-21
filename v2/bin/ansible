@@ -30,6 +30,7 @@ from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.utils.cli import base_parser, validate_conflicts, normalize_become_options, ask_passwords
+from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
 ########################################################
@@ -76,9 +77,9 @@ class Cli(object):
 
         pattern = args[0]
 
-        #-------------------------------------------------------------------------------
-        # FIXME: the password asking stuff needs to be ported over still
-        #-------------------------------------------------------------------------------
+        if options.connection == "local":
+            options.ask_pass = False
+
         sshpass    = None
         becomepass    = None
         vault_pass = None
@@ -86,23 +87,12 @@ class Cli(object):
         normalize_become_options(options)
         (sshpass, becomepass, vault_pass) = ask_passwords(options)
 
-
-        #options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
-        ## Never ask for an SSH password when we run with local connection
-        #if options.connection == "local":
-        #    options.ask_pass = False
-        #options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        #options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        #options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
-        #
-        #(sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
-        #
+        if options.vault_password_file:
         # read vault_pass from a file
-        #if not options.ask_vault_pass and options.vault_password_file:
-        #    vault_pass = utils.read_vault_file(options.vault_password_file)
-        #-------------------------------------------------------------------------------
+            vault_pass = read_vault_file(options.vault_password_file)
 
-        # FIXME: needs vault password, after the above is fixed
+
+        # FIXME: needs vault password
         loader = DataLoader()
         variable_manager = VariableManager()
 
