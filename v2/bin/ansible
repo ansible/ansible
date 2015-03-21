@@ -91,9 +91,7 @@ class Cli(object):
         # read vault_pass from a file
             vault_pass = read_vault_file(options.vault_password_file)
 
-
-        # FIXME: needs vault password
-        loader = DataLoader()
+        loader = DataLoader(vault_password=vault_pass)
         variable_manager = VariableManager()
 
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=options.inventory)
