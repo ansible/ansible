@@ -55,12 +55,6 @@ def base_parser(usage="", output_opts=False, runas_opts=False,
         help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
         help='use this file to authenticate the connection')
-    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
-        help='ask for sudo password')
-    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
-        help='ask for su password')
-    parser.add_option('--ask-become-pass', default=False, dest='ask_become_pass', action='store_true',
-        help='ask for privlege escalation password')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
         help='ask for vault password')
     parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
@@ -86,29 +80,33 @@ def base_parser(usage="", output_opts=False, runas_opts=False,
             help='log output to this directory')
 
     if runas_opts:
-        parser.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true",
-            dest='become', help="run operations with become (nopasswd implied)")
-        parser.add_option('-B', '--become-user', help='run operations with as this '
-                                                  'user (default=%s)' % C.DEFAULT_BECOME_USER)
-        parser.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true",
-            dest='sudo', help="run operations with sudo (nopasswd)")
+        # priv user defaults to root later on to enable detecting when this option was given here
+        parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+            help='ask for sudo password (deprecated, use become)')
+        parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
+            help='ask for su password (deprecated, use become)')
+        parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true", dest='sudo',
+            help="run operations with sudo (nopasswd) (deprecated, use become)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
-                          help='desired sudo user (default=root)')  # Can't default to root because we need to detect when this option was given
-        parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER,
-            dest='remote_user', help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+                          help='desired sudo user (default=root) (deprecated, use become)')
+        parser.add_option('-S', '--su', default=constants.DEFAULT_SU, action='store_true',
+            help='run operations with su (deprecated, use become)')
+        parser.add_option('-R', '--su-user', default=None,
+            help='run operations with su as this user (default=%s) (deprecated, use become)' % constants.DEFAULT_SU_USER)
 
-        parser.add_option('-S', '--su', default=C.DEFAULT_SU,
-                          action='store_true', help='run operations with su')
-        parser.add_option('-R', '--su-user', help='run operations with su as this '
-                                                  'user (default=%s)' % C.DEFAULT_SU_USER)
+        # consolidated privilege escalation (become)
+        parser.add_option("-b", "--become", default=constants.DEFAULT_BECOME, action="store_true", dest='become',
+            help="run operations with become (nopasswd implied)")
+        parser.add_option('--become-method', dest='become_method', default=constants.DEFAULT_BECOME_METHOD, type='string',
+            help="privilege escalation method to use (default=%s), valid choices: [ %s ]" % (constants.DEFAULT_BECOME_METHOD, ' | '.join(constants.BECOME_METHODS)))
+        parser.add_option('--become-user', default=None, dest='become_user', type='string',
+            help='run operations as this user (default=%s)' % constants.DEFAULT_BECOME_USER)
+        parser.add_option('--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
+            help='ask for privilege escalation password')
+
 
     if connect_opts:
-        parser.add_option('-c', '--connection', dest='connection',
-                          default=C.DEFAULT_TRANSPORT,
-                          help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-        parser.add_option('--become-method', dest='become_method',
-                          default=C.DEFAULT_BECOME_METHOD,
-                          help="privlege escalation method to use (default=%s)" % C.DEFAULT_BECOME_METHOD)
+        parser.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT, help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
 
     if async_opts:
         parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',
