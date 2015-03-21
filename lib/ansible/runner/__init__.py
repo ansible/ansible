@@ -934,8 +934,12 @@ class Runner(object):
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
-        actual_pass = template.template(self.basedir, actual_pass, inject)
-        self.become_pass = template.template(self.basedir, self.become_pass, inject)
+        try:
+            actual_pass = template.template(self.basedir, actual_pass, inject)
+            self.become_pass = template.template(self.basedir, self.become_pass, inject)
+        except:
+            # ignore password template errors, could be triggered by password charaters #10468
+            pass
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
