@@ -29,7 +29,7 @@ from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.utils.cli import base_parser, validate_conflicts
+from ansible.utils.cli import base_parser, validate_conflicts, normalize_become_options, ask_passwords
 from ansible.vars import VariableManager
 
 ########################################################
@@ -79,11 +79,14 @@ class Cli(object):
         #-------------------------------------------------------------------------------
         # FIXME: the password asking stuff needs to be ported over still
         #-------------------------------------------------------------------------------
-        #sshpass    = None
-        #sudopass   = None
-        #su_pass    = None
-        #vault_pass = None
-        #
+        sshpass    = None
+        becomepass    = None
+        vault_pass = None
+
+        normalize_become_options(options)
+        (sshpass, becomepass, vault_pass) = ask_passwords(options)
+
+
         #options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         ## Never ask for an SSH password when we run with local connection
         #if options.connection == "local":

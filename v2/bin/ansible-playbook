@@ -12,7 +12,7 @@ from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.task import Task
-from ansible.utils.cli import base_parser, validate_conflicts
+from ansible.utils.cli import base_parser, validate_conflicts, normalize_become_options, ask_passwords
 from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import combine_vars
 from ansible.utils.vault import read_vault_file
@@ -55,11 +55,15 @@ def main(args):
 
     validate_conflicts(parser,options)
 
+    # Manage passwords
+    sshpass    = None
+    becomepass    = None
     vault_pass = None
-    if options.ask_vault_pass:
-        # FIXME: prompt here
-        pass
-    elif options.vault_password_file:
+
+    normalize_become_options(options)
+    (sshpass, becomepass, vault_pass) = ask_passwords(options)
+
+    if options.vault_password_file:
         # read vault_pass from a file
         vault_pass = read_vault_file(options.vault_password_file)
 
