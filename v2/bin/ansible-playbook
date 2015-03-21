@@ -12,7 +12,7 @@ from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.task import Task
-from ansible.utils.cli import base_parser
+from ansible.utils.cli import base_parser, validate_conflicts
 from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import combine_vars
 from ansible.utils.vault import read_vault_file
@@ -30,37 +30,30 @@ def main(args):
     parser = base_parser(
         usage = "%prog playbook.yml",
         connect_opts=True,
+        meta_opts=True,
         runas_opts=True,
         subset_opts=True,
         check_opts=True,
-        diff_opts=True
+        diff_opts=True,
     )
-    parser.add_option('--vault-password', dest="vault_password",
-        help="password for vault encrypted files")
-    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-        help="set additional variables as key=value or YAML/JSON", default=[])
-    parser.add_option('-t', '--tags', dest='tags', default='all',
-        help="only run plays and tasks tagged with these values")
-    parser.add_option('--skip-tags', dest='skip_tags',
-        help="only run plays and tasks whose tags do not match these values")
-    parser.add_option('--syntax-check', dest='syntax', action='store_true',
-        help="perform a syntax check on the playbook, but do not execute it")
+
+    # ansible playbook specific opts
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
         help="list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
         help="start the playbook at the task matching this name")
-    parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
-        help="run handlers even if a task fails")
-    parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
-        help="clear the fact cache")
+    parser.add_option('--list-tags', dest='listtags', action='store_true',
+        help="list all available tags")
 
     options, args = parser.parse_args(args)
 
     if len(args) == 0:
         parser.print_help(file=sys.stderr)
         return 1
+
+    validate_conflicts(parser,options)
 
     vault_pass = None
     if options.ask_vault_pass:
