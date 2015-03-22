@@ -1578,10 +1578,14 @@ def main():
         if count > 1 and name:
             module.fail_json(msg="Count and name must not be used together")
 
-        # Explicitly pull new container images, if requested.
-        # Do this before noticing running and deployed containers so that the image names will differ
-        # if a newer image has been pulled.
-        if pull == "always":
+        # Explicitly pull new container images, if requested. Do this before
+        # noticing running and deployed containers so that the image names
+        # will differ if a newer image has been pulled.
+        # Missing images should be pulled first to avoid downtime when old
+        # container is stopped, but image for new one is now downloaded yet.
+        # It also prevents removal of running container before realizing
+        # that requested image cannot be retrieved.
+        if pull == "always" or (state == 'reloaded' and manager.get_inspect_image() is None):
             manager.pull_image()
 
         containers = ContainerSet(manager)
