@@ -24,6 +24,8 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 
 class Taggable:
+
+    untagged = set(['untagged'])
     _tags = FieldAttribute(isa='list', default=[])
 
     def __init__(self):
@@ -38,22 +40,45 @@ class Taggable:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        templar = Templar(loader=self._loader, variables=all_vars)
-        tags = templar.template(self.tags)
-        if not isinstance(tags, list):
-            tags = set([tags])
-        else:
-            tags = set(tags)
+        ''' this checks if the current item should be executed depending on tag options '''
 
-        #print("%s tags are: %s, only_tags=%s, skip_tags=%s" % (self, my_tags, only_tags, skip_tags))
-        if skip_tags:
-            skipped_tags = tags.intersection(skip_tags)
-            if len(skipped_tags) > 0:
-                return False
-        matched_tags = tags.intersection(only_tags)
-        #print("matched tags are: %s" % matched_tags)
-        if len(matched_tags) > 0 or 'all' in only_tags:
-            return True
-        else:
-            return False
+        should_run = True
 
+        if self.tags:
+            templar = Templar(loader=self._loader, variables=all_vars)
+            tags = templar.template(self.tags)
+
+            if not isinstance(tags, list):
+                if tags.find(',') != -1:
+                    tags = set(tags.split(','))
+                else:
+                    tags = set([tags])
+            else:
+                tags = set(tags)
+        else:
+            # this makes intersection work for untagged
+            tags = self.__class__.untagged
+
+        if only_tags:
+
+            should_run = False
+
+            if 'always' in tags or 'all' in only_tags:
+                 should_run = True
+            elif tags.intersection(only_tags):
+                should_run = True
+            elif 'tagged' in only_tags and tags != self.__class__.untagged:
+                should_run = True
+
+        if should_run and skip_tags:
+
+            # Check for tags that we need to skip
+            if 'all' in skip_tags:
+                if 'always' not in tags or 'always' in skip_tags:
+                    should_run = False
+            elif tags.intersection(skip_tags):
+                should_run = False
+            elif 'tagged' in skip_tags and tags != self.__class__.untagged:
+                should_run = False
+
+        return should_run
