@@ -5,7 +5,7 @@ Here are some commonly-asked questions and their answers.
 
 .. _users_and_ports:
 
-If you are looking to set environment varialbes remotely for your project (in a task, not locally for Ansible)
+If you are looking to set environment variables remotely for your project (in a task, not locally for Ansible)
 The keyword is simply `environment`
 
 ```
