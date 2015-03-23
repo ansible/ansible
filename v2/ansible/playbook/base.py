@@ -97,6 +97,9 @@ class Base:
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
+        ### FIXME: Can't find any classes with methods named
+        # _munge_base_class.__name__ so maybe Base.munge should be reduced down
+        # to return ds
         for base_class in self.__class__.mro():
             method = getattr(self, "_munge_%s" % base_class.__name__.lower(), None)
             if method:
@@ -132,7 +135,7 @@ class Base:
         # FIXME: we currently don't do anything with private attributes but
         #        may later decide to filter them out of 'ds' here.
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for name in self._get_base_attributes():
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
@@ -151,7 +154,7 @@ class Base:
         return self
 
     def get_ds(self):
-       	try:
+        try:
             return getattr(self, '_ds')
         except AttributeError:
             return None
@@ -168,7 +171,7 @@ class Base:
         not map to attributes for this object.
         '''
 
-        valid_attrs = [name for (name, attribute) in iteritems(self._get_base_attributes())]
+        valid_attrs = frozenset(name for name in self._get_base_attributes())
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
@@ -191,7 +194,7 @@ class Base:
 
         new_me = self.__class__()
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for name in self._get_base_attributes():
             setattr(new_me, name, getattr(self, name))
 
         new_me._loader           = self._loader
@@ -223,7 +226,7 @@ class Base:
             try:
                 # if the attribute contains a variable, template it now
                 value = templar.template(getattr(self, name))
-                
+
                 # run the post-validator if present
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
@@ -262,7 +265,7 @@ class Base:
 
         repr = dict()
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for name in self._get_base_attributes():
             repr[name] = getattr(self, name)
 
         # serialize the uuid field
