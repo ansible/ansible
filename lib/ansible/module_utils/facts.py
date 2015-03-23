@@ -889,6 +889,22 @@ class LinuxHardware(Hardware):
                          'uuid': uuid,
                          })
 
+                    if (fields[1] == '/'):
+                        mount_name = "_root"
+                    else:
+                        mount_name = fields[1].replace('/','_')
+
+                    self.facts['mount' + mount_name] = {
+                         'mount': fields[1],
+                         'device':fields[0],
+                         'fstype': fields[2],
+                         'options': fields[3],
+                         # statvfs data
+                         'size_total': size_total,
+                         'size_available': size_available,
+                         'uuid': uuid,
+                         }
+
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = module.get_bin_path('lspci')
