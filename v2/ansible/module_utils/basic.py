@@ -1376,7 +1376,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(dest, 0666 ^ umask)
+            os.chmod(dest, 0666 & ~umask)
             if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
