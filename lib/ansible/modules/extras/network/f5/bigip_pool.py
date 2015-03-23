@@ -54,6 +54,14 @@ options:
         default: null
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.9.1
     state:
         description:
             - Pool/pool member state
@@ -235,6 +243,12 @@ def bigip_api(bigip, user, password):
     api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
     return api
 
+def disable_ssl_cert_validation():
+    # You probably only want to do this for testing and never in production.
+    # From https://www.python.org/dev/peps/pep-0476/#id29
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+
 def pool_exists(api, pool):
     # hack to determine if pool exists
     result = False
@@ -359,6 +373,7 @@ def main():
             server = dict(type='str', required=True),
             user = dict(type='str', required=True),
             password = dict(type='str', required=True),
+            validate_certs = dict(default='yes', type='bool'),
             state = dict(type='str', default='present', choices=['present', 'absent']),
             name = dict(type='str', required=True, aliases=['pool']),
             partition = dict(type='str', default='Common'),
@@ -380,6 +395,7 @@ def main():
     server = module.params['server']
     user = module.params['user']
     password = module.params['password']
+    validate_certs = module.params['validate_certs']
     state = module.params['state']
     name = module.params['name']
     partition = module.params['partition']
@@ -406,6 +422,9 @@ def main():
     host = module.params['host']
     address = "/%s/%s" % (partition, host)
     port = module.params['port']
+
+    if not validate_certs:
+        disable_ssl_cert_validation()
 
     # sanity check user supplied values
 
