@@ -49,6 +49,14 @@ options:
             - BIG-IP password
         required: true
         default: null
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.9.1
     state:
         description:
             - Monitor state
@@ -196,6 +204,14 @@ def bigip_api(bigip, user, password):
     return api
 
 
+def disable_ssl_cert_validation():
+
+    # You probably only want to do this for testing and never in production.
+    # From https://www.python.org/dev/peps/pep-0476/#id29
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+
 def check_monitor_exists(module, api, monitor, parent):
 
     # hack to determine if monitor exists
@@ -331,6 +347,7 @@ def main():
             server    = dict(required=True),
             user      = dict(required=True),
             password  = dict(required=True),
+            validate_certs = dict(default='yes', type='bool'),
             partition = dict(default='Common'),
             state     = dict(default='present', choices=['present', 'absent']),
             name      = dict(required=True),
@@ -351,6 +368,7 @@ def main():
     server = module.params['server']
     user = module.params['user']
     password = module.params['password']
+    validate_certs = module.params['validate_certs']
     partition = module.params['partition']
     parent_partition = module.params['parent_partition']
     state = module.params['state']
@@ -371,6 +389,9 @@ def main():
     TEMPLATE_TYPE = type
 
     # end monitor specific stuff
+
+    if not validate_certs:
+        disable_ssl_cert_validation()
 
     if not bigsuds_found:
         module.fail_json(msg="the python bigsuds module is required")
