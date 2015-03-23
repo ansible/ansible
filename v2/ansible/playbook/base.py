@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import uuid
 
+from functools import partial
 from inspect import getmembers
 from io import FileIO
 
@@ -50,11 +51,24 @@ class Base:
         # every object gets a random uuid:
         self._uuid = uuid.uuid4()
 
-        # each class knows attributes set upon it, see Task.py for example
-        self._attributes = dict()
+        # and initialize the base attributes
+        self._initialize_base_attributes()
 
-        for (name, value) in iteritems(self._get_base_attributes()):
-            self._attributes[name] = value.default
+    @staticmethod
+    def _generic_g(key, self):
+        method = "_get_attr_%s" % key
+        if method in dir(self):
+            return getattr(self, method)()
+
+        return self._attributes[key]
+
+    @staticmethod
+    def _generic_s(key, self, value):
+        self._attributes[key] = value
+
+    @staticmethod
+    def _generic_d(key, self):
+        del self._attributes[key]
 
     def _get_base_attributes(self):
         '''
@@ -68,6 +82,17 @@ class Base:
                    name = name[1:]
                base_attributes[name] = value
         return base_attributes
+
+    def _initialize_base_attributes(self):
+        # each class knows attributes set upon it, see Task.py for example
+        self._attributes = dict()
+
+        for (name, value) in self._get_base_attributes().items():
+            getter = partial(self._generic_g, name)
+            setter = partial(self._generic_s, name)
+            deleter = partial(self._generic_d, name)
+            setattr(Base, name, property(getter, setter, deleter))
+            setattr(self, name, value.default)
 
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
@@ -273,27 +298,6 @@ class Base:
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
-
-    def __getattr__(self, needle):
-
-        # return any attribute names as if they were real
-        # optionally allowing masking by accessors
-
-        if not needle.startswith("_"):
-            method = "_get_attr_%s" % needle
-            if method in dir(self):
-                return getattr(self, method)()
-
-        if needle in self._attributes:
-            return self._attributes[needle]
-
-        raise AttributeError("attribute not found in %s: %s" % (self.__class__.__name__, needle))
-
-    def __setattr__(self, needle, value):
-        if hasattr(self, '_attributes') and needle in self._attributes:
-            self._attributes[needle] = value
-        else:
-            super(Base, self).__setattr__(needle, value)
 
     def __getstate__(self):
         return self.serialize()
