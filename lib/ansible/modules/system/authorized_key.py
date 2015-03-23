@@ -377,12 +377,13 @@ def enforce_state(module, params):
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
         parsed_new_key = parsekey(module, new_key)
-        if key_options is not None:
-            parsed_options = parseoptions(module, key_options)
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
 
         if not parsed_new_key:
             module.fail_json(msg="invalid key specified: %s" % new_key)
+
+        if key_options is not None:
+            parsed_options = parseoptions(module, key_options)
+            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
 
         present = False
         matched = False
