@@ -228,6 +228,7 @@ class CronTab(object):
             fileh = open(self.cron_file, 'w')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
+            os.chmod(path, 0o644)
             fileh = os.fdopen(filed, 'w')
 
         fileh.write(self.render())
