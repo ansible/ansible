@@ -236,7 +236,7 @@ class StrategyModule(StrategyBase):
                         for include_result in include_results:
                             original_task = iterator.get_original_task(res._host, res._task)
                             if original_task and original_task._role:
-                                include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_file)
+                                include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_result['include'])
                             else:
                                 include_file = self._loader.path_dwim(res._task.args.get('_raw_params'))
 
