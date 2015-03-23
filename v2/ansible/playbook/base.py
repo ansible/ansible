@@ -97,17 +97,7 @@ class Base:
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
-        def _get_base_classes_munge(target_class):
-            base_classes = list(target_class.__bases__[:])
-            for base_class in target_class.__bases__:
-                base_classes.extend( _get_base_classes_munge(base_class))
-            return base_classes
-
-        base_classes = list(self.__class__.__bases__[:])
-        for base_class in self.__class__.__bases__:
-            base_classes.extend(_get_base_classes_munge(base_class))
-
-        for base_class in base_classes:
+        for base_class in self.__class__.mro():
             method = getattr(self, "_munge_%s" % base_class.__name__.lower(), None)
             if method:
                 return method(ds)
