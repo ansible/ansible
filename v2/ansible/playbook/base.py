@@ -97,9 +97,6 @@ class Base:
     def munge(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
-        ### FIXME: Can't find any classes with methods named
-        # _munge_base_class.__name__ so maybe Base.munge should be reduced down
-        # to return ds
         for base_class in self.__class__.mro():
             method = getattr(self, "_munge_%s" % base_class.__name__.lower(), None)
             if method:
