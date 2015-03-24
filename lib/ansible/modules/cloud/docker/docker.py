@@ -1123,15 +1123,17 @@ class DockerManager(object):
             repo_tags = [normalize_image(self.module.params.get('image'))]
 
         for i in self.client.containers(all=True):
-            details = self.client.inspect_container(i['Id'])
-            details = _docker_id_quirk(details)
-
-            running_image = normalize_image(details['Config']['Image'])
-            running_command = i['Command'].strip()
+            details = None
 
             if name:
                 matches = name in i.get('Names', [])
             else:
+                details = self.client.inspect_container(i['Id'])
+                details = _docker_id_quirk(details)
+
+                running_image = normalize_image(details['Config']['Image'])
+                running_command = i['Command'].strip()
+
                 image_matches = running_image in repo_tags
 
                 # if a container has an entrypoint, `command` will actually equal
@@ -1141,6 +1143,10 @@ class DockerManager(object):
                 matches = image_matches and command_matches
 
             if matches:
+                if not details:
+                    details = self.client.inspect_container(i['Id'])
+                    details = _docker_id_quirk(details)
+
                 deployed.append(details)
 
         return deployed
