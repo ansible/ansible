@@ -412,7 +412,7 @@ class Facts(object):
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
-                                break
+                                    break
                             else:
                                 try:
                                     self.get_lsb_facts()
