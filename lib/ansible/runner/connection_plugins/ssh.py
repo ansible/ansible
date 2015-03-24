@@ -272,7 +272,10 @@ class Connection(object):
         if utils.VERBOSITY > 3:
             ssh_cmd += ["-vvv"]
         else:
-            ssh_cmd += ["-v"]
+            if self.runner.module_name == 'raw':
+                ssh_cmd += ["-q"]
+            else:
+                ssh_cmd += ["-v"]
         ssh_cmd += self.common_args
 
         if self.ipv6:
