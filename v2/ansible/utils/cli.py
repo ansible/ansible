@@ -46,6 +46,8 @@ def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False,
 
     parser = SortedOptParser(usage, version=version("%prog"))
 
+    parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+        help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
         help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
     parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
