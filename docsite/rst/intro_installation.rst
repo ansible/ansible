@@ -261,6 +261,17 @@ Ansible is available for Solaris as `SysV package from OpenCSW <https://www.open
     # pkgadd -d http://get.opencsw.org/now
     # /opt/csw/bin/pkgutil -i ansible
 
+.. _from_pacman:
+
+Latest Releases Via Pacman (Arch Linux)
++++++++++++++++++++++++++++++++++++++++
+
+Ansible is available in the Community repository::
+
+    $ pacman -S ansible
+
+The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
+
 .. _from_pip:
 
 Latest Releases Via Pip
