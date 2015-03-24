@@ -51,7 +51,13 @@ class Become:
         elif has_sudo and has_su:
             raise errors.AnsibleParserError('sudo params ("sudo", "sudo_user") and su params ("su", "su_user") cannot be used together')
 
-    def _munge_become(self, ds):
+    def _preprocess_data_become(self, ds):
+        """Preprocess the playbook data for become attributes
+
+        This is called from the Base object's preprocess_data() method which
+        in turn is called pretty much anytime any sort of playbook object
+        (plays, tasks, blocks, etc) are created.
+        """
 
         self._detect_privilege_escalation_conflict(ds)
 

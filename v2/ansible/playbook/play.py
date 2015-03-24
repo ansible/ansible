@@ -102,7 +102,7 @@ class Play(Base, Taggable, Become):
         p = Play()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         Adjusts play datastructure to cleanup old/legacy items
         '''
@@ -121,7 +121,7 @@ class Play(Base, Taggable, Become):
             ds['remote_user'] = ds['user']
             del ds['user']
 
-        return super(Play, self).munge(ds)
+        return super(Play, self).preprocess_data(ds)
 
     def _load_vars(self, attr, ds):
         '''
