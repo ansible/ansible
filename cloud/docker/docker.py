@@ -420,6 +420,13 @@ def get_split_image_tag(image):
 
     return resource, tag
 
+def normalize_image(image):
+    """
+    Normalize a Docker image name to include the implied :latest tag.
+    """
+
+    return ":".join(get_split_image_tag(image))
+
 
 def is_running(container):
     '''Return True if an inspected container is in a state we consider "running."'''
@@ -1109,16 +1116,20 @@ class DockerManager(object):
         if inspected:
             repo_tags = self.get_image_repo_tags()
         else:
-            image, tag = get_split_image_tag(self.module.params.get('image'))
-            repo_tags = [':'.join([image, tag])]
+            repo_tags = [normalize_image(self.module.params.get('image'))]
 
         for i in self.client.containers(all=True):
-            running_image = i['Image']
-            running_command = i['Command'].strip()
+            details = None
 
             if name:
                 matches = name in i.get('Names', [])
             else:
+                details = self.client.inspect_container(i['Id'])
+                details = _docker_id_quirk(details)
+
+                running_image = normalize_image(details['Config']['Image'])
+                running_command = i['Command'].strip()
+
                 image_matches = running_image in repo_tags
 
                 # if a container has an entrypoint, `command` will actually equal
@@ -1128,8 +1139,9 @@ class DockerManager(object):
                 matches = image_matches and command_matches
 
             if matches:
-                details = self.client.inspect_container(i['Id'])
-                details = _docker_id_quirk(details)
+                if not details:
+                    details = self.client.inspect_container(i['Id'])
+                    details = _docker_id_quirk(details)
 
                 deployed.append(details)
 
