@@ -61,7 +61,7 @@ class RoleRequirement(RoleDefinition):
         if isinstance(ds, string_types):
             role_name = ds
         else:
-            ds = self._munge_role_spec(ds)
+            ds = self._preprocess_role_spec(ds)
             (new_ds, role_params) = self._split_role_params(ds)
 
             # pull the role name out of the ds
@@ -70,7 +70,7 @@ class RoleRequirement(RoleDefinition):
 
         return (new_ds, role_name, role_params)
 
-    def _munge_role_spec(self, ds):
+    def _preprocess_role_spec(self, ds):
         if 'role' in ds:
             # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
             role_info = self._role_spec_parse(ds['role'])

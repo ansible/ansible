@@ -54,12 +54,12 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
     def load(data, variable_manager=None, loader=None):
         raise AnsibleError("not implemented")
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
 
         assert isinstance(ds, dict) or isinstance(ds, string_types)
 
         if isinstance(ds, dict):
-            ds = super(RoleDefinition, self).munge(ds)
+            ds = super(RoleDefinition, self).preprocess_data(ds)
 
         # we create a new data structure here, using the same
         # object used internally by the YAML parsing code so we

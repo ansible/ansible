@@ -66,7 +66,7 @@ class Block(Base, Become, Conditional, Taggable):
         b = Block(parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         If a simple task is given, an implicit block for that single task
         is created, which goes in the main portion of the block
@@ -80,11 +80,11 @@ class Block(Base, Become, Conditional, Taggable):
 
         if not is_block:
             if isinstance(ds, list):
-                return super(Block, self).munge(dict(block=ds))
+                return super(Block, self).preprocess_data(dict(block=ds))
             else:
-                return super(Block, self).munge(dict(block=[ds]))
+                return super(Block, self).preprocess_data(dict(block=[ds]))
 
-        return super(Block, self).munge(ds)
+        return super(Block, self).preprocess_data(ds)
 
     def _load_block(self, attr, ds):
         return load_list_of_tasks(

@@ -137,7 +137,7 @@ class Task(Base, Conditional, Taggable, Become):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
 
-    def _munge_loop(self, ds, new_ds, k, v):
+    def _preprocess_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
         loop_name = k.replace("with_", "")
@@ -146,7 +146,7 @@ class Task(Base, Conditional, Taggable, Become):
         new_ds['loop'] = loop_name
         new_ds['loop_args'] = v
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         tasks are especially complex arguments so need pre-processing.
         keep it short.
@@ -178,11 +178,11 @@ class Task(Base, Conditional, Taggable, Become):
                 # determined by the ModuleArgsParser() above
                 continue
             elif k.replace("with_", "") in lookup_loader:
-                self._munge_loop(ds, new_ds, k, v)
+                self._preprocess_loop(ds, new_ds, k, v)
             else:
                 new_ds[k] = v
 
-        return super(Task, self).munge(new_ds)
+        return super(Task, self).preprocess_data(new_ds)
 
     def post_validate(self, all_vars=dict(), fail_on_undefined=True):
         '''

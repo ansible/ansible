@@ -94,11 +94,11 @@ class Base:
             setattr(Base, name, property(getter, setter, deleter))
             setattr(self, name, value.default)
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
         for base_class in self.__class__.mro():
-            method = getattr(self, "_munge_%s" % base_class.__name__.lower(), None)
+            method = getattr(self, "_preprocess_data_%s" % base_class.__name__.lower(), None)
             if method:
                 return method(ds)
         return ds
@@ -121,10 +121,10 @@ class Base:
         if isinstance(ds, string_types) or isinstance(ds, FileIO):
             ds = self._loader.load(ds)
 
-        # call the munge() function to massage the data into something
-        # we can more easily parse, and then call the validation function
-        # on it to ensure there are no incorrect key values
-        ds = self.munge(ds)
+        # call the preprocess_data() function to massage the data into
+        # something we can more easily parse, and then call the validation
+        # function on it to ensure there are no incorrect key values
+        ds = self.preprocess_data(ds)
         self._validate_attributes(ds)
 
         # Walk all attributes in the class.

@@ -48,7 +48,8 @@ class PlaybookInclude(Base):
         from ansible.playbook import Playbook
 
         # first, we use the original parent method to correctly load the object
-        # via the munge/load_data system we normally use for other playbook objects
+        # via the load_data/preprocess_data system we normally use for other
+        # playbook objects
         new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader)
 
         # then we use the object to load a Playbook
@@ -67,7 +68,7 @@ class PlaybookInclude(Base):
 
         return pb
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         Regorganizes the data for a PlaybookInclude datastructure to line
         up with what we expect the proper attributes to be
@@ -83,9 +84,7 @@ class PlaybookInclude(Base):
 
         for (k,v) in ds.iteritems():
             if k == 'include':
-                self._munge_include(ds, new_ds, k, v)
-            elif k.replace("with_", "") in lookup_loader:
-                self._munge_loop(ds, new_ds, k, v)
+                self._preprocess_include(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
                 # formatted and do not conflict with k=v parameters
@@ -98,9 +97,9 @@ class PlaybookInclude(Base):
                         raise AnsibleParserError("vars for include statements must be specified as a dictionary", obj=ds)
                 new_ds[k] = v
 
-        return super(PlaybookInclude, self).munge(new_ds)
+        return super(PlaybookInclude, self).preprocess_data(new_ds)
 
-    def _munge_include(self, ds, new_ds, k, v):
+    def _preprocess_include(self, ds, new_ds, k, v):
         '''
         Splits the include line up into filename and parameters
         '''
