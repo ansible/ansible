@@ -54,21 +54,40 @@ class Base:
         # and initialize the base attributes
         self._initialize_base_attributes()
 
+    # The following three functions are used to programatically define data
+    # descriptors (aka properties) for the Attributes of all of the playbook
+    # objects (tasks, blocks, plays, etc).
+    #
+    # The function signature is a little strange because of how we define
+    # them.  We use partial to give each method the name of the Attribute that
+    # it is for.  Since partial prefills the positional arguments at the
+    # beginning of the function we end up with the first positional argument
+    # being allocated to the name instead of to the class instance (self) as
+    # normal.  To deal with that we make the property name field the first
+    # positional argument and self the second arg.
+    #
+    # Because these methods are defined inside of the class, they get bound to
+    # the instance when the object is created.  After we run partial on them
+    # and put the result back into the class as a property, they get bound
+    # a second time.  This leads to self being  placed in the arguments twice.
+    # To work around that, we mark the functions as @staticmethod so that the
+    # first binding to the instance doesn't happen.
+
     @staticmethod
-    def _generic_g(key, self):
-        method = "_get_attr_%s" % key
+    def _generic_g(prop_name, self):
+        method = "_get_attr_%s" % prop_name
         if method in dir(self):
             return getattr(self, method)()
 
-        return self._attributes[key]
+        return self._attributes[prop_name]
 
     @staticmethod
-    def _generic_s(key, self, value):
-        self._attributes[key] = value
+    def _generic_s(prop_name, self, value):
+        self._attributes[prop_name] = value
 
     @staticmethod
-    def _generic_d(key, self):
-        del self._attributes[key]
+    def _generic_d(prop_name, self):
+        del self._attributes[prop_name]
 
     def _get_base_attributes(self):
         '''
@@ -91,7 +110,13 @@ class Base:
             getter = partial(self._generic_g, name)
             setter = partial(self._generic_s, name)
             deleter = partial(self._generic_d, name)
+
+            # Place the property into the class so that cls.name is the
+            # property functions.
             setattr(Base, name, property(getter, setter, deleter))
+
+            # Place the value into the instance so that the property can
+            # process and hold that value/
             setattr(self, name, value.default)
 
     def preprocess_data(self, ds):
