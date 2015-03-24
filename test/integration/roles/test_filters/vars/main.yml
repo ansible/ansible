@@ -4,3 +4,7 @@ some_structure:
     this: "is a hash element in a list"
     warp: 9
     where: endor
+
+july_4th: '7/4/15'
+labor_day: '9/7/15'
+mlk: '1/19/15'

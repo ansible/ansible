@@ -41,3 +41,4 @@
     that: 
         - 'diff_result.stdout == ""' 
 
+- include: date_filters.yml

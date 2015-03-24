@@ -1,0 +1,80 @@
+
+- name: 24hr times are automatically parsed 
+  assert:
+    that:
+      - "{{ '00:00:00' | before('00:00:01')}}"
+      - "{{ '00:00:01' | after('00:00:00')}}"
+
+
+- name: 12hr times are automatically parsed with AM/PM
+  assert:
+    that:
+      - "{{ '12:00:00 am' | before('12:00:01 am')}}"
+      - "{{ '1:00:01 PM' | after('1:00:00 AM')}}"
+      
+- name: Format day mon year is automatically understood 
+  assert:
+    that:
+      - "{{ '1 Jan 2015' | before('2 Jan 2015')}}"
+      - "{{ '2/1/15' | after('1/1/15')}}"
+
+- name: dates can be variables 
+  assert:
+    that:
+      - "{{ july_4th | before (labor_day) }}"
+      - "{{ labor_day | after (july_4th) }}"
+
+- name: use any custom formatting string to parse
+  debug:
+    msg:
+      - '{{ "31/7" | as_date("%d/%m")}}'
+#   
+- name: can get a date as unix time
+  assert:
+    that: "{{ mlk | to_unix() }} == 1421625600.0"
+
+  
+- name: test a part of a date
+  assert:
+    that:
+      - "{{ '09 Mar 2015 14:00:00' | to_date_str('%H:%M') | match('14:00')}}"
+      
+- name: manipulate the ansible_datetime facts
+  assert:
+    that:
+      - '{{ ansible_date_time.iso8601 | to_date_str("%H:%M:%S") == ansible_date_time.time}}'
+      - '{{ ansible_date_time.iso8601_micro | to_date_str("%H:%M:%S") == ansible_date_time.time }}'
+
+- name: simple date arithmetic
+  assert:
+    that:
+        - '{{ july_4th | in_past(1, "d") | to_date_str("%d") | match("03")}}'
+        - '{{ july_4th | in_past(1, "day") | to_date_str("%d") | match("03")}}'
+        - '{{ july_4th | in_past(1, "days") | to_date_str("%d") | match("03")}}'
+        - '{{ july_4th | in_future(1, "d") | to_date_str("%d") | match("05")}}'
+        - '{{ july_4th | in_future(1, "day") | to_date_str("%d") | match("05")}}'
+        - '{{ july_4th | in_future(1, "days") | to_date_str("%d") | match("05")}}'
+        - '{{ july_4th | in_past(1, "h") | to_date_str("%H") | match("23")}}'
+        - '{{ july_4th | in_past(1, "hours") | to_date_str("%H") | match("23")}}'
+        - '{{ july_4th | in_past(1, "hour") | to_date_str("%H") | match("23")}}'
+        - '{{ july_4th | in_future(1, "h") | to_date_str("%H") | match("01")}}'
+        - '{{ july_4th | in_future(1, "hours") | to_date_str("%H") | match("01")}}'
+        - '{{ july_4th | in_future(1, "hour") | to_date_str("%H") | match("01")}}'
+        
+  
+- name: convenience filters for date arithmetic
+  assert:
+    that:
+      - '{{ july_4th | day_before | to_date_str("%m/%d") | match("07/03")}}'
+      - '{{ july_4th | day_ago | to_date_str("%m/%d") | match("07/03")}}'
+      - '{{ july_4th | previous_day | to_date_str("%m/%d") | match("07/03")}}'
+      - '{{ july_4th | day_after | to_date_str("%m/%d") | match("07/05")}}'
+      - '{{ july_4th | next_day | to_date_str("%m/%d") | match("07/05")}}'
+      - '{{ july_4th | week_ago | to_date_str("%m/%d") | match("06/27")}}'
+      - '{{ july_4th | week_before | to_date_str("%m/%d") | match("06/27")}}'
+      - '{{ july_4th | previous_week | to_date_str("%m/%d") | match("06/27")}}'
+      - '{{ july_4th | week_after | to_date_str("%m/%d") | match("07/11")}}'
+      - '{{ july_4th | next_week | to_date_str("%m/%d") | match("07/11")}}'
+      - '{{ july_4th | year_ago | to_date_str("%y") | match("14")}}'
+      - '{{ july_4th | year_before | to_date_str("%y") | match("14")}}'
+      - '{{ july_4th | year_after | to_date_str("%y") | match("16")}}'
