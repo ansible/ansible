@@ -51,7 +51,7 @@ def load_callback_plugins():
     callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
 def get_cowsay_info():
-    if !constants.ANSIBLE_COWS:
+    if not constants.ANSIBLE_COWS:
         return (None, None)
     cowsay = None
     if os.path.exists("/usr/bin/cowsay"):
