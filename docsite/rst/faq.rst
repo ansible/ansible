@@ -102,15 +102,15 @@ Where does the configuration file live and what can I configure in it?
 
 See :doc:`intro_configuration`.
 
-.. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
+.. _howto_enable_cowsay:
 
-How do I disable cowsay?
+How do I enable cowsay?
 ++++++++++++++++++++++++
 
-If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable::
+If cowsay is installed, Ansible can make your day happier when running playbooks.  If you decide
+that you would like to work in a cow-full environment, you can set an environment variable::
 
-    export ANSIBLE_NOCOWS=1
+    export ANSIBLE_COWS=1
 
 .. _browse_facts:
 

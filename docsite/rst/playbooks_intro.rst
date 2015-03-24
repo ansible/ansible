@@ -397,8 +397,8 @@ kept separate in the counts.
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
 use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
 
-Ansible playbook output is vastly upgraded if the cowsay
-package is installed.  Try it!
+Ansible playbook output can be vastly upgraded if the cowsay
+package is installed and you enable it by exporting ANSIBLE_COWS=1.  Try it!
 
 To see what hosts would be affected by a playbook before you run it, you
 can do this::

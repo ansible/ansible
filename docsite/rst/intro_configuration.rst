@@ -399,14 +399,14 @@ If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 
 .. _nocows:
 
-nocows
+cows
 ======
 
-By default ansible will take advantage of cowsay if installed to make /usr/bin/ansible-playbook runs more exciting.
-Why?  We believe systems management should be a happy experience.  If you do not like the cows, you can disable them
-by setting 'nocows' to 1::
+Ansible take advantage of cowsay if installed to make /usr/bin/ansible-playbook runs more exciting.
+Why?  We believe systems management should be a happy experience.  If you want the cows, you can enable them
+by setting 'cows' to 1::
 
-    nocows=0
+    cows=0
 
 .. _pattern:
 
