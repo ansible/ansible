@@ -98,6 +98,7 @@ class Facts(object):
                     ('/etc/SuSE-release', 'SuSE'),
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
+                    ('/etc/os-release', 'Debian'),
                     ('/etc/debian_version', 'Debian'),
                     ('/etc/lsb-release', 'Mandriva') )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
@@ -406,17 +407,18 @@ class Facts(object):
                                                 self.facts['distribution_release'] = release.group(1)
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Debian':
-                            try:
-                                self.get_lsb_facts()
-                                self.facts['distribution_release'] = self.facts['lsb']['codename']
-                            except:
-                                continue
                             data = get_file_content(path)
                             if 'Debian' in data or 'Raspbian' in data:
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
                                 break
+                            else:
+                                try:
+                                    self.get_lsb_facts()
+                                    self.facts['distribution_release'] = self.facts['lsb']['codename']
+                                except:
+                                    continue
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:
