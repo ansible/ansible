@@ -235,9 +235,9 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocols: http
-      - load_balancer_port: 80
-      - instance_port: 80
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
 """
 
 import sys
