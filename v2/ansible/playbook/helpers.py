@@ -60,9 +60,9 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
     '''
 
     # we import here to prevent a circular dependency with imports
+    from ansible.playbook.block import Block
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
-    #from ansible.playbook.task_include import TaskInclude
 
     assert type(ds) == list
 
@@ -71,27 +71,17 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
         if not isinstance(task, dict):
             raise AnsibleParserError("task/handler entries must be dictionaries (got a %s)" % type(task), obj=ds)
 
-        #if 'include' in task:
-        #    cur_basedir = None
-        #    if isinstance(task, AnsibleBaseYAMLObject) and loader:
-        #        pos_info = task.get_position_info()
-        #        new_basedir = os.path.dirname(pos_info[0])
-        #        cur_basedir = loader.get_basedir()
-        #        loader.set_basedir(new_basedir)
-
-        #    t = TaskInclude.load(
-        #        task,
-        #        block=block,
-        #        role=role,
-        #        task_include=task_include,
-        #        use_handlers=use_handlers,
-        #        loader=loader
-        #    )
-
-        #    if cur_basedir and loader:
-        #        loader.set_basedir(cur_basedir)
-        #else:
-        if True:
+        if 'block' in task:
+            t = Block.load(
+                task,
+                parent_block=block,
+                role=role,
+                task_include=task_include,
+                use_handlers=use_handlers,
+                variable_manager=variable_manager,
+                loader=loader,
+            )
+        else:
             if use_handlers:
                 t = Handler.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
             else:
@@ -119,16 +109,4 @@ def load_list_of_roles(ds, current_role_path=None, variable_manager=None, loader
         roles.append(i)
 
     return roles
-
-def compile_block_list(block_list):
-    '''
-    Given a list of blocks, compile them into a flat list of tasks
-    '''
-
-    task_list = []
-
-    for block in block_list:
-        task_list.extend(block.compile())
-
-    return task_list
 
