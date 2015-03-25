@@ -111,6 +111,9 @@ rm -rf %{buildroot}
 
 %changelog
 
+* Wed Mar 25 2015 Ansible, Inc. <support@ansible.com> - 1.9.0
+- Release 1.9.0
+
 * Thu Feb 19 2015 Ansible, Inc. <support@ansible.com> - 1.8.4
 - Release 1.8.4
 

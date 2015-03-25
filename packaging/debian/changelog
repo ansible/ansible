@@ -1,8 +1,8 @@
 ansible (1.9.0) unstable; urgency=low
 
-  * 1.9.0 release (PENDING)
+  * 1.9.0
 
- -- Ansible, Inc. <support@ansible.com>  Wed, 21 Oct 2015 04:29:00 -0500
+ -- Ansible, Inc. <support@ansible.com>  Wed, 25 Mar 2015 15:00:00 -0500
 
 ansible (1.8.4) unstable; urgency=low
 
