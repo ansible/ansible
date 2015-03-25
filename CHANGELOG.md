@@ -5,7 +5,7 @@ Ansible Changes By Release
 
 in progress, details pending
 
-* Added kerberos suport to winrm connection plugin.
+* Added kerberos support to winrm connection plugin.
 
 * Tags rehaul: added 'all', 'always', 'untagged' and 'tagged' special tags and normalized
   tag resolution. Added tag information to --list-tasks and new --list-tags option.
@@ -76,10 +76,26 @@ in progress, details pending
 
 
 * module enhancements and notable changes
+  * vsphere_guest now supports deploying guests from a template
+  * ec2_vol gained the ability to specify the EBS volume type
+  * ec2_vol can now detach volumes by specifying instance=None
+  * Added tenancy support for the ec2 module
+  * rds module has gained the ability to manage tags and set charset and public accessibility
+  * ec2_snapshot module gained the capability to remove snapshots
+  * Several important docker changes:
+    * restart_policy parameters to configure when the container automatically restarts
+    * If the docker client or server doesn't support an option, the task will now fail instead of silently ignoring the option
+    * Add insecure_registry parameter for connecting to registries via http
+  * authorized_keys can now use url as a key source
   * The selinux module now sets the current running state to permissive if state='disabled'
   * Can now set accounts as expired via the user module
-  * vsphere_guest now supports deploying guests from a template
+  * Overhaul of the service module to make code simpler and behave better for systems running systemd or rcctl
+  * yum module now has a parameter to refresh its cache of package metadata
+  * Add parameters to the postgres modules to specify a unix socket to connect to the db
+  * The mount module now supports bind mounts
+  * django_manage can now handle 
   * Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+  * Add a refspec argument to the git module that allows pulling commits that aren't part of a branch
   * Safety changes: several modules have force parameters that defaulted to true.
     These have been changed to default to false so as not to accidentally lose
     work.  Playbooks that depended on the former behaviour simply need to add
