@@ -358,20 +358,17 @@ class Facts(object):
                                                 self.facts['distribution_release'] = release.group(1)
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Oracle Linux':
-                            data = get_file_content(path)
                             if 'Oracle Linux' in data:
                                 self.facts['distribution'] = name
                             else:
                                 self.facts['distribution'] = data.split()[0]
                             break
                         elif name == 'OtherLinux':
-                            data = get_file_content(path)
                             if 'Amazon' in data:
                                 self.facts['distribution'] = 'Amazon'
                                 self.facts['distribution_version'] = data.split()[-1]
                                 break
                         elif name == 'OpenWrt':
-                            data = get_file_content(path)
                             if 'OpenWrt' in data:
                                 self.facts['distribution'] = name
                                 version = re.search('DISTRIB_RELEASE="(.*)"', data)
@@ -382,12 +379,11 @@ class Facts(object):
                                     self.facts['distribution_release'] = release.groups()[0]
                                 break
                         elif name == 'Alpine':
-                            data = get_file_content(path)
                             self.facts['distribution'] = name
                             self.facts['distribution_version'] = data
                             break
                         elif name == 'Solaris':
-                            data = get_file_content(path).split('\n')[0]
+                            data = data.split('\n')[0]
                             if 'Solaris' in data:
                                 ora_prefix = ''
                                 if 'Oracle Solaris' in data:
@@ -423,7 +419,6 @@ class Facts(object):
                                     self.facts['distribution_version'] = uname_out.split('\n')[0].strip()
                                 break
                         elif name == 'Mandriva':
-                            data = get_file_content(path)
                             if 'Mandriva' in data:
                                 version = re.search('DISTRIB_RELEASE="(.*)"', data)
                                 if version:
@@ -434,12 +429,11 @@ class Facts(object):
                                 self.facts['distribution'] = name
                                 break
                         elif name == 'RedHat':
-                                data = get_file_content(path)
-                                if 'Red Hat' in data:
-                                    self.facts['distribution'] = name
-                                else:
-                                    self.facts['distribution'] = data.split()[0]
-                                break
+                            if 'Red Hat' in data:
+                                self.facts['distribution'] = name
+                            else:
+                                self.facts['distribution'] = data.split()[0]
+                            break
                     else:
                         self.facts['distribution'] = name
 
