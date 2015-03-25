@@ -82,7 +82,20 @@ in progress, details pending
   * syslog_json: allows logging play output to a syslog network server using json format
 
 * new task modules:
+  * cryptab: manages linux encrypted block devices
+  * gce_img:  for utilizing GCE image resources
+  * gluster_volume: manage glusterfs volumes
+  * haproxy: for the load balancer of same name
+  * known_hosts: manages the ssh known_hosts file
+  * lxc_container: manage lxc containers
   * patch: allows for patching files on target systems
+  * pkg5:  installing and uninstalling packages on Solaris
+  * pkg5_publisher: manages Solaris pkg5 repository configuration
+  * postgresql_ext: manage postgresql extensions
+  * snmp_facts: gather facts via snmp
+  * svc: manages daemontools based services
+  * uptimerobot: manage monitoring with this service
+
 
 * new inventory scripts:
   * vbox: virtualbox
