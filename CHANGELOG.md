@@ -10,7 +10,7 @@ in progress, details pending
 * Tags rehaul: added 'all', 'always', 'untagged' and 'tagged' special tags and normalized
   tag resolution. Added tag information to --list-tasks and new --list-tags option.
 
-* Privilege Escalation generalization, new 'Become' system and varialbes  now will
+* Privilege Escalation generalization, new 'Become' system and variables  now will
   handle existing and new methods. Sudo and su have been kept for backwards compatibility.
   New methods pbrun and pfexec in 'alpha' state, planned adding 'runas' for winrm connection plugin.
 
@@ -24,23 +24,23 @@ in progress, details pending
 
 * Safety changes: several modules have force parameters that defaulted to true.
   These have been changed to default to false so as not to accidentally lose
-  work.  Playbooks that depended on the former behaviour simply to add
+  work.  Playbooks that depended on the former behaviour simply need to add
   force=True to the task that needs it.  Affected modules:
 
   * bzr: When local modifications exist in a checkout, the bzr module used to
-    default to temoving the modifications on any operation.  Now the module
+    default to removing the modifications on any operation.  Now the module
     will not remove the modifications unless force=yes is specified.
     Operations that depend on a clean working tree may fail unless force=yes is
     added.
   * git: When local modifications exist in a checkout, the git module will now
-    fail unless force is explictly specified.  Specifying force will allow the
-    module to revert and overwrite local modifications to make git actions
+    fail unless force is explictly specified.  Specifying force=yes will allow
+    the module to revert and overwrite local modifications to make git actions
     succeed.
   * hg: When local modifications exist in a checkout, the hg module used to
     default to removing the modifications on any operation.  Now the module
     will not remove the modifications unless force=yes is specified.
   * subversion: When updating a checkout with local modifications, you now need
-    to add force so the module will revert the modifications before updating.
+    to add force=yes so the module will revert the modifications before updating.
 
 * Optimize the plugin loader to cache available plugins much more efficiently.
   For some use cases this can lead to dramatic improvements in startup time.
