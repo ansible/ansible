@@ -77,20 +77,47 @@ in progress, details pending
 
 * module enhancements and notable changes
   * vsphere_guest now supports deploying guests from a template
-  * ec2_vol gained the ability to specify the EBS volume type
-  * ec2_vol can now detach volumes by specifying instance=None
-  * Added tenancy support for the ec2 module
-  * rds module has gained the ability to manage tags and set charset and public accessibility
-  * ec2_snapshot module gained the capability to remove snapshots
+  * Multiple new enhancements to the amazon web service modules:
+    * ec2 now applies all specified security groups when creating a new instance.  Previously it was only applying one
+    * ec2_vol gained the ability to specify the EBS volume type
+    * ec2_vol can now detach volumes by specifying instance=None
+    * Fix ec2_group to purge specific grants rather than whole rules
+    * Added tenancy support for the ec2 module
+    * rds module has gained the ability to manage tags and set charset and public accessibility
+    * ec2_snapshot module gained the capability to remove snapshots
+    * Add alias support for route53
+    * Add private_zones support to route53
+    * ec2_asg: Add wait_for_instances parameter that waits until an instance is ready before ending the ansible task
+  * gce gained the ip_forward parameter to forward ip packets
+  * disk_auto_delete parameter to gce that will remove the boot disk after an instance is destroyed
+  * gce can now spawn instances with no external ip
+  * gce_pd gained the ability to choose a disk type
+  * gce_net gained target_tags parameter for creating firewall rules
+  * rax module has new parameters for making use of a boot volume
+  * Add scheduler_hints to the nova_compute module for optional parameters
   * Several important docker changes:
     * restart_policy parameters to configure when the container automatically restarts
     * If the docker client or server doesn't support an option, the task will now fail instead of silently ignoring the option
     * Add insecure_registry parameter for connecting to registries via http
+    * New parameter to set a container's domainname
+    * Undeprecated docker_image module until there's replacement functionality
+    * Allow setting the container's pid namespace
+    * Add a pull parameter that chooses when ansible will look for more recent images in the registry
+    * docker module states have been greatly enhanced.  The reworked and new states are:
+      * present now creates but does not start containers
+      * restarted always restarts a container
+      * reloaded restarts a container if ansible detects that the configuration is different than what is spcified
+        * reloaded accounts for exposed ports, env vars, and volumes
+    * Can now connect to the docker server using TLS
+  * Many fixes for hardlink and softlink handling in file-related modules
+  * Implement user, group, mode, and selinux parameters for the unarchive module
   * authorized_keys can now use url as a key source
+  * authorized_keys has a new exclusive paameter that determines if keys that weren't specified in the task
   * The selinux module now sets the current running state to permissive if state='disabled'
-  * Can now set accounts as expired via the user module
-  * Overhaul of the service module to make code simpler and behave better for systems running systemd or rcctl
+  * Can now set accounts to expire via the user module
+  * Overhaul of the service module to make code simpler and behave better for systems running several popular init systems
   * yum module now has a parameter to refresh its cache of package metadata
+  * apt module gained a build_dep parameter to install a package's build dependencies
   * Add parameters to the postgres modules to specify a unix socket to connect to the db
   * The mount module now supports bind mounts
   * django_manage can now handle 
