@@ -1457,7 +1457,12 @@ class AnsibleModule(object):
         # in reporting later, which strips out things like
         # passwords from the args list
         if isinstance(args, basestring):
-            to_clean_args = shlex.split(args.encode('utf-8'))
+            if isinstance(args, unicode):
+                b_args = args.encode('utf-8')
+            else:
+                b_args = args
+            to_clean_args = shlex.split(b_args)
+            del b_args
         else:
             to_clean_args = args
 
