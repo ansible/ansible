@@ -99,11 +99,14 @@ class DataLoader():
     def path_exists(self, path):
         return os.path.exists(path)
 
+    def is_file(self, path):
+        return os.path.isfile(path)
+
     def is_directory(self, path):
         return os.path.isdir(path)
 
-    def is_file(self, path):
-        return os.path.isfile(path)
+    def list_directory(self, path):
+        return os.path.listdir(path)
 
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''

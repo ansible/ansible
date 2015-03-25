@@ -6,3 +6,8 @@
       - block:
         - block:
           - debug: msg="are we there yet?"
+        always:
+        - debug: msg="a random always block"
+      - fail:
+      rescue:
+      - debug: msg="rescuing from the fail"

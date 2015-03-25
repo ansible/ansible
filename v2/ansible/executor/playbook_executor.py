@@ -26,6 +26,7 @@ from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 
+from ansible.utils.color import colorize, hostcolor
 from ansible.utils.debug import debug
 
 class PlaybookExecutor:
@@ -70,8 +71,8 @@ class PlaybookExecutor:
 
                     for batch in self._get_serialized_batches(new_play):
                         if len(batch) == 0:
-                            self._tqm._callback.playbook_on_play_start(new_play.name)
-                            self._tqm._callback.playbook_on_no_hosts_matched()
+                            self._tqm.send_callback('v2_playbook_on_play_start', new_play)
+                            self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                             result = 0
                             break
                         # restrict the inventory to the hosts in the serialized batch
@@ -90,6 +91,36 @@ class PlaybookExecutor:
             raise
 
         self._cleanup()
+
+        # FIXME: this stat summary stuff should be cleaned up and moved
+        #        to a new method, if it even belongs here...
+        self._tqm._display.banner("PLAY RECAP")
+
+        hosts = sorted(self._tqm._stats.processed.keys())
+        for h in hosts:
+            t = self._tqm._stats.summarize(h)
+
+            self._tqm._display.display("%s : %s %s %s %s" % (
+                hostcolor(h, t),
+                colorize('ok', t['ok'], 'green'),
+                colorize('changed', t['changed'], 'yellow'),
+                colorize('unreachable', t['unreachable'], 'red'),
+                colorize('failed', t['failures'], 'red')),
+                screen_only=True
+            )
+
+            self._tqm._display.display("%s : %s %s %s %s" % (
+                hostcolor(h, t, False),
+                colorize('ok', t['ok'], None),
+                colorize('changed', t['changed'], None),
+                colorize('unreachable', t['unreachable'], None),
+                colorize('failed', t['failures'], None)),
+                log_only=True
+            )
+        
+        self._tqm._display.display("", screen_only=True)
+        # END STATS STUFF
+
         return result
 
     def _cleanup(self, signum=None, framenum=None):

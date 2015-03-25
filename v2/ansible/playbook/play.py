@@ -24,7 +24,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
-from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles, compile_block_list
+from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 

@@ -73,3 +73,20 @@ def stringc(text, color):
 
 # --- end "pretty"
 
+def colorize(lead, num, color):
+    """ Print 'lead' = 'num' in 'color' """
+    if num != 0 and ANSIBLE_COLOR and color is not None:
+        return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
+    else:
+        return "%s=%-4s" % (lead, str(num))
+
+def hostcolor(host, stats, color=True):
+    if ANSIBLE_COLOR and color:
+        if stats['failures'] != 0 or stats['unreachable'] != 0:
+            return "%-37s" % stringc(host, 'red')
+        elif stats['changed'] != 0:
+            return "%-37s" % stringc(host, 'yellow')
+        else:
+            return "%-37s" % stringc(host, 'green')
+    return "%-26s" % host
+
