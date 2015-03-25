@@ -1,6 +1,6 @@
-ansible (1.9.0) unstable; urgency=low
+ansible (1.9.0.1) unstable; urgency=low
 
-  * 1.9.0
+  * 1.9.0.1
 
  -- Ansible, Inc. <support@ansible.com>  Wed, 25 Mar 2015 15:00:00 -0500
 
