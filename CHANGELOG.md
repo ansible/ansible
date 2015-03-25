@@ -20,28 +20,6 @@ in progress, details pending
   ansible-doc and the docsite. Documented copy, stats and acl modules, the rest must be
   updated individually (we will start doing so incrementally).
 
-* Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
-
-* Safety changes: several modules have force parameters that defaulted to true.
-  These have been changed to default to false so as not to accidentally lose
-  work.  Playbooks that depended on the former behaviour simply need to add
-  force=True to the task that needs it.  Affected modules:
-
-  * bzr: When local modifications exist in a checkout, the bzr module used to
-    default to removing the modifications on any operation.  Now the module
-    will not remove the modifications unless force=yes is specified.
-    Operations that depend on a clean working tree may fail unless force=yes is
-    added.
-  * git: When local modifications exist in a checkout, the git module will now
-    fail unless force is explictly specified.  Specifying force=yes will allow
-    the module to revert and overwrite local modifications to make git actions
-    succeed.
-  * hg: When local modifications exist in a checkout, the hg module used to
-    default to removing the modifications on any operation.  Now the module
-    will not remove the modifications unless force=yes is specified.
-  * subversion: When updating a checkout with local modifications, you now need
-    to add force=yes so the module will revert the modifications before updating.
-
 * Optimize the plugin loader to cache available plugins much more efficiently.
   For some use cases this can lead to dramatic improvements in startup time.
 
@@ -97,12 +75,36 @@ in progress, details pending
   * uptimerobot: manage monitoring with this service
 
 
+* module enhancements and notable changes
+  * The selinux module now sets the current running state to permissive if state='disabled'
+  * Can now set accounts as expired via the user module
+  * vsphere_guest now supports deploying guests from a template
+  * Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+  * Safety changes: several modules have force parameters that defaulted to true.
+    These have been changed to default to false so as not to accidentally lose
+    work.  Playbooks that depended on the former behaviour simply need to add
+    force=True to the task that needs it.  Affected modules:
+    * bzr: When local modifications exist in a checkout, the bzr module used to
+      default to removing the modifications on any operation.  Now the module
+      will not remove the modifications unless force=yes is specified.
+      Operations that depend on a clean working tree may fail unless force=yes is
+      added.
+    * git: When local modifications exist in a checkout, the git module will now
+      fail unless force is explictly specified.  Specifying force=yes will allow
+      the module to revert and overwrite local modifications to make git actions
+      succeed.
+    * hg: When local modifications exist in a checkout, the hg module used to
+      default to removing the modifications on any operation.  Now the module
+      will not remove the modifications unless force=yes is specified.
+    * subversion: When updating a checkout with local modifications, you now need
+      to add force=yes so the module will revert the modifications before updating.
+
+
 * new inventory scripts:
   * vbox: virtualbox
   * consul: use consul as an inventory source
 
 * Many documentation additions and fixes.
-
 
 ## 1.8.4 "You Really Got Me" - Feb 19, 2015
 
