@@ -472,7 +472,7 @@ class LinuxService(Service):
             self.module.fail_json(msg="no service or tool found for: %s" % self.name)
 
         # If no service control tool selected yet, try to see if 'service' is available
-        if not self.svc_cmd and location.get('service', False):
+        if self.svc_cmd is None and location.get('service', False):
             self.svc_cmd = location['service']
 
         # couldn't find anything yet
