@@ -260,10 +260,10 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
     conditional = conditional.replace("jinja2_compare ","")
     # allow variable names
-    if conditional in inject and '-' not in str(inject[conditional]):
-        conditional = inject[conditional]
+    if conditional in inject and '-' not in to_unicode(inject[conditional], nonstring='simplerepr'):
+        conditional = to_unicode(inject[conditional], nonstring='simplerepr')
     conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
-    original = str(conditional).replace("jinja2_compare ","")
+    original = to_unicode(conditional, nonstring='simplerepr').replace("jinja2_compare ","")
     # a Jinja2 evaluation that results in something Python can eval!
     presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
     conditional = template.template(basedir, presented, inject)
