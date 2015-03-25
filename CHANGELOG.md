@@ -5,7 +5,9 @@ Ansible Changes By Release
 
 in progress, details pending
 
-* Tags rehaul: added 'always', 'untagged' and 'tagged' special tags and normalized
+* Added kerberos suport to winrm connection plugin.
+
+* Tags rehaul: added 'all', 'always', 'untagged' and 'tagged' special tags and normalized
   tag resolution. Added tag information to --list-tasks and new --list-tags option.
 
 * Privilege Escalation generalization, new 'Become' system and varialbes  now will
@@ -53,16 +55,23 @@ in progress, details pending
 
 * environment: directive now can also be applied to play and is inhertited by tasks, which can still overridde it.
 
-* expanded facts and OS support for existing facts.
+* expanded facts and OS/distribution support for existing facts and improved performance with pypy.
 
 * new 'wantlist' option to lookups allows for selecting a list typed variable vs a commad delimited string as the return.
 
 * the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
 
+* allow for empty inventories, this is now a warning and not an error (for those using localhost and cloud modules).
+
+* sped up YAML parsing in ansible by up to 25% by switching to CParser loader.
+
 * new filters:
    * ternary: allows for trueval/falseval assignement dependint on conditional
    * cartesian: returns the cartesian product of 2 lists
    * to_uuid: given a string it will return an ansible domain specific UUID
+   * checksum: uses the ansible internal checksum to return a hash from a string
+   * hash: get a hash from a string (md5, sha1, etc)
+   * password_hash: get a hash form as string that can be used as a password in the user module (and others)
    * A whole set of ip/network manipulation filters: ipaddr,ipwrap,ipv4,ipv6ipsubnet,nthhost,hwaddr,macaddr
 
 * new lookup plugins (allow fetching data for use in plays):
@@ -73,8 +82,14 @@ in progress, details pending
   * syslog_json: allows logging play output to a syslog network server using json format
 
 * new task modules:
+  * patch: allows for patching files on target systems
+
+* new inventory scripts:
+  * vbox: virtualbox
+  * consul: use consul as an inventory source
 
 * Many documentation additions and fixes.
+
 
 ## 1.8.4 "You Really Got Me" - Feb 19, 2015
 
