@@ -5,7 +5,21 @@ Ansible Changes By Release
 
 in progress, details pending
 
+* Tags rehaul: added 'always', 'untagged' and 'tagged' special tags and normalized
+  tag resolution. Added tag information to --list-tasks and new --list-tags option.
+
+* Privilege Escalation generalization, new 'Become' system and varialbes  now will
+  handle existing and new methods. Sudo and su have been kept for backwards compatibility.
+  New methods pbrun and pfexec in 'alpha' state, planned adding 'runas' for winrm connection plugin.
+
+* Improved ssh connection error reporting, now you get back the specific message from ssh.
+
+* Added facility to document task module return values for registered vars, both for
+  ansible-doc and the docsite. Documented copy, stats and acl modules, the rest must be
+  updated individually (we will start doing so incrementally).
+
 * Add a clone parameter to git module that allows you to get information about a remote repo even if it doesn't exist locally.
+
 * Safety changes: several modules have force parameters that defaulted to true.
   These have been changed to default to false so as not to accidentally lose
   work.  Playbooks that depended on the former behaviour simply to add
@@ -29,7 +43,38 @@ in progress, details pending
 * Optimize the plugin loader to cache available plugins much more efficiently.
   For some use cases this can lead to dramatic improvements in startup time.
 
+* Overhaul of the checksum system, now supports more systems and more cases more reliably and uniformly.
+
 * Fix skipped tasks to not display their parameters if no_log is specified.
+
+* Many fixes to unicode support, standarized functions to make it easier to add to input/output boundries.
+
+* Added travis integration to github for basic tests, this should speed up ticket triage and merging.
+
+* environment: directive now can also be applied to play and is inhertited by tasks, which can still overridde it.
+
+* expanded facts and OS support for existing facts.
+
+* new 'wantlist' option to lookups allows for selecting a list typed variable vs a commad delimited string as the return.
+
+* the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
+
+* new filters:
+   * ternary: allows for trueval/falseval assignement dependint on conditional
+   * cartesian: returns the cartesian product of 2 lists
+   * to_uuid: given a string it will return an ansible domain specific UUID
+   * A whole set of ip/network manipulation filters: ipaddr,ipwrap,ipv4,ipv6ipsubnet,nthhost,hwaddr,macaddr
+
+* new lookup plugins (allow fetching data for use in plays):
+   * dig: does dns resolution and returns IPs.
+   * url: allows pulling data from a url.
+
+* new callback plugins:
+  * syslog_json: allows logging play output to a syslog network server using json format
+
+* new task modules:
+
+* Many documentation additions and fixes.
 
 ## 1.8.4 "You Really Got Me" - Feb 19, 2015
 
