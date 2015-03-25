@@ -26,6 +26,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import lookup_loader, connection_loader, action_loader
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.unicode import to_unicode
 
 from ansible.utils.debug import debug
 
@@ -89,7 +90,7 @@ class TaskExecutor:
             debug("done dumping result, returning")
             return result
         except AnsibleError, e:
-            return dict(failed=True, msg=str(e))
+            return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
 
     def _get_loop_items(self):
         '''
