@@ -53,16 +53,16 @@ options:
     choices: [ "yes", "no" ]
   size_id:
     description:
-     - Numeric, this is the id of the size you would like the droplet created with.
+     - This is the slug of the size you would like the droplet created with.
   image_id:
     description:
-     - Numeric, this is the id of the image you would like the droplet created with.
+     - This is the slug of the image you would like the droplet created with.
   region_id:
     description:
-     - "Numeric, this is the id of the region you would like your server to be created in."
+     - This is the slug of the region you would like your server to be created in.
   ssh_key_ids:
     description:
-     - Optional, comma separated list of ssh_key_ids that you would like to be added to the server.
+     - Optional, array of of ssh_key_ids that you would like to be added to the server.
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
@@ -81,6 +81,12 @@ options:
     version_added: "1.6"
     default: "no"
     choices: [ "yes", "no" ]
+  user_data:
+    description:
+      - opaque blob of data which is made available to the droplet
+    version_added: "1.10"
+    required: false
+    default: None
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
@@ -121,11 +127,10 @@ EXAMPLES = '''
       state=present
       command=droplet
       name=mydroplet
-      client_id=XXX
       api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      size_id=2gb
+      region_id=ams2
+      image_id=fedora-19-x64
       wait_timeout=500
   register: my_droplet
 - debug: msg="ID is {{ my_droplet.droplet.id }}"
@@ -142,9 +147,9 @@ EXAMPLES = '''
       name=mydroplet
       client_id=XXX
       api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      size_id=2gb
+      region_id=ams2
+      image_id=fedora-19-x64
       wait_timeout=500
 
 # Create a droplet with ssh key
@@ -154,13 +159,13 @@ EXAMPLES = '''
 
 - digital_ocean: >
       state=present
-      ssh_key_ids=id1,id2
+      ssh_key_ids=[id1,id2]
       name=mydroplet
       client_id=XXX
       api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      size_id=2gb
+      region_id=ams2
+      image_id=fedora-19-x64
 '''
 
 import sys
@@ -171,11 +176,11 @@ try:
     import dopy
     from dopy.manager import DoError, DoManager
 except ImportError, e:
-    print "failed=True msg='dopy >= 0.2.3 required for this module'"
+    print "failed=True msg='dopy >= 0.3.2 required for this module'"
     sys.exit(1)
 
-if dopy.__version__ < '0.2.3':
-    print "failed=True msg='dopy >= 0.2.3 required for this module'"
+if dopy.__version__ < '0.3.2':
+    print "failed=True msg='dopy >= 0.3.2 required for this module'"
     sys.exit(1)
 
 class TimeoutError(DoError):
@@ -233,13 +238,13 @@ class Droplet(JsonfyMixIn):
 
     @classmethod
     def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key)
+        cls.manager = DoManager(client_id, api_key, api_version=2)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None):
         private_networking_lower = str(private_networking).lower()
         backups_enabled_lower = str(backups_enabled).lower()
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower)
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower,user_data)
         droplet = cls(json)
         return droplet
 
@@ -311,14 +316,14 @@ def core(module):
 
     try:
         # params['client_id'] will be None even if client_id is not passed in
-        client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
-        api_key = module.params['api_key'] or os.environ['DO_API_KEY']
+        api_key = module.params['api_key'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
     except KeyError, e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     changed = True
     command = module.params['command']
     state = module.params['state']
+    client_id = 'notused'
 
     if command == 'droplet':
         Droplet.setup(client_id, api_key)
@@ -344,6 +349,7 @@ def core(module):
                     virtio=module.params['virtio'],
                     private_networking=module.params['private_networking'],
                     backups_enabled=module.params['backups_enabled'],
+                    user_data=module.params.get('user_data'),
                 )
 
             if droplet.is_powered_on():
@@ -370,7 +376,7 @@ def core(module):
                 module.exit_json(changed=False, msg='The droplet is not found.')
 
             event_json = droplet.destroy()
-            module.exit_json(changed=True, event_id=event_json['event_id'])
+            module.exit_json(changed=True)
 
     elif command == 'ssh':
         SSH.setup(client_id, api_key)
@@ -398,15 +404,16 @@ def main():
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(type='str'),
-            size_id = dict(type='int'),
-            image_id = dict(type='int'),
-            region_id = dict(type='int'),
+            size_id = dict(),
+            image_id = dict(),
+            region_id = dict(),
             ssh_key_ids = dict(default=''),
             virtio = dict(type='bool', default='yes'),
             private_networking = dict(type='bool', default='no'),
             backups_enabled = dict(type='bool', default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
             unique_name = dict(type='bool', default='no'),
+            user_data = dict(default=None),
             wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300, type='int'),
             ssh_pub_key = dict(type='str'),
