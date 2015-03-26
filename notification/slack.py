@@ -90,6 +90,7 @@ options:
       - 'yes'
       - 'no'
   color:
+    version_added: 2.0
     description:
       - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
     required: false
