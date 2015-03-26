@@ -57,6 +57,11 @@ options:
       - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'authenticated-read'.
     required: false
     default: private 
+  headers:
+    description:
+      - Headers to attach to object.
+    required: false
+    default: {}
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only avaialbe when public-read is the acl for the object.
@@ -90,6 +95,9 @@ author: benno@ansible.com Note. Most of the code has been taken from the S3 modu
 EXAMPLES = '''
 # upload some content
 - gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=put permission=public-read
+
+# upload some headers
+- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt headers='{"Content-Encoding": "gzip"}'
 
 # download some content
 - gc_storage: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=get
@@ -223,11 +231,27 @@ def path_check(path):
     else:
         return False
 
+def transform_headers(headers):
+    """
+    Boto url-encodes values unless we convert the value to `str`, so doing
+    this prevents 'max-age=100000' from being converted to "max-age%3D100000".
+
+    :param headers: Headers to convert
+    :type  headers: dict
+    :rtype: dict
+
+    """
+    
+    return {key: str(value) for key, value in headers.items()}
+
 def upload_gsfile(module, gs, bucket, obj, src, expiry):
     try:
         bucket = gs.lookup(bucket)
         key = bucket.new_key(obj)  
-        key.set_contents_from_filename(src)
+        key.set_contents_from_filename(
+            filename=src,
+            headers=transform_headers(module.params.get('headers'))
+        )
         key.set_acl(module.params.get('permission'))
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
@@ -343,6 +367,7 @@ def main():
             expiration     = dict(default=600, aliases=['expiry']),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
             permission     = dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
+            headers        = dict(type='dict', default={}),
             gs_secret_key  = dict(no_log=True, required=True),
             gs_access_key  = dict(required=True),
             overwrite      = dict(default=True, type='bool', aliases=['force']),
