@@ -26,7 +26,7 @@ from ansible import errors
 from ansible import utils
 from ansible import constants as C
 from ansible import __version__
-from asnible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
