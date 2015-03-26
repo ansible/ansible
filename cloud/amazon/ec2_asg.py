@@ -116,7 +116,7 @@ options:
     version_added: "1.8"
   wait_for_instances:
     description:
-      - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the instances are considered by the ELB.
+      - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
     default: yes
     required: False
