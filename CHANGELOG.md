@@ -4,8 +4,14 @@ Ansible Changes By Release
 ## 2.0 "TBD" - ACTIVE DEVELOPMENT
 
 Major Changes:
+    big_ip modules now support turning off ssl certificat validation (use only for self signed)
 
 New Modules:
+    vertica_configuration
+    vertica_facts
+    vertica_role
+    vertica_schema
+    vertica_user
 
 Other Notable Changes:
 
