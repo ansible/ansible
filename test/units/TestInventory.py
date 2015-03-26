@@ -212,7 +212,12 @@ class TestInventory(unittest.TestCase):
         inventory.subset('greek[0-2];norse[0]')
         self.assertEqual(sorted(inventory.list_hosts()),  sorted(['zeus','hera','thor']))
 
-    def test_subet_range_empty_group(self):
+    def test_subset_range_pattern(self):
+        inventory = self.simple_inventory()
+        inventory.subset('greek[0:1];norse[0]')
+        self.assertEqual(sorted(inventory.list_hosts()),  sorted(['zeus','hera','thor']))
+
+    def test_subset_range_empty_group(self):
         inventory = self.simple_inventory()
         inventory.subset('missing[0]')
         self.assertEqual(sorted(inventory.list_hosts()), sorted([]))

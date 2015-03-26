@@ -173,8 +173,28 @@ class Inventory(object):
                 results.append(item)
         return results
 
+    def _split_pattern_groups(self, patterns):
+        """
+        takes e.g. "webservers[0:5]:dbservers:others"
+        and returns ["webservers[0:5]", "dbservers", "others"]
+        """
+        naive_split = patterns.split(':')
+        if len(naive_split) == 1:
+            return naive_split
+        results = []
+        for i in range(0,len(naive_split)):
+            # recombine "webservers[0", "5]"
+            if len(naive_split) > i and \
+               "[" in naive_split[i] and "]" not in naive_split[i] and \
+               "[" not in naive_split[i+1] and "]" in naive_split[i+1]:
+               results.append(naive_split[i] + ":" + naive_split[i+1])
+            # allow "webservers[0-5]" but not "5]" 
+            if not "]" in naive_split[i] or "[" in naive_split[i]:
+                results.append(naive_split[i])
+        return results
+
     def get_hosts(self, pattern="all"):
-        """ 
+        """
         find all host names matching a pattern string, taking into account any inventory restrictions or
         applied subsets.
         """
@@ -182,7 +202,7 @@ class Inventory(object):
         # process patterns
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
-        patterns = pattern.replace(";",":").split(":")
+        patterns = self._split_pattern_groups(pattern.replace(";",":"))
         hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
@@ -269,15 +289,20 @@ class Inventory(object):
             return (pattern, None)
 
         # The regex used to match on the range, which can be [x] or [x-y].
-        pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
+        pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:([-:])([0-9]+))?\](.*)$")
         m = pattern_re.match(pattern)
         if m:
-            (target, first, last, rest) = m.groups()
+            (target, first, rangetype, last, rest) = m.groups()
             first = int(first)
             if last:
                 if first < 0:
                     raise errors.AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
-                last = int(last)
+                if rangetype == '-':
+                    # [0-10] is documented as being first 10 hosts
+                    last = int(last)
+                else:
+                    # [0:10] should be 11 hosts, not 10
+                    last = int(last)+1
             else:
                 last = first
             return (target, (first, last))
@@ -532,7 +557,8 @@ class Inventory(object):
             self._subset = None
         else:
             subset_pattern = subset_pattern.replace(',',':')
-            subset_pattern = subset_pattern.replace(";",":").split(":")
+            subset_pattern = subset_pattern.replace(";",":")
+            subset_pattern = self._split_pattern_groups(subset_pattern)
             results = []
             # allow Unix style @filename data
             for x in subset_pattern:
