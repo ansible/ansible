@@ -23,7 +23,7 @@
 DOCUMENTATION = '''
 ---
 module: pushover
-version_added: "1.8"
+version_added: "2.0"
 short_description: Send notifications via u(https://pushover.net)
 description:
    - Send notifications via pushover, to subscriber list of devices, and email
