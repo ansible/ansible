@@ -63,7 +63,7 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
-        version_added: 1.9.1
+        version_added: 2.0
     session:
         description:
             - BIG-IP session support; may be useful to avoid concurrency

@@ -56,7 +56,7 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
-        version_added: 1.9.1
+        version_added: 2.0
     state:
         description:
             - Monitor state
