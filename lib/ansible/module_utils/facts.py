@@ -347,7 +347,7 @@ class Facts(object):
                 release = re.search('DISTRIB_CODENAME="(.*)"', data)
                 if release:
                     self.facts['distribution_release'] = release.groups()[0]
-                self.facts['distribution'] = name
+                self.facts['distribution'] = 'Mandriva'
                 return
 
         data = get_file_content('/etc/redhat-release')
