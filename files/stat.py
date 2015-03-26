@@ -342,7 +342,7 @@ def main():
 
         d['pw_name']   = pw.pw_name
 
-        grp_info = grp.getgrgid(pw.pw_gid)
+        grp_info = grp.getgrgid(st.st_gid)
         d['gr_name'] = grp_info.gr_name
     except:
         pass

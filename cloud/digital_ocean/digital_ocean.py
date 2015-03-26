@@ -99,6 +99,7 @@ options:
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
+  - Version 2 of DigitalOcean API is used.
 requirements: [ dopy ]
 '''
 
