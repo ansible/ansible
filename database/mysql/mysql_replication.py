@@ -239,7 +239,7 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
-            login_port=dict(default="3306"),
+            login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
             master_host=dict(default=None),
@@ -304,10 +304,10 @@ def main():
     try:
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password)
-        elif module.params["login_port"] != "3306" and module.params["login_host"] == "localhost":
+        elif module.params["login_port"] != 3306 and module.params["login_host"] == "localhost":
             module.fail_json(msg="login_host is required when login_port is defined, login_host cannot be localhost when login_port is defined")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password)
+            db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], user=login_user, passwd=login_password)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     try:
