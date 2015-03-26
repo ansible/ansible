@@ -23,82 +23,79 @@ description:
  - Create/delete a droplet in DigitalOcean and optionally wait for it to be 'running', or deploy an SSH key.
 version_added: "1.3"
 options:
-command:
-description:
- - Which target you want to operate on.
-default: droplet
-choices: ['droplet', 'ssh']
-state:
-description:
- - Indicate desired state of the target.
-default: present
-choices: ['present', 'active', 'absent', 'deleted']
-client_id:
- description:
- - DigitalOcean manager id.
-api_key:
-description:
- - DigitalOcean api key.
-id:
-description:
- - Numeric, the droplet id you want to operate on.
-name:
-description:
- - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
-unique_name:
-description:
- - Bool, require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
-version_added: "1.4"
-default: "no"
-choices: [ "yes", "no" ]
-size_id:
-description:
- - This is the slug of the size you would like the droplet created with.
-image_id:
-description:
- - This is the slug of the image you would like the droplet created with.
-region_id:
-description:
- - This is the slug of the region you would like your server to be created in.
-ssh_key_ids:
-description:
- - Optional, array of of ssh_key_ids that you would like to be added to the server.
-virtio:
-description:
- - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
-version_added: "1.4"
-default: "yes"
-choices: [ "yes", "no" ]
-private_networking:
-description:
- - "Bool, add an additional, private network interface to droplet for inter-droplet communication."
-version_added: "1.4"
-default: "no"
-choices: [ "yes", "no" ]
-backups_enabled:
-description:
- - Optional, Boolean, enables backups for your droplet.
-version_added: "1.6"
-default: "no"
-choices: [ "yes", "no" ]
-user_data:
-description:
-  - opaque blob of data which is made available to the droplet
-version_added: "1.10"
-required: false
-default: None
-wait:
-description:
- - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
-default: "yes"
-choices: [ "yes", "no" ]
-wait_timeout:
-description:
- - How long before wait gives up, in seconds.
-default: 300
-ssh_pub_key:
-description:
- - The public SSH key you want to add to your account.
+  command:
+    description:
+     - Which target you want to operate on.
+    default: droplet
+    choices: ['droplet', 'ssh']
+  state:
+    description:
+     - Indicate desired state of the target.
+    default: present
+    choices: ['present', 'active', 'absent', 'deleted']
+  api_token:
+    description:
+     - DigitalOcean api token.
+  id:
+    description:
+     - Numeric, the droplet id you want to operate on.
+  name:
+    description:
+     - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
+  unique_name:
+    description:
+     - Bool, require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
+    version_added: "1.4"
+    default: "no"
+    choices: [ "yes", "no" ]
+  size_id:
+    description:
+     - This is the slug of the size you would like the droplet created with.
+  image_id:
+    description:
+     - This is the slug of the image you would like the droplet created with.
+  region_id:
+    description:
+     - This is the slug of the region you would like your server to be created in.
+  ssh_key_ids:
+    description:
+     - Optional, array of of ssh_key_ids that you would like to be added to the server.
+  virtio:
+    description:
+     - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
+    version_added: "1.4"
+    default: "yes"
+    choices: [ "yes", "no" ]
+  private_networking:
+    description:
+     - "Bool, add an additional, private network interface to droplet for inter-droplet communication."
+    version_added: "1.4"
+    default: "no"
+    choices: [ "yes", "no" ]
+  backups_enabled:
+    description:
+     - Optional, Boolean, enables backups for your droplet.
+    version_added: "1.6"
+    default: "no"
+    choices: [ "yes", "no" ]
+  user_data:
+    description:
+      - opaque blob of data which is made available to the droplet
+    version_added: "1.10"
+    required: false
+    default: None
+  wait:
+    description:
+     - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
+    default: "yes"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+     - How long before wait gives up, in seconds.
+    default: 300
+  ssh_pub_key:
+    description:
+     - The public SSH key you want to add to your account.
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
@@ -116,7 +113,7 @@ EXAMPLES = '''
       command=ssh
       name=my_ssh_key
       ssh_pub_key='ssh-rsa AAAA...'
-      api_key=XXX
+      api_token=XXX
 
 # Create a new Droplet
 # Will return the droplet details including the droplet id (used for idempotence)
@@ -125,7 +122,7 @@ EXAMPLES = '''
       state=present
       command=droplet
       name=mydroplet
-      api_key=XXX
+      api_token=XXX
       size_id=2gb
       region_id=ams2
       image_id=fedora-19-x64
@@ -143,7 +140,7 @@ EXAMPLES = '''
       command=droplet
       id=123
       name=mydroplet
-      api_key=XXX
+      api_token=XXX
       size_id=2gb
       region_id=ams2
       image_id=fedora-19-x64
@@ -158,7 +155,7 @@ EXAMPLES = '''
       state=present
       ssh_key_ids=[id1,id2]
       name=mydroplet
-      api_key=XXX
+      api_token=XXX
       size_id=2gb
       region_id=ams2
       image_id=fedora-19-x64
@@ -233,8 +230,8 @@ class Droplet(JsonfyMixIn):
         return self.manager.destroy_droplet(self.id, scrub_data=True)
 
     @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key, api_version=2)
+    def setup(cls, api_token):
+        cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None):
@@ -280,8 +277,8 @@ class SSH(JsonfyMixIn):
         return True
 
     @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key, api_version=2)
+    def setup(cls, api_token):
+        cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
     def find(cls, name):
@@ -311,18 +308,16 @@ def core(module):
         return v
 
     try:
-        # params['client_id'] will be None even if client_id is not passed in
-        api_key = module.params['api_key'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
+        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
     except KeyError, e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     changed = True
     command = module.params['command']
     state = module.params['state']
-    client_id = 'notused'
 
     if command == 'droplet':
-        Droplet.setup(client_id, api_key)
+        Droplet.setup(api_token)
         if state in ('active', 'present'):
 
             # First, try to find a droplet by id.
@@ -375,7 +370,7 @@ def core(module):
             module.exit_json(changed=True)
 
     elif command == 'ssh':
-        SSH.setup(client_id, api_key)
+        SSH.setup(api_token)
         name = getkeyordie('name')
         if state in ('active', 'present'):
             key = SSH.find(name)
@@ -397,8 +392,7 @@ def main():
         argument_spec = dict(
             command = dict(choices=['droplet', 'ssh'], default='droplet'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
+            api_token = dict(aliases=['API_TOKEN'], no_log=True),
             name = dict(type='str'),
             size_id = dict(),
             image_id = dict(),
