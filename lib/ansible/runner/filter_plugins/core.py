@@ -270,6 +270,15 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def list_comp(lst, elem_key):
+    """return the elem_keys of items in lst, as a list"""
+    return [unicode(i[elem_key]) for i in lst]
+
+def list_comp_joined(lst, elem_key):
+    """return the elem_keys of items in lst, as a unicode sequence"""
+    return u' '.join(list_comp(lst, elem_key))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -348,4 +357,9 @@ class FilterModule(object):
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+            
+            # list comprehension
+            'list_comp' : list_comp,
+            'list_comp_joined' : list_comp_joined,
+            
         }
