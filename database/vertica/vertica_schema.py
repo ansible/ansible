@@ -19,7 +19,7 @@
 DOCUMENTATION = """
 ---
 module: vertica_schema
-version_added: '1.0'
+version_added: '2.0'
 short_description: Adds or removes Vertica database schema and roles.
 description:
   Adds or removes Vertica database schema and, optionally, roles 

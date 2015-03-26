@@ -19,7 +19,7 @@
 DOCUMENTATION = """
 ---
 module: vertica_user
-version_added: '1.0'
+version_added: '2.0'
 short_description: Adds or removes Vertica database users and assigns roles.
 description:
   Adds or removes Vertica database user and, optionally, assigns roles.

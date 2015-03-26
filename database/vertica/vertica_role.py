@@ -19,7 +19,7 @@
 DOCUMENTATION = """
 ---
 module: vertica_role
-version_added: '1.0'
+version_added: '2.0'
 short_description: Adds or removes Vertica database roles and assigns roles to them.
 description:
   Adds or removes Vertica database role and, optionally, assign other roles.

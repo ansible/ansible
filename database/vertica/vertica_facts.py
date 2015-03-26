@@ -19,7 +19,7 @@
 DOCUMENTATION = """
 ---
 module: vertica_facts
-version_added: '1.0'
+version_added: '2.0'
 short_description: Gathers Vertica database facts.
 description:
   Gathers Vertica database facts.
