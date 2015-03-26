@@ -7,6 +7,7 @@ Major Changes:
     big_ip modules now support turning off ssl certificat validation (use only for self signed)
 
 New Modules:
+    maven_artifact
     pushover
     vertica_configuration
     vertica_facts
