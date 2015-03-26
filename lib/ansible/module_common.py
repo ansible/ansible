@@ -26,6 +26,7 @@ from ansible import errors
 from ansible import utils
 from ansible import constants as C
 from ansible import __version__
+from asnible.utils.unicode import to_bytes
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
@@ -184,7 +185,8 @@ class ModuleReplacer(object):
                 interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
                 if interpreter_config in inject:
-                    lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
+                    interpreter = to_bytes(inject[interpreter_config], errors='strict')
+                    lines[0] = shebang = "#!%s %s" % (interpreter, " ".join(args[1:]))
                     module_data = "\n".join(lines)
 
             return (module_data, module_style, shebang)
