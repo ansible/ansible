@@ -7,6 +7,7 @@ Major Changes:
     big_ip modules now support turning off ssl certificat validation (use only for self signed)
 
 New Modules:
+    pushover
     vertica_configuration
     vertica_facts
     vertica_role
