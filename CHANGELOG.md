@@ -29,9 +29,9 @@ Major changes:
 * Fix skipped tasks to not display their parameters if no_log is specified.
 * Many fixes to unicode support, standarized functions to make it easier to add to input/output boundries.
 * Added travis integration to github for basic tests, this should speed up ticket triage and merging.
-* environment: directive now can also be applied to play and is inhertited by tasks, which can still overridde it.
+* environment: directive now can also be applied to play and is inhertited by tasks, which can still override it.
 * expanded facts and OS/distribution support for existing facts and improved performance with pypy.
-* new 'wantlist' option to lookups allows for selecting a list typed variable vs a commad delimited string as the return.
+* new 'wantlist' option to lookups allows for selecting a list typed variable vs a command delimited string as the return.
 * the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
 * allow for empty inventories, this is now a warning and not an error (for those using localhost and cloud modules).
 * sped up YAML parsing in ansible by up to 25% by switching to CParser loader.
@@ -126,7 +126,7 @@ Other Notable Changes:
 * Many fixes for hardlink and softlink handling in file-related modules
 * Implement user, group, mode, and selinux parameters for the unarchive module
 * authorized_keys can now use url as a key source
-* authorized_keys has a new exclusive paameter that determines if keys that weren't specified in the task
+* authorized_keys has a new exclusive parameter that determines if keys that weren't specified in the task
 * The selinux module now sets the current running state to permissive if state='disabled'
 * Can now set accounts to expire via the user module
 * Overhaul of the service module to make code simpler and behave better for systems running several popular init systems
