@@ -32,7 +32,7 @@ DOCUMENTATION = '''
 ---
 module: maven_artifact
 short_description: Downloads an Artifact from a Maven Repository
-version_added: "historical"
+version_added: "2.0"
 description:
     - Downloads an artifact from a maven repository given the maven coordinates provided to the module. Can retrieve
     - snapshots or release versions of the artifact and will resolve the latest available version if one is not
@@ -45,54 +45,42 @@ options:
     group_id:
         description: The Maven groupId coordinate
         required: true
-        default: null
-        version_added: 0.0.1
     artifact_id:
         description: The maven artifactId coordinate
         required: true
-        default: null
-        version_added: 0.0.1
     version:
         description: The maven version coordinate
         required: false
         default: latest
-        version_added: 0.0.1
     classifier:
         description: The maven classifier coordinate
         required: false
         default: null
-        version_added: 0.0.1
     extension:
         description: The maven type/extension coordinate
         required: false
         default: jar
-        version_added: 0.0.1
     repository_url:
         description: The URL of the Maven Repository to download from
         required: false
         default: http://repo1.maven.org/maven2
-        version_added: 0.0.1
     username:
         description: The username to authenticate as to the Maven Repository
         required: false
         default: null
-        version_added: 0.0.1
     password:
         description: The passwor to authenticate with to the Maven Repository
         required: false
         default: null
-        version_added: 0.0.1
     dest:
         description: The path where the artifact should be written to
         required: true
         default: false
-        version_added: 0.0.1
     state:
         description: The desired state of the artifact
         required: true
         default: present
         choices: [present,absent]
-        version_added: 0.0.1
 '''
 
 EXAMPLES = '''
