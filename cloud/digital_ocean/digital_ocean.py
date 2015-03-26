@@ -101,7 +101,7 @@ options:
      - The public SSH key you want to add to your account.
 
 notes:
-  - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
+  - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
 requirements: [ dopy ]
 '''
 
@@ -116,7 +116,6 @@ EXAMPLES = '''
       command=ssh
       name=my_ssh_key
       ssh_pub_key='ssh-rsa AAAA...'
-      client_id=XXX
       api_key=XXX
 
 # Create a new Droplet
@@ -144,7 +143,6 @@ EXAMPLES = '''
       command=droplet
       id=123
       name=mydroplet
-      client_id=XXX
       api_key=XXX
       size_id=2gb
       region_id=ams2
@@ -160,7 +158,6 @@ EXAMPLES = '''
       state=present
       ssh_key_ids=[id1,id2]
       name=mydroplet
-      client_id=XXX
       api_key=XXX
       size_id=2gb
       region_id=ams2
@@ -284,7 +281,7 @@ class SSH(JsonfyMixIn):
 
     @classmethod
     def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key)
+        cls.manager = DoManager(client_id, api_key, api_version=2)
 
     @classmethod
     def find(cls, name):
