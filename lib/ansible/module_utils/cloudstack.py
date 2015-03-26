@@ -17,19 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 
 try:
     from cs import CloudStack, CloudStackException, read_config
+    has_lib_cs = True
 except ImportError:
-    print("failed=True " + \
-        "msg='python library cs required: pip install cs'")
-    sys.exit(1)
+    has_lib_cs = False
 
 
 class AnsibleCloudStack:
 
     def __init__(self, module):
+        if not has_lib_cs:
+            module.fail_json(msg="python library cs required: pip install cs")
+
         self.module = module
         self._connect()
 
