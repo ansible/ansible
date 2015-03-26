@@ -56,6 +56,14 @@ options:
         default: null
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.9.1
     session:
         description:
             - BIG-IP session support; may be useful to avoid concurrency
@@ -1566,6 +1574,12 @@ def generate_software_list(f5):
     software_list = software.get_all_software_status()
     return software_list
 
+def disable_ssl_cert_validation():
+    # You probably only want to do this for testing and never in production.
+    # From https://www.python.org/dev/peps/pep-0476/#id29
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def main():
     module = AnsibleModule(
@@ -1573,6 +1587,7 @@ def main():
             server = dict(type='str', required=True),
             user = dict(type='str', required=True),
             password = dict(type='str', required=True),
+            validate_certs = dict(default='yes', type='bool'),
             session = dict(type='bool', default=False),
             include = dict(type='list', required=True),
             filter = dict(type='str', required=False),
@@ -1585,6 +1600,7 @@ def main():
     server = module.params['server']
     user = module.params['user']
     password = module.params['password']
+    validate_certs = module.params['validate_certs']
     session = module.params['session']
     fact_filter = module.params['filter']
     if fact_filter:
@@ -1600,6 +1616,9 @@ def main():
     include_test = map(lambda x: x in valid_includes, include)
     if not all(include_test):
         module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
+
+    if not validate_certs:
+        disable_ssl_cert_validation()
 
     try:
         facts = {}
