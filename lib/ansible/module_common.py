@@ -168,6 +168,10 @@ class ModuleReplacer(object):
                     facility = inject['ansible_syslog_facility']
                 module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
+            try:
+                module_data = module_data.decode('utf-8')
+            except UnicodeDecodeError:
+                pass
             lines = module_data.split("\n")
             shebang = None
             if lines[0].startswith("#!"):
