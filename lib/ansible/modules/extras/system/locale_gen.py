@@ -159,7 +159,7 @@ def main():
             # Ubuntu created its own system to manage locales.
             ubuntuMode = True
         else:
-            module.fail_json(msg="/etc/locale.gen and /var/lib/locales/supported.d/local are missing. Is the package “locales” installed?")
+            module.fail_json(msg="/etc/locale.gen and /var/lib/locales/supported.d/local are missing. Is the package \"locales\" installed?")
     else:
         # We found the common way to manage locales.
         ubuntuMode = False
