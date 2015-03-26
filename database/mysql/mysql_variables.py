@@ -67,6 +67,7 @@ EXAMPLES = '''
 import ConfigParser
 import os
 import warnings
+from re import match
 
 try:
     import MySQLdb
@@ -103,10 +104,12 @@ def typedvalue(value):
 
 
 def getvariable(cursor, mysqlvar):
-    cursor.execute("SHOW VARIABLES LIKE %s", (mysqlvar,))
+    cursor.execute("SHOW VARIABLES WHERE Variable_name = %s", (mysqlvar,))
     mysqlvar_val = cursor.fetchall()
-    return mysqlvar_val
-
+    if len(mysqlvar_val) is 1:
+        return mysqlvar_val[0][1]
+    else:
+        return None
 
 def setvariable(cursor, mysqlvar, value):
     """ Set a global mysql variable to a given value
@@ -116,11 +119,9 @@ def setvariable(cursor, mysqlvar, value):
     should be passed as numeric literals.
 
     """
-    query = ["SET GLOBAL %s" % mysql_quote_identifier(mysqlvar, 'vars') ]
-    query.append(" = %s")
-    query = ' '.join(query)
+    query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
     try:
-        cursor.execute(query, (value,))
+        cursor.execute(query + "%s", (value,))
         cursor.fetchall()
         result = True
     except Exception, e:
@@ -204,6 +205,10 @@ def main():
     host = module.params["login_host"]
     mysqlvar = module.params["variable"]
     value = module.params["value"]
+    if mysqlvar is None:
+        module.fail_json(msg="Cannot run without variable to operate with")
+    if match('^[0-9a-z_]+$', mysqlvar) is None:
+	    module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
     else:
@@ -232,17 +237,15 @@ def main():
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
-    if mysqlvar is None:
-        module.fail_json(msg="Cannot run without variable to operate with")
     mysqlvar_val = getvariable(cursor, mysqlvar)
+    if mysqlvar_val is None:
+        module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
     if value is None:
         module.exit_json(msg=mysqlvar_val)
     else:
-        if len(mysqlvar_val) < 1:
-            module.fail_json(msg="Variable not available", changed=False)
         # Type values before using them
         value_wanted = typedvalue(value)
-        value_actual = typedvalue(mysqlvar_val[0][1])
+        value_actual = typedvalue(mysqlvar_val)
         if value_wanted == value_actual:
             module.exit_json(msg="Variable already set to requested value", changed=False)
         try:
