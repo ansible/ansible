@@ -165,23 +165,25 @@ def modify_module(module_path, module_args, strip_comments=False):
         #        facility = inject['ansible_syslog_facility']
         #    module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
-        lines = module_data.split("\n", 1)
+        lines = module_data.split(b"\n", 1)
         shebang = None
-        if lines[0].startswith("#!"):
+        if lines[0].startswith(b"#!"):
             shebang = lines[0].strip()
             args = shlex.split(str(shebang[2:]))
             interpreter = args[0]
             interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
             # FIXME: more inject stuff here...
+            #from ansible.utils.unicode import to_bytes
             #if interpreter_config in inject:
-            #    lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
+            #    interpreter = to_bytes(inject[interpreter_config], errors='strict')
+            #    lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
 
             lines.insert(1, ENCODING_STRING)
         else:
             lines.insert(0, ENCODING_STRING)
 
-        module_data = "\n".join(lines)
+        module_data = b"\n".join(lines)
 
         return (module_data, module_style, shebang)
 
