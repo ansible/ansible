@@ -33,12 +33,9 @@ options:
      - Indicate desired state of the target.
     default: present
     choices: ['present', 'active', 'absent', 'deleted']
-  client_id:
-     description:
-     - DigitalOcean manager id.
-  api_key:
+  api_token:
     description:
-     - DigitalOcean api key.
+     - DigitalOcean api token.
   id:
     description:
      - Numeric, the droplet id you want to operate on.
@@ -116,7 +113,7 @@ EXAMPLES = '''
       command=ssh
       name=my_ssh_key
       ssh_pub_key='ssh-rsa AAAA...'
-      api_key=XXX
+      api_token=XXX
 
 # Create a new Droplet
 # Will return the droplet details including the droplet id (used for idempotence)
@@ -125,7 +122,7 @@ EXAMPLES = '''
       state=present
       command=droplet
       name=mydroplet
-      api_key=XXX
+      api_token=XXX
       size_id=2gb
       region_id=ams2
       image_id=fedora-19-x64
@@ -143,7 +140,7 @@ EXAMPLES = '''
       command=droplet
       id=123
       name=mydroplet
-      api_key=XXX
+      api_token=XXX
       size_id=2gb
       region_id=ams2
       image_id=fedora-19-x64
@@ -158,7 +155,7 @@ EXAMPLES = '''
       state=present
       ssh_key_ids=[id1,id2]
       name=mydroplet
-      api_key=XXX
+      api_token=XXX
       size_id=2gb
       region_id=ams2
       image_id=fedora-19-x64
@@ -233,8 +230,8 @@ class Droplet(JsonfyMixIn):
         return self.manager.destroy_droplet(self.id, scrub_data=True)
 
     @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key, api_version=2)
+    def setup(cls, api_token):
+        cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None):
@@ -280,8 +277,8 @@ class SSH(JsonfyMixIn):
         return True
 
     @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key, api_version=2)
+    def setup(cls, api_token):
+        cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
     def find(cls, name):
@@ -311,18 +308,16 @@ def core(module):
         return v
 
     try:
-        # params['client_id'] will be None even if client_id is not passed in
-        api_key = module.params['api_key'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
+        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
     except KeyError, e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     changed = True
     command = module.params['command']
     state = module.params['state']
-    client_id = 'notused'
 
     if command == 'droplet':
-        Droplet.setup(client_id, api_key)
+        Droplet.setup(api_token)
         if state in ('active', 'present'):
 
             # First, try to find a droplet by id.
@@ -375,7 +370,7 @@ def core(module):
             module.exit_json(changed=True)
 
     elif command == 'ssh':
-        SSH.setup(client_id, api_key)
+        SSH.setup(api_token)
         name = getkeyordie('name')
         if state in ('active', 'present'):
             key = SSH.find(name)
@@ -397,8 +392,7 @@ def main():
         argument_spec = dict(
             command = dict(choices=['droplet', 'ssh'], default='droplet'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
+            api_token = dict(aliases=['API_TOKEN'], no_log=True),
             name = dict(type='str'),
             size_id = dict(),
             image_id = dict(),
