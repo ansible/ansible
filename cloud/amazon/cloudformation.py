@@ -142,7 +142,7 @@ def stack_operation(cfn, stack_name, operation):
     operation_complete = False
     while operation_complete == False:
         try:
-            stack = cfn.describe_stacks(stack_name)[0]
+            stack = invoke_with_throttling_retries(cfn.describe_stacks, stack_name)[0]
             existed.append('yes')
         except:
             if 'yes' in existed:
@@ -171,6 +171,19 @@ def stack_operation(cfn, stack_name, operation):
             time.sleep(5)
     return result
 
+IGNORE_CODE = 'Throttling'
+MAX_RETRIES=3
+def invoke_with_throttling_retries(function_ref, *argv):
+    retries=0
+    while True:
+        try:
+            retval=function_ref(*argv)
+            return retval
+        except boto.exception.BotoServerError, e:
+            if e.code != IGNORE_CODE or retries==MAX_RETRIES:
+                raise e
+        time.sleep(5 * (2**retries))
+        retries += 1
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -271,7 +284,7 @@ def main():
     # and get the outputs of the stack
 
     if state == 'present' or update:
-        stack = cfn.describe_stacks(stack_name)[0]
+        stack = invoke_with_throttling_retries(cfn.describe_stacks,stack_name)[0]
         for output in stack.outputs:
             stack_outputs[output.key] = output.value
         result['stack_outputs'] = stack_outputs
@@ -282,7 +295,7 @@ def main():
 
     if state == 'absent':
         try:
-            cfn.describe_stacks(stack_name)
+            invoke_with_throttling_retries(cfn.describe_stacks,stack_name)
             operation = 'DELETE'
         except Exception, err:
             error_msg = boto_exception(err)
