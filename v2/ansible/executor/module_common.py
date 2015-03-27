@@ -140,6 +140,16 @@ def modify_module(module_path, module_args, strip_comments=False):
     which results in the inclusion of the common code from powershell.ps1
 
     """
+    ### TODO: Optimization ideas if this code is actually a source of slowness:
+    # * Fix comment stripping: Currently doesn't preserve shebangs and encoding info (but we unconditionally add encoding info)
+    # * Use pyminifier if installed
+    # * comment stripping/pyminifier needs to have config setting to turn it
+    #   off for debugging purposes (goes along with keep remote but should be
+    #   separate otherwise users wouldn't be able to get info on what the
+    #   minifier output)
+    # * Only split into lines and recombine into strings once
+    # * Cache the modified module?  If only the args are different and we do
+    #   that as the last step we could cache sll the work up to that point.
 
     with open(module_path) as f:
 
