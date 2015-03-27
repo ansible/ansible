@@ -145,10 +145,10 @@ DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_
 #TODO: get rid of ternary chain mess
 BECOME_METHODS            = ['sudo','su','pbrun','pfexec','runas']
 BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'runas': ''}
-DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',True if DEFAULT_SUDO or DEFAULT_SU else False, boolean=True)
+DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',False, boolean=True)
 DEFAULT_BECOME_METHOD     = get_config(p, 'privilege_escalation', 'become_method', 'ANSIBLE_BECOME_METHOD','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo' ).lower()
-DEFAULT_BECOME_USER       = get_config(p, 'privilege_escalation', 'become_user', 'ANSIBLE_BECOME_USER',DEFAULT_SUDO_USER if DEFAULT_SUDO else DEFAULT_SU_USER if DEFAULT_SU else 'root')
-DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pass', 'ANSIBLE_BECOME_ASK_PASS',True if DEFAULT_ASK_SUDO_PASS else False, boolean=True)
+DEFAULT_BECOME_USER       = get_config(p, 'privilege_escalation', 'become_user', 'ANSIBLE_BECOME_USER', None)
+DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pass', 'ANSIBLE_BECOME_ASK_PASS', False, boolean=True)
 # need to rethink impementing these 2
 DEFAULT_BECOME_EXE = None
 #DEFAULT_BECOME_EXE        = get_config(p, DEFAULTS, 'become_exe', 'ANSIBLE_BECOME_EXE','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo')
