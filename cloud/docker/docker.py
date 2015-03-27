@@ -176,6 +176,12 @@ options:
     description:
       - Enable detached mode to leave the container running in background.
     default: true
+  signal:
+    description:
+      - With the state "killed", you can alter the signal sent to the
+        container.
+    required: false
+    default: KILL
   state:
     description:
       - Assert the container's desired state. "present" only asserts that the
@@ -1272,7 +1278,7 @@ class DockerManager(object):
 
     def kill_containers(self, containers):
         for i in containers:
-            self.client.kill(i['Id'])
+            self.client.kill(i['Id'], self.module.params.get('signal'))
             self.increment_counter('killed')
 
     def restart_containers(self, containers):
@@ -1436,6 +1442,7 @@ def main():
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
+            signal          = dict(default=None),
             restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no']),
             restart_policy_retry = dict(default=0, type='int'),
             debug           = dict(default=False, type='bool'),
