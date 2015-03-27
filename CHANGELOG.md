@@ -4,7 +4,7 @@ Ansible Changes By Release
 ## 2.0 "TBD" - ACTIVE DEVELOPMENT
 
 Major Changes:
-    big_ip modules now support turning off ssl certificat validation (use only for self signed)
+    big_ip modules now support turning off ssl certificate validation (use only for self signed)
 
 New Modules:
     cloudtrail
@@ -63,8 +63,8 @@ New Modules:
 
 New Filters:
 
-* ternary: allows for trueval/falseval assignement dependint on conditional
-* cartesian: returns the cartesian product of 2 lists
+* ternary: allows for trueval/falseval assignment dependent on conditional
+* cartesian: returns the Cartesian product of 2 lists
 * to_uuid: given a string it will return an ansible domain specific UUID
 * checksum: uses the ansible internal checksum to return a hash from a string
 * hash: get a hash from a string (md5, sha1, etc)
@@ -93,14 +93,14 @@ Other Notable Changes:
   * restart_policy parameters to configure when the container automatically restarts
   * If the docker client or server doesn't support an option, the task will now fail instead of silently ignoring the option
   * Add insecure_registry parameter for connecting to registries via http
-  * New parameter to set a container's domainname
+  * New parameter to set a container's domain name
   * Undeprecated docker_image module until there's replacement functionality
   * Allow setting the container's pid namespace
   * Add a pull parameter that chooses when ansible will look for more recent images in the registry
   * docker module states have been greatly enhanced.  The reworked and new states are:
     * present now creates but does not start containers
     * restarted always restarts a container
-    * reloaded restarts a container if ansible detects that the configuration is different than what is spcified
+    * reloaded restarts a container if ansible detects that the configuration is different than what is specified
       * reloaded accounts for exposed ports, env vars, and volumes
   * Can now connect to the docker server using TLS
 * Several source control modules had force parameters that defaulted to true.
