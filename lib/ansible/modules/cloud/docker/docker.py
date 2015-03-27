@@ -185,7 +185,7 @@ options:
       - Assert the container's desired state. "present" only asserts that the
         matching containers exist. "started" asserts that the matching
         containers both exist and are running, but takes no action if any
-        configuration has changed. "reloaded" asserts that all matching
+        configuration has changed. "reloaded" (added in Ansible 1.9) asserts that all matching
         containers are running and restarts any that have any images or
         configuration out of date. "restarted" unconditionally restarts (or
         starts) the matching containers. "stopped" and '"killed" stop and kill
