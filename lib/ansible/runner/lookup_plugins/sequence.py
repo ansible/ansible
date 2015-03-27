@@ -151,10 +151,17 @@ class LookupModule(object):
             )
         elif self.count is not None:
             # convert count to end
-            self.end = self.start + self.count * self.stride - 1
+            if self.count != 0:
+                self.end = self.start + self.count * self.stride - 1
+            else:
+                self.start = 0
+                self.end = 0
+                self.stride = 0
             del self.count
-        if self.end < self.start:
-            raise AnsibleError("can't count backwards")
+        if self.stride > 0 and self.end < self.start:
+            raise AnsibleError("to count backwards make stride negative")
+        if self.stride < 0 and self.end > self.start:
+            raise AnsibleError("to count forward don't make stride negative")
         if self.format.count('%') != 1:
             raise AnsibleError("bad formatting string: %s" % self.format)
 
@@ -193,12 +200,13 @@ class LookupModule(object):
 
                 self.sanity_check()
 
-                results.extend(self.generate_sequence())
+                if self.start != self.end:
+                    results.extend(self.generate_sequence())
             except AnsibleError:
                 raise
-            except Exception:
+            except Exception, e:
                 raise AnsibleError(
-                    "unknown error generating sequence"
+                    "unknown error generating sequence: %s" % str(e)
                 )
 
         return results
