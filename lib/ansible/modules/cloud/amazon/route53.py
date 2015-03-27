@@ -61,6 +61,7 @@ options:
     version_added: 1.9
     default: False
     aliases: []
+    choices: [ 'True', 'False' ]
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
@@ -153,7 +154,7 @@ EXAMPLES = '''
       record=elb.foo.com
       type=A
       value="{{ elb_dns_name }}"
-      alias=yes
+      alias=True
       alias_hosted_zone_id="{{ elb_zone_id }}"
 
 
