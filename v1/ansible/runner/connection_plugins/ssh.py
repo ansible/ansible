@@ -16,21 +16,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-import re
-import subprocess
-import shlex
-import pipes
-import random
-import select
 import fcntl
-import hmac
-import pwd
 import gettext
+import hmac
+import os
+import pipes
 import pty
+import pwd
+import random
+import re
+import select
+import shlex
+import subprocess
+import time
 from hashlib import sha1
 import ansible.constants as C
-from ansible.callbacks import vvv
+from ansible.callbacks import vvv, vv
 from ansible import errors
 from ansible import utils
 
@@ -256,7 +257,51 @@ class Connection(object):
             vvv("EXEC previous known host file not found for %s" % host)
         return True
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, *args, **kwargs):
+        """ Wrapper around _exec_command to retry in the case of an ssh
+            failure
+
+            Will retry if:
+            * an exception is caught
+            * ssh returns 255
+
+            Will not retry if
+            * remaining_tries is <2
+            * retries limit reached
+            """
+        remaining_tries = C.get_config(
+            C.p, 'ssh_connection', 'retries',
+            'ANSIBLE_SSH_RETRIES', 3, integer=True) + 1
+        cmd_summary = "%s %s..." % (args[0], str(kwargs)[:200])
+        for attempt in xrange(remaining_tries):
+            pause = 2 ** attempt - 1
+            if pause > 30:
+                pause = 30
+            time.sleep(pause)
+            try:
+                return_tuple = self._exec_command(*args, **kwargs)
+            except Exception as e:
+                msg = ("ssh_retry: attempt: %d, caught exception(%s) from cmd "
+                       "(%s).") % (attempt, e, cmd_summary)
+                vv(msg)
+                if attempt == remaining_tries - 1:
+                    raise e
+                else:
+                    continue
+            # 0 = success
+            # 1-254 = remote command return code
+            # 255 = failure from the ssh command itself
+            if return_tuple[0] != 255:
+                break
+            else:
+                msg = ('ssh_retry: attempt: %d, ssh return code is 255. cmd '
+                       '(%s).') % (attempt, cmd_summary)
+                vv(msg)
+
+        return return_tuple
+
+
+    def _exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
