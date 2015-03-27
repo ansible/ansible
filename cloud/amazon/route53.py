@@ -74,18 +74,6 @@ options:
     required: false
     default: null
     aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. 
-    required: false
-    default: null
-    aliases: ['ec2_secret_key', 'secret_key']
-  aws_access_key:
-    description:
-      - AWS access key. 
-    required: false
-    default: null
-    aliases: ['ec2_access_key', 'access_key']
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
@@ -106,6 +94,7 @@ options:
     version_added: "1.9"
 requirements: [ "boto" ]
 author: Bruce Pennypacker
+extends_documentation_fragment: aws
 '''
 
 # FIXME: the command stuff should have a more state like configuration alias -- MPD
@@ -177,6 +166,7 @@ try:
     import boto
     import boto.ec2
     from boto import route53
+    from boto.route53 import Route53Connection
     from boto.route53.record import ResourceRecordSets
 except ImportError:
     print "failed=True msg='boto required for this module'"
@@ -225,7 +215,7 @@ def main():
     retry_interval_in       = module.params.get('retry_interval')
     private_zone_in         = module.params.get('private_zone')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     value_list = ()
 
@@ -252,7 +242,7 @@ def main():
 
     # connect to the route53 endpoint 
     try:
-        conn = boto.route53.Route53Connection(**aws_connect_params)
+        conn = Route53Connection(**aws_connect_kwargs)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
