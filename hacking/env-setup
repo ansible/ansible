@@ -41,11 +41,10 @@ expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_M
 # Do the work in a function so we don't repeat ourselves later
 gen_egg_info()
 {
-    python setup.py egg_info
     if [ -e "$PREFIX_PYTHONPATH/ansible.egg-info" ] ; then
         rm -r "$PREFIX_PYTHONPATH/ansible.egg-info"
     fi
-    mv "ansible.egg-info" "$PREFIX_PYTHONPATH"
+    python setup.py egg_info
 }
 
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
