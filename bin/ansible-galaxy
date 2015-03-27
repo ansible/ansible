@@ -345,8 +345,6 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         return False
     tempdir = tempfile.mkdtemp()
     clone_cmd = [scm, 'clone', role_url, role_name]
-    if scm == 'git' and role_version is not None and role_version.strip():
-        clone_cmd.extend(['--branch', role_version])
     with open('/dev/null', 'w') as devnull:
         try:
             print "- executing: %s" % " ".join(clone_cmd)
@@ -359,6 +357,20 @@ def scm_archive_role(scm, role_url, role_version, role_name):
         print "  in directory %s" % tempdir
         return False
 
+    if scm == 'git' and role_version:
+        checkout_cmd = [scm, 'checkout', role_version]
+        with open('/dev/null', 'w') as devnull:
+            try:
+                print "- executing: %s" % " ".join(checkout_cmd)
+                popen = subprocess.Popen(checkout_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+            except:
+                raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
+                rc = popen.wait()
+                if rc != 0:
+                    print "- command %s failed" % ' '.join(clone_cmd)
+                    print "  in directory %s" % tempdir
+                    return False
+
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
     if scm == 'hg':
         archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
@@ -366,11 +378,7 @@ def scm_archive_role(scm, role_url, role_version, role_name):
             archive_cmd.extend(['-r', role_version])
         archive_cmd.append(temp_file.name)
     if scm == 'git':
-        archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name]
-        if role_version:
-            archive_cmd.append(role_version)
-        else:
-            archive_cmd.append('HEAD')
+        archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name, 'HEAD']
 
     with open('/dev/null', 'w') as devnull:
         print "- executing: %s" % " ".join(archive_cmd)
