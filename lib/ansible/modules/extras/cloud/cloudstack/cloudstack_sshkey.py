@@ -107,14 +107,14 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
         self.ssh_key = None
 
 
-    def register_ssh_key(self):
+    def register_ssh_key(self, public_key):
         ssh_key = self.get_ssh_key()
         if not ssh_key:
             self.result['changed'] = True
             args = {}
             args['projectid'] = self.get_project_id()
             args['name'] = self.module.params.get('name')
-            args['publickey'] = self.module.params.get('public_key')
+            args['publickey'] = public_key
             if not self.module.check_mode:
                 ssh_key = self.cs.registerSSHKeyPair(**args)
         return ssh_key
@@ -194,8 +194,9 @@ def main():
         if state in ['absent']:
             ssh_key = acs_sshkey.remove_ssh_key()
         else:
-            if module.params.get('public_key'):
-                ssh_key = acs_sshkey.register_ssh_key()
+            public_key = module.params.get('public_key')
+            if public_key:
+                ssh_key = acs_sshkey.register_ssh_key(public_key)
             else:
                 ssh_key = acs_sshkey.create_ssh_key()
 
