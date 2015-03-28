@@ -139,6 +139,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
             self.result['changed'] = True
             args = {}
             args['name'] = self.module.params.get('name')
+            args['projectid'] = self.get_project_id()
             if not self.module.check_mode:
                 res = self.cs.deleteSSHKeyPair(**args)
         return ssh_key
