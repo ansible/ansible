@@ -95,6 +95,12 @@ try:
 except ImportError:
     has_lib_cs = False
 
+try:
+    import sshpubkeys
+    has_lib_sshpubkeys = True
+except ImportError:
+    has_lib_sshpubkeys = False
+
 from ansible.module_utils.cloudstack import *
 
 class AnsibleCloudStackSshKey(AnsibleCloudStack):
@@ -109,14 +115,30 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def register_ssh_key(self, public_key):
         ssh_key = self.get_ssh_key()
+  
+        args = {}
+        args['projectid'] = self.get_project_id()
+        args['name'] = self.module.params.get('name')
+
+        res = None
         if not ssh_key:
             self.result['changed'] = True
-            args = {}
-            args['projectid'] = self.get_project_id()
-            args['name'] = self.module.params.get('name')
             args['publickey'] = public_key
             if not self.module.check_mode:
-                ssh_key = self.cs.registerSSHKeyPair(**args)
+                res = self.cs.registerSSHKeyPair(**args)
+
+        else:
+            fingerprint = self._get_ssh_fingerprint(public_key)
+            if ssh_key['fingerprint'] != fingerprint:
+                self.result['changed'] = True
+                if not self.module.check_mode:
+                    self.cs.deleteSSHKeyPair(**args)
+                    args['publickey'] = public_key
+                    res = self.cs.registerSSHKeyPair(**args)
+
+        if res and 'keypair' in res:
+            ssh_key = res['keypair']
+
         return ssh_key
 
 
@@ -170,6 +192,11 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
         return self.result
 
 
+    def _get_ssh_fingerprint(self, public_key):
+        key = sshpubkeys.SSHKey(public_key)
+        return key.hash()
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -187,6 +214,9 @@ def main():
 
     if not has_lib_cs:
         module.fail_json(msg="python library cs required: pip install cs")
+
+    if not has_lib_sshpubkeys:
+        module.fail_json(msg="python library sshpubkeys required: pip install sshpubkeys")
 
     try:
         acs_sshkey = AnsibleCloudStackSshKey(module)
