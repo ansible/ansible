@@ -26,7 +26,7 @@ description:
    - The M(known_hosts) module lets you add or remove a host from the C(known_hosts) file. 
      This is useful if you're going to want to use the M(git) module over ssh, for example. 
      If you have a very large number of host keys to manage, you will find the M(template) module more useful.
-version_added: "1.6"
+version_added: "1.9"
 options:
   name:
     aliases: [ 'host' ]
