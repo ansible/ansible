@@ -24,9 +24,9 @@ version_added: "1.1"
 options:
   bucket:
     description:
-      - Bucket name. 
+      - Bucket name.
     required: true
-    default: null 
+    default: null
     aliases: []
   object:
     description:
@@ -56,13 +56,13 @@ options:
     version_added: "1.2"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket) and delete (bucket). 
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket) and delete (bucket).
     required: true
     default: null
     aliases: []
   expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation. 
+      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
     required: false
     default: 600
     aliases: []
@@ -180,7 +180,7 @@ def delete_key(module, s3, bucket, obj):
         module.exit_json(msg="Object deleted from bucket %s"%bucket, changed=True)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
- 
+
 def create_dirkey(module, s3, bucket, obj):
     try:
         bucket = s3.lookup(bucket)
@@ -201,7 +201,7 @@ def upload_file_check(src):
 
 def path_check(path):
     if os.path.exists(path):
-        return True 
+        return True
     else:
         return False
 
@@ -323,7 +323,7 @@ def main():
             walrus = urlparse.urlparse(s3_url).hostname
             s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
         else:
-            s3 = boto.s3.connect_to_region(location, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, is_secure=True, calling_format=OrdinaryCallingFormat())
+            s3 = boto.s3.connection.S3Connection(calling_format=OrdinaryCallingFormat(), **aws_connect_kwargs)
             # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
             if s3 is None:
                 s3 = boto.connect_s3(aws_access_key, aws_secret_key)
@@ -354,7 +354,7 @@ def main():
         if pathrtn is False:
             download_s3file(module, s3, bucket, obj, dest)
 
-        # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists. 
+        # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
             md5_remote = keysum(module, s3, bucket, obj)
             md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
@@ -371,7 +371,7 @@ def main():
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
 
-        # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
+        # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message.
         if sum_matches is True and overwrite is False:
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
 
@@ -379,7 +379,7 @@ def main():
         if sum_matches is True and pathrtn is True and overwrite is True:
             download_s3file(module, s3, bucket, obj, dest)
 
-        # If sum does not match but the destination exists, we 
+        # If sum does not match but the destination exists, we
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
@@ -424,7 +424,7 @@ def main():
         if bucketrtn is True and pathrtn is True and keyrtn is False:
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
 
-    # Support for deleting an object if we have both params.  
+    # Support for deleting an object if we have both params.
     if mode == 'delete':
         if bucket:
             bucketrtn = bucket_check(module, s3, bucket)
@@ -436,11 +436,11 @@ def main():
                 module.fail_json(msg="Bucket does not exist.", changed=False)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
- 
+
     # Need to research how to create directories without "populating" a key, so this should just do bucket creation for now.
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
     if mode == 'create':
-        if bucket and not obj: 
+        if bucket and not obj:
             bucketrtn = bucket_check(module, s3, bucket)
             if bucketrtn is True:
                 module.exit_json(msg="Bucket already exists.", changed=False)
@@ -454,9 +454,9 @@ def main():
                 dirobj = obj + "/"
             if bucketrtn is True:
                 keyrtn = key_check(module, s3, bucket, dirobj)
-                if keyrtn is True: 
+                if keyrtn is True:
                     module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
-                else:      
+                else:
                     create_dirkey(module, s3, bucket, dirobj)
             if bucketrtn is False:
                 created = create_bucket(module, s3, bucket, location)
