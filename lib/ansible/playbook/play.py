@@ -577,7 +577,7 @@ class Play(object):
 
             # evaluate privilege escalation vars for current and child tasks
             included_become_vars = {}
-            for k in ["become", "become_user", "become_method", "become_exe"]:
+            for k in ["become", "become_user", "become_method", "become_exe", "sudo", "su", "sudo_user", "su_user"]:
                 if k in x:
                     included_become_vars[k] = x[k]
                 elif k in become_vars:
