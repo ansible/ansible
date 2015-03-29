@@ -93,7 +93,6 @@ options:
     required: false
     default: false
     version_added: "1.9"
-requirements: [ "boto" ]
 author: Bruce Pennypacker
 extends_documentation_fragment: aws
 '''
