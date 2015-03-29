@@ -37,18 +37,15 @@ options:
             - Url of Zabbix server, with protocol (http or https).
               C(url) is an alias for C(server_url).
         required: true
-        default: null
         aliases: [ "url" ]
     login_user:
         description:
             - Zabbix user name.
         required: true
-        default: null
     login_password:
         description:
             - Zabbix user password.
         required: true
-        default: null
     host_name:
         description:
             - Technical name of the host.
@@ -340,7 +337,7 @@ class Host(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
+            server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
             login_password=dict(required=True),
             host_name=dict(required=True),
