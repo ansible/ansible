@@ -333,7 +333,7 @@ class Host(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
+            server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
             login_password=dict(required=True),
             host_name=dict(required=True),
