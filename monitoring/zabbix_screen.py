@@ -313,7 +313,7 @@ class Screen(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
+            server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
             login_password=dict(required=True),
             timeout=dict(default=10),
