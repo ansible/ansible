@@ -36,18 +36,15 @@ options:
             - Url of Zabbix server, with protocol (http or https).
               C(url) is an alias for C(server_url).
         required: true
-        default: null
         aliases: [ "url" ]
     login_user:
         description:
             - Zabbix user name.
         required: true
-        default: null
     login_password:
         description:
             - Zabbix user password.
         required: true
-        default: null
     state:
         description:
             - Create or delete host group.
@@ -148,7 +145,7 @@ class HostGroup(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
+            server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
             login_password=dict(required=True),
             host_groups=dict(required=True),
