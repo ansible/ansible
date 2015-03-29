@@ -17,7 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: cloudformation
-short_description: create a AWS CloudFormation stack
+short_description: Create or delete an AWS CloudFormation stack
 description:
      - Launches an AWS CloudFormation stack and waits for it complete.
 version_added: "1.1"
@@ -50,8 +50,8 @@ options:
     aliases: []
   template:
     description:
-      - the path of the cloudformation template
-    required: true
+      - The path of the cloudformation template, required if state is "present".
+    required: false
     default: null
     aliases: []
   stack_policy:
@@ -99,6 +99,13 @@ tasks:
       ClusterSize: 3
     tags:
       Stack: "ansible-cloudformation"
+
+# Removal example
+tasks:
+- name: tear down old deployment
+  cloudformation:
+    stack_name: "ansible-cloudformation-old"
+    state: "absent"
 '''
 
 import json
@@ -191,7 +198,7 @@ def main():
             stack_name=dict(required=True),
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
-            template=dict(default=None, required=True),
+            template=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
             tags=dict(default=None)
@@ -206,7 +213,14 @@ def main():
 
     state = module.params['state']
     stack_name = module.params['stack_name']
-    template_body = open(module.params['template'], 'r').read()
+
+    if module.params['template'] is not None:
+        template_body = open(module.params['template'], 'r').read()
+    else:
+        template_body = None
+        if state == 'present':
+            module.fail_json('Module parameter "template" is required if "state" is "present"')
+
     if module.params['stack_policy'] is not None:
         stack_policy_body = open(module.params['stack_policy'], 'r').read()
     else:
