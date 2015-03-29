@@ -100,7 +100,6 @@ options:
     required: true
     default: null
     aliases: ['aws_region', 'ec2_region']
-requirements: [ "boto" ]
 author: Carson Gee
 extends_documentation_fragment: aws
 '''

@@ -83,7 +83,6 @@ options:
     required: false
     default: null
     version_added: "1.8"
-requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 extends_documentation_fragment: aws
 '''
