@@ -22,7 +22,6 @@ description:
   - Manage cache clusters in Amazon Elasticache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
-requirements: [ "boto" ]
 author: Jim Dalton
 options:
   state:

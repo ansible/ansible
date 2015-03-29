@@ -77,7 +77,6 @@ options:
     aliases: ['aws_region', 'ec2_region']
     version_added: "1.5"
 
-requirements: [ "boto" ]
 author: James S. Martin
 extends_documentation_fragment: aws
 '''
