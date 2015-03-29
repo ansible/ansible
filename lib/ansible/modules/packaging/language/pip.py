@@ -179,6 +179,7 @@ def _get_pip(module, env=None, executable=None):
     candidate_pip_basenames = ['pip', 'python-pip', 'pip-python']
     pip = None
     if executable is not None:
+        executable = os.path.expanduser(executable)
         if os.path.isabs(executable):
             pip = executable
         else:
