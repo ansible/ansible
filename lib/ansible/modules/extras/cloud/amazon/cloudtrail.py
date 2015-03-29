@@ -22,7 +22,6 @@ description:
   - Creates or deletes CloudTrail configuration. Ensures logging is also enabled. This module has a dependency on python-boto >= 2.21.
 version_added: "2.0"
 author: Ted Timmons
-requirements: ["boto"]
 options:
   state:
     description:
