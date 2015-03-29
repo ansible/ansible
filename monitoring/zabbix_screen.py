@@ -39,18 +39,15 @@ options:
             - Url of Zabbix server, with protocol (http or https).
               C(url) is an alias for C(server_url).
         required: true
-        default: null
         aliases: [ "url" ]
     login_user:
         description:
             - Zabbix user name.
         required: true
-        default: null
     login_password:
         description:
             - Zabbix user password.
         required: true
-        default: null
     timeout:
         description:
             - The timeout of API request(seconds).
@@ -63,7 +60,6 @@ options:
             - When deleting screen(s), the screen_name is required.
             - The available states are: present(default) and absent. If the screen(s) already exists, and the state is not "absent", the screen(s) will just be updated.
         required: true
-        default: null
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
@@ -321,7 +317,7 @@ class Screen(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, default=None, aliases=['url']),
+            server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
             login_password=dict(required=True),
             timeout=dict(default=10),
