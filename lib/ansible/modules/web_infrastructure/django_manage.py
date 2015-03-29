@@ -232,8 +232,6 @@ def main():
         if not module.params[param]:
             module.fail_json(msg='%s param is required for command=%s' % (param, command))
 
-    venv = module.params['virtualenv']
-
     _ensure_virtualenv(module)
 
     cmd = "python manage.py %s" % (command, )
@@ -254,7 +252,7 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd, cwd=app_path)
+    rc, out, err = module.run_command(cmd, cwd=os.path.expanduser(app_path))
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'
