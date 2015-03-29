@@ -10,6 +10,9 @@ New Modules:
     cloudtrail
     maven_artifact
     pushover
+    zabbix_host
+    zabbix_hostmacro
+    zabbix_screen
     vertica_configuration
     vertica_facts
     vertica_role
