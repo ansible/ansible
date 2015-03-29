@@ -24,10 +24,8 @@ DOCUMENTATION = '''
 module: zabbix_host
 short_description: Zabbix host creates/updates/deletes
 description:
-   - When the host does not exists, a new host will be created, added to any host groups and linked to any templates.
-   - When the host already exists, the host group membership will be updated, along with the template links and interfaces.
-   - Delete a host from Zabbix if the host exists.
-version_added: "1.9"
+   - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
+version_added: "2.0"
 author: Tony Minfei Ding, Harrison Gu
 requirements:
     - zabbix-api python module
@@ -35,44 +33,38 @@ options:
     server_url:
         description:
             - Url of Zabbix server, with protocol (http or https).
-              C(url) is an alias for C(server_url).
         required: true
-        default: null
         aliases: [ "url" ]
     login_user:
         description:
-            - Zabbix user name.
+            - Zabbix user name, used to authenticate against the server.
         required: true
-        default: null
     login_password:
         description:
             - Zabbix user password.
         required: true
-        default: null
     host_name:
         description:
-            - Technical name of the host.
-            - If the host has already been added, the host name won't be updated.
+            - Name of the host in Zabbix.
+            - host_name is the unique identifier used and cannot be updated using this module.
         required: true
     host_groups:
         description:
-            - List of host groups to add the host to.
+            - List of host groups the host is part of.
         required: false
     link_templates:
         description:
-            - List of templates to be linked to the host.
+            - List of templates linked to the host.
         required: false
         default: None
     status:
         description:
-            - Status and function of the host.
-            - Possible values are: enabled and disabled
+            - 'Monitoring status of the host. Possible values are: "enabled" and "disabled".'
         required: false
         default: "enabled"
     state:
         description:
-            - create/update or delete host.
-            - Possible values are: present and absent. If the host already exists, and the state is "present", just to update the host.
+            - 'Possible values are: "present" and "absent". If the host already exists, and the state is "present", it will just to update the host is the associated data is different. "absent" will remove a host if it exists.'
         required: false
         default: "present"
     timeout:
@@ -81,11 +73,12 @@ options:
         default: 10
     interfaces:
         description:
-            - List of interfaces to be created for the host (see example).
+            - List of interfaces to be created for the host (see example below).
             - Available values are: dns, ip, main, port, type and useip.
             - Please review the interface documentation for more information on the supported properties:
             - https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface
         required: false
+        default: []
 '''
 
 EXAMPLES = '''

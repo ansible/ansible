@@ -25,11 +25,8 @@ DOCUMENTATION = '''
 module: zabbix_screen
 short_description: Zabbix screen creates/updates/deletes
 description:
-   - When the screen does not exists, a new screen will be created with any screen items specified.
-   - When the screen already exists and the graphs have changed, the screen items will be updated.
-   - When the graph IDs have not changed, the screen items won't be updated unless the graph_width and graph_height have changed.
-   - Delete screen(s) from Zabbix if the screen(s) exists.
-version_added: "1.9"
+    - This module allows you to create, modify and delete Zabbix screens and associated graph data.
+version_added: "2.0"
 author: Tony Minfei Ding, Harrison Gu
 requirements:
     - zabbix-api python module
@@ -37,20 +34,16 @@ options:
     server_url:
         description:
             - Url of Zabbix server, with protocol (http or https).
-              C(url) is an alias for C(server_url).
         required: true
-        default: null
         aliases: [ "url" ]
     login_user:
         description:
             - Zabbix user name.
         required: true
-        default: null
     login_password:
         description:
             - Zabbix user password.
         required: true
-        default: null
     timeout:
         description:
             - The timeout of API request(seconds).
@@ -61,9 +54,8 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), the screen_name, host_group are required.
             - When deleting screen(s), the screen_name is required.
-            - The available states are: present(default) and absent. If the screen(s) already exists, and the state is not "absent", the screen(s) will just be updated.
+            - The available states are: present(default) and absent. If the screen(s) already exists, and the state is not "absent", the screen(s) will just be updated as needed.
         required: true
-        default: null
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
