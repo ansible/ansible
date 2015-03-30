@@ -31,12 +31,17 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 
+### FIXME: Find a different way to fix 3518 as sys.defaultencoding() breaks
+# the python interpreter in subtle ways.  It appears that this does not fix
+# 3518 anyway (using binary files via lookup().  Instead, it tries to fix
+# utf-8 strings in the content parameter.  That should be fixable by properly
+# encoding or decoding the value before we write it to a file.
+#
 ## fixes https://github.com/ansible/ansible/issues/3518
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
-
-import sys
-reload(sys)
-sys.setdefaultencoding("utf8")
+#import sys
+#reload(sys)
+#sys.setdefaultencoding("utf8")
 
 
 class ActionModule(ActionBase):
@@ -231,7 +236,7 @@ class ActionModule(ActionBase):
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                if (self._connection_info.become and self._connection_info.become_user != 'root':
+                if self._connection_info.become and self._connection_info.become_user != 'root':
                     self._remote_chmod('a+r', tmp_src, tmp)
 
                 if raw:
