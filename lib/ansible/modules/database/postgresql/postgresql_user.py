@@ -117,8 +117,9 @@ options:
     description:
       - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make password changes as necessary.
     required: false
-    default: 'yes'
+    default: 'no'
     choices: [ "yes", "no" ]
+    version_added: '2.0'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -492,7 +493,7 @@ def main():
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
     port = module.params["port"]
-    no_password_changes = module.params.get("no_password_changes", False)
+    no_password_changes = module.params["no_password_changes"]
     try:
         role_attr_flags = parse_role_attrs(module.params["role_attr_flags"])
     except InvalidFlagsError, e:
