@@ -196,7 +196,8 @@ options:
     default: null
   detach:
     description:
-      - Enable detached mode to leave the container running in background.
+      - Enable detached mode to leave the container running in background. If
+        disabled, fail unless the process exits cleanly.
     default: true
   state:
     description:
@@ -1345,6 +1346,13 @@ class DockerManager(object):
         for i in containers:
             self.client.start(i)
             self.increment_counter('started')
+
+            if not self.module.params.get('detach'):
+                status = self.client.wait(i['Id'])
+                if status != 0:
+                    output = self.client.logs(i['Id'], stdout=True, stderr=True,
+                                              stream=False, timestamps=False)
+                    self.module.fail_json(status=status, msg=output)
 
     def stop_containers(self, containers):
         for i in containers:
