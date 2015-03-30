@@ -320,12 +320,12 @@ def main():
             )
         elif is_walrus(s3_url):
             walrus = urlparse.urlparse(s3_url).hostname
-            s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
+            s3 = boto.connect_walrus(walrus, **aws_connect_kwargs)
         else:
-            s3 = boto.s3.connection.S3Connection(calling_format=OrdinaryCallingFormat(), **aws_connect_kwargs)
+            s3 = boto.s3.connect_to_region(location, is_secure=True, calling_format=OrdinaryCallingFormat(), **aws_connect_kwargs)
             # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
             if s3 is None:
-                s3 = boto.connect_s3(aws_access_key, aws_secret_key)
+                s3 = boto.connect_s3(**aws_connect_kwargs)
 
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg='No Authentication Handler found: %s ' % str(e))
