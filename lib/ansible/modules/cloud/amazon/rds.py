@@ -931,11 +931,15 @@ def validate_parameters(required_vars, valid_vars, module):
     if module.params.get('security_groups'):
         params[sec_group] = module.params.get('security_groups').split(',')
 
-    if module.params.get('vpc_security_groups'):
-        groups_list = []
-        for x in module.params.get('vpc_security_groups'):
-            groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
-        params["vpc_security_groups"] = groups_list
+    vpc_groups = module.params.get('vpc_security_groups')
+    if vpc_groups:
+        if has_rds2:
+            params['vpc_security_group_ids'] = vpc_groups
+        else:
+            groups_list = []
+            for x in vpc_groups:
+                groups_list.append(boto.rds.VPCSecurityGroupMembership(vpc_group=x))
+            params['vpc_security_groups'] = groups_list
 
     # Convert tags dict to list of tuples that rds2 expects
     if 'tags' in params:
