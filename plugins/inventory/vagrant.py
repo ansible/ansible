@@ -107,7 +107,7 @@ if options.list:
         hosts['vagrant'].append(data['HostName'])
 
     print json.dumps(hosts)
-    sys.exit(1)
+    sys.exit(0)
 
 # Get out the host details
 #------------------------------
@@ -122,11 +122,11 @@ elif options.host:
         result['ansible_ssh_port'] = result['Port']
 
     print json.dumps(result)
-    sys.exit(1)
+    sys.exit(0)
 
 
 # Print out help
 #------------------------------
 else:
     parser.print_help()
-    sys.exit(1)
+    sys.exit(0)
