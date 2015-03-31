@@ -54,7 +54,7 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), the screen_name, host_group are required.
             - When deleting screen(s), the screen_name is required.
-            - The available states are: present(default) and absent. If the screen(s) already exists, and the state is not "absent", the screen(s) will just be updated as needed.
+            - 'The available states are: present(default) and absent. If the screen(s) already exists, and the state is not "absent", the screen(s) will just be updated as needed.'
         required: true
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
