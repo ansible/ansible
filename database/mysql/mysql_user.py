@@ -93,6 +93,14 @@ options:
     required: false
     default: false
     version_added: "1.3"
+  update_password:
+    required: false
+    default: always
+    choices: ['always', 'on_create']
+    version_added: "1.9"
+    description:
+      - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
@@ -446,6 +454,7 @@ def main():
             priv=dict(default=None),
             append_privs=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
+            update_password=dict(default="always", choices=["always", "on_create"]),
         )
     )
     user = module.params["user"]
@@ -455,6 +464,7 @@ def main():
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
     append_privs = module.boolean(module.params["append_privs"])
+    update_password = module.params['update_password']
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -497,7 +507,11 @@ def main():
     if state == "present":
         if user_exists(cursor, user, host):
             try:
-                changed = user_mod(cursor, user, host, password, priv, append_privs)
+                if update_password == 'always':
+                    changed = user_mod(cursor, user, host, password, priv, append_privs)
+                else:
+                    changed = user_mod(cursor, user, host, None, priv, append_privs)
+
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
         else:
