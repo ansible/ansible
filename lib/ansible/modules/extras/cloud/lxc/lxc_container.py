@@ -398,7 +398,7 @@ LXC_ANSIBLE_STATES = {
 # home directory of the user that was attached to the container and source
 # that users environment variables by default.
 ATTACH_TEMPLATE = """#!/usr/bin/env bash
-pushd "$(grep $(whoami) /etc/passwd | awk -F':' '{print $6}')"
+pushd "$(getent passwd $(whoami)|cut -f6 -d':')"
     if [[ -f ".bashrc" ]];then
         source .bashrc
     fi
