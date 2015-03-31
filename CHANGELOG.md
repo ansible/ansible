@@ -8,6 +8,9 @@ Major Changes:
 
 New Modules:
     cloudtrail
+    cloudstack_fw
+    cloudstack_iso
+    cloudstack_sshkey
     maven_artifact
     pushover
     zabbix_host
