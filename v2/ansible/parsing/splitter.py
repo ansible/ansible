@@ -211,7 +211,7 @@ def split_args(args):
                 params.append(token)
                 appended = True
             elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
-                if idx == 0 and not inside_quotes and was_inside_quotes:
+                if idx == 0 and was_inside_quotes:
                     params[-1] = "%s%s" % (params[-1], token)
                 elif len(tokens) > 1:
                     spacer = ''
@@ -251,8 +251,7 @@ def split_args(args):
         # one item (meaning we split on newlines), add a newline back here
         # to preserve the original structure
         if len(items) > 1 and itemidx != len(items) - 1 and not line_continuation:
-            if not params[-1].endswith('\n'):
-                params[-1] += '\n'
+            params[-1] += '\n'
 
         # always clear the line continuation flag
         line_continuation = False
