@@ -166,7 +166,11 @@ class LookupModule(object):
             raise AnsibleError("bad formatting string: %s" % self.format)
 
     def generate_sequence(self):
-        numbers = xrange(self.start, self.end + 1, self.stride)
+        if self.stride > 0:
+            adjust = 1
+        else:
+            adjust = -1
+        numbers = xrange(self.start, self.end + adjust, self.stride)
 
         for i in numbers:
             try:
