@@ -17,15 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pipes
 
 from ansible.plugins.action import ActionBase
-
-## fixes https://github.com/ansible/ansible/issues/3518
-# http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
-import sys
-reload(sys)
-sys.setdefaultencoding("utf8")
-import pipes
 
 
 class ActionModule(ActionBase):

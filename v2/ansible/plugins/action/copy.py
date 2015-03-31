@@ -30,18 +30,7 @@ from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
-
-### FIXME: Find a different way to fix 3518 as sys.defaultencoding() breaks
-# the python interpreter in subtle ways.  It appears that this does not fix
-# 3518 anyway (using binary files via lookup().  Instead, it tries to fix
-# utf-8 strings in the content parameter.  That should be fixable by properly
-# encoding or decoding the value before we write it to a file.
-#
-## fixes https://github.com/ansible/ansible/issues/3518
-# http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
-#import sys
-#reload(sys)
-#sys.setdefaultencoding("utf8")
+from ansible.utils.unicode import to_bytes
 
 
 class ActionModule(ActionBase):
@@ -54,16 +43,6 @@ class ActionModule(ActionBase):
         dest    = self._task.args.get('dest', None)
         raw     = boolean(self._task.args.get('raw', 'no'))
         force   = boolean(self._task.args.get('force', 'yes'))
-
-        # content with newlines is going to be escaped to safely load in yaml
-        # now we need to unescape it so that the newlines are evaluated properly
-        # when writing the file to disk
-        if content:
-            if isinstance(content, unicode):
-                try:
-                    content = content.decode('unicode-escape')
-                except UnicodeDecodeError:
-                    pass
 
         # FIXME: first available file needs to be reworked somehow...
         #if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
@@ -86,7 +65,7 @@ class ActionModule(ActionBase):
             try:
                 # If content comes to us as a dict it should be decoded json.
                 # We need to encode it back into a string to write it out.
-                if type(content) is dict:
+                if isinstance(content, dict):
                     content_tempfile = self._create_content_tempfile(json.dumps(content))
                 else:
                     content_tempfile = self._create_content_tempfile(content)
@@ -316,7 +295,8 @@ class ActionModule(ActionBase):
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
         fd, content_tempfile = tempfile.mkstemp()
-        f = os.fdopen(fd, 'w')
+        f = os.fdopen(fd, 'wb')
+        content = to_bytes(content)
         try:
             f.write(content)
         except Exception, err:
