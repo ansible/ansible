@@ -22,66 +22,63 @@ module: vertica_role
 version_added: '1.0'
 short_description: Adds or removes Vertica database roles and assigns roles to them.
 description:
-  Adds or removes Vertica database role and, optionally, assign other roles.
+  - Adds or removes Vertica database role and, optionally, assign other roles.
 options:
   name:
     description:
-      Name of the role to add or remove.
+      - Name of the role to add or remove.
     required: true
-    default: null
   assigned_roles:
     description:
-      Comma separated list of roles to assign to the role.
-      [Alias I(assigned_role)]
+      - Comma separated list of roles to assign to the role.
+    aliases: ['assigned_role']
     required: false
     default: null
   state:
     description:
-      Whether to create C(present), drop C(absent) or lock C(locked) a role.
+      - Whether to create C(present), drop C(absent) or lock C(locked) a role.
     required: false
     choices: ['present', 'absent']
     default: present
   db:
     description:
-      Name of the Vertica database.
+      - Name of the Vertica database.
     required: false
     default: null
   cluster:
     description:
-      Name of the Vertica cluster.
+      - Name of the Vertica cluster.
     required: false
     default: localhost
   port:
     description:
-      Vertica cluster port to connect to.
+      - Vertica cluster port to connect to.
     required: false
     default: 5433
   login_user:
     description:
-      The username used to authenticate with.
+      - The username used to authenticate with.
     required: false
     default: dbadmin
   login_password:
     description:
-      The password used to authenticate with.
+      - The password used to authenticate with.
     required: false
     default: null
 notes:
-  The default authentication assumes that you are either logging in as or sudo'ing
-  to the C(dbadmin) account on the host.
-  This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
-  that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
-  Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
-  to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
-  and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
-  to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
+  - The default authentication assumes that you are either logging in as or sudo'ing
+    to the C(dbadmin) account on the host.
+  - This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
+    that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
+  - Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
+    to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
+    and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
+    to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
 requirements: [ 'unixODBC', 'pyodbc' ]
 author: Dariusz Owczarek
 """
 
 EXAMPLES = """
-Examples:
-
 - name: creating a new vertica role
   vertica_role: name=role_name db=db_name state=present
 

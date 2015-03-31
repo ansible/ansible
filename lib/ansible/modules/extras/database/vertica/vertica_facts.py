@@ -22,11 +22,11 @@ module: vertica_facts
 version_added: '1.0'
 short_description: Gathers Vertica database facts.
 description:
-  Gathers Vertica database facts.
+  - Gathers Vertica database facts.
 options:
   cluster:
     description:
-      Name of the cluster running the schema.
+      - Name of the cluster running the schema.
     required: false
     default: localhost
   port:
@@ -36,28 +36,28 @@ options:
     default: 5433
   db:
     description:
-      Name of the database running the schema.
+      - Name of the database running the schema.
     required: false
     default: null
   login_user:
     description:
-      The username used to authenticate with.
+      - The username used to authenticate with.
     required: false
     default: dbadmin
   login_password:
     description:
-      The password used to authenticate with.
+      - The password used to authenticate with.
     required: false
     default: null
 notes:
-  The default authentication assumes that you are either logging in as or sudo'ing
-  to the C(dbadmin) account on the host.
-  This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
-  that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
-  Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
-  to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
-  and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
-  to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
+  - The default authentication assumes that you are either logging in as or sudo'ing
+    to the C(dbadmin) account on the host.
+  - This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
+    that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
+  - Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
+    to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
+    and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
+    to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
 requirements: [ 'unixODBC', 'pyodbc' ]
 author: Dariusz Owczarek
 """
