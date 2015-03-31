@@ -19,6 +19,7 @@ Major changes:
 * Privilege Escalation generalization, new 'Become' system and variables  now will
   handle existing and new methods. Sudo and su have been kept for backwards compatibility.
   New methods pbrun and pfexec in 'alpha' state, planned adding 'runas' for winrm connection plugin.
+  Existing custom connection plugins will need to be updated.
 * Improved ssh connection error reporting, now you get back the specific message from ssh.
 * Added facility to document task module return values for registered vars, both for
   ansible-doc and the docsite. Documented copy, stats and acl modules, the rest must be
