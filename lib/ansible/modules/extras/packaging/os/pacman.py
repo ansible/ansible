@@ -56,6 +56,14 @@ options:
         choices: ["yes", "no"]
         version_added: "1.3"
 
+    force:
+        description:
+            - Force remove package, without any checks.
+        required: false
+        default: "no"
+        choices: ["yes", "no"]
+        version_added: "1.3"
+
     update_cache:
         description:
             - Whether or not to refresh the master package lists. This can be
@@ -90,6 +98,9 @@ EXAMPLES = '''
 
 # Run the equivalent of "pacman -Su" as a separate step
 - pacman: upgrade=yes
+
+# Run the equivalent of "pacman -Rdd", force remove package baz
+- pacman: name=baz state=absent force=yes
 '''
 
 import json
@@ -170,6 +181,12 @@ def remove_packages(module, packages):
     else:
         args = "R"
 
+def remove_packages(module, packages):
+    if module.params["force"]:
+        args = "Rdd"
+    else:
+        args = "R"
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -244,6 +261,7 @@ def main():
             name         = dict(aliases=['pkg']),
             state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             recurse      = dict(default='no', choices=BOOLEANS, type='bool'),
+            force        = dict(default='no', choices=BOOLEANS, type='bool'),
             upgrade      = dict(default='no', choices=BOOLEANS, type='bool'),
             update_cache = dict(default='no', aliases=['update-cache'], choices=BOOLEANS, type='bool')),
         required_one_of = [['name', 'update_cache', 'upgrade']],
