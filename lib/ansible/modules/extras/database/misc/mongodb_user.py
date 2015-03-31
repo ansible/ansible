@@ -222,7 +222,7 @@ def main():
             if mongocnf_creds is not False:
                 login_user = mongocnf_creds['user']
                 login_password = mongocnf_creds['password']
-        elif login_password is None and login_user is not None:
+        elif login_password is None or login_user is None:
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         if login_user is not None and login_password is not None:
