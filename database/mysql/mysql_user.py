@@ -97,7 +97,7 @@ options:
     required: false
     default: always
     choices: ['always', 'on_create']
-    version_added: "1.9"
+    version_added: "2.0"
     description:
       - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 
