@@ -20,17 +20,27 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from yaml.composer import Composer
-from yaml.nodes import MappingNode
+from yaml.nodes import MappingNode, ScalarNode
 
 class AnsibleComposer(Composer):
     def __init__(self):
         self.__mapping_starts = []
         super(Composer, self).__init__()
+
     def compose_node(self, parent, index):
         # the line number where the previous token has ended (plus empty lines)
         node = Composer.compose_node(self, parent, index)
-        if isinstance(node, MappingNode):
+        if isinstance(node, ScalarNode):
+            # Scalars are pretty easy -- assume they start on the current
+            # token's line (what about multiline strings?  Perhaps we also
+            # need to use previous token ended
             node.__datasource__ = self.name
+            node.__line__ = self.line + 1
+            node.__column__ = self.column + 1
+        elif isinstance(node, MappingNode):
+            node.__datasource__ = self.name
+
+            # Need extra help to know where the mapping starts
             try:
                 (cur_line, cur_column) = self.__mapping_starts.pop()
             except:
@@ -38,7 +48,9 @@ class AnsibleComposer(Composer):
                 cur_column = None
             node.__line__   = cur_line
             node.__column__ = cur_column
+
         return node
+
     def compose_mapping_node(self, anchor):
         # the column here will point at the position in the file immediately
         # after the first key is found, which could be a space or a newline.

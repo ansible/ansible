@@ -20,7 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from yaml.constructor import Constructor
-from ansible.parsing.yaml.objects import AnsibleMapping
+from ansible.utils.unicode import to_unicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleUnicode
 
 class AnsibleConstructor(Constructor):
     def __init__(self, file_name=None):
@@ -52,6 +53,22 @@ class AnsibleConstructor(Constructor):
 
         return ret
 
+    def construct_yaml_str(self, node):
+        # Override the default string handling function
+        # to always return unicode objects
+        value = self.construct_scalar(node)
+        value = to_unicode(value)
+        data = AnsibleUnicode(self.construct_scalar(node))
+
+        data._line_number = node.__line__
+        data._column_number = node.__column__
+        if self._ansible_file_name:
+            data._data_source = self._ansible_file_name
+        else:
+            data._data_source = node.__datasource__
+
+        return data
+
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',
     AnsibleConstructor.construct_yaml_map)
@@ -59,4 +76,12 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:python/dict',
     AnsibleConstructor.construct_yaml_map)
+
+AnsibleConstructor.add_constructor(
+    u'tag:yaml.org,2002:str',
+    AnsibleConstructor.construct_yaml_str)
+
+AnsibleConstructor.add_constructor(
+    u'tag:yaml.org,2002:python/unicode',
+    AnsibleConstructor.construct_yaml_str)
 
