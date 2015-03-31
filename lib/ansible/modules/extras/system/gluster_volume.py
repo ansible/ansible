@@ -130,8 +130,10 @@ import shutil
 import time
 import socket
 
+glusterbin = ''
 
 def run_gluster(gargs, **kwargs):
+    global glusterbin
     args = [glusterbin]
     args.extend(gargs)
     try:
@@ -143,6 +145,7 @@ def run_gluster(gargs, **kwargs):
     return out
 
 def run_gluster_nofail(gargs, **kwargs):
+    global glusterbin
     args = [glusterbin]
     args.extend(gargs)
     rc, out, err = module.run_command(args, **kwargs)
@@ -151,6 +154,7 @@ def run_gluster_nofail(gargs, **kwargs):
     return out
 
 def run_gluster_yes(gargs):
+    global glusterbin
     args = [glusterbin]
     args.extend(gargs)
     rc, out, err = module.run_command(args, data='y\n')
@@ -312,6 +316,7 @@ def main():
             )
         )
 
+    global glusterbin
     glusterbin = module.get_bin_path('gluster', True)
 
     changed = False
