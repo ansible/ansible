@@ -78,7 +78,7 @@ options:
     version_added: "1.5"
   template_url:
     description:
-      - 'Location of file containing the template body. The URL must point to a template (max size: 307,200 bytes) located in an S3 bucket in the same region as the stack. This parameter is mutually exclusive with 'template'. Either one of them is required if "state" parameter is "present"'
+      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region as the stack. This parameter is mutually exclusive with 'template'. Either one of them is required if "state" parameter is "present"
     required: false
     version_added: "2.0"
 
