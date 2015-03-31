@@ -291,7 +291,7 @@ def privileges_unpack(priv):
                     pieces[0][idx] = "`" + pieces[0][idx] + "`"
             pieces[0] = '.'.join(pieces[0])
 
-        output[pieces[0]] = pieces[1].upper().split(',')
+        output[pieces[0]] = map(lambda s: s.strip(), pieces[1].upper().split(','))
         new_privs = frozenset(output[pieces[0]])
         if not new_privs.issubset(VALID_PRIVS):
             raise InvalidPrivsError('Invalid privileges specified: %s' % new_privs.difference(VALID_PRIVS))
