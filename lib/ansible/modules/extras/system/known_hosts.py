@@ -188,10 +188,14 @@ def search_for_host_key(module,host,key,path,sshkeygen):
     replace=False
     if os.path.exists(path)==False:
         return False, False
+    #openssh >=6.4 has changed ssh-keygen behaviour such that it returns
+    #1 if no host is found, whereas previously it returned 0
     rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,'-f',path],
-                                 check_rc=True)
-    if stdout=='': #host not found
-        return False, False
+                                 check_rc=False)
+    if stdout=='' and stderr=='' and (rc==0 or rc==1):
+        return False, False #host not found, no other errors
+    if rc!=0: #something went wrong
+        module.fail_json(msg="ssh-keygen failed (rc=%d,stdout='%s',stderr='%s')" % (rc,stdout,stderr))
 
 #If user supplied no key, we don't want to try and replace anything with it
     if key is None:
