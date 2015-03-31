@@ -45,23 +45,23 @@ options:
     description:
       - CIDR (full notation) to be used for firewall rule.
     required: false
-    default: '0.0.0.0\0'
-  start_port
+    default: '0.0.0.0/0'
+  start_port:
     description:
       - Start port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
     required: false
     default: null
-  end_port
+  end_port:
     description:
       - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
     required: false
     default: null
-  icmp_type
+  icmp_type:
     description:
       - Type of the icmp message being sent. Considered if C(protocol=icmp).
     required: false
     default: null
-  icmp_code
+  icmp_code:
     description:
       - Error code for this icmp message. Considered if C(protocol=icmp).
     required: false
@@ -104,9 +104,6 @@ EXAMPLES = '''
     end_port: 8888
     cidr: 17.0.0.0/8
     state: absent
-'''
-
-RETURN = '''
 '''
 
 try:
