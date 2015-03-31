@@ -23,8 +23,8 @@ __metaclass__ = type
 
 from ansible import constants as C
 from ansible.inventory.group import Group
-from ansible.inventory.host import Host
-from ansible.inventory.aggregate import InventoryAggregateParser
+from .host import Host
+from ansible.plugins.inventory.aggregate import InventoryAggregateParser
 
 class Inventory:
     '''
