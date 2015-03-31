@@ -30,6 +30,7 @@ DOCUMENTATION = '''
 module: quantum_router
 version_added: "1.2"
 author: "Benno Joy (@bennojoy)"
+deprecated: Deprecated in 2.0. Use os_router instead
 short_description: Create or Remove router from openstack
 description:
    - Create or Delete routers from OpenStack
