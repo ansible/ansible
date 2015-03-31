@@ -32,27 +32,22 @@ options:
     description:
       - Name of public key.
     required: true
-    default: null
-    aliases: []
   project:
     description:
       - Name of the project the public key to be registered in.
     required: false
     default: null
-    aliases: []
   state:
     description:
       - State of the public key.
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
-    aliases: []
   public_key:
     description:
       - String of the public key.
     required: false
     default: null
-    aliases: []
 '''
 
 EXAMPLES = '''
