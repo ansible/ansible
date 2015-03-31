@@ -19,6 +19,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+import codecs
+
+# Decode escapes adapted from rspeer's answer here:
+# http://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
+_HEXCHAR = '[a-fA-F0-9]'
+_ESCAPE_SEQUENCE_RE = re.compile(r'''
+    ( \\U{0}           # 8-digit hex escapes
+    | \\u{1}           # 4-digit hex escapes
+    | \\x{2}           # 2-digit hex escapes
+    | \\[0-7]{{1,3}}   # Octal escapes
+    | \\N\{{[^}}]+\}}  # Unicode characters by name
+    | \\[\\'"abfnrtv]  # Single-character escapes
+    )'''.format(_HEXCHAR*8, _HEXCHAR*4, _HEXCHAR*2), re.UNICODE | re.VERBOSE)
+
+def _decode_escapes(s):
+    def decode_match(match):
+        return codecs.decode(match.group(0), 'unicode-escape')
+
+    return _ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
 def parse_kv(args, check_raw=False):
     '''
     Convert a string of key/value items to a dict. If any free-form params
@@ -26,6 +47,10 @@ def parse_kv(args, check_raw=False):
     to a new parameter called '_raw_params'. If check_raw is not enabled,
     they will simply be ignored.
     '''
+
+    ### FIXME: args should already be a unicode string
+    from ansible.utils.unicode import to_unicode
+    args = to_unicode(args, nonstring='passthru')
 
     options = {}
     if args is not None:
@@ -39,6 +64,7 @@ def parse_kv(args, check_raw=False):
 
         raw_params = []
         for x in vargs:
+            x = _decode_escapes(x)
             if "=" in x:
                 pos = 0
                 try:
@@ -72,7 +98,7 @@ def parse_kv(args, check_raw=False):
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
         if len(raw_params) > 0:
-            options['_raw_params'] = ' '.join(raw_params)
+            options[u'_raw_params'] = ' '.join(raw_params)
 
     return options
 
@@ -126,17 +152,11 @@ def split_args(args):
     '''
 
     # the list of params parsed out of the arg string
-    # this is going to be the result value when we are donei
+    # this is going to be the result value when we are done
     params = []
 
-    # here we encode the args, so we have a uniform charset to
-    # work with, and split on white space
+    # Initial split on white space
     args = args.strip()
-    try:
-        args = args.encode('utf-8')
-        do_decode = True
-    except UnicodeDecodeError:
-        do_decode = False
     items = args.strip().split('\n')
 
     # iterate over the tokens, and reassemble any that may have been
@@ -241,10 +261,6 @@ def split_args(args):
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
         raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes")
-
-    # finally, we decode each param back to the unicode it was in the arg string
-    if do_decode:
-        params = [x.decode('utf-8') for x in params]
 
     return params
 
