@@ -63,6 +63,13 @@ options:
         required: false
         default: "no"
         choices: ["yes", "no"]
+
+    upgrade
+        description:
+            - Whether or not to upgrade whole system
+        required: false
+        default: "no"
+        choices: ["yes", "no"]
 '''
 
 EXAMPLES = '''
@@ -80,6 +87,9 @@ EXAMPLES = '''
 
 # Run the equivalent of "pacman -Sy" as a separate step
 - pacman: update_cache=yes
+
+# Run the equivalent of "pacman -Su" as a separate step
+- pacman: upgrade=yes
 '''
 
 import json
@@ -132,6 +142,27 @@ def update_package_db(module):
     else:
         module.fail_json(msg="could not update package db")
 
+def upgrade(module):
+    cmdupgrade = "pacman -Suq --noconfirm"
+    cmdneedrefresh = "pacman -Supq"
+    rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
+
+def upgrade(module):
+    cmdupgrade = "pacman -Suq --noconfirm"
+    cmdneedrefresh = "pacman -Supq"
+    rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
+
+    if rc == 0:
+        if stdout.count('\n') > 1:
+            rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
+            if rc == 0:
+                module.exit_json(changed=True, msg='System upgraded')
+            else:
+                module.fail_json(msg="could not upgrade")
+        else:
+            module.exit_json(changed=False, msg='Nothing to upgrade')
+    else:
+        module.fail_json(msg="could not list upgrades")
 
 def remove_packages(module, packages):
     if module.params["recurse"]:
@@ -213,8 +244,9 @@ def main():
             name         = dict(aliases=['pkg']),
             state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             recurse      = dict(default='no', choices=BOOLEANS, type='bool'),
+            upgrade      = dict(default='no', choices=BOOLEANS, type='bool'),
             update_cache = dict(default='no', aliases=['update-cache'], choices=BOOLEANS, type='bool')),
-        required_one_of = [['name', 'update_cache']],
+        required_one_of = [['name', 'update_cache', 'upgrade']],
         supports_check_mode = True)
 
     if not os.path.exists(PACMAN_PATH):
@@ -235,6 +267,9 @@ def main():
 
     if p['update_cache'] and module.check_mode and not p['name']:
         module.exit_json(changed=True, msg='Would have updated the package cache')
+
+    if p['upgrade']:
+        upgrade(module)
 
     if p['name']:
         pkgs = p['name'].split(',')
