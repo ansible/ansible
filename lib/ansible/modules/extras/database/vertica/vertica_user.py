@@ -22,98 +22,95 @@ module: vertica_user
 version_added: '1.0'
 short_description: Adds or removes Vertica database users and assigns roles.
 description:
-  Adds or removes Vertica database user and, optionally, assigns roles.
-  A user will not be removed until all the dependencies have been dropped.
-  In such a situation, if the module tries to remove the user it
-  will fail and only remove roles granted to the user.
+  - Adds or removes Vertica database user and, optionally, assigns roles.
+  - A user will not be removed until all the dependencies have been dropped.
+  - In such a situation, if the module tries to remove the user it
+    will fail and only remove roles granted to the user.
 options:
   name:
     description:
-      Name of the user to add or remove.
+      - Name of the user to add or remove.
     required: true
-    default: null
   profile:
     description:
-      Sets the user's profile.
+      - Sets the user's profile.
     required: false
     default: null
   resource_pool:
     description:
-      Sets the user's resource pool.
+      - Sets the user's resource pool.
     required: false
     default: null
   password:
     description:
-      The user's password encrypted by the MD5 algorithm.
-      The password must be generated with the format C("md5" + md5[password + username]),
-      resulting in a total of 35 characters. An easy way to do this is by querying
-      the Vertica database with select 'md5'||md5('<user_password><user_name>').
+      - The user's password encrypted by the MD5 algorithm.
+      - The password must be generated with the format C("md5" + md5[password + username]),
+        resulting in a total of 35 characters. An easy way to do this is by querying
+        the Vertica database with select 'md5'||md5('<user_password><user_name>').
     required: false
     default: null
   expired:
     description:
-      Sets the user's password expiration.
+      - Sets the user's password expiration.
     required: false
     default: null
   ldap:
     description:
-      Set to true if users are authenticated via LDAP.
-      The user will be created with password expired and set to I($ldap$).
+      - Set to true if users are authenticated via LDAP.
+      - The user will be created with password expired and set to I($ldap$).
     required: false
     default: null
   roles:
     description:
-      Comma separated list of roles to assign to the user.
-      [Alias I(role)]
+      - Comma separated list of roles to assign to the user.
+    aliases: ['role']
     required: false
     default: null
   state:
     description:
-      Whether to create C(present), drop C(absent) or lock C(locked) a user.
+      - Whether to create C(present), drop C(absent) or lock C(locked) a user.
     required: false
     choices: ['present', 'absent', 'locked']
     default: present
   db:
     description:
-      Name of the Vertica database.
+      - Name of the Vertica database.
     required: false
     default: null
   cluster:
     description:
-      Name of the Vertica cluster.
+      - Name of the Vertica cluster.
     required: false
     default: localhost
   port:
     description:
-      Vertica cluster port to connect to.
+      - Vertica cluster port to connect to.
     required: false
     default: 5433
   login_user:
     description:
-      The username used to authenticate with.
+      - The username used to authenticate with.
     required: false
     default: dbadmin
   login_password:
     description:
-      The password used to authenticate with.
+      - The password used to authenticate with.
     required: false
     default: null
 notes:
-  The default authentication assumes that you are either logging in as or sudo'ing
-  to the C(dbadmin) account on the host.
-  This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
-  that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
-  Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
-  to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
-  and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
-  to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
+  - The default authentication assumes that you are either logging in as or sudo'ing
+    to the C(dbadmin) account on the host.
+  - This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
+    that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
+  - Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
+    to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
+    and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
+    to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
 requirements: [ 'unixODBC', 'pyodbc' ]
 author: Dariusz Owczarek
 """
 
 EXAMPLES = """
-Examples:
-
 - name: creating a new vertica user with password
   vertica_user: name=user_name password=md5<encrypted_password> db=db_name state=present
 
