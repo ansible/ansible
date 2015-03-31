@@ -74,8 +74,8 @@ options:
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
-            - Available values are: dns, ip, main, port, type and useip.
-            - Please review the interface documentation for more information on the supported properties:
+            - 'Available values are: dns, ip, main, port, type and useip.'
+            - Please review the interface documentation for more information on the supported properties
             - https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface
         required: false
         default: []
