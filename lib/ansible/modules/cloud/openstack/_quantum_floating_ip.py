@@ -34,6 +34,7 @@ version_added: "1.2"
 author:
     - "Benno Joy (@bennojoy)"
     - "Brad P. Crochet (@bcrochet)"
+deprecated: Deprecated in 2.0. Use os_floating_ip instead
 short_description: Add/Remove floating IP from an instance
 description:
    - Add or Remove a floating IP to an instance
