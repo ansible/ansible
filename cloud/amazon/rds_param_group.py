@@ -87,9 +87,6 @@ EXAMPLES = '''
       name: norwegian_blue
 '''
 
-import sys
-import time
-
 VALID_ENGINES = [
     'mysql5.1',
     'mysql5.5',
@@ -112,9 +109,10 @@ VALID_ENGINES = [
 try:
     import boto.rds
     from boto.exception import BotoServerError
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
 
@@ -219,6 +217,9 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     state                   = module.params.get('state')
     group_name              = module.params.get('name').lower()

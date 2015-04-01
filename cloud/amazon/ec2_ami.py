@@ -129,15 +129,17 @@ EXAMPLES = '''
     state: absent
 
 '''
+
 import sys
 import time
 
 try:
     import boto
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def create_image(module, ec2):
     """
@@ -226,6 +228,7 @@ def deregister_image(module, ec2):
     module.exit_json(msg="AMI deregister/delete operation complete", changed=True)
     sys.exit(0)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -241,6 +244,9 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     try:
         ec2 = ec2_connect(module)
