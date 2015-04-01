@@ -105,6 +105,7 @@ from ansible.module_utils.ec2 import *
 
 try:
     import boto
+    import boto.ec2
     import boto.sns
 except ImportError:
     print "failed=True msg='boto required for this module'"
