@@ -33,23 +33,20 @@ class AnsibleConstructor(Constructor):
         yield data
         value = self.construct_mapping(node)
         data.update(value)
-        data._line_number   = value._line_number
-        data._column_number = value._column_number
-        data._data_source   = value._data_source
+        data.ansible_pos = value.ansible_pos
 
     def construct_mapping(self, node, deep=False):
         ret = AnsibleMapping(super(Constructor, self).construct_mapping(node, deep))
-        ret._line_number   = node.__line__
-        ret._column_number = node.__column__
 
         # in some cases, we may have pre-read the data and then
         # passed it to the load() call for YAML, in which case we
         # want to override the default datasource (which would be
         # '<string>') to the actual filename we read in
         if self._ansible_file_name:
-            ret._data_source = self._ansible_file_name
+            data_source = self._ansible_file_name
         else:
-            ret._data_source = node.__datasource__
+            data_source = node.__datasource__
+        ret.ansible_pos = (data_source, node.__line__, node.__column__)
 
         return ret
 
@@ -58,16 +55,15 @@ class AnsibleConstructor(Constructor):
         # to always return unicode objects
         value = self.construct_scalar(node)
         value = to_unicode(value)
-        data = AnsibleUnicode(self.construct_scalar(node))
+        ret = AnsibleUnicode(self.construct_scalar(node))
 
-        data._line_number = node.__line__
-        data._column_number = node.__column__
         if self._ansible_file_name:
-            data._data_source = self._ansible_file_name
+            data_source = self._ansible_file_name
         else:
-            data._data_source = node.__datasource__
+            data_source = node.__datasource__
+        ret.ansible_pos = (data_source, node.__line__, node.__column__)
 
-        return data
+        return ret
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',

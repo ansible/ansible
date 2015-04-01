@@ -66,7 +66,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # can preserve file:line:column information if it exists
         new_ds = AnsibleMapping()
         if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.copy_position_info(ds)
+            new_ds.ansible_pos = ds.ansible_pos
 
         # first we pull the role name out of the data structure,
         # and then use that to determine the role path (which may
