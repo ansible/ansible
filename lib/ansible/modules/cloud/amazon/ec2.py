@@ -487,7 +487,6 @@ EXAMPLES = '''
 
 '''
 
-import sys
 import time
 from ast import literal_eval
 
@@ -496,9 +495,10 @@ try:
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
     from boto.vpc import VPCConnection
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
 
@@ -782,7 +782,6 @@ def create_instances(module, ec2, vpc, override_count=None):
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
-        sys.exit(1)
 
     vpc_id = None
     if vpc_subnet_id:
@@ -1202,6 +1201,9 @@ def main():
                                 ['exact_count', 'instance_ids']
                              ],
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     ec2 = ec2_connect(module)
 

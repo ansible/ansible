@@ -72,13 +72,13 @@ tasks:
 '''
 
 import sys
-import time
 
 try:
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -89,6 +89,9 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     resource = module.params.get('resource')
     tags = module.params.get('tags')

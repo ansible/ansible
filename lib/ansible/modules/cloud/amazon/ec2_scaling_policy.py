@@ -55,8 +55,6 @@ EXAMPLES = '''
 '''
 
 
-import sys
-
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
@@ -64,10 +62,9 @@ try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import ScalingPolicy
     from boto.exception import BotoServerError
-
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def create_scaling_policy(connection, module):
@@ -156,6 +153,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 

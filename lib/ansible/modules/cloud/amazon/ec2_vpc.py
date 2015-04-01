@@ -156,16 +156,17 @@ the delete will fail until those dependencies are removed.
 '''
 
 
-import sys
 import time
 
 try:
     import boto.ec2
     import boto.vpc
     from boto.exception import EC2ResponseError
+
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def get_vpc_info(vpc):
     """
@@ -575,6 +576,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     state = module.params.get('state')
 

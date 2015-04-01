@@ -131,16 +131,15 @@ EXAMPLES = """
 """
 
 import sys
-import os
 import time
 
 try:
     import boto
     from boto.elasticache.layer1 import ElastiCacheConnection
     from boto.regioninfo import RegionInfo
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 class ElastiCacheManager(object):
@@ -496,6 +495,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
