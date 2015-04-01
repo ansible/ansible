@@ -122,9 +122,9 @@ try:
     import boto.ec2.cloudwatch
     from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
     from boto.exception import BotoServerError
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def create_metric_alarm(connection, module):
@@ -265,6 +265,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     state = module.params.get('state')
 

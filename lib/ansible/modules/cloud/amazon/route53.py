@@ -159,7 +159,6 @@ EXAMPLES = '''
 
 '''
 
-import sys
 import time
 
 try:
@@ -167,9 +166,10 @@ try:
     from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import ResourceRecordSets
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def commit(changes, retry_interval):
     """Commit changes, but retry PriorRequestNotComplete errors."""
@@ -202,6 +202,9 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     command_in              = module.params.get('command')
     zone_in                 = module.params.get('zone').lower()

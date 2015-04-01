@@ -186,16 +186,16 @@ EXAMPLES = '''
     device_name: /dev/xvdf
 '''
 
-import sys
 import time
 
 from distutils.version import LooseVersion
 
 try:
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def get_volume(module, ec2):
     name = module.params.get('name')
@@ -363,6 +363,9 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     id = module.params.get('id')
     name = module.params.get('name')

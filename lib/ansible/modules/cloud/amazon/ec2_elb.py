@@ -99,17 +99,16 @@ post_tasks:
 """
 
 import time
-import sys
-import os
 
 try:
     import boto
     import boto.ec2
     import boto.ec2.elb
     from boto.regioninfo import RegionInfo
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
@@ -298,6 +297,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 

@@ -189,7 +189,6 @@ to "replace_instances":
     region: us-east-1
 '''
 
-import sys
 import time
 
 from ansible.module_utils.basic import *
@@ -199,9 +198,9 @@ try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup, Tag
     from boto.exception import BotoServerError
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
     'health_check_period', 'health_check_type', 'launch_config_name',
@@ -617,6 +616,10 @@ def main():
         argument_spec=argument_spec, 
         mutually_exclusive = [['replace_all_instances', 'replace_instances']]
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
     state = module.params.get('state')
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')

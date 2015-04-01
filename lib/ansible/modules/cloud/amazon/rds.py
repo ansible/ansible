@@ -294,9 +294,9 @@ import time
 
 try:
     import boto.rds
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 try:
     import boto.rds2
@@ -984,6 +984,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
     invocations = {
             'create': create_db_instance,
             'replicate': replicate_db_instance,
