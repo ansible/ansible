@@ -50,3 +50,6 @@ class AnsibleMapping(AnsibleBaseYAMLObject, dict):
     ''' sub class for dictionaries '''
     pass
 
+class AnsibleUnicode(AnsibleBaseYAMLObject, unicode):
+    ''' sub class for unicode objects '''
+    pass
