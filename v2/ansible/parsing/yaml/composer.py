@@ -35,8 +35,13 @@ class AnsibleComposer(Composer):
             # token's line (what about multiline strings?  Perhaps we also
             # need to use previous token ended
             node.__datasource__ = self.name
-            node.__line__ = self.line + 1
-            node.__column__ = self.column + 1
+            node.__line__ = self.line
+
+            # Need to investigate why this works...
+            if self.indents:
+                node.__column__ = self.indent + 1
+            else:
+                node.__column__ = self.column +1
         elif isinstance(node, MappingNode):
             node.__datasource__ = self.name
 
@@ -58,4 +63,3 @@ class AnsibleComposer(Composer):
         # should be good enough to determine the error location.
         self.__mapping_starts.append((self.line + 1, self.column + 1))
         return Composer.compose_mapping_node(self, anchor)
-
