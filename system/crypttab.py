@@ -103,7 +103,7 @@ def main():
     state          = module.params['state']
     path           = module.params['path']
 
-    if backing_device is None and password is None and opts is None:
+    if state != 'absent' and backing_device is None and password is None and opts is None:
         module.fail_json(msg="expected one or more of 'backing_device', 'password' or 'opts'",
                          **module.params)
 
