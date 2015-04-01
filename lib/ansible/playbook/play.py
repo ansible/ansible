@@ -119,7 +119,11 @@ class Play(object):
         temp_vars = utils.combine_vars(self.vars, self.vars_file_vars)
         temp_vars = utils.combine_vars(temp_vars, self.playbook.extra_vars)
 
-        ds = template(basedir, ds, temp_vars)
+        try:
+            ds = template(basedir, ds, temp_vars)
+        except errors.AnsibleError, e:
+            utils.warning("non fatal error while trying to template play variables: %s" % (str(e)))
+
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
