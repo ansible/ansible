@@ -65,11 +65,13 @@ options:
       - How long should the socket layer wait before timing out for API calls.
         If this is omitted, nothing will be passed to the requests library.
     required: false
-  verify:
+    default: None
+  validate_certs:
     description:
       - Whether or not SSL API requests should be verified.
     required: false
     default: True
+    aliases: ['verify']
   cacert:
     description:
       - A path to a CA Cert bundle that can be used as part of verifying
