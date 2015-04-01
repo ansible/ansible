@@ -159,7 +159,7 @@ class Task(Base, Conditional, Taggable, Become):
         # attributes of the task class
         new_ds = AnsibleMapping()
         if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.copy_position_info(ds)
+            new_ds.ansible_pos = ds.ansible_pos
 
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms

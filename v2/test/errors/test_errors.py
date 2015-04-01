@@ -44,9 +44,7 @@ class TestErrors(unittest.TestCase):
 
     @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_object(self, mock_method):
-        self.obj._data_source   = 'foo.yml'
-        self.obj._line_number   = 1
-        self.obj._column_number = 1
+        self.obj.ansible_pos = ('foo.yml', 1, 1)
 
         mock_method.return_value = ('this is line 1\n', '')
         e = AnsibleError(self.message, self.obj)
@@ -59,16 +57,12 @@ class TestErrors(unittest.TestCase):
 
         with patch('{0}.open'.format(BUILTINS), m):
             # this line will be found in the file
-            self.obj._data_source   = 'foo.yml'
-            self.obj._line_number   = 1
-            self.obj._column_number = 1
+            self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(e.message, "ERROR! This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
 
             # this line will not be found, as it is out of the index range
-            self.obj._data_source   = 'foo.yml'
-            self.obj._line_number   = 2
-            self.obj._column_number = 1
+            self.obj.ansible_pos = ('foo.yml', 2, 1)
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(e.message, "ERROR! This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
-        
+

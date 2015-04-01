@@ -146,7 +146,7 @@ class DataLoader():
         err_obj = None
         if hasattr(yaml_exc, 'problem_mark'):
             err_obj = AnsibleBaseYAMLObject()
-            err_obj.set_position_info(file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
+            err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
         raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
 

@@ -54,9 +54,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data, u'Ansible')
         self.assertIsInstance(data, unicode)
 
-        self.assertEqual(data._line_number, 2)
-        self.assertEqual(data._column_number, 17)
-        self.assertEqual(data._data_source, 'myfile.yml')
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
     def test_parse_utf8_string(self):
         stream = StringIO("""
@@ -67,9 +65,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data, u'Cafè Eñyei')
         self.assertIsInstance(data, unicode)
 
-        self.assertEqual(data._line_number, 2)
-        self.assertEqual(data._column_number, 17)
-        self.assertEqual(data._data_source, 'myfile.yml')
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
     def test_parse_dict(self):
         stream = StringIO("""
@@ -84,17 +80,10 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertIsInstance(data.values()[0], unicode)
 
         # Beginning of the first key
-        self.assertEqual(data._line_number, 2)
-        self.assertEqual(data._column_number, 17)
-        self.assertEqual(data._data_source, 'myfile.yml')
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
-        self.assertEqual(data[u'webster']._line_number, 2)
-        self.assertEqual(data[u'webster']._column_number, 26)
-        self.assertEqual(data[u'webster']._data_source, 'myfile.yml')
-
-        self.assertEqual(data[u'oed']._line_number, 3)
-        self.assertEqual(data[u'oed']._column_number, 22)
-        self.assertEqual(data[u'oed']._data_source, 'myfile.yml')
+        self.assertEqual(data[u'webster'].ansible_pos, ('myfile.yml', 2, 26))
+        self.assertEqual(data[u'oed'].ansible_pos, ('myfile.yml', 3, 22))
 
     def test_parse_list(self):
         stream = StringIO("""
@@ -191,109 +180,51 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def check_vars(self):
         # Numbers don't have line/col information yet
-        #self.assertEqual(self.data[0][u'vars'][u'number']._line_number, 4)
-        #self.assertEqual(self.data[0][u'vars'][u'number']._column_number, 21)
-        #self.assertEqual(self.data[0][u'vars'][u'number']._data_source, self.play_filename)
+        #self.assertEqual(self.data[0][u'vars'][u'number'].ansible_pos, (self.play_filename, 4, 21))
 
-        self.assertEqual(self.data[0][u'vars'][u'string']._line_number, 5)
-        self.assertEqual(self.data[0][u'vars'][u'string']._column_number, 29)
-        self.assertEqual(self.data[0][u'vars'][u'string']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'vars'][u'utf8_string']._line_number, 6)
-        self.assertEqual(self.data[0][u'vars'][u'utf8_string']._column_number, 34)
-        self.assertEqual(self.data[0][u'vars'][u'utf8_string']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'vars'][u'dictionary']._line_number, 8)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary']._column_number, 23)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._line_number, 8)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._column_number, 32)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._line_number, 9)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._column_number, 28)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._data_source, self.play_filename)
+        self.assertEqual(self.data[0][u'vars'][u'string'].ansible_pos, (self.play_filename, 5, 29))
+        self.assertEqual(self.data[0][u'vars'][u'utf8_string'].ansible_pos, (self.play_filename, 6, 34))
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'].ansible_pos, (self.play_filename, 8, 23))
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster'].ansible_pos, (self.play_filename, 8, 32))
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed'].ansible_pos, (self.play_filename, 9, 28))
 
         # Lists don't yet have line/col information
-        #self.assertEqual(self.data[0][u'vars'][u'list']._line_number, 10)
-        #self.assertEqual(self.data[0][u'vars'][u'list']._column_number, 21)
-        #self.assertEqual(self.data[0][u'vars'][u'list']._data_source, self.play_filename)
+        #self.assertEqual(self.data[0][u'vars'][u'list'].ansible_pos, (self.play_filename, 10, 21))
 
     def check_tasks(self):
         #
         # First Task
         #
-        self.assertEqual(self.data[0][u'tasks'][0]._line_number, 16)
-        self.assertEqual(self.data[0][u'tasks'][0]._column_number, 23)
-        self.assertEqual(self.data[0][u'tasks'][0]._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][0][u'name']._line_number, 16)
-        self.assertEqual(self.data[0][u'tasks'][0][u'name']._column_number, 29)
-        self.assertEqual(self.data[0][u'tasks'][0][u'name']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping']._line_number, 18)
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping']._column_number, 25)
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._line_number, 18)
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._column_number, 31)
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._data_source, self.play_filename)
+        self.assertEqual(self.data[0][u'tasks'][0].ansible_pos, (self.play_filename, 16, 23))
+        self.assertEqual(self.data[0][u'tasks'][0][u'name'].ansible_pos, (self.play_filename, 16, 29))
+        self.assertEqual(self.data[0][u'tasks'][0][u'ping'].ansible_pos, (self.play_filename, 18, 25))
+        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data'].ansible_pos, (self.play_filename, 18, 31))
 
         #
         # Second Task
         #
-        self.assertEqual(self.data[0][u'tasks'][1]._line_number, 20)
-        self.assertEqual(self.data[0][u'tasks'][1]._column_number, 23)
-        self.assertEqual(self.data[0][u'tasks'][1]._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][1][u'name']._line_number, 20)
-        self.assertEqual(self.data[0][u'tasks'][1][u'name']._column_number, 29)
-        self.assertEqual(self.data[0][u'tasks'][1][u'name']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping']._line_number, 22)
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping']._column_number, 25)
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._line_number, 22)
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._column_number, 31)
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._data_source, self.play_filename)
+        self.assertEqual(self.data[0][u'tasks'][1].ansible_pos, (self.play_filename, 20, 23))
+        self.assertEqual(self.data[0][u'tasks'][1][u'name'].ansible_pos, (self.play_filename, 20, 29))
+        self.assertEqual(self.data[0][u'tasks'][1][u'ping'].ansible_pos, (self.play_filename, 22, 25))
+        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data'].ansible_pos, (self.play_filename, 22, 31))
 
         #
         # Third Task
         #
-        self.assertEqual(self.data[0][u'tasks'][2]._line_number, 24)
-        self.assertEqual(self.data[0][u'tasks'][2]._column_number, 23)
-        self.assertEqual(self.data[0][u'tasks'][2]._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][2][u'name']._line_number, 24)
-        self.assertEqual(self.data[0][u'tasks'][2][u'name']._column_number, 29)
-        self.assertEqual(self.data[0][u'tasks'][2][u'name']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'tasks'][2][u'command']._line_number, 25)
-        self.assertEqual(self.data[0][u'tasks'][2][u'command']._column_number, 32)
-        self.assertEqual(self.data[0][u'tasks'][2][u'command']._data_source, self.play_filename)
+        self.assertEqual(self.data[0][u'tasks'][2].ansible_pos, (self.play_filename, 24, 23))
+        self.assertEqual(self.data[0][u'tasks'][2][u'name'].ansible_pos, (self.play_filename, 24, 29))
+        self.assertEqual(self.data[0][u'tasks'][2][u'command'].ansible_pos, (self.play_filename, 25, 32))
 
     def test_line_numbers(self):
         # Check the line/column numbers are correct
-        # Note: Remember, currently dicts begin at the start of their first entry's value
-        self.assertEqual(self.data[0]._line_number, 2)
-        self.assertEqual(self.data[0]._column_number, 19)
-        self.assertEqual(self.data[0]._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'hosts']._line_number, 2)
-        self.assertEqual(self.data[0][u'hosts']._column_number, 26)
-        self.assertEqual(self.data[0][u'hosts']._data_source, self.play_filename)
-
-        self.assertEqual(self.data[0][u'vars']._line_number, 4)
-        self.assertEqual(self.data[0][u'vars']._column_number, 21)
-        self.assertEqual(self.data[0][u'vars']._data_source, self.play_filename)
+        # Note: Remember, currently dicts begin at the start of their first entry
+        self.assertEqual(self.data[0].ansible_pos, (self.play_filename, 2, 19))
+        self.assertEqual(self.data[0][u'hosts'].ansible_pos, (self.play_filename, 2, 26))
+        self.assertEqual(self.data[0][u'vars'].ansible_pos, (self.play_filename, 4, 21))
 
         self.check_vars()
 
         # Lists don't yet have line/col info
-        #self.assertEqual(self.data[0][u'tasks']._line_number, 17)
-        #self.assertEqual(self.data[0][u'tasks']._column_number, 28)
-        #self.assertEqual(self.data[0][u'tasks']._data_source, self.play_filename)
+        #self.assertEqual(self.data[0][u'tasks'].ansible_pos, (self.play_filename, 17, 28))
 
         self.check_tasks()

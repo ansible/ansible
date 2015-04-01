@@ -74,7 +74,7 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
         #if 'include' in task:
         #    cur_basedir = None
         #    if isinstance(task, AnsibleBaseYAMLObject) and loader:
-        #        pos_info = task.get_position_info()
+        #        pos_info = task.ansible_pos
         #        new_basedir = os.path.dirname(pos_info[0])
         #        cur_basedir = loader.get_basedir()
         #        loader.set_basedir(new_basedir)
