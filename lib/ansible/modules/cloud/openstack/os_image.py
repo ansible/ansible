@@ -169,13 +169,13 @@ def main():
                     module.exit_json(changed=changed, result=result)
                 image = cloud.get_image(name_or_id=result['id'])
 
-        cloud.update_image_properties(
-            image=image,
-            kernel=module.params['kernel'],
-            ramdisk=module.params['ramdisk'],
-            **module.params['properties'])
+            cloud.update_image_properties(
+                image=image,
+                kernel=module.params['kernel'],
+                ramdisk=module.params['ramdisk'],
+                **module.params['properties'])
 
-        if module.params['state'] == 'absent':
+        elif module.params['state'] == 'absent':
             if not image:
                 module.exit_json(changed=False, result="success")
             else:
