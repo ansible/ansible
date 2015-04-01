@@ -83,6 +83,7 @@ def openstack_full_argument_spec(**kwargs):
         key=dict(default=None),
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
+        api_timeout=dict(default=None, type='int'),
         endpoint_type=dict(
             default='public', choices=['public', 'internal', 'admin']
         )

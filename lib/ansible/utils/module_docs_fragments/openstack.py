@@ -60,6 +60,11 @@ options:
       - How long should ansible wait for the requested resource.
     required: false
     default: 180
+  api_timeout:
+    description:
+      - How long should the socket layer wait before timing out for API calls.
+        If this is omitted, nothing will be passed to the requests library.
+    required: false
   verify:
     description:
       - Whether or not SSL API requests should be verified.
