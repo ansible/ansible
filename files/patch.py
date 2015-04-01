@@ -43,7 +43,9 @@ options:
     aliases: [ "originalfile" ]
   src:
     description:
-      - Path of the patch file as accepted by the GNU patch tool.
+      - Path of the patch file as accepted by the GNU patch tool. If
+        C(remote_src) is False, the patch source file is looked up from the
+        module's "files" directory.
     required: true
     aliases: [ "patchfile" ]
   remote_src:
@@ -141,8 +143,13 @@ def main():
         p.basedir = path.dirname(p.dest)
 
     patch_bin = module.get_bin_path('patch')
+    if patch_bin is None:
+        module.fail_json(msg="patch command not found")
     patch_func = lambda opts: module.run_command("%s %s" % (patch_bin, ' '.join(opts)))
 
+    # patch need an absolute file name
+    p.src = os.path.abspath(p.src)
+    
     changed = False
     if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip):
         try:
