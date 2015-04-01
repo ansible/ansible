@@ -1303,7 +1303,7 @@ class AnsibleModule(object):
 
         try:
             shutil.copy2(fn, backupdest)
-        except shutil.Error, e:
+        except (shutil.Error, IOError), e:
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
