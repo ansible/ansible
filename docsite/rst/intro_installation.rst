@@ -103,6 +103,11 @@ when they are implemented, and also easily contribute to the project. Because th
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
+.. note::
+  
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use apt/yum/pip for a stable version
+
+
 To install from source.
 
 .. code-block:: bash
