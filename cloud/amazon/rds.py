@@ -759,7 +759,7 @@ def modify_db_instance(module, conn):
     valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
                   'db_name', 'engine_version', 'instance_type', 'iops', 'license_model',
                   'maint_window', 'multi_zone', 'new_instance_name',
-                  'option_group', 'parameter_group' 'password', 'size', 'upgrade']
+                  'option_group', 'parameter_group', 'password', 'size', 'upgrade']
 
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
