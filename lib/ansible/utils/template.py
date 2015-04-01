@@ -118,7 +118,10 @@ def template(basedir, varname, templatevars, lookup_fatal=True, depth=0, expand_
 
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
-                varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
+                try:
+                    varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
+                except errors.AnsibleError, e:
+                    raise errors.AnsibleError("Failed to template %s: %s" % (varname, str(e)))
 
                 if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
                     eval_results = utils.safe_eval(varname, locals=templatevars, include_exceptions=True)
@@ -188,11 +191,7 @@ class _jinja2_vars(object):
         if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
-            try:
-                return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
-            except:
-                raise KeyError("undefined variable: %s" % varname)
-
+            return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
 
     def add_locals(self, locals):
         '''
