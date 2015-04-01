@@ -77,7 +77,7 @@ def openstack_full_argument_spec(**kwargs):
         auth=dict(default=None),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
-        verify=dict(default=True),
+        verify=dict(default=True, aliases=['validate_certs']),
         cacert=dict(default=None),
         cert=dict(default=None),
         key=dict(default=None),
