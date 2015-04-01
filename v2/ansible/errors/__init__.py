@@ -92,7 +92,7 @@ class AnsibleError(Exception):
         error_message = ''
 
         try:
-            (src_file, line_number, col_number) = self._obj.get_position_info()
+            (src_file, line_number, col_number) = self._obj.ansible_pos
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)

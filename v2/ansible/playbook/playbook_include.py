@@ -80,7 +80,7 @@ class PlaybookInclude(Base):
         # items reduced to a standard structure
         new_ds = AnsibleMapping()
         if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.copy_position_info(ds)
+            new_ds.ansible_pos = ds.ansible_pos
 
         for (k,v) in ds.iteritems():
             if k == 'include':
