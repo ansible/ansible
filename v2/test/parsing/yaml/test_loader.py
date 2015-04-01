@@ -83,18 +83,17 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertIsInstance(data.keys()[0], unicode)
         self.assertIsInstance(data.values()[0], unicode)
 
-        # Note: this is the beginning of the first value.
-        # May be changed in the future to beginning of the first key
+        # Beginning of the first key
         self.assertEqual(data._line_number, 2)
-        self.assertEqual(data._column_number, 25)
+        self.assertEqual(data._column_number, 17)
         self.assertEqual(data._data_source, 'myfile.yml')
 
         self.assertEqual(data[u'webster']._line_number, 2)
-        self.assertEqual(data[u'webster']._column_number, 17)
+        self.assertEqual(data[u'webster']._column_number, 26)
         self.assertEqual(data[u'webster']._data_source, 'myfile.yml')
 
         self.assertEqual(data[u'oed']._line_number, 3)
-        self.assertEqual(data[u'oed']._column_number, 17)
+        self.assertEqual(data[u'oed']._column_number, 22)
         self.assertEqual(data[u'oed']._data_source, 'myfile.yml')
 
     def test_parse_list(self):
@@ -147,7 +146,6 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         pass
 
     def test_data_complete(self):
-        return
         self.assertEqual(len(self.data), 1)
         self.assertIsInstance(self.data, list)
         self.assertEqual(frozenset(self.data[0].keys()), frozenset((u'hosts', u'vars', u'tasks')))
@@ -198,23 +196,23 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         #self.assertEqual(self.data[0][u'vars'][u'number']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'vars'][u'string']._line_number, 5)
-        self.assertEqual(self.data[0][u'vars'][u'string']._column_number, 21)
+        self.assertEqual(self.data[0][u'vars'][u'string']._column_number, 29)
         self.assertEqual(self.data[0][u'vars'][u'string']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'vars'][u'utf8_string']._line_number, 6)
-        self.assertEqual(self.data[0][u'vars'][u'utf8_string']._column_number, 21)
+        self.assertEqual(self.data[0][u'vars'][u'utf8_string']._column_number, 34)
         self.assertEqual(self.data[0][u'vars'][u'utf8_string']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'vars'][u'dictionary']._line_number, 8)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary']._column_number, 31)
+        self.assertEqual(self.data[0][u'vars'][u'dictionary']._column_number, 23)
         self.assertEqual(self.data[0][u'vars'][u'dictionary']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._line_number, 8)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._column_number, 23)
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._column_number, 32)
         self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._line_number, 9)
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._column_number, 23)
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._column_number, 28)
         self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed']._data_source, self.play_filename)
 
         # Lists don't yet have line/col information
@@ -227,68 +225,68 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         # First Task
         #
         self.assertEqual(self.data[0][u'tasks'][0]._line_number, 16)
-        self.assertEqual(self.data[0][u'tasks'][0]._column_number, 28)
+        self.assertEqual(self.data[0][u'tasks'][0]._column_number, 23)
         self.assertEqual(self.data[0][u'tasks'][0]._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'tasks'][0][u'name']._line_number, 16)
-        self.assertEqual(self.data[0][u'tasks'][0][u'name']._column_number, 23)
+        self.assertEqual(self.data[0][u'tasks'][0][u'name']._column_number, 29)
         self.assertEqual(self.data[0][u'tasks'][0][u'name']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'tasks'][0][u'ping']._line_number, 18)
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping']._column_number, 30)
+        self.assertEqual(self.data[0][u'tasks'][0][u'ping']._column_number, 25)
         self.assertEqual(self.data[0][u'tasks'][0][u'ping']._data_source, self.play_filename)
 
-        #self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._line_number, 18)
-        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._column_number, 25)
+        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._line_number, 18)
+        self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._column_number, 31)
         self.assertEqual(self.data[0][u'tasks'][0][u'ping'][u'data']._data_source, self.play_filename)
 
         #
         # Second Task
         #
         self.assertEqual(self.data[0][u'tasks'][1]._line_number, 20)
-        self.assertEqual(self.data[0][u'tasks'][1]._column_number, 28)
+        self.assertEqual(self.data[0][u'tasks'][1]._column_number, 23)
         self.assertEqual(self.data[0][u'tasks'][1]._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'tasks'][1][u'name']._line_number, 20)
-        self.assertEqual(self.data[0][u'tasks'][1][u'name']._column_number, 23)
+        self.assertEqual(self.data[0][u'tasks'][1][u'name']._column_number, 29)
         self.assertEqual(self.data[0][u'tasks'][1][u'name']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'tasks'][1][u'ping']._line_number, 22)
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping']._column_number, 30)
+        self.assertEqual(self.data[0][u'tasks'][1][u'ping']._column_number, 25)
         self.assertEqual(self.data[0][u'tasks'][1][u'ping']._data_source, self.play_filename)
 
-        #self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._line_number, 22)
-        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._column_number, 25)
+        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._line_number, 22)
+        self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._column_number, 31)
         self.assertEqual(self.data[0][u'tasks'][1][u'ping'][u'data']._data_source, self.play_filename)
 
         #
         # Third Task
         #
         self.assertEqual(self.data[0][u'tasks'][2]._line_number, 24)
-        self.assertEqual(self.data[0][u'tasks'][2]._column_number, 28)
+        self.assertEqual(self.data[0][u'tasks'][2]._column_number, 23)
         self.assertEqual(self.data[0][u'tasks'][2]._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'tasks'][2][u'name']._line_number, 24)
-        self.assertEqual(self.data[0][u'tasks'][2][u'name']._column_number, 23)
+        self.assertEqual(self.data[0][u'tasks'][2][u'name']._column_number, 29)
         self.assertEqual(self.data[0][u'tasks'][2][u'name']._data_source, self.play_filename)
 
-        #self.assertEqual(self.data[0][u'tasks'][2][u'command']._line_number, 25)
-        self.assertEqual(self.data[0][u'tasks'][2][u'command']._column_number, 23)
+        self.assertEqual(self.data[0][u'tasks'][2][u'command']._line_number, 25)
+        self.assertEqual(self.data[0][u'tasks'][2][u'command']._column_number, 32)
         self.assertEqual(self.data[0][u'tasks'][2][u'command']._data_source, self.play_filename)
 
     def test_line_numbers(self):
         # Check the line/column numbers are correct
         # Note: Remember, currently dicts begin at the start of their first entry's value
         self.assertEqual(self.data[0]._line_number, 2)
-        self.assertEqual(self.data[0]._column_number, 25)
+        self.assertEqual(self.data[0]._column_number, 19)
         self.assertEqual(self.data[0]._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'hosts']._line_number, 2)
-        self.assertEqual(self.data[0][u'hosts']._column_number, 19)
+        self.assertEqual(self.data[0][u'hosts']._column_number, 26)
         self.assertEqual(self.data[0][u'hosts']._data_source, self.play_filename)
 
         self.assertEqual(self.data[0][u'vars']._line_number, 4)
-        self.assertEqual(self.data[0][u'vars']._column_number, 28)
+        self.assertEqual(self.data[0][u'vars']._column_number, 21)
         self.assertEqual(self.data[0][u'vars']._data_source, self.play_filename)
 
         self.check_vars()
