@@ -29,7 +29,7 @@ from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.utils.path import unfrackpath
 
 class DataLoader():
@@ -70,12 +70,26 @@ class DataLoader():
             # we first try to load this data as JSON
             return json.loads(data)
         except:
+            # if loading JSON failed for any reason, we go ahead
+            # and try to parse it as YAML instead
+
+            if isinstance(data, AnsibleUnicode):
+                # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
+                # they are unable to cope with our subclass.
+                # Unwrap and re-wrap the unicode so we can keep track of line
+                # numbers
+                new_data = unicode(data)
+            else:
+                new_data = data
             try:
-                # if loading JSON failed for any reason, we go ahead
-                # and try to parse it as YAML instead
-                return self._safe_load(data, file_name=file_name)
+                new_data = self._safe_load(new_data, file_name=file_name)
             except YAMLError as yaml_exc:
                 self._handle_error(yaml_exc, file_name, show_content)
+
+            if isinstance(data, AnsibleUnicode):
+                new_data = AnsibleUnicode(new_data)
+                new_data.ansible_pos = data.ansible_pos
+            return new_data
 
     def load_from_file(self, file_name):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
