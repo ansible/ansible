@@ -116,16 +116,6 @@ EXAMPLES = '''
 import time
 
 
-def _glance_delete_image(module, params, client):
-    try:
-        for image in client.images.list():
-            if image.name == params['name']:
-                client.images.delete(image)
-    except Exception, e:
-        module.fail_json(msg="Error in deleting image: %s" % e.message)
-    module.exit_json(changed=True, result="Deleted")
-
-
 def main():
 
     argument_spec = openstack_full_argument_spec(
@@ -179,7 +169,10 @@ def main():
             if not image:
                 module.exit_json(changed=False, result="success")
             else:
-                _glance_delete_image(module, module.params, cloud.glance_client)
+                cloud.delete_image(
+                    name_or_id=module.params['name'],
+                    wait=module.params['wait'],
+                    timeout=module.params['timeout'])
                 changed = True
 
         module.exit_json(changed=changed, id=image.id, result="success")
