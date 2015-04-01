@@ -188,7 +188,11 @@ class _jinja2_vars(object):
         if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
-            return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
+            try:
+                return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
+            except:
+                raise KeyError("undefined variable: %s" % varname)
+
 
     def add_locals(self, locals):
         '''
