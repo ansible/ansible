@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from yaml.constructor import Constructor
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 
 class AnsibleConstructor(Constructor):
     def __init__(self, file_name=None):
@@ -49,6 +49,12 @@ class AnsibleConstructor(Constructor):
         ret.ansible_pos = self._node_position_info(node)
 
         return ret
+
+    def construct_yaml_seq(self, node):
+        data = AnsibleSequence()
+        yield data
+        data.extend(self.construct_sequence(node))
+        data.ansible_pos = self._node_position_info(node)
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
@@ -79,3 +85,6 @@ AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:python/unicode',
     AnsibleConstructor.construct_yaml_str)
 
+AnsibleConstructor.add_constructor(
+    u'tag:yaml.org,2002:seq',
+    AnsibleConstructor.construct_yaml_seq)
