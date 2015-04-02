@@ -137,11 +137,11 @@ def enforce_state(module, params):
             outf.write(key)
             outf.close()
             module.atomic_move(outf.name,path)
-        except IOError,e:
+        except (IOError,OSError),e:
             module.fail_json(msg="Failed to write to file %s: %s" % \
                                  (path,str(e)))
         params['changed'] = True
-    
+
     return params
 
 def sanity_check(module,host,key,sshkeygen):
