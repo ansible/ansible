@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import os
 import stat
@@ -19,7 +20,8 @@ from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
 # Implement an ansible.utils.warning() function later
-warning = getattr(__builtins__, 'print')
+def warning(*args, **kwargs):
+    print(*args, **kwargs)
 
 #---------------------------------------------------------------------------------------------------
 
@@ -136,10 +138,10 @@ if __name__ == "__main__":
         sys.exit(main(sys.argv[1:]))
     except AnsibleError, e:
         #display("ERROR: %s" % e, color='red', stderr=True)
-        print e
+        print(e)
         sys.exit(1)
     except KeyboardInterrupt, ke:
         #display("ERROR: interrupted", color='red', stderr=True)
-        print "keyboard interrupt"
+        print("keyboard interrupt")
         sys.exit(1)
 
