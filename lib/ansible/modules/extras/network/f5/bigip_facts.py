@@ -78,8 +78,8 @@ options:
         required: true
         default: null
         choices: ['address_class', 'certificate', 'client_ssl_profile',
-                  'device_group', 'interface', 'key', 'node', 'pool', 'rule',
-                  'self_ip', 'software', 'system_info', 'traffic_group',
+                  'device', 'device_group', 'interface', 'key', 'node', 'pool',
+                  'rule', 'self_ip', 'software', 'system_info', 'traffic_group',
                   'trunk', 'virtual_address', 'virtual_server', 'vlan']
         aliases: []
     filter:
@@ -1609,8 +1609,8 @@ def main():
         regex = None
     include = map(lambda x: x.lower(), module.params['include'])
     valid_includes = ('address_class', 'certificate', 'client_ssl_profile',
-                      'device_group', 'interface', 'key', 'node', 'pool',
-                      'rule', 'self_ip', 'software', 'system_info',
+                      'device', 'device_group', 'interface', 'key', 'node',
+                      'pool', 'rule', 'self_ip', 'software', 'system_info',
                       'traffic_group', 'trunk', 'virtual_address',
                       'virtual_server', 'vlan')
     include_test = map(lambda x: x in valid_includes, include)
