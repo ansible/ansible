@@ -276,7 +276,7 @@ def list_groups():
             id = container.get('Id')
             short_id = id[:13]
             try:
-                name = container.get('Names', list()).pop(0).lstrip('/')
+                name = container.get('Names', list()).pop().lstrip('/')
             except IndexError:
                 name = short_id
 
