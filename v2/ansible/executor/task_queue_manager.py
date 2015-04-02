@@ -29,9 +29,11 @@ from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
+from ansible.executor.stats import AggregateStats
 from ansible.plugins import callback_loader, strategy_loader
 
 from ansible.utils.debug import debug
+from ansible.utils.display import Display
 
 __all__ = ['TaskQueueManager']
 
@@ -53,6 +55,9 @@ class TaskQueueManager:
         self._variable_manager = variable_manager
         self._loader           = loader
         self._options          = options
+        self._stats            = AggregateStats()
+
+        self._display          = Display()
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -66,9 +71,14 @@ class TaskQueueManager:
 
         self._final_q = multiprocessing.Queue()
 
-        # FIXME: hard-coded the default callback plugin here, which
-        #        should be configurable.
-        self._callback = callback_loader.get(callback)
+        # load all available callback plugins
+        # FIXME: we need an option to white-list callback plugins
+        self._callback_plugins = []
+        for callback_plugin in callback_loader.all(class_only=True):
+            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
+                self._callback_plugins.append(callback_plugin(self._display))
+            else:
+                self._callback_plugins.append(callback_plugin())
 
         # create the pool of worker threads, based on the number of forks specified
         try:
@@ -131,16 +141,11 @@ class TaskQueueManager:
         '''
 
         connection_info = ConnectionInformation(play, self._options)
-        self._callback.set_connection_info(connection_info)
+        for callback_plugin in self._callback_plugins:
+            if hasattr(callback_plugin, 'set_connection_info'):
+                callback_plugin.set_connection_info(connection_info)
 
-        # run final validation on the play now, to make sure fields are templated
-        # FIXME: is this even required? Everything is validated and merged at the
-        #        task level, so else in the play needs to be templated
-        #all_vars = self._vmw.get_vars(loader=self._dlw, play=play)
-        #all_vars = self._vmw.get_vars(loader=self._loader, play=play)
-        #play.post_validate(all_vars=all_vars)
-
-        self._callback.playbook_on_play_start(play.name)
+        self.send_callback('v2_playbook_on_play_start', play)
 
         # initialize the shared dictionary containing the notified handlers
         self._initialize_notified_handlers(play.handlers)
@@ -172,9 +177,6 @@ class TaskQueueManager:
     def get_inventory(self):
         return self._inventory
 
-    def get_callback(self):
-        return self._callback
-
     def get_variable_manager(self):
         return self._variable_manager
 
@@ -201,3 +203,18 @@ class TaskQueueManager:
 
     def terminate(self):
         self._terminated = True
+
+    def send_callback(self, method_name, *args, **kwargs):
+        for callback_plugin in self._callback_plugins:
+            # a plugin that set self.disabled to True will not be called
+            # see osx_say.py example for such a plugin
+            if getattr(callback_plugin, 'disabled', False):
+                continue
+            methods = [
+                getattr(callback_plugin, method_name, None),
+                getattr(callback_plugin, 'on_any', None)
+            ]
+            for method in methods:
+                if method is not None:
+                    method(*args, **kwargs)
+

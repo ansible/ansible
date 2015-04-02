@@ -43,6 +43,7 @@ class Block(Base, Become, Conditional, Taggable):
         self._task_include = task_include
         self._use_handlers = use_handlers
         self._dep_chain    = []
+        self._vars         = dict()
 
         super(Block, self).__init__()
 
@@ -56,9 +57,12 @@ class Block(Base, Become, Conditional, Taggable):
 
         if self._role:
             all_vars.update(self._role.get_vars())
+        if self._parent_block:
+            all_vars.update(self._parent_block.get_vars())
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
+        all_vars.update(self._vars)
         return all_vars
 
     @staticmethod
@@ -131,25 +135,29 @@ class Block(Base, Become, Conditional, Taggable):
     #        use_handlers=self._use_handlers,
     #    )
 
-    def copy(self):
+    def copy(self, exclude_parent=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
-                new_task = task.copy(exclude_block=True)
-                new_task._block = new_block
+                if isinstance(task, Block):
+                    new_task = task.copy(exclude_parent=True)
+                    new_task._parent_block = new_block
+                else:
+                    new_task = task.copy(exclude_block=True)
+                    new_task._block = new_block
                 new_task_list.append(new_task)
             return new_task_list
 
         new_me = super(Block, self).copy()
         new_me._use_handlers = self._use_handlers
-        new_me._dep_chain = self._dep_chain[:]
+        new_me._dep_chain    = self._dep_chain[:]
 
         new_me.block  = _dupe_task_list(self.block or [], new_me)
         new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
         new_me.always = _dupe_task_list(self.always or [], new_me)
 
         new_me._parent_block = None
-        if self._parent_block:
+        if self._parent_block and not exclude_parent:
             new_me._parent_block = self._parent_block.copy()
 
         new_me._role = None
@@ -260,7 +268,7 @@ class Block(Base, Become, Conditional, Taggable):
         value = self._attributes[attr]
         if not value:
             if self._parent_block:
-                value = getattr(self._block, attr)
+                value = getattr(self._parent_block, attr)
             elif self._role:
                 value = getattr(self._role, attr)
                 if not value and len(self._dep_chain):

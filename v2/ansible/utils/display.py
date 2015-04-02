@@ -112,3 +112,15 @@ class Display:
         if C.SYSTEM_WARNINGS:
             self._warning(msg)
 
+    def banner(self, msg, color=None):
+        '''
+        Prints a header-looking line with stars taking up to 80 columns
+        of width (3 columns, minimum)
+        '''
+        msg = msg.strip()
+        star_len = (80 - len(msg))
+        if star_len < 0:
+            star_len = 3
+        stars = "*" * star_len
+        self.display("\n%s %s" % (msg, stars), color=color)
+

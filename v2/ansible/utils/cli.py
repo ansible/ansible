@@ -70,6 +70,8 @@ def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False,
         default=None)
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
+    parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+        help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',

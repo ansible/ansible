@@ -162,10 +162,9 @@ class VariableManager:
                 all_vars = self._combine_vars(all_vars, self._group_vars_files['all'])
 
             for group in host.get_groups():
-                group_name = group.get_name()
                 all_vars = self._combine_vars(all_vars, group.get_vars())
-                if group_name in self._group_vars_files and group_name != 'all':
-                    all_vars = self._combine_vars(all_vars, self._group_vars_files[group_name])
+                if group.name in self._group_vars_files and group.name != 'all':
+                    all_vars = self._combine_vars(all_vars, self._group_vars_files[group.name])
 
             host_name = host.get_name()
             if host_name in self._host_vars_files:
@@ -228,7 +227,7 @@ class VariableManager:
         '''
 
         (name, ext) = os.path.splitext(os.path.basename(path))
-        if ext not in ('yml', 'yaml'):
+        if ext not in ('.yml', '.yaml'):
             return os.path.basename(path)
         else:
             return name
@@ -239,11 +238,11 @@ class VariableManager:
         basename of the file without the extension
         '''
 
-        if os.path.isdir(path):
+        if loader.is_directory(path):
             data = dict()
 
             try:
-                names = os.listdir(path)
+                names = loader.list_directory(path)
             except os.error, err:
                 raise AnsibleError("This folder cannot be listed: %s: %s." % (path, err.strerror))
 
@@ -270,7 +269,7 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        if os.path.exists(path):
+        if loader.path_exists(path):
             (name, data) = self._load_inventory_file(path, loader)
             self._host_vars_files[name] = data
 
@@ -281,7 +280,7 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        if os.path.exists(path):
+        if loader.path_exists(path):
             (name, data) = self._load_inventory_file(path, loader)
             self._group_vars_files[name] = data
 

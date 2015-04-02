@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.utils.display import Display
+#from ansible.utils.display import Display
 
 __all__ = ["CallbackBase"]
 
@@ -34,8 +34,8 @@ class CallbackBase:
     # FIXME: the list of functions here needs to be updated once we have
     #        finalized the list of callback methods used in the default callback
 
-    def __init__(self):
-        self._display = Display()
+    def __init__(self, display):
+        self._display = display
 
     def set_connection_info(self, conn_info):
         # FIXME: this is a temporary hack, as the connection info object
