@@ -207,7 +207,7 @@ class Rhsm(RegistrationBase):
 
         # Generate command arguments
         if activationkey:
-            args.append('--activationkey "%s"' % activationkey)
+            args.extend(['--activationkey', activationkey])
         else:
             if autosubscribe:
                 args.append('--autosubscribe')
