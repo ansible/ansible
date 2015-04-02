@@ -73,7 +73,29 @@ class TaskExecutor:
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
+
+                    # loop through the item results, and remember the changed/failed
+                    # result flags based on any item there.
+                    changed = False
+                    failed  = False
+                    for item in item_results:
+                        if 'changed' in item:
+                           changed = True
+                        if 'failed' in item:
+                           failed = True
+
+                    # create the overall result item, and set the changed/failed
+                    # flags there to reflect the overall result of the loop
                     res = dict(results=item_results)
+
+                    if changed:
+                        res['changed'] = True
+
+                    if failed:
+                        res['failed'] = True
+                        res['msg'] = 'One or more items failed'
+                    else:
+                        res['msg'] = 'All items completed'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
