@@ -19,20 +19,34 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from yaml.reader import Reader
-from yaml.scanner import Scanner
-from yaml.parser import Parser
+try:
+    from _yaml import CParser, CEmitter
+    HAVE_PYYAML_C = True
+except ImportError:
+    HAVE_PYYAML_C = False
+
 from yaml.resolver import Resolver
 
-from ansible.parsing.yaml.composer import AnsibleComposer
 from ansible.parsing.yaml.constructor import AnsibleConstructor
 
-class AnsibleLoader(Reader, Scanner, Parser, AnsibleComposer, AnsibleConstructor, Resolver):
-    def __init__(self, stream, file_name=None):
-        Reader.__init__(self, stream)
-        Scanner.__init__(self)
-        Parser.__init__(self)
-        AnsibleComposer.__init__(self)
-        AnsibleConstructor.__init__(self, file_name=file_name)
-        Resolver.__init__(self)
+if HAVE_PYYAML_C:
+    class AnsibleLoader(CParser, AnsibleConstructor, Resolver):
+        def __init__(self, stream, file_name=None):
+            CParser.__init__(self, stream)
+            AnsibleConstructor.__init__(self, file_name=file_name)
+            Resolver.__init__(self)
+else:
+    from yaml.reader import Reader
+    from yaml.scanner import Scanner
+    from yaml.parser import Parser
 
+    from ansible.parsing.yaml.composer import AnsibleComposer
+
+    class AnsibleLoader(Reader, Scanner, Parser, AnsibleComposer, AnsibleConstructor, Resolver):
+        def __init__(self, stream, file_name=None):
+            Reader.__init__(self, stream)
+            Scanner.__init__(self)
+            Parser.__init__(self)
+            AnsibleComposer.__init__(self)
+            AnsibleConstructor.__init__(self, file_name=file_name)
+            Resolver.__init__(self)

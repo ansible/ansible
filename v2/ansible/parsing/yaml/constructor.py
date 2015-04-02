@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from yaml.constructor import Constructor
-from ansible.utils.unicode import to_unicode
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleUnicode
 
 class AnsibleConstructor(Constructor):
@@ -33,20 +32,11 @@ class AnsibleConstructor(Constructor):
         yield data
         value = self.construct_mapping(node)
         data.update(value)
-        data.ansible_pos = value.ansible_pos
+        data.ansible_pos = self._node_position_info(node)
 
     def construct_mapping(self, node, deep=False):
         ret = AnsibleMapping(super(Constructor, self).construct_mapping(node, deep))
-
-        # in some cases, we may have pre-read the data and then
-        # passed it to the load() call for YAML, in which case we
-        # want to override the default datasource (which would be
-        # '<string>') to the actual filename we read in
-        if self._ansible_file_name:
-            data_source = self._ansible_file_name
-        else:
-            data_source = node.__datasource__
-        ret.ansible_pos = (data_source, node.__line__, node.__column__)
+        ret.ansible_pos = self._node_position_info(node)
 
         return ret
 
@@ -54,16 +44,24 @@ class AnsibleConstructor(Constructor):
         # Override the default string handling function
         # to always return unicode objects
         value = self.construct_scalar(node)
-        value = to_unicode(value)
-        ret = AnsibleUnicode(self.construct_scalar(node))
+        ret = AnsibleUnicode(value)
 
-        if self._ansible_file_name:
-            data_source = self._ansible_file_name
-        else:
-            data_source = node.__datasource__
-        ret.ansible_pos = (data_source, node.__line__, node.__column__)
+        ret.ansible_pos = self._node_position_info(node)
 
         return ret
+
+    def _node_position_info(self, node):
+        # the line number where the previous token has ended (plus empty lines)
+        column = node.start_mark.column + 1
+        line = node.start_mark.line + 1
+
+        # in some cases, we may have pre-read the data and then
+        # passed it to the load() call for YAML, in which case we
+        # want to override the default datasource (which would be
+        # '<string>') to the actual filename we read in
+        datasource = self._ansible_file_name or node.start_mark.name
+
+        return (datasource, line, column)
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',
