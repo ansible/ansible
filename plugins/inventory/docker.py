@@ -263,7 +263,7 @@ def list_groups():
     for host in hosts:
         ssh_port = host.pop('private_ssh_port', None)
         default_ip = host.pop('default_ip', None)
-        hostname = host.get('base_url')
+        hostname = host.get('base_url','localhost')
 
         try:
             client = docker.Client(**host)
@@ -275,15 +275,17 @@ def list_groups():
         for container in containers:
             id = container.get('Id')
             short_id = id[:13]
+            inspect = client.inspect_container(id)
             try:
-                name = container.get('Names', list()).pop(0).lstrip('/')
+                name = inspect.get('Name').lstrip('/')
+                if not name:
+                  name = container.get('Names').pop().lstrip('/')
             except IndexError:
                 name = short_id
 
             if not id:
                 continue
 
-            inspect = client.inspect_container(id)
             running = inspect.get('State', dict()).get('Running')
 
             groups[id].append(name)
@@ -302,13 +304,10 @@ def list_groups():
             except (IndexError, AttributeError, TypeError):
                 port = dict()
 
-            try:
-                ip = default_ip if port['HostIp'] == '0.0.0.0' else port['HostIp']
-            except KeyError:
-                ip = ''
+	    network_settings = inspect.get('NetworkSettings')
 
             container_info = dict(
-                ansible_ssh_host=ip,
+                ansible_ssh_host=network_settings.get('IPAddress'),
                 ansible_ssh_port=port.get('HostPort', int()),
                 docker_args=inspect.get('Args'),
                 docker_config=inspect.get('Config'),
@@ -321,7 +320,7 @@ def list_groups():
                 docker_id=inspect.get('ID'),
                 docker_image=inspect.get('Image'),
                 docker_name=name,
-                docker_network_settings=inspect.get('NetworkSettings'),
+                docker_network_settings=network_settings,
                 docker_path=inspect.get('Path'),
                 docker_resolv_conf_path=inspect.get('ResolvConfPath'),
                 docker_state=inspect.get('State'),
@@ -331,7 +330,7 @@ def list_groups():
 
             hostvars[name].update(container_info)
 
-    groups['docker_hosts'] = [host.get('base_url') for host in hosts]
+    groups['docker_hosts'] = [host.get('base_url','localhost') for host in hosts]
     groups['_meta'] = dict()
     groups['_meta']['hostvars'] = hostvars
     print json.dumps(groups, sort_keys=True, indent=4)
