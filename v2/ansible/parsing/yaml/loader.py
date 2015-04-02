@@ -36,17 +36,16 @@ if HAVE_PYYAML_C:
             AnsibleConstructor.__init__(self, file_name=file_name)
             Resolver.__init__(self)
 else:
+    from yaml.composer import Composer
     from yaml.reader import Reader
     from yaml.scanner import Scanner
     from yaml.parser import Parser
 
-    from ansible.parsing.yaml.composer import AnsibleComposer
-
-    class AnsibleLoader(Reader, Scanner, Parser, AnsibleComposer, AnsibleConstructor, Resolver):
+    class AnsibleLoader(Reader, Scanner, Parser, Composer, AnsibleConstructor, Resolver):
         def __init__(self, stream, file_name=None):
             Reader.__init__(self, stream)
             Scanner.__init__(self)
             Parser.__init__(self)
-            AnsibleComposer.__init__(self)
+            Composer.__init__(self)
             AnsibleConstructor.__init__(self, file_name=file_name)
             Resolver.__init__(self)
