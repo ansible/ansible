@@ -95,7 +95,11 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data, [u'a', u'b'])
         self.assertEqual(len(data), 2)
         self.assertIsInstance(data[0], unicode)
-        # No line/column info saved yet
+
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
+
+        self.assertEqual(data[0].ansible_pos, ('myfile.yml', 2, 19))
+        self.assertEqual(data[1].ansible_pos, ('myfile.yml', 3, 19))
 
 class TestAnsibleLoaderPlay(unittest.TestCase):
 
@@ -184,12 +188,17 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
 
         self.assertEqual(self.data[0][u'vars'][u'string'].ansible_pos, (self.play_filename, 5, 29))
         self.assertEqual(self.data[0][u'vars'][u'utf8_string'].ansible_pos, (self.play_filename, 6, 34))
+
         self.assertEqual(self.data[0][u'vars'][u'dictionary'].ansible_pos, (self.play_filename, 8, 23))
         self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'webster'].ansible_pos, (self.play_filename, 8, 32))
         self.assertEqual(self.data[0][u'vars'][u'dictionary'][u'oed'].ansible_pos, (self.play_filename, 9, 28))
 
-        # Lists don't yet have line/col information
-        #self.assertEqual(self.data[0][u'vars'][u'list'].ansible_pos, (self.play_filename, 10, 21))
+        self.assertEqual(self.data[0][u'vars'][u'list'].ansible_pos, (self.play_filename, 11, 23))
+        self.assertEqual(self.data[0][u'vars'][u'list'][0].ansible_pos, (self.play_filename, 11, 25))
+        self.assertEqual(self.data[0][u'vars'][u'list'][1].ansible_pos, (self.play_filename, 12, 25))
+        # Numbers don't have line/col info yet
+        #self.assertEqual(self.data[0][u'vars'][u'list'][2].ansible_pos, (self.play_filename, 13, 25))
+        #self.assertEqual(self.data[0][u'vars'][u'list'][3].ansible_pos, (self.play_filename, 14, 25))
 
     def check_tasks(self):
         #
@@ -224,7 +233,6 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
 
         self.check_vars()
 
-        # Lists don't yet have line/col info
-        #self.assertEqual(self.data[0][u'tasks'].ansible_pos, (self.play_filename, 17, 28))
+        self.assertEqual(self.data[0][u'tasks'].ansible_pos, (self.play_filename, 16, 21))
 
         self.check_tasks()
