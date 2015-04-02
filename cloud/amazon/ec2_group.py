@@ -113,9 +113,9 @@ EXAMPLES = '''
 
 try:
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
@@ -201,6 +201,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     name = module.params['name']
     description = module.params['description']

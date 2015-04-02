@@ -107,20 +107,19 @@ EXAMPLES = '''
 - s3: bucket=mybucket mode=delete
 '''
 
-import sys
 import os
 import urlparse
 import hashlib
 
-from boto.s3.connection import OrdinaryCallingFormat
-
 try:
     import boto
     from boto.s3.connection import Location
+    from boto.s3.connection import OrdinaryCallingFormat
     from boto.s3.connection import S3Connection
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def key_check(module, s3, bucket, obj):
     try:
@@ -277,6 +276,9 @@ def main():
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     bucket = module.params.get('bucket')
     obj = module.params.get('object')

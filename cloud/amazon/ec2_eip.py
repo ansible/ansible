@@ -90,10 +90,9 @@ EXAMPLES = '''
 
 try:
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    boto_found = False
-else:
-    boto_found = True
+    HAS_BOTO = False
 
 
 wait_timeout = 0  
@@ -251,8 +250,8 @@ def main():
         supports_check_mode=True
     )
 
-    if not boto_found:
-        module.fail_json(msg="boto is required")
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     ec2 = ec2_connect(module)
 
