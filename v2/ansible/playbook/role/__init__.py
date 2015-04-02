@@ -32,7 +32,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
-from ansible.playbook.helpers import load_list_of_blocks, compile_block_list
+from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable

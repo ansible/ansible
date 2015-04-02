@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
+from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategies import StrategyBase
@@ -52,6 +53,9 @@ class StrategyModule(StrategyBase):
         lowest_cur_block = len(iterator._blocks)
 
         for (k, v) in host_tasks.iteritems():
+            if v is None:
+                continue
+
             (s, t) = v
             if s.cur_block < lowest_cur_block and s.run_state != PlayIterator.ITERATING_COMPLETE:
                 lowest_cur_block = s.cur_block
@@ -131,7 +135,7 @@ class StrategyModule(StrategyBase):
                 debug("done getting the remaining hosts for this loop")
                 if len(hosts_left) == 0:
                     debug("out of hosts to run on")
-                    self._callback.playbook_on_no_hosts_remaining()
+                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                     result = False
                     break
 
@@ -184,7 +188,6 @@ class StrategyModule(StrategyBase):
                         meta_action = task.args.get('_raw_params')
                         if meta_action == 'noop':
                             # FIXME: issue a callback for the noop here?
-                            print("%s => NOOP" % host)
                             continue
                         elif meta_action == 'flush_handlers':
                             self.run_handlers(iterator, connection_info)
@@ -192,7 +195,7 @@ class StrategyModule(StrategyBase):
                             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
                     else:
                         if not callback_sent:
-                            self._callback.playbook_on_task_start(task.get_name(), False)
+                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             callback_sent = True
 
                         self._blocked_hosts[host.get_name()] = True
@@ -234,6 +237,10 @@ class StrategyModule(StrategyBase):
                             include_results = [ res._result ]
 
                         for include_result in include_results:
+                            # if the task result was skipped or failed, continue
+                            if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result:
+                                continue
+
                             original_task = iterator.get_original_task(res._host, res._task)
                             if original_task and original_task._role:
                                 include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_result['include'])
@@ -263,27 +270,31 @@ class StrategyModule(StrategyBase):
                     noop_task.args['_raw_params'] = 'noop'
                     noop_task.set_loader(iterator._play._loader)
 
-                    all_tasks = dict((host, []) for host in hosts_left)
+                    all_blocks = dict((host, []) for host in hosts_left)
                     for included_file in included_files:
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
-                            new_tasks = self._load_included_file(included_file)
+                            new_blocks = self._load_included_file(included_file)
                         except AnsibleError, e:
                             for host in included_file._hosts:
                                 iterator.mark_host_failed(host)
                             # FIXME: callback here?
                             print(e)
 
-                        noop_tasks = [noop_task for t in new_tasks]
-                        for host in hosts_left:
-                            if host in included_file._hosts:
-                                all_tasks[host].extend(new_tasks)
-                            else:
-                                all_tasks[host].extend(noop_tasks)
+                        for new_block in new_blocks:
+                            noop_block = Block(parent_block=task._block)
+                            noop_block.block  = [noop_task for t in new_block.block]
+                            noop_block.always = [noop_task for t in new_block.always]
+                            noop_block.rescue = [noop_task for t in new_block.rescue]
+                            for host in hosts_left:
+                                if host in included_file._hosts:
+                                    all_blocks[host].append(new_block)
+                                else:
+                                    all_blocks[host].append(noop_block)
 
                     for host in hosts_left:
-                        iterator.add_tasks(host, all_tasks[host])
+                        iterator.add_tasks(host, all_blocks[host])
 
                 debug("results queue empty")
             except (IOError, EOFError), e:

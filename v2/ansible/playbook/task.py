@@ -78,7 +78,7 @@ class Task(Base, Conditional, Taggable, Become):
     # FIXME: this should not be a Task
     _meta                 = FieldAttribute(isa='string')
 
-    _name                 = FieldAttribute(isa='string')
+    _name                 = FieldAttribute(isa='string', default='')
 
     _no_log               = FieldAttribute(isa='bool')
     _notify               = FieldAttribute(isa='list')
@@ -167,7 +167,6 @@ class Task(Base, Conditional, Taggable, Become):
         args_parser = ModuleArgsParser(task_ds=ds)
         (action, args, delegate_to) = args_parser.parse()
 
-
         new_ds['action']      = action
         new_ds['args']        = args
         new_ds['delegate_to'] = delegate_to
@@ -199,6 +198,8 @@ class Task(Base, Conditional, Taggable, Become):
 
     def get_vars(self):
         all_vars = self.vars.copy()
+        if self._block:
+            all_vars.update(self._block.get_vars())
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 

@@ -31,6 +31,8 @@ class CallbackModule(CallbackBase):
     to stdout when new callback events are received.
     '''
 
+    CALLBACK_VERSION = 2.0
+
     def _print_banner(self, msg):
         '''
         Prints a header-looking line with stars taking up to 80 columns

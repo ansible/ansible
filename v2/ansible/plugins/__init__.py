@@ -240,7 +240,10 @@ class PluginLoader:
                     continue
                 if path not in self._module_cache:
                     self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
-                yield getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+                if kwargs.get('class_only', False):
+                    yield getattr(self._module_cache[path], self.class_name)
+                else:
+                    yield getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
 action_loader = PluginLoader(
     'ActionModule',
