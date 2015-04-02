@@ -286,6 +286,8 @@ def list_groups():
             if not id:
                 continue
 
+            image = container.get('Image').split(':')[0].replace('/','-')
+
             running = inspect.get('State', dict()).get('Running')
 
             groups[id].append(name)
@@ -293,6 +295,7 @@ def list_groups():
             if not short_id in groups.keys():
                 groups[short_id].append(name)
             groups[hostname].append(name)
+            groups[image].append(name)
 
             if running is True:
                 groups['running'].append(name)
