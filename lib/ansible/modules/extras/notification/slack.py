@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
 # This file is part of Ansible
@@ -46,7 +47,7 @@ options:
   msg:
     description:
       - Message to send.
-    required: true
+    required: false
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
@@ -100,6 +101,10 @@ options:
       - 'good'
       - 'warning'
       - 'danger'
+  attachments:
+    description:
+      - Define a list of attachments. This list mirrors the Slack JSON API. For more information, see https://api.slack.com/docs/attachments
+    required: false
 """
 
 EXAMPLES = """
@@ -130,15 +135,32 @@ EXAMPLES = """
     color: good
     username: ""
     icon_url: ""
+
+- name: Use the attachments API
+  slack:
+    domain: future500.slack.com
+    token: thetokengeneratedbyslack
+    attachments:
+      - text: "Display my system load on host A and B"
+        color: "#ff00dd"
+        title: "System load"
+        fields:
+          - title: "System A"
+            value: "load average: 0,74, 0,66, 0,63"
+            short: "true"
+          - title: "System B"
+            value: "load average: 5,16, 4,64, 2,43"
+            short: "true"
 """
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
-def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color):
-    if color == 'normal':
+def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
+    payload = {}
+    if color == "normal" and text is not None:
         payload = dict(text=text)
-    else:
+    elif text is not None:
         payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
         if (channel[0] == '#') or (channel[0] == '@'):
@@ -155,6 +177,16 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
         payload['link_names'] = link_names
     if parse is not None:
         payload['parse'] = parse
+
+    if attachments is not None:
+        if 'attachments' not in payload:
+            payload['attachments'] = []
+
+    if attachments is not None:
+        for attachment in attachments:
+            if 'fallback' not in attachment:
+                attachment['fallback'] = attachment['text']
+            payload['attachments'].append(attachment)
 
     payload="payload=" + module.jsonify(payload)
     return payload
@@ -178,7 +210,7 @@ def main():
         argument_spec = dict(
             domain      = dict(type='str', required=False, default=None),
             token       = dict(type='str', required=True, no_log=True),
-            msg         = dict(type='str', required=True),
+            msg         = dict(type='str', required=False, default=None),
             channel     = dict(type='str', default=None),
             username    = dict(type='str', default='Ansible'),
             icon_url    = dict(type='str', default='http://www.ansible.com/favicon.ico'),
@@ -186,7 +218,8 @@ def main():
             link_names  = dict(type='int', default=1, choices=[0,1]),
             parse       = dict(type='str', default=None, choices=['none', 'full']),
             validate_certs = dict(default='yes', type='bool'),
-            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger'])
+            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            attachments = dict(type='list', required=False, default=None)
         )
     )
 
@@ -200,8 +233,9 @@ def main():
     link_names = module.params['link_names']
     parse = module.params['parse']
     color = module.params['color']
+    attachments = module.params['attachments']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color)
+    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")
