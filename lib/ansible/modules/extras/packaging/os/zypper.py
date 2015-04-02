@@ -212,6 +212,11 @@ def package_latest(m, name, installed_state, package_type, disable_gpg_check, di
     # first of all, make sure all the packages are installed
     (rc, stdout, stderr, changed) = package_present(m, name, installed_state, package_type, disable_gpg_check, disable_recommends, old_zypper)
 
+    # return if an error occured while installation
+    # otherwise error messages will be lost and user doesn`t see any error
+    if rc:
+        return (rc, stdout, stderr, changed)
+
     # if we've already made a change, we don't have to check whether a version changed
     if not changed:
         pre_upgrade_versions = get_current_version(m, name)
