@@ -254,6 +254,10 @@ To install on a Mac, make sure you have Homebrew, then run:
     $ brew update
     $ brew install ansible
 
+by default ansible will be looking for your host file in "/usr/local/etc/ansible/hosts", check the `Inventory Configuration 
+<http://docs.ansible.com/intro_configuration.html#inventory>`_ on how to change this.
+
+
 .. _from_pkgutil:
 
 Latest Releases Via OpenCSW (Solaris)
