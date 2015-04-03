@@ -58,13 +58,16 @@ def main(args):
 
     validate_conflicts(parser,options)
 
+    # Note: slightly wrong, this is written so that implicit localhost
     # Manage passwords
     sshpass    = None
     becomepass    = None
     vault_pass = None
 
-    normalize_become_options(options)
-    (sshpass, becomepass, vault_pass) = ask_passwords(options)
+    # don't deal with privilege escalation when we don't need to
+    if not options.listhosts and not options.listtasks and not options.listtags:
+        normalize_become_options(options)
+        (sshpass, becomepass, vault_pass) = ask_passwords(options)
 
     if options.vault_password_file:
         # read vault_pass from a file
@@ -109,7 +112,6 @@ def main(args):
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=options.inventory)
     variable_manager.set_inventory(inventory)
 
-    # Note: slightly wrong, this is written so that implicit localhost
     # (which is not returned in list_hosts()) is taken into account for
     # warning if inventory is empty.  But it can't be taken into account for
     # checking if limit doesn't match any hosts.  Instead we don't worry about
@@ -129,7 +131,18 @@ def main(args):
     # create the playbook executor, which manages running the plays
     # via a task queue manager
     pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=options)
-    return pbex.run()
+
+    if options.listhosts:
+        print('TODO: implement')
+        sys.exit(0)
+    elif options.listtasks:
+        print('TODO: implement')
+        sys.exit(0)
+    elif options.listtags:
+        print('TODO: implement')
+        sys.exit(0)
+    else:
+        return pbex.run()
 
 if __name__ == "__main__":
     #display(" ", log_only=True)
