@@ -26,7 +26,7 @@ import sys
 import glob
 import imp
 from ansible import constants as C
-from ansible.utils import warnings
+from ansible.utils.display import Display
 from ansible import errors
 
 MODULE_CACHE = {}
@@ -181,7 +181,8 @@ class PluginLoader:
                 try:
                     full_paths = (os.path.join(path, f) for f in os.listdir(path))
                 except OSError,e:
-                    warnings("Error accessing plugin paths: %s" % str(e))
+                    d = Display()
+                    d.warning("Error accessing plugin paths: %s" % str(e))
                 for full_path in (f for f in full_paths if os.path.isfile(f)):
                     for suffix in suffixes:
                         if full_path.endswith(suffix):
