@@ -162,10 +162,11 @@ class PlaybookExecutor:
 
             return serialized_batches
 
-    def listhosts(self):
+    def list_hosts_per_play(self):
 
         playlist = []
         try:
+            i = 1
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 for play in pb.get_entries():
@@ -175,10 +176,21 @@ class PlaybookExecutor:
                     new_play = play.copy()
                     new_play.post_validate(all_vars, fail_on_undefined=False)
 
-                    playlist.append(set(self._inventory.get_hosts(new_play.hosts)))
+                    pname =  play.get_name().strip()
+                    if pname == 'PLAY: <no name specified>':
+                        pname = 'play #%d' % i
+
+                    playlist.append( {
+                        'name': pname,
+                        'pattern': play.hosts,
+                        'hosts': set(self._inventory.get_hosts(new_play.hosts)),
+                    } )
+                    i = i + 1
+
         except AnsibleError:
             raise
         except Exception, e:
+            #TODO: log exception
             raise AnsibleParserError("Failed to process plays: %s" % str(e))
 
         return playlist
