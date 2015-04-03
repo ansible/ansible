@@ -145,6 +145,7 @@ options:
     choices:
       - "yes"
       - "no"
+    version_added: "2.0"
   rsync_opts:
     description:
       - Specify additional rsync options by passing in an array.
