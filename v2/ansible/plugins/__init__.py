@@ -26,6 +26,7 @@ import sys
 import glob
 import imp
 from ansible import constants as C
+from ansible.utils import warnings
 from ansible import errors
 
 MODULE_CACHE = {}
@@ -160,17 +161,14 @@ class PluginLoader:
                 self._extra_dirs.append(directory)
                 self._paths = None
 
-    def find_plugin(self, name, suffixes=None, transport=''):
+    def find_plugin(self, name, suffixes=None):
         ''' Find a plugin named name '''
 
         if not suffixes:
             if self.class_name:
                 suffixes = ['.py']
             else:
-                if transport == 'winrm':
-                    suffixes = ['.ps1', '']
-                else:
-                    suffixes = ['.py', '']
+                suffixes = ['.py', '']
 
         potential_names = frozenset('%s%s' % (name, s) for s in suffixes)
         for full_name in potential_names:
@@ -180,18 +178,21 @@ class PluginLoader:
         found = None
         for path in [p for p in self._get_paths() if p not in self._searched_paths]:
             if os.path.isdir(path):
-                for potential_file in os.listdir(path):
+                try:
+                    full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                except OSError,e:
+                    warnings("Error accessing plugin paths: %s" % str(e))
+                for full_path in (f for f in full_paths if os.path.isfile(f)):
                     for suffix in suffixes:
-                        if potential_file.endswith(suffix):
-                            full_path = os.path.join(path, potential_file)
+                        if full_path.endswith(suffix):
                             full_name = os.path.basename(full_path)
                             break
                     else: # Yes, this is a for-else: http://bit.ly/1ElPkyg
                         continue
-    
+
                     if full_name not in self._plugin_path_cache:
                         self._plugin_path_cache[full_name] = full_path
-    
+
             self._searched_paths.add(path)
             for full_name in potential_names:
                 if full_name in self._plugin_path_cache:
