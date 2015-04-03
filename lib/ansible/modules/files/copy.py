@@ -240,7 +240,7 @@ def main():
     changed = False
 
     # Special handling for recursive copy - create intermediate dirs
-    if original_basename and dest.endswith("/"):
+    if original_basename and dest.endswith(os.sep):
         dest = os.path.join(dest, original_basename)
         dirname = os.path.dirname(dest)
         if not os.path.exists(dirname) and os.path.isabs(dirname):
