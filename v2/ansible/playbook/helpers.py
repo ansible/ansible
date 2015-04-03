@@ -21,7 +21,7 @@ import os
 from types import NoneType
 
 from ansible.errors import AnsibleParserError
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleSequence
 
 
 def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
@@ -34,7 +34,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 
-    assert type(ds) in (list, NoneType)
+    assert ds is None or isinstance(ds, AnsibleSequence), 'block has bad type: %s' % type(ds)
 
     block_list = []
     if ds:
@@ -64,7 +64,7 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
 
-    assert type(ds) == list
+    assert isinstance(ds, list), 'task has bad type: %s' % type(ds)
 
     task_list = []
     for task in ds:
@@ -101,7 +101,7 @@ def load_list_of_roles(ds, current_role_path=None, variable_manager=None, loader
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
-    assert isinstance(ds, list)
+    assert isinstance(ds, list), 'roles has bad type: %s' % type(ds)
 
     roles = []
     for role_def in ds:
