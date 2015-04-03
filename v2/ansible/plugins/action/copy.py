@@ -31,7 +31,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 from ansible.utils.unicode import to_bytes
-
+from ansible.parsing.vault import VaultLib
 
 class ActionModule(ActionBase):
 
@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
         # Check if the source ends with a "/"
         source_trailing_slash = False
         if source:
-            source_trailing_slash = source.endswith("/")
+            source_trailing_slash = source.endswith(os.sep)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -145,6 +145,7 @@ class ActionModule(ActionBase):
         dest = self._remote_expand_user(dest, tmp)
 
         for source_full, source_rel in source_files:
+
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
@@ -284,11 +285,8 @@ class ActionModule(ActionBase):
         else:
             result = dict(dest=dest, src=source, changed=changed)
 
-        # FIXME: move diffs into the result?
-        #if len(diffs) == 1:
-        #    return ReturnData(conn=conn, result=result, diff=diffs[0])
-        #else:
-        #    return ReturnData(conn=conn, result=result)
+        if len(diffs) == 1:
+            result['diff']=diffs[0]
 
         return result
 

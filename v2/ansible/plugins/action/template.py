@@ -91,7 +91,7 @@ class ActionModule(ActionBase):
         dest = self._remote_expand_user(dest, tmp)
 
         directory_prepended = False
-        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
+        if dest.endswith(os.sep):
             directory_prepended = True
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
