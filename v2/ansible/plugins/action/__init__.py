@@ -83,7 +83,7 @@ class ActionBase:
 
         # Search module path(s) for named module.
         module_suffixes = getattr(self._connection, 'default_suffixes', None)
-        module_path = self._module_loader.find_plugin(module_name, module_suffixes, transport=self._connection.get_transport())
+        module_path = self._module_loader.find_plugin(module_name, module_suffixes)
         if module_path is None:
             module_path2 = self._module_loader.find_plugin('ping', module_suffixes)
             if module_path2 is not None:
