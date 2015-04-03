@@ -31,6 +31,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.utils.display import Display
 from ansible.utils.cli import base_parser, validate_conflicts, normalize_become_options, ask_passwords
+from ansible.utils.display import Display
 from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
@@ -131,7 +132,8 @@ class Cli(object):
 
         # now create a task queue manager to execute the play
         try:
-            tqm = TaskQueueManager(inventory=inventory, callback='minimal', variable_manager=variable_manager, loader=loader, options=options)
+            display = Display()
+            tqm = TaskQueueManager(inventory=inventory, callback='minimal', variable_manager=variable_manager, loader=loader, display=display, options=options)
             result = tqm.run(play)
             tqm.cleanup()
         except AnsibleError:

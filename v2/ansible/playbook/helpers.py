@@ -34,7 +34,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 
-    assert ds is None or isinstance(ds, AnsibleSequence), 'block has bad type: %s' % type(ds)
+    assert ds is None or isinstance(ds, list), 'block has bad type: %s' % type(ds)
 
     block_list = []
     if ds:
