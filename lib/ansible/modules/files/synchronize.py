@@ -138,6 +138,13 @@ options:
       - put user@ for the remote paths. If you have a custom ssh config to define the remote user for a host
         that does not match the inventory user, you should set this parameter to "no".
     default: yes
+  use_ssh_args:
+    description:
+      - Use the ssh_args specified in ansible.cfg
+    default: "yes"
+    choices:
+      - "yes"
+      - "no"
   rsync_opts:
     description:
       - Specify additional rsync options by passing in an array.
@@ -227,7 +234,8 @@ def main():
             group = dict(type='bool'),
             set_remote_user = dict(default='yes', type='bool'),
             rsync_timeout = dict(type='int', default=0),
-            rsync_opts = dict(type='list')
+            rsync_opts = dict(type='list'),
+            ssh_args = dict(type='str'),
         ),
         supports_check_mode = True
     )
@@ -254,6 +262,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
+    ssh_args = module.params['ssh_args']
 
     cmd = '%s --delay-updates -F' % rsync
     if compress:
@@ -306,7 +315,7 @@ def main():
     else:
         private_key = '-i '+ private_key 
 
-    ssh_opts = '-S none -o StrictHostKeyChecking=no'
+    ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
     if dest_port != 22:
         cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
     else:
