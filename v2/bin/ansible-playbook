@@ -15,6 +15,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.task import Task
 from ansible.utils.cli import base_parser, validate_conflicts, normalize_become_options, ask_passwords
+from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import combine_vars
 from ansible.utils.vault import read_vault_file
@@ -130,7 +131,8 @@ def main(args):
 
     # create the playbook executor, which manages running the plays
     # via a task queue manager
-    pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=options)
+    display = Display()
+    pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options)
 
     if options.listhosts:
         i = 1

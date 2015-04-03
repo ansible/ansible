@@ -33,7 +33,6 @@ from ansible.executor.stats import AggregateStats
 from ansible.plugins import callback_loader, strategy_loader
 
 from ansible.utils.debug import debug
-from ansible.utils.display import Display
 
 __all__ = ['TaskQueueManager']
 
@@ -49,15 +48,14 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, callback, variable_manager, loader, options):
+    def __init__(self, inventory, callback, variable_manager, loader, display, options):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
+        self._display          = display
         self._options          = options
         self._stats            = AggregateStats()
-
-        self._display          = Display()
 
         # a special flag to help us exit cleanly
         self._terminated = False

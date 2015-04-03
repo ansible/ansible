@@ -36,17 +36,18 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, options):
+    def __init__(self, playbooks, inventory, variable_manager, loader, display, options):
         self._playbooks        = playbooks
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
+        self._display          = display
         self._options          = options
 
         if options.listhosts or options.listtasks or options.listtags:
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, options=options)
+            self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, display=display, options=options)
 
     def run(self):
 
@@ -94,13 +95,13 @@ class PlaybookExecutor:
             #TODO: move to callback
             # FIXME: this stat summary stuff should be cleaned up and moved
             #        to a new method, if it even belongs here...
-            self._tqm._display.banner("PLAY RECAP")
+            self._display.banner("PLAY RECAP")
 
             hosts = sorted(self._tqm._stats.processed.keys())
             for h in hosts:
                 t = self._tqm._stats.summarize(h)
 
-                self._tqm._display.display("%s : %s %s %s %s" % (
+                self._display.display("%s : %s %s %s %s" % (
                     hostcolor(h, t),
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
@@ -109,7 +110,7 @@ class PlaybookExecutor:
                     screen_only=True
                 )
 
-                self._tqm._display.display("%s : %s %s %s %s" % (
+                self._display.display("%s : %s %s %s %s" % (
                     hostcolor(h, t, False),
                     colorize('ok', t['ok'], None),
                     colorize('changed', t['changed'], None),
@@ -118,7 +119,7 @@ class PlaybookExecutor:
                     log_only=True
                 )
 
-            self._tqm._display.display("", screen_only=True)
+            self._display.display("", screen_only=True)
             # END STATS STUFF
 
         return result
