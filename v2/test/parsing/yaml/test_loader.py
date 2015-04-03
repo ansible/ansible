@@ -101,6 +101,49 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data[0].ansible_pos, ('myfile.yml', 2, 19))
         self.assertEqual(data[1].ansible_pos, ('myfile.yml', 3, 19))
 
+    def test_parse_short_dict(self):
+        stream = StringIO("""{"foo": "bar"}""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        data = loader.get_single_data()
+        self.assertEqual(data, dict(foo=u'bar'))
+
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 1, 1))
+        self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 1, 9))
+
+        stream = StringIO("""foo: bar""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        data = loader.get_single_data()
+        self.assertEqual(data, dict(foo=u'bar'))
+
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 1, 1))
+        self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 1, 6))
+
+    def test_error_conditions(self):
+        stream = StringIO("""{""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        self.assertRaises(loader.get_single_data)
+
+    def test_front_matter(self):
+        stream = StringIO("""---\nfoo: bar""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        data = loader.get_single_data()
+        self.assertEqual(data, dict(foo=u'bar'))
+
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 1))
+        self.assertEqual(data[u'foo'].ansible_pos, ('myfile.yml', 2, 6))
+
+        # Initial indent (See: #6348)
+        stream = StringIO(""" - foo: bar\n   baz: qux""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        data = loader.get_single_data()
+        self.assertEqual(data, [{u'foo': u'bar', u'baz': u'qux'}])
+
+        self.assertEqual(data.ansible_pos, ('myfile.yml', 1, 2))
+        self.assertEqual(data[0].ansible_pos, ('myfile.yml', 1, 4))
+        self.assertEqual(data[0][u'foo'].ansible_pos, ('myfile.yml', 1, 9))
+        self.assertEqual(data[0][u'baz'].ansible_pos, ('myfile.yml', 2, 9))
+
+
 class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def setUp(self):
