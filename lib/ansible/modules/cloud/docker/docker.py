@@ -1602,7 +1602,7 @@ def main():
                          summary=manager.counters,
                          containers=containers.changed,
                          reload_reasons=manager.get_reload_reason_message(),
-                         ansible_facts=_ansible_facts(containers.changed))
+                         ansible_facts=_ansible_facts(manager.get_inspect_containers(containers.changed)))
 
     except DockerAPIError as e:
         module.fail_json(changed=manager.has_changed(), msg="Docker API Error: %s" % e.explanation)
