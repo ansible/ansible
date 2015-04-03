@@ -24,7 +24,7 @@ options:
   cloud:
     description:
       - Named cloud to operate against. Provides default values for I(auth) and I(auth_plugin)
-     required: false
+    required: false
   auth:
     description:
       - Dictionary containing auth information as needed by the cloud's auth
@@ -87,12 +87,11 @@ options:
     required: false
   endpoint_type:
     description:
-      - Endpoint URL type to fetch from the service catalog.
+        - Endpoint URL type to fetch from the service catalog.
     choices: [public, internal, admin]
     required: false
     default: public
-requirements:
-  - shade
+requirements: [shade]
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
     may be user instead of providing explicit values.
