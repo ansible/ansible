@@ -242,8 +242,10 @@ def transform_headers(headers):
     :rtype: dict
 
     """
-    
-    return {key: str(value) for key, value in headers.items()}
+
+    for key, value in headers.items():
+        headers[key] = str(value)
+    return headers
 
 def upload_gsfile(module, gs, bucket, obj, src, expiry):
     try:
