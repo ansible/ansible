@@ -26,12 +26,10 @@ DOCUMENTATION = '''
 ---
 module: os_auth
 short_description: Retrieve an auth token
-version_added: "1.10"
-extends_documentation_fragment: openstack
+version_added: "2.0"
 description:
    - Retrieve an auth token from an OpenStack Cloud
-options:
-requirements: ["shade"]
+extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
