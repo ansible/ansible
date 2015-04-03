@@ -82,7 +82,7 @@ class ActionModule(ActionBase):
 
         dest = os.path.expanduser(dest)
         if flat:
-            if dest.endswith("/"):
+            if dest.endswith(os.sep):
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename
                 base = os.path.basename(source_local)
