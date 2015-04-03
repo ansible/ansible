@@ -29,6 +29,7 @@ from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
+from ansible.utils.display import Display
 from ansible.utils.cli import base_parser, validate_conflicts, normalize_become_options, ask_passwords
 from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
@@ -98,7 +99,8 @@ class Cli(object):
 
         hosts = inventory.list_hosts(pattern)
         if len(hosts) == 0:
-            raise AnsibleError("provided hosts list is empty")
+            d = Display()
+            d.warning("provided hosts list is empty, only localhost is available")
 
         if options.listhosts:
             for host in hosts:
