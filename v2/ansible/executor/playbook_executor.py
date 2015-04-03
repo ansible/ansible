@@ -178,7 +178,7 @@ class PlaybookExecutor:
 
                     pname =  play.get_name().strip()
                     if pname == 'PLAY: <no name specified>':
-                        pname = 'play #%d' % i
+                        pname = 'PLAY: #%d' % i
 
                     playlist.append( {
                         'name': pname,
