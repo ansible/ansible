@@ -43,7 +43,10 @@ class PlaybookExecutor:
         self._loader           = loader
         self._options          = options
 
-        self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, options=options)
+        if options.listhosts or options.listtasks or options.listtags:
+            self._tqm = None
+        else:
+            self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, options=options)
 
     def run(self):
 
@@ -58,7 +61,7 @@ class PlaybookExecutor:
         try:
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
-        
+
                 # FIXME: playbook entries are just plays, so we should rename them
                 for play in pb.get_entries():
                     self._inventory.remove_restriction()
@@ -83,43 +86,40 @@ class PlaybookExecutor:
                             break
 
                     if result != 0:
-                        # FIXME: do something here, to signify the playbook execution failed
-                        self._cleanup()
-                        return result
-        except:
+                        raise AnsibleError("Play failed!: %d" % result)
+        finally:
             self._cleanup()
-            raise
 
-        self._cleanup()
+        if result == 0:
+            #TODO: move to callback
+            # FIXME: this stat summary stuff should be cleaned up and moved
+            #        to a new method, if it even belongs here...
+            self._tqm._display.banner("PLAY RECAP")
 
-        # FIXME: this stat summary stuff should be cleaned up and moved
-        #        to a new method, if it even belongs here...
-        self._tqm._display.banner("PLAY RECAP")
+            hosts = sorted(self._tqm._stats.processed.keys())
+            for h in hosts:
+                t = self._tqm._stats.summarize(h)
 
-        hosts = sorted(self._tqm._stats.processed.keys())
-        for h in hosts:
-            t = self._tqm._stats.summarize(h)
+                self._tqm._display.display("%s : %s %s %s %s" % (
+                    hostcolor(h, t),
+                    colorize('ok', t['ok'], 'green'),
+                    colorize('changed', t['changed'], 'yellow'),
+                    colorize('unreachable', t['unreachable'], 'red'),
+                    colorize('failed', t['failures'], 'red')),
+                    screen_only=True
+                )
 
-            self._tqm._display.display("%s : %s %s %s %s" % (
-                hostcolor(h, t),
-                colorize('ok', t['ok'], 'green'),
-                colorize('changed', t['changed'], 'yellow'),
-                colorize('unreachable', t['unreachable'], 'red'),
-                colorize('failed', t['failures'], 'red')),
-                screen_only=True
-            )
+                self._tqm._display.display("%s : %s %s %s %s" % (
+                    hostcolor(h, t, False),
+                    colorize('ok', t['ok'], None),
+                    colorize('changed', t['changed'], None),
+                    colorize('unreachable', t['unreachable'], None),
+                    colorize('failed', t['failures'], None)),
+                    log_only=True
+                )
 
-            self._tqm._display.display("%s : %s %s %s %s" % (
-                hostcolor(h, t, False),
-                colorize('ok', t['ok'], None),
-                colorize('changed', t['changed'], None),
-                colorize('unreachable', t['unreachable'], None),
-                colorize('failed', t['failures'], None)),
-                log_only=True
-            )
-        
-        self._tqm._display.display("", screen_only=True)
-        # END STATS STUFF
+            self._tqm._display.display("", screen_only=True)
+            # END STATS STUFF
 
         return result
 
@@ -160,3 +160,24 @@ class PlaybookExecutor:
                 serialized_batches.append(play_hosts)
 
             return serialized_batches
+
+    def listhosts(self):
+
+        playlist = []
+        try:
+            for playbook_path in self._playbooks:
+                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
+                for play in pb.get_entries():
+
+                    # Use templated copies in case hosts: depends on variables
+                    all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+                    new_play = play.copy()
+                    new_play.post_validate(all_vars, fail_on_undefined=False)
+
+                    playlist.append(set(self._inventory.get_hosts(new_play.hosts)))
+        except AnsibleError:
+            raise
+        except Exception, e:
+            raise AnsibleParserError("Failed to process plays: %s" % str(e))
+
+        return playlist

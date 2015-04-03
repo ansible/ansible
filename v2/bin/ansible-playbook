@@ -133,7 +133,12 @@ def main(args):
     pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=options)
 
     if options.listhosts:
-        print('TODO: implement')
+        i = 1
+        for play in pbex.listhosts():
+            print("\nplay #%d" % i)
+            for host in sorted(play):
+                print("    %s" % host)
+            i = i + 1
         sys.exit(0)
     elif options.listtasks:
         print('TODO: implement')
