@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError, AnsibleParserError

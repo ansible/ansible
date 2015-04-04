@@ -18,6 +18,7 @@
 # FIXME: copied mostly from old code, needs py3 improvements
 
 import textwrap
+import sys
 
 from ansible import constants as C
 from ansible.errors import *
@@ -97,15 +98,15 @@ class Display:
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in deprecations:
-            self._display(new_msg, color='purple', stderr=True)
+            self.display(new_msg, color='purple', stderr=True)
             self._deprecations[new_msg] = 1
 
     def warning(self, msg):
         new_msg = "\n[WARNING]: %s" % msg
         wrapped = textwrap.wrap(new_msg, 79)
         new_msg = "\n".join(wrapped) + "\n"
-        if new_msg not in warns:
-            self._display(new_msg, color='bright purple', stderr=True)
+        if new_msg not in self._warns:
+            self.display(new_msg, color='bright purple', stderr=True)
             self._warns[new_msg] = 1
 
     def system_warning(self, msg):

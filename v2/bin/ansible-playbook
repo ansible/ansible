@@ -21,13 +21,9 @@ from ansible.utils.vars import combine_vars
 from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
-# Implement an ansible.utils.warning() function later
-def warning(*args, **kwargs):
-    print(*args, **kwargs)
-
 #---------------------------------------------------------------------------------------------------
 
-def main(args):
+def main(display, args):
     ''' run ansible-playbook operations '''
 
     # create parser for CLI options
@@ -122,16 +118,14 @@ def main(args):
     no_hosts = False
     if len(inventory.list_hosts()) == 0:
         # Empty inventory
-        warning("provided hosts list is empty, only localhost is available")
+        display.warning("provided hosts list is empty, only localhost is available")
         no_hosts = True
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0 and no_hosts is False:
         # Invalid limit
         raise errors.AnsibleError("Specified --limit does not match any hosts")
 
-    # create the playbook executor, which manages running the plays
-    # via a task queue manager
-    display = Display()
+    # create the playbook executor, which manages running the plays via a task queue manager
     pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options)
 
     results = pbex.run()
@@ -139,38 +133,34 @@ def main(args):
     if isinstance(results, list):
         for p in results:
 
-            print('')
-            print('playbook: %s' % p['playbook'])
-            print('')
-
+            display.display('\nplaybook: %s\n' % p['playbook'])
             for play in p['plays']:
                 if options.listhosts:
-                    print("\n  %s (%s): host count=%d" % (play['name'], play['pattern'], len(play['hosts'])))
+                    display.display("\n  %s (%s): host count=%d" % (play['name'], play['pattern'], len(play['hosts'])))
                     for host in play['hosts']:
-                        print("    %s" % host)
+                        display.display("    %s" % host)
                 if options.listtasks: #TODO: do we want to display block info?
-                    print("\n  %s: task count=%d" % (play['name'], len(play['tasks'])))
+                    display.display("\n  %s" % (play['name']))
                     for task in play['tasks']:
-                        print("    %s" % task)
-                if options.listtags:
-                    print("\n  %s: tags count=%d" % (play['name'], len(play['tags'])))
+                        display.display("    %s" % task)
+                if options.listtags: #TODO: fix once we figure out block handling above
+                    display.display("\n  %s: tags count=%d" % (play['name'], len(play['tags'])))
                     for tag in play['tags']:
-                        print("    %s" % tag)
+                        display.display("    %s" % tag)
+        return 0
     else:
         return results
 
 if __name__ == "__main__":
-    #display(" ", log_only=True)
-    #display(" ".join(sys.argv), log_only=True)
-    #display(" ", log_only=True)
+
+    display = Display()
+    display.display(" ".join(sys.argv), log_only=True)
+
     try:
-        sys.exit(main(sys.argv[1:]))
+        sys.exit(main(display, sys.argv[1:]))
     except AnsibleError as e:
-        #display("ERROR: %s" % e, color='red', stderr=True)
-        print(e)
+        display.display("[ERROR]: %s" % e, color='red', stderr=True)
         sys.exit(1)
     except KeyboardInterrupt:
-        #display("ERROR: interrupted", color='red', stderr=True)
-        print("keyboard interrupt")
+        display.display("[ERROR]: interrupted", color='red', stderr=True)
         sys.exit(1)
-
