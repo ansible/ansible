@@ -27,6 +27,7 @@ from ansible.playbook.become import Become
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.playbook.block import Block
 
 from ansible.utils.vars import combine_vars
 
@@ -232,6 +233,15 @@ class Play(Base, Taggable, Become):
 
     def get_roles(self):
         return self.roles[:]
+
+    def get_tasks(self):
+        tasklist = []
+        for task in self.pre_tasks + self.tasks + self.post_tasks:
+            if isinstance(task, Block):
+                tasklist.append(task.block + task.rescue + task.always)
+            else:
+                tasklist.append(task)
+        return tasklist
 
     def serialize(self):
         data = super(Play, self).serialize()
