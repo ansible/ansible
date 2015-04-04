@@ -81,5 +81,5 @@ class Playbook:
     def get_loader(self):
         return self._loader
 
-    def get_entries(self):
+    def get_plays(self):
         return self._entries[:]
