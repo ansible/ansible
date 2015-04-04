@@ -53,6 +53,7 @@ def main(display, args):
         parser.print_help(file=sys.stderr)
         return 1
 
+    display.verbosity = options.verbosity
     validate_conflicts(parser,options)
 
     # Note: slightly wrong, this is written so that implicit localhost
@@ -154,7 +155,7 @@ def main(display, args):
 if __name__ == "__main__":
 
     display = Display()
-    display.display(" ".join(sys.argv), log_only=True)
+    #display.display(" ".join(sys.argv), log_only=True)
 
     try:
         sys.exit(main(display, sys.argv[1:]))

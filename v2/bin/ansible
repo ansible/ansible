@@ -72,6 +72,7 @@ class Cli(object):
             parser.print_help()
             sys.exit(1)
 
+        display.verbosity = options.verbosity
         validate_conflicts(parser,options)
 
         return (options, args)
@@ -109,7 +110,7 @@ class Cli(object):
 
         if options.listhosts:
             for host in hosts:
-                self.display('    %s' % host.name)
+                self.display.display('    %s' % host.name)
             sys.exit(0)
 
         if ((options.module_name == 'command' or options.module_name == 'shell') and not options.module_args):
@@ -163,7 +164,7 @@ class Cli(object):
 if __name__ == '__main__':
 
     display = Display()
-    #display.display(" ".join(sys.argv), log_only=True)
+    #display.display(" ".join(sys.argv))
 
     try:
         cli = Cli(display=display)

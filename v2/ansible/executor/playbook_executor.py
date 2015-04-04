@@ -127,6 +127,7 @@ class PlaybookExecutor:
 
                 if entry:
                     entrylist.append(entry) # per playbook
+                self._display.vvvvv('%d plays in %s' % (i, playbook_path))
 
             if entrylist:
                 return entrylist
