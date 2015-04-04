@@ -26,11 +26,9 @@ from ansible.utils.color import stringc
 
 class Display:
 
-    def __init__(self, conn_info=None):
-        if conn_info:
-            self._verbosity = conn_info.verbosity
-        else:
-            self._verbosity = 0
+    def __init__(self, verbosity=0):
+
+        self.verbosity = verbosity
 
         # list of all deprecation messages to prevent duplicate display
         self._deprecations = {}
@@ -70,10 +68,13 @@ class Display:
     def vvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=3)
 
+    def vvvvv(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=4)
+
     def verbose(self, msg, host=None, caplevel=2):
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
-        if self._verbosity > caplevel:
+        if self.verbosity > caplevel:
             if host is None:
                 self.display(msg, color='blue')
             else:
@@ -124,4 +125,3 @@ class Display:
             star_len = 3
         stars = "*" * star_len
         self.display("\n%s %s" % (msg, stars), color=color)
-
