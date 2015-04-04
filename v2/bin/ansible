@@ -40,8 +40,12 @@ from ansible.vars import VariableManager
 class Cli(object):
     ''' code behind bin/ansible '''
 
-    def __init__(self):
-        pass
+    def __init__(self, display=None):
+
+        if display is None:
+            self.display = Display()
+        else:
+            self.display = display
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -105,7 +109,7 @@ class Cli(object):
 
         if options.listhosts:
             for host in hosts:
-                print('    %s' % host.name)
+                self.display('    %s' % host.name)
             sys.exit(0)
 
         if ((options.module_name == 'command' or options.module_name == 'shell') and not options.module_args):
@@ -157,22 +161,17 @@ class Cli(object):
 ########################################################
 
 if __name__ == '__main__':
-    #callbacks.display("", log_only=True)
-    #callbacks.display(" ".join(sys.argv), log_only=True)
-    #callbacks.display("", log_only=True)
+
+    display = Display()
+    #display.display(" ".join(sys.argv), log_only=True)
 
     try:
-        cli = Cli()
+        cli = Cli(display=display)
         (options, args) = cli.parse()
-        result = cli.run(options, args)
-        
-    except AnsibleError, e:
-        print(e)
+        sys.exit(cli.run(options, args))
+    except AnsibleError as e:
+        display.display("[ERROR]: %s" % e, color='red', stderr=True)
         sys.exit(1)
-
-    except Exception, e:
-        # Generic handler for errors
-        print("ERROR: %s" % str(e))
+    except KeyboardInterrupt:
+        display.display("[ERROR]: interrupted", color='red', stderr=True)
         sys.exit(1)
-
-    sys.exit(result)
