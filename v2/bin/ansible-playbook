@@ -134,20 +134,30 @@ def main(args):
     display = Display()
     pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options)
 
-    if options.listhosts:
-        for p in pbex.list_hosts_per_play():
-            print("\n  %s (%s): host count=%d" % (p['name'], p['pattern'], len(p['hosts'])))
-            for host in p['hosts']:
-                print("    %s" % host)
-        sys.exit(0)
-    elif options.listtasks:
-        print('TODO: implement')
-        sys.exit(0)
-    elif options.listtags:
-        print('TODO: implement')
-        sys.exit(0)
+    results = pbex.run()
+
+    if isinstance(results, list):
+        for p in results:
+
+            print('')
+            print('playbook: %s' % p['playbook'])
+            print('')
+
+            for play in p['plays']:
+                if options.listhosts:
+                    print("\n  %s (%s): host count=%d" % (play['name'], play['pattern'], len(play['hosts'])))
+                    for host in play['hosts']:
+                        print("    %s" % host)
+                if options.listtasks: #TODO: do we want to display block info?
+                    print("\n  %s: task count=%d" % (play['name'], len(play['tasks'])))
+                    for task in play['tasks']:
+                        print("    %s" % task)
+                if options.listtags:
+                    print("\n  %s: tags count=%d" % (play['name'], len(play['tags'])))
+                    for tag in play['tags']:
+                        print("    %s" % tag)
     else:
-        return pbex.run()
+        return results
 
 if __name__ == "__main__":
     #display(" ", log_only=True)
