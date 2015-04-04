@@ -70,7 +70,10 @@ class PlaybookExecutor:
                     entry['plays'] = []
 
                 i = 1
-                for play in pb.get_plays():
+                plays = pb.get_plays()
+                self._display.vv('%d plays in %s' % (len(plays), playbook_path))
+
+                for play in plays:
                     self._inventory.remove_restriction()
 
                     # Create a temporary copy of the play here, so we can run post_validate
@@ -127,7 +130,6 @@ class PlaybookExecutor:
 
                 if entry:
                     entrylist.append(entry) # per playbook
-                self._display.vvvvv('%d plays in %s' % (i, playbook_path))
 
             if entrylist:
                 return entrylist

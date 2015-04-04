@@ -39,7 +39,7 @@ class ConnectionBase:
 
     def __init__(self, connection_info, *args, **kwargs):
         self._connection_info = connection_info
-        self._display = Display(connection_info)
+        self._display = Display(verbosity=connection_info.verbosity)
 
 
     def _become_method_supported(self, become_method):
