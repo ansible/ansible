@@ -34,9 +34,10 @@ class Play(object):
 
     _pb_common = [
         'accelerate', 'accelerate_ipv6', 'accelerate_port', 'any_errors_fatal', 'become',
-        'become_method', 'become_user', 'environment', 'gather_facts', 'handlers', 'hosts',
-        'name', 'no_log', 'remote_user', 'roles', 'serial', 'su', 'su_user', 'sudo',
-        'sudo_user', 'tags', 'vars', 'vars_files', 'vars_prompt', 'vault_password',
+        'become_method', 'become_user', 'environment', 'force_handlers', 'gather_facts',
+        'handlers', 'hosts', 'name', 'no_log', 'remote_user', 'roles', 'serial', 'su', 
+        'su_user', 'sudo', 'sudo_user', 'tags', 'vars', 'vars_files', 'vars_prompt', 
+        'vault_password',
     ]
 
     __slots__ = _pb_common + [
@@ -153,6 +154,7 @@ class Play(object):
         self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.no_log           = utils.boolean(ds.get('no_log', 'false'))
+        self.force_handlers   = utils.boolean(ds.get('force_handlers', self.playbook.force_handlers))
 
         # Fail out if user specifies conflicting privelege escalations
         if (ds.get('become') or ds.get('become_user')) and (ds.get('sudo') or ds.get('sudo_user')):
