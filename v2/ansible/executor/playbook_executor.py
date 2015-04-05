@@ -124,7 +124,7 @@ class PlaybookExecutor:
                                 break
 
                         if result != 0:
-                            raise AnsibleError("Play failed!: %d" % result)
+                            break
 
                     i = i + 1 # per play
 
@@ -138,7 +138,6 @@ class PlaybookExecutor:
             if self._tqm is not None:
                 self._cleanup()
 
-        #TODO: move to callback
         # FIXME: this stat summary stuff should be cleaned up and moved
         #        to a new method, if it even belongs here...
         self._display.banner("PLAY RECAP")

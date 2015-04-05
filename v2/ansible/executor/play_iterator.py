@@ -88,18 +88,11 @@ class PlayIterator:
     FAILED_ALWAYS      = 8
 
     def __init__(self, inventory, play):
-        # FIXME: should we save the post_validated play from below here instead?
         self._play = play
 
-        # post validate the play, as we need some fields to be finalized now
-        # so that we can use them to setup the iterator properly
-        all_vars = inventory._variable_manager.get_vars(loader=inventory._loader, play=play)
-        new_play = play.copy()
-        new_play.post_validate(all_vars, fail_on_undefined=False)
-
-        self._blocks  = new_play.compile()
+        self._blocks  = self._play.compile()
         self._host_states = {}
-        for host in inventory.get_hosts(new_play.hosts):
+        for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
 
     def get_host_state(self, host):

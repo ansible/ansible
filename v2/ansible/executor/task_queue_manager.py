@@ -123,7 +123,8 @@ class TaskQueueManager:
         # FIXME: there is a block compile helper for this...
         handler_list = []
         for handler_block in handlers:
-            handler_list.extend(handler_block.compile())
+            for handler in handler_block.block:
+                handler_list.append(handler)
 
         # then initalize it with the handler names from the handler list
         for handler in handler_list:
@@ -138,23 +139,28 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        connection_info = ConnectionInformation(play, self._options)
+        all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+
+        new_play = play.copy()
+        new_play.post_validate(all_vars, fail_on_undefined=False)
+
+        connection_info = ConnectionInformation(new_play, self._options)
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_connection_info'):
                 callback_plugin.set_connection_info(connection_info)
 
-        self.send_callback('v2_playbook_on_play_start', play)
+        self.send_callback('v2_playbook_on_play_start', new_play)
 
         # initialize the shared dictionary containing the notified handlers
-        self._initialize_notified_handlers(play.handlers)
+        self._initialize_notified_handlers(new_play.handlers)
 
         # load the specified strategy (or the default linear one)
-        strategy = strategy_loader.get(play.strategy, self)
+        strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:
-            raise AnsibleError("Invalid play strategy specified: %s" % play.strategy, obj=play._ds)
+            raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=play)
+        iterator = PlayIterator(inventory=self._inventory, play=new_play)
 
         # and run the play using the strategy
         return strategy.run(iterator, connection_info)
