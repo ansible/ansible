@@ -390,7 +390,6 @@ class StrategyBase:
         #        of handlers based on the notified list
 
         for handler_block in iterator._play.handlers:
-            debug("handlers are: %s" % handlers)
             # FIXME: handlers need to support the rescue/always portions of blocks too,
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
