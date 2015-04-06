@@ -547,7 +547,7 @@ class User(object):
                 return passwd
         if not self.user_exists():
             return passwd
-        else:
+        elif self.SHADOWFILE:
             # Read shadow file for user's encrypted password string
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
@@ -1424,6 +1424,24 @@ class DarwinUser(User):
                 else:
                     return None
 
+    def _get_next_uid(self):
+        '''Return the next available uid'''
+        cmd = self._get_dscl()
+        cmd += ['-list', '/Users', 'UniqueID']
+        (rc, out, err) = self.execute_command(cmd)
+        if rc != 0:
+            self.module.fail_json(
+                msg="Unable to get the next available uid",
+                rc=rc,
+                out=out,
+                err=err
+            )
+        max_uid = 0
+        for line in out.splitlines():
+            if max_uid < int(line.split()[1]):
+                max_uid = int(line.split()[1])
+        return max_uid + 1
+
     def _change_user_password(self):
         '''Change password for SELF.NAME against SELF.PASSWORD.
 
@@ -1449,13 +1467,14 @@ class DarwinUser(User):
 
     def _make_group_numerical(self):
         '''Convert SELF.GROUP to is stringed numerical value suitable for dscl.'''
-        if self.group is not None:
-            try:
-                self.group = grp.getgrnam(self.group).gr_gid
-            except KeyError:
-                self.module.fail_json(msg='Group "%s" not found. Try to create it first using "group" module.' % self.group)
-            # We need to pass a string to dscl
-            self.group = str(self.group)
+        if self.group is None:
+            self.group = 'nogroup'
+        try:
+            self.group = grp.getgrnam(self.group).gr_gid
+        except KeyError:
+            self.module.fail_json(msg='Group "%s" not found. Try to create it first using "group" module.' % self.group)
+        # We need to pass a string to dscl
+        self.group = str(self.group)
 
     def __modify_group(self, group, action):
         '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
@@ -1512,7 +1531,6 @@ class DarwinUser(User):
         plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
 
         # http://support.apple.com/kb/HT5017?viewlocale=en_US
-        uid = int(self.uid)
         cmd = [ 'defaults', 'read', plist_file, 'HiddenUsersList' ]
         (rc, out, err) = self.execute_command(cmd)
         # returned value is
@@ -1590,6 +1608,8 @@ class DarwinUser(User):
 
 
         self._make_group_numerical()
+        if self.uid is None:
+            self.uid = str(self._get_next_uid())
 
         # Homedir is not created by default
         if self.createhome:
@@ -1651,7 +1671,7 @@ class DarwinUser(User):
                     changed = rc
                     out += _out
                     err += _err
-        if self.update_password == 'always':
+        if self.update_password == 'always' and self.password is not None:
             (rc, _err, _out) = self._change_user_password()
             out += _out
             err += _err
