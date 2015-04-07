@@ -44,7 +44,7 @@ options:
   password:
     description:
       - set the user's password, before 1.4 this was required.
-      - "When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is: C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\")."
+      - "When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is: C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if encrypted is set, the stored password will be hashed whether or not it is pre-encrypted."
     required: false
     default: null
   db:
@@ -103,7 +103,7 @@ options:
     choices: [ "present", "absent" ]
   encrypted:
     description:
-      - denotes if the password is already encrypted. boolean.
+      - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the stored password is hashed when encrypted is set.
     required: false
     default: false
     version_added: '1.4'
@@ -129,6 +129,10 @@ notes:
      PostgreSQL must also be installed on the remote host. For Ubuntu-based
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
+   - If the passlib library is installed, then passwords that are encrypted
+     in the DB but not encrypted when passed as arguments can be checked for
+     changes. If the passlib library is not installed, unencrypted passwords
+     stored in the DB encrypted will be assumed to have changed.
    - If you specify PUBLIC as the user, then the privilege changes will apply
      to all users. You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
@@ -161,6 +165,7 @@ import itertools
 
 try:
     import psycopg2
+    import psycopg2.extras
 except ImportError:
     postgresqldb_found = False
 else:
@@ -172,6 +177,12 @@ VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' % f for f in _flags)))
 VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL', 'USAGE')),
         database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL', 'USAGE')),
         )
+
+# map to cope with idiosyncracies of SUPERUSER and LOGIN
+PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
+                             CREATEUSER='rolcreateuser', CREATEDB='rolcreatedb',
+                             INHERIT='rolinherit', LOGIN='rolcanlogin',
+                             REPLICATION='rolreplication')
 
 class InvalidFlagsError(Exception):
     pass
@@ -230,8 +241,45 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         # Grab current role attributes.
         current_role_attrs = cursor.fetchone()
 
-        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        # Do we actually need to do anything?
+        pwchanging = False
         if password is not None:
+            if encrypted:
+                if password.startswith('md5'):
+                    if password != current_role_attrs['rolpassword']:
+                        pwchanging = True
+                else:
+                    try:
+                        from passlib.hash import postgres_md5 as pm
+                        if pm.encrypt(password, user) != current_role_attrs['rolpassword']:
+                            pwchanging = True
+                    except ImportError:
+                        # Cannot check if passlib is not installed, so assume password is different
+                        pwchanging = True
+            else:
+                if password != current_role_attrs['rolpassword']:
+                    pwchanging = True
+
+        role_attr_flags_changing = False
+        if role_attr_flags:
+            role_attr_flags_dict = {}
+            for r in role_attr_flags.split(','):
+                if r.startswith('NO'):
+                    role_attr_flags_dict[r.replace('NO', '', 1)] = False
+                else:
+                    role_attr_flags_dict[r] = True
+
+            for role_attr_name, role_attr_value in role_attr_flags_dict.items():
+                if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
+                    role_attr_flags_changing = True
+
+        expires_changing = (expires is not None and expires == current_roles_attrs['rol_valid_until'])
+
+        if not pwchanging and not role_attr_flags_changing and not expires_changing:
+            return False
+
+        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        if pwchanging:
             alter.append("WITH %(crypt)s" % {"crypt": encrypted})
             alter.append("PASSWORD %(password)s")
             alter.append(role_attr_flags)
@@ -527,7 +575,7 @@ def main():
 
     try:
         db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor()
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except Exception, e:
         module.fail_json(msg="unable to connect to database: %s" % e)
 
