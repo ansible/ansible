@@ -36,18 +36,19 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, display, options):
+    def __init__(self, playbooks, inventory, variable_manager, loader, display, options, conn_pass, become_pass):
         self._playbooks        = playbooks
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
         self._display          = display
         self._options          = options
+        self.passwords         = {'conn_pass': conn_pass, 'become_pass': become_pass}
 
         if options.listhosts or options.listtasks or options.listtags:
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, display=display, options=options)
+            self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=self.passwords)
 
     def run(self):
 

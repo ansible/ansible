@@ -37,6 +37,9 @@ class Connection(ConnectionBase):
 
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
+
+        self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._connection_info.remote_addr)
+
         return self
 
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
