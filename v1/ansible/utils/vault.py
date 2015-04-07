@@ -516,11 +516,6 @@ class VaultAES256(object):
         salt = os.urandom(32)
         key1, key2, iv = self.gen_key_initctr(password, salt)
 
-        # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
-        bs = AES.block_size
-        padding_length = (bs - len(data) % bs) or bs
-        data += padding_length * chr(padding_length)
-
         # COUNTER.new PARAMETERS
         # 1) nbits (integer) - Length of the counter, in bits.
         # 2) initial_value (integer) - initial value of the counter. "iv" from gen_key_initctr
@@ -534,8 +529,8 @@ class VaultAES256(object):
 
         cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
 
-        # ENCRYPT PADDED DATA
-        cryptedData = cipher.encrypt(data)                
+        # ENCRYPT DATA
+        cryptedData = cipher.encrypt(data)
 
         # COMBINE SALT, DIGEST AND DATA
         hmac = HMAC.new(key2, cryptedData, SHA256)
@@ -563,12 +558,8 @@ class VaultAES256(object):
         ctr = Counter.new(128, initial_value=long(iv, 16))
         cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
 
-        # DECRYPT PADDED DATA
+        # DECRYPT DATA
         decryptedData = cipher.decrypt(cryptedData)
-
-        # UNPAD DATA
-        padding_length = ord(decryptedData[-1])
-        decryptedData = decryptedData[:-padding_length]
 
         return decryptedData
 
