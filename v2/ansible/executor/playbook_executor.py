@@ -36,6 +36,8 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
+    # FIXME: passwords should not be passed in piecemeal like this,
+    #        if they're just going to be stuck in a dict later.
     def __init__(self, playbooks, inventory, variable_manager, loader, display, options, conn_pass, become_pass):
         self._playbooks        = playbooks
         self._inventory        = inventory
