@@ -18,6 +18,7 @@
 import os
 import time
 import errno
+import codecs
 
 try:
     import simplejson as json
@@ -57,7 +58,7 @@ class CacheModule(BaseCacheModule):
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            f = open( cachefile, 'r')
+            f = codecs.open(cachefile, 'r', encoding='utf-8')
         except (OSError,IOError), e:
             utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
         else:
@@ -73,7 +74,7 @@ class CacheModule(BaseCacheModule):
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            f = open(cachefile, 'w')
+            f = codecs.open(cachefile, 'w', encoding='utf-8')
         except (OSError,IOError), e:
             utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
         else:
