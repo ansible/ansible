@@ -8,9 +8,9 @@ This shows a few alternative ways to run playbooks. These modes are very useful 
 
 Start-at-task
 `````````````
-If you want to start executing your playbook at a particular task, you can do so with the ``--start-at`` option::
+If you want to start executing your playbook at a particular task, you can do so with the ``--start-at-task`` option::
 
-    ansible-playbook playbook.yml --start-at="install packages"
+    ansible-playbook playbook.yml --start-at-task="install packages"
 
 The above will start executing your playbook at a task named "install packages".
 
