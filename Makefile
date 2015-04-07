@@ -34,7 +34,8 @@ PYTHON=python
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # VERSION file provides one place to update the software version
-VERSION := $(shell cat VERSION)
+VERSION := $(shell cat VERSION | cut -f1 -d' ')
+RELEASE := $(shell cat VERSION | cut -f2 -d' ')
 
 # Get the branch information from git
 ifneq ($(shell which git),)
@@ -53,7 +54,7 @@ DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
 ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE = 1ppa
+    DEB_RELEASE = $(RELEASE)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
     # DEBSIGN_KEYID is required when signing
     ifneq ($(DEBSIGN_KEYID),)
@@ -74,7 +75,7 @@ DEB_DIST ?= unstable
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
-RPMRELEASE = 1
+RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
 endif
