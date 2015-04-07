@@ -36,8 +36,8 @@ description:
 options:
    state:
      description:
-        - Indicate desired state of the resource
-     choices: ['present', 'absent']
+       - Should the resource be present or absent.
+     choices: [present, absent]
      default: present
    server:
      description:
@@ -53,11 +53,6 @@ options:
       - Device you want to attach. Defaults to auto finding a device name.
      required: false
      default: None
-   state:
-     description:
-       - Should the resource be present or absent.
-     choices: [present, absent]
-     default: present
 requirements: ["shade"]
 '''
 
@@ -76,6 +71,18 @@ EXAMPLES = '''
 '''
 
 
+def _system_state_change(state, device):
+    """Check if system state would change."""
+    if state == 'present':
+        if device:
+            return False
+        return True
+    if state == 'absent':
+        if device:
+            return True
+        return False
+    return False
+
 def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True),
@@ -85,7 +92,9 @@ def main():
     )
 
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -98,8 +107,16 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
         server = cloud.get_server(module.params['server'])
         volume = cloud.get_volume(module.params['volume'])
+        dev = cloud.get_volume_attach_device(volume, server.id)
+
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(state, dev))
 
         if state == 'present':
+            if dev:
+                # Volume is already attached to this server
+                module.exit_json(changed=False)
+
             cloud.attach_volume(server, volume, module.params['device'],
                                 wait=wait, timeout=timeout)
 
@@ -115,6 +132,10 @@ def main():
             )
 
         elif state == 'absent':
+            if not dev:
+                # Volume is not attached to this server
+                module.exit_json(changed=False)
+
             cloud.detach_volume(server, volume, wait=wait, timeout=timeout)
             module.exit_json(
                 changed=True,
