@@ -61,7 +61,7 @@ class Play(Base, Taggable, Become):
     _hosts               = FieldAttribute(isa='list', default=[], required=True)
     _name                = FieldAttribute(isa='string', default='<no name specified>')
     _port                = FieldAttribute(isa='int', default=22)
-    _remote_user         = FieldAttribute(isa='string', default='root')
+    _remote_user         = FieldAttribute(isa='string')
 
     # Variable Attributes
     _vars                = FieldAttribute(isa='dict', default=dict())

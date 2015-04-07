@@ -57,7 +57,7 @@ class Connection(ConnectionBase):
     def connect(self):
         ''' connect to the remote host '''
 
-        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._connection_info.remote_addr)
+        self._display.vvv("ESTABLISH SSH CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._connection_info.remote_addr)
 
         self._common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -99,7 +99,7 @@ class Connection(ConnectionBase):
             self._common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
-        if self._connection_info.remote_user != pwd.getpwuid(os.geteuid())[0]:
+        if self._connection_info.remote_user is not None and self._connection_info.remote_user != pwd.getpwuid(os.geteuid())[0]:
             self._common_args += ["-o", "User="+self._connection_info.remote_user]
         # FIXME: figure out where this goes
         #self._common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]

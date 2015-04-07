@@ -48,7 +48,7 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, callback, variable_manager, loader, display, options):
+    def __init__(self, inventory, callback, variable_manager, loader, display, options, passwords):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -56,6 +56,7 @@ class TaskQueueManager:
         self._display          = display
         self._options          = options
         self._stats            = AggregateStats()
+        self.passwords         = passwords
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -144,7 +145,7 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(all_vars, fail_on_undefined=False)
 
-        connection_info = ConnectionInformation(new_play, self._options)
+        connection_info = ConnectionInformation(new_play, self._options, self.passwords)
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_connection_info'):
                 callback_plugin.set_connection_info(connection_info)

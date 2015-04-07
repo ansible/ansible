@@ -38,34 +38,40 @@ class ConnectionInformation:
     connection/authentication information.
     '''
 
-    def __init__(self, play=None, options=None):
-        # FIXME: implement the new methodology here for supporting
-        #        various different auth escalation methods (becomes, etc.)
+    def __init__(self, play=None, options=None, passwords=None):
 
-        self.connection  = C.DEFAULT_TRANSPORT
+        if passwords is None:
+            passwords = {}
+
+        # connection
+        self.connection  = None
         self.remote_addr = None
-        self.remote_user = 'root'
-        self.password    = ''
-        self.port        = 22
+        self.remote_user = None
+        self.password    = passwords.get('conn_pass','')
+        self.port        = None
         self.private_key_file = None
+
+        # privilege escalation
+        self.become        = None
+        self.become_method = None
+        self.become_user   = None
+        self.become_pass   = passwords.get('become_pass','')
+
+        # general flags (should we move out?)
         self.verbosity   = 0
         self.only_tags   = set()
         self.skip_tags   = set()
-
-        # privilege escalation
-        self.become        = False
-        self.become_method = C.DEFAULT_BECOME_METHOD
-        self.become_user   = ''
-        self.become_pass   = ''
-
         self.no_log      = False
         self.check_mode  = False
+
+        #TODO: just pull options setup to above?
+        # set options before play to allow play to override them
+        if options:
+            self.set_options(options)
 
         if play:
             self.set_play(play)
 
-        if options:
-            self.set_options(options)
 
     def __repr__(self):
         value = "CONNECTION INFO:\n"
@@ -84,12 +90,18 @@ class ConnectionInformation:
         if play.connection:
             self.connection = play.connection
 
-        self.remote_user   = play.remote_user
-        self.password      = ''
-        self.port          = int(play.port) if play.port else 22
-        self.become        = play.become
-        self.become_method = play.become_method
-        self.become_user   = play.become_user
+        if play.remote_user:
+            self.remote_user   = play.remote_user
+
+        if play.port:
+            self.port          = int(play.port)
+
+        if play.become is not None:
+            self.become        = play.become
+        if play.become_method:
+            self.become_method = play.become_method
+        if play.become_user:
+            self.become_user   = play.become_user
         self.become_pass   = play.become_pass
 
         # non connection related
@@ -103,14 +115,29 @@ class ConnectionInformation:
         higher precedence than those set on the play or host.
         '''
 
-        # FIXME: set other values from options here?
-
-        self.verbosity = options.verbosity
         if options.connection:
             self.connection = options.connection
 
+        self.remote_user = options.remote_user
+        #if 'port' in options and options.port is not None:
+        #    self.port        = options.port
+        self.private_key_file = None
+
+        # privilege escalation
+        self.become        = options.become
+        self.become_method = options.become_method
+        self.become_user   = options.become_user
+        self.become_pass   = ''
+
+        # general flags (should we move out?)
+        if options.verbosity:
+            self.verbosity  = options.verbosity
+        #if options.no_log:
+        #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
+
+
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the

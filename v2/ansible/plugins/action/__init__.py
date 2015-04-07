@@ -415,7 +415,11 @@ class ActionBase:
         # FIXME: in error situations, the stdout may not contain valid data, so we
         #        should check for bad rc codes better to catch this here
         if 'stdout' in res and res['stdout'].strip():
-            data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
+            try:
+                data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
+            except ValueError:
+                # not valid json, lets try to capture error
+                data = {'traceback': res['stdout']}
             if 'parsed' in data and data['parsed'] == False:
                 data['msg'] += res['stderr']
             # pre-split stdout into lines, if stdout is in the data and there

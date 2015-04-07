@@ -93,6 +93,7 @@ class Cli(object):
 
         normalize_become_options(options)
         (sshpass, becomepass, vault_pass) = ask_passwords(options)
+        passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
         if options.vault_password_file:
         # read vault_pass from a file
@@ -138,7 +139,7 @@ class Cli(object):
         # now create a task queue manager to execute the play
         try:
             display = Display()
-            tqm = TaskQueueManager(inventory=inventory, callback='minimal', variable_manager=variable_manager, loader=loader, display=display, options=options)
+            tqm = TaskQueueManager(inventory=inventory, callback='minimal', variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=passwords)
             result = tqm.run(play)
             tqm.cleanup()
         except AnsibleError:
