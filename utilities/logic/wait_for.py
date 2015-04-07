@@ -38,15 +38,15 @@ DOCUMENTATION = '''
 module: wait_for
 short_description: Waits for a condition before continuing.
 description:
-     - Waiting for a port to become available is useful for when services 
-       are not immediately available after their init scripts return - 
-       which is true of certain Java application servers. It is also 
+     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified.
+     - Waiting for a port to become available is useful for when services
+       are not immediately available after their init scripts return
+       which is true of certain Java application servers. It is also
        useful when starting guests with the M(virt) module and
-       needing to pause until they are ready. 
+       needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
-     - In 1.6 and later, this module can 
-       also be used to wait for a file to be available or absent on the 
-       filesystem.
+     - In 1.6 and later, this module can also be used to wait for a file to be available or
+       absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active
        connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
@@ -57,7 +57,6 @@ options:
       - A resolvable hostname or IP address to wait for
     required: false
     default: "127.0.0.1"
-    aliases: []
   timeout:
     description:
       - maximum number of seconds to wait for
