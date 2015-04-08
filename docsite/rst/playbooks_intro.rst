@@ -334,7 +334,7 @@ Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          service:  name=memcached state=restarted
+          service: name=memcached state=restarted
         - name: restart apache
           service: name=apache state=restarted
 
