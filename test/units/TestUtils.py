@@ -780,7 +780,7 @@ class TestUtils(unittest.TestCase):
         assert 'failed' in data
         assert 'changed' in data
         assert 'skipped' in data
-        assert 'msg' not in data
+        assert 'msg' in data
         assert data['censored'] == 'results hidden due to no_log parameter'
 
     def test_repo_url_to_role_name(self):
