@@ -49,12 +49,25 @@ options:
         description:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run
-author: "Matt Martz (@sivel)"
+    wait:
+        version_added: ""
+        description:
+            - Specify whether to wait for install or uninstall to complete before continuing.
+        choices:
+            - true
+            - yes
+            - false
+            - no
+        default: false
+author: Matt Martz
 '''
 
 EXAMPLES = '''
 # Install an MSI file
 - win_msi: path=C:\\\\7z920-x64.msi
+
+# Install an MSI, and wait for it to complete before continuing
+- win_msi: path=C:\\\\7z920-x64.msi wait=true
 
 # Uninstall an MSI file
 - win_msi: path=C:\\\\7z920-x64.msi state=absent
