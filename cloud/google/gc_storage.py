@@ -18,34 +18,29 @@ DOCUMENTATION = '''
 ---
 module: gc_storage
 version_added: "1.4"
-short_description: This module manages objects/buckets in Google Cloud Storage. 
+short_description: This module manages objects/buckets in Google Cloud Storage.
 description:
     - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for information about setting the default project.
 
 options:
   bucket:
     description:
-      - Bucket name. 
+      - Bucket name.
     required: true
-    default: null 
-    aliases: []
   object:
     description:
       - Keyname of the object inside the bucket. Can be also be used to create "virtual directories" (see examples).
     required: false
     default: null
-    aliases: []
   src:
     description:
       - The source file path when performing a PUT operation.
     required: false
     default: null
-    aliases: []
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     required: false
-    aliases: []
   force:
     description:
       - Forces an overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -56,29 +51,27 @@ options:
     description:
       - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'authenticated-read'.
     required: false
-    default: private 
+    default: private
   headers:
     version_added: 2.0
     description:
       - Headers to attach to object.
     required: false
-    default: {}
+    default: '{}'
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only avaialbe when public-read is the acl for the object.
     required: false
     default: null
-    aliases: []
   mode:
     description:
-      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket). 
+      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket).
     required: true
     default: null
-    aliases: []
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
   gcs_secret_key:
     description:
-      - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used. 
+      - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used.
     required: true
     default: null
   gcs_access_key:
