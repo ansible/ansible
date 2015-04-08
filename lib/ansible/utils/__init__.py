@@ -1636,9 +1636,12 @@ def censor_unlogged_data(data):
     '''
     new_data = {}
     for (x,y) in data.iteritems():
-       if x in [ 'skipped', 'changed', 'failed', 'rc' ]:
-           new_data[x] = y
+        if x in [ 'skipped', 'changed', 'failed', 'rc', 'msg' ]:
+            new_data[x] = y
     new_data['censored'] = 'results hidden due to no_log parameter'
+    # retain msg on failure as diagnosis is difficult otherwise
+    if 'failed' in data and 'msg' in data:
+        new_data['msg'] = data['msg']
     return new_data
 
 def check_mutually_exclusive_privilege(options, parser):
