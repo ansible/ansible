@@ -66,6 +66,7 @@ def main(display, args):
     if not options.listhosts and not options.listtasks and not options.listtags:
         normalize_become_options(options)
         (sshpass, becomepass, vault_pass) = ask_passwords(options)
+        passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
     if options.vault_password_file:
         # read vault_pass from a file
@@ -127,7 +128,7 @@ def main(display, args):
         raise errors.AnsibleError("Specified --limit does not match any hosts")
 
     # create the playbook executor, which manages running the plays via a task queue manager
-    pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, conn_pass=sshpass, become_pass=becomepass)
+    pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=passwords)
 
     results = pbex.run()
 
