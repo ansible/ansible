@@ -187,7 +187,7 @@ def main():
                 changed = True
             else:
                 lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
-                rc, _, err = module.run_command("%s --yes -n %s -%s %s%s %s" % (lvcreate_cmd, lv, size_opt, size, size_unit, vg))
+                rc, _, err = module.run_command("%s -n %s -%s %s%s %s" % (lvcreate_cmd, lv, size_opt, size, size_unit, vg))
                 if rc == 0:
                     changed = True
                 else:
