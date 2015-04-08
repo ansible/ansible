@@ -172,9 +172,12 @@ class Facts(object):
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
-            rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
-            data = out.split('\n')
-            self.facts['architecture'] = data[0]
+            try:
+                rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
+                data = out.split('\n')
+                self.facts['architecture'] = data[0]
+            except:
+                self.facts['architectrure' = 'Not Available'
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
 
