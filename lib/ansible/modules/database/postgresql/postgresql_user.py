@@ -174,8 +174,8 @@ else:
 _flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 VALID_FLAGS = frozenset(itertools.chain(_flags, ('NO%s' % f for f in _flags)))
 
-VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL', 'USAGE')),
-        database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL', 'USAGE')),
+VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL')),
+        database=frozenset(('CREATE', 'CONNECT', 'TEMPORARY', 'TEMP', 'ALL')),
         )
 
 # map to cope with idiosyncracies of SUPERUSER and LOGIN
@@ -325,6 +325,8 @@ def user_delete(cursor, user):
     return True
 
 def has_table_privilege(cursor, user, table, priv):
+    if priv == 'ALL':
+        priv = ','.join([ p for p in VALID_PRIVS['table'] if p != 'ALL' ])
     query = 'SELECT has_table_privilege(%s, %s, %s)'
     cursor.execute(query, (user, table, priv))
     return cursor.fetchone()[0]
@@ -378,6 +380,8 @@ def get_database_privileges(cursor, user, db):
     return o
 
 def has_database_privilege(cursor, user, db, priv):
+    if priv == 'ALL':
+        priv = ','.join([ p for p in VALID_PRIVS['database'] if p != 'ALL' ])
     query = 'SELECT has_database_privilege(%s, %s, %s)'
     cursor.execute(query, (user, db, priv))
     return cursor.fetchone()[0]
