@@ -325,6 +325,8 @@ def user_delete(cursor, user):
     return True
 
 def has_table_privilege(cursor, user, table, priv):
+    if priv == 'ALL':
+        priv = [ p for p in VALID_PRIVS['table'] if p != 'ALL' ].join(',')
     query = 'SELECT has_table_privilege(%s, %s, %s)'
     cursor.execute(query, (user, table, priv))
     return cursor.fetchone()[0]
@@ -378,6 +380,8 @@ def get_database_privileges(cursor, user, db):
     return o
 
 def has_database_privilege(cursor, user, db, priv):
+    if priv == 'ALL':
+        priv = [ p for p in VALID_PRIVS['database'] if p != 'ALL' ].join(',')
     query = 'SELECT has_database_privilege(%s, %s, %s)'
     cursor.execute(query, (user, db, priv))
     return cursor.fetchone()[0]
@@ -415,14 +419,13 @@ def revoke_privileges(cursor, user, privs):
         return False
 
     changed = False
+    revoke_funcs = dict(table=revoke_table_privilege, database=revoke_database_privilege)
+    check_funcs = dict(table=has_table_privilege, database=has_database_privilege)
     for type_ in privs:
-        revoke_func = {
-            'table':revoke_table_privilege,
-            'database':revoke_database_privilege
-        }[type_]
         for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
-                changed = revoke_func(cursor, user, name, privilege)\
+                if check_funcs[type_](cursor, user, name, privilege):
+                    changed = revoke_funcs[type_](cursor, user, name, privilege)\
                         or changed
 
     return changed
@@ -430,16 +433,15 @@ def revoke_privileges(cursor, user, privs):
 def grant_privileges(cursor, user, privs):
     if privs is None:
         return False
+    grant_funcs = dict(table=grant_table_privilege, database=grant_database_privilege)
+    check_funcs = dict(table=has_table_privilege, database=has_database_privilege)
 
     changed = False
     for type_ in privs:
-        grant_func = {
-            'table':grant_table_privilege,
-            'database':grant_database_privilege
-        }[type_]
         for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
-                changed = grant_func(cursor, user, name, privilege)\
+                if not check_funcs[type_](cursor, user, name, privilege):
+                    changed = grant_funcs[type_](cursor, user, name, privilege)\
                         or changed
 
     return changed
