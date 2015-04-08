@@ -392,7 +392,7 @@ def role_spec_parse(role_spec):
     role_version = ''
     default_role_versions = dict(git='master', hg='tip')
     if role_spec == "" or role_spec.startswith("#"):
-        return (None, None, None, None)
+        return None
 
     tokens = [s.strip() for s in role_spec.split(',')]
     

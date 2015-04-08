@@ -774,6 +774,9 @@ def execute_install(args, options, parser):
         # (and their dependencies, unless the user doesn't want us to).
         roles_left = map(ansible.utils.role_spec_parse, args)
 
+    # roles_spec_parse returns None for comments or blank lines
+    roles_left = filter(lambda x: x is not None, roles_left)
+
     while len(roles_left) > 0:
         # query the galaxy API for the role data
         role_data = None
