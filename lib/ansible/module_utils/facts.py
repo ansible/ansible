@@ -2447,7 +2447,7 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
-	if sys_vendor == 'oVirt':
+        if sys_vendor == 'oVirt':
             self.facts['virtualization_type'] = 'kvm'
             self.facts['virtualization_role'] = 'guest'
             return
