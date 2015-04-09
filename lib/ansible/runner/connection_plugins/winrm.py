@@ -89,8 +89,10 @@ class Connection(object):
             vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
             return _winrm_cache[cache_key]
         exc = None
+        domain_user = re.search(r'[@|\\]', self.user)
+        vvv('WINRM SELECTING transport domain user is: %s' % domain_user)
         for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
-            if transport == 'kerberos' and not HAVE_KERBEROS:
+            if transport == 'kerberos' and not domain_user:
                 continue
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
             vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
