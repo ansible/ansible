@@ -31,7 +31,8 @@ options:
     name:
         description:
             - name of package to install/remove
-        required: true
+        required: false
+        default: None
     state:
         description:
             - state of the package
@@ -48,7 +49,7 @@ options:
         description:
             - upgrade all homebrew packages
         required: false
-        default: no
+        default: "no"
         choices: [ "yes", "no" ]
     install_options:
         description:
