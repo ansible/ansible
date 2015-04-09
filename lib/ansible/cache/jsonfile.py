@@ -60,7 +60,7 @@ class CacheModule(BaseCacheModule):
         try:
             f = codecs.open(cachefile, 'r', encoding='utf-8')
         except (OSError,IOError), e:
-            utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
+            utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
         else:
             value = json.load(f)
             self._cache[key] = value
@@ -76,7 +76,7 @@ class CacheModule(BaseCacheModule):
         try:
             f = codecs.open(cachefile, 'w', encoding='utf-8')
         except (OSError,IOError), e:
-            utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
+            utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
         else:
             f.write(utils.jsonify(value))
         finally:
