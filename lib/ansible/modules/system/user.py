@@ -79,8 +79,8 @@ options:
         description:
             - Optionally set the user's password to this crypted value.  See
               the user example in the github examples directory for what this looks
-              like in a playbook. The `FAQ <http://docs.ansible.com/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module>`_
-              contains details on various ways to generate these password values.
+              like in a playbook. See U(http://docs.ansible.com/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+              for details on various ways to generate these password values.
               Note on Darwin system, this value has to be cleartext.
               Beware of security issues.
     state:
