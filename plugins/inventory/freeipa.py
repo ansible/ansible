@@ -13,7 +13,11 @@ def initialize():
 
     api.bootstrap(context='cli')
     api.finalize()
-    api.Backend.xmlclient.connect()
+    try:
+        api.Backend.rpcclient.connect()
+    except AttributeError:
+        #FreeIPA < 4.0 compatibility
+        api.Backend.xmlclient.connect()
     
     return api
 
