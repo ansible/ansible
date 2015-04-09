@@ -53,6 +53,7 @@ DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
+DEB_DATE := $(shell date +"%a, %d %b %Y %T %z")
 ifeq ($(OFFICIAL),yes)
     DEB_RELEASE = $(RELEASE)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
@@ -217,7 +218,7 @@ debian: sdist
 	    mkdir -p deb-build/$${DIST} ; \
 	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
 	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
-	    sed -ie "s#^$(NAME) (\([^)]*\)) \([^;]*\);#ansible (\1-$(DEB_RELEASE)~$${DIST}) $${DIST};#" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
+        sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
 deb: debian

@@ -1,3 +1,9 @@
+ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
+
+  * %VERSION% release
+
+ -- Ansible, Inc. <support@ansible.com>  %DATE%
+
 ansible (1.9.0.1) unstable; urgency=low
 
   * 1.9.0.1
