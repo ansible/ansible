@@ -84,6 +84,9 @@ class Connection(object):
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self.user, port, self.host), host=self.host)
         netloc = '%s:%d' % (self.host, port)
+        # If user has kerberos, and password is blank set it to 'kerberos'
+        if not self.password and HAVE_KERBEROS:
+            self.password = 'kerberos'
         cache_key = '%s:%s@%s:%d' % (self.user, hashlib.md5(self.password).hexdigest(), self.host, port)
         if cache_key in _winrm_cache:
             vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
