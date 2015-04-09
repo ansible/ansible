@@ -134,7 +134,15 @@ else:
 # MongoDB module specific support methods.
 #
 
+def user_find(client, user):
+    for mongo_user in client["admin"].system.users.find():
+        if mongo_user['user'] == user:
+            return mongo_user
+    return False
+
 def user_add(module, client, db_name, user, password, roles):
+    #pymono's user_add is a _create_or_update_user so we won't know if it was changed or updated
+    #without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
     if roles is None:
         db.add_user(user, password, False)
@@ -147,9 +155,13 @@ def user_add(module, client, db_name, user, password, roles):
                 err_msg = err_msg + ' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)'
             module.fail_json(msg=err_msg)
 
-def user_remove(client, db_name, user):
-    db = client[db_name]
-    db.remove_user(user)
+def user_remove(module, client, db_name, user):
+    exists = user_find(client, user)
+    if exists:
+        db = client[db_name]
+        db.remove_user(user)
+    else:
+        module.exit_json(changed=False, user=user)
 
 def load_mongocnf():
     config = ConfigParser.RawConfigParser()
@@ -208,15 +220,6 @@ def main():
     	else:
     	   client = MongoClient(login_host, int(login_port), ssl=ssl)
 
-        # try to authenticate as a target user to check if it already exists
-        try:
-           client[db_name].authenticate(user, password)
-           if state == 'present':
-              module.exit_json(changed=False, user=user)
-        except OperationFailure:
-           if state == 'absent':
-              module.exit_json(changed=False, user=user)
-
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
             if mongocnf_creds is not False:
@@ -227,6 +230,10 @@ def main():
 
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password)
+        elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
+            if db_name != "admin":
+                module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
+            #else: this has to be the first admin user added
 
     except ConnectionFailure, e:
         module.fail_json(msg='unable to connect to database: %s' % str(e))
@@ -242,7 +249,7 @@ def main():
 
     elif state == 'absent':
         try:
-            user_remove(client, db_name, user)
+            user_remove(module, client, db_name, user)
         except OperationFailure, e:
             module.fail_json(msg='Unable to remove user: %s' % str(e))
 
