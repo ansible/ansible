@@ -136,12 +136,12 @@ EXAMPLES = '''
     image: "{{ image }}"
     wait: yes 
     count: 3
-    register: ec2
+  register: ec2
 - ec2_vol:
     instance: "{{ item.id }} " 
     volume_size: 5
     with_items: ec2.instances
-    register: ec2_vol
+  register: ec2_vol
 
 # Example: Launch an instance and then add a volume if not already present
 #   * Nothing will happen if the volume is already attached.
@@ -154,7 +154,7 @@ EXAMPLES = '''
     id: my_instance
     wait: yes
     count: 1
-    register: ec2
+  register: ec2
 
 - ec2_vol:
     instance: "{{ item.id }}"
