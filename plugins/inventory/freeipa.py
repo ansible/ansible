@@ -56,6 +56,7 @@ def initialize():
                          ' try running kinit, aborting!')
         sys.exit(1)
     except AttributeError:
+        #For compatibility with FreeIPA < 4.0
         try:
             ipalib.api.Backend.xmlclient.connect()
         except ipalib.errors.CCacheError:
