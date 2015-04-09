@@ -50,11 +50,19 @@ def initialize():
     ipalib.api.bootstrap(context='cli')
     ipalib.api.finalize()
     try:
-        ipalib.api.Backend.xmlclient.connect()
+        ipalib.api.Backend.rpcclient.connect()
     except ipalib.errors.CCacheError:
-        sys.stderr.write('No Kerberos ticket found in the Credential Cache, '
-                         'try running kinit, aborting!')
+        sys.stderr.write('No Kerberos ticket found in the Credential Cache,'
+                         ' try running kinit, aborting!')
         sys.exit(1)
+    except AttributeError:
+        try:
+            ipalib.api.Backend.xmlclient.connect()
+        except ipalib.errors.CCacheError:
+            sys.stderr.write('No Kerberos ticket found in the Credential Cache,'
+                             ' try running kinit, aborting!')
+            sys.exit(1)
+
     return ipalib.api
 
 def list_groups(api):
