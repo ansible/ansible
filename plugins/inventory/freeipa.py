@@ -13,8 +13,12 @@ def initialize():
 
     api.bootstrap(context='cli')
     api.finalize()
-    api.Backend.xmlclient.connect()
-    
+    try:
+        api.Backend.rpcclient.connect()
+    except AttributError:
+        #Compatability with FreeIPA < 4.0
+        api.Backend.xmlclient.connect()
+
     return api
 
 def list_groups(api):
