@@ -18,8 +18,6 @@
 from __future__ import absolute_import
 
 import base64
-import hashlib
-import imp
 import os
 import re
 import shlex
@@ -43,10 +41,6 @@ try:
     HAVE_KERBEROS = True
 except ImportError:
     pass
-
-_winrm_cache = {
-    # 'user:pwhash@host:port': <protocol instance>
-}
 
 def vvvvv(msg, host=None):
     verbose(msg, host=host, caplevel=4)
@@ -84,10 +78,6 @@ class Connection(object):
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self.user, port, self.host), host=self.host)
         netloc = '%s:%d' % (self.host, port)
-        cache_key = '%s:%s@%s:%d' % (self.user, hashlib.md5(self.password).hexdigest(), self.host, port)
-        if cache_key in _winrm_cache:
-            vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
-            return _winrm_cache[cache_key]
         exc = None
         for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
             if transport == 'kerberos' and not HAVE_KERBEROS:
@@ -99,7 +89,6 @@ class Connection(object):
                                 username=self.user, password=self.password)
             try:
                 protocol.send_message('')
-                _winrm_cache[cache_key] = protocol
                 return protocol
             except WinRMTransportError, exc:
                 err_msg = str(exc)
@@ -111,7 +100,6 @@ class Connection(object):
                     if code == 401:
                         raise errors.AnsibleError("the username/password specified for this server was incorrect")
                     elif code == 411:
-                        _winrm_cache[cache_key] = protocol
                         return protocol
                 vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host)
                 continue
