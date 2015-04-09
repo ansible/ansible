@@ -143,7 +143,7 @@ EXAMPLES = '''
     with_items: ec2.instances
     register: ec2_vol
 
-# Example: Launch an instance and then add a volue if not already present
+# Example: Launch an instance and then add a volume if not already present
 #   * Nothing will happen if the volume is already attached.
 #   * Volume must exist in the same zone.
 
