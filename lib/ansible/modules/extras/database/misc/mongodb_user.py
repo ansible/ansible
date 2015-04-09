@@ -87,6 +87,14 @@ options:
         required: false
         default: present
         choices: [ "present", "absent" ]
+    update_password:
+        required: false
+        default: always
+        choices: ['always', 'on_create']
+        version_added: "2.1"
+        description:
+          - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
@@ -196,6 +204,7 @@ def main():
             ssl=dict(default=False),
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
+            update_password=dict(default="always", choices=["always", "on_create"]),
         )
     )
 
@@ -213,6 +222,7 @@ def main():
     ssl = module.params['ssl']
     roles = module.params['roles']
     state = module.params['state']
+    update_password = module.params['update_password']
 
     try:
     	if replica_set:
@@ -239,8 +249,11 @@ def main():
         module.fail_json(msg='unable to connect to database: %s' % str(e))
 
     if state == 'present':
-        if password is None:
-            module.fail_json(msg='password parameter required when adding a user')
+        if password is None and update_password == 'always':
+            module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
+
+        if update_password != 'always' and user_find(client, user):
+            password = None
 
         try:
             user_add(module, client, db_name, user, password, roles)
