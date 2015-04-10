@@ -58,6 +58,7 @@ class AnsibleConstructor(Constructor):
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
+        # Add one so that the first line is line 1 rather than line 0
         column = node.start_mark.column + 1
         line = node.start_mark.line + 1
 
