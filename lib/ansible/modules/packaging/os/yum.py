@@ -768,7 +768,7 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
                             a = rid.repoXML.repoid
                     current_repos = new_repos
                 except yum.Errors.YumBaseError, e:
-                    module.fail_json(msg="Error setting/accessing repo %s: %s" % (r, e))
+                    module.fail_json(msg="Error setting/accessing repos: %s" % (e))
         except yum.Errors.YumBaseError, e:
             module.fail_json(msg="Error accessing repos: %s" % e)
     if state in ['installed', 'present']:
