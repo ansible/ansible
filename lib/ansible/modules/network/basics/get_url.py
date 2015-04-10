@@ -112,8 +112,6 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
-notes:
-    - This module doesn't yet support configuration for proxies.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
 author: Jan-Piet Mens
