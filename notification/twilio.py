@@ -57,14 +57,14 @@ author: Matt Makai
 EXAMPLES = '''
 # send a text message from the local server about the build status to (555) 303 5681
 # note: you have to have purchased the 'from_number' on your Twilio account
-- local_action: text msg="All servers with webserver role are now configured." 
+- local_action: twilio msg="All servers with webserver role are now configured." 
   account_sid={{ twilio_account_sid }}
   auth_token={{ twilio_auth_token }}
   from_number=+15552014545 to_number=+15553035681
 
 # send a text message from a server to (555) 111 3232
 # note: you have to have purchased the 'from_number' on your Twilio account
-- text: msg="This server's configuration is now complete."
+- twilio: msg="This server's configuration is now complete."
   account_sid={{ twilio_account_sid }}
   auth_token={{ twilio_auth_token }}
   from_number=+15553258899 to_number=+15551113232
