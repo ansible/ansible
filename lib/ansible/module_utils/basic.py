@@ -1297,14 +1297,18 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM:SS~
-        ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
-        backupdest = '%s.%s' % (fn, ext)
 
-        try:
-            shutil.copy2(fn, backupdest)
-        except (shutil.Error, IOError), e:
-            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+        backupdest = ''
+        if os.path.exists(fn):
+            # backups named basename-YYYY-MM-DD@HH:MM:SS~
+            ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
+            backupdest = '%s.%s' % (fn, ext)
+
+            try:
+                shutil.copy2(fn, backupdest)
+            except (shutil.Error, IOError), e:
+                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+
         return backupdest
 
     def cleanup(self, tmpfile):
