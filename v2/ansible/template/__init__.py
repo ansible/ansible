@@ -32,7 +32,16 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
+from numbers import Number
+
 __all__ = ['Templar']
+
+# A regex for checking to see if a variable we're trying to
+# expand is just a single variable name.
+SINGLE_VAR = re.compile(r"^{{\s*(\w*)\s*}}$")
+
+# Primitive Types which we don't want Jinja to convert to strings.
+NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
 JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
@@ -125,6 +134,18 @@ class Templar:
             if isinstance(variable, basestring):
                 result = variable
                 if self._contains_vars(variable):
+
+                    # Check to see if the string we are trying to render is just referencing a single
+                    # var.  In this case we don't wont to accidentally change the type of the variable
+                    # to a string by using the jinja template renderer. We just want to pass it.
+                    only_one = SINGLE_VAR.match(variable)
+                    if only_one:
+                        var_name = only_one.group(1)
+                        if var_name in self._available_vars:
+                            resolved_val = self._available_vars[var_name]
+                            if isinstance(resolved_val, NON_TEMPLATED_TYPES):
+                                return resolved_val
+
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines)
 
                     # if this looks like a dictionary or list, convert it to such using the safe_eval method
