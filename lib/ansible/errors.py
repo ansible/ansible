@@ -33,3 +33,6 @@ class AnsibleUndefinedVariable(AnsibleError):
 
 class AnsibleFilterError(AnsibleError):
     pass
+
+class AnsibleInvalidInventory(AnsibleError):
+    pass
