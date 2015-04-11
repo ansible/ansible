@@ -65,6 +65,7 @@ import pwd
 import platform
 import errno
 import tempfile
+import fcntl
 
 try:
     import json
@@ -347,6 +348,7 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
+        self.lock_files = []
         
         self.aliases = {}
         
@@ -1222,6 +1224,55 @@ class AnsibleModule(object):
     def from_json(self, data):
         return json.loads(data)
 
+    def create_lock_file(self, path, blocking=False, retries=3, timeout=1):
+        '''Create a temporary lock file
+
+        Prevents simultaneous execution by opening an exclusive file lock on
+        path. If blocking is True, the call to flock will block until the lock
+        can be acquired. Optionally specify a number of retries (default 3)
+        and a sleep timeout (default 1).
+
+        The lock file is added to self.cleanup_files to automatically be
+        removed at the end of the module run.
+
+        Returns the open file handler for the lock, allowing the user to close
+        the lock before cleanup.
+        '''
+
+        try:
+            lock_file = open(path, 'a')
+        except IOError as e:
+            self.fail_json(msg='Error opening lock file: %s' % e)
+
+        operation = fcntl.LOCK_EX
+
+        if blocking:
+            retries = 0
+        else:
+            operation = operation | fcntl.LOCK_NB
+
+        for i in range(retries + 1):
+            try:
+                fcntl.flock(lock_file, operation)
+                break
+            except IOError:
+                if i == retries:
+                    self.fail_json(
+                        msg='Unable to acquire exclusive lock on %s' % path
+                    )
+                else:
+                    time.sleep(timeout)
+
+        self.lock_files.append(lock_file)
+        self.cleanup_files.append(path)
+
+        return lock_file
+
+    def close_lock_files(self):
+        for lock_file in self.lock_files:
+            if not lock_file.closed:
+                lock_file.close()
+
     def add_cleanup_file(self, path):
         if path not in self.cleanup_files:
             self.cleanup_files.append(path)
@@ -1235,6 +1286,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        self.close_lock_files()
         self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(0)
@@ -1244,6 +1296,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        self.close_lock_files()
         self.do_cleanup_files()
         print self.jsonify(kwargs)
         sys.exit(1)
