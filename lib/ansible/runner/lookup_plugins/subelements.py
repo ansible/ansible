@@ -17,6 +17,7 @@
 
 import ansible.utils as utils
 import ansible.errors as errors
+import ansible.constants as constants
 
 
 class LookupModule(object):
@@ -56,6 +57,8 @@ class LookupModule(object):
                 # this particular item is to be skipped
                 continue 
             if not subelement in item0:
+                if constants.IGNORE_MISSING_SUBELEMENTS:
+                    continue      # skip this item because it has no subelement
                 raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
             if not isinstance(item0[subelement], list):
                 raise errors.AnsibleError("the key %s should point to a list, got '%s'" % (subelement, item0[subelement]))
