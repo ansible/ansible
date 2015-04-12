@@ -19,7 +19,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
-module: cloudstack_fw
+module: cs_firewall
 short_description: Manages firewall rules on Apache CloudStack based clouds.
 description: Creates and removes firewall rules.
 version_added: '2.0'
@@ -77,7 +77,7 @@ EXAMPLES = '''
 ---
 # Allow inbound port 80/tcp from 1.2.3.4 to 4.3.2.1
 - local_action:
-    module: cloudstack_fw
+    module: cs_firewall
     ip_address: 4.3.2.1
     start_port: 80
     end_port: 80
@@ -86,7 +86,7 @@ EXAMPLES = '''
 
 # Allow inbound tcp/udp port 53 to 4.3.2.1
 - local_action:
-    module: cloudstack_fw
+    module: cs_firewall
     ip_address: 4.3.2.1
     start_port: 53
     end_port: 53
@@ -98,7 +98,7 @@ EXAMPLES = '''
 
 # Ensure firewall rule is removed
 - local_action:
-    module: cloudstack_fw
+    module: cs_firewall
     ip_address: 4.3.2.1
     start_port: 8000
     end_port: 8888

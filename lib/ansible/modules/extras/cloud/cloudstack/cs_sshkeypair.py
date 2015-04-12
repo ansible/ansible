@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-module: cloudstack_sshkey
+module: cs_sshkeypair
 short_description: Manages SSH keys on Apache CloudStack based clouds.
 description:
   - If no key was found and no public key was provided and a new SSH
@@ -53,15 +53,15 @@ options:
 EXAMPLES = '''
 ---
 # create a new private / public key pair:
-- local_action: cloudstack_sshkey name=linus@example.com
+- local_action: cs_sshkeypair name=linus@example.com
   register: key
 - debug: msg='private key is {{ key.private_key }}'
 
 # remove a public key by its name:
-- local_action: cloudstack_sshkey name=linus@example.com state=absent
+- local_action: cs_sshkeypair name=linus@example.com state=absent
 
 # register your existing local public key:
-- local_action: cloudstack_sshkey name=linus@example.com public_key='{{ lookup('file', '~/.ssh/id_rsa.pub') }}'
+- local_action: cs_sshkeypair name=linus@example.com public_key='{{ lookup('file', '~/.ssh/id_rsa.pub') }}'
 '''
 
 RETURN = '''

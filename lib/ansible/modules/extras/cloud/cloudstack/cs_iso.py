@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-module: cloudstack_iso
+module: cs_iso
 short_description: Manages ISOs images on Apache CloudStack based clouds.
 description: Register and remove ISO images.
 version_added: '2.0'
@@ -100,7 +100,7 @@ EXAMPLES = '''
 ---
 # Register an ISO if ISO name does not already exist.
 - local_action:
-    module: cloudstack_iso
+    module: cs_iso
     name: Debian 7 64-bit
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: Debian GNU/Linux 7(64-bit)
@@ -108,7 +108,7 @@ EXAMPLES = '''
 
 # Register an ISO with given name if ISO md5 checksum does not already exist.
 - local_action:
-    module: cloudstack_iso
+    module: cs_iso
     name: Debian 7 64-bit
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type:    
@@ -117,14 +117,14 @@ EXAMPLES = '''
 
 # Remove an ISO by name
 - local_action:
-    module: cloudstack_iso
+    module: cs_iso
     name: Debian 7 64-bit
     state: absent
 
 
 # Remove an ISO by checksum
 - local_action:
-    module: cloudstack_iso
+    module: cs_iso
     name: Debian 7 64-bit
     checksum: 0b31bccccb048d20b551f70830bb7ad0
     state: absent
