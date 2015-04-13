@@ -28,7 +28,7 @@ from ansible.plugins.cache.base import BaseCacheModule
 try:
     from redis import StrictRedis
 except ImportError:
-    print "The 'redis' python module is required, 'pip install redis'"
+    print("The 'redis' python module is required, 'pip install redis'")
     sys.exit(1)
 
 class CacheModule(BaseCacheModule):
