@@ -319,7 +319,7 @@ class ActionBase:
         filter only leading lines since multiline JSON is valid.
         '''
 
-        filtered_lines = StringIO.StringIO()
+        filtered_lines = StringIO()
         stop_filtering = False
         for line in data.splitlines():
             if stop_filtering or line.startswith('{') or line.startswith('['):
