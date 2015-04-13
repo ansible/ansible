@@ -21,7 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # from python and deps
-from cStringIO import StringIO
+from six.moves import StringIO
 import json
 import os
 import shlex
