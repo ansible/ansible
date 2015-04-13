@@ -47,6 +47,7 @@ class FakePlayBook(object):
         self.transport = None
         self.only_tags = None
         self.skip_tags = None
+        self.force_handlers = None
         self.VARS_CACHE = {}
         self.SETUP_CACHE = {}
         self.inventory = FakeInventory()

@@ -375,17 +375,17 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _trim_unavailable_hosts(self, hostlist=[]):
+    def _trim_unavailable_hosts(self, hostlist=[], keep_failed=False):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in hostlist if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in hostlist if (keep_failed or h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
-    def _run_task_internal(self, task):
+    def _run_task_internal(self, task, include_failed=False):
         ''' run a particular module step in a playbook '''
 
-        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts))
+        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts), keep_failed=include_failed)
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
@@ -493,7 +493,8 @@ class PlayBook(object):
         task.ignore_errors =  utils.check_conditional(cond, play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
 
         # load up an appropriate ansible runner to run the task in parallel
-        results = self._run_task_internal(task)
+        include_failed = is_handler and play.force_handlers
+        results = self._run_task_internal(task, include_failed=include_failed)
 
         # if no hosts are matched, carry on
         hosts_remaining = True
@@ -811,7 +812,7 @@ class PlayBook(object):
 
                 # if no hosts remain, drop out
                 if not host_list:
-                    if self.force_handlers:
+                    if play.force_handlers:
                         task_errors = True
                         break
                     else:
@@ -821,7 +822,7 @@ class PlayBook(object):
             # lift restrictions after each play finishes
             self.inventory.lift_also_restriction()
 
-            if task_errors and not self.force_handlers:
+            if task_errors and not play.force_handlers:
                 # if there were failed tasks and handler execution
                 # is not forced, quit the play with an error
                 return False
@@ -856,7 +857,7 @@ class PlayBook(object):
                             play.max_fail_pct = 0
                         if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
                             host_list = None
-                        if not host_list and not self.force_handlers:
+                        if not host_list and not play.force_handlers:
                             self.callbacks.on_no_hosts_remaining()
                             return False
 
