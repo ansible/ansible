@@ -109,7 +109,7 @@ class StrategyBase:
 
             self._pending_results += 1
             main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info, module_loader), block=False)
-        except (EOFError, IOError, AssertionError), e:
+        except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
             debug("got an error while queuing: %s" % e)
             return

@@ -139,7 +139,7 @@ class StrategyModule(StrategyBase):
         try:
             results = self._wait_on_pending_results(iterator)
             host_results.extend(results)
-        except Exception, e:
+        except Exception as e:
             # FIXME: ctrl+c can cause some failures here, so catch them
             #        with the appropriate error type
             print("wtf: %s" % e)
