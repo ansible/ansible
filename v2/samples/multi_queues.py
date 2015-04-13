@@ -55,10 +55,10 @@ def results(final_q, workers):
             time.sleep(0.01)
             continue
          final_q.put(result, block=False)
-      except (IOError, EOFError, KeyboardInterrupt), e:
+      except (IOError, EOFError, KeyboardInterrupt) as e:
          debug("got a breaking error: %s" % e)
          break
-      except Exception, e:
+      except Exception as e:
          debug("EXCEPTION DURING RESULTS PROCESSING: %s" % e)
          traceback.print_exc()
          break
@@ -77,10 +77,10 @@ def worker(main_q, res_q, loader):
             time.sleep(0.01)
       except Queue.Empty:
          pass
-      except (IOError, EOFError, KeyboardInterrupt), e:
+      except (IOError, EOFError, KeyboardInterrupt) as e:
          debug("got a breaking error: %s" % e)
          break
-      except Exception, e:
+      except Exception as e:
          debug("EXCEPTION DURING WORKER PROCESSING: %s" % e)
          traceback.print_exc()
          break

@@ -85,7 +85,7 @@ class LookupModule(LookupBase):
                         paramvals['chars'] = use_chars
                     else:
                         paramvals[name] = value
-            except (ValueError, AssertionError), e:
+            except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
             length  = paramvals['length']
@@ -99,7 +99,7 @@ class LookupModule(LookupBase):
                 if not os.path.isdir(pathdir):
                     try:
                         os.makedirs(pathdir, mode=0700)
-                    except OSError, e:
+                    except OSError as e:
                         raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
