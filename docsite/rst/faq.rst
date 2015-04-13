@@ -3,15 +3,17 @@ Frequently Asked Questions
 
 Here are some commonly-asked questions and their answers.
 
-.. _users_and_ports:
+.. _set_environment:
 
-If you are looking to set environment variables remotely for your project (in a task, not locally for Ansible)
-The keyword is simply `environment`
+How can I set the PATH or any other environment variable for a task or entire playbook?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-```
-  environment:
-     PATH:$PATH:/thingy/bin 
-```
+Setting environment variables can be done with the `environment` keyword. It can be used at task or playbook level::
+
+    environment:
+      PATH: {{ ansible_env.PATH }}:/thingy/bin
+      SOME: value
+
 
 
 How do I handle different machines needing different user accounts or ports to log in with?
