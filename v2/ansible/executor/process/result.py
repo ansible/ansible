@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import Queue
+from six.moves import queue
 import multiprocessing
 import os
 import signal
@@ -77,7 +77,7 @@ class ResultProcess(multiprocessing.Process):
                     result = rslt_q.get(block=False)
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
             if self._cur_worker == starting_point:
@@ -164,7 +164,7 @@ class ResultProcess(multiprocessing.Process):
                 if result._task.register:
                     self._send_result(('set_host_var', result._host, result._task.register, result._result))
 
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             except (KeyboardInterrupt, IOError, EOFError):
                 break

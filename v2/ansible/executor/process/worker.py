@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import Queue
+from six.moves import queue
 import multiprocessing
 import os
 import signal
@@ -130,7 +130,7 @@ class WorkerProcess(multiprocessing.Process):
                 else:
                     time.sleep(0.1)
 
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             except (IOError, EOFError, KeyboardInterrupt):
                 break
