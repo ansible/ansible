@@ -187,10 +187,10 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
         pkgs = []
         try:
             my = yum_base(conf_file)
-            for rid in en_repos:
-                my.repos.enableRepo(rid)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
+            for rid in en_repos:
+                my.repos.enableRepo(rid)
                 
             e,m,u = my.rpmdb.matchPackageNames([pkgspec])
             pkgs = e + m
@@ -226,10 +226,10 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
         pkgs = []
         try:
             my = yum_base(conf_file)
-            for rid in en_repos:
-                my.repos.enableRepo(rid)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
+            for rid in en_repos:
+                my.repos.enableRepo(rid)
 
             e,m,u = my.pkgSack.matchPackageNames([pkgspec])
             pkgs = e + m
@@ -269,10 +269,10 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
 
         try:
             my = yum_base(conf_file)
-            for rid in en_repos:
-                my.repos.enableRepo(rid)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
+            for rid in en_repos:
+                my.repos.enableRepo(rid)
 
             pkgs = my.returnPackagesByDep(pkgspec) + my.returnInstalledPackagesByDep(pkgspec)
             if not pkgs:
@@ -313,10 +313,10 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
         pkgs = []
         try:
             my = yum_base(conf_file)
-            for rid in en_repos:
-                my.repos.enableRepo(rid)
             for rid in dis_repos:
                 my.repos.disableRepo(rid)
+            for rid in en_repos:
+                my.repos.enableRepo(rid)
 
             pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
             if not pkgs:
