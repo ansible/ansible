@@ -25,6 +25,9 @@ New Modules:
     vertica_schema
     vertica_user
 
+New Inventory scripts:
+    fleetctl
+
 Other Notable Changes:
 
 ## 1.9 "Dancing In the Street" - Mar 25, 2015
