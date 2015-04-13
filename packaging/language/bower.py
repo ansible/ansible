@@ -108,7 +108,7 @@ class Bower(object):
         return ''
 
     def list(self):
-        cmd = ['list', '--json']
+        cmd = ['list', '--json', '--config.interactive=false', '--allow-root']
 
         installed = list()
         missing = list()
