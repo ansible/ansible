@@ -16,6 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # FIXME: copied mostly from old code, needs py3 improvements
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import textwrap
 import sys

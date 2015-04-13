@@ -18,6 +18,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ---
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 # The func transport permit to use ansible over func. For people who have already setup
 # func and that wish to play with ansible, this permit to move gradually to ansible
 # without having to redo completely the setup of the network.
