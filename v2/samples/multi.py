@@ -59,10 +59,10 @@ def results(pipe, workers):
             time.sleep(0.01)
             continue
          pipe.send(result)
-      except (IOError, EOFError, KeyboardInterrupt), e:
+      except (IOError, EOFError, KeyboardInterrupt) as e:
          debug("got a breaking error: %s" % e)
          break
-      except Exception, e:
+      except Exception as e:
          debug("EXCEPTION DURING RESULTS PROCESSING: %s" % e)
          traceback.print_exc()
          break

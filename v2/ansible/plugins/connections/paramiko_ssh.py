@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # ---
 # The paramiko transport is provided because many distributions, in particular EL6 and before
@@ -170,7 +171,7 @@ class Connection(object):
                 key_filename=key_filename, password=self.password,
                 timeout=self.runner.timeout, port=self.port)
 
-        except Exception, e:
+        except Exception as e:
 
             msg = str(e)
             if "PID check failed" in msg:
@@ -197,7 +198,7 @@ class Connection(object):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
 
-        except Exception, e:
+        except Exception as e:
 
             msg = "Failed to open session"
             if len(str(e)) > 0:
@@ -284,7 +285,7 @@ class Connection(object):
 
         try:
             self.sftp = self.ssh.open_sftp()
-        except Exception, e:
+        except Exception as e:
             raise errors.AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
@@ -308,7 +309,7 @@ class Connection(object):
 
         try:
             self.sftp = self._connect_sftp()
-        except Exception, e:
+        except Exception as e:
             raise errors.AnsibleError("failed to open a SFTP connection (%s)", e)
 
         try:

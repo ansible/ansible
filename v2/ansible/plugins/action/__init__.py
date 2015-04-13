@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import StringIO
+from six.moves import StringIO
 import json
 import os
 import random
@@ -122,7 +122,7 @@ class ActionBase:
         # FIXME: modified from original, needs testing? Since this is now inside
         #        the action plugin, it should make it just this simple
         return getattr(self, 'TRANSFERS_FILES', False)
-        
+
     def _late_needs_tmp_path(self, tmp, module_style):
         '''
         Determines if a temp path is required after some early actions have already taken place.
@@ -223,7 +223,7 @@ class ActionBase:
             #else:
             #    data = data.encode('utf-8')
             afo.write(data)
-        except Exception, e:
+        except Exception as e:
             #raise AnsibleError("failure encoding into utf-8: %s" % str(e))
             raise AnsibleError("failure writing module data to temporary file for transfer: %s" % str(e))
 
@@ -319,7 +319,7 @@ class ActionBase:
         filter only leading lines since multiline JSON is valid.
         '''
 
-        filtered_lines = StringIO.StringIO()
+        filtered_lines = StringIO()
         stop_filtering = False
         for line in data.splitlines():
             if stop_filtering or line.startswith('{') or line.startswith('['):

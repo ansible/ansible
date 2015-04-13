@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import datetime
 import sys
@@ -68,7 +70,7 @@ class ActionModule(ActionBase):
                     seconds = int(self._task.args['seconds'])
                     duration_unit = 'seconds'
 
-            except ValueError, e:
+            except ValueError as e:
                 return dict(failed=True, msg="non-integer value given for prompt duration:\n%s" % str(e))
 
         # Is 'prompt' a key in 'args'?
@@ -99,7 +101,7 @@ class ActionModule(ActionBase):
 
         try:
             if not pause_type == 'prompt':
-                print "(^C-c = continue early, ^C-a = abort)"
+                print("(^C-c = continue early, ^C-a = abort)")
                 #print("[%s]\nPausing for %s seconds" % (hosts, seconds))
                 print("[%s]\nPausing for %s seconds" % (self._task.get_name().strip(), seconds))
                 time.sleep(seconds)
@@ -110,7 +112,7 @@ class ActionModule(ActionBase):
                 result['user_input'] = raw_input(prompt.encode(sys.stdout.encoding))
         except KeyboardInterrupt:
             while True:
-                print '\nAction? (a)bort/(c)ontinue: '
+                print('\nAction? (a)bort/(c)ontinue: ')
                 c = getch()
                 if c == 'c':
                     # continue playbook evaluation

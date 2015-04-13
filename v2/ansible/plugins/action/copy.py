@@ -70,7 +70,7 @@ class ActionModule(ActionBase):
                 else:
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
-            except Exception, err:
+            except Exception as err:
                 return dict(failed=True, msg="could not write content temp file: %s" % err)
 
         ###############################################################################################
@@ -270,7 +270,7 @@ class ActionModule(ActionBase):
             if module_return.get('changed') == True:
                 changed = True
 
-            # the file module returns the file path as 'path', but 
+            # the file module returns the file path as 'path', but
             # the copy module uses 'dest', so add it if it's not there
             if 'path' in module_return and 'dest' not in module_return:
                 module_return['dest'] = module_return['path']
@@ -297,7 +297,7 @@ class ActionModule(ActionBase):
         content = to_bytes(content)
         try:
             f.write(content)
-        except Exception, err:
+        except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
         finally:

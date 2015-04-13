@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 
@@ -59,7 +61,7 @@ class LookupModule(LookupBase):
                 string = 'NXDOMAIN'
             except dns.resolver.Timeout:
                 string = ''
-            except dns.exception.DNSException, e:
+            except dns.exception.DNSException as e:
                 raise AnsibleError("dns.resolver unhandled exception", e)
 
             ret.append(''.join(string))

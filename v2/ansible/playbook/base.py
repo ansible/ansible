@@ -270,9 +270,9 @@ class Base:
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
 
-            except (TypeError, ValueError), e:
+            except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
-            except UndefinedError, e:
+            except UndefinedError as e:
                 if fail_on_undefined:
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
 
