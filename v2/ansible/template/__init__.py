@@ -143,8 +143,8 @@ class Templar:
                     only_one = SINGLE_VAR.match(variable)
                     if only_one:
                         var_name = only_one.group(1)
-                        if var_name in self._available_vars:
-                            resolved_val = self._available_vars[var_name]
+                        if var_name in self._available_variables:
+                            resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
 
