@@ -1,0 +1,143 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2015, Matt Makai <matthew.makai@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+version_added: "2.0"
+module: sendgrid
+short_description: Sends an email with the SendGrid API
+description:
+   - Sends an email with a SendGrid account through their API, not through
+     the SMTP service.
+notes:
+   - Like the other notification modules, this one requires an external 
+     dependency to work. In this case, you'll need an active SendGrid 
+     account.
+options:
+  username:
+    description:
+      username for logging into the SendGrid account
+    required: true
+  password:
+    description: password that corresponds to the username
+    required: true
+  from_address:
+    description:
+      the address in the "from" field for the email
+    required: true
+  to_addresses:
+    description:
+      a list with one or more recipient email addresses
+    required: true
+  subject:
+    description:
+      the desired subject for the email
+    required: true
+
+requirements: [ urllib, urllib2 ]
+author: Matt Makai
+'''
+
+EXAMPLES = '''
+# send an email to a single recipient that the deployment was successful
+- local_action: sendgrid
+      username={{ sendgrid_username }}
+      password={{ sendgrid_password }}
+      from_address="ansible@mycompany.com"
+      to_addresses:
+        - "ops@mycompany.com"
+      subject="Deployment success."
+      body="The most recent Ansible deployment was successful."
+
+# send an email to more than one recipient that the build failed
+- local_action: sendgrid
+      username={{ sendgrid_username }}
+      password={{ sendgrid_password }}
+      from_address="build@mycompany.com"
+      to_addresses:
+        - "ops@mycompany.com"
+        - "devteam@mycompany.com"
+      subject="Build failure!."
+      body="Unable to pull source repository from Git server."
+'''
+
+# =======================================
+# sendgrid module support methods
+#
+try:
+    import urllib, urllib2
+except ImportError:
+    module.fail_json(msg="urllib and urllib2 are required")
+
+import base64
+
+def post_sendgrid_api(module, username, password, from_address, to_addresses,
+        subject, body):
+    SENDGRID_URI = "https://api.sendgrid.com/api/mail.send.json"
+    AGENT = "Ansible/1.7"
+    data = {'api_user':username, 'api_key':password,
+            'from':from_address, 'subject': subject, 'text': body}
+    encoded_data = urllib.urlencode(data)
+    to_addresses_api = ''
+    for recipient in to_addresses:
+        to_addresses_api += '&to[]=%s' % str(recipient)
+    encoded_data += to_addresses_api
+    request = urllib2.Request(SENDGRID_URI)
+    request.add_header('User-Agent', AGENT)
+    request.add_header('Content-type', 'application/x-www-form-urlencoded')
+    request.add_header('Accept', 'application/json')
+    return urllib2.urlopen(request, encoded_data)
+
+
+# =======================================
+# Main
+#
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            username=dict(required=True),
+            password=dict(required=True, no_log=True),
+            from_address=dict(required=True),
+            to_addresses=dict(required=True, type='list'),
+            subject=dict(required=True),
+            body=dict(required=True),
+        ),
+        supports_check_mode=True
+    )
+
+    username = module.params['username']
+    password = module.params['password']
+    from_address = module.params['from_address']
+    to_addresses = module.params['to_addresses']
+    subject = module.params['subject']
+    body = module.params['body']
+
+    try:
+        response = post_sendgrid_api(module, username, password,
+            from_address, to_addresses, subject, body)
+    except Exception, e:
+        module.fail_json(msg="unable to send email through SendGrid API")
+
+    module.exit_json(msg=subject, changed=False)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
