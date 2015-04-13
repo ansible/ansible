@@ -56,6 +56,20 @@ test_group_by:
 
 test_handlers:
 	ansible-playbook test_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	# Not forcing, should only run on successful host
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
+	# Forcing from command line
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing from command line, should only run later tasks on unfailed hosts
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_TASK_. | sort | uniq | xargs)" = "CALLED_TASK_B CALLED_TASK_D CALLED_TASK_E" ]
+	# Forcing from command line, should call handlers even if all hosts fail
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v -e fail_all=yes $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing from ansible.cfg
+	[ "$$(ANSIBLE_FORCE_HANDLERS=true ansible-playbook --tags normal test_force_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing true in play
+	[ "$$(ansible-playbook test_force_handlers.yml --tags force_true_in_play -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing false in play, which overrides command line
+	[ "$$(ansible-playbook test_force_handlers.yml --force-handlers --tags force_false_in_play -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 
 test_hash:
 	ANSIBLE_HASH_BEHAVIOUR=replace ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
