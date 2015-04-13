@@ -147,7 +147,7 @@ class Connection(object):
             cmd_parts = powershell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
-        except Exception, e:
+        except Exception as e:
             traceback.print_exc()
             raise errors.AnsibleError("failed to exec cmd %s" % cmd)
         return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))

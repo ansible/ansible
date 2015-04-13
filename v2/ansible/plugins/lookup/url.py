@@ -31,10 +31,10 @@ class LookupModule(LookupBase):
             try:
                 r = urllib2.Request(term)
                 response = urllib2.urlopen(r)
-            except URLError, e:
+            except URLError as e:
                 utils.warnings("Failed lookup url for %s : %s" % (term, str(e)))
                 continue
-            except HTTPError, e:
+            except HTTPError as e:
                 utils.warnings("Recieved HTTP error for %s : %s" % (term, str(e)))
                 continue
 

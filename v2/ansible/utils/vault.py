@@ -40,7 +40,7 @@ def read_vault_file(vault_password_file):
         try:
             # STDERR not captured to make it easier for users to prompt for input in their scripts
             p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
-        except OSError, e:
+        except OSError as e:
             raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
         stdout, stderr = p.communicate()
         vault_pass = stdout.strip('\r\n')
@@ -49,7 +49,7 @@ def read_vault_file(vault_password_file):
             f = open(this_path, "rb")
             vault_pass=f.read().strip()
             f.close()
-        except (OSError, IOError), e:
+        except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 
     return vault_pass

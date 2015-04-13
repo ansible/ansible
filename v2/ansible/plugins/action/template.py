@@ -102,7 +102,7 @@ class ActionModule(ActionBase):
             with open(source, 'r') as f:
                 template_data = f.read()
             resultant = templar.template(template_data, preserve_trailing_newlines=True)
-        except Exception, e:
+        except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 
         local_checksum = checksum_s(resultant)

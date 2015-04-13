@@ -243,7 +243,7 @@ class VariableManager:
 
             try:
                 names = loader.list_directory(path)
-            except os.error, err:
+            except os.error as err:
                 raise AnsibleError("This folder cannot be listed: %s: %s." % (path, err.strerror))
 
             # evaluate files in a stable order rather than whatever

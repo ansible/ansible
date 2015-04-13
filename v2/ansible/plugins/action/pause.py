@@ -68,7 +68,7 @@ class ActionModule(ActionBase):
                     seconds = int(self._task.args['seconds'])
                     duration_unit = 'seconds'
 
-            except ValueError, e:
+            except ValueError as e:
                 return dict(failed=True, msg="non-integer value given for prompt duration:\n%s" % str(e))
 
         # Is 'prompt' a key in 'args'?

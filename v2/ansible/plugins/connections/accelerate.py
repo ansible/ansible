@@ -140,7 +140,7 @@ class Connection(object):
                     # shutdown, so we'll reconnect.
                     wrong_user = True
 
-        except AnsibleError, e:
+        except AnsibleError as e:
             if allow_ssh:
                 if "WRONG_USER" in e:
                     vvv("Switching users, waiting for the daemon on %s to shutdown completely..." % self.host)
