@@ -14,9 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from __future__ import absolute_import
-import collections
 # FIXME: can we store these as something else before we ship it?
 import sys
 import time
@@ -28,7 +28,7 @@ from ansible.plugins.cache.base import BaseCacheModule
 try:
     from redis import StrictRedis
 except ImportError:
-    print "The 'redis' python module is required, 'pip install redis'"
+    print("The 'redis' python module is required, 'pip install redis'")
     sys.exit(1)
 
 class CacheModule(BaseCacheModule):
