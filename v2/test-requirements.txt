@@ -4,6 +4,7 @@ PyYAML
 jinja2
 httplib2
 passlib
+six
 
 # Test requirements
 unittest2
