@@ -20,7 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from StringIO import StringIO
+from six.moves import StringIO
 from collections import Sequence, Set, Mapping
 
 from ansible.compat.tests import unittest

@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import base64
 import os
@@ -102,7 +104,7 @@ class ActionModule(ActionBase):
             with open(source, 'r') as f:
                 template_data = f.read()
             resultant = templar.template(template_data, preserve_trailing_newlines=True)
-        except Exception, e:
+        except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 
         local_checksum = checksum_s(resultant)

@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # take a list of files and (optionally) a list of paths
 # return the first existing file found in the paths
@@ -177,7 +179,7 @@ class LookupModule(LookupBase):
         for fn in total_search:
             try:
                 fn = templar.template(fn)
-            except (AnsibleUndefinedVariable, UndefinedError), e:
+            except (AnsibleUndefinedVariable, UndefinedError) as e:
                 continue
 
             if os.path.isabs(fn) and os.path.exists(fn):

@@ -16,6 +16,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import errno
@@ -85,7 +87,7 @@ class LookupModule(LookupBase):
                         paramvals['chars'] = use_chars
                     else:
                         paramvals[name] = value
-            except (ValueError, AssertionError), e:
+            except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
             length  = paramvals['length']
@@ -98,8 +100,8 @@ class LookupModule(LookupBase):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
                     try:
-                        os.makedirs(pathdir, mode=0700)
-                    except OSError, e:
+                        os.makedirs(pathdir, mode=0o700)
+                    except OSError as e:
                         raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
@@ -111,7 +113,7 @@ class LookupModule(LookupBase):
                 else:
                     content = password
                 with open(path, 'w') as f:
-                    os.chmod(path, 0600)
+                    os.chmod(path, 0o600)
                     f.write(content + '\n')
             else:
                 content = open(path).read().rstrip()
@@ -129,12 +131,12 @@ class LookupModule(LookupBase):
                     salt = self.random_salt()
                     content = '%s salt=%s' % (password, salt)
                     with open(path, 'w') as f:
-                        os.chmod(path, 0600)
+                        os.chmod(path, 0o600)
                         f.write(content + '\n')
                 # crypt not requested, remove salt if present
                 elif (encrypt is None and salt):
                     with open(path, 'w') as f:
-                        os.chmod(path, 0600)
+                        os.chmod(path, 0o600)
                         f.write(password + '\n')
 
             if encrypt:

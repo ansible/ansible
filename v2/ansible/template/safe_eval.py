@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import ast
 import sys
@@ -105,13 +107,13 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except SyntaxError, e:
+    except SyntaxError as e:
         # special handling for syntax errors, we just return
         # the expression string back as-is
         if include_exceptions:
             return (expr, None)
         return expr
-    except Exception, e:
+    except Exception as e:
         if include_exceptions:
             return (expr, e)
         return expr

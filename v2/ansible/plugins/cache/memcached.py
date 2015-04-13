@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import collections
 import os
@@ -28,7 +30,7 @@ from ansible.plugins.cache.base import BaseCacheModule
 try:
     import memcache
 except ImportError:
-    print 'python-memcached is required for the memcached fact cache'
+    print('python-memcached is required for the memcached fact cache')
     sys.exit(1)
 
 

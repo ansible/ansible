@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -140,7 +142,7 @@ class Connection(object):
                     # shutdown, so we'll reconnect.
                     wrong_user = True
 
-        except AnsibleError, e:
+        except AnsibleError as e:
             if allow_ssh:
                 if "WRONG_USER" in e:
                     vvv("Switching users, waiting for the daemon on %s to shutdown completely..." % self.host)
