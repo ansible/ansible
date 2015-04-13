@@ -177,7 +177,7 @@ class Facts(object):
                 data = out.split('\n')
                 self.facts['architecture'] = data[0]
             except:
-                self.facts['architectrure' = 'Not Available'
+                self.facts['architectrure'] = 'Not Available'
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
 
