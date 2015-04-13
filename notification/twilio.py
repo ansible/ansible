@@ -87,8 +87,8 @@ EXAMPLES = '''
       - "+19735559010"
   delegate_to: localhost
 
-# send an MMS to multiple phone numbers with an update on the
-# deployment and a screenshot of the results
+# send an MMS to a single recipient with an update on the deployment
+# and an image of the results
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
