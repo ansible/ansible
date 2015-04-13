@@ -45,7 +45,7 @@ Major changes:
   For some use cases this can lead to dramatic improvements in startup time.
 * Overhaul of the checksum system, now supports more systems and more cases more reliably and uniformly.
 * Fix skipped tasks to not display their parameters if no_log is specified.
-* Many fixes to unicode support, standarized functions to make it easier to add to input/output boundries.
+* Many fixes to unicode support, standarized functions to make it easier to add to input/output boundaries.
 * Added travis integration to github for basic tests, this should speed up ticket triage and merging.
 * environment: directive now can also be applied to play and is inhertited by tasks, which can still override it.
 * expanded facts and OS/distribution support for existing facts and improved performance with pypy.
@@ -162,7 +162,7 @@ Other Notable Changes:
 
 ## 1.8.3 "You Really Got Me" - Feb 17, 2015
 
-* Fixing a security bug related to the default permissions set on a tempoary file created when using "ansible-vault view <filename>".
+* Fixing a security bug related to the default permissions set on a temporary file created when using "ansible-vault view <filename>".
 * Many bug fixes, for both core code and core modules.
 
 ## 1.8.2 "You Really Got Me" - Dec 04, 2014
@@ -450,7 +450,7 @@ Other notable changes:
 ## 1.5.4 "Love Walks In" - April 1, 2014
 
 - Security fix for safe_eval, which further hardens the checking of the evaluation function.
-- Changing order of variable precendence for system facts, to ensure that inventory variables take precedence over any facts that may be set on a host.
+- Changing order of variable precedence for system facts, to ensure that inventory variables take precedence over any facts that may be set on a host.
 
 ## 1.5.3 "Love Walks In" - March 13, 2014
 
@@ -485,7 +485,7 @@ Major features/changes:
 * ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
-* if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
+* if repoquery is unavailable, the yum module will automatically attempt to install yum-utils
 * ansible-vault: a framework for encrypting your playbooks and variable files 
 * added support for privilege escalation via 'su' into bin/ansible and bin/ansible-playbook and associated keywords 'su', 'su_user', 'su_pass' for tasks/plays
 
@@ -948,7 +948,7 @@ Bugfixes and Misc Changes:
 * misc fixes to the Riak module
 * make template module slightly more efficient
 * base64encode / decode filters are now available to templates
-* libvirt module can now work with multiple different libvirt connecton URIs
+* libvirt module can now work with multiple different libvirt connection URIs
 * fix for postgresql password escaping
 * unicode fix for shlex.split in some cases
 * apt module upgrade logic improved
@@ -1153,7 +1153,7 @@ New playbook/language features:
 * task includes can now be of infinite depth
 * when_set and when_unset can take more than one var (when_set: $a and $b and $c)
 * added the with_sequence lookup plugin
-* can override "connection:" on an indvidual task
+* can override "connection:" on an individual task
 * parameterized playbook includes can now define complex variables (not just all on one line)
 * making inventory variables available for use in vars_files paths
 * messages when skipping plays are now more clear
