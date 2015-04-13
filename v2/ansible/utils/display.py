@@ -43,14 +43,14 @@ class Display:
         if not log_only:
             if not stderr:
                 try:
-                    print msg2
+                    print(msg2)
                 except UnicodeEncodeError:
-                    print msg2.encode('utf-8')
+                    print(msg2.encode('utf-8'))
             else:
                 try:
-                    print >>sys.stderr, msg2
+                    print(msg2, file=sys.stderr)
                 except UnicodeEncodeError:
-                    print >>sys.stderr, msg2.encode('utf-8')
+                    print(msg2.encode('utf-8'), file=sys.stderr)
         if C.DEFAULT_LOG_PATH != '':
             while msg.startswith("\n"):
                 msg = msg.replace("\n","")

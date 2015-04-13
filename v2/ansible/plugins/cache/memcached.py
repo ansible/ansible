@@ -30,7 +30,7 @@ from ansible.plugins.cache.base import BaseCacheModule
 try:
     import memcache
 except ImportError:
-    print 'python-memcached is required for the memcached fact cache'
+    print('python-memcached is required for the memcached fact cache')
     sys.exit(1)
 
 

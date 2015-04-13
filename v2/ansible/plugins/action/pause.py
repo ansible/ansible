@@ -101,7 +101,7 @@ class ActionModule(ActionBase):
 
         try:
             if not pause_type == 'prompt':
-                print "(^C-c = continue early, ^C-a = abort)"
+                print("(^C-c = continue early, ^C-a = abort)")
                 #print("[%s]\nPausing for %s seconds" % (hosts, seconds))
                 print("[%s]\nPausing for %s seconds" % (self._task.get_name().strip(), seconds))
                 time.sleep(seconds)
@@ -112,7 +112,7 @@ class ActionModule(ActionBase):
                 result['user_input'] = raw_input(prompt.encode(sys.stdout.encoding))
         except KeyboardInterrupt:
             while True:
-                print '\nAction? (a)bort/(c)ontinue: '
+                print('\nAction? (a)bort/(c)ontinue: ')
                 c = getch()
                 if c == 'c':
                     # continue playbook evaluation
