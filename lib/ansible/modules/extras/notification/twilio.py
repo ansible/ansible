@@ -157,17 +157,15 @@ def main():
     to_number = module.params['to_number']
     media_url = module.params['media_url']
 
-    try:
-        if isinstance(to_number, list):
-            for number in to_number:
-                post_twilio_api(module, account_sid, auth_token, msg,
-                    from_number, number, media_url)
-        else:
+    if not isinstance(to_number, list):
+        to_number = [to_number]
+
+    for number in to_number:
+        try:
             post_twilio_api(module, account_sid, auth_token, msg,
-                from_number, to_number, media_url)
-        pass
-    except Exception:
-        module.fail_json(msg="unable to send text message to %s" % to_number)
+                from_number, number, media_url)
+        except Exception:
+            module.fail_json(msg="unable to send message to %s" % number)
 
     module.exit_json(msg=msg, changed=False)
 
