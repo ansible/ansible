@@ -24,7 +24,7 @@ version_added: "1.6"
 module: twilio
 short_description: Sends a text message to a mobile phone through Twilio.
 description:
-   - Sends a text message to a phone number through the Twilio SMS API.
+   - Sends a text message to a phone number through the Twilio messaging API.
 notes:
    - This module is non-idempotent because it sends an email through the
      external API. It is idempotent only in the case that the module fails.
@@ -52,27 +52,34 @@ options:
     description:
       the Twilio number to send the text message from, format +15551112222
     required: true
+  media_url:
+    description:
+      a URL with a picture, video or sound clip to send with an MMS
+      (multimedia message) instead of a plain SMS
+    required: false
 
 author: Matt Makai
 '''
 
 EXAMPLES = '''
 # send an SMS about the build status to (555) 303 5681
-# note: you have to have the 'from_number' on your Twilio account
+# note: replace account_sid and auth_token values with your credentials
+# and you have to have the 'from_number' on your Twilio account
 - twilio:
     msg: "All servers with webserver role are now configured."
-    account_sid: "{{ twilio_account_sid }}"
-    auth_token: "{{ twilio_auth_token }}"
+    account_sid: "ACXXXXXXXXXXXXXXXXX"
+    auth_token: "ACXXXXXXXXXXXXXXXXX"
     from_number: "+15552014545"
     to_number: "+15553035681"
   delegate_to: localhost
 
 # send an SMS to multiple phone numbers about the deployment
-# note: you must have the 'from_number' on your Twilio account
+# note: replace account_sid and auth_token values with your credentials
+# and you have to have the 'from_number' on your Twilio account
 - twilio:
     msg: "This server's configuration is now complete."
-    account_sid: "{{ twilio_account_sid }}"
-    auth_token: "{{ twilio_auth_token }}"
+    account_sid: "ACXXXXXXXXXXXXXXXXX"
+    auth_token: "ACXXXXXXXXXXXXXXXXX"
     from_number: "+15553258899"
     to_number:
       - "+15551113232"
@@ -80,6 +87,18 @@ EXAMPLES = '''
       - "+19735559010"
   delegate_to: localhost
 
+# send an MMS to multiple phone numbers with an update on the
+# deployment and a screenshot of the results
+# note: replace account_sid and auth_token values with your credentials
+# and you have to have the 'from_number' on your Twilio account
+- twilio:
+    msg: "Deployment complete!"
+    account_sid: "ACXXXXXXXXXXXXXXXXX"
+    auth_token: "ACXXXXXXXXXXXXXXXXX"
+    from_number: "+15552014545"
+    to_number: "+15553035681"
+    media_url: "https://demo.twilio.com/logo.png"
+  delegate_to: localhost
 '''
 
 # =======================================
@@ -94,12 +113,14 @@ import base64
 
 
 def post_twilio_api(module, account_sid, auth_token, msg, from_number,
-                    to_number):
+                    to_number, media_url=None):
     URI = "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json" \
         % (account_sid,)
     AGENT = "Ansible"
 
     data = {'From':from_number, 'To':to_number, 'Body':msg}
+    if media_url:
+        data['MediaUrl'] = media_url
     encoded_data = urllib.urlencode(data)
     request = urllib2.Request(URI)
     base64string = base64.encodestring('%s:%s' % \
@@ -124,6 +145,7 @@ def main():
             msg=dict(required=True),
             from_number=dict(required=True),
             to_number=dict(required=True),
+            media_url=dict(default=None, required=False),
         ),
         supports_check_mode=True
     )
@@ -133,15 +155,16 @@ def main():
     msg = module.params['msg']
     from_number = module.params['from_number']
     to_number = module.params['to_number']
+    media_url = module.params['media_url']
 
     try:
         if isinstance(to_number, list):
             for number in to_number:
                 post_twilio_api(module, account_sid, auth_token, msg,
-                    from_number, number)
+                    from_number, number, media_url)
         else:
             post_twilio_api(module, account_sid, auth_token, msg,
-                from_number, to_number)
+                from_number, to_number, media_url)
         pass
     except Exception:
         module.fail_json(msg="unable to send text message to %s" % to_number)
