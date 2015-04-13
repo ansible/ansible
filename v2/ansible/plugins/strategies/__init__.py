@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import Queue
+import six.moves import queue as Queue
 import time
 
 from ansible.errors import *

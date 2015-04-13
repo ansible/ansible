@@ -24,7 +24,8 @@ import os
 import re
 import shlex
 import traceback
-import urlparse
+
+from six.moves.urllib import parse as urlparse
 from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv, vvvv, verbose
