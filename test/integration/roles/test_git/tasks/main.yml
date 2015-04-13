@@ -65,16 +65,11 @@
   stat: path={{ checkout_dir }}/.git/HEAD
   register: head
 
-- name: check for remotes
-  stat: path={{ checkout_dir }}/.git/branches
-  register: branches
-
 - name: assert presence of tags/trunk/branches
   assert:
     that:
       - "tags.stat.isdir"
       - "head.stat.isreg"
-      - "branches.stat.isdir"
 
 - name: verify on a reclone things are marked unchanged
   assert:
