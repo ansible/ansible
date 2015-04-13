@@ -1,0 +1,11 @@
+# Ansible requirementss
+paramiko
+PyYAML
+jinja2
+httplib2
+passlib
+
+# Test requirements
+unittest2
+mock
+nose
