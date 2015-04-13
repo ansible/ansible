@@ -180,7 +180,7 @@ class PluginLoader:
             if os.path.isdir(path):
                 try:
                     full_paths = (os.path.join(path, f) for f in os.listdir(path))
-                except OSError,e:
+                except OSError as e:
                     d = Display()
                     d.warning("Error accessing plugin paths: %s" % str(e))
                 for full_path in (f for f in full_paths if os.path.isfile(f)):

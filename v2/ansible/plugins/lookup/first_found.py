@@ -177,7 +177,7 @@ class LookupModule(LookupBase):
         for fn in total_search:
             try:
                 fn = templar.template(fn)
-            except (AnsibleUndefinedVariable, UndefinedError), e:
+            except (AnsibleUndefinedVariable, UndefinedError) as e:
                 continue
 
             if os.path.isabs(fn) and os.path.exists(fn):

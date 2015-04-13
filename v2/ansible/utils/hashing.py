@@ -64,7 +64,7 @@ def secure_hash(filename, hash_func=sha1):
             digest.update(block)
             block = infile.read(blocksize)
         infile.close()
-    except IOError, e:
+    except IOError as e:
         raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
 
