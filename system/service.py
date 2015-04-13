@@ -928,10 +928,13 @@ class FreeBsdService(Service):
 
     def get_service_status(self):
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
-        if rc == 1:
-            self.running = False
-        elif rc == 0:
-            self.running = True
+        if self.name == "pf":
+            self.running = "Enabled" in stdout
+        else:
+            if rc == 1:
+                self.running = False
+            elif rc == 0:
+                self.running = True
 
     def service_enable(self):
         if self.enable:
