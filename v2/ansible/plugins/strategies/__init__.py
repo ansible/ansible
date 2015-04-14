@@ -303,7 +303,7 @@ class StrategyBase:
 
         data = self._loader.load_from_file(included_file._filename)
         if not isinstance(data, list):
-            raise AnsibleParsingError("included task files must contain a list of tasks", obj=included_file._task._ds)
+            raise AnsibleParserError("included task files must contain a list of tasks", obj=included_file._task._ds)
 
         is_handler = isinstance(included_file._task, Handler)
         block_list = load_list_of_blocks(

@@ -144,7 +144,7 @@ class Play(Base, Taggable, Become):
             else:
                 raise ValueError
         except ValueError:
-            raise AnsibleParsingError("Vars in a playbook must be specified as a dictionary, or a list of dictionaries", obj=ds)
+            raise AnsibleParserError("Vars in a playbook must be specified as a dictionary, or a list of dictionaries", obj=ds)
 
     def _load_tasks(self, attr, ds):
         '''
