@@ -130,6 +130,7 @@ def main():
     # Create type object as namespace for module params
     p = type('Params', (), module.params)
 
+    p.src = os.path.expanduser(p.src)
     if not os.access(p.src, R_OK):
         module.fail_json(msg="src %s doesn't exist or not readable" % (p.src))
 
