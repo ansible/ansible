@@ -41,7 +41,7 @@ from ansible.playbook.task import Task
 
 from ansible.utils.debug import debug
 
-__all__ = ['ExecutorProcess']
+__all__ = ['WorkerProcess']
 
 
 class WorkerProcess(multiprocessing.Process):
