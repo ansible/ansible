@@ -17,7 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.runner.shell_plugins.sh import ShellModule as ShModule
+from ansible.plugins.shell.sh import ShellModule as ShModule
 
 class ShellModule(ShModule):
 
