@@ -171,3 +171,7 @@ class AnsibleUndefinedVariable(AnsibleRuntimeError):
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
     pass
+
+class AnsibleParserError(AnsibleRuntimeError):
+    ''' a parser error '''
+    pass
