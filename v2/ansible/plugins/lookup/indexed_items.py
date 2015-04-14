@@ -17,6 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
@@ -27,7 +28,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         if not isinstance(terms, list):
-            raise errors.AnsibleError("with_indexed_items expects a list")
+            raise AnsibleError("with_indexed_items expects a list")
 
         items = self._flatten(terms)
         return zip(range(len(items)), items)
