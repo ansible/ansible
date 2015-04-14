@@ -134,6 +134,7 @@ glusterbin = ''
 
 def run_gluster(gargs, **kwargs):
     global glusterbin
+    global module
     args = [glusterbin]
     args.extend(gargs)
     try:
@@ -146,6 +147,7 @@ def run_gluster(gargs, **kwargs):
 
 def run_gluster_nofail(gargs, **kwargs):
     global glusterbin
+    global module
     args = [glusterbin]
     args.extend(gargs)
     rc, out, err = module.run_command(args, **kwargs)
@@ -155,6 +157,7 @@ def run_gluster_nofail(gargs, **kwargs):
 
 def run_gluster_yes(gargs):
     global glusterbin
+    global module
     args = [glusterbin]
     args.extend(gargs)
     rc, out, err = module.run_command(args, data='y\n')
@@ -240,6 +243,7 @@ def wait_for_peer(host):
     return False
 
 def probe(host):
+    global module
     run_gluster([ 'peer', 'probe', host ])
     if not wait_for_peer(host):
         module.fail_json(msg='failed to probe peer %s' % host)
@@ -285,18 +289,19 @@ def add_brick(name, brick, force):
     run_gluster(args)
 
 def do_rebalance(name):
-    run_gluster(['volume', 'rebalance', name, 'start'])
+    run_gluster([ 'volume', 'rebalance', name, 'start' ])
 
 def enable_quota(name):
     run_gluster([ 'volume', 'quota', name, 'enable' ])
 
 def set_quota(name, directory, value):
-        run_gluster([ 'volume', 'quota', name, 'limit-usage', directory, value ])
+    run_gluster([ 'volume', 'quota', name, 'limit-usage', directory, value ])
 
 
 def main():
     ### MAIN ###
 
+    global module
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, default=None, aliases=['volume']),
