@@ -190,7 +190,7 @@ class ActionBase:
         # Catch failure conditions, files should never be
         # written to locations in /.
         if rc == '/':
-            raise AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
+            raise AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basefile, cmd))
 
         return rc
 
