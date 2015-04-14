@@ -23,7 +23,7 @@ import os
 import pwd
 import sys
 
-from . compat import configparser
+from six.moves import configparser
 from string import ascii_letters, digits
 
 # copied from utils, avoid circular reference fun :)
