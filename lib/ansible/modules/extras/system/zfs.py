@@ -177,7 +177,7 @@ options:
     description:
       - The sync property.
     required: False
-    choices: ['on','off']
+    choices: ['standard','always','disabled']
   utf8only:
     description:
       - The utf8only property.
@@ -368,7 +368,7 @@ def main():
             'sharenfs':        {'required': False},
             'sharesmb':        {'required': False},
             'snapdir':         {'required': False, 'choices':['hidden', 'visible']},
-            'sync':            {'required': False, 'choices':['on', 'off']},
+            'sync':            {'required': False, 'choices':['standard', 'always', 'disabled']},
             # Not supported
             #'userquota':       {'required': False},
             'utf8only':        {'required': False, 'choices':['on', 'off']},
