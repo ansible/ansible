@@ -21,6 +21,8 @@ import os
 import re
 import pipes
 import ansible.constants as C
+import time
+import random
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
