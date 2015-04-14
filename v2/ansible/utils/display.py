@@ -114,7 +114,7 @@ class Display:
 
     def system_warning(self, msg):
         if C.SYSTEM_WARNINGS:
-            self._warning(msg)
+            self.warning(msg)
 
     def banner(self, msg, color=None):
         '''
