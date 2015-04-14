@@ -167,3 +167,7 @@ class AnsibleFilterError(AnsibleRuntimeError):
 class AnsibleUndefinedVariable(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
+
+class AnsibleFileNotFound(AnsibleRuntimeError):
+    ''' a file missing failure '''
+    pass
