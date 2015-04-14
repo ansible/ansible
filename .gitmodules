@@ -1,7 +1,8 @@
 [submodule "lib/ansible/modules/core"]
 	path = lib/ansible/modules/core
 	url = https://github.com/ansible/ansible-modules-core.git
-	branch = devel
+	branch = pr/76
+	fetch = +refs/pull/*/head:refs/remotes/origin/pr/*
 [submodule "lib/ansible/modules/extras"]
 	path = lib/ansible/modules/extras
 	url = https://github.com/ansible/ansible-modules-extras.git
