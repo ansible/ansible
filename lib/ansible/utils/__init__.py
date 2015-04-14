@@ -1250,6 +1250,7 @@ def make_become_cmd(cmd, user, shell, method, flags=None, exe=None):
         becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, user, shell, pipes.quote('echo %s; %s' % (success_key, cmd)))
 
     elif method == 'pbrun':
+        prompt = 'assword:'
         exe = exe or 'pbrun'
         flags = flags or ''
         becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, pipes.quote('echo %s; %s' % (success_key,cmd)))
