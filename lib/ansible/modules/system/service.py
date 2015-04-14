@@ -703,14 +703,10 @@ class LinuxService(Service):
 
             # Check if we're already in the correct state
             service_enabled = self.get_systemd_service_enabled()
-            if self.enable and service_enabled:
-                self.changed = False
-            elif not self.enable and not service_enabled:
-                self.changed = False
-            elif not self.enable:
-                self.changed = False
 
-            if not self.changed:
+            # self.changed should already be true
+            if self.enable == service_enabled:
+                self.changed = False
                 return
 
         #
