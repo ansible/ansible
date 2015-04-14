@@ -59,6 +59,7 @@ options:
             - Organisation ID to use in conjunction with activationkey
         required: False
         default: null
+        version_added: "2.0"
     pool:
         description:
             - Specify a subscription pool name to consume.  Regular expressions accepted.
