@@ -23,7 +23,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -160,7 +160,7 @@ class InventoryDirectory(object):
 
         # name
         if group.name != newgroup.name:
-            raise errors.AnsibleError("Cannot merge group %s with %s" % (group.name, newgroup.name))
+            raise AnsibleError("Cannot merge group %s with %s" % (group.name, newgroup.name))
 
         # depth
         group.depth = max([group.depth, newgroup.depth])
@@ -210,7 +210,7 @@ class InventoryDirectory(object):
 
         # name
         if host.name != newhost.name:
-            raise errors.AnsibleError("Cannot merge host %s with %s" % (host.name, newhost.name))
+            raise AnsibleError("Cannot merge host %s with %s" % (host.name, newhost.name))
 
         # group membership relation
         for newgroup in newhost.groups:
