@@ -25,7 +25,7 @@ import random
 from ansible import constants as C
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
-
+from ansible.errors import AnsibleError
 
 __all__ = ['ConnectionInformation']
 
@@ -230,7 +230,7 @@ class ConnectionInformation:
             elif self.become_method == 'pbrun':
                 exe = become_settings.get('pbrun_exe', 'pbrun')
                 flags = become_settings.get('pbrun_flags', '')
-                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, success_cmd)
+                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'pfexec':
                 exe = become_settings.get('pfexec_exe', 'pbrun')
@@ -239,7 +239,7 @@ class ConnectionInformation:
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
             else:
-                raise errors.AnsibleError("Privilege escalation method not found: %s" % method)
+                raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
             return (('%s -c ' % executable) + pipes.quote(becomecmd), prompt, success_key)
 
