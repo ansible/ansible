@@ -20,6 +20,8 @@ __metaclass__ = type
 import ast
 import sys
 
+from six.moves import builtins
+
 from ansible import constants as C
 from ansible.plugins import filter_loader
 
@@ -84,7 +86,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             elif isinstance(node, ast.Call):
                 inside_call = True
             elif isinstance(node, ast.Name) and inside_call:
-                if hasattr(builtin, node.id) and node.id not in CALL_WHITELIST:
+                if hasattr(builtins, node.id) and node.id not in CALL_WHITELIST:
                     raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
             for child_node in ast.iter_child_nodes(node):
