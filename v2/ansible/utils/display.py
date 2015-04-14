@@ -100,7 +100,7 @@ class Display:
         wrapped = textwrap.wrap(new_msg, 79)
         new_msg = "\n".join(wrapped) + "\n"
 
-        if new_msg not in deprecations:
+        if new_msg not in self._deprecations:
             self.display(new_msg, color='purple', stderr=True)
             self._deprecations[new_msg] = 1
 
