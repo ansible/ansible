@@ -64,13 +64,13 @@ class ConnectionInformation:
         self.no_log      = False
         self.check_mode  = False
 
+        if play:
+            self.set_play(play)
+
         #TODO: just pull options setup to above?
         # set options before play to allow play to override them
         if options:
             self.set_options(options)
-
-        if play:
-            self.set_play(play)
 
 
     def __repr__(self):
