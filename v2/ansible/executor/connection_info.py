@@ -261,3 +261,11 @@ class ConnectionInformation:
         for field in self._get_fields():
             value = templar.template(getattr(self, field))
             setattr(self, field, value)
+
+    def update_vars(self, variables):
+        '''
+        Adds 'magic' variables relating to connections to the variable dictionary provided.
+        '''
+
+        variables['ansible_ssh_port'] = self.port
+        variables['ansible_ssh_user'] = self.remote_user
