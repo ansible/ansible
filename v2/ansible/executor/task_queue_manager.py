@@ -188,18 +188,6 @@ class TaskQueueManager:
     def get_loader(self):
         return self._loader
 
-    def get_server_pipe(self):
-        return self._server_pipe
-
-    def get_client_pipe(self):
-        return self._client_pipe
-
-    def get_pending_results(self):
-        return self._pending_results
-
-    def get_allow_processing(self):
-        return self._allow_processing
-
     def get_notified_handlers(self):
         return self._notified_handlers
 
