@@ -23,6 +23,9 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
+from six import add_metaclass
+
+@add_metaclass(ABCMeta)
 class InventoryParser:
     '''Abstract Base Class for retrieving inventory information
 
@@ -31,7 +34,6 @@ class InventoryParser:
     InventoryParser.hosts for a mapping of Host objects and
     InventoryParser.Groups for a mapping of Group objects.
     '''
-    __metaclass__ = ABCMeta
 
     def __init__(self, inven_source):
         '''
