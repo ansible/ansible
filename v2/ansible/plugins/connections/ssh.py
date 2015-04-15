@@ -45,6 +45,7 @@ class Connection(ConnectionBase):
         # SSH connection specific init stuff
         self.HASHED_KEY_MAGIC = "|1|"
         self._has_pipelining = True
+        self._env = {'LC_ALL':'C', 'LANG':'C' }
 
         # FIXME: move the lockfile locations to ActionBase?
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
@@ -112,18 +113,18 @@ class Connection(ConnectionBase):
     def _run(self, cmd, indata):
         if indata:
             # do not use pseudo-pty
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._env)
             stdin = p.stdin
         else:
             # try to use upseudo-pty
             try:
                 # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
                 master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._env)
                 stdin = os.fdopen(master, 'w', 0)
                 os.close(slave)
             except:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._env)
                 stdin = p.stdin
 
         return (p, stdin)
@@ -435,7 +436,7 @@ class Connection(ConnectionBase):
             cmd += ["sftp"] + self._common_args + [host]
             indata = "get %s %s\n" % (in_path, out_path)
 
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._env)
         self._send_password()
         stdout, stderr = p.communicate(indata)
 

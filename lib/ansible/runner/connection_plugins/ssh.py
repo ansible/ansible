@@ -49,6 +49,7 @@ class Connection(object):
         self.HASHED_KEY_MAGIC = "|1|"
         self.has_pipelining = True
 
+        self._env = {'LC_ALL':'C', 'LANG':'C' }
         # TODO: add pbrun, pfexec
         self.become_methods_supported=['sudo', 'su', 'pbrun']
 
@@ -107,7 +108,7 @@ class Connection(object):
     def _run(self, cmd, indata):
         if indata:
             # do not use pseudo-pty
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, env=self._env,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = p.stdin
         else:
@@ -115,12 +116,12 @@ class Connection(object):
             try:
                 # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
                 master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave,
+                p = subprocess.Popen(cmd, stdin=slave, env=self._env,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdin = os.fdopen(master, 'w', 0)
                 os.close(slave)
             except:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, env=self._env,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdin = p.stdin
 
@@ -446,7 +447,7 @@ class Connection(object):
             cmd += ["sftp"] + self.common_args + [host]
             indata = "get %s %s\n" % (in_path, out_path)
 
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, env=self._env,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._send_password()
         stdout, stderr = p.communicate(indata)
