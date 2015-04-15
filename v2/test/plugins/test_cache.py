@@ -88,13 +88,13 @@ class TestAbstractClass(unittest.TestCase):
 
         self.assertIsInstance(CacheModule3(), CacheModule3)
 
-    @unittest.skipUnless(HAVE_MEMCACHED)
+    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
     def test_memcached_cachemodule(self):
         self.assertIsInstance(MemcachedCache(), MemcachedCache)
 
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
-    @unittest.skipUnless(HAVE_REDIS)
+    @unittest.skipUnless(HAVE_REDIS, 'Redis pyhton module not installed')
     def test_redis_cachemodule(self):
         self.assertIsInstance(RedisCache(), RedisCache)
