@@ -14,30 +14,42 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import exceptions
+from abc import ABCMeta, abstractmethod
 
-class BaseCacheModule(object):
+from six import add_metaclass
 
+
+@add_metaclass(ABCMeta)
+class BaseCacheModule:
+
+    @abstractmethod
     def get(self, key):
-        raise exceptions.NotImplementedError
+        pass
 
+    @abstractmethod
     def set(self, key, value):
-        raise exceptions.NotImplementedError
+        pass
 
+    @abstractmethod
     def keys(self):
-        raise exceptions.NotImplementedError
+        pass
 
+    @abstractmethod
     def contains(self, key):
-        raise exceptions.NotImplementedError
+        pass
 
+    @abstractmethod
     def delete(self, key):
-        raise exceptions.NotImplementedError
+        pass
 
+    @abstractmethod
     def flush(self):
-        raise exceptions.NotImplementedError
+        pass
 
+    @abstractmethod
     def copy(self):
-        raise exceptions.NotImplementedError
+        pass
