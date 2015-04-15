@@ -112,7 +112,6 @@ options:
     master_auto_position:
         descrtiption:
             - does the host uses GTID based replication or not
-        possible values: 0,1
 '''
 
 EXAMPLES = '''
@@ -245,7 +244,7 @@ def main():
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
-            master_auto_position=dict(default=None, choices=['0', '1']),
+            master_auto_position=dict(default=False, type='bool'),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
