@@ -1,0 +1,22 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - block:
+      - debug: msg="this is the tagged block"
+    tags:
+    - block
+  - block:
+      - debug: msg="tagged debug from second block"
+        tags:
+        - tag1
+      - fail:
+        tags:
+        - tag1
+    rescue:
+      - debug: msg="tagged rescue from second block"
+        tags:
+        - rescue_tag
+    always:
+      - debug: msg="tagged always from second block"
+        tags:
+        - always_tag
