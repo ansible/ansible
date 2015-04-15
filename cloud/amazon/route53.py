@@ -35,6 +35,12 @@ options:
     required: true
     default: null
     aliases: []
+  hosted_zone_id:
+    description:
+      - The Hosted Zone ID of the DNS zone to modify
+    required: false
+    default: null
+    aliases: []
   record:
     description:
       - The full DNS record to create or delete
@@ -156,6 +162,16 @@ EXAMPLES = '''
       alias=True
       alias_hosted_zone_id="{{ elb_zone_id }}"
 
+# Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
+# that the entire parameter list must be quoted:
+- route53:
+      command: "create"
+      zone: "foo.com"
+      hostes_zone_id: "Z2AABBCCDDEEFF"
+      record: "localhost.foo.com"
+      type: "AAAA"
+      ttl: "7200"
+      value: "::1"
 
 '''
 
@@ -191,6 +207,7 @@ def main():
     argument_spec.update(dict(
             command              = dict(choices=['get', 'create', 'delete'], required=True),
             zone                 = dict(required=True),
+            hosted_zone_id       = dict(required=False),
             record               = dict(required=True),
             ttl                  = dict(required=False, default=3600),
             type                 = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
@@ -209,6 +226,7 @@ def main():
 
     command_in              = module.params.get('command')
     zone_in                 = module.params.get('zone').lower()
+    hosted_zone_id_in       = module.params.get('hosted_zone_id')
     ttl_in                  = module.params.get('ttl')
     record_in               = module.params.get('record').lower()
     type_in                 = module.params.get('type')
@@ -257,9 +275,17 @@ def main():
         # the private_zone_in boolean specified in the params
         if module.boolean(r53zone['Config'].get('PrivateZone', False)) == private_zone_in:
             zone_id = r53zone['Id'].replace('/hostedzone/', '')
-            zones[r53zone['Name']] = zone_id
+            # only save when unique hosted_zone_id is given and is equal
+            # hosted_zone_id_in is specified in the params
+            if hosted_zone_id_in and zone_id == hosted_zone_id_in:
+                zones[r53zone['Name']] = zone_id
+            elif not hosted_zone_id_in:
+                zones[r53zone['Name']] = zone_id
 
     # Verify that the requested zone is already defined in Route53
+    if not zone_in in zones and hosted_zone_id_in:
+        errmsg = "Hosted_zone_id %s does not exist in Route53" % hosted_zone_id_in
+        module.fail_json(msg = errmsg)
     if not zone_in in zones:
         errmsg = "Zone %s does not exist in Route53" % zone_in
         module.fail_json(msg = errmsg)
@@ -282,6 +308,8 @@ def main():
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
+            if hosted_zone_id_in:
+                record['hosted_zone_id'] = hosted_zone_id_in
             if rset.alias_dns_name:
               record['alias'] = True
               record['value'] = rset.alias_dns_name
