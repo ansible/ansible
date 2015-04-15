@@ -5,6 +5,8 @@ jinja2
 httplib2
 passlib
 six
+python-memcached
+redis
 
 # Test requirements
 unittest2
