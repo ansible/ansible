@@ -33,7 +33,7 @@ If ($params.src) {
         Fail-Json $result "src file: $src does not exist."
     }
 
-    $ext = [System.IO.Path]::GetExtension($dest)
+    $ext = [System.IO.Path]::GetExtension($src)
 }
 Else {
     Fail-Json $result "missing required argument: src"
@@ -93,7 +93,7 @@ Else {
     If (-Not ($list -match "PSCX")) {
         # Try install with chocolatey
         Try {
-            cinst -force PSCX
+            cinst -force PSCX -y
             $choco = $true
         }
         Catch {
@@ -109,9 +109,7 @@ Else {
                 Fail-Json $result "Error downloading PSCX from $url and saving as $dest"
             }
             Try {
-                msiexec.exe /i $msi /qb
-                # Give it a chance to install, so that it can be imported
-                sleep 10
+                Start-Process -FilePath msiexec.exe -ArgumentList "/i $msi /qb" -Verb Runas -PassThru -Wait | out-null
             }
             Catch {
                 Fail-Json $result "Error installing $msi"
@@ -127,7 +125,12 @@ Else {
     # Import
     Try {
         If ($installed) {
-            Import-Module 'C:\Program Files (x86)\Powershell Community Extensions\pscx3\pscx\pscx.psd1'
+            Try {
+                Import-Module 'C:\Program Files (x86)\Powershell Community Extensions\pscx3\pscx\pscx.psd1'
+            }
+            Catch {
+                Import-Module PSCX
+            }
         }
         Else {
             Import-Module PSCX
