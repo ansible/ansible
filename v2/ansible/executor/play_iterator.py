@@ -87,10 +87,15 @@ class PlayIterator:
     FAILED_RESCUE      = 4
     FAILED_ALWAYS      = 8
 
-    def __init__(self, inventory, play):
+    def __init__(self, inventory, play, connection_info, all_vars):
         self._play = play
 
-        self._blocks  = self._play.compile()
+        self._blocks = []
+        for block in self._play.compile():
+            new_block = block.filter_tagged_tasks(connection_info, all_vars)
+            if new_block.has_tasks():
+                self._blocks.append(new_block)
+
         self._host_states = {}
         for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)

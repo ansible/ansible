@@ -281,3 +281,25 @@ class Block(Base, Become, Conditional, Taggable):
 
         return value
 
+    def filter_tagged_tasks(self, connection_info, all_vars):
+        '''
+        Creates a new block, with task lists filtered based on the tags contained
+        within the connection_info object.
+        '''
+
+        def evaluate_and_append_task(target):
+            tmp_list = []
+            for task in target:
+                if task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, all_vars=all_vars):
+                    tmp_list.append(task)
+            return tmp_list
+
+        new_block = self.copy()
+        new_block.block  = evaluate_and_append_task(self.block)
+        new_block.rescue = evaluate_and_append_task(self.rescue)
+        new_block.always = evaluate_and_append_task(self.always)
+
+        return new_block
+
+    def has_tasks(self):
+        return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
