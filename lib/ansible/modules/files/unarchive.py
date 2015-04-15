@@ -75,8 +75,13 @@ EXAMPLES = '''
 - unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
 '''
 
+import re
 import os
 from zipfile import ZipFile
+
+# String from tar that shows the tar contents are different from the
+# filesystem
+DIFFERENCE_RE = re.compile(r': (.*) differs$')
 
 class UnarchiveError(Exception):
     pass
@@ -168,9 +173,12 @@ class TgzArchive(object):
 
             # What is different
             changes = set()
-            difference_re = re.compile(r': (.*) differs$')
+            if err:
+                # Assume changes if anything returned on stderr
+                # * Missing files are known to trigger this
+                return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
             for line in out.splitlines():
-                match = difference_re.search(line)
+                match = DIFFERENCE_RE.search(line)
                 if not match:
                     # Unknown tar output. Assume we have changes
                     return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
