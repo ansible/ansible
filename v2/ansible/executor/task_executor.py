@@ -193,8 +193,12 @@ class TaskExecutor:
             variables = self._job_vars
 
         # fields set from the play/task may be based on variables, so we have to
-        # do the same kind of post validation step on it here before we use it
+        # do the same kind of post validation step on it here before we use it.
         self._connection_info.post_validate(variables=variables, loader=self._loader)
+
+        # now that the connection information is finalized, we can add 'magic'
+        # variables to the variable dictionary
+        self._connection_info.update_vars(variables)
 
         # get the connection and the handler for this execution
         self._connection = self._get_connection(variables)
