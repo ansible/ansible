@@ -75,6 +75,8 @@
   assert:
     that:
       - "unarchive02.changed == true"
+      # Verify that no file list is generated
+      - "'files' not in unarchive02"
 
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
@@ -126,13 +128,17 @@
   file: path={{output_dir}}/test-unarchive-zip state=directory
 
 - name: unarchive a zip file
-  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip copy=no
+  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip copy=no list_files=True
   register: unarchive03
 
 - name: verify that the file was marked as changed
   assert:
     that:
       - "unarchive03.changed == true"
+      # Verify that file list is generated
+      - "'files' in unarchive03"
+      - "{{unarchive03['files']| length}} == 1"
+      - "'foo-unarchive.txt' in unarchive03['files']"
 
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
@@ -176,6 +182,7 @@
     dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
     copy: no
     mode: "u+rwX,g-rwx,o-rwx"
+    list_files: True
   register: unarchive06
 
 - name: Test that the file modes were changed
@@ -188,6 +195,10 @@
     that:
       - "unarchive06.changed == true"
       - "unarchive06_stat.stat.mode == '0600'"
+      # Verify that file list is generated
+      - "'files' in unarchive06"
+      - "{{unarchive06['files']| length}} == 1"
+      - "'foo-unarchive.txt' in unarchive06['files']"
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
@@ -222,12 +233,17 @@
     dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
     copy: no
     mode: "u+rwX,g-wx,o-wx,g+r,o+r"
+    list_files: True
   register: unarchive07
 
 - name: Test that the files were not changed
   assert:
     that:
       - "unarchive07.changed == false"
+      # Verify that file list is generated
+      - "'files' in unarchive07"
+      - "{{unarchive07['files']| length}} == 1"
+      - "'foo-unarchive.txt' in unarchive07['files']"
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
