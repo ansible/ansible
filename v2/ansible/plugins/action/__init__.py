@@ -168,7 +168,7 @@ class ActionBase:
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
-            elif result['rc'] == 255 and self._connection.get_transport() in ['ssh']:
+            elif result['rc'] == 255 and self._connection.transport in ('ssh',):
                 # FIXME: more utils.VERBOSITY
                 #if utils.VERBOSITY > 3:
                 #    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])

@@ -1,4 +1,5 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -19,6 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from abc import ABCMeta, abstractmethod, abstractproperty
+
+from six import add_metaclass
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 
@@ -29,7 +34,7 @@ from ansible.utils.display import Display
 
 __all__ = ['ConnectionBase']
 
-
+@add_metaclass(ABCMeta)
 class ConnectionBase:
     '''
     A base class for connections to contain common code.
@@ -39,9 +44,15 @@ class ConnectionBase:
     become_methods = C.BECOME_METHODS
 
     def __init__(self, connection_info, *args, **kwargs):
-        self._connection_info = connection_info
-        self._display = Display(verbosity=connection_info.verbosity)
+        # All these hasattrs allow subclasses to override these parameters
+        if not hasattr(self, '_connection_info'):
+            self._connection_info = connection_info
+        if not hasattr(self, '_display'):
+            self._display = Display(verbosity=connection_info.verbosity)
+        if not hasattr(self, '_connected'):
+            self._connected = False
 
+        self._connect()
 
     def _become_method_supported(self, become_method):
         ''' Checks if the current class supports this privilege escalation method '''
@@ -50,3 +61,33 @@ class ConnectionBase:
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
+
+    @abstractproperty
+    def transport(self):
+        """String used to identify this Connection class from other classes"""
+        pass
+
+    @abstractmethod
+    def _connect(self):
+        """Connect to the host we've been initialized with"""
+        pass
+
+    @abstractmethod
+    def exec_command(self, cmd, tmp_path, executable=None, in_data=None):
+        """Run a command on the remote host"""
+        pass
+
+    @abstractmethod
+    def put_file(self, in_path, out_path):
+        """Transfer a file from local to remote"""
+        pass
+
+    @abstractmethod
+    def fetch_file(self, in_path, out_path):
+        """Fetch a file from remote to local"""
+        pass
+
+    @abstractmethod
+    def close(self):
+        """Terminate the connection"""
+        pass

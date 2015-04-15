@@ -374,8 +374,6 @@ class TaskExecutor:
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
-        connection.connect()
-
         return connection
 
     def _get_action_handler(self, connection):

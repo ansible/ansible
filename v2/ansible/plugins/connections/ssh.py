@@ -33,15 +33,13 @@ import pty
 from hashlib import sha1
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
     def __init__(self, connection_info, *args, **kwargs):
-        super(Connection, self).__init__(connection_info)
-
         # SSH connection specific init stuff
         self.HASHED_KEY_MAGIC = "|1|"
         self._has_pipelining = True
@@ -52,14 +50,20 @@ class Connection(ConnectionBase):
         self._cp_dir = '/tmp'
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
-    def get_transport(self):
+        super(Connection, self).__init__(connection_info)
+
+    @property
+    def transport(self):
         ''' used to identify this connection object from other classes '''
         return 'ssh'
 
-    def connect(self):
+    def _connect(self):
         ''' connect to the remote host '''
 
-        self._display.vvv("ESTABLISH SSH CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._connection_info.remote_addr)
+        self._display.vvv("ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._connection_info.remote_user), host=self._connection_info.remote_addr)
+
+        if self._connected:
+            return self
 
         self._common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
@@ -67,11 +71,11 @@ class Connection(ConnectionBase):
             # make sure there is no empty string added as this can produce weird errors
             self._common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
         else:
-            self._common_args += [
+            self._common_args += (
                 "-o", "ControlMaster=auto",
                 "-o", "ControlPersist=60s",
-                "-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir)),
-            ]
+                "-o", "ControlPath=\"{0}\"".format(C.ANSIBLE_SSH_CONTROL_PATH.format(dict(directory=self._cp_dir))),
+            )
 
         cp_in_use = False
         cp_path_set = False
@@ -82,30 +86,34 @@ class Connection(ConnectionBase):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
-            self._common_args += ["-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir))]
+            self._common_args += ("-o", "ControlPath=\"{0}\"".format(
+                C.ANSIBLE_SSH_CONTROL_PATH.format(dict(directory=self._cp_dir)))
+            )
 
         if not C.HOST_KEY_CHECKING:
-            self._common_args += ["-o", "StrictHostKeyChecking=no"]
+            self._common_args += ("-o", "StrictHostKeyChecking=no")
 
         if self._connection_info.port is not None:
-            self._common_args += ["-o", "Port=%d" % (self._connection_info.port)]
+            self._common_args += ("-o", "Port={0}".format(self._connection_info.port))
         # FIXME: need to get this from connection info
         #if self.private_key_file is not None:
-        #    self._common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
+        #    self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self.private_key_file)))
         #elif self.runner.private_key_file is not None:
-        #    self._common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.private_key_file)]
+        #    self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self.runner.private_key_file)))
         if self._connection_info.password:
-            self._common_args += ["-o", "GSSAPIAuthentication=no",
-                                 "-o", "PubkeyAuthentication=no"]
+            self._common_args += ("-o", "GSSAPIAuthentication=no",
+                                 "-o", "PubkeyAuthentication=no")
         else:
-            self._common_args += ["-o", "KbdInteractiveAuthentication=no",
+            self._common_args += ("-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
-                                 "-o", "PasswordAuthentication=no"]
+                                 "-o", "PasswordAuthentication=no")
         if self._connection_info.remote_user is not None and self._connection_info.remote_user != pwd.getpwuid(os.geteuid())[0]:
-            self._common_args += ["-o", "User="+self._connection_info.remote_user]
+            self._common_args += ("-o", "User={0}".format(self._connection_info.remote_user))
         # FIXME: figure out where this goes
-        #self._common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
-        self._common_args += ["-o", "ConnectTimeout=15"]
+        #self._common_args += ("-o", "ConnectTimeout={0}".format(self.runner.timeout))
+        self._common_args += ("-o", "ConnectTimeout=15")
+
+        self._connected = True
 
         return self
 
@@ -136,13 +144,13 @@ class Connection(ConnectionBase):
             except OSError:
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
-            return ["sshpass", "-d%d" % self.rfd]
+            return ("sshpass", "-d{0}".format(self.rfd))
         return []
 
     def _send_password(self):
         if self._connection_info.password:
             os.close(self.rfd)
-            os.write(self.wfd, "%s\n" % self._connection_info.password)
+            os.write(self.wfd, "{0}\n".format(self._connection_info.password))
             os.close(self.wfd)
 
     def _communicate(self, p, stdin, indata, su=False, sudoable=False, prompt=None):
@@ -215,12 +223,12 @@ class Connection(ConnectionBase):
         else:
             user_host_file = "~/.ssh/known_hosts"
         user_host_file = os.path.expanduser(user_host_file)
-        
+
         host_file_list = []
         host_file_list.append(user_host_file)
         host_file_list.append("/etc/ssh/ssh_known_hosts")
         host_file_list.append("/etc/ssh/ssh_known_hosts2")
-        
+
         hfiles_not_found = 0
         for hf in host_file_list:
             if not os.path.exists(hf):
@@ -234,7 +242,7 @@ class Connection(ConnectionBase):
             else:
                 data = host_fh.read()
                 host_fh.close()
-                
+
             for line in data.split("\n"):
                 if line is None or " " not in line:
                     continue
@@ -258,33 +266,33 @@ class Connection(ConnectionBase):
                         return False
 
         if (hfiles_not_found == len(host_file_list)):
-            self._display.vvv("EXEC previous known host file not found for %s" % host)
+            self._display.vvv("EXEC previous known host file not found for {0}".format(host))
         return True
 
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-C"]
+        ssh_cmd += ("ssh", "-C")
         if not in_data:
             # we can only use tty when we are not pipelining the modules. piping data into /usr/bin/python
             # inside a tty automatically invokes the python interactive-mode but the modules are not
             # compatible with the interactive-mode ("unexpected indent" mainly because of empty lines)
-            ssh_cmd += ["-tt"]
+            ssh_cmd.append("-tt")
         if self._connection_info.verbosity > 3:
-            ssh_cmd += ["-vvv"]
+            ssh_cmd.append("-vvv")
         else:
-            ssh_cmd += ["-q"]
+            ssh_cmd.append("-q")
         ssh_cmd += self._common_args
 
         # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
         #        not sure if it's all working yet so this remains commented out
         #if self._ipv6:
         #    ssh_cmd += ['-6']
-        ssh_cmd += [self._connection_info.remote_addr]
+        ssh_cmd.append(self._connection_info.remote_addr)
 
         ssh_cmd.append(cmd)
-        self._display.vvv("EXEC %s" % ' '.join(ssh_cmd), host=self._connection_info.remote_addr)
+        self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=self._connection_info.remote_addr)
 
         not_in_host_file = self.not_in_host_file(self._connection_info.remote_addr)
 
@@ -361,7 +369,7 @@ class Connection(ConnectionBase):
         # FIXME: the prompt won't be here anymore
         prompt=""
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, prompt=prompt)
-        
+
         #if C.HOST_KEY_CHECKING and not_in_host_file:
         #    # lock around the initial SSH connectivity so the user prompt about whether to add 
         #    # the host to known hosts is not intermingled with multiprocess output.
@@ -384,9 +392,9 @@ class Connection(ConnectionBase):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
+        self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
         if not os.path.exists(in_path):
-            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
@@ -398,12 +406,15 @@ class Connection(ConnectionBase):
         #    host = '[%s]' % host
 
         if C.DEFAULT_SCP_IF_SSH:
-            cmd += ["scp"] + self._common_args
-            cmd += [in_path,host + ":" + pipes.quote(out_path)]
+            cmd.append('scp')
+            cmd += self._common_args
+            cmd.append(in_path,host + ":" + pipes.quote(out_path))
             indata = None
         else:
-            cmd += ["sftp"] + self._common_args + [host]
-            indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
+            cmd.append('sftp')
+            cmd += self._common_args
+            cmd.append(host)
+            indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
 
         (p, stdin) = self._run(cmd, indata)
 
@@ -412,11 +423,11 @@ class Connection(ConnectionBase):
         (returncode, stdout, stderr) = self._communicate(p, stdin, indata)
 
         if returncode != 0:
-            raise AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
+            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}".format(out_path, stdout, stderr))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
+        self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
         cmd = self._password_cmd()
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
@@ -428,21 +439,24 @@ class Connection(ConnectionBase):
         #    host = '[%s]' % self._connection_info.remote_addr
 
         if C.DEFAULT_SCP_IF_SSH:
-            cmd += ["scp"] + self._common_args
-            cmd += [host + ":" + in_path, out_path]
+            cmd.append('scp')
+            cmd += self._common_args
+            cmd += ('{0}:{1}'.format(host, in_path), out_path)
             indata = None
         else:
-            cmd += ["sftp"] + self._common_args + [host]
-            indata = "get %s %s\n" % (in_path, out_path)
+            cmd.append('sftp')
+            cmd += self._common_args
+            cmd.append(host)
+            indata = "get {0} {1}\n".format(in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._send_password()
         stdout, stderr = p.communicate(indata)
 
         if p.returncode != 0:
-            raise AnsibleError("failed to transfer file from %s:\n%s\n%s" % (in_path, stdout, stderr))
+            raise AnsibleError("failed to transfer file from {0}:\n{1}\n{2}".format(in_path, stdout, stderr))
 
     def close(self):
         ''' not applicable since we're executing openssh binaries '''
-        pass
+        self._connected = False
 
