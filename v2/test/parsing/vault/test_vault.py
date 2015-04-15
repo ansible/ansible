@@ -31,6 +31,7 @@ from binascii import hexlify
 from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
+from ansible.utils.unicode import to_bytes, to_unicode
 
 from ansible import errors
 from ansible.parsing.vault import VaultLib
@@ -70,8 +71,8 @@ class TestVaultLib(unittest.TestCase):
 
     def test_is_encrypted(self):
         v = VaultLib(None)
-        assert not v.is_encrypted("foobar"), "encryption check on plaintext failed"
-        data = "$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(six.b("ansible"))
+        assert not v.is_encrypted(u"foobar"), "encryption check on plaintext failed"
+        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         assert v.is_encrypted(data), "encryption check on headered text failed"
 
     def test_add_header(self):
@@ -79,9 +80,9 @@ class TestVaultLib(unittest.TestCase):
         v.cipher_name = "TEST"
         sensitive_data = "ansible"
         data = v._add_header(sensitive_data)
-        lines = data.split('\n')
+        lines = data.split(b'\n')
         assert len(lines) > 1, "failed to properly add header"
-        header = lines[0]
+        header = to_unicode(lines[0])
         assert header.endswith(';TEST'), "header does end with cipher name"
         header_parts = header.split(';')
         assert len(header_parts) == 3, "header has the wrong number of parts"
@@ -91,10 +92,10 @@ class TestVaultLib(unittest.TestCase):
 
     def test_split_header(self):
         v = VaultLib('ansible')
-        data = "$ANSIBLE_VAULT;9.9;TEST\nansible"
+        data = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
         rdata = v._split_header(data)
-        lines = rdata.split('\n')
-        assert lines[0] == "ansible"
+        lines = rdata.split(b'\n')
+        assert lines[0] == b"ansible"
         assert v.cipher_name == 'TEST', "cipher name was not set"
         assert v.version == "9.9"
 
@@ -102,7 +103,7 @@ class TestVaultLib(unittest.TestCase):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         v = VaultLib('ansible')
-        v.cipher_name = 'AES'
+        v.cipher_name = u'AES'
         enc_data = v.encrypt("foobar")
         dec_data = v.decrypt(enc_data)
         assert enc_data != "foobar", "encryption failed"
