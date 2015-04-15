@@ -105,6 +105,7 @@ class Facts(object):
     # package manager, put the preferred one last.  If there is an
     # ansible module, use that as the value for the 'name' key.
     PKG_MGRS = [ { 'path' : '/usr/bin/yum',         'name' : 'yum' },
+                 { 'path' : '/usr/bin/dnf',         'name' : 'dnf' },
                  { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
                  { 'path' : '/usr/sbin/urpmi',      'name' : 'urpmi' },
