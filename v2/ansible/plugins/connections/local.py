@@ -1,4 +1,5 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -19,13 +20,12 @@ __metaclass__ = type
 
 import traceback
 import os
-import pipes
 import shutil
 import subprocess
-import select
-import fcntl
+#import select
+#import fcntl
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 
 from ansible.utils.debug import debug
@@ -33,15 +33,17 @@ from ansible.utils.debug import debug
 class Connection(ConnectionBase):
     ''' Local based connections '''
 
-    def get_transport(self):
+    @property
+    def transport(self):
         ''' used to identify this connection object '''
         return 'local'
 
-    def connect(self, port=None):
+    def _connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
 
-        self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: %s" % self._connection_info.remote_user, host=self._connection_info.remote_addr)
-
+        if not self._connected:
+            self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._connection_info.remote_user, host=self._connection_info.remote_addr))
+            self._connected = True
         return self
 
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
@@ -57,7 +59,7 @@ class Connection(ConnectionBase):
 
         executable = executable.split()[0] if executable else None
 
-        self._display.vvv("%s EXEC %s" % (self._connection_info.remote_addr, cmd))
+        self._display.vvv("{0} EXEC {1}".format(self._connection_info.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
         debug("opening command with Popen()")
         p = subprocess.Popen(
@@ -106,26 +108,25 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
-        #vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
-        self._display.vvv("%s PUT %s TO %s" % (self._connection_info.remote_addr, in_path, out_path))
+        #vvv("PUT {0} TO {1}".format(in_path, out_path), host=self.host)
+        self._display.vvv("{0} PUT {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
-            #raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-            raise AnsibleError("file or module does not exist: %s" % in_path)
+            raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
             traceback.print_exc()
-            raise AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+            raise AnsibleError("failed to copy: {0} and {1} are the same".format(in_path, out_path))
         except IOError:
             traceback.print_exc()
-            raise AnsibleError("failed to transfer file to %s" % out_path)
+            raise AnsibleError("failed to transfer file to {0}".format(out_path))
 
     def fetch_file(self, in_path, out_path):
-        #vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
-        self._display.vvv("%s FETCH %s TO %s" % (self._connection_info.remote_addr, in_path, out_path))
         ''' fetch a file from local to local -- for copatibility '''
+        #vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
+        self._display.vvv("{0} FETCH {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
         self.put_file(in_path, out_path)
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
-        pass
+        self._connected = False
