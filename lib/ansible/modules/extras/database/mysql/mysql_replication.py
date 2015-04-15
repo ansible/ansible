@@ -109,7 +109,7 @@ options:
     master_ssl_cipher:
         description:
             - same as mysql variable
-    gtid_replication:
+    master_auto_position:
         descrtiption:
             - does the host uses GTID based replication or not
         possible values: 0,1
@@ -245,7 +245,7 @@ def main():
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
-            gtid_replication=dict(default=None, choices=['0', '1']),
+            master_auto_position=dict(default=None, choices=['0', '1']),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
@@ -283,7 +283,7 @@ def main():
     master_ssl_cert = module.params["master_ssl_cert"]
     master_ssl_key = module.params["master_ssl_key"]
     master_ssl_cipher = module.params["master_ssl_cipher"]
-    gtid_replication = module.params["gtid_replication"]
+    master_auto_position = module.params["master_auto_position"]
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -381,7 +381,7 @@ def main():
         if master_ssl_cipher:
             chm.append("MASTER_SSL_CIPHER=%(master_ssl_cipher)s")
             chm_params['master_ssl_cipher'] = master_ssl_cipher
-        if gtid_replication:
+        if master_auto_position:
             chm.append("MASTER_AUTO_POSITION = 1")
         changemaster(cursor, chm, chm_params)
         module.exit_json(changed=True)
