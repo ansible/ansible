@@ -27,6 +27,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
+from ansible.errors import AnsibleParserError
 
 class PlaybookInclude(Base):
 
