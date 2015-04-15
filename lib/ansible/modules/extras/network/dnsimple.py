@@ -130,13 +130,12 @@ EXAMPLES = '''
 '''
 
 import os
-from sys import exit
 try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import DNSimpleException
+    HAS_DNSIMPLE = True
 except ImportError:
-    print "failed=True msg='dnsimple required for this module'"
-    exit(1)
+    HAS_DNSIMPLE = False
 
 def main():
     module = AnsibleModule(
@@ -158,6 +157,9 @@ def main():
         ),
         supports_check_mode = True,
     )
+
+    if not HAS_DNSIMPLE:
+        module.fail_json("dnsimple required for this module")
 
     account_email     = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')
