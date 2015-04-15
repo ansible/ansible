@@ -92,7 +92,7 @@ class RoleRequirement(RoleDefinition):
                 ds["scm"] = scm
                 ds["src"] = src
 
-            if 'name' in role:
+            if 'name' in ds:
                 ds["role"] = ds["name"]
                 del ds["name"]
             else:
