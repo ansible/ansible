@@ -253,15 +253,3 @@ class EC2SnapshotTest(unittest.TestCase):
         snaps = self.ec2.get_all_snapshots()
         snap = snaps[0]
         self.assertEqual(tags, snap.tags)
-
-
-
-
-
-
-
-
-
-
-
-
