@@ -45,11 +45,11 @@ class Become:
         if has_become:
             msg = 'The become params ("become", "become_user") and'
             if has_sudo:
-                raise errors.AnsibleParserError('%s sudo params ("sudo", "sudo_user") cannot be used together' % msg)
+                raise AnsibleParserError('%s sudo params ("sudo", "sudo_user") cannot be used together' % msg)
             elif has_su:
-                raise errors.AnsibleParserError('%s su params ("su", "su_user") cannot be used together' % msg)
+                raise AnsibleParserError('%s su params ("su", "su_user") cannot be used together' % msg)
         elif has_sudo and has_su:
-            raise errors.AnsibleParserError('sudo params ("sudo", "sudo_user") and su params ("su", "su_user") cannot be used together')
+            raise AnsibleParserError('sudo params ("sudo", "sudo_user") and su params ("su", "su_user") cannot be used together')
 
     def _preprocess_data_become(self, ds):
         """Preprocess the playbook data for become attributes
