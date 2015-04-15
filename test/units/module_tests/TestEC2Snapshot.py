@@ -184,6 +184,10 @@ class EC2SnapshotTest(unittest.TestCase):
         snapshot age
         """
 
+        # no previous snapshots
+        found_snap = _get_most_recent_snapshot([])
+        self.assertIsNone(found_snap)
+
         snap_1 = self.create_ec2_snapshot()
         snap_2 = self.create_ec2_snapshot()
 

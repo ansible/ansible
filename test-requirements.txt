@@ -7,3 +7,4 @@ mock
 passlib
 coverage
 coveralls
+moto
