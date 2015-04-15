@@ -267,5 +267,9 @@ class ConnectionInformation:
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         '''
 
-        variables['ansible_ssh_port'] = self.port
-        variables['ansible_ssh_user'] = self.remote_user
+        variables['ansible_connection']           = self.connection
+        variables['ansible_ssh_host']             = self.remote_addr
+        variables['ansible_ssh_pass']             = self.password
+        variables['ansible_ssh_port']             = self.port
+        variables['ansible_ssh_user']             = self.remote_user
+        variables['ansible_ssh_private_key_file'] = self.private_key_file
