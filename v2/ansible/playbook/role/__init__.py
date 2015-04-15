@@ -172,13 +172,13 @@ class Role(Base, Become, Conditional, Taggable):
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
         if not isinstance(self._role_vars, (dict, NoneType)):
-            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
+            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
         elif self._role_vars is None:
             self._role_vars = dict()
 
         self._default_vars = self._load_role_yaml('defaults')
         if not isinstance(self._default_vars, (dict, NoneType)):
-            raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name, obj=ds)
+            raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
         elif self._default_vars is None:
             self._default_vars = dict()
 
