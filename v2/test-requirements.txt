@@ -5,8 +5,10 @@ jinja2
 httplib2
 passlib
 six
-python-memcached
-redis
+
+# These are needed for various optional features
+#python-memcached
+#redis
 
 # Test requirements
 unittest2
