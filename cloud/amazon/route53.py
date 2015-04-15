@@ -212,6 +212,17 @@ EXAMPLES = '''
       ttl: "7200"
       value: "::1"
       
+# Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
+# that the entire parameter list must be quoted:
+- route53:
+      command: "create"
+      zone: "foo.com"
+      hostes_zone_id: "Z2AABBCCDDEEFF"
+      record: "localhost.foo.com"
+      type: "AAAA"
+      ttl: "7200"
+      value: "::1"
+      
 # Use a routing policy to distribute traffic:
 - route53:
       command: "create"
@@ -374,6 +385,8 @@ def main():
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
+            if hosted_zone_id_in:
+                record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
             record['weight'] = rset.weight
             record['region'] = rset.region
