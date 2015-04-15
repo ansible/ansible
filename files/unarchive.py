@@ -3,6 +3,7 @@
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -50,6 +51,13 @@ options:
     required: no
     default: null
     version_added: "1.6"
+  list_files:
+    description:
+      - If set to True, return the list of files that are contained in the tarball.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "2.0"
 author: Dylan Martin
 todo:
     - detect changed/unchanged for .zip files
@@ -247,6 +255,7 @@ def main():
             dest              = dict(required=True),
             copy              = dict(default=True, type='bool'),
             creates           = dict(required=False),
+            list_files          = dict(required=False, default=False, type='bool'),
         ),
         add_file_common_args=True,
     )
@@ -295,6 +304,9 @@ def main():
     for filename in handler.files_in_archive:
         file_args['path'] = os.path.join(dest, filename)
         res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+
+    if module.params['list_files']:
+        res_args['files'] = handler.files_in_archive
 
     module.exit_json(**res_args)
 
