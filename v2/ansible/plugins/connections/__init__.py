@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 
 # FIXME: this object should be created upfront and passed through
 #        the entire chain of calls to here, as there are other things
@@ -48,4 +49,4 @@ class ConnectionBase:
         if become_method in self.__class__.become_methods:
             return True
 
-        raise errors.AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
+        raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
