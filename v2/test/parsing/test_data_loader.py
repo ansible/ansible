@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six.moves import builtins
+from six import PY2
 from yaml.scanner import ScannerError
 
 from ansible.compat.tests import unittest
@@ -80,6 +80,11 @@ class TestDataLoaderWithVault(unittest.TestCase):
 3135306561356164310a343937653834643433343734653137383339323330626437313562306630
 3035
 """
-        with patch('builtins.open', mock_open(read_data=vaulted_data)):
+        if PY2:
+            builtins_name = '__builtin__'
+        else:
+            builtins_name = 'builtins'
+
+        with patch(builtins_name + '.open', mock_open(read_data=vaulted_data)):
             output = self._loader.load_from_file('dummy_vault.txt')
             self.assertEqual(output, dict(foo='bar'))
