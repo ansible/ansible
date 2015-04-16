@@ -23,7 +23,7 @@ become_user
     equivalent to adding sudo_user: or su_user: to a play or task
 
 become_method
-    at play or task level overrides the default method set in ansibile.cfg
+    at play or task level overrides the default method set in ansible.cfg
 
 
 New ansible_ variables
@@ -31,16 +31,16 @@ New ansible_ variables
 Each allows you to set an option per group and/or host
 
 ansible_become
-    equivalent to ansible_sudo or ansbile_su, allows to force privilege escalation
+    equivalent to ansible_sudo or ansible_su, allows to force privilege escalation
 
 ansible_become_method
     allows to set privilege escalation method
 
 ansible_become_user
-    equivalent to ansible_sudo_user or ansbile_su_user, allows to set the user you become through privilege escalation
+    equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation
 
 ansible_become_pass
-    equivalent to ansible_sudo_pass or ansbile_su_pass, allows you to set the privilege escalation password
+    equivalent to ansible_sudo_pass or ansible_su_pass, allows you to set the privilege escalation password
 
 
 New command line options
@@ -50,7 +50,7 @@ New command line options
     ask for privilege escalation password
 
 -b, --become
-    run operations with become (no passorwd implied)
+    run operations with become (no password implied)
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
