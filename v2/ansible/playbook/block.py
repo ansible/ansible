@@ -43,7 +43,6 @@ class Block(Base, Become, Conditional, Taggable):
         self._task_include = task_include
         self._use_handlers = use_handlers
         self._dep_chain    = []
-        self._vars         = dict()
 
         super(Block, self).__init__()
 
