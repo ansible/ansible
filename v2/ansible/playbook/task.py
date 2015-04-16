@@ -63,10 +63,8 @@ class Task(Base, Conditional, Taggable, Become):
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='string')
-    _connection           = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
-    _environment          = FieldAttribute(isa='dict')
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _ignore_errors        = FieldAttribute(isa='bool')
@@ -80,16 +78,12 @@ class Task(Base, Conditional, Taggable, Become):
 
     _name                 = FieldAttribute(isa='string', default='')
 
-    _no_log               = FieldAttribute(isa='bool')
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
-    _remote_user          = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
-    _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
-    _vars                 = FieldAttribute(isa='dict', default=dict())
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
