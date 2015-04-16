@@ -270,6 +270,10 @@ class Facts(object):
             self.facts['distribution'] = 'FreeBSD'
             self.facts['distribution_release'] = platform.release()
             self.facts['distribution_version'] = platform.version()
+        elif self.facts['system'] == 'NetBSD':
+            self.facts['distribution'] = 'NetBSD'
+            self.facts['distribution_release'] = platform.release()
+            self.facts['distribution_version'] = platform.version()
         elif self.facts['system'] == 'OpenBSD':
             self.facts['distribution'] = 'OpenBSD'
             self.facts['distribution_release'] = platform.release()
