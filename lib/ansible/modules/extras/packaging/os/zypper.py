@@ -56,6 +56,7 @@ options:
         required: false
         choices: [ package, patch, pattern, product, srcpackage ]
         default: "package"
+        version_added: "2.0"
     disable_gpg_check:
         description:
           - Whether to disable to GPG signature checking of the package
