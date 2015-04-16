@@ -40,18 +40,18 @@ options:
    network_name:
      description:
         - Name of the network to which the subnet should be attached
-     required: true
-     default: None
+     required: true when state is 'present'
    name:
      description:
-       - The name of the subnet that should be created
+       - The name of the subnet that should be created. Although Neutron
+         allows for non-unique subnet names, this module enforces subnet
+         name uniqueness.
      required: true
-     default: None
    cidr:
      description:
-        - The CIDR representation of the subnet that should be assigned to the subnet
-     required: true
-     default: None
+        - The CIDR representation of the subnet that should be assigned to
+          the subnet.
+     required: true when state is 'present'
    ip_version:
      description:
         - The IP version of the subnet 4 or 6
@@ -69,139 +69,179 @@ options:
      default: None
    dns_nameservers:
      description:
-        - DNS nameservers for this subnet, comma-separated
+        - List of DNS nameservers for this subnet.
      required: false
      default: None
-     version_added: "1.4"
    allocation_pool_start:
      description:
-        - From the subnet pool the starting address from which the IP should be allocated
+        - From the subnet pool the starting address from which the IP should
+          be allocated.
      required: false
      default: None
    allocation_pool_end:
      description:
-        - From the subnet pool the last IP that should be assigned to the virtual machines
+        - From the subnet pool the last IP that should be assigned to the
+          virtual machines.
+     required: false
+     default: None
+   host_routes:
+     description:
+        - A list of host route dictionaries for the subnet.
      required: false
      default: None
 requirements: ["shade"]
 '''
 
 EXAMPLES = '''
-# Create a subnet with the specified network
-- os_subnet: state=present username=admin password=admin
-             project_name=admin
-             network_name=network1 name=net1subnet cidr=192.168.0.0/24"
+# Create a new (or update an existing) subnet on the specified network
+- os_subnet:
+    state=present
+    network_name=network1
+    name=net1subnet
+    cidr=192.168.0.0/24
+    dns_nameservers:
+       - 8.8.8.7
+       - 8.8.8.8
+    host_routes:
+       - destination: 0.0.0.0/0
+         nexthop: 123.456.78.9
+       - destination: 192.168.0.0/24
+         nexthop: 192.168.0.1
+
+# Delete a subnet
+- os_subnet:
+    state=absent
+    name=net1subnet
 '''
 
-_os_network_id = None
 
-def _get_net_id(neutron, module):
-    kwargs = {
-        'name': module.params['network_name'],
-    }
-    try:
-        networks = neutron.list_networks(**kwargs)
-    except Exception, e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
-    if not networks['networks']:
-            return None
-    return networks['networks'][0]['id']
+def _needs_update(subnet, module):
+    """Check for differences in the updatable values."""
+    enable_dhcp = module.params['enable_dhcp']
+    subnet_name = module.params['name']
+    pool_start = module.params['allocation_pool_start']
+    pool_end = module.params['allocation_pool_end']
+    gateway_ip = module.params['gateway_ip']
+    dns = module.params['dns_nameservers']
+    host_routes = module.params['host_routes']
+    curr_pool = subnet['allocation_pools'][0]
 
-
-def _get_subnet_id(module, neutron):
-    global _os_network_id
-    subnet_id = None
-    _os_network_id = _get_net_id(neutron, module)
-    if not _os_network_id:
-        module.fail_json(msg = "network id of network not found.")
-    else:
-        kwargs = {
-            'name': module.params['name'],
-        }
-        try:
-            subnets = neutron.list_subnets(**kwargs)
-        except Exception, e:
-            module.fail_json( msg = " Error in getting the subnet list:%s " % e.message)
-        if not subnets['subnets']:
-            return None
-        return subnets['subnets'][0]['id']
-
-def _create_subnet(module, neutron):
-    neutron.format = 'json'
-    subnet = {
-            'name':            module.params['name'],
-            'ip_version':      module.params['ip_version'],
-            'enable_dhcp':     module.params['enable_dhcp'],
-            'gateway_ip':      module.params['gateway_ip'],
-            'dns_nameservers': module.params['dns_nameservers'],
-            'network_id':      _os_network_id,
-            'cidr':            module.params['cidr'],
-    }
-    if module.params['allocation_pool_start'] and module.params['allocation_pool_end']:
-        allocation_pools = [
-            {
-                'start' : module.params['allocation_pool_start'],
-                'end'   :  module.params['allocation_pool_end']
-            }
-        ]
-        subnet.update({'allocation_pools': allocation_pools})
-    if not module.params['gateway_ip']:
-        subnet.pop('gateway_ip')
-    if module.params['dns_nameservers']:
-        subnet['dns_nameservers'] = module.params['dns_nameservers'].split(',')
-    else:
-        subnet.pop('dns_nameservers')
-    try:
-        new_subnet = neutron.create_subnet(dict(subnet=subnet))
-    except Exception, e:
-        module.fail_json(msg = "Failure in creating subnet: %s" % e.message)
-    return new_subnet['subnet']['id']
+    if subnet['enable_dhcp'] != enable_dhcp:
+        return True
+    if subnet_name and subnet['name'] != subnet_name:
+        return True
+    if pool_start and curr_pool['start'] != pool_start:
+        return True
+    if pool_end and curr_pool['end'] != pool_end:
+        return True
+    if gateway_ip and subnet['gateway_ip'] != gateway_ip:
+        return True
+    if dns and sorted(subnet['dns_nameservers']) != sorted(dns):
+        return True
+    if host_routes:
+        curr_hr = sorted(subnet['host_routes'], key=lambda t: t.keys())
+        new_hr = sorted(host_routes, key=lambda t: t.keys())
+        if sorted(curr_hr) != sorted(new_hr):
+            return True
+    return False
 
 
-def _delete_subnet(module, neutron, subnet_id):
-    try:
-        neutron.delete_subnet(subnet_id)
-    except Exception, e:
-        module.fail_json( msg = "Error in deleting subnet: %s" % e.message)
-    return True
+def _system_state_change(module, subnet):
+    state = module.params['state']
+    if state == 'present':
+        if not subnet:
+            return True
+        return _needs_update(subnet, module)
+    if state == 'absent' and subnet:
+        return True
+    return False
 
 
 def main():
-
     argument_spec = openstack_full_argument_spec(
-        name                    = dict(required=True),
-        network_name            = dict(required=True),
-        cidr                    = dict(required=True),
-        ip_version              = dict(default='4', choices=['4', '6']),
-        enable_dhcp             = dict(default='true', type='bool'),
-        gateway_ip              = dict(default=None),
-        dns_nameservers         = dict(default=None),
-        allocation_pool_start   = dict(default=None),
-        allocation_pool_end     = dict(default=None),
+        name=dict(required=True),
+        network_name=dict(default=None),
+        cidr=dict(default=None),
+        ip_version=dict(default='4', choices=['4', '6']),
+        enable_dhcp=dict(default='true', type='bool'),
+        gateway_ip=dict(default=None),
+        dns_nameservers=dict(default=None, type='list'),
+        allocation_pool_start=dict(default=None),
+        allocation_pool_end=dict(default=None),
+        host_routes=dict(default=None, type='list'),
     )
+
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
 
+    state = module.params['state']
+    network_name = module.params['network_name']
+    cidr = module.params['cidr']
+    ip_version = module.params['ip_version']
+    enable_dhcp = module.params['enable_dhcp']
+    subnet_name = module.params['name']
+    gateway_ip = module.params['gateway_ip']
+    dns = module.params['dns_nameservers']
+    pool_start = module.params['allocation_pool_start']
+    pool_end = module.params['allocation_pool_end']
+    host_routes = module.params['host_routes']
+
+    # Check for required parameters when state == 'present'
+    if state == 'present':
+        for p in ['network_name', 'cidr']:
+            if not module.params[p]:
+                module.fail_json(msg='%s required with present state' % p)
+
+    if pool_start and pool_end:
+        pool = [dict(start=pool_start, end=pool_end)]
+    elif pool_start or pool_end:
+        module.fail_json(msg='allocation pool requires start and end values')
+    else:
+        pool = None
+
     try:
         cloud = shade.openstack_cloud(**module.params)
-        neutron = cloud.neutron_client
-        if module.params['state'] == 'present':
-            subnet_id = _get_subnet_id(module, neutron)
-            if not subnet_id:
-                subnet_id = _create_subnet(module, neutron)
-                module.exit_json(changed = True, result = "Created" , id = subnet_id)
+        subnet = cloud.get_subnet(subnet_name)
+
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(module, subnet))
+
+        if state == 'present':
+            if not subnet:
+                subnet = cloud.create_subnet(network_name, cidr,
+                                             ip_version=ip_version,
+                                             enable_dhcp=enable_dhcp,
+                                             subnet_name=subnet_name,
+                                             gateway_ip=gateway_ip,
+                                             dns_nameservers=dns,
+                                             allocation_pools=pool,
+                                             host_routes=host_routes)
+                module.exit_json(changed=True, result="created")
             else:
-                module.exit_json(changed = False, result = "success" , id = subnet_id)
-        else:
-            subnet_id = _get_subnet_id(module, neutron)
-            if not subnet_id:
-                module.exit_json(changed = False, result = "success")
+                if _needs_update(subnet, module):
+                    cloud.update_subnet(subnet['id'],
+                                        subnet_name=subnet_name,
+                                        enable_dhcp=enable_dhcp,
+                                        gateway_ip=gateway_ip,
+                                        dns_nameservers=dns,
+                                        allocation_pools=pool,
+                                        host_routes=host_routes)
+                    module.exit_json(changed=True, result="updated")
+                else:
+                    module.exit_json(changed=False, result="success")
+
+        elif state == 'absent':
+            if not subnet:
+                module.exit_json(changed=False, result="success")
             else:
-                _delete_subnet(module, neutron, subnet_id)
-                module.exit_json(changed = True, result = "deleted")
+                cloud.delete_subnet(subnet_name)
+                module.exit_json(changed=True, result="deleted")
+
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
 
@@ -210,4 +250,3 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 main()
-
