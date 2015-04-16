@@ -132,7 +132,7 @@ class TestVaultEditor(unittest.TestCase):
         # verify decrypted content
         f = open(v10_file.name, "rb")
         fdata = to_unicode(f.read())
-        f.cloes()
+        f.close()
 
         os.unlink(v10_file.name)
 
