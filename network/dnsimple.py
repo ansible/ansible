@@ -32,7 +32,7 @@ options:
     description:
       - Account API token. See I(account_email) for info.
     required: false
-    default: null      
+    default: null
 
   domain:
     description:
@@ -67,7 +67,7 @@ options:
     default: 3600 (one hour)
 
   value:
-    description: 
+    description:
       - Record value
       - "Must be specified when trying to ensure a record exists"
     required: false
@@ -133,9 +133,9 @@ import os
 try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import DNSimpleException
+    HAS_DNSIMPLE = True
 except ImportError:
-    print "failed=True msg='dnsimple required for this module'"
-    sys.exit(1)
+    HAS_DNSIMPLE = False
 
 def main():
     module = AnsibleModule(
@@ -148,7 +148,7 @@ def main():
             type              = dict(required=False, choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL']),
             ttl               = dict(required=False, default=3600, type='int'),
             value             = dict(required=False),
-            priority          = dict(required=False, type='int'), 
+            priority          = dict(required=False, type='int'),
             state             = dict(required=False, choices=['present', 'absent']),
             solo              = dict(required=False, type='bool'),
         ),
@@ -157,6 +157,9 @@ def main():
         ),
         supports_check_mode = True,
     )
+
+    if not HAS_DNSIMPLE:
+        module.fail_json("dnsimple required for this module")
 
     account_email     = module.params.get('account_email')
     account_api_token = module.params.get('account_api_token')
