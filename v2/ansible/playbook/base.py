@@ -41,6 +41,16 @@ from ansible.template import template
 
 class Base:
 
+    # connection/transport
+    _connection          = FieldAttribute(isa='string')
+    _port                = FieldAttribute(isa='int')
+    _remote_user         = FieldAttribute(isa='string')
+
+    # vars and flags
+    _vars                = FieldAttribute(isa='dict', default=dict())
+    _environment         = FieldAttribute(isa='dict', default=dict())
+    _no_log              = FieldAttribute(isa='bool', default=False)
+
     def __init__(self):
 
         # initialize the data loader and variable manager, which will be provided
