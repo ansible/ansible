@@ -43,7 +43,6 @@ class Block(Base, Become, Conditional, Taggable):
         self._task_include = task_include
         self._use_handlers = use_handlers
         self._dep_chain    = []
-        self._vars         = dict()
 
         super(Block, self).__init__()
 
@@ -62,7 +61,7 @@ class Block(Base, Become, Conditional, Taggable):
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
-        all_vars.update(self._vars)
+        all_vars.update(self.vars)
         return all_vars
 
     @staticmethod
