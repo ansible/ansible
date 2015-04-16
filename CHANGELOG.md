@@ -9,7 +9,11 @@ Major Changes:
     - template code now retains types for bools and Numbers instead of turning them into strings
       - If you need the old behaviour, quote the value and it will get passed around as a string
 
+Deprecated Modules:
+    ec2_ami_search, in favor of the new ec2_ami_find
+
 New Modules:
+    ec2_ami_find
     cloudtrail
     cloudstack_fw
     cloudstack_iso
