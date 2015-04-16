@@ -99,7 +99,8 @@ class Facts(object):
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
                     ('/etc/os-release', 'Debian'),
-                    ('/etc/lsb-release', 'Mandriva') )
+                    ('/etc/lsb-release', 'Mandriva'),
+                    ('/etc/os-release', 'NA') )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -427,6 +428,20 @@ class Facts(object):
                                     self.facts['distribution_release'] = release.groups()[0]
                                 self.facts['distribution'] = name
                                 break
+                        elif name == 'NA':
+                            data = get_file_content(path)
+                            for line in data.splitlines():
+                                distribution = re.search("^NAME=(.*)", line)
+                                if distribution:
+                                    self.facts['distribution'] = distribution.group(1).strip('"')
+                                version = re.search("^VERSION=(.*)", line)
+                                if version:
+                                    self.facts['distribution_version'] = version.group(1).strip('"')
+                            if self.facts['distribution'].lower() == 'coreos':
+                                data = get_file_content('/etc/coreos/update.conf')
+                                release = re.search("^GROUP=(.*)", data)
+                                if release:
+                                    self.facts['distribution_release'] = release.group(1).strip('"')
                     else:
                         self.facts['distribution'] = name
         machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
