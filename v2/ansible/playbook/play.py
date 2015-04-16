@@ -56,15 +56,11 @@ class Play(Base, Taggable, Become):
     _accelerate_port     = FieldAttribute(isa='int', default=5099) # should be alias of port
 
     # Connection
-    _connection          = FieldAttribute(isa='string', default='smart')
     _gather_facts        = FieldAttribute(isa='string', default='smart')
     _hosts               = FieldAttribute(isa='list', default=[], required=True)
     _name                = FieldAttribute(isa='string', default='<no name specified>')
-    _port                = FieldAttribute(isa='int', default=22)
-    _remote_user         = FieldAttribute(isa='string')
 
     # Variable Attributes
-    _vars                = FieldAttribute(isa='dict', default=dict())
     _vars_files          = FieldAttribute(isa='list', default=[])
     _vars_prompt         = FieldAttribute(isa='dict', default=dict())
     _vault_password      = FieldAttribute(isa='string')
@@ -80,9 +76,7 @@ class Play(Base, Taggable, Become):
 
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
-    _environment         = FieldAttribute(isa='dict', default=dict())
     _max_fail_percentage = FieldAttribute(isa='string', default='0')
-    _no_log              = FieldAttribute(isa='bool', default=False)
     _serial              = FieldAttribute(isa='int', default=0)
     _strategy            = FieldAttribute(isa='string', default='linear')
 
