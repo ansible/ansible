@@ -73,6 +73,7 @@ CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the on
 HEADER=u'$ANSIBLE_VAULT'
 CIPHER_WHITELIST=['AES', 'AES256']
 
+
 class VaultLib(object):
 
     def __init__(self, password):
@@ -334,7 +335,7 @@ class VaultEditor(object):
         if os.path.isfile(filename):
             os.remove(filename)
         f = open(filename, "wb")
-        f.write(data)
+        f.write(to_bytes(data))
         f.close()
 
     def shuffle_files(self, src, dest):
@@ -410,7 +411,6 @@ class VaultAES(object):
         cipher = AES.new(key, AES.MODE_CBC, iv)
         full = to_bytes(b'Salted__' + salt)
         out_file.write(full)
-        print(repr(full))
         finished = False
         while not finished:
             chunk = in_file.read(1024 * bs)
@@ -422,10 +422,8 @@ class VaultAES(object):
 
         out_file.seek(0)
         enc_data = out_file.read()
-        #print(enc_data)
         tmp_data = hexlify(enc_data)
 
-        assert isinstance(tmp_data, binary_type)
         return tmp_data
 
 
@@ -444,7 +442,6 @@ class VaultAES(object):
 
         bs = AES.block_size
         tmpsalt = in_file.read(bs)
-        print(repr(tmpsalt))
         salt = tmpsalt[len('Salted__'):]
         key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
         cipher = AES.new(key, AES.MODE_CBC, iv)
@@ -461,11 +458,15 @@ class VaultAES(object):
 
                 chunk = chunk[:-padding_length]
                 finished = True
+
             out_file.write(chunk)
+            out_file.flush()
 
         # reset the stream pointer to the beginning
         out_file.seek(0)
-        new_data = to_unicode(out_file.read())
+        out_data = out_file.read()
+        out_file.close()
+        new_data = to_unicode(out_data)
 
         # split out sha and verify decryption
         split_data = new_data.split("\n")
@@ -476,7 +477,6 @@ class VaultAES(object):
         if this_sha != test_sha:
             raise errors.AnsibleError("Decryption failed")
 
-        #return out_file.read()
         return this_data
 
 
