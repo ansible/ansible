@@ -66,7 +66,7 @@ options:
     required: false
     default: null
     description:
-      - Brick path on servers. Multiple bricks can be specified by commas
+      - Brick path on servers. Multiple brick paths can be separated by commas
   start_on_create:
     choices: [ 'yes', 'no']
     required: false
