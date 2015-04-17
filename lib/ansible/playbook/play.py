@@ -590,14 +590,16 @@ class Play(object):
                     included_become_vars[k] = become_vars[k]
                     x[k] = become_vars[k]
 
-            if 'meta' in x:
-                if x['meta'] == 'flush_handlers':
-                    results.append(Task(self, x))
-                    continue
-
             task_vars = vars.copy()
             if original_file:
                 task_vars['_original_file'] = original_file
+
+            if 'meta' in x:
+                if x['meta'] == 'flush_handlers':
+                    if role_name and 'role_name' not in x:
+                        x['role_name'] = role_name
+                    results.append(Task(self, x, module_vars=task_vars, role_name=role_name))
+                    continue
 
             if 'include' in x:
                 tokens = split_args(str(x['include']))
