@@ -66,7 +66,7 @@ options:
     required: false
     default: null
     description:
-      - Brick path on servers
+      - Brick path on servers. Multiple bricks can be specified by commas
   start_on_create:
     choices: [ 'yes', 'no']
     required: false
@@ -256,7 +256,7 @@ def probe_all_peers(hosts, peers, myhostname):
             if myhostname != host:
                 probe(host)
 
-def create_volume(name, stripe, replica, transport, hosts, brick, force):
+def create_volume(name, stripe, replica, transport, hosts, bricks, force):
     args = [ 'volume', 'create' ]
     args.append(name)
     if stripe:
@@ -267,8 +267,9 @@ def create_volume(name, stripe, replica, transport, hosts, brick, force):
         args.append(str(replica))
     args.append('transport')
     args.append(transport)
-    for host in hosts:
-        args.append(('%s:%s' % (host, brick)))
+    for brick in bricks:
+        for host in hosts:
+            args.append(('%s:%s' % (host, brick)))
     if force:
         args.append('force')
     run_gluster(args)
@@ -329,7 +330,7 @@ def main():
     action = module.params['state']
     volume_name = module.params['name']
     cluster= module.params['cluster']
-    brick_path = module.params['brick']
+    brick_paths = module.params['brick']
     stripes = module.params['stripes']
     replicas = module.params['replicas']
     transport = module.params['transport']
@@ -340,6 +341,11 @@ def main():
 
     if not myhostname:
         myhostname = socket.gethostname()
+
+    if brick_paths != None and "," in brick_paths:
+        brick_paths = brick_paths.split(",")
+    else:
+        brick_paths = [brick_paths]
 
     options = module.params['options']
     quota = module.params['quota']
@@ -366,7 +372,7 @@ def main():
 
         # create if it doesn't exist
         if volume_name not in volumes:
-            create_volume(volume_name, stripes, replicas, transport, cluster, brick_path, force)
+            create_volume(volume_name, stripes, replicas, transport, cluster, brick_paths, force)
             volumes = get_volumes()
             changed = True
 
@@ -380,10 +386,11 @@ def main():
             removed_bricks = []
             all_bricks = []
             for node in cluster:
-                brick = '%s:%s' % (node, brick_path)
-                all_bricks.append(brick)
-                if brick not in volumes[volume_name]['bricks']:
-                    new_bricks.append(brick)
+                for brick_path in brick_paths:
+                    brick = '%s:%s' % (node, brick_path)
+                    all_bricks.append(brick)
+                    if brick not in volumes[volume_name]['bricks']:
+                        new_bricks.append(brick)
 
             # this module does not yet remove bricks, but we check those anyways
             for brick in volumes[volume_name]['bricks']:
