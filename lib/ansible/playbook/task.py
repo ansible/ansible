@@ -52,6 +52,8 @@ class Task(object):
         if 'meta' in ds:
             self.meta = ds['meta']
             self.tags = []
+            self.module_vars = module_vars
+            self.role_name = role_name
             return
         else:
             self.meta = None
