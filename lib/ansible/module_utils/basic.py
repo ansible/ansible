@@ -1245,7 +1245,7 @@ class AnsibleModule(object):
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
         self.do_cleanup_files()
-        print self.jsonify(kwargs)
+        sys.stderr.write(self.jsonify(kwargs) + '\n')
         sys.exit(1)
 
     def is_executable(self, path):
