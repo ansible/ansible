@@ -59,7 +59,7 @@ options:
      - This is the slug of the region you would like your server to be created in.
   ssh_key_ids:
     description:
-     - Optional, array of of ssh_key_ids that you would like to be added to the server.
+     - Optional, array of of SSH key (numeric) ID that you would like to be added to the server.
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
@@ -153,7 +153,7 @@ EXAMPLES = '''
 
 - digital_ocean: >
       state=present
-      ssh_key_ids=[id1,id2]
+      ssh_key_ids=123,456
       name=mydroplet
       api_token=XXX
       size_id=2gb
@@ -397,7 +397,7 @@ def main():
             size_id = dict(),
             image_id = dict(),
             region_id = dict(),
-            ssh_key_ids = dict(default=''),
+            ssh_key_ids = dict(type='list'),
             virtio = dict(type='bool', default='yes'),
             private_networking = dict(type='bool', default='no'),
             backups_enabled = dict(type='bool', default='no'),
