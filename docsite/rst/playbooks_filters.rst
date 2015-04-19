@@ -301,7 +301,7 @@ Other Useful Filters
 
 To use one value on true and another on false (since 1.9)::
 
-   {{ name == "John" | ternary('Mr','Ms') }}
+   {{ (name == "John") | ternary('Mr','Ms') }}
 
 To concatenate a list into a string::
 
