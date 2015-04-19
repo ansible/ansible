@@ -173,7 +173,13 @@ class PluginLoader(object):
         found = None
         for path in [p for p in self._get_paths() if p not in self._searched_paths]:
             if os.path.isdir(path):
-                full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                try:
+                    full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                except OSError as e:
+                    if e.errno == 13:   # Permission denied; skip this directory
+                        continue
+                    else:
+                        raise
                 for full_path in (f for f in full_paths if os.path.isfile(f)):
                     for suffix in suffixes:
                         if full_path.endswith(suffix):
