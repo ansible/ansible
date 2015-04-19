@@ -128,18 +128,23 @@ def enforce_state(module, params):
                 module.fail_json(msg="Failed to read %s: %s" % \
                                      (path,str(e)))
         try:
-            outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path),
-                                             delete=False)
+            outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path))
             if inf is not None:
                 for line in inf:
                     outf.write(line)
                 inf.close()
             outf.write(key)
-            outf.close()
+            outf.flush()
             module.atomic_move(outf.name,path)
         except (IOError,OSError),e:
             module.fail_json(msg="Failed to write to file %s: %s" % \
                                  (path,str(e)))
+
+        try:
+            outf.close()
+        except:
+            pass
+
         params['changed'] = True
 
     return params
@@ -162,16 +167,20 @@ def sanity_check(module,host,key,sshkeygen):
     #The approach is to write the key to a temporary file,
     #and then attempt to look up the specified host in that file.
     try:
-        outf=tempfile.NamedTemporaryFile(delete=False)
+        outf=tempfile.NamedTemporaryFile()
         outf.write(key)
-        outf.close()
+        outf.flush()
     except IOError,e:
         module.fail_json(msg="Failed to write to temporary file %s: %s" % \
                              (outf.name,str(e)))
     rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,
                                          '-f',outf.name],
                                         check_rc=True)
-    os.remove(outf.name)
+    try:
+        outf.close()
+    except:
+        pass
+
     if stdout=='': #host not found
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
