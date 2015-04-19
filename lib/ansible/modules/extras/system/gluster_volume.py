@@ -356,7 +356,9 @@ def main():
     # do the work!
     if action == 'absent':
         if volume_name in volumes:
-            run_gluster([ 'volume', 'delete', name ])
+            if volumes[volume_name]['status'].lower() != 'stopped':
+                stop_volume(volume_name)
+            run_gluster_yes([ 'volume', 'delete', volume_name ])
             changed = True
 
     if action == 'present':
