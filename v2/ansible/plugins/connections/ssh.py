@@ -74,7 +74,7 @@ class Connection(ConnectionBase):
             self._common_args += (
                 "-o", "ControlMaster=auto",
                 "-o", "ControlPersist=60s",
-                "-o", "ControlPath=\"{0}\"".format(C.ANSIBLE_SSH_CONTROL_PATH.format(dict(directory=self._cp_dir))),
+                "-o", "ControlPath=\"{0}\"".format(C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir)),
             )
 
         cp_in_use = False
@@ -87,7 +87,7 @@ class Connection(ConnectionBase):
 
         if cp_in_use and not cp_path_set:
             self._common_args += ("-o", "ControlPath=\"{0}\"".format(
-                C.ANSIBLE_SSH_CONTROL_PATH.format(dict(directory=self._cp_dir)))
+                C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir))
             )
 
         if not C.HOST_KEY_CHECKING:
