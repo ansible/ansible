@@ -238,7 +238,7 @@ def main():
 
     _ensure_virtualenv(module)
 
-    cmd = "python manage.py %s" % (command, )
+    cmd = "./manage.py %s" % (command, )
 
     if command in noinput_commands:
         cmd = '%s --noinput' % cmd
