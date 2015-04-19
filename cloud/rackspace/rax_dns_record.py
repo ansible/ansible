@@ -49,7 +49,7 @@ options:
       - Add new records if data doesn't match, instead of updating existing
         record with matching name. If there are already multiple records with
         matching name and overwrite=true, this module will fail.
-    default: false
+    default: true
   priority:
     description:
       - Required for MX and SRV records, but forbidden for other record types.
@@ -190,7 +190,7 @@ def rax_dns_record_ptr(module, data=None, comment=None, loadbalancer=None,
 
 
 def rax_dns_record(module, comment=None, data=None, domain=None, name=None,
-                   overwrite=False, priority=None, record_type='A',
+                   overwrite=True, priority=None, record_type='A',
                    state='present', ttl=7200):
     """Function for manipulating record types other than PTR"""
 
