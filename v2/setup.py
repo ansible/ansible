@@ -18,7 +18,7 @@ setup(name='ansible',
       author_email='michael@ansible.com',
       url='http://ansible.com/',
       license='GPLv3',
-      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
+      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6', 'six >= 1.4.0'],
       # package_dir={ '': 'lib' },
       # packages=find_packages('lib'),
       package_data={
