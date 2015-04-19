@@ -124,6 +124,7 @@ be used to access the machine.
 import os
 import re
 import argparse
+import sys
 from time import time
 import ConfigParser
 import urllib, urllib2, base64
@@ -136,8 +137,8 @@ except ImportError:
 try:
   import consul
 except ImportError, e:
-  print """failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'"""
+  sys.stderr.write("""failed=True msg='python-consul required for this module. see
+  http://python-consul.readthedocs.org/en/latest/#installation'\n""")
   sys.exit(1)
 
 

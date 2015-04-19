@@ -164,7 +164,7 @@ try:
     import pyrax
     from pyrax.utils import slugify
 except ImportError:
-    print('pyrax is required for this module')
+    sys.stderr.write('pyrax is required for this module\n')
     sys.exit(1)
 
 NON_CALLABLES = (basestring, bool, dict, int, list, type(None))

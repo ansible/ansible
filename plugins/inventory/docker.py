@@ -152,7 +152,7 @@ for path in [os.getcwd(), '', os.path.dirname(os.path.abspath(__file__))]:
 try:
     import docker
 except ImportError:
-    print('docker-py is required for this module')
+    sys.stderr.write('docker-py is required for this module\n')
     sys.exit(1)
 
 

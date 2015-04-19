@@ -90,7 +90,7 @@ try:
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
 except:
-    print("GCE inventory script requires libcloud >= 0.13")
+    sys.stderr.write("GCE inventory script requires libcloud >= 0.13\n")
     sys.exit(1)
 
 
@@ -150,7 +150,7 @@ class GceInventory(object):
             if not secrets_path.endswith('secrets.py'):
                 err = "Must specify libcloud secrets file as "
                 err += "/absolute/path/to/secrets.py"
-                print(err)
+                sys.stderr.write(err + '\n')
                 sys.exit(1)
             sys.path.append(os.path.dirname(secrets_path))
             try:

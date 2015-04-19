@@ -140,7 +140,7 @@ except ImportError:
 try:
     from dopy.manager import DoError, DoManager
 except ImportError, e:
-    print "failed=True msg='`dopy` library required for this script'"
+    sys.stderr.write("failed=True msg='`dopy` library required for this script'\n")
     sys.exit(1)
 
 
@@ -170,9 +170,9 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'client_id') or not hasattr(self, 'api_key'):
-            print '''Could not find values for DigitalOcean client_id and api_key.
+            sys.stderr.write('''Could not find values for DigitalOcean client_id and api_key.
 They must be specified via either ini file, command line argument (--client-id and --api-key),
-or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
+or environment variables (DO_CLIENT_ID and DO_API_KEY)\n''')
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
@@ -190,7 +190,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    print '''Cache is empty and --force-cache was specified'''
+                    sys.stderr.write('''Cache is empty and --force-cache was specified\n''')
                     sys.exit(-1)
                 self.load_all_data_from_digital_ocean()
             else:

@@ -152,8 +152,7 @@ def main():
         elif args.host:
             inventory.get_host(args.host)
     except shade.OpenStackCloudException as e:
-        print(e.message)
-        sys.exit(1)
+        sys.exit(e.message)
     sys.exit(0)
 
 
