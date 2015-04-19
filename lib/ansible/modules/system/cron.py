@@ -139,7 +139,7 @@ EXAMPLES = '''
         cron_file=ansible_yum-autoupdate
 
 # Removes a cron file from under /etc/cron.d
-- cron: cron_file=ansible_yum-autoupdate state=absent
+- cron: name="yum autoupdate" cron_file=ansible_yum-autoupdate state=absent
 '''
 
 import os
