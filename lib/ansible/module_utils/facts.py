@@ -87,7 +87,7 @@ class Facts(object):
     _I386RE = re.compile(r'i([3456]86|86pc)')
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
-    OSDIST_LIST = ( ('/etc/oracle-release', 'Oracle Linux'),
+    OSDIST_LIST = ( ('/etc/oracle-release', 'OracleLinux'),
                     ('/etc/redhat-release', 'RedHat'),
                     ('/etc/vmware-release', 'VMwareESX'),
                     ('/etc/openwrt_release', 'OpenWrt'),
@@ -291,7 +291,7 @@ class Facts(object):
                             # Once we determine the value is one of these distros
                             # we trust the values are always correct
                             break
-                        elif name == 'Oracle Linux':
+                        elif name == 'OracleLinux':
                             data = get_file_content(path)
                             if 'Oracle Linux' in data:
                                 self.facts['distribution'] = name
