@@ -1,0 +1,193 @@
+#!/usr/bin/env python
+
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# ansible-vault is a script that encrypts/decrypts YAML files. See
+# http://docs.ansible.com/playbooks_vault.html for more details.
+
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
+
+import os
+import sys
+import traceback
+
+from ansible.errors import AnsibleError
+from ansible.utils.vault import VaultEditor
+from ansible.utils.cli import base_parser, ask_vault_passwords
+
+#-------------------------------------------------------------------------------------
+# Utility functions for parsing actions/options
+#-------------------------------------------------------------------------------------
+
+
+
+class Cli(object):
+
+    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
+
+
+    def __init__(self, display=None):
+
+        self.vault_pass = None
+
+        if display is None:
+            self.display = Display()
+        else:
+            self.display = display
+
+
+    def parse(self):
+
+        # create parser for CLI options
+        parser = base_parser(
+            usage = "%prog vaultfile.yml",
+        )
+
+        return parser.parse_args()
+
+    def run(self, options, args)
+
+        action = self.get_action(args)
+
+        if not action:
+            parser.print_help()
+            raise AnsibleError("missing required action")
+
+        # options specific to actions
+        if action == "create":
+            parser.set_usage("usage: %prog create [options] file_name")
+        elif action == "decrypt":
+            parser.set_usage("usage: %prog decrypt [options] file_name")
+        elif action == "edit":
+            parser.set_usage("usage: %prog edit [options] file_name")
+        elif action == "view":
+            parser.set_usage("usage: %prog view [options] file_name")
+        elif action == "encrypt":
+            parser.set_usage("usage: %prog encrypt [options] file_name")
+        elif action == "rekey":
+            parser.set_usage("usage: %prog rekey [options] file_name")
+
+        if len(args) == 0 or len(args) > 1:
+            parser.print_help()
+            raise AnsibleError("Vault requires a single filename as a parameter")
+
+        if options.vault_password_file:
+            # read vault_pass from a file
+            self.vault_pass = read_vault_file(options.vault_password_file)
+        else:
+            self.vault_pass, _= ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
+
+        # execute the desired action
+        fn = getattr(self, "execute_%s" % action)
+        fn(args, options)
+
+    def get_action(self, args):
+        """
+        Get the action the user wants to execute from the
+        sys argv list.
+        """
+        for i in range(0,len(args)):
+            arg = args[i]
+            if arg in VALID_ACTIONS:
+                del args[i]
+                return arg
+        return None
+
+    def execute_create(args, options):
+
+        cipher = 'AES256'
+        if hasattr(options, 'cipher'):
+            cipher = options.cipher
+
+        this_editor = VaultEditor(cipher, self.vault_pass, args[0])
+        this_editor.create_file()
+
+    def execute_decrypt(args, options):
+
+        cipher = 'AES256'
+        if hasattr(options, 'cipher'):
+            cipher = options.cipher
+
+        for f in args:
+            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor.decrypt_file()
+
+        self.display.display("Decryption successful")
+
+    def execute_edit(args, options):
+
+        cipher = None
+
+        for f in args:
+            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor.edit_file()
+
+    def execute_view(args, options):
+
+        cipher = None
+
+        for f in args:
+            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor.view_file()
+
+    def execute_encrypt(args, options):
+
+        cipher = 'AES256'
+        if hasattr(options, 'cipher'):
+            cipher = options.cipher
+
+        for f in args:
+            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor.encrypt_file()
+
+        self.display.display("Encryption successful")
+
+    def execute_rekey(args, options ):
+        __, new_password = ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+
+        cipher = None
+        for f in args:
+            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor.rekey_file(new_password)
+
+        self.display.display("Rekey successful")
+
+########################################################
+
+if __name__ == "__main__":
+
+    display = Display()
+    #display.display(" ".join(sys.argv), log_only=True)
+
+    try:
+        cli = Cli(display=display)
+        (options, args) = cli.parse()
+        sys.exit(cli.run(options, args))
+    except AnsibleError as e:
+        display.display("[ERROR]: %s" % e, color='red', stderr=True)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        display.display("[ERROR]: interrupted", color='red', stderr=True)
+        sys.exit(1)
