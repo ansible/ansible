@@ -125,6 +125,7 @@ import os
 import re
 import argparse
 from time import time
+import sys
 import ConfigParser
 import urllib, urllib2, base64
 
