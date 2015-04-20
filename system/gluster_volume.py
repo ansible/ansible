@@ -62,11 +62,11 @@ options:
     default: 'tcp'
     description:
       - Transport type for volume
-  brick:
+  bricks:
     required: false
     default: null
     description:
-      - Brick path on servers. Multiple brick paths can be separated by commas
+      - Brick paths on servers. Multiple brick paths can be separated by commas
   start_on_create:
     choices: [ 'yes', 'no']
     required: false
@@ -107,7 +107,7 @@ author: Taneli Leppä
 
 EXAMPLES = """
 - name: create gluster volume
-  gluster_volume: state=present name=test1 brick=/bricks/brick1/g1 rebalance=yes cluster:"{{ play_hosts }}"
+  gluster_volume: state=present name=test1 bricks=/bricks/brick1/g1 rebalance=yes cluster:"{{ play_hosts }}"
   run_once: true
 
 - name: tune
@@ -124,6 +124,10 @@ EXAMPLES = """
 
 - name: remove gluster volume
   gluster_volume: state=absent name=test1
+
+- name: create gluster volume with multiple bricks
+  gluster_volume: state=present name=test2 bricks="/bricks/brick1/g2,/bricks/brick2/g2" cluster:"{{ play_hosts }}"
+  run_once: true
 """
 
 import shutil
@@ -312,7 +316,7 @@ def main():
             stripes=dict(required=False, default=None, type='int'),
             replicas=dict(required=False, default=None, type='int'),
             transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
-            brick=dict(required=False, default=None),
+            bricks=dict(required=False, default=None, aliases=['brick']),
             start_on_create=dict(required=False, default=True, type='bool'),
             rebalance=dict(required=False, default=False, type='bool'),
             options=dict(required=False, default={}, type='dict'),
