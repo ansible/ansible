@@ -167,7 +167,7 @@ You can also use sudo on a particular task instead of the whole play::
 
 .. note::
 
-    The becoem syntax deprecates the old sudo/su specific syntax begining in 1.9.
+    The become syntax deprecates the old sudo/su specific syntax beginning in 1.9.
 
 You can also login as you, and then become a user different than root::
 
@@ -314,7 +314,7 @@ The old form continues to work in newer versions without any plan of deprecation
 Handlers: Running Operations On Change
 ``````````````````````````````````````
 
-As we've mentioned, modules are written to be 'idempotent' and can relay  when
+As we've mentioned, modules are written to be 'idempotent' and can relay when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
