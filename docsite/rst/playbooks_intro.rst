@@ -148,7 +148,7 @@ Remote users can also be defined per task::
     The `remote_user` parameter for tasks was added in 1.4.
 
 
-Support for running things from sudo is also available::
+Support for running things from as another user is also available (see :doc:`become`)::
 
     ---
     - hosts: webservers
@@ -162,31 +162,44 @@ You can also use sudo on a particular task instead of the whole play::
       remote_user: yourname
       tasks:
         - service: name=nginx state=started
-          sudo: yes
+          become: yes
+          become_method: sudo
 
+.. note::
 
-You can also login as you, and then sudo to different users than root::
+    The becoem syntax deprecates the old sudo/su specific syntax begining in 1.9.
+
+You can also login as you, and then become a user different than root::
 
     ---
     - hosts: webservers
       remote_user: yourname
-      sudo: yes
-      sudo_user: postgres
+      become: yes
+      become_user: postgres
 
-If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-sudo-pass`` (`-K`).
-If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
-Just `Control-C` to kill it and run it again with `-K`.
+You can also use other privilege escalation methods, like su::
+
+    ---
+    - hosts: webservers
+      remote_user: yourname
+      become: yes
+      become_method: su
+
+If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-become-pass`` or
+when using the old sudo syntax ``--ask-sudo--pass`` (`-K`).  If you run a become playbook and the
+playbook seems to hang, it's probably stuck at the privilege escalation prompt.
+Just `Control-C` to kill it and run it again adding the appropriate password.
 
 .. important::
 
-   When using `sudo_user` to a user other than root, the module
+   When using `become_user` to a user other than root, the module
    arguments are briefly written into a random tempfile in /tmp.
    These are deleted immediately after the command is executed.  This
-   only occurs when sudoing from a user like 'bob' to 'timmy', not
-   when going from 'bob' to 'root', or logging in directly as 'bob' or
+   only occurs when changing privileges from a user like 'bob' to 'timmy',
+   not when going from 'bob' to 'root', or logging in directly as 'bob' or
    'root'.  If it concerns you that this data is briefly readable
    (not writable), avoid transferring unencrypted passwords with
-   `sudo_user` set.  In other cases, '/tmp' is not used and this does
+   `become_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
 
