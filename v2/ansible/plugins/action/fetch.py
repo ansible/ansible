@@ -94,7 +94,11 @@ class ActionModule(ActionBase):
                 dest = self._loader.path_dwim(dest)
         else:
             # files are saved in dest dir, with a subdir for each host, then the filename
-            dest = "%s/%s/%s" % (self._loader.path_dwim(dest), self._connection_info.remote_addr, source_local)
+            if 'inventory_hostname' in task_vars:
+                target_name = task_vars['inventory_hostname']
+            else:
+                target_name = self._connection_info.remote_addr
+            dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
         dest = dest.replace("//","/")
 
