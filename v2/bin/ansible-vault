@@ -67,7 +67,7 @@ class Cli(object):
 
         return parser.parse_args()
 
-    def run(self, options, args)
+    def run(self, options, args):
 
         action = self.get_action(args)
 
