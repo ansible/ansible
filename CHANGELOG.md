@@ -13,6 +13,7 @@ Deprecated Modules:
     ec2_ami_search, in favor of the new ec2_ami_find
 
 New Modules:
+    find
     ec2_ami_find
     cloudtrail
     cloudstack_fw
