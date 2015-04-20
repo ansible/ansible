@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six import iteritems, string_types
-from types import NoneType
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins import module_loader
@@ -165,7 +164,7 @@ class ModuleArgsParser:
             # form is like: local_action: copy src=a dest=b ... pretty common
             check_raw = action in ('command', 'shell', 'script')
             args = parse_kv(thing, check_raw=check_raw)
-        elif isinstance(thing, NoneType):
+        elif thing is None:
             # this can happen with modules which take no params, like ping:
             args = None
         else:
