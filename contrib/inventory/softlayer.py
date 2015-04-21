@@ -35,12 +35,40 @@ via the command `sl config setup`.
 import SoftLayer
 import re
 import argparse
+import itertools
 try:
     import json
 except:
     import simplejson as json
 
 class SoftLayerInventory(object):
+    common_items = [
+        'id',
+        'globalIdentifier',
+        'hostname',
+        'domain',
+        'fullyQualifiedDomainName',
+        'primaryBackendIpAddress',
+        'primaryIpAddress',
+        'datacenter',
+        'tagReferences.tag.name',
+        ]
+
+    vs_items = [
+        'lastKnownPowerState.name',
+        'powerState',
+        'maxCpu',
+        'maxMemory',
+        'activeTransaction.transactionStatus[friendlyName,name]',
+        'status',
+        ]
+
+    hw_items = [
+        'hardwareStatusId',
+        'processorPhysicalCoreAmount',
+        'memoryCapacity',
+        ]
+
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
 
@@ -139,10 +167,15 @@ class SoftLayerInventory(object):
         # Inventory: group by type (hardware/virtual)
         self.push(self.inventory, instance_type, dest)
 
+        # Inventory: group by tag
+        for tag in instance['tagReferences']:
+             self.push(self.inventory, tag['tag']['name'], dest)
+
     def get_virtual_servers(self):
         '''Get all the CCI instances'''
         vs = SoftLayer.VSManager(self.client)
-        instances = vs.list_instances()
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items,self.vs_items))
+        instances = vs.list_instances(mask=mask)
 
         for instance in instances:
             self.process_instance(instance)
@@ -150,7 +183,8 @@ class SoftLayerInventory(object):
     def get_physical_servers(self):
         '''Get all the hardware instances'''
         hw = SoftLayer.HardwareManager(self.client)
-        instances = hw.list_hardware()
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items,self.hw_items))
+        instances = hw.list_hardware(mask=mask)
 
         for instance in instances:
             self.process_instance(instance, 'hardware')
