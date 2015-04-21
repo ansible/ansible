@@ -73,7 +73,6 @@ options:
     description:
       - The HTTP method of the request or response.
     required: false
-    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH" ]
     default: "GET"
   return_content:
     description:
@@ -341,7 +340,7 @@ def main():
             password = dict(required=False, default=None),
             body = dict(required=False, default=None),
             body_format = dict(required=False, default='raw', choices=['raw', 'json']),
-            method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH']),
+            method = dict(required=False, default='GET'),
             return_content = dict(required=False, default='no', type='bool'),
             force_basic_auth = dict(required=False, default='no', type='bool'),
             follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
