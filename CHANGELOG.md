@@ -16,9 +16,9 @@ New Modules:
     find
     ec2_ami_find
     cloudtrail
-    cloudstack_fw
-    cloudstack_iso
-    cloudstack_sshkey
+    cloudstack: cs_firewall
+    cloudstack: cs_iso
+    cloudstack: cs_sshkeypair
     maven_artifact
     pushover
     zabbix_host
