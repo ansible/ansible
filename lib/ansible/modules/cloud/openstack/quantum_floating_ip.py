@@ -187,8 +187,7 @@ def _get_floating_ip(module, neutron, fixed_ip_address, network_name):
             return address['id'], address['floating_ip_address']
     return None, None
 
-def _check_ips_network(neutron, floating_id, network_name):
-    net_id = neutron.show_floatingip('3d479538-9f9c-417e-a313-0c99b13b050b')['floatingip']['floating_network_id']
+def _check_ips_network(neutron, net_id, network_name):
     if neutron.show_network(net_id)['network']['name'] == network_name:
         return True
     else:
