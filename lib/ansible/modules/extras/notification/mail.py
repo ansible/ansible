@@ -110,6 +110,11 @@ options:
       - The character set of email being sent
     default: 'us-ascii'
     required: false
+  subtype:
+    description:
+      - The minor mime type, can be either text or html. The major type is always text.
+    default: 'plain'
+    required: false
 """
 
 EXAMPLES = '''
@@ -183,7 +188,8 @@ def main():
             body = dict(default=None),
             attach = dict(default=None),
             headers = dict(default=None),
-            charset = dict(default='us-ascii')
+            charset = dict(default='us-ascii'),
+            subtype = dict(default='plain')
         )
     )
 
@@ -200,6 +206,7 @@ def main():
     attach_files = module.params.get('attach')
     headers = module.params.get('headers')
     charset = module.params.get('charset')
+    subtype = module.params.get('subtype')
     sender_phrase, sender_addr = parseaddr(sender)
 
     if not body:
@@ -259,7 +266,7 @@ def main():
     if len(cc_list) > 0:
         msg['Cc'] = ", ".join(cc_list)
 
-    part = MIMEText(body + "\n\n", _charset=charset)
+    part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
     msg.attach(part)
 
     if attach_files is not None:
