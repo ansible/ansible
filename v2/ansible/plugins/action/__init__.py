@@ -412,22 +412,22 @@ class ActionBase:
                 cmd2 = self._shell.remove(tmp, recurse=True)
                 self._low_level_execute_command(cmd2, tmp, sudoable=False)
 
-        # FIXME: in error situations, the stdout may not contain valid data, so we
-        #        should check for bad rc codes better to catch this here
-        if 'stdout' in res and res['stdout'].strip():
-            try:
-                data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
-            except ValueError:
-                # not valid json, lets try to capture error
-                data = {'traceback': res['stdout']}
-            if 'parsed' in data and data['parsed'] == False:
-                data['msg'] += res['stderr']
-            # pre-split stdout into lines, if stdout is in the data and there
-            # isn't already a stdout_lines value there
-            if 'stdout' in data and 'stdout_lines' not in data:
-                data['stdout_lines'] = data.get('stdout', '').splitlines()
-        else:
-            data = dict()
+        try:
+            data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', '')))
+        except ValueError:
+            # not valid json, lets try to capture error
+            data = dict(failed=True, parsed=False)
+            if 'stderr' in res and res['stderr'].startswith('Traceback'):
+                data['traceback'] = res['stderr']
+            else:
+                data['msg'] = res.get('stdout', '')
+                if 'stderr' in res:
+                    data['msg'] += res['stderr']
+
+        # pre-split stdout into lines, if stdout is in the data and there
+        # isn't already a stdout_lines value there
+        if 'stdout' in data and 'stdout_lines' not in data:
+            data['stdout_lines'] = data.get('stdout', '').splitlines()
 
         # store the module invocation details back into the result
         data['invocation'] = dict(
