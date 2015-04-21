@@ -30,11 +30,32 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
+    def get_checksum(self, conn, tmp, dest, inject, try_directory=False, source=None):
+        remote_checksum = self.runner._remote_checksum(conn, tmp, dest, inject)
+
+        if remote_checksum in ('0', '2', '3', '4'):
+            # Note: 1 means the file is not present which is fine; template
+            # will create it.  3 means directory was specified instead of file
+            # which requires special handling
+            if try_directory and remote_checksum == '3' and source:
+                # If the user specified a directory name as their dest then we
+                # have to check the checksum of dest/basename(src).  This is
+                # the same behaviour as cp foo.txt /var/tmp/ so users expect
+                # it to work.
+                base = os.path.basename(source)
+                dest = os.path.join(dest, base)
+                remote_checksum = self.get_checksum(conn, tmp, dest, inject, try_directory=False)
+                if remote_checksum not in ('0', '2', '3', '4'):
+                    return remote_checksum
+
+            result = dict(failed=True, msg="failed to checksum remote file."
+                        " Checksum error code: %s" % remote_checksum)
+            return ReturnData(conn=conn, comm_ok=True, result=result)
+
+        return remote_checksum
+
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for template operations '''
-
-        # note: since this module just calls the copy module, the --check mode support
-        # can be implemented entirely over there
 
         if not self.runner.is_playbook:
             raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
@@ -78,22 +99,26 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-
-        if dest.endswith("/"):
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
         # template the source data locally & get ready to transfer
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject, vault_password=self.runner.vault_pass)
         except Exception, e:
-            result = dict(failed=True, msg=str(e))
+            result = dict(failed=True, msg=type(e).__name__ + ": " + str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
-        local_md5 = utils.md5s(resultant)
-        remote_md5 = self.runner._remote_md5(conn, tmp, dest)
+        # Expand any user home dir specification
+        dest = self.runner._remote_expand_user(conn, dest, tmp)
 
-        if local_md5 != remote_md5:
+        directory_prepended = False
+        if dest.endswith("/"): # CCTODO: Fix path for Windows hosts.
+            directory_prepended = True
+            base = os.path.basename(source)
+            dest = os.path.join(dest, base)
+
+        local_checksum = utils.checksum_s(resultant)
+        remote_checksum = self.get_checksum(conn, tmp, dest, inject, not directory_prepended, source=source)
+
+        if local_checksum != remote_checksum:
 
             # template is different from the remote value
 
@@ -113,19 +138,42 @@ class ActionModule(object):
             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
             # fix file permissions when the copy is done as a different user
-            if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+            if self.runner.become and self.runner.become_user != 'root':
+                self.runner._remote_chmod(conn, 'a+r', xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(source)))
+            new_module_args = dict(
+               src=xfered,
+               dest=dest,
+               original_basename=os.path.basename(source),
+               follow=True,
+            )
+            module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             if self.runner.noop_on_check(inject):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
             else:
-                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
+                res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject, complex_args=complex_args)
                 if res.result.get('changed', False):
                     res.diff = dict(before=dest_contents, after=resultant)
                 return res
         else:
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+            # when running the file module based on the template data, we do
+            # not want the source filename (the name of the template) to be used,
+            # since this would mess up links, so we clear the src param and tell
+            # the module to follow links.  When doing that, we have to set
+            # original_basename to the template just in case the dest is
+            # a directory.
+            module_args = ''
+            new_module_args = dict(
+                src=None,
+                original_basename=os.path.basename(source),
+                follow=True,
+            )
+            # be sure to inject the check mode param into the module args and
+            # rely on the file module to report its changed status
+            if self.runner.noop_on_check(inject):
+                new_module_args['CHECKMODE'] = True
+            options.update(new_module_args)
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=options)
 

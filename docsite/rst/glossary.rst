@@ -410,7 +410,7 @@ YAML
 ++++
 
 Ansible does not want to force people to write programming language code to automate infrastructure, so Ansible uses YAML to define playbook configuration languages and also variable files.  YAML is nice because it has a minimum of syntax and is very clean and easy for people to skim.  It is a good data format for configuration files and humans, but also machine readable.  Ansible's usage of YAML stemmed from Michael's first use of it inside of Cobbler around 2006.  YAML is fairly popular in the dynamic language community and the format has libraries available
-for serialization in many different languages (Python, Perl, Ruby, etc.).
+for serialization in many languages (Python, Perl, Ruby, etc.).
 
 .. seealso::
 

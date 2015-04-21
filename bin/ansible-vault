@@ -14,12 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# ansible-vault is a script that encrypts/decrypts YAML files. See
+# http://docs.ansible.com/playbooks_vault.html for more details.
+
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
 
 import os
 import sys
 import traceback
 
 import ansible.constants as C
+
 from ansible import utils
 from ansible import errors
 from ansible.utils.vault import VaultEditor
@@ -30,7 +45,7 @@ from optparse import OptionParser
 # Utility functions for parsing actions/options
 #-------------------------------------------------------------------------------------
 
-VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey")
+VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
 
 def build_option_parser(action):
     """
@@ -50,7 +65,7 @@ def build_option_parser(action):
     # options for all actions
     parser.add_option('--debug', dest='debug', action="store_true", help="debug")
     parser.add_option('--vault-password-file', dest='password_file',
-                    help="vault password file")
+                      help="vault password file", default=C.DEFAULT_VAULT_PASSWORD_FILE)
 
     # options specific to actions
     if action == "create":
@@ -59,6 +74,8 @@ def build_option_parser(action):
         parser.set_usage("usage: %prog decrypt [options] file_name")
     elif action == "edit":
         parser.set_usage("usage: %prog edit [options] file_name")
+    elif action == "view":
+        parser.set_usage("usage: %prog view [options] file_name")
     elif action == "encrypt":
         parser.set_usage("usage: %prog encrypt [options] file_name")
     elif action == "rekey":
@@ -96,15 +113,7 @@ def get_opt(options, k, defval=""):
 # Command functions
 #-------------------------------------------------------------------------------------
 
-def _read_password(filename):
-    f = open(filename, "rb")
-    data = f.read()
-    f.close
-    data = data.strip()
-    return data
-
 def execute_create(args, options, parser):
-
     if len(args) > 1:
         raise errors.AnsibleError("'create' does not accept more than one filename")        
 
@@ -116,7 +125,10 @@ def execute_create(args, options, parser):
         if not options.password_file:        
             password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
         else:
-            password = _read_password(options.password_file)
+            password = utils.read_vault_file(options.password_file)
+
+    if hasattr(options, 'cipher'):
+        cipher = options.cipher
 
     this_editor = VaultEditor(cipher, password, args[0])
     this_editor.create_file()
@@ -133,7 +145,7 @@ def execute_decrypt(args, options, parser):
         if not options.password_file:        
             password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=False)
         else:
-            password = _read_password(options.password_file)
+            password = utils.read_vault_file(options.password_file)
 
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
@@ -144,7 +156,7 @@ def execute_decrypt(args, options, parser):
 def execute_edit(args, options, parser):
 
     if len(args) > 1:
-        raise errors.AnsibleError("create does not accept more than one filename")        
+        raise errors.AnsibleError("edit does not accept more than one filename")        
 
     cipher = C.VAULT_CIPHER
     gpg_noprompt = C.VAULT_GPG_NOPROMPT
@@ -156,16 +168,32 @@ def execute_edit(args, options, parser):
         if not options.password_file:        
             password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=False)
         else:
-            password = _read_password(options.password_file)
+            password = utils.read_vault_file(options.password_file)
 
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
         this_editor.edit_file()
 
-def execute_encrypt(args, options, parser):
+def execute_view(args, options, parser):
+
+    if len(args) > 1:
+        raise errors.AnsibleError("view does not accept more than one filename")        
 
     if len(args) > 1:
         raise errors.AnsibleError("'create' does not accept more than one filename")        
+
+    if not options.password_file:        
+        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
+    else:
+        password = utils.read_vault_file(options.password_file)
+
+    cipher = None
+
+    for f in args:
+        this_editor = VaultEditor(cipher, password, f)
+        this_editor.view_file()
+
+def execute_encrypt(args, options, parser):
 
     cipher = C.VAULT_CIPHER
 
@@ -176,7 +204,7 @@ def execute_encrypt(args, options, parser):
         if not options.password_file:        
             password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
         else:
-            password = _read_password(options.password_file)
+            password = utils.read_vault_file(options.password_file)
 
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
@@ -201,7 +229,7 @@ def execute_rekey(args, options, parser):
         if not options.password_file:        
             password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
         else:
-            password = _read_password(options.password_file)
+            password = utils.read_vault_file(options.password_file)
         __, new_password = utils.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
     for f in args:
@@ -220,6 +248,11 @@ def main():
     parser = build_option_parser(action)
     (options, args) = parser.parse_args()
 
+    if not len(args):
+        raise errors.AnsibleError(
+            "The '%s' command requires a filename as the first argument" % action
+        ) 
+
     # execute the desired action
     try:
         fn = globals()["execute_%s" % action]
@@ -232,4 +265,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

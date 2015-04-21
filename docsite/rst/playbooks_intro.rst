@@ -67,11 +67,44 @@ For starters, here's a playbook that contains just one play::
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
-      - name: ensure apache is running
-        service: name=httpd state=started
+      - name: ensure apache is running (and enable it at boot)
+        service: name=httpd state=started enabled=yes
       handlers:
         - name: restart apache
           service: name=httpd state=restarted
+
+We can also break task items out over multiple lines using the YAML dictionary
+types to supply module arguments. This can be helpful when working with tasks
+that have really long parameters or modules that take many parameters to keep
+them well structured. Below is another version of the above example but using
+YAML dictionaries to supply the modules with their key=value arguments.::
+
+    ---
+    - hosts: webservers
+      vars:
+        http_port: 80
+        max_clients: 200
+      remote_user: root
+      tasks:
+      - name: ensure apache is at the latest version
+        yum:
+          pkg: httpd
+          state: latest
+      - name: write the apache config file
+        template:
+          src: /srv/httpd.j2
+          dest: /etc/httpd.conf
+        notify:
+        - restart apache
+      - name: ensure apache is running
+        service:
+          name: httpd
+          state: started
+      handlers:
+        - name: restart apache
+          service:
+            name: httpd
+            state: restarted
 
 Below, we'll break down what the various features of the playbook language are.
 
@@ -151,8 +184,8 @@ Just `Control-C` to kill it and run it again with `-K`.
    These are deleted immediately after the command is executed.  This
    only occurs when sudoing from a user like 'bob' to 'timmy', not
    when going from 'bob' to 'root', or logging in directly as 'bob' or
-   'root'.  If this concerns you that this data is briefly readable
-   (not writable), avoid transferring uncrypted passwords with
+   'root'.  If it concerns you that this data is briefly readable
+   (not writable), avoid transferring unencrypted passwords with
    `sudo_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
@@ -196,7 +229,7 @@ it is recommended that you use the more conventional "module: options" format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
 
-Here is what a basic task looks like, as with most modules,
+Here is what a basic task looks like. As with most modules,
 the service module takes key=value arguments::
 
    tasks:
@@ -301,7 +334,7 @@ Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          service:  name=memcached state=restarted
+          service: name=memcached state=restarted
         - name: restart apache
           service: name=apache state=restarted
 

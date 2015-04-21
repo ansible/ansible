@@ -1,0 +1,4 @@
+dependencies:
+  - { role: test_var_precedence_role1, param_var: "param_var_role1" }
+  - { role: test_var_precedence_role2, param_var: "param_var_role2" }
+  - { role: test_var_precedence_role3, param_var: "param_var_role3" }

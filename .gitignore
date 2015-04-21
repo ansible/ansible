@@ -35,12 +35,14 @@ docsite/searchindex.js
 docsite/htmlout
 # deb building stuff...
 debian/
+deb-build
 # Vim swap files
 *.swp
 *.swo
 credentials.yml
 # test output
 .coverage
+.tox
 results.xml
 coverage.xml
 /test/units/cover-html
@@ -49,3 +51,4 @@ coverage.xml
 venv
 Vagrantfile
 .vagrant
+ansible.egg-info/

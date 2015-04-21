@@ -2,12 +2,12 @@
 .\"     Title: ansible-galaxy
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/16/2014
+.\"      Date: 12/09/2014
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.6
+.\"    Source: Ansible 1.9
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-GALAXY" "1" "03/16/2014" "Ansible 1\&.6" "System administration commands"
+.TH "ANSIBLE\-GALAXY" "1" "12/09/2014" "Ansible 1\&.9" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -148,6 +148,11 @@ Force overwriting an existing role\&.
 \fB\-p\fR \fIINIT_PATH\fR, \fB\-\-init\-path=\fR\fIINIT_PATH\fR
 .RS 4
 The path in which the skeleton role will be created\&.The default is the current working directory\&.
+.RE
+.PP
+\fB\-\-offline\fR
+.RS 4
+Don\(cqt query the galaxy API when creating roles
 .RE
 .SH "LIST"
 .sp

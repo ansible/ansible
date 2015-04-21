@@ -8,3 +8,6 @@ test_hash:
 
 # Support execution from within a virtualenv
 ansible_python_interpreter: '/usr/bin/env python'
+
+# Var precedence testing
+defaults_file_var_role3: "overridden from inventory"

@@ -5,7 +5,7 @@ Delegation, Rolling Updates, and Local Actions
 
 Being designed for multi-tier deployments since the beginning, Ansible is great at doing things on one host on behalf of another, or doing local steps with reference to some remote hosts.
 
-This in particular this is very applicable when setting up continuous deployment infrastructure or zero downtime rolling updates, where you might be talking with load balancers or monitoring systems.
+This in particular is very applicable when setting up continuous deployment infrastructure or zero downtime rolling updates, where you might be talking with load balancers or monitoring systems.
 
 Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
 
@@ -32,6 +32,18 @@ use case, you can define how many hosts Ansible should manage at a single time b
 
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
+
+The ''serial'' keyword can also be specified as a percentage in Ansible 1.8 and later, which will be applied to the total number of hosts in a
+play, in order to determine the number of hosts per pass::
+
+    - name: test play
+      hosts: websevers
+      serial: "30%"
+
+If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.
+
+.. note::
+     No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
 
 .. _maximum_failure_percentage:
 
@@ -118,6 +130,42 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+.. _run_once:
+
+Run Once
+````````
+
+.. versionadded:: 1.7
+
+In some cases there may be a need to only run a task one time and only on one host. This can be achieved
+by configuring "run_once" on a task::
+
+    ---
+    # ...
+
+      tasks:
+
+        # ...
+
+        - command: /opt/application/upgrade_db.py
+          run_once: true
+
+        # ...
+
+This can be optionally paired with "delegate_to" to specify an individual host to execute on::
+
+        - command: /opt/application/upgrade_db.py
+          run_once: true
+          delegate_to: web01.example.org
+
+When "run_once" is not used with "delegate_to" it will execute on the first host, as defined by inventory,
+in the group(s) of hosts targeted by the play. e.g. webservers[0] if the play targeted "hosts: webservers".
+
+This approach is similar, although more concise and cleaner than applying a conditional to a task such as::
+
+        - command: /opt/application/upgrade_db.py
+          when: inventory_hostname == webservers[0]
+
 .. _local_playbooks:
 
 Local Playbooks
@@ -125,9 +173,9 @@ Local Playbooks
 
 It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
-to run a playbook inside a OS installer, such as an Anaconda kickstart.
+to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
-To run an entire playbook locally, just set the "hosts:" line to "hosts:127.0.0.1" and then run the playbook like so::
+To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::
 
     ansible-playbook playbook.yml --connection=local
 

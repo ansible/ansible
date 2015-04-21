@@ -28,7 +28,8 @@ class Group(object):
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
-        self.clear_hosts_cache()
+        self._hosts_cache = None
+        #self.clear_hosts_cache()
         if self.name is None:
             raise Exception("group name is required")
 
@@ -40,9 +41,25 @@ class Group(object):
         # don't add if it's already there
         if not group in self.child_groups:
             self.child_groups.append(group)
+
+            # update the depth of the child
             group.depth = max([self.depth+1, group.depth])
-            group.parent_groups.append(self)
+
+            # update the depth of the grandchildren
+            group._check_children_depth()
+
+            # now add self to child's parent_groups list, but only if there
+            # isn't already a group with the same name
+            if not self.name in [g.name for g in group.parent_groups]:
+                group.parent_groups.append(self)
+
             self.clear_hosts_cache()
+
+    def _check_children_depth(self):
+
+        for group in self.child_groups:
+            group.depth = max([self.depth+1, group.depth])
+            group._check_children_depth()
 
     def add_host(self, host):
 

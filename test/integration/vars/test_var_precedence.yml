@@ -1,0 +1,5 @@
+---
+extra_var: "BAD!"
+role_var: "BAD!"
+vars_files_var: "vars_files_var"
+vars_files_var_role: "should be overridden by roles"

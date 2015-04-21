@@ -14,18 +14,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- begin analytics -->
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-29861888-3', 'ansible.com');
-  ga('send', 'pageview');
-
-</script>
-<!-- end analytics -->
+  <!-- Google Tag Manager Data Layer -->
+  <script>
+   dataLayer = [];
+  </script>
+  <!-- End Google Tag Manager Data Layer -->
 
   {% block htmltitle %}
   <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
@@ -120,9 +113,32 @@
      }
   </style>
 
+  <!-- Google Code for Remarketing Tag -->
+  <script type="text/javascript">
+  /* <![CDATA[ */
+  var google_conversion_id = 972577926;
+  var google_custom_params = window.google_tag_params;
+  var google_remarketing_only = true;
+  /* ]]> */
+  </script>
+  <script type="text/javascript" src="//www.googleadservices.com/pagead/conversion.js">
+  </script>
+  <noscript>
+    <div style="display:inline;">
+        <img height="1" width="1" style="border-style:none;" alt=""
+              src="//googleads.g.doubleclick.net/pagead/viewthroughconversion/972577926/?value=0&amp;guid=ON&amp;script=0"/>
+    </div>
+  </noscript>
+  <!-- End of Google Code for Remarketing Tag -->
+
 </head>
 
 <body class="wy-body-for-nav">
+
+  <!-- Google Tag Manager -->
+  <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PSB293" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-PSB293');</script>
+  <!-- End Google Tag Manager -->
 
   <div class="wy-grid-for-nav">
 
@@ -178,6 +194,19 @@
       {# PAGE CONTENT #}
       <div class="wy-nav-content">
         <div class="rst-content">
+
+<!-- AnsibleFest and free eBook preview stuff -->
+<center>
+<a href="http://www.ansible.com/tower?utm_source=docs">
+<img src="http://www.ansible.com/hubfs/Docs_Ads/TowerDocs.png">
+</a>
+<a href="https://www.eventbrite.com/e/ansiblefest-nyc-2015-tickets-16058031003">
+<img src="http://www.ansible.com/hubfs/Docs_Ads/Untitled_design_1.png">
+</a>
+<br/>&nbsp;<br/>
+<br/>&nbsp;<br/>
+</center>
+
           {% include "breadcrumbs.html" %}
           <div id="page-content">
           {% block body %}{% endblock %}

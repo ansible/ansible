@@ -1,0 +1,5 @@
+---
+# should be overridden by vars_files in the main play
+vars_files_var: "BAD!"
+# should be seen in role1 (no override)
+defaults_file_var_role1: "defaults_file_var_role1"

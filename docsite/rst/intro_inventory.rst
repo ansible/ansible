@@ -19,7 +19,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI format and looks like this::
+The format for /etc/ansible/hosts is an INI-like format and looks like this::
 
     mail.example.com
 
@@ -39,8 +39,10 @@ It is ok to put systems in more than one group, for instance a server could be b
 If you do, note that variables will come from all of the groups they are a member of, and variable precedence is detailed in a later chapter.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  Ports listed in your SSH config file won't be used,
-so it is important that you set them if things are not running on the default port::
+after the hostname with a colon.  Ports listed in your SSH config file won't be used with the paramiko
+connection but will be used with the openssh connection.
+
+To make things explicit, it is suggested that you set them if things are not running on the default port::
 
     badwolf.example.com:5309
 
@@ -142,7 +144,7 @@ Splitting Out Host and Group Specific Data
 
 The preferred practice in Ansible is actually not to store variables in the main inventory file.
 
-In addition to the storing variables directly in the INI file, host
+In addition to storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
 inventory file.  
 
@@ -169,9 +171,20 @@ the 'raleigh' group might look like::
 
 It is ok if these files do not exist, as this is an optional feature.
 
+As an advanced use-case, you can create *directories* named after your groups or hosts, and
+Ansible will read all the files in these directories. An example with the 'raleigh' group::
+
+    /etc/ansible/group_vars/raleigh/db_settings
+    /etc/ansible/group_vars/raleigh/cluster_settings
+
+All hosts that are in the 'raleigh' group will have the variables defined in these files
+available to them. This can be very useful to keep your variables organized when a single
+file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
+variables. Note that this only works on Ansible 1.4 or later.
+
 Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
-directory will be loaded second.
+directory will override variables set in the inventory directory.
 
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
@@ -192,12 +205,18 @@ mentioned::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+    ansible_sudo
+      The boolean to decide if sudo should be used for this host. Defaults to false.
     ansible_sudo_pass
       The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
+    ansible_sudo_exe (new in version 1.8)
+      The sudo command path.
     ansible_connection
       Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+    ansible_shell_type
+      The shell type of the target system. By default commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python

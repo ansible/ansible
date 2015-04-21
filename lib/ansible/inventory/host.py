@@ -58,7 +58,7 @@ class Host(object):
         groups = self.get_groups()
         for group in sorted(groups, key=lambda g: g.depth):
             results = utils.combine_vars(results, group.get_variables())
-        results.update(self.vars)
+        results = utils.combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
         results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])

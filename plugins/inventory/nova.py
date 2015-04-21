@@ -17,118 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION = '''
----
-inventory: nova
-short_description: OpenStack external inventory script
-description:
-  - Generates inventory that Ansible can understand by making API request to OpenStack endpoint using the novaclient library.
-  - |
-    When run against a specific host, this script returns the following variables:
-        os_os-ext-sts_task_state
-        os_addresses
-        os_links
-        os_image
-        os_os-ext-sts_vm_state
-        os_flavor
-        os_id
-        os_rax-bandwidth_bandwidth
-        os_user_id
-        os_os-dcf_diskconfig
-        os_accessipv4
-        os_accessipv6
-        os_progress
-        os_os-ext-sts_power_state
-        os_metadata
-        os_status
-        os_updated
-        os_hostid
-        os_name
-        os_created
-        os_tenant_id
-        os__info
-        os__loaded
-
-    where some item can have nested structure.
-  - All information are set on B(nova.ini) file
-version_added: None
-options:
-  version:
-    description:
-      - OpenStack version to use.
-    required: true
-    default: null
-    choices: [ "1.1", "2" ]
-  username:
-    description:
-      - Username used to authenticate in OpenStack.
-    required: true
-    default: null
-  api_key:
-    description:
-      - Password used to authenticate in OpenStack, can be the ApiKey on some authentication system.
-    required: true
-    default: null
-  auth_url:
-    description:
-      - Authentication URL required to generate token.
-      - To manage RackSpace use I(https://identity.api.rackspacecloud.com/v2.0/)
-    required: true
-    default: null
-  auth_system:
-    description:
-      - Authentication system used to login
-      - To manage RackSpace install B(rackspace-novaclient) and insert I(rackspace)
-    required: true
-    default: null
-  region_name:
-    description:
-      - Region name to use in request
-      - In RackSpace some value can be I(ORD) or I(DWF).
-    required: true
-    default: null
-  project_id:
-    description:
-      - Project ID to use in connection
-      - In RackSpace use OS_TENANT_NAME
-    required: false
-    default: null
-  endpoint_type:
-    description:
-      - The endpoint type for novaclient
-      - In RackSpace use 'publicUrl'
-    required: false
-    default: null
-  service_type:
-    description:
-      - The service type you are managing.
-      - In RackSpace use 'compute'
-    required: false
-    default: null
-  service_name:
-    description:
-      - The service name you are managing.
-      - In RackSpace use 'cloudServersOpenStack'
-    required: false
-    default: null
-  insicure:
-    description:
-      - To no check security
-    required: false
-    default: false
-    choices: [ "true", "false" ]
-author: Marco Vito Moscaritolo
-notes:
-  - This script assumes Ansible is being executed where the environment variables needed for novaclient have already been set on nova.ini file
-  - For more details, see U(https://github.com/openstack/python-novaclient)
-examples:
-    - description: List instances
-      code: nova.py --list
-    - description: Instance property
-      code: nova.py --instance INSTANCE_IP
-'''
-
-
 import sys
 import re
 import os
@@ -137,69 +25,183 @@ from novaclient import client as nova_client
 
 try:
     import json
-except:
+except ImportError:
     import simplejson as json
 
 ###################################################
 # executed with no parameters, return the list of
 # all groups and hosts
 
-def nova_load_config_file():
-    p = ConfigParser.SafeConfigParser()
-    path1 = os.getcwd() + "/nova.ini"
-    path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini"))
-    path3 = "/etc/ansible/nova.ini"
+NOVA_CONFIG_FILES = [os.getcwd() + "/nova.ini",
+                     os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/nova.ini")),
+                     "/etc/ansible/nova.ini"]
 
-    if os.path.exists(path1):
-        p.read(path1)
-    elif os.path.exists(path2):
-        p.read(path2)
-    elif os.path.exists(path3):
-        p.read(path3)
+NOVA_DEFAULTS = {
+    'auth_system': None,
+    'region_name': None,
+    'service_type': 'compute',
+}
+
+
+def nova_load_config_file():
+    p = ConfigParser.SafeConfigParser(NOVA_DEFAULTS)
+
+    for path in NOVA_CONFIG_FILES:
+        if os.path.exists(path):
+            p.read(path)
+            return p
+
+    return None
+
+
+def get_fallback(config, value, section="openstack"):
+    """
+    Get value from config object and return the value
+    or false
+    """
+    try:
+        return config.get(section, value)
+    except ConfigParser.NoOptionError:
+        return False
+
+
+def push(data, key, element):
+    """
+    Assist in items to a dictionary of lists
+    """
+    if (not element) or (not key):
+        return
+
+    if key in data:
+        data[key].append(element)
     else:
-        return None
-    return p
+        data[key] = [element]
+
+
+def to_safe(word):
+    '''
+    Converts 'bad' characters in a string to underscores so they can
+    be used as Ansible groups
+    '''
+    return re.sub(r"[^A-Za-z0-9\-]", "_", word)
+
+
+def get_ips(server, access_ip=True):
+    """
+    Returns a list of the server's IPs, or the preferred
+    access IP
+    """
+    private = []
+    public = []
+    address_list = []
+    # Iterate through each servers network(s), get addresses and get type
+    addresses = getattr(server, 'addresses', {})
+    if len(addresses) > 0:
+        for network in addresses.itervalues():
+            for address in network:
+                if address.get('OS-EXT-IPS:type', False) == 'fixed':
+                    private.append(address['addr'])
+                elif address.get('OS-EXT-IPS:type', False) == 'floating':
+                    public.append(address['addr'])
+
+    if not access_ip:
+        address_list.append(server.accessIPv4)
+        address_list.extend(private)
+        address_list.extend(public)
+        return address_list
+
+    access_ip = None
+    # Append group to list
+    if server.accessIPv4:
+        access_ip = server.accessIPv4
+    if (not access_ip) and public and not (private and prefer_private):
+        access_ip = public[0]
+    if private and not access_ip:
+        access_ip = private[0]
+
+    return access_ip
+
+
+def get_metadata(server):
+    """Returns dictionary of all host metadata"""
+    get_ips(server, False)
+    results = {}
+    for key in vars(server):
+        # Extract value
+        value = getattr(server, key)
+
+        # Generate sanitized key
+        key = 'os_' + re.sub(r"[^A-Za-z0-9\-]", "_", key).lower()
+
+        # Att value to instance result (exclude manager class)
+        #TODO: maybe use value.__class__ or similar inside of key_name
+        if key != 'os_manager':
+            results[key] = value
+    return results
 
 config = nova_load_config_file()
+if not config:
+    sys.exit('Unable to find configfile in %s' % ', '.join(NOVA_CONFIG_FILES))
+
+# Load up connections info based on config and then environment
+# variables
+username = (get_fallback(config, 'username') or
+            os.environ.get('OS_USERNAME', None))
+api_key = (get_fallback(config, 'api_key') or
+           os.environ.get('OS_PASSWORD', None))
+auth_url = (get_fallback(config, 'auth_url') or
+            os.environ.get('OS_AUTH_URL', None))
+project_id = (get_fallback(config, 'project_id') or
+              os.environ.get('OS_TENANT_NAME', None))
+region_name = (get_fallback(config, 'region_name') or
+               os.environ.get('OS_REGION_NAME', None))
+auth_system = (get_fallback(config, 'auth_system') or
+               os.environ.get('OS_AUTH_SYSTEM', None))
+
+# Determine what type of IP is preferred to return
+prefer_private = False
+try:
+    prefer_private = config.getboolean('openstack', 'prefer_private')
+except ConfigParser.NoOptionError:
+    pass
 
 client = nova_client.Client(
-    version     = config.get('openstack', 'version'),
-    username    = config.get('openstack', 'username'),
-    api_key     = config.get('openstack', 'api_key'),
-    auth_url    = config.get('openstack', 'auth_url'),
-    region_name = config.get('openstack', 'region_name'),
-    project_id  = config.get('openstack', 'project_id'),
-    auth_system = config.get('openstack', 'auth_system')
+    version=config.get('openstack', 'version'),
+    username=username,
+    api_key=api_key,
+    auth_url=auth_url,
+    region_name=region_name,
+    project_id=project_id,
+    auth_system=auth_system,
+    service_type=config.get('openstack', 'service_type'),
 )
 
-if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
-    groups = {}
-
+# Default or added list option
+if (len(sys.argv) == 2 and sys.argv[1] == '--list') or len(sys.argv) == 1:
+    groups = {'_meta': {'hostvars': {}}}
     # Cycle on servers
-    for f in client.servers.list():
-	private = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-	public  = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
-	    
-	# Define group (or set to empty string)
-        group = f.metadata['group'] if f.metadata.has_key('group') else 'undefined'
+    for server in client.servers.list():
+        access_ip = get_ips(server)
 
-        # Create group if not exist
-        if group not in groups:
-            groups[group] = []
+        # Push to name group of 1
+        push(groups, server.name, access_ip)
 
-        # Append group to list
-	if f.accessIPv4:
-        	groups[group].append(f.accessIPv4)
-		continue
-	if public:
-        	groups[group].append(''.join(public))
-		continue
-	if private:
-        	groups[group].append(''.join(private))
-		continue
+        # Run through each metadata item and add instance to it
+        for key, value in server.metadata.iteritems():
+            composed_key = to_safe('tag_{0}_{1}'.format(key, value))
+            push(groups, composed_key, access_ip)
+
+        # Do special handling of group for backwards compat
+        # inventory groups
+        group = server.metadata['group'] if 'group' in server.metadata else 'undefined'
+        push(groups, group, access_ip)
+
+        # Add vars to _meta key for performance optimization in
+        # Ansible 1.3+
+        groups['_meta']['hostvars'][access_ip] = get_metadata(server)
 
     # Return server list
-    print json.dumps(groups)
+    print(json.dumps(groups, sort_keys=True, indent=2))
     sys.exit(0)
 
 #####################################################
@@ -209,26 +211,10 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
     results = {}
     ips = []
-    for instance in client.servers.list():
-	private = [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-	public =  [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
-        ips.append( instance.accessIPv4)
-	ips.append(''.join(private))
-	ips.append(''.join(public))
-	if sys.argv[2] in ips:
-            for key in vars(instance):
-                # Extract value
-                value = getattr(instance, key)
-
-                # Generate sanitized key
-                key = 'os_' + re.sub("[^A-Za-z0-9\-]", "_", key).lower()
-
-                # Att value to instance result (exclude manager class)
-                #TODO: maybe use value.__class__ or similar inside of key_name
-                if key != 'os_manager':
-                    results[key] = value
-
-    print json.dumps(results)
+    for server in client.servers.list():
+        if sys.argv[2] in (get_ips(server) or []):
+            results = get_metadata(server)
+    print(json.dumps(results, sort_keys=True, indent=2))
     sys.exit(0)
 
 else:

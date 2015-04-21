@@ -3,7 +3,18 @@ Frequently Asked Questions
 
 Here are some commonly-asked questions and their answers.
 
-.. _users_and_ports:
+.. _set_environment:
+
+How can I set the PATH or any other environment variable for a task or entire playbook?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Setting environment variables can be done with the `environment` keyword. It can be used at task or playbook level::
+
+    environment:
+      PATH: {{ ansible_env.PATH }}:/thingy/bin
+      SOME: value
+
+
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -81,7 +92,7 @@ What is the best way to make content reusable/redistributable?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you have not done so already, read all about "Roles" in the playbooks documentation.  This helps you make playbook content
-self contained, and works well with things like git submodules for sharing content with others.
+self-contained, and works well with things like git submodules for sharing content with others.
 
 If some of these plugin types look strange to you, see the API documentation for more details about ways Ansible can be extended.
 
@@ -217,7 +228,7 @@ password hashing library is installed.
 
 Once the library is ready, SHA512 password values can then be generated as follows::
 
-    python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
+    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
 
 .. _commercial_support:
 
@@ -250,6 +261,22 @@ If you would like to keep secret data in your Ansible content and still share it
 
 .. _i_dont_see_my_question:
 
+In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+
+    - name: secret task
+      shell: /usr/bin/do_something --value={{ secret_value }}
+      no_log: True
+
+This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
+
+The no_log attribute can also apply to an entire play::
+
+    - hosts: all
+      no_log: True
+
+Though this will make the play somewhat difficult to debug.  It's recommended that this
+be applied to single tasks only, once a playbook is completed.   
+
 I don't see my question here
 ++++++++++++++++++++++++++++
 
@@ -263,7 +290,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

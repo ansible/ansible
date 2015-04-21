@@ -31,8 +31,10 @@ import datetime
 import pwd
 import ast
 import traceback
+from numbers import Number
 
 from ansible.utils.string_functions import count_newlines_from_end
+from ansible.utils import to_bytes, to_unicode
 
 class Globals(object):
 
@@ -80,52 +82,68 @@ class Flags:
 
 FILTER_PLUGINS = None
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
-JINJA2_OVERRIDE='#jinja2:'
+
+# A regex for checking to see if a variable we're trying to
+# expand is just a single variable name.
+SINGLE_VAR = re.compile(r"^{{\s*(\w*)\s*}}$")
+
+JINJA2_OVERRIDE = '#jinja2:'
+JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
 
 def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
-    vars = kwargs.get('vars', None)
+    tvars = kwargs.get('vars', None)
+
+    wantlist = kwargs.pop('wantlist', False)
 
     if instance is not None:
-        # safely catch run failures per #5059
         try:
-            ran = instance.run(*args, inject=vars, **kwargs)
+            ran = instance.run(*args, inject=tvars, **kwargs)
+        except errors.AnsibleError:
+            raise
+        except jinja2.exceptions.UndefinedError, e:
+            raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
         except Exception, e:
-            ran = None
-        if ran:
+            raise errors.AnsibleError('Unexpected error in during lookup: %s' % e)
+        if ran and not wantlist:
             ran = ",".join(ran)
         return ran
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def template(basedir, varname, templatevars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
     from ansible import utils
-
     try:
         if convert_bare and isinstance(varname, basestring):
             first_part = varname.split(".")[0].split("[")[0]
-            if first_part in vars and '{{' not in varname and '$' not in varname:
+            if first_part in templatevars and '{{' not in varname and '$' not in varname:
                 varname = "{{%s}}" % varname
-    
+
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
-                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+                try:
+                    varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
+                except errors.AnsibleError, e:
+                    raise errors.AnsibleError("Failed to template %s: %s" % (varname, str(e)))
 
-                if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
-                    eval_results = utils.safe_eval(varname, locals=vars, include_exceptions=True)
-                    if eval_results[1] is None:
-                        varname = eval_results[0]
+                # template_from_string may return non strings for the case where the var is just
+                # a reference to a single variable, so we should re_check before we do further evals
+                if isinstance(varname, basestring):
+                    if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
+                        eval_results = utils.safe_eval(varname, locals=templatevars, include_exceptions=True)
+                        if eval_results[1] is None:
+                            varname = eval_results[0]
 
             return varname
-    
+
         elif isinstance(varname, (list, tuple)):
-            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
+            return [template(basedir, v, templatevars, lookup_fatal, depth, expand_lists, convert_bare, fail_on_undefined, filter_fatal) for v in varname]
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
-                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
+                d[k] = template(basedir, v, templatevars, lookup_fatal, depth, expand_lists, convert_bare, fail_on_undefined, filter_fatal)
             return d
         else:
             return varname
@@ -165,6 +183,7 @@ class _jinja2_vars(object):
         return False
 
     def __getitem__(self, varname):
+        from ansible.runner import HostVars
         if varname not in self.vars:
             for i in self.extras:
                 if varname in i:
@@ -174,8 +193,10 @@ class _jinja2_vars(object):
             else:
                 raise KeyError("undefined variable: %s" % varname)
         var = self.vars[varname]
-        # HostVars is special, return it as-is
-        if isinstance(var, dict) and type(var) != dict:
+        # HostVars is special, return it as-is, as is the special variable
+        # 'vars', which contains the vars structure
+        var = to_unicode(var, nonstring="passthru")
+        if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
             return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
@@ -194,7 +215,7 @@ class J2Template(jinja2.environment.Template):
     This class prevents Jinja2 from running _jinja2_vars through dict()
     Without this, {% include %} and similar will create new contexts unlike
     the special one created in template_from_file. This ensures they are all
-    alike, with the exception of potential locals.
+    alike, except for potential locals.
     '''
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
@@ -228,7 +249,6 @@ def template_from_file(basedir, path, vars, vault_password=None):
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
 
-
     # Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
@@ -236,7 +256,10 @@ def template_from_file(basedir, path, vars, vault_password=None):
         data = data[eol+1:]
         for pair in line.split(','):
             (key,val) = pair.split(':')
-            setattr(environment,key.strip(),ast.literal_eval(val.strip()))
+            key = key.strip()
+            if key in JINJA2_ALLOWED_OVERRIDES:
+                setattr(environment, key, ast.literal_eval(val.strip()))
+
 
     environment.template_class = J2Template
     try:
@@ -264,7 +287,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     managed_str = managed_default.format(
         host = vars['template_host'],
         uid  = vars['template_uid'],
-        file = vars['template_path']
+        file = to_bytes(vars['template_path'])
     )
     vars['ansible_managed'] = time.strftime(
         managed_str,
@@ -278,6 +301,16 @@ def template_from_file(basedir, path, vars, vault_password=None):
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals, fail_on_undefined), shared=True)))
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
+    except jinja2.exceptions.TemplateNotFound, e:
+        # Throw an exception which includes a more user friendly error message
+        # This likely will happen for included sub-template. Not that besides
+        # pure "file not found" it may happen due to Jinja2's "security"
+        # checks on path.
+        values = {'name': realpath, 'subname': str(e)}
+        msg = 'file: %(name)s, error: Cannot find/not allowed to load (include) template %(subname)s' % \
+               values
+        error = errors.AnsibleError(msg)
+        raise error
 
     # The low level calls above do not preserve the newline
     # characters at the end of the input data, so we use the
@@ -298,10 +331,20 @@ def template_from_file(basedir, path, vars, vault_password=None):
 
 def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''
-
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
+   
+            # Check to see if the string we are trying to render is just referencing a single
+            # var.  In this case we don't wont to accidentally change the type of the variable
+            # to a string by using the jinja template renderer. We just want to pass it. 
+            only_one = SINGLE_VAR.match(data)
+            if only_one:
+                var_name = only_one.group(1)
+                if var_name in vars:
+                    resolved_val = vars[var_name]
+                    if isinstance(resolved_val, (bool, Number)):
+                        return resolved_val
 
         def my_finalize(thing):
             return thing if thing is not None else ''
@@ -325,6 +368,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         try:
             t = environment.from_string(data)
+        except TemplateSyntaxError, e:
+            raise errors.AnsibleError("template error while templating string: %s" % str(e))
         except Exception, e:
             if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
@@ -349,7 +394,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
                     "Make sure your variable name does not contain invalid characters like '-'."
                 )
             else:
-                raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
+                raise errors.AnsibleError("an unexpected type error occurred. Error was %s" % te)
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:

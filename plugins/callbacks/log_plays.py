@@ -63,9 +63,6 @@ class CallbackModule(object):
     def runner_on_ok(self, host, res):
         log(host, 'OK', res)
 
-    def runner_on_error(self, host, msg):
-        log(host, 'ERROR', msg)
-
     def runner_on_skipped(self, host, item=None):
         log(host, 'SKIPPED', '...')
 
@@ -111,7 +108,7 @@ class CallbackModule(object):
     def playbook_on_not_import_for_host(self, host, missing_file):
         log(host, 'NOTIMPORTED', missing_file)
 
-    def playbook_on_play_start(self, pattern):
+    def playbook_on_play_start(self, name):
         pass
 
     def playbook_on_stats(self, stats):

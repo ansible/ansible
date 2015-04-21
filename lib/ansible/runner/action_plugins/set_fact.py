@@ -32,6 +32,16 @@ class ActionModule(object):
         options  = {}
         if complex_args:
             options.update(complex_args)
-        options.update(utils.parse_kv(module_args))
+
+        # parse the k=v arguments and convert any special boolean
+        # strings into proper booleans (issue #8629)
+        parsed_args = utils.parse_kv(module_args)
+        for k,v in parsed_args.iteritems():
+            # convert certain strings to boolean values
+            if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
+                parsed_args[k] = utils.boolean(v)
+
+        # and finally update the options with the parsed/modified args
+        options.update(parsed_args)
 
         return ReturnData(conn=conn, result=dict(ansible_facts=options))

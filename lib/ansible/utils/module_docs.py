@@ -44,6 +44,7 @@ def get_docstring(filename, verbose=False):
 
     doc = None
     plainexamples = None
+    returndocs = None
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -89,10 +90,13 @@ def get_docstring(filename, verbose=False):
 
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
+
+                if 'RETURN' in (t.id for t in child.targets):
+                    returndocs = child.value.s[1:]
     except:
         traceback.print_exc() # temp
         if verbose == True:
             traceback.print_exc()
             print "unable to parse %s" % filename
-    return doc, plainexamples
+    return doc, plainexamples, returndocs
 

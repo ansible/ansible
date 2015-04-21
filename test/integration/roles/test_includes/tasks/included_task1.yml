@@ -1,0 +1,10 @@
+- set_fact: 
+    ca: "{{ a }}"
+
+- set_fact: 
+    cb: "{{b}}"
+
+- set_fact:
+    cc: "{{ c }}"
+
+

@@ -43,6 +43,8 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
+Also be aware that when combining `when` with `with_items` (or any other loop statement), the `when` statement is processed separately for each item. See :ref:`the_when_statement` for an example.
+
 .. _nested_loops:
 
 Nested Loops
@@ -53,7 +55,7 @@ Loops can be nested as well::
     - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
-        - [ 'alice', 'bob', 'eve' ]
+        - [ 'alice', 'bob' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable's name without templating it with '{{ }}'::
@@ -233,7 +235,7 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
       retries: 5
       delay: 10
 
-The above example run the shell module recursively till the module's result has "all systems go" in it's stdout or the task has 
+The above example run the shell module recursively till the module's result has "all systems go" in its stdout or the task has
 been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
 
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
