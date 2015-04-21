@@ -35,4 +35,4 @@ class ActionModule(ActionBase):
                 if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v
-        return dict(changed=True, ansible_facts=facts)
+        return dict(changed=False, ansible_facts=facts)
