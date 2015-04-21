@@ -96,7 +96,8 @@ def _get_ksclient(module, kwargs):
         kclient = ksclient.Client(username=kwargs.get('login_username'),
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                 auth_url=kwargs.get('auth_url'),
+                                 region_name=kwargs.get('region_name'))
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
@@ -231,7 +232,7 @@ def main():
 
     try:
         nova = nova_client.Client(module.params['login_username'], module.params['login_password'],
-            module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
+            module.params['login_tenant_name'], module.params['auth_url'], region_name=module.params['region_name'], service_type='compute')
         neutron = _get_neutron_client(module, module.params)
     except Exception, e:
         module.fail_json(msg="Error in authenticating to nova: %s" % e.message)
