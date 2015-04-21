@@ -64,7 +64,7 @@ sudo and su still work!
 -----------------------
 
 Old playbooks will not need to be changed, even though they are deprecated, sudo and su directives will continue to work though it
-is recommended to move to become as they may be retired at one point. You cannot mix directives on the same object though, ansible
+is recommended to move to become as they may be retired at one point. You cannot mix directives on the same object though, Ansible
 will complain if you try to.
 
 Become will default to using the old sudo/su configs and variables if they exist, but will override them if you specify any of the
@@ -73,6 +73,10 @@ new ones.
 
 
 .. note:: Privilege escalation methods must also be supported by the connection plugin used, most will warn if they do not, some will just ignore it as they always run as root (jail, chroot, etc).
+
+.. note:: Methods cannot be chained, you cannot use 'sudo /bin/su -' to become a user, you need to have privileges to run the command as that user in sudo or be able to su directly to it (the same for pbrun, pfexec or other supported methods).
+
+.. note:: Privilege escalation permissions have to be general, Ansible does not always use a specific command to do something but runs modules (code) from a temporary file name which changes every time. So if you have '/sbin/sevice' or '/bin/chmod' as the allowed commands this will fail with ansible.
 
 .. seealso::
 
