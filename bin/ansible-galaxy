@@ -593,7 +593,7 @@ def execute_init(args, options, parser):
     if not offline:
         api_config = api_get_config(api_server)
         if not api_config:
-            print "- the API server (%s) is not responding, please try again later." % api_server
+            print "- the API server (%s) is not responding, please try again later or use --offline." % api_server
             sys.exit(1)
 
     try:
