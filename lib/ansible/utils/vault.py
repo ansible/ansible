@@ -665,23 +665,9 @@ class VaultGPG(object):
         # Open GPG subprocess
         self.gpg = gnupg.GPG(homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
 
-        if self.debug:
-            print "Homedir: " + str(self.gpghomedir)
-            print "Pubring " + str(self.pubkeyring)
-            print "Secring " + str(self.privkeyring)
-            print "Trust " + str(self.alwaystrust)
-            print "Recipients " + str(self.recipients)
-            print "Debug " + str(self.debug)
-            print self.gpg.homedir
-            print self.gpg.keyring
-            print self.gpg.secring
-            print "keys_available gpg opened, searching for " + str(requested_keys)
-
         # Take each requested key and compare it to keys available in the keyring
         public_keys = self.gpg.list_keys()
         priv_keys = self.gpg.list_keys(secret=True)
-        if self.debug:
-            print "Secret Keys: " + str(priv_keys)
 
         # If the user has not provided a gpg_homedir and python has selected a non default home you can find empty keyrings.
         if len(public_keys) < 1:
@@ -693,9 +679,6 @@ class VaultGPG(object):
 
         available_keys = []
         untrusted_keys = []
-
-        if self.debug:
-            print "Marginal: %s" % self.passmarginal
 
         # list_keys() returns a list of dicts
         for li in public_keys:
@@ -742,17 +725,9 @@ class VaultGPG(object):
         except AttributeError:
             raise errors.AnsibleError("You need to provide gpg_recipients in ansible.cfg to use GPG cipher type")
 
-        if self.debug:
-            print "data: " + str(data)
-            print "keys: " + str(available_keys)
-
         # Uses _encrypt over encrypt(). Appears to only be a thin stream wrapper anyway
         # https://github.com/isislovecruft/python-gnupg/blob/master/gnupg/gnupg.py#L973
         enc_data = self.gpg._encrypt(data,available_keys,always_trust=self.alwaystrust)
-
-        if self.debug:
-            print "enc data: " + str(enc_data)
-            print "enc status: " + str(enc_data.status)
 
         if len(str(enc_data)) == 0:
             raise errors.AnsibleError("Encryption failed: GPG returned '%s'. Check recipient validity and trusts." % enc_data.status)
