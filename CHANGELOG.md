@@ -16,9 +16,13 @@ New Modules:
     find
     ec2_ami_find
     cloudtrail
+    cloudstack: cs_affinitygroup
     cloudstack: cs_firewall
     cloudstack: cs_iso
     cloudstack: cs_sshkeypair
+    cloudstack: cs_securitygroup
+    cloudstack: cs_securitygroup_rule
+    cloudstack: cs_vmsnapshot
     maven_artifact
     pushover
     zabbix_host
