@@ -44,7 +44,7 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file."
+      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file.  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
     required: true
     default: null
     aliases: []
@@ -68,7 +68,7 @@ options:
     version_added: "0.9"
     default: null
     aliases: []
-    
+
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
@@ -715,16 +715,12 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     module.exit_json(**res)
 
-def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
+def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check):
-
-    # take multiple args comma separated
-    items = pkgspec.split(',')
 
     # need debug level 2 to get 'Nothing to do' for groupinstall.
     yum_basecmd = [yumbin, '-d', '2', '-y']
 
-        
     if not repoquery:
         repoq = None
     else:
@@ -745,7 +741,6 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
         en_repos = enablerepo.split(',')
         r_cmd = ['--enablerepo=%s' % enablerepo]
         yum_basecmd.extend(r_cmd)
-           
 
 
     if state in ['installed', 'present', 'latest']:
@@ -774,13 +769,13 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+        install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state in ['removed', 'absent']:
-        remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+        remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+        latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
 
     # should be caught by AnsibleModule argument_spec
     return dict(changed=False, failed=True, results='', errors='unexpected state')
@@ -800,7 +795,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(aliases=['pkg']),
+            name=dict(aliases=['pkg'], type="list"),
             # removed==absent, installed==present, these are accepted as aliases
             state=dict(default='installed', choices=['absent','present','installed','removed','latest']),
             enablerepo=dict(),
@@ -829,7 +824,7 @@ def main():
         module.exit_json(**results)
 
     else:
-        pkg = params['name']
+        pkg = [ p.strip() for p in params['name']]
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
