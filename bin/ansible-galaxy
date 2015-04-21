@@ -276,7 +276,7 @@ def api_lookup_role_by_name(api_server, role_name, notify=True):
             print "- downloading role '%s', owned by %s" % (role_name, user_name)
     except:
         parser.print_help()
-        print "- invalid role name (%s). Specify role as format: username.rolename" % role_name
+        print >> sys.stderr, "- invalid role name (%s). Specify role as format: username.rolename" % role_name
         sys.exit(1)
 
     url = 'https://%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
@@ -593,7 +593,7 @@ def execute_init(args, options, parser):
     if not offline:
         api_config = api_get_config(api_server)
         if not api_config:
-            print "- the API server (%s) is not responding, please try again later or use --offline." % api_server
+            print >> sys.stderr, "- the API server (%s) is not responding, please try again later or use --offline." % api_server
             sys.exit(1)
 
     try:
@@ -603,17 +603,17 @@ def execute_init(args, options, parser):
         role_path = os.path.join(init_path, role_name)
         if os.path.exists(role_path):
             if os.path.isfile(role_path):
-                print "- the path %s already exists, but is a file - aborting" % role_path
+                print >> sys.stderr, "- the path %s already exists, but is a file - aborting" % role_path
                 sys.exit(1)
             elif not force:
-                print "- the directory %s already exists." % role_path
-                print "  you can use --force to re-initialize this directory,\n" + \
+                print >> sys.stderr, "- the directory %s already exists." % role_path
+                print >> sys.stderr, "  you can use --force to re-initialize this directory,\n" + \
                       "  however it will reset any main.yml files that may have\n" + \
                       "  been modified there already."
                 sys.exit(1)
     except Exception, e:
         parser.print_help()
-        print "- no role name specified for init"
+        print >> sys.stderr, "- no role name specified for init"
         sys.exit(1)
 
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
@@ -685,7 +685,7 @@ def execute_info(args, options, parser):
     if len(args) == 0:
         # the user needs to specify a role
         parser.print_help()
-        print "- you must specify a user/role name"
+        print >> sys.stderr, "- you must specify a user/role name"
         sys.exit(1)
 
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
@@ -753,7 +753,7 @@ def execute_install(args, options, parser):
         # using a role file is mutually exclusive of specifying
         # the role name on the command line
         parser.print_help()
-        print "- please specify a user/role name, or a roles file, but not both"
+        print >> sys.stderr, "- please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
     api_server = get_opt(options, "api_server", "galaxy.ansible.com")
@@ -801,7 +801,7 @@ def execute_install(args, options, parser):
                 # installing from galaxy
                 api_config = api_get_config(api_server)
                 if not api_config:
-                    print "- the API server (%s) is not responding, please try again later." % api_server
+                    print >> sys.stderr, "- the API server (%s) is not responding, please try again later." % api_server
                     sys.exit(1)
 
                 role_data = api_lookup_role_by_name(api_server, role_src)
@@ -893,7 +893,7 @@ def execute_list(args, options, parser):
     """
 
     if len(args) > 1:
-        print "- please specify only one role to list, or specify no roles to see a full list"
+        print >> sys.stderr, "- please specify only one role to list, or specify no roles to see a full list"
         sys.exit(1)
 
     if len(args) == 1:
@@ -917,10 +917,10 @@ def execute_list(args, options, parser):
         roles_path = os.path.expanduser(roles_path)
         if not os.path.exists(roles_path):
             parser.print_help()
-            print "- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path
+            print >> sys.stderr, "- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path
             sys.exit(1)
         elif not os.path.isdir(roles_path):
-            print "- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path
+            print >> sys.stderr, "- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path
             parser.print_help()
             sys.exit(1)
         path_files = os.listdir(roles_path)
@@ -950,7 +950,7 @@ def main():
         fn = globals()["execute_%s" % action]
         fn(args, options, parser)
     #except KeyError, e:
-    #    print "- error: %s is not a valid action. Valid actions are: %s" % (action, ", ".join(VALID_ACTIONS))
+    #    print >> sys.stderr, "- error: %s is not a valid action. Valid actions are: %s" % (action, ", ".join(VALID_ACTIONS))
     #    sys.exit(1)
 
 if __name__ == "__main__":
