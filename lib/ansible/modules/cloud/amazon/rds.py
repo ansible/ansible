@@ -130,7 +130,7 @@ options:
     aliases: []
   port:
     description:
-      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql. Must be changed to 1521 for Oracle, 1443 for SQL Server, 5432 for PostgreSQL. Used only when command=create or command=replicate.
+      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql. Must be changed to 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL. Used only when command=create or command=replicate.
     required: false
     default: null
     aliases: []
