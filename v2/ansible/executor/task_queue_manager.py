@@ -92,7 +92,7 @@ class TaskQueueManager:
             if fileno is not None:
                 try:
                     new_stdin = os.fdopen(os.dup(fileno))
-                except OSError, e:
+                except OSError:
                     # couldn't dupe stdin, most likely because it's
                     # not a valid file descriptor, so we just rely on
                     # using the one that was passed in
