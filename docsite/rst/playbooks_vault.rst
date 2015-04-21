@@ -77,7 +77,7 @@ If you have existing files that you no longer want to keep encrypted, you can pe
 Viewing Encrypted Files
 ```````````````````````
 
-_Available since Ansible 1.8_
+*Available since Ansible 1.8*
 
 If you want to view the contents of an encrypted file without editing it, you can use the `ansible-vault view` command::
 
