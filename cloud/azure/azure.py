@@ -242,7 +242,7 @@ def create_virtual_machine(module, azure):
     azure: authenticated azure ServiceManagementService object
 
     Returns:
-        True if a new virtual machine was created, false otherwise
+        True if a new virtual machine and/or cloud service was created, false otherwise
     """
     name = module.params.get('name')
     hostname = module.params.get('hostname') or name + ".cloudapp.net"
@@ -258,18 +258,24 @@ def create_virtual_machine(module, azure):
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
+    changed = False
+
     # Check if a deployment with the same name already exists
     cloud_service_name_available = azure.check_hosted_service_name_availability(name)
-    if not cloud_service_name_available.result:
-        changed = False
-    else:
-        changed = True
-        # Create cloud service if necessary
+    if cloud_service_name_available.result:
+        # cloud service does not exist; create it
         try:
             result = azure.create_hosted_service(service_name=name, label=name, location=location)
             _wait_for_completion(azure, result, wait_timeout, "create_hosted_service")
+            changed = True
         except WindowsAzureError as e:
-            module.fail_json(msg="failed to create the new service name, it already exists: %s" % str(e))
+            module.fail_json(msg="failed to create the new service, error was: %s" % str(e))
+
+    try:
+        # check to see if a vm with this name exists; if so, do nothing
+        azure.get_role(name, name, name)
+    except WindowsAzureMissingResourceError:
+        # vm does not exist; create it
 
         # Create linux configuration
         disable_ssh_password_authentication = not password
@@ -322,9 +328,9 @@ def create_virtual_machine(module, azure):
                                                              role_type='PersistentVMRole',
                                                              virtual_network_name=virtual_network_name)
             _wait_for_completion(azure, result, wait_timeout, "create_virtual_machine_deployment")
+            changed = True
         except WindowsAzureError as e:
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
-
 
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
