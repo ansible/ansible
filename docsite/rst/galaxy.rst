@@ -77,7 +77,7 @@ And here's an example showing some specific version downloads from multiple sour
     - src: https://github.com/bennojoy/nginx
       version: master
       name: nginx_role
-    
+
     # from a webserver, where the role is packaged in a tar.gz
     - src: https://some.webserver.example.com/files/master.tar.gz
       name: http-role
@@ -91,9 +91,29 @@ And here's an example showing some specific version downloads from multiple sour
       scm: hg
 
 As you can see in the above, there are a large amount of controls available
-to customize where roles can be pulled from, and what to save roles as.     
+to customize where roles can be pulled from, and what to save roles as.
 
 Roles pulled from galaxy work as with other SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
+
+At a basic level, including requirements files allows you to break up bits of configuration policy into smaller files. Role includes pull in roles from other files.
+
+    ansible-galaxy install -r requirements.yml
+
+    # from galaxy
+    - src: yatesr.timezon
+
+    - include: webserver.yml
+
+
+Content of the webserver.yml file.
+
+    # from github
+    - src: https://github.com/bennojoy/nginx
+
+    # from github installing to a relative path
+    - src: https://github.com/bennojoy/nginx
+      path: vagrant/roles/
+
 
 .. seealso::
 
