@@ -61,8 +61,7 @@ options:
     required: false
   subject:
     description:
-      - The subject of the email being sent. Alias: I(msg)
-    aliases: [ msg ]
+      - The subject of the email being sent.
     required: true
   body:
     description:
