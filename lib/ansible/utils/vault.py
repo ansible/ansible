@@ -744,14 +744,15 @@ class VaultGPG(object):
         self.gpg = gnupg.GPG(homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
 
         # If we have a user password we need to pass it on
-        
-        print "GPG Password: %s" % password
-
         if password:
             dec_data = self.gpg.decrypt(data,passphrase=password,always_trust=self.alwaystrust)
         else:
             # We are in gpg_noprompt mode
             dec_data = self.gpg.decrypt(data)
+
+        if len(str(dec_data)) == 0:
+            raise errors.AnsibleError("Decryption failed: GPG returned '%s'. Check private key passwords and agent function" % dec_data.status)
+
         decryptedData = str(dec_data)
 
         return decryptedData
