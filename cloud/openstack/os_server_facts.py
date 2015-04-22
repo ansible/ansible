@@ -26,8 +26,7 @@ DOCUMENTATION = '''
 ---
 module: os_server_facts
 short_description: Retrieve facts about a compute instance
-extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Retrieve facts about a server instance from OpenStack.
 notes:
@@ -37,7 +36,7 @@ options:
      description:
         - Name or ID of the instance
      required: true
-requirements: ["shade"]
+extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
