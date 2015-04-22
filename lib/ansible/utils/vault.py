@@ -89,8 +89,8 @@ except AttributeError:
 
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
-GPG_DEP_ERROR = "ansible-vault requires python-gnupg and a system gpg binary such as gnupg2 when running in GPG mode"
-GPG_LIB_ERROR = "ansible-vault requires python-gnupg version 2.0.2 or later. See http://pythonhosted.org/gnupg/"
+GPG_DEP_ERROR = "ansible-vault requires a newer version of python-gnupg than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-gnupg; rpm -e --nodeps python-gnupg; pip install gnupg""
+GPG_LIB_ERROR = "ansible-vault requires python-gnupg version 2.0.2 or later. See http://pythonhosted.org/gnupg/ You may fix this by installing from pip directly: pip install gnupg"
 
 HEADER='$ANSIBLE_VAULT'
 CIPHER_WHITELIST=['AES', 'AES256', 'GPG']
@@ -255,9 +255,10 @@ class VaultEditor(object):
 
     def create_file(self):
         """ create a new encrypted file """
-
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        
+        if not cipher == "GPG":
+            if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+                raise errors.AnsibleError(CRYPTO_UPGRADE)
 
         if os.path.isfile(self.filename):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
@@ -743,6 +744,9 @@ class VaultGPG(object):
         self.gpg = gnupg.GPG(homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
 
         # If we have a user password we need to pass it on
+        
+        print "GPG Password: %s" % password
+
         if password:
             dec_data = self.gpg.decrypt(data,passphrase=password,always_trust=self.alwaystrust)
         else:
