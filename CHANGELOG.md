@@ -32,6 +32,7 @@ New Modules:
   * vertica_role
   * vertica_schema
   * vertica_user
+  * vmware_datacenter
 
 New Inventory scripts:
   * fleetctl
