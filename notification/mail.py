@@ -62,7 +62,6 @@ options:
   subject:
     description:
       - The subject of the email being sent.
-    aliases: [ msg ]
     required: true
   body:
     description:
@@ -115,7 +114,7 @@ options:
 
 EXAMPLES = '''
 # Example playbook sending mail to root
-- local_action: mail msg='System {{ ansible_hostname }} has been successfully provisioned.'
+- local_action: mail subject='System {{ ansible_hostname }} has been successfully provisioned.'
 
 # Sending an e-mail using Gmail SMTP servers
 - local_action: mail
@@ -125,7 +124,7 @@ EXAMPLES = '''
                 password='mysecret'
                 to="John Smith <john.smith@example.com>"
                 subject='Ansible-report'
-                msg='System {{ ansible_hostname }} has been successfully provisioned.'
+                body='System {{ ansible_hostname }} has been successfully provisioned.'
 
 # Send e-mail to a bunch of users, attaching files
 - local_action: mail
