@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 language: python
 env:
   - TOXENV=py26
