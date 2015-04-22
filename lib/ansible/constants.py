@@ -201,9 +201,10 @@ DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
 # VAULT
 VAULT_CIPHER                   = get_config(p, 'vault', 'cipher', 'VAULT_CIPHER', 'AES256')
+VAULT_GPG_BINARY               = get_config(p, 'vault', 'gpg_binary', 'VAULT_GPG_BINARY', "gpg2")
 VAULT_GPG_RECIPIENTS           = get_config(p, 'vault', 'gpg_recipients', 'VAULT_RECIPIENTS', '')
 VAULT_GPG_ALWAYS_TRUST         = get_config(p, 'vault', 'gpg_always_trust', 'VAULT_GPG_ALWAYS_TRUST', False, boolean=True)
-VAULT_GPG_PASS_MARGINAL       = get_config(p, 'vault', 'gpg_pass_marginal', 'VAULT_GPG_PASS_MARGINAL', False, boolean=True)
+VAULT_GPG_PASS_MARGINAL        = get_config(p, 'vault', 'gpg_pass_marginal', 'VAULT_GPG_PASS_MARGINAL', False, boolean=True)
 VAULT_GPG_DEBUG                = get_config(p, 'vault', 'gpg_debug', 'VAULT_GPG_DEBUG', False, boolean=True)
 VAULT_GPG_NOPROMPT             = get_config(p, 'vault', 'gpg_noprompt', 'VAULT_GPG_NOPROMPT', False, boolean=True)
 VAULT_GPG_HOMEDIR              = get_config(p, 'vault', 'gpg_homedir', 'VAULT_GPG_HOMEDIR', '')

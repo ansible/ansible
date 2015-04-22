@@ -89,7 +89,8 @@ except AttributeError:
 
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
-GPG_DEP_ERROR = "ansible-vault requires a newer version of python-gnupg than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-gnupg; rpm -e --nodeps python-gnupg; pip install gnupg""
+GPG_DEP_ERROR = "ansible-vault requires a newer version of python-gnupg than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-gnupg; rpm -e --nodeps python-gnupg; pip install gnupg"
+
 GPG_LIB_ERROR = "ansible-vault requires python-gnupg version 2.0.2 or later. See http://pythonhosted.org/gnupg/ You may fix this by installing from pip directly: pip install gnupg"
 
 HEADER='$ANSIBLE_VAULT'
@@ -625,6 +626,8 @@ class VaultGPG(object):
         if not HAS_GNUPG_FORK:
             raise errors.AnsibleError(GPG_LIB_ERROR)
 
+        self.binary = C.VAULT_GPG_BINARY
+
         if not C.VAULT_GPG_PASS_MARGINAL:
             self.passmarginal = False
         else:
@@ -664,7 +667,10 @@ class VaultGPG(object):
         '''Basic check to see if we have a public key to encrypt to'''
 
         # Open GPG subprocess
-        self.gpg = gnupg.GPG(homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        try:
+            self.gpg = gnupg.GPG(binary=self.binary, homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        except:
+            raise errors.AnsibleError("Unhandled error initalizing gnupg, check your binary %s" % self.binary)
 
         # Take each requested key and compare it to keys available in the keyring
         public_keys = self.gpg.list_keys()
@@ -718,7 +724,10 @@ class VaultGPG(object):
         '''encrypt function for VaultLib'''
 
         # Open GPG subprocess
-        self.gpg = gnupg.GPG(homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        try:
+            self.gpg = gnupg.GPG(binary=self.binary, homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        except:
+            raise errors.AnsibleError("Unhandled error initalizing gnupg, check your binary %s" % self.binary)
 
         # Get public and private key availability
         try:
@@ -741,7 +750,10 @@ class VaultGPG(object):
         '''decrypt function for VaultLib'''
 
         # Open GPG subprocess
-        self.gpg = gnupg.GPG(homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        try:
+            self.gpg = gnupg.GPG(binary=self.binary, homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        except:
+            raise errors.AnsibleError("Unhandled error initalizing gnupg, check your binary %s" % self.binary)
 
         # If we have a user password we need to pass it on
         if password:
