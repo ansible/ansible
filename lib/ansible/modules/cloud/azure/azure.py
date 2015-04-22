@@ -144,6 +144,7 @@ import os
 import sys
 import time
 from urlparse import urlparse
+from ansible.module_utils.facts import * # TimeoutError
 
 AZURE_LOCATIONS = ['South Central US',
                    'Central US',
@@ -215,6 +216,23 @@ def _wait_for_completion(azure, promise, wait_timeout, msg):
 
     raise WindowsAzureError('Timed out waiting for async operation ' + msg + ' "' + str(promise.request_id) + '" to complete.')
 
+def _delete_disks_when_detached(azure, wait_timeout, disk_names):
+    def _handle_timeout(signum, frame):
+        raise TimeoutError("Timeout reached while waiting for disks to become detached.")
+
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    signal.alarm(wait_timeout)
+    try:
+        while len(disk_names) > 0:
+            for disk_name in disk_names:
+                disk = azure.get_disk(disk_name)
+                if disk.attached_to is None:
+                    azure.delete_disk(disk.name, True)
+                    disk_names.remove(disk_name)
+    except WindowsAzureError, e:
+        module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
+    finally:
+        signal.alarm(0)
 
 def get_ssh_certificate_tokens(module, ssh_cert_path):
     """
@@ -268,7 +286,7 @@ def create_virtual_machine(module, azure):
             result = azure.create_hosted_service(service_name=name, label=name, location=location)
             _wait_for_completion(azure, result, wait_timeout, "create_hosted_service")
             changed = True
-        except WindowsAzureError as e:
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to create the new service, error was: %s" % str(e))
 
     try:
@@ -329,13 +347,13 @@ def create_virtual_machine(module, azure):
                                                              virtual_network_name=virtual_network_name)
             _wait_for_completion(azure, result, wait_timeout, "create_virtual_machine_deployment")
             changed = True
-        except WindowsAzureError as e:
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
 
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
         return (changed, urlparse(deployment.url).hostname, deployment)
-    except WindowsAzureError as e:
+    except WindowsAzureError, e:
         module.fail_json(msg="failed to lookup the deployment information for %s, error was: %s" % (name, str(e)))
 
 
@@ -363,9 +381,9 @@ def terminate_virtual_machine(module, azure):
     disk_names = []
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-    except WindowsAzureMissingResourceError as e:
+    except WindowsAzureMissingResourceError, e:
         pass  # no such deployment or service
-    except WindowsAzureError as e:
+    except WindowsAzureError, e:
         module.fail_json(msg="failed to find the deployment, error was: %s" % str(e))
 
     # Delete deployment
@@ -378,37 +396,28 @@ def terminate_virtual_machine(module, azure):
                 role_props = azure.get_role(name, deployment.name, role.role_name)
                 if role_props.os_virtual_hard_disk.disk_name not in disk_names:
                     disk_names.append(role_props.os_virtual_hard_disk.disk_name)
-        except WindowsAzureError as e:
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to get the role %s, error was: %s" % (role.role_name, str(e)))
 
         try:
             result = azure.delete_deployment(name, deployment.name)
             _wait_for_completion(azure, result, wait_timeout, "delete_deployment")
-        except WindowsAzureError as e:
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to delete the deployment %s, error was: %s" % (deployment.name, str(e)))
 
         # It's unclear when disks associated with terminated deployment get detatched.
         # Thus, until the wait_timeout is reached, we continue to delete disks as they
         # become detatched by polling the list of remaining disks and examining the state.
-        wait_start = time.time()
-        while len(disk_names) > 0:
-            try:
-                for disk_name in disk_names:
-                    disk = azure.get_disk(disk_name)
-                    if disk.attached_to is None:
-                        azure.delete_disk(disk.name, True)
-                        disk_names.remove(disk_name)
-            except WindowsAzureError as e:
-                module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
-
-            if (time.time() - wait_start) > wait_timeout:
-                module.fail_json(msg="Timeout reached while waiting for disks to become detached.")
+        try:
+            _delete_disks_when_detached(azure, wait_timeout, disk_names)
+        except (WindowsAzureError, TimeoutError), e:
+            module.fail_json(msg=str(e))
 
         try:
             # Now that the vm is deleted, remove the cloud service
             result = azure.delete_hosted_service(service_name=name)
             _wait_for_completion(azure, result, wait_timeout, "delete_hosted_service")
-        except WindowsAzureError as e:
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to delete the service %s, error was: %s" % (name, str(e)))
         public_dns_name = urlparse(deployment.url).hostname
 
@@ -510,7 +519,7 @@ class Wrapper(object):
         while wait_timeout > time.time():
             try:
                 return f()
-            except WindowsAzureError as e:
+            except WindowsAzureError, e:
                 if not str(e).lower().find("temporary redirect") == -1:
                     time.sleep(5)
                     pass
