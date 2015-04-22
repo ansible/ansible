@@ -30,7 +30,6 @@ options:
     description:
       - name of the user (role) to add or remove
     required: true
-    default: null
   password:
     description:
       - set the user's password
@@ -102,10 +101,10 @@ options:
       - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
   config_file:
     description:
-      - Specify a config file from which user and password are to be read 
+      - Specify a config file from which user and password are to be read
     required: false
-    default: null
-    version_added: "1.8"
+    default: '~/.my.cnf'
+    version_added: "2.0"
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
