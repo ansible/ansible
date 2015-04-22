@@ -346,8 +346,6 @@ def terminate_virtual_machine(module, azure):
     module : AnsibleModule object
     azure: authenticated azure ServiceManagementService object
 
-    Not yet supported: handle deletion of attached data disks.
-
     Returns:
         True if a new virtual machine was deleted, false otherwise
     """
@@ -380,13 +378,33 @@ def terminate_virtual_machine(module, azure):
                 role_props = azure.get_role(name, deployment.name, role.role_name)
                 if role_props.os_virtual_hard_disk.disk_name not in disk_names:
                     disk_names.append(role_props.os_virtual_hard_disk.disk_name)
+        except WindowsAzureError as e:
+            module.fail_json(msg="failed to get the role %s, error was: %s" % (role.role_name, str(e)))
 
+        try:
             result = azure.delete_deployment(name, deployment.name)
             _wait_for_completion(azure, result, wait_timeout, "delete_deployment")
+        except WindowsAzureError as e:
+            module.fail_json(msg="failed to delete the deployment %s, error was: %s" % (deployment.name, str(e)))
 
-            for disk_name in disk_names:
-                azure.delete_disk(disk_name, True)
+        # It's unclear when disks associated with terminated deployment get detatched.
+        # Thus, until the wait_timeout is reached, we continue to delete disks as they
+        # become detatched by polling the list of remaining disks and examining the state.
+        wait_start = time.time()
+        while len(disk_names) > 0:
+            try:
+                for disk_name in disk_names:
+                    disk = azure.get_disk(disk_name)
+                    if disk.attached_to is None:
+                        azure.delete_disk(disk.name, True)
+                        disk_names.remove(disk_name)
+            except WindowsAzureError as e:
+                module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
 
+            if (time.time() - wait_start) > wait_timeout:
+                module.fail_json(msg="Timeout reached while waiting for disks to become detached.")
+
+        try:
             # Now that the vm is deleted, remove the cloud service
             result = azure.delete_hosted_service(service_name=name)
             _wait_for_completion(azure, result, wait_timeout, "delete_hosted_service")
