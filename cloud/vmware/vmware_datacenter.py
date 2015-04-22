@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Joseph Callen <jcallen () csc.com>
@@ -21,38 +21,39 @@
 DOCUMENTATION = '''
 ---
 module: vmware_datacenter
-short_description: Create VMware vSphere Datacenter
+short_description: Manage VMware vSphere Datacenters
 description:
-    - Create VMware vSphere Datacenter
+    - Manage VMware vSphere Datacenters
 version_added: 2.0
 author: Joseph Callen
 notes:
-requirements:
     - Tested on vSphere 5.5
-    - PyVmomi installed
+requirements:
+    - PyVmomi
 options:
- hostname:
+    hostname:
         description:
-            - The hostname or IP address of the vSphere vCenter
+            - The hostname or IP address of the vSphere vCenter API server
         required: True
-        version_added: 2.0
     username:
         description:
             - The username of the vSphere vCenter
         required: True
         aliases: ['user', 'admin']
-        version_added: 2.0
     password:
         description:
             - The password of the vSphere vCenter
         required: True
         aliases: ['pass', 'pwd']
-        version_added: 2.0
     datacenter_name:
         description:
             - The name of the datacenter the cluster will be created in.
         required: True
-        version_added: 2.0
+    state:
+        description:
+            - If the datacenter should be present or absent
+        choices: ['present', 'absent']
+        required: True
 '''
 
 EXAMPLES = '''
@@ -133,10 +134,6 @@ def state_destroy_datacenter(module):
         module.fail_json(msg=method_fault.msg)
 
 
-def state_update_datacenter(module):
-    module.exit_json(changed=False, msg="Currently Not Implemented")
-
-
 def state_exit_unchanged(module):
     module.exit_json(changed=False)
 
@@ -144,8 +141,12 @@ def state_exit_unchanged(module):
 def main():
 
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(
+        dict(
+                datacenter_name=dict(required=True, type='str'),
+                state=dict(required=True, choices=['present', 'absent'], type='str'),
+                )
+        )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_PYVMOMI:
@@ -157,7 +158,6 @@ def main():
             'absent': state_exit_unchanged,
         },
         'present': {
-            'update': state_update_datacenter,
             'present': state_exit_unchanged,
             'absent': state_create_datacenter,
         }
