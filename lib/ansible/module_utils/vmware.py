@@ -39,14 +39,14 @@ def wait_for_task(task):
     while True:
         if task.info.state == vim.TaskInfo.State.success:
             return True, task.info.result
-        if task.info.state == vim.TaskInfo.State.error
+        if task.info.state == vim.TaskInfo.State.error:
             try:
                 raise TaskError(task.info.error)
             except AttributeError:
                 raise TaskError("An unknown error has occurred")
         if task.info.state == vim.TaskInfo.State.running:
             time.sleep(15)
-        if task.info.state = vim.TaskInfo.State.queued:
+        if task.info.state == vim.TaskInfo.State.queued:
             time.sleep(15)
 
 
@@ -70,7 +70,7 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
     return None
 
 
-def find_datacenter_by_name(content, datacenter_name, throw=True):
+def find_datacenter_by_name(content, datacenter_name):
 
     datacenters = get_all_objs(content, [vim.Datacenter])
     for dc in datacenters:
