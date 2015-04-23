@@ -191,8 +191,8 @@ if __name__ == "__main__":
     try:
         sys.exit(main(display, sys.argv[1:]))
     except AnsibleError as e:
-        display.display("[ERROR]: %s" % e, color='red', stderr=True)
+        display.error(str(e))
         sys.exit(1)
     except KeyboardInterrupt:
-        display.display("[ERROR]: interrupted", color='red', stderr=True)
+        display.error("interrupted")
         sys.exit(1)
