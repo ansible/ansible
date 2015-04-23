@@ -646,7 +646,7 @@ class Hardware(Facts):
         for sc in Hardware.__subclasses__():
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def __init__(self):
         Facts.__init__(self)
@@ -888,7 +888,7 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
-    @timeout(10)
+    @timeout(30)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
@@ -1696,7 +1696,7 @@ class Network(Facts):
         for sc in Network.__subclasses__():
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def __init__(self, module):
         self.module = module
@@ -2374,7 +2374,7 @@ class Virtual(Facts):
         for sc in Virtual.__subclasses__():
             if sc.platform == platform.system():
                 subclass = sc
-        return super(cls, subclass).__new__(subclass, *arguments, **keyword)
+        return super(cls, subclass).__new__(subclass)
 
     def __init__(self):
         Facts.__init__(self)
