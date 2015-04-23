@@ -1,6 +1,7 @@
 # Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # and chroot.py     (c) 2013, Maykel Moya <mmoya@speedyrails.com>
-# (c) 2013, Michael Scherer <misc@zarb.org>
+# and jail.py       (c) 2013, Michael Scherer <misc@zarb.org>
+# (c) 2015, Dagobert Michelsen <dam@baltic-online.de>
 #
 # This file is part of Ansible
 #
@@ -22,12 +23,13 @@ import traceback
 import os
 import shutil
 import subprocess
+from subprocess import Popen,PIPE
 from ansible import errors
 from ansible.callbacks import vvv
 import ansible.constants as C
 
 class Connection(object):
-    ''' Local chroot based connections '''
+    ''' Local zone based connections '''
 
     def _search_executable(self, executable):
         cmd = distutils.spawn.find_executable(executable)
@@ -35,43 +37,48 @@ class Connection(object):
             raise errors.AnsibleError("%s command not found in PATH") % executable
         return cmd
 
-    def list_jails(self):
-        p = subprocess.Popen([self.jls_cmd, '-q', 'name'],
+    def list_zones(self):
+        pipe = subprocess.Popen([self.zoneadm_cmd, 'list', '-ip'],
+                             cwd=self.runner.basedir,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #stdout, stderr = p.communicate()
+        zones = []
+        for l in pipe.stdout.readlines():
+          # 1:work:running:/zones/work:3126dc59-9a07-4829-cde9-a816e4c5040e:native:shared
+          s = l.split(':')
+          if s[1] != 'global':
+            zones.append(s[1])
+
+        return zones
+
+    def get_zone_path(self):
+        #solaris10vm# zoneadm -z cswbuild list -p         
+        #-:cswbuild:installed:/zones/cswbuild:479f3c4b-d0c6-e97b-cd04-fd58f2c0238e:native:shared
+        pipe = subprocess.Popen([self.zoneadm_cmd, '-z', self.zone, 'list', '-p'],
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        stdout, stderr = p.communicate()
-
-        return stdout.split()
-
-    def get_jail_path(self):
-        p = subprocess.Popen([self.jls_cmd, '-j', self.jail, '-q', 'path'],
-                             cwd=self.runner.basedir,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        stdout, stderr = p.communicate()
-        # remove \n
-        return stdout[:-1]
-
- 
+        #stdout, stderr = p.communicate()
+        path = pipe.stdout.readlines()[0].split(':')[3]
+        return path + '/root'
         
     def __init__(self, runner, host, port, *args, **kwargs):
-        self.jail = host
+        self.zone = host
         self.runner = runner
         self.host = host
         self.has_pipelining = False
         self.become_methods_supported=C.BECOME_METHODS
 
         if os.geteuid() != 0:
-            raise errors.AnsibleError("jail connection requires running as root")
+            raise errors.AnsibleError("zone connection requires running as root")
 
-        self.jls_cmd = self._search_executable('jls')
-        self.jexec_cmd = self._search_executable('jexec')
+        self.zoneadm_cmd = self._search_executable('zoneadm')
+        self.zlogin_cmd = self._search_executable('zlogin')
         
-        if not self.jail in self.list_jails():
-            raise errors.AnsibleError("incorrect jail name %s" % self.jail)
+        if not self.zone in self.list_zones():
+            raise errors.AnsibleError("incorrect zone name %s" % self.zone)
 
 
         self.host = host
@@ -79,22 +86,22 @@ class Connection(object):
         self.port = port
 
     def connect(self, port=None):
-        ''' connect to the chroot; nothing to do here '''
+        ''' connect to the zone; nothing to do here '''
 
-        vvv("THIS IS A LOCAL CHROOT DIR", host=self.jail)
+        vvv("THIS IS A LOCAL ZONE DIR", host=self.zone)
 
         return self
 
     # a modifier
     def _generate_cmd(self, executable, cmd):
         if executable:
-            local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
+            local_cmd = [self.zlogin_cmd, self.zone, executable, cmd]
         else:
-            local_cmd = '%s "%s" %s' % (self.jexec_cmd, self.jail, cmd)
+            local_cmd = '%s "%s" %s' % (self.zlogin_cmd, self.zone, cmd)
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
-        ''' run a command on the chroot '''
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
+        ''' run a command on the zone '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
             raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
@@ -102,10 +109,12 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # Ignores privilege escalation
+        # We happily ignore privelege escalation
+        if executable == '/bin/sh':
+          executable = None
         local_cmd = self._generate_cmd(executable, cmd)
 
-        vvv("EXEC %s" % (local_cmd), host=self.jail)
+        vvv("EXEC %s" % (local_cmd), host=self.zone)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
@@ -133,18 +142,18 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file to %s" % out_path)
 
     def put_file(self, in_path, out_path):
-        ''' transfer a file from local to chroot '''
+        ''' transfer a file from local to zone '''
 
-        out_path = self._normalize_path(out_path, self.get_jail_path())
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
+        out_path = self._normalize_path(out_path, self.get_zone_path())
+        vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
 
         self._copy_file(in_path, out_path)
 
     def fetch_file(self, in_path, out_path):
-        ''' fetch a file from chroot to local '''
+        ''' fetch a file from zone to local '''
 
-        in_path = self._normalize_path(in_path, self.get_jail_path())
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
+        in_path = self._normalize_path(in_path, self.get_zone_path())
+        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
 
         self._copy_file(in_path, out_path)
 
