@@ -312,11 +312,15 @@ def prepare_writeable_dir(tree,mode=0777):
     # and normalized and free of symlinks
     tree = unfrackpath(tree)
 
-    if not os.path.exists(tree):
-        try:
-            os.makedirs(tree, mode)
-        except (IOError, OSError), e:
+    try:
+        os.makedirs(tree, mode)
+    except IOError, e:
+        # has no errno
+        raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
+    except OSError, e:
+        if e.errno != errno.EEXIST:
             raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
+
     if not os.access(tree, os.W_OK):
         raise errors.AnsibleError("Cannot write to path %s" % tree)
     return tree
