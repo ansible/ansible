@@ -35,6 +35,7 @@ class Display:
         # list of all deprecation messages to prevent duplicate display
         self._deprecations = {}
         self._warns        = {}
+        self._errors       = {}
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         msg2 = msg
@@ -130,3 +131,12 @@ class Display:
             star_len = 3
         stars = "*" * star_len
         self.display("\n%s %s" % (msg, stars), color=color)
+
+    def error(self, msg):
+        new_msg = "\n[ERROR]: %s" % msg
+        wrapped = textwrap.wrap(new_msg, 79)
+        new_msg = "\n".join(wrapped) + "\n"
+        if new_msg not in self._errors:
+            self.display(new_msg, color='bright red', stderr=True)
+            self._errors[new_msg] = 1
+
