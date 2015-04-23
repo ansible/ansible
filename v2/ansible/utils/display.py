@@ -23,7 +23,7 @@ import textwrap
 import sys
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
 
 class Display:
@@ -84,7 +84,7 @@ class Display:
             if host is None:
                 self.display(msg, color='blue')
             else:
-                self.display("<%s> %s" % (host, msg), color='blue')
+                self.display("<%s> %s" % (host, msg), color='blue', screen_only=True)
 
     def deprecated(self, msg, version, removed=False):
         ''' used to print out a deprecation message.'''
