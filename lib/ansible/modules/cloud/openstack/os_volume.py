@@ -88,7 +88,7 @@ EXAMPLES = '''
 def _present_volume(module, cloud):
     if cloud.volume_exists(module.params['display_name']):
         v = cloud.get_volume(module.params['display_name'])
-        module.exit_json(changed=False, id=v.id, info=v._info)
+        module.exit_json(changed=False, id=v['id'])
 
     volume_args = dict(
         size=module.params['size'],
@@ -105,11 +105,10 @@ def _present_volume(module, cloud):
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
         **volume_args)
-    module.exit_json(changed=True, id=volume.id, info=volume._info)
+    module.exit_json(changed=True, id=volume['id'])
 
 
 def _absent_volume(module, cloud):
-
     try:
         cloud.delete_volume(
             name_or_id=module.params['display_name'],
