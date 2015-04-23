@@ -183,8 +183,8 @@ if __name__ == '__main__':
         (options, args) = cli.parse()
         sys.exit(cli.run(options, args))
     except AnsibleError as e:
-        display.display("[ERROR]: %s" % e, color='red', stderr=True)
+        display.error(str(e))
         sys.exit(1)
     except KeyboardInterrupt:
-        display.display("[ERROR]: interrupted", color='red', stderr=True)
+        display.error("interrupted")
         sys.exit(1)
