@@ -137,6 +137,6 @@ class Display:
         wrapped = textwrap.wrap(new_msg, 79)
         new_msg = "\n".join(wrapped) + "\n"
         if new_msg not in self._errors:
-            self.display(new_msg, color='bright red', stderr=True)
+            self.display(new_msg, color='red', stderr=True)
             self._errors[new_msg] = 1
 
