@@ -126,8 +126,8 @@ def main():
 
             module.exit_json(
                 changed=True,
-                id=volume.id,
-                attachments=volume.attachments,
+                id=volume['id'],
+                attachments=volume['attachments'],
                 openstack=hostvars
             )
 
