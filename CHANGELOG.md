@@ -4,33 +4,38 @@ Ansible Changes By Release
 ## 2.0 "TBD" - ACTIVE DEVELOPMENT
 
 Major Changes:
-    - big_ip modules now support turning off ssl certificate validation (use only for self signed)
-
-    - template code now retains types for bools and Numbers instead of turning them into strings
-      - If you need the old behaviour, quote the value and it will get passed around as a string
+ * big_ip modules now support turning off ssl certificate validation (use only for self signed)
+ * template code now retains types for bools and Numbers instead of turning them into strings
+   If you need the old behaviour, quote the value and it will get passed around as a string
 
 Deprecated Modules:
-    ec2_ami_search, in favor of the new ec2_ami_find
+  * ec2_ami_search, in favor of the new ec2_ami_find
 
 New Modules:
-    ec2_ami_find
-    cloudtrail
-    cloudstack_fw
-    cloudstack_iso
-    cloudstack_sshkey
-    maven_artifact
-    pushover
-    zabbix_host
-    zabbix_hostmacro
-    zabbix_screen
-    vertica_configuration
-    vertica_facts
-    vertica_role
-    vertica_schema
-    vertica_user
+  * find
+  * ec2_ami_find
+  * cloudtrail
+  * cloudstack: cs_affinitygroup
+  * cloudstack: cs_firewall
+  * cloudstack: cs_iso
+  * cloudstack: cs_sshkeypair
+  * cloudstack: cs_securitygroup
+  * cloudstack: cs_securitygroup_rule
+  * cloudstack: cs_vmsnapshot
+  * maven_artifact
+  * pushover
+  * zabbix_host
+  * zabbix_hostmacro
+  * zabbix_screen
+  * vertica_configuration
+  * vertica_facts
+  * vertica_role
+  * vertica_schema
+  * vertica_user
+  * vmware_datacenter
 
 New Inventory scripts:
-    fleetctl
+  * fleetctl
 
 Other Notable Changes:
 

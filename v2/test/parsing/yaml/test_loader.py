@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import text_type, binary_type
 from six.moves import StringIO
 from collections import Sequence, Set, Mapping
 
@@ -27,6 +28,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 from ansible.parsing.yaml.loader import AnsibleLoader
+
 
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
@@ -52,7 +54,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, u'Ansible')
-        self.assertIsInstance(data, unicode)
+        self.assertIsInstance(data, text_type)
 
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
@@ -63,7 +65,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, u'Cafè Eñyei')
-        self.assertIsInstance(data, unicode)
+        self.assertIsInstance(data, text_type)
 
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
@@ -76,8 +78,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, {'webster': 'daniel', 'oed': 'oxford'})
         self.assertEqual(len(data), 2)
-        self.assertIsInstance(data.keys()[0], unicode)
-        self.assertIsInstance(data.values()[0], unicode)
+        self.assertIsInstance(list(data.keys())[0], text_type)
+        self.assertIsInstance(list(data.values())[0], text_type)
 
         # Beginning of the first key
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
@@ -94,7 +96,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, [u'a', u'b'])
         self.assertEqual(len(data), 2)
-        self.assertIsInstance(data[0], unicode)
+        self.assertIsInstance(data[0], text_type)
 
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
@@ -204,10 +206,10 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def walk(self, data):
         # Make sure there's no str in the data
-        self.assertNotIsInstance(data, str)
+        self.assertNotIsInstance(data, binary_type)
 
         # Descend into various container types
-        if isinstance(data, unicode):
+        if isinstance(data, text_type):
             # strings are a sequence so we have to be explicit here
             return
         elif isinstance(data, (Sequence, Set)):
