@@ -69,6 +69,27 @@ class AnsibleCloudStack:
             self.cs = CloudStack(**read_config())
 
 
+    def _has_changed(self, want_dict, current_dict, only_keys=None):
+        for key, value in want_dict.iteritems():
+
+            # Optionally limit by a list of keys
+            if only_keys and key not in only_keys:
+                continue;
+
+            if key in current_dict:
+
+                # API returns string for int in some cases, just to make sure
+                if isinstance(value, int):
+                    current_dict[key] = int(current_dict[key])
+                elif isinstance(value, str):
+                    current_dict[key] = str(current_dict[key])
+
+                # Only need to detect a singe change, not every item
+                if value != current_dict[key]:
+                    return True
+        return False
+
+
     def _get_by_key(self, key=None, my_dict={}):
         if key:
             if key in my_dict:
