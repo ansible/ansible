@@ -69,6 +69,14 @@ class AnsibleCloudStack:
             self.cs = CloudStack(**read_config())
 
 
+    def _get_by_key(self, key=None, my_dict={}):
+        if key:
+            if key in my_dict:
+                return my_dict[key]
+            self.module.fail_json(msg="Something went wrong: %s not found" % key)
+        return my_dict
+
+
     def get_project_id(self):
         if self.project_id:
             return self.project_id
