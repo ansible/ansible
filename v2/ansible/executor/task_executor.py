@@ -45,11 +45,12 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, connection_info, loader, module_loader):
+    def __init__(self, host, task, job_vars, connection_info, new_stdin, loader, module_loader):
         self._host            = host
         self._task            = task
         self._job_vars        = job_vars
         self._connection_info = connection_info
+        self._new_stdin       = new_stdin
         self._loader          = loader
         self._module_loader   = module_loader
 
@@ -370,7 +371,7 @@ class TaskExecutor:
         if conn_type == 'smart':
             conn_type = 'ssh'
 
-        connection = connection_loader.get(conn_type, self._connection_info)
+        connection = connection_loader.get(conn_type, self._connection_info, self._new_stdin)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 

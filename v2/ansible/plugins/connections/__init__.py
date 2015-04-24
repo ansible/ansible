@@ -43,10 +43,12 @@ class ConnectionBase:
     has_pipelining = False
     become_methods = C.BECOME_METHODS
 
-    def __init__(self, connection_info, *args, **kwargs):
+    def __init__(self, connection_info, new_stdin, *args, **kwargs):
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_connection_info'):
             self._connection_info = connection_info
+        if not hasattr(self, '_new_stdin'):
+            self._new_stdin = new_stdin
         if not hasattr(self, '_display'):
             self._display = Display(verbosity=connection_info.verbosity)
         if not hasattr(self, '_connected'):

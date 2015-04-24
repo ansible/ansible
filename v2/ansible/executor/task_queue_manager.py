@@ -87,21 +87,10 @@ class TaskQueueManager:
 
         self._workers = []
         for i in range(self._options.forks):
-            # duplicate stdin, if possible
-            new_stdin = None
-            if fileno is not None:
-                try:
-                    new_stdin = os.fdopen(os.dup(fileno))
-                except OSError:
-                    # couldn't dupe stdin, most likely because it's
-                    # not a valid file descriptor, so we just rely on
-                    # using the one that was passed in
-                    pass
-
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
 
-            prc = WorkerProcess(self, main_q, rslt_q, loader, new_stdin)
+            prc = WorkerProcess(self, main_q, rslt_q, loader)
             prc.start()
 
             self._workers.append((prc, main_q, rslt_q))

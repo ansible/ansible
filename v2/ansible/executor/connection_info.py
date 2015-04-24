@@ -44,12 +44,13 @@ class ConnectionInformation:
             passwords = {}
 
         # connection
-        self.connection  = None
-        self.remote_addr = None
-        self.remote_user = None
-        self.password    = passwords.get('conn_pass','')
-        self.port        = None
-        self.private_key_file = None
+        self.connection       = None
+        self.remote_addr      = None
+        self.remote_user      = None
+        self.password         = passwords.get('conn_pass','')
+        self.port             = 22
+        self.private_key_file = C.DEFAULT_PRIVATE_KEY_FILE
+        self.timeout          = C.DEFAULT_TIMEOUT
 
         # privilege escalation
         self.become        = None
@@ -119,9 +120,7 @@ class ConnectionInformation:
             self.connection = options.connection
 
         self.remote_user = options.remote_user
-        #if 'port' in options and options.port is not None:
-        #    self.port        = options.port
-        self.private_key_file = None
+        self.private_key_file = options.private_key_file
 
         # privilege escalation
         self.become        = options.become
