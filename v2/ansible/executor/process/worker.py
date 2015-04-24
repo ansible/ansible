@@ -51,7 +51,7 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, tqm, main_q, rslt_q, loader, new_stdin):
+    def __init__(self, tqm, main_q, rslt_q, loader):
 
         # takes a task queue manager as the sole param:
         self._main_q = main_q
@@ -59,23 +59,20 @@ class WorkerProcess(multiprocessing.Process):
         self._loader = loader
 
         # dupe stdin, if we have one
+        self._new_stdin = sys.stdin
         try:
             fileno = sys.stdin.fileno()
+            if fileno is not None:
+                try:
+                    self._new_stdin = os.fdopen(os.dup(fileno))
+                except OSError, e:
+                    # couldn't dupe stdin, most likely because it's
+                    # not a valid file descriptor, so we just rely on
+                    # using the one that was passed in
+                    pass
         except ValueError:
-            fileno = None
-
-        self._new_stdin = new_stdin
-        if not new_stdin and fileno is not None:
-            try:
-                self._new_stdin = os.fdopen(os.dup(fileno))
-            except OSError, e:
-                # couldn't dupe stdin, most likely because it's
-                # not a valid file descriptor, so we just rely on
-                # using the one that was passed in
-                pass
-
-        if self._new_stdin:
-            sys.stdin = self._new_stdin
+            # couldn't get stdin's fileno, so we just carry on
+            pass
 
         super(WorkerProcess, self).__init__()
 
@@ -118,7 +115,7 @@ class WorkerProcess(multiprocessing.Process):
 
                     # execute the task and build a TaskResult from the result
                     debug("running TaskExecutor() for %s/%s" % (host, task))
-                    executor_result = TaskExecutor(host, task, job_vars, new_connection_info, self._loader, module_loader).run()
+                    executor_result = TaskExecutor(host, task, job_vars, new_connection_info, self._new_stdin, self._loader, module_loader).run()
                     debug("done running TaskExecutor() for %s/%s" % (host, task))
                     task_result = TaskResult(host, task, executor_result)
 

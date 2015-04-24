@@ -50,7 +50,7 @@ class Connection(ConnectionBase):
         self._cp_dir = '/tmp'
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
-        super(Connection, self).__init__(connection_info)
+        super(Connection, self).__init__(connection_info, *args, **kwargs)
 
     @property
     def transport(self):
