@@ -77,7 +77,7 @@ class AnsibleCloudStack:
         if not project:
             return None
 
-        projects = self.cs.listProjects()
+        projects = self.cs.listProjects(listall=True)
         if projects:
             for p in projects['project']:
                 if project in [ p['name'], p['displaytext'], p['id'] ]:
