@@ -51,9 +51,10 @@ options:
       - Start port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
     required: false
     default: null
+    aliases: [ 'port' ]
   end_port:
     description:
-      - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
+      - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp). If not specified, equal C(start_port).
     required: false
     default: null
   icmp_type:
@@ -80,8 +81,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_firewall
     ip_address: 4.3.2.1
-    start_port: 80
-    end_port: 80
+    port: 80
     cidr: 1.2.3.4/32
 
 
@@ -89,8 +89,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_firewall
     ip_address: 4.3.2.1
-    start_port: 53
-    end_port: 53
+    port: 53
     protocol: '{{ item }}'
   with_items:
   - tcp
@@ -127,12 +126,18 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
         self.firewall_rule = None
 
 
+    def get_end_port(self):
+        if self.module.params.get('end_port'):
+            return self.module.params.get('end_port')
+        return self.module.params.get('start_port')
+
+
     def get_firewall_rule(self):
         if not self.firewall_rule:
             cidr = self.module.params.get('cidr')
             protocol = self.module.params.get('protocol')
             start_port = self.module.params.get('start_port')
-            end_port = self.module.params.get('end_port')
+            end_port = self.get_end_port()
             icmp_code = self.module.params.get('icmp_code')
             icmp_type = self.module.params.get('icmp_type')
 
@@ -186,7 +191,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             args['cidrlist'] = self.module.params.get('cidr')
             args['protocol'] = self.module.params.get('protocol')
             args['startport'] = self.module.params.get('start_port')
-            args['endport'] = self.module.params.get('end_port')
+            args['endport'] = self.get_end_port()
             args['icmptype'] = self.module.params.get('icmp_type')
             args['icmpcode'] = self.module.params.get('icmp_code')
             args['ipaddressid'] = self.get_ip_address_id()
@@ -217,12 +222,12 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            ip_address = dict(required=True, default=None),
+            ip_address = dict(required=True),
             cidr = dict(default='0.0.0.0/0'),
             protocol = dict(choices=['tcp', 'udp', 'icmp'], default='tcp'),
             icmp_type = dict(type='int', default=None),
             icmp_code = dict(type='int', default=None),
-            start_port = dict(type='int', default=None),
+            start_port = dict(type='int', aliases=['port'], default=None),
             end_port = dict(type='int', default=None),
             state = dict(choices=['present', 'absent'], default='present'),
             project = dict(default=None),
@@ -230,9 +235,6 @@ def main():
             api_secret = dict(default=None),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
-        ),
-        required_together = (
-            ['start_port', 'end_port'],
         ),
         mutually_exclusive = (
             ['icmp_type', 'start_port'],
