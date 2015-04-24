@@ -153,7 +153,9 @@ def bucket_check(module, s3, bucket):
     else:
         return False
 
-def create_bucket(module, s3, bucket, location=Location.DEFAULT):
+def create_bucket(module, s3, bucket, location=None):
+    if location is None:
+        location = Location.DEFAULT
     try:
         bucket = s3.create_bucket(bucket, location=location)
     except s3.provider.storage_response_error, e:
