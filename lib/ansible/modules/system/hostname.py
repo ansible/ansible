@@ -425,6 +425,11 @@ class GentooHostname(Hostname):
     distribution = 'Gentoo base system'
     strategy_class = OpenRCStrategy
 
+class ALTLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Altlinux'
+    strategy_class = RedHatStrategy
+
 # ===========================================
 
 def main():
