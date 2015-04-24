@@ -44,11 +44,11 @@ class AnsibleCloudStack:
         self.module = module
         self._connect()
 
-        self.project_id = None
-        self.ip_address_id = None
-        self.zone_id = None
-        self.vm_id = None
-        self.os_type_id = None
+        self.project = None
+        self.ip_address = None
+        self.zone = None
+        self.vm = None
+        self.os_type = None
         self.hypervisor = None
 
 
@@ -77,9 +77,14 @@ class AnsibleCloudStack:
         return my_dict
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_project_id(self):
-        if self.project_id:
-            return self.project_id
+        return get_project(key='id')
+
+
+    def get_project(self, key=None):
+        if self.project:
+            return self._get_by_key(key, self.project)
 
         project = self.module.params.get('project')
         if not project:
@@ -89,14 +94,19 @@ class AnsibleCloudStack:
         if projects:
             for p in projects['project']:
                 if project in [ p['name'], p['displaytext'], p['id'] ]:
-                    self.project_id = p['id']
-                    return self.project_id
+                    self.project = p
+                    return self._get_by_key(key, self.project)
         self.module.fail_json(msg="project '%s' not found" % project)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_ip_address_id(self):
-        if self.ip_address_id:
-            return self.ip_address_id
+        return get_ip_address(key='id')
+
+
+    def get_ip_address(self, key=None):
+        if self.ip_address:
+            return self._get_by_key(key, self.ip_address)
 
         ip_address = self.module.params.get('ip_address')
         if not ip_address:
@@ -104,58 +114,73 @@ class AnsibleCloudStack:
 
         args = {}
         args['ipaddress'] = ip_address
-        args['projectid'] = self.get_project_id()
+        args['projectid'] = self.get_project(key='id')
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if not ip_addresses:
             self.module.fail_json(msg="IP address '%s' not found" % args['ipaddress'])
 
-        self.ip_address_id = ip_addresses['publicipaddress'][0]['id']
-        return self.ip_address_id
+        self.ip_address = ip_addresses['publicipaddress'][0]
+        return self._get_by_key(key, self.ip_address)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_vm_id(self):
-        if self.vm_id:
-            return self.vm_id
+        return get_vm(key='id')
+
+
+    def get_vm(self, key=None):
+        if self.vm:
+            return self._get_by_key(key, self.vm)
 
         vm = self.module.params.get('vm')
         if not vm:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
         args = {}
-        args['projectid'] = self.get_project_id()
+        args['projectid'] = self.get_project(key='id')
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
-                if vm in [ v['displayname'], v['name'], v['id'] ]:
-                    self.vm_id = v['id']
-                    return self.vm_id
+                if vm in [ v['name'], v['displayname'], v['id'] ]:
+                    self.vm = v
+                    return self._get_by_key(key, self.vm)
         self.module.fail_json(msg="Virtual machine '%s' not found" % vm)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_zone_id(self):
-        if self.zone_id:
-            return self.zone_id
+        return get_zone(key='id')
+
+
+    def get_zone(self, key=None):
+        if self.zone:
+            return self._get_by_key(key, self.zone)
 
         zone = self.module.params.get('zone')
         zones = self.cs.listZones()
 
         # use the first zone if no zone param given
         if not zone:
-            self.zone_id = zones['zone'][0]['id']
-            return self.zone_id
+            self.zone = zones['zone'][0]
+            return self._get_by_key(key, self.zone)
 
         if zones:
             for z in zones['zone']:
                 if zone in [ z['name'], z['id'] ]:
-                    self.zone_id = z['id']
-                    return self.zone_id
+                    self.zone = z
+                    return self._get_by_key(key, self.zone)
         self.module.fail_json(msg="zone '%s' not found" % zone)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_os_type_id(self):
-        if self.os_type_id:
-            return self.os_type_id
+        return get_os_type(key='id')
+
+
+    def get_os_type(self, key=None):
+        if self.os_type:
+            return self._get_by_key(key, self.zone)
 
         os_type = self.module.params.get('os_type')
         if not os_type:
@@ -165,8 +190,8 @@ class AnsibleCloudStack:
         if os_types:
             for o in os_types['ostype']:
                 if os_type in [ o['description'], o['id'] ]:
-                    self.os_type_id = o['id']
-                    return self.os_type_id
+                    self.os_type = o
+                    return self._get_by_key(key, self.os_type)
         self.module.fail_json(msg="OS type '%s' not found" % os_type)
 
 
