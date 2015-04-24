@@ -100,7 +100,7 @@ class AnsibleCloudStack:
 
     # TODO: for backward compatibility only, remove if not used anymore
     def get_project_id(self):
-        return get_project(key='id')
+        return self.get_project(key='id')
 
 
     def get_project(self, key=None):
@@ -122,7 +122,7 @@ class AnsibleCloudStack:
 
     # TODO: for backward compatibility only, remove if not used anymore
     def get_ip_address_id(self):
-        return get_ip_address(key='id')
+        return self.get_ip_address(key='id')
 
 
     def get_ip_address(self, key=None):
@@ -147,7 +147,7 @@ class AnsibleCloudStack:
 
     # TODO: for backward compatibility only, remove if not used anymore
     def get_vm_id(self):
-        return get_vm(key='id')
+        return self.get_vm(key='id')
 
 
     def get_vm(self, key=None):
@@ -171,7 +171,7 @@ class AnsibleCloudStack:
 
     # TODO: for backward compatibility only, remove if not used anymore
     def get_zone_id(self):
-        return get_zone(key='id')
+        return self.get_zone(key='id')
 
 
     def get_zone(self, key=None):
@@ -196,7 +196,7 @@ class AnsibleCloudStack:
 
     # TODO: for backward compatibility only, remove if not used anymore
     def get_os_type_id(self):
-        return get_os_type(key='id')
+        return self.get_os_type(key='id')
 
 
     def get_os_type(self, key=None):
