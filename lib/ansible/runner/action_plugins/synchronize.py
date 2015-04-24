@@ -19,6 +19,7 @@
 import os.path
 
 from ansible import utils
+from ansible import constants
 from ansible.runner.return_data import ReturnData
 import ansible.utils.template as template
 
@@ -104,9 +105,11 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
+        use_ssh_args = options.pop('use_ssh_args', None)
 
         src = template.template(self.runner.basedir, src, inject)
         dest = template.template(self.runner.basedir, dest, inject)
+        use_ssh_args = template.template(self.runner.basedir, use_ssh_args, inject)
 
         try:
             options['local_rsync_path'] = inject['ansible_rsync_path']
@@ -187,6 +190,8 @@ class ActionModule(object):
         options['dest'] = dest
         if 'mode' in options:
             del options['mode']
+        if use_ssh_args:
+            options['ssh_args'] = constants.ANSIBLE_SSH_ARGS
 
         # Allow custom rsync path argument.
         rsync_path = options.get('rsync_path', None)
