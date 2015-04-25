@@ -50,6 +50,7 @@ class AnsibleCloudStack:
         self.vm = None
         self.os_type = None
         self.hypervisor = None
+        self.capabilities = None
 
 
     def _connect(self):
@@ -233,6 +234,14 @@ class AnsibleCloudStack:
                 self.hypervisor = h['name']
                 return self.hypervisor
         self.module.fail_json(msg="Hypervisor '%s' not found" % hypervisor)
+
+
+    def get_capabilities(self, key=None):
+        if self.capabilities:
+            return self._get_by_key(key, self.capabilities)
+        capabilities = self.cs.listCapabilities()
+        self.capabilities = capabilities['capability']
+        return self._get_by_key(key, self.capabilities)
 
 
     def _poll_job(self, job=None, key=None):
