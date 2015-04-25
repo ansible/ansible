@@ -38,6 +38,8 @@ class CallbackModule(CallbackBase):
         pass
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
+        if 'exception' in result._result and self._display.verbosity < 3:
+            del result._result['exception']
         self._display.display("%s | FAILED! => %s" % (result._host.get_name(), result._result), color='red')
 
     def v2_runner_on_ok(self, result):
