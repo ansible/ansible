@@ -694,9 +694,7 @@ class Ec2Inventory(object):
                 instance_vars['ec2_previous_state_code'] = instance.previous_state_code
             elif type(value) in [int, bool]:
                 instance_vars[key] = value
-            elif six.PY2 and type(value) in [str, unicode]:
-                instance_vars[key] = value.strip()
-            elif six.PY3 and type(value) in [str]:
+            elif isinstance(value, six.string_types):
                 instance_vars[key] = value.strip()
             elif type(value) == type(None):
                 instance_vars[key] = ''
