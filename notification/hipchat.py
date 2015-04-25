@@ -96,6 +96,11 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
 
     url = api + "?auth_token=%s" % (token)
     data = urllib.urlencode(params)
+
+    if module.check_mode:
+        # In check mode, exit before actually sending the message
+        module.exit_json(changed=False)
+
     response, info = fetch_url(module, url, data=data)
     if info['status'] == 200:
         return response.read()
@@ -119,8 +124,8 @@ def main():
                                                   "purple", "gray", "random"]),
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
-            validate_certs = dict(default='yes', type='bool'),
-            api = dict(default=MSG_URI),
+            validate_certs=dict(default='yes', type='bool'),
+            api=dict(default=MSG_URI),
         ),
         supports_check_mode=True
     )
