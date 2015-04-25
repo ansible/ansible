@@ -122,7 +122,13 @@ import boto
 from boto import ec2
 from boto import rds
 from boto import route53
-import ConfigParser
+import six
+
+try:
+    import ConfigParser as configparser
+except:
+    import configparser
+
 from collections import defaultdict
 
 try:
@@ -166,7 +172,7 @@ class Ec2Inventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        print(data_to_print)
 
 
     def is_cache_valid(self):
@@ -184,8 +190,10 @@ class Ec2Inventory(object):
 
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
-
-        config = ConfigParser.SafeConfigParser()
+        if six.PY2:
+            config = configparser.SafeConfigParser()
+        else:
+            config = configparser.ConfigParser()
         ec2_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
         ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
         config.read(ec2_ini_path)
@@ -282,7 +290,7 @@ class Ec2Inventory(object):
                 self.pattern_include = re.compile(pattern_include)
             else:
                 self.pattern_include = None
-        except ConfigParser.NoOptionError, e:
+        except configparser.NoOptionError as e:
             self.pattern_include = None
 
         # Do we need to exclude hosts that match a pattern?
@@ -292,7 +300,7 @@ class Ec2Inventory(object):
                 self.pattern_exclude = re.compile(pattern_exclude)
             else:
                 self.pattern_exclude = None
-        except ConfigParser.NoOptionError, e:
+        except configparser.NoOptionError as e:
             self.pattern_exclude = None
 
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
@@ -354,7 +362,7 @@ class Ec2Inventory(object):
             conn = self.connect(region)
             reservations = []
             if self.ec2_instance_filters:
-                for filter_key, filter_values in self.ec2_instance_filters.iteritems():
+                for filter_key, filter_values in self.ec2_instance_filters.items():
                     reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
             else:
                 reservations = conn.get_all_instances()
@@ -363,7 +371,7 @@ class Ec2Inventory(object):
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
 
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
@@ -381,7 +389,7 @@ class Ec2Inventory(object):
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
                     self.add_rds_instance(instance, region)
-        except boto.exception.BotoServerError, e:
+        except boto.exception.BotoServerError as e:
             error = e.reason
             
             if e.error_code == 'AuthFailure':
@@ -515,7 +523,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
-            for k, v in instance.tags.iteritems():
+            for k, v in instance.tags.items():
                 key = self.to_safe("tag_" + k + "=" + v)
                 self.push(self.inventory, key, dest)
                 if self.nested_groups:
@@ -690,7 +698,9 @@ class Ec2Inventory(object):
                 instance_vars['ec2_previous_state_code'] = instance.previous_state_code
             elif type(value) in [int, bool]:
                 instance_vars[key] = value
-            elif type(value) in [str, unicode]:
+            elif six.PY2 and type(value) in [str, unicode]:
+                instance_vars[key] = value.strip()
+            elif six.PY3 and type(value) in [str]:
                 instance_vars[key] = value.strip()
             elif type(value) == type(None):
                 instance_vars[key] = ''
@@ -699,7 +709,7 @@ class Ec2Inventory(object):
             elif key == 'ec2__placement':
                 instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
-                for k, v in value.iteritems():
+                for k, v in value.items():
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
             elif key == 'ec2_groups':
