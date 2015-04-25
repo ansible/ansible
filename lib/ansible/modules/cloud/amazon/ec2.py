@@ -1195,7 +1195,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list', aliases=['instance_id']),
             source_dest_check = dict(type='bool', default=True),
-            state = dict(default='present'),
+            state = dict(default='present', choices=['present', 'absent', 'running', 'stopped']),
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
