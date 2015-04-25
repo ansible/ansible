@@ -124,11 +124,7 @@ from boto import rds
 from boto import route53
 import six
 
-try:
-    import ConfigParser as configparser
-except:
-    import configparser
-
+from six.moves import configparser
 from collections import defaultdict
 
 try:
