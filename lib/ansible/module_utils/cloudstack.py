@@ -161,6 +161,7 @@ class AnsibleCloudStack:
 
         args = {}
         args['projectid'] = self.get_project(key='id')
+        args['zoneid'] = self.get_zone(key='id')
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
