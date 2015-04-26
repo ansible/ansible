@@ -39,35 +39,73 @@ options:
             node name or session id is required as parameter.
         required: false
         choices: ['present', 'absent', 'info', 'node', 'list']
+        default: present
     name:
         description:
           - the name that should be associated with the session. This is opaque
             to Consul and not required.
         required: false
+        default: None
     delay:
         description:
           - the optional lock delay that can be attached to the session when it
             is created. Locks for invalidated sessions ar blocked from being
             acquired until this delay has expired.
         default: 15s
+        required: false
     node:
         description:
           - the name of the node that with which the session will be associated.
             by default this is the name of the agent.
+        required: false
+        default: None
     datacenter:
         description:
           - name of the datacenter in which the session exists or should be
             created.
+        required: false
+        default: None
     checks:
         description:
           - a list of checks that will be used to verify the session health. If
             all the checks fail, the session will be invalidated and any locks
             associated with the session will be release and can be acquired once
             the associated lock delay has expired.
+        required: false
+        default: None
+    host:
+        description:
+          - host of the consul agent defaults to localhost
+        required: false
+        default: localhost
+    port:
+        description:
+          - the port on which the consul agent is running
+        required: false
+        default: 8500
 """
 
 EXAMPLES = '''
+- name: register basic session with consul
+  consul_session:
+    name: session1
+    
+- name: register a session with an existing check
+  consul_session:
+    name: session_with_check
+    checks:
+      - existing_check_name
 
+- name: register a session with lock_delay
+  consul_session:
+    name: session_with_delay
+    delay: 20
+
+- name: retrieve info about session by id
+  consul_session: id=session_id state=info
+
+- name: retrieve active sessions
+  consul_session: state=list
 '''
 
 import sys
