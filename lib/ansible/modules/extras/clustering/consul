@@ -24,19 +24,19 @@ short_description: "Add, modify & delete services within a consul cluster.
 description:
  - registers services and checks for an agent with a consul cluster. A service
    is some process running on the agent node that should be advertised by
-   consul's discovery mechanism. It  may optionally supply a check definition
-   that will be used to notify the consul cluster of the health of the service.
+   consul's discovery mechanism. It may optionally supply a check definition,
+   a periodic service test to notify the consul cluster of service's health.
    Checks may also be registered per node e.g. disk usage, or cpu usage and
    notify the health of the entire node to the cluster.
    Service level checks do not require a check name or id as these are derived
    by Consul from the Service name and id respectively by appending 'service:'.
-   Node level checks require a check_name and optionally a check_id Currently,
-   there is no complete way to retrieve the script, interval or ttl metadata for
-   a registered check. Without this metadata it is  not possible to tell if
-   the data supplied with ansible represents a change to a check. As a result
-   this does not attempt to determine changes and will always report a changed
-   occurred. An api method is planned to supply this metadata so at that stage
-   change management will be added.
+   Node level checks require a check_name and optionally a check_id. 
+   Currently, there is no complete way to retrieve the script, interval or ttl 
+   metadata for a registered check. Without this metadata it is  not possible to
+   tell if the data supplied with ansible represents a change to a check. As a 
+   result this does not attempt to determine changes and will always report a 
+   changed occurred. An api method is planned to supply this metadata so at that
+   stage change management will be added.
 version_added: "1.9"
 author: Steve Gargan (steve.gargan@gmail.com)
 options:
@@ -45,71 +45,105 @@ options:
           - register or deregister the consul service, defaults to present
         required: true
         choices: ['present', 'absent']
-    service_id:
-        description:
-          - the ID for the service, must be unique per node, defaults to the
-            service name
-        required: false
-    host:
-        description:
-          - host of the consul agent with which to register the service,
-            defaults to localhost
-        required: false
-    notes:
-        description:
-          - Notes to attach to check when registering it.
     service_name:
         desciption:
           - Unique name for the service on a node, must be unique per node,
             required if registering a service. May be ommitted if registering
             a node level check
         required: false
+    service_id:
+        description:
+          - the ID for the service, must be unique per node, defaults to the
+            service name if the service name is supplied
+        required: false
+        default: service_name if supplied
+    host:
+        description:
+          - host of the consul agent defaults to localhost
+        required: false
+        default: localhost
+    port:
+        description:
+          - the port on which the consul agent is running
+        required: false
+        default: 8500
+    notes:
+        description:
+          - Notes to attach to check when registering it.
+        required: false
+        default: None
     service_port:
         description:
           - the port on which the service is listening required for
-            registration of a service.
-        required: true
+            registration of a service, i.e. if service_name or service_id is set
+        required: false
     tags:
         description:
           - a list of tags that will be attached to the service registration.
         required: false
+        default: None
     script:
         description:
           - the script/command that will be run periodically to check the health
-            of the service
+            of the service. Scripts require an interval and vise versa
         required: false
+        default: None
     interval:
         description:
-          - the interval at which the service check will be run. This is by
-            convention a number with a s or m to signify the units of seconds
-            or minutes. if none is supplied, m will be appended
+          - the interval at which the service check will be run. This is a number
+            with a s or m suffix to signify the units of seconds or minutes e.g 
+            15s or 1m. If no suffix is supplied, m will be used by default e.g. 
+            1 will be 1m. Required if the script param is specified.
+        required: false
+        default: None    
     check_id:
         description:
           - an ID for the service check, defaults to the check name, ignored if
-            part of service definition.
+            part of a service definition.
+        required: false
+        default: None
     check_name:
         description:
           - a name for the service check, defaults to the check id. required if
             standalone, ignored if part of service definition.
+        required: false
+        default: None
+    ttl:
+        description: 
+          - checks can be registered with a ttl instead of a script and interval
+            this means that the service will check in with the agent before the
+            ttl expires. If it doesn't the check will be considered failed. 
+            Required if registering a check and the script an interval are missing
+            Similar to the interval this is a number with a s or m suffix to 
+            signify the units of seconds or minutes e.g 15s or 1m. If no suffix 
+            is supplied, m will be used by default e.g. 1 will be 1m
+        required: false
+        default: None
+    token:
+        description:
+          - the token key indentifying an ACL rule set. May be required to 
+            register services.
+        required: false
+        default: None
 """
 
 EXAMPLES = '''
   - name: register nginx service with the local consul agent
     consul:
       name: nginx
-      port: 80
+      service_port: 80
 
   - name: register nginx service with curl check
     consul:
       name: nginx
-      port: 80
+      service_port: 80
       script: "curl http://localhost"
       interval: 60s
 
   - name: register nginx with some service tags
     consul:
       name: nginx
-      port: 80
+      service_port: 80
       tags:
         - prod
         - webservers
@@ -432,23 +466,22 @@ class ConsulCheck():
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            host=dict(default='localhost'),
+            port=dict(default=8500, type='int'),
             check_id=dict(required=False),
             check_name=dict(required=False),
-            host=dict(default='localhost'),
-            interval=dict(required=False, type='str'),
-            ttl=dict(required=False, type='str'),
             check_node=dict(required=False),
             check_host=dict(required=False),
             notes=dict(required=False),
-            port=dict(default=8500, type='int'),
             script=dict(required=False),
             service_id=dict(required=False),
             service_name=dict(required=False),
             service_port=dict(required=False, type='int'),
             state=dict(default='present', choices=['present', 'absent']),
+            interval=dict(required=False, type='str'),
+            ttl=dict(required=False, type='str'),
             tags=dict(required=False, type='list'),
-            token=dict(required=False),
-            url=dict(default='http://localhost:8500')
+            token=dict(required=False)
         ),
         supports_check_mode=False,
     )

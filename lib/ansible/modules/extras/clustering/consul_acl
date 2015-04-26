@@ -22,7 +22,8 @@ module: consul_acl
 short_description: "manipulate consul acl keys and rules"
 description:
  - allows the addition, modification and deletion of ACL keys and associated
-   rules in a consul cluster via the agent.
+   rules in a consul cluster via the agent. For more details on using and 
+   configuring ACLs, see https://www.consul.io/docs/internals/acl.html
 version_added: "1.9"
 author: Steve Gargan (steve.gargan@gmail.com)
 options:
@@ -53,6 +54,16 @@ options:
         description:
           - an list of the rules that should be associated with a given key/token.
         required: false
+    host:
+        description:
+          - host of the consul agent defaults to localhost
+        required: false
+        default: localhost
+    port:
+        description:
+          - the port on which the consul agent is running
+        required: false
+        default: 8500
 """
 
 EXAMPLES = '''
