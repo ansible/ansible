@@ -29,6 +29,7 @@ except ImportError:
     from sha import sha as sha1
 
 from ansible import constants as C
+from ansible.errors import *
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -78,14 +79,19 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
+    def _validate_both_dicts(self, a, b):
+        '''
+        Validates that both arguments are dictionaries, or an error is raised.
+        '''
+        if not (isinstance(a, dict) and isinstance(b, dict)):
+            raise AnsibleError("failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__))
+
     def _combine_vars(self, a, b):
         '''
         Combines dictionaries of variables, based on the hash behavior
         '''
 
-        # FIXME: do we need this from utils, or should it just
-        #        be merged into this definition?
-        #_validate_both_dicts(a, b)
+        self._validate_both_dicts(a, b)
 
         if C.DEFAULT_HASH_BEHAVIOUR == "merge":
             return self._merge_dicts(a, b)
@@ -100,9 +106,7 @@ class VariableManager:
 
         result = dict()
 
-        # FIXME: do we need this from utils, or should it just
-        #        be merged into this definition?
-        #_validate_both_dicts(a, b)
+        self._validate_both_dicts(a, b)
 
         for dicts in a, b:
             # next, iterate over b keys and values
@@ -183,6 +187,8 @@ class VariableManager:
                 try:
                     vars_file = templar.template(vars_file)
                     data = loader.load_from_file(vars_file)
+                    if data is None:
+                        data = dict()
                     all_vars = self._combine_vars(all_vars, data)
                 except:
                     # FIXME: get_vars should probably be taking a flag to determine
@@ -258,6 +264,8 @@ class VariableManager:
 
         else:
             data = loader.load_from_file(path)
+            if data is None:
+                data = dict()
 
         name = self._get_inventory_basename(path)
         return (name, data)

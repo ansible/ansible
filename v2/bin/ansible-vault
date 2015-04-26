@@ -34,7 +34,7 @@ import sys
 import traceback
 
 from ansible.errors import AnsibleError
-from ansible.utils.vault import VaultEditor
+from ansible.parsing.vault import VaultEditor
 from ansible.utils.cli import base_parser, ask_vault_passwords
 
 #-------------------------------------------------------------------------------------
