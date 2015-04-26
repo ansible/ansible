@@ -88,12 +88,12 @@ class Cli(object):
             options.ask_pass = False
 
         sshpass    = None
-        becomepass    = None
+        becomepass = None
         vault_pass = None
 
         normalize_become_options(options)
         (sshpass, becomepass, vault_pass) = ask_passwords(options)
-        passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+        passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         if options.vault_password_file:
         # read vault_pass from a file
@@ -114,7 +114,7 @@ class Cli(object):
                 self.display.display('    %s' % host.name)
             sys.exit(0)
 
-        if ((options.module_name == 'command' or options.module_name == 'shell') and not options.module_args):
+        if (options.module_name == 'command' or options.module_name == 'shell') and not options.module_args:
             raise AnsibleError("No argument passed to %s module" % options.module_name)
 
         # FIXME: async support needed
@@ -127,9 +127,9 @@ class Cli(object):
 
         # create a pseudo-play to execute the specified module via a single task
         play_ds = dict(
-            hosts = pattern,
-            gather_facts = 'no',
-            tasks = [
+            hosts=pattern,
+            gather_facts='no',
+            tasks=[
                 dict(action=dict(module=options.module_name, args=parse_kv(options.module_args))),
             ]
         )

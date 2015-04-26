@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import subprocess
+from six import binary_type
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -43,11 +44,11 @@ def read_vault_file(vault_password_file):
         except OSError as e:
             raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
         stdout, stderr = p.communicate()
-        vault_pass = stdout.strip('\r\n')
+        vault_pass = stdout.strip('\r\n')  # TODO: fix to bytes type
     else:
         try:
             f = open(this_path, "rb")
-            vault_pass=f.read().strip()
+            vault_pass = f.read().strip()
             f.close()
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))

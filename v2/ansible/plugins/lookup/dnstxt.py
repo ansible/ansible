@@ -45,7 +45,7 @@ class LookupModule(LookupBase):
             raise AnsibleError("Can't LOOKUP(dnstxt): module dns.resolver is not installed")
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
         ret = []
         for term in terms:
