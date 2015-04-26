@@ -31,6 +31,10 @@ options:
       - Unique Name of the snapshot. In CloudStack terms C(displayname).
     required: true
     aliases: ['displayname']
+  vm:
+    description:
+      - Name of the virtual machine.
+    required: true
   description:
     description:
       - Description of the snapshot.
