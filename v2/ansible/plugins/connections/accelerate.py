@@ -26,8 +26,9 @@ import struct
 import time
 from ansible.callbacks import vvv, vvvv
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
-from ansible.runner.connection_plugins.paramiko_ssh import Connection as ParamikoConnection
+from . import ConnectionBase
+from .ssh import Connection as SSHConnection
+from .paramiko_ssh import Connection as ParamikoConnection
 from ansible import utils
 from ansible import constants
 
@@ -38,7 +39,7 @@ from ansible import constants
 # multiple of the value to speed up file reads.
 CHUNK_SIZE=1044*20
 
-class Connection(object):
+class Connection(ConnectionBase):
     ''' raw socket accelerated connection '''
 
     def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
@@ -90,6 +91,11 @@ class Connection(object):
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
             utils.AES_KEYS = self.runner.aes_keys
+
+    @property
+    def transport(self):
+        """String used to identify this Connection class from other classes"""
+        return 'accelerate'
 
     def _execute_accelerate_module(self):
         args = "password=%s port=%s minutes=%d debug=%d ipv6=%s" % (
