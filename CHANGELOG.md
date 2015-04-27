@@ -14,6 +14,10 @@ Deprecated Modules:
 New Modules:
   * find
   * ec2_ami_find
+  * consul
+  * consul_acl
+  * consul_kv
+  * consul_session
   * cloudtrail
   * cloudstack: cs_affinitygroup
   * cloudstack: cs_firewall
