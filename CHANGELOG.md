@@ -9,13 +9,15 @@ New Modules:
 
 Other Notable Changes:
 
-## 1.9.1 "Dancing In the Street" -  TBD
+## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
+* Fixed a bug related to Kerberos auth when using winrm with a domain account.
 * Fixing several bugs in the s3 module.
 * Fixed a bug with upstart service detection in the service module.
 * Fixed several bugs with the user module when used on OSX.
 * Fixed unicode handling in some module situations (assert and shell/command execution).
 * Fixed a bug in redhat_subscription when using the activationkey parameter.
+* Fixed a traceback in the gce module on EL6 distros when multiple pycrypto installations are available.
 * Added support for PostgreSQL 9.4 in rds_param_group
 * Several other minor fixes.
 
