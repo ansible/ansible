@@ -23,7 +23,8 @@ import os
 import re
 import shlex
 import traceback
-import urlparse
+
+from six.moves.urllib import parse
 
 try:
     from winrm import Response
@@ -90,7 +91,7 @@ class Connection(ConnectionBase):
             else:
                 realm = None
 
-            endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
+            endpoint = parse.urlunsplit((scheme, netloc, '/wsman', '', ''))
 
             self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._connection_info.remote_addr)
             protocol = Protocol(
