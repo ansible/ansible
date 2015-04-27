@@ -162,12 +162,12 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
         group_id = rule['group_id']
     elif 'group_name' in rule:
         group_name = rule['group_name']
-        if group_name in groups:
-            group_id = groups[group_name].id
-        elif group_name == name:
+        if group_name == name:
             group_id = group.id
             groups[group_id] = group
             groups[group_name] = group
+        elif group_name in groups:
+            group_id = groups[group_name].id
         else:
             if not rule.get('group_desc', '').strip():
                 module.fail_json(msg="group %s will be automatically created by rule %s and no description was provided" % (group_name, rule))
