@@ -228,17 +228,20 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
                and cidr == rule['cidr']
 
 
+    def get_end_port(self):
+        if self.module.params.get('end_port'):
+            return self.module.params.get('end_port')
+        return self.module.params.get('start_port')
+
+
     def _get_rule(self, rules):
         user_security_group_name = self.module.params.get('user_security_group')
         cidr                     = self.module.params.get('cidr')
         protocol                 = self.module.params.get('protocol')
         start_port               = self.module.params.get('start_port')
-        end_port                 = self.module.params.get('end_port')
+        end_port                 = self.get_end_port()
         icmp_code                = self.module.params.get('icmp_code')
         icmp_type                = self.module.params.get('icmp_type')
-
-        if not end_port:
-            end_port = start_port
 
         if protocol in ['tcp', 'udp'] and not (start_port and end_port):
             self.module.fail_json(msg="no start_port or end_port set for protocol '%s'" % protocol)
@@ -294,14 +297,11 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         args['protocol']        = self.module.params.get('protocol')
         args['startport']       = self.module.params.get('start_port')
-        args['endport']         = self.module.params.get('end_port')
+        args['endport']         = self.get_end_port()
         args['icmptype']        = self.module.params.get('icmp_type')
         args['icmpcode']        = self.module.params.get('icmp_code')
         args['projectid']       = self.get_project_id()
         args['securitygroupid'] = security_group['id']
-
-        if not args['endport']:
-            args['endport'] = args['startport']
 
         rule = None
         res  = None
