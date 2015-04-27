@@ -56,22 +56,12 @@ class ActionBase:
 
     def get_shell(self):
 
-        # FIXME: no more inject, get this from the host variables?
-        #default_shell = getattr(self._connection, 'default_shell', '')
-        #shell_type = inject.get('ansible_shell_type')
-        #if not shell_type:
-        #    if default_shell:
-        #        shell_type = default_shell
-        #    else:
-        #        shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
-
-        shell_type = getattr(self._connection, 'default_shell', '')
-        if not shell_type:
-            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
-
-        shell_plugin = shell_loader.get(shell_type)
-        if shell_plugin is None:
-            shell_plugin = shell_loader.get('sh')
+        if hasattr(self._connection, '_shell'):
+            shell_plugin = getattr(self._connection, '_shell', '')
+        else:
+            shell_plugin = shell_loader.get(os.path.basename(C.DEFAULT_EXECUTABLE))
+            if shell_plugin is None:
+                shell_plugin = shell_loader.get('sh')
 
         return shell_plugin
 

@@ -23,17 +23,13 @@ import re
 import shlex
 import traceback
 import urlparse
-from ansible import errors
-from ansible import utils
-from ansible.callbacks import vvv, vvvv, verbose
-from ansible.runner.shell_plugins import powershell
 
 try:
     from winrm import Response
     from winrm.exceptions import WinRMTransportError
     from winrm.protocol import Protocol
 except ImportError:
-    raise errors.AnsibleError("winrm is not installed")
+    raise AnsibleError("winrm is not installed")
 
 HAVE_KERBEROS = False
 try:
@@ -42,10 +38,12 @@ try:
 except ImportError:
     pass
 
-def vvvvv(msg, host=None):
-    verbose(msg, host=host, caplevel=4)
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.plugins.connections import ConnectionBase
+from ansible.plugins import shell_loader
 
-class Connection(object):
+class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
     transport_schemes = {
@@ -53,69 +51,79 @@ class Connection(object):
         'https': [('kerberos', 'https'), ('plaintext', 'https')],
         }
 
-    def __init__(self,  runner, host, port, user, password, *args, **kwargs):
-        self.runner = runner
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.has_pipelining = False
-        self.default_shell = 'powershell'
-        self.default_suffixes = ['.ps1', '']
-        self.protocol = None
-        self.shell_id = None
-        self.delegate = None
+    def __init__(self,  *args, **kwargs):
 
-        # Add runas support
-        #self.become_methods_supported=['runas']
+        self.has_pipelining   = False
+        self.default_suffixes = ['.ps1', '']
+        self.protocol         = None
+        self.shell_id         = None
+        self.delegate         = None
+
+        self._shell           = shell_loader.get('powershell')
+
+        # TODO: Add runas support
         self.become_methods_supported=[]
+
+        super(Connection, self).__init__(*args, **kwargs)
+
+    @property
+    def transport(self):
+        ''' used to identify this connection object from other classes '''
+        return 'winrm'
 
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
-        port = self.port or 5986
-        vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
-            (self.user, port, self.host), host=self.host)
-        netloc = '%s:%d' % (self.host, port)
+        port = self._connection_info.port or 5986
+        self._display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
+            (self._connection_info.remote_user, port, self._connection_info.remote_addr), host=self._connection_info.remote_addr)
+        netloc = '%s:%d' % (self._connection_info.remote_addr, port)
         exc = None
         for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
-            if transport == 'kerberos' and (not HAVE_KERBEROS or not '@' in self.user):
+            if transport == 'kerberos' and (not HAVE_KERBEROS or not '@' in self._connection_info.remote_user):
                 continue
+
             if transport == 'kerberos':
-                realm = self.user.split('@', 1)[1].strip() or None
+                realm = self._connection_info.remote_user.split('@', 1)[1].strip() or None
             else:
                 realm = None
+
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
-            vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
-                 host=self.host)
-            protocol = Protocol(endpoint, transport=transport,
-                                username=self.user, password=self.password,
-                                realm=realm)
+
+            self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._connection_info.remote_addr)
+            protocol = Protocol(
+                endpoint,
+                transport=transport,
+                username=self._connection_info.remote_user,
+                password=self._connection_info.password,
+                realm=realm
+            )
+
             try:
                 protocol.send_message('')
                 return protocol
             except WinRMTransportError, exc:
                 err_msg = str(exc)
                 if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
-                    raise errors.AnsibleError("the connection attempt timed out")
+                    raise AnsibleError("the connection attempt timed out")
                 m = re.search(r'Code\s+?(\d{3})', err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
-                        raise errors.AnsibleError("the username/password specified for this server was incorrect")
+                        raise AnsibleError("the username/password specified for this server was incorrect")
                     elif code == 411:
                         return protocol
-                vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host)
+                self._display.vvvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self._connection_info.remote_addr)
                 continue
         if exc:
-            raise errors.AnsibleError(str(exc))
+            raise AnsibleError(str(exc))
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
-            vvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
+            self._display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._connection_info.remote_addr)
         else:
-            vvvvv("WINRM EXEC %r %r" % (command, args), host=self.host)
+            self._display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._connection_info.remote_addr)
         if not self.protocol:
             self.protocol = self._winrm_connect()
         if not self.shell_id:
@@ -125,49 +133,46 @@ class Connection(object):
             command_id = self.protocol.run_command(self.shell_id, command, args)
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
-                vvvv('WINRM RESULT %r' % response, host=self.host)
+                self._display.vvvvv('WINRM RESULT %r' % response, host=self._connection_info.remote_addr)
             else:
-                vvvvv('WINRM RESULT %r' % response, host=self.host)
-            vvvvv('WINRM STDOUT %s' % response.std_out, host=self.host)
-            vvvvv('WINRM STDERR %s' % response.std_err, host=self.host)
+                self._display.vvvvvv('WINRM RESULT %r' % response, host=self._connection_info.remote_addr)
+            self._display.vvvvvv('WINRM STDOUT %s' % response.std_out, host=self._connection_info.remote_addr)
+            self._display.vvvvvv('WINRM STDERR %s' % response.std_err, host=self._connection_info.remote_addr)
             return response
         finally:
             if command_id:
                 self.protocol.cleanup_command(self.shell_id, command_id)
 
-    def connect(self):
+    def _connect(self):
         if not self.protocol:
             self.protocol = self._winrm_connect()
         return self
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
-
-        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
 
         cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
             decoded_cmd = base64.b64decode(encoded_cmd)
-            vvv("EXEC %s" % decoded_cmd, host=self.host)
+            self._display.vvv("EXEC %s" % decoded_cmd, host=self._connection_info.remote_addr)
         else:
-            vvv("EXEC %s" % cmd, host=self.host)
+            self._display.vvv("EXEC %s" % cmd, host=self._connection_info.remote_addr)
         # For script/raw support.
         if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
-            script = powershell._build_file_cmd(cmd_parts, quote_args=False)
-            cmd_parts = powershell._encode_script(script, as_list=True)
+            script = self._shell._build_file_cmd(cmd_parts, quote_args=False)
+            cmd_parts = self._shell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception, e:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to exec cmd %s" % cmd)
+            raise AnsibleError("failed to exec cmd %s" % cmd)
         return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
 
     def put_file(self, in_path, out_path):
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         with open(in_path) as in_file:
             in_size = os.path.getsize(in_path)
             script_template = '''
@@ -179,8 +184,8 @@ class Connection(object):
                 [void]$s.Close();
             '''
             # Determine max size of data we can pass per command.
-            script = script_template % (powershell._escape(out_path), in_size, '', in_size)
-            cmd = powershell._encode_script(script)
+            script = script_template % (self._shell._escape(out_path), in_size, '', in_size)
+            cmd = self._shell._encode_script(script)
             # Encode script with no data, subtract its length from 8190 (max
             # windows command length), divide by 2.67 (UTF16LE base64 command
             # encoding), then by 1.35 again (data base64 encoding).
@@ -192,19 +197,19 @@ class Connection(object):
                         if out_data.lower().startswith('#!powershell') and not out_path.lower().endswith('.ps1'):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
-                    script = script_template % (powershell._escape(out_path), offset, b64_data, in_size)
-                    vvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self.host)
-                    cmd_parts = powershell._encode_script(script, as_list=True)
+                    script = script_template % (self._shell._escape(out_path), offset, b64_data, in_size)
+                    self._display.vvvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self._connection_info.remote_addr)
+                    cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
                         raise IOError(result.std_err.encode('utf-8'))
                 except Exception:
                     traceback.print_exc()
-                    raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+                    raise AnsibleError("failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
         out_path = out_path.replace('\\', '/')
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
         buffer_size = 2**19 # 0.5MB chunks
         if not os.path.exists(os.path.dirname(out_path)):
             os.makedirs(os.path.dirname(out_path))
@@ -233,9 +238,9 @@ class Connection(object):
                             Write-Error "%(path)s does not exist";
                             Exit 1;
                         }
-                    ''' % dict(buffer_size=buffer_size, path=powershell._escape(in_path), offset=offset)
-                    vvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self.host)
-                    cmd_parts = powershell._encode_script(script, as_list=True)
+                    ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
+                    self._display.vvvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self._connection_info.remote_addr)
+                    cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
                         raise IOError(result.std_err.encode('utf-8'))
@@ -259,7 +264,7 @@ class Connection(object):
                         offset += len(data)
                 except Exception:
                     traceback.print_exc()
-                    raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+                    raise AnsibleError("failed to transfer file to %s" % out_path)
         finally:
             if out_file:
                 out_file.close()
