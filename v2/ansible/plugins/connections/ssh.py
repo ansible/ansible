@@ -236,7 +236,7 @@ class Connection(ConnectionBase):
                 continue
             try:
                 host_fh = open(hf)
-            except IOError, e:
+            except IOError as e:
                 hfiles_not_found += 1
                 continue
             else:
