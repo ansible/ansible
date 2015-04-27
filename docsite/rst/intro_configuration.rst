@@ -451,7 +451,7 @@ private_key_file
 ================
 
 If you are using a pem file to authenticate with machines rather than SSH agent or passwords, you can set the default
-value here to avoid re-specifying ``--ansible-private-keyfile`` with every invocation::
+value here to avoid re-specifying ``--private-key`` with every invocation::
 
     private_key_file=/path/to/file.pem
 
