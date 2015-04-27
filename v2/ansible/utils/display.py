@@ -73,6 +73,9 @@ class Display:
     def vvvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=4)
 
+    def vvvvvv(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=5)
+
     def verbose(self, msg, host=None, caplevel=2):
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)

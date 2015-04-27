@@ -141,7 +141,8 @@ class Connection(ConnectionBase):
         if not HAVE_PARAMIKO:
             raise AnsibleError("paramiko is not installed")
 
-        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._connection_info.remote_user, self._connection_info.port, self._connection_info.remote_addr), host=self._connection_info.remote_addr)
+        port = self._connection_info.port or 22
+        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._connection_info.remote_user, port, self._connection_info.remote_addr), host=self._connection_info.remote_addr)
 
         ssh = paramiko.SSHClient()
 
@@ -170,7 +171,7 @@ class Connection(ConnectionBase):
                 key_filename=key_filename,
                 password=self._connection_info.password,
                 timeout=self._connection_info.timeout,
-                port=self._connection_info.port
+                port=port,
             )
         except Exception, e:
             msg = str(e)
@@ -178,7 +179,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif "Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
-                    self._connection_info.remote_user, self._connection_info.remote_addr, self._connection_info.port, msg)
+                    self._connection_info.remote_user, self._connection_info.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
             else:
                 raise AnsibleConnectionFailure(msg)

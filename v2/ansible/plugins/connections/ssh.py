@@ -39,7 +39,7 @@ from ansible.plugins.connections import ConnectionBase
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
-    def __init__(self, connection_info, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         # SSH connection specific init stuff
         self.HASHED_KEY_MAGIC = "|1|"
         self._has_pipelining = True
@@ -50,7 +50,7 @@ class Connection(ConnectionBase):
         self._cp_dir = '/tmp'
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
-        super(Connection, self).__init__(connection_info, *args, **kwargs)
+        super(Connection, self).__init__(*args, **kwargs)
 
     @property
     def transport(self):

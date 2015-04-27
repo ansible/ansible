@@ -48,7 +48,7 @@ class ConnectionInformation:
         self.remote_addr      = None
         self.remote_user      = None
         self.password         = passwords.get('conn_pass','')
-        self.port             = 22
+        self.port             = None
         self.private_key_file = C.DEFAULT_PRIVATE_KEY_FILE
         self.timeout          = C.DEFAULT_TIMEOUT
 
