@@ -35,141 +35,100 @@ import traceback
 
 from ansible.errors import AnsibleError
 from ansible.parsing.vault import VaultEditor
-from ansible.utils.cli import base_parser, ask_vault_passwords
+from ansible.utils.cli import CLI
+from ansible.utils.display import Display
 
-#-------------------------------------------------------------------------------------
-# Utility functions for parsing actions/options
-#-------------------------------------------------------------------------------------
-
-
-
-class Cli(object):
+class VaultCli(CLI):
+    """ Vault command line class """
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
+    CIPHER = 'AES256'
 
-
-    def __init__(self, display=None):
+    def __init__(self, args, display=None):
 
         self.vault_pass = None
-
-        if display is None:
-            self.display = Display()
-        else:
-            self.display = display
-
+        super(VaultCli, self).__init__(args, display)
 
     def parse(self):
 
         # create parser for CLI options
-        parser = base_parser(
+        self.parser = CLI.base_parser(
             usage = "%prog vaultfile.yml",
         )
 
-        return parser.parse_args()
+        self.set_action()
 
-    def run(self, options, args):
-
-        action = self.get_action(args)
-
-        if not action:
-            parser.print_help()
-            raise AnsibleError("missing required action")
-
-        # options specific to actions
-        if action == "create":
-            parser.set_usage("usage: %prog create [options] file_name")
-        elif action == "decrypt":
-            parser.set_usage("usage: %prog decrypt [options] file_name")
-        elif action == "edit":
-            parser.set_usage("usage: %prog edit [options] file_name")
-        elif action == "view":
-            parser.set_usage("usage: %prog view [options] file_name")
-        elif action == "encrypt":
-            parser.set_usage("usage: %prog encrypt [options] file_name")
+        # options specific to self.actions
+        if self.action == "create":
+            self.parser.set_usage("usage: %prog create [options] file_name")
+        elif self.action == "decrypt":
+            self.parser.set_usage("usage: %prog decrypt [options] file_name")
+        elif self.action == "edit":
+            self.parser.set_usage("usage: %prog edit [options] file_name")
+        elif self.action == "view":
+            self.parser.set_usage("usage: %prog view [options] file_name")
+        elif self.action == "encrypt":
+            self.parser.set_usage("usage: %prog encrypt [options] file_name")
         elif action == "rekey":
-            parser.set_usage("usage: %prog rekey [options] file_name")
+            self.parser.set_usage("usage: %prog rekey [options] file_name")
 
-        if len(args) == 0 or len(args) > 1:
-            parser.print_help()
+        self.options, self.args = self.parser.parse_args()
+
+        if len(self.args) == 0 or len(self.args) > 1:
+            self.parser.print_help()
             raise AnsibleError("Vault requires a single filename as a parameter")
 
-        if options.vault_password_file:
+    def run(self):
+
+        if self.options.vault_password_file:
             # read vault_pass from a file
-            self.vault_pass = read_vault_file(options.vault_password_file)
-        else:
-            self.vault_pass, _= ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
+            self.vault_pass = read_vault_file(self.options.vault_password_file)
+        elif self.options.ask_vault_pass:
+            self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
 
-        # execute the desired action
-        fn = getattr(self, "execute_%s" % action)
-        fn(args, options)
+        self.execute()
 
-    def get_action(self, args):
-        """
-        Get the action the user wants to execute from the
-        sys argv list.
-        """
-        for i in range(0,len(args)):
-            arg = args[i]
-            if arg in VALID_ACTIONS:
-                del args[i]
-                return arg
-        return None
+    def execute_create(self):
 
-    def execute_create(args, options):
-
-        cipher = 'AES256'
-        if hasattr(options, 'cipher'):
-            cipher = options.cipher
-
-        this_editor = VaultEditor(cipher, self.vault_pass, args[0])
+        cipher = getattr(self.options, 'cipher', self.CIPHER)
+        this_editor = VaultEditor(cipher, self.vault_pass, self.args[0])
         this_editor.create_file()
 
-    def execute_decrypt(args, options):
+    def execute_decrypt(self):
 
-        cipher = 'AES256'
-        if hasattr(options, 'cipher'):
-            cipher = options.cipher
-
-        for f in args:
+        cipher = getattr(self.options, 'cipher', self.CIPHER)
+        for f in self.args:
             this_editor = VaultEditor(cipher, self.vault_pass, f)
             this_editor.decrypt_file()
 
         self.display.display("Decryption successful")
 
-    def execute_edit(args, options):
+    def execute_edit(self):
 
-        cipher = None
-
-        for f in args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
+        for f in self.args:
+            this_editor = VaultEditor(None, self.vault_pass, f)
             this_editor.edit_file()
 
-    def execute_view(args, options):
+    def execute_view(self):
 
-        cipher = None
-
-        for f in args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
+        for f in self.args:
+            this_editor = VaultEditor(None, self.vault_pass, f)
             this_editor.view_file()
 
-    def execute_encrypt(args, options):
+    def execute_encrypt(self):
 
-        cipher = 'AES256'
-        if hasattr(options, 'cipher'):
-            cipher = options.cipher
-
-        for f in args:
+        cipher = getattr(self.options, 'cipher', self.CIPHER)
+        for f in self.args:
             this_editor = VaultEditor(cipher, self.vault_pass, f)
             this_editor.encrypt_file()
 
         self.display.display("Encryption successful")
 
-    def execute_rekey(args, options ):
-        __, new_password = ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+    def execute_rekey(self):
+        __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
-        cipher = None
-        for f in args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
+        for f in self.args:
+            this_editor = VaultEditor(None, self.vault_pass, f)
             this_editor.rekey_file(new_password)
 
         self.display.display("Rekey successful")
@@ -179,14 +138,12 @@ class Cli(object):
 if __name__ == "__main__":
 
     display = Display()
-    #display.display(" ".join(sys.argv), log_only=True)
-
     try:
-        cli = Cli(display=display)
-        (options, args) = cli.parse()
-        sys.exit(cli.run(options, args))
+        cli = VaultCli(sys.argv, display=display)
+        cli.parse()
+        sys.exit(cli.run())
     except AnsibleError as e:
-        display.error(str(e))
+        display.display(str(e), stderr=True, color='red')
         sys.exit(1)
     except KeyboardInterrupt:
         display.error("interrupted")

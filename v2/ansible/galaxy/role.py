@@ -36,6 +36,8 @@ class GalaxyRole(object):
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
+    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
+
 
     def __init__(self, galaxy, role_name, role_version=None, role_url=None):
 
@@ -45,13 +47,13 @@ class GalaxyRole(object):
         self.name = role_name
         self.meta_data = None
         self.install_info = None
-        self.role_path = (os.path.join(self.roles_path, self.name))
+        self.path = (os.path.join(galaxy.roles_path, self.name))
 
         # TODO: possibly parse version and url from role_name
         self.version = role_version
         self.url = role_url
-        if self.url is None and '://' in self.name:
-            self.url = self.name
+        if self.url is None:
+            self._spec_parse()
 
         if C.GALAXY_SCMS:
             self.scms = self.SUPPORTED_SCMS.intersection(set(C.GALAXY_SCMS))
@@ -62,7 +64,7 @@ class GalaxyRole(object):
             self.display.warning("No valid SCMs configured for Galaxy.")
 
 
-    def fetch_from_scm_archive(self, scm, role_url, role_version):
+    def fetch_from_scm_archive(self):
 
         # this can be configured to prevent unwanted SCMS but cannot add new ones unless the code is also updated
         if scm not in self.scms:
@@ -111,12 +113,21 @@ class GalaxyRole(object):
         return temp_file.name
 
 
+    def get_metadata(self):
+        """
+        Returns role metadata
+        """
+        if self.meta_data is None:
+            self._read_metadata
 
-    def read_metadata(self):
+        return self.meta_data
+
+
+    def _read_metadata(self):
         """
         Reads the metadata as YAML, if the file 'meta/main.yml' exists
         """
-        meta_path = os.path.join(self.role_path, self.META_MAIN)
+        meta_path = os.path.join(self.path, self.META_MAIN)
         if os.path.isfile(meta_path):
             try:
                 f = open(meta_path, 'r')
@@ -127,15 +138,24 @@ class GalaxyRole(object):
             finally:
                 f.close()
 
-        return True
 
-    def read_galaxy_install_info(self):
+    def get_galaxy_install_info(self):
+        """
+        Returns role install info
+        """
+        if self.install_info is None:
+            self._read_galaxy_isntall_info()
+
+        return self.install_info
+
+
+    def _read_galaxy_install_info(self):
         """
         Returns the YAML data contained in 'meta/.galaxy_install_info',
         if it exists.
         """
 
-        info_path = os.path.join(self.role_path, self.META_INSTALL)
+        info_path = os.path.join(self.path, self.META_INSTALL)
         if os.path.isfile(info_path):
             try:
                 f = open(info_path, 'r')
@@ -146,9 +166,7 @@ class GalaxyRole(object):
             finally:
                 f.close()
 
-        return True
-
-    def write_galaxy_install_info(self):
+    def _write_galaxy_install_info(self):
         """
         Writes a YAML-formatted file to the role's meta/ directory
         (named .galaxy_install_info) which contains some information
@@ -159,7 +177,7 @@ class GalaxyRole(object):
             version=self.version,
             install_date=datetime.datetime.utcnow().strftime("%c"),
         )
-        info_path = os.path.join(self.role_path, self.META_INSTALL)
+        info_path = os.path.join(self.path, self.META_INSTALL)
         try:
             f = open(info_path, 'w+')
             self.install_info = yaml.safe_dump(info, f)
@@ -178,7 +196,7 @@ class GalaxyRole(object):
         """
         if self.read_metadata():
             try:
-                rmtree(self.role_path)
+                rmtree(self.path)
                 return True
             except:
                 pass
@@ -213,7 +231,7 @@ class GalaxyRole(object):
             self.display.error("failed to download the file.")
             return False
 
-    def install(self, role_version, role_filename):
+    def install(self, role_filename):
         # the file is a tar, so open it that way and extract it
         # to the specified (or default) roles directory
 
@@ -246,10 +264,10 @@ class GalaxyRole(object):
             # we strip off the top-level directory for all of the files contained within
             # the tar file here, since the default is 'github_repo-target', and change it
             # to the specified role's name
-            self.display.display("- extracting %s to %s" % (self.name, self.role_path))
+            self.display.display("- extracting %s to %s" % (self.name, self.path))
             try:
-                if os.path.exists(self.role_path):
-                    if not os.path.isdir(self.role_path):
+                if os.path.exists(self.path):
+                    if not os.path.isdir(self.path):
                         self.display.error("the specified roles path exists and is not a directory.")
                         return False
                     elif not getattr(self.options, "force", False):
@@ -258,13 +276,13 @@ class GalaxyRole(object):
                     else:
                         # using --force, remove the old path
                         if not self.remove():
-                            self.display.error("%s doesn't appear to contain a role." % self.role_path)
+                            self.display.error("%s doesn't appear to contain a role." % self.path)
                             self.display.error("  please remove this directory manually if you really want to put the role here.")
                             return False
                 else:
-                    os.makedirs(self.role_path)
+                    os.makedirs(self.path)
 
-                # now we do the actual extraction to the role_path
+                # now we do the actual extraction to the path
                 for member in members:
                     # we only extract files, and remove any relative path
                     # bits that might be in the file for security purposes
@@ -276,15 +294,62 @@ class GalaxyRole(object):
                             if part != '..' and '~' not in part and '$' not in part:
                                 final_parts.append(part)
                         member.name = os.path.join(*final_parts)
-                        role_tar_file.extract(member, self.role_path)
+                        role_tar_file.extract(member, self.path)
 
                 # write out the install info file for later use
-                self.version = role_version
-                self.write_galaxy_install_info()
+                self._write_galaxy_install_info()
             except OSError as e:
-                self.display.error("Could not update files in %s: %s" % (self.role_path, str(e)))
+                self.display.error("Could not update files in %s: %s" % (self.path, str(e)))
                 return False
 
             # return the parsed yaml metadata
-            self.display.display("- %s was installed successfully" % self.role_name)
+            self.display.display("- %s was installed successfully" % self.name)
             return True
+
+    def get_spec(self):
+        """
+        Returns role spec info
+        {
+           'scm': 'git',
+           'src': 'http://git.example.com/repos/repo.git',
+           'version': 'v1.0',
+           'name': 'repo'
+        }
+        """
+        if self.scm is None and self.url is None:
+            self._read_galaxy_isntall_info()
+
+        return dict(scm=self.scm, src=self.url, version=self.version, role_name=self.name)
+
+    def _spec_parse(self):
+        ''' creates separated parts of role spec '''
+        default_role_versions = dict(git='master', hg='tip')
+
+        if not self.url and '://' in self.name:
+            role_spec = self.name.strip()
+
+            if role_spec == "" or role_spec.startswith("#"):
+                return
+
+            tokens = [s.strip() for s in role_spec.split(',')]
+
+            # assume https://github.com URLs are git+https:// URLs and not tarballs unless they end in '.zip'
+            if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
+                tokens[0] = 'git+' + tokens[0]
+
+            if '+' in tokens[0]:
+                (self.scm, self.url) = tokens[0].split('+')
+            else:
+                self.scm = None
+                self.url = tokens[0]
+
+            if len(tokens) >= 2:
+                self.version = tokens[1]
+
+            if len(tokens) == 3:
+                self.name = tokens[2]
+            else:
+                self.name = self._repo_url_to_role_name(tokens[0])
+
+            if self.scm and not self.version:
+                self.version = default_role_versions.get(scm, '')

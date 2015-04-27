@@ -42,113 +42,109 @@ from optparse import OptionParser
 import ansible.constants as C
 import ansible.utils
 import ansible.galaxy
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.galaxy import Galaxy
+from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.role import GalaxyRole
+from ansible.utils.display import Display
+from ansible.utils.cli import CLI
 
-class Cli(object):
+class GalaxyCLI(CLI):
 
     VALID_ACTIONS = ("init", "info", "install", "list", "remove")
     SKIP_INFO_KEYS = ("platforms","readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
 
-    def __init__(self):
+    def __init__(self, args, display=None):
 
-        if display is None:
-            self.display = Display()
-        else:
-            self.display = display
-        self.action = None
-
-    def set_action(args):
-        """
-        Get the action the user wants to execute from the
-        sys argv list.
-        """
-        for i in range(0,len(args)):
-            arg = args[i]
-            if arg in VALID_ACTIONS:
-                del args[i]
-                self.action = arg
-
+        self.api = None
+        self.galaxy = None
+        super(GalaxyCLI, self).__init__(args, display)
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
-        usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(VALID_ACTIONS)
+
+        usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS)
         epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         OptionParser.format_epilog = lambda self, formatter: self.epilog
         parser = OptionParser(usage=usage, epilog=epilog)
 
-        if not self.action:
-            parser.print_help()
-            sys.exit(1)
+        self.parser = parser
+        self.set_action()
 
         # options specific to actions
         if self.action == "info":
-            parser.set_usage("usage: %prog info [options] role_name[,version]")
+           self.parser.set_usage("usage: %prog info [options] role_name[,version]")
         elif self.action == "init":
-            parser.set_usage("usage: %prog init [options] role_name")
-            parser.add_option(
+           self.parser.set_usage("usage: %prog init [options] role_name")
+           self.parser.add_option(
                 '-p', '--init-path', dest='init_path', default="./",
                 help='The path in which the skeleton role will be created. '
                      'The default is the current working directory.')
-            parser.add_option(
+           self.parser.add_option(
                 '--offline', dest='offline', default=False, action='store_true',
                 help="Don't query the galaxy API when creating roles")
         elif self.action == "install":
-            parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
-            parser.add_option(
+           self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
+           self.parser.add_option(
                 '-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                 help='Ignore errors and continue with the next specified role.')
-            parser.add_option(
+           self.parser.add_option(
                 '-n', '--no-deps', dest='no_deps', action='store_true', default=False,
                 help='Don\'t download roles listed as dependencies')
-            parser.add_option(
+           self.parser.add_option(
                 '-r', '--role-file', dest='role_file',
                 help='A file containing a list of roles to be imported')
         elif self.action == "remove":
-            parser.set_usage("usage: %prog remove role1 role2 ...")
+           self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
-            parser.set_usage("usage: %prog list [role_name]")
+           self.parser.set_usage("usage: %prog list [role_name]")
 
         # options that apply to more than one action
         if self.action != "init":
-            parser.add_option(
+           self.parser.add_option(
                 '-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                 help='The path to the directory containing your roles. '
                      'The default is the roles_path configured in your '
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
 
         if self.action in ("info","init","install"):
-            parser.add_option(
+           self.parser.add_option(
                 '-s', '--server', dest='api_server', default="galaxy.ansible.com",
                 help='The API server destination')
 
         if self.action in ("init","install"):
-            parser.add_option(
+           self.parser.add_option(
                 '-f', '--force', dest='force', action='store_true', default=False,
                 help='Force overwriting an existing role')
 
-        # done, return the parser
-        options, args = parser.parse_args()
+        # get options, args and galaxy object
+        self.options, self.args =self.parser.parse_args()
+        self.galaxy = Galaxy(self.options, self.display)
 
-        if len(args) == 0 or len(args) > 1:
-            parser.print_help()
-            sys.exit(1)
+        if len(self.args) != 1:
+            raise AnsibleOptionsError("Missing arguments")
 
-        display.verbosity = options.verbosity
+        return True
 
-        return (options, args)
+    def run(self):
 
-    def run(options, args):
+        #self.display.verbosity = self.options.verbosity
+        api_server = self.get_opt("api_server", "galaxy.ansible.com")
 
-        # execute the desired action
-        fn = getattr(self, "execute_%s" % self.action)
-        fn(args, options)
+        # if not offline, get connect to galaxy api
+        if self.action == 'init' and not self.options.offline:
+            self.api = GalaxyAPI(self.galaxy, api_server)
+            if not self.api:
+                raise AnsibleError("The API server (%s) is not responding, please try again later." % api_server)
 
-    def get_opt(options, k, defval=""):
+        self.execute()
+
+    def get_opt(self, k, defval=""):
         """
         Returns an option from an Optparse values instance.
         """
         try:
-            data = getattr(options, k)
+            data = getattr(self.options, k)
         except:
             return defval
         if k == "roles_path":
@@ -156,56 +152,40 @@ class Cli(object):
                 data = data.split(os.pathsep)[0]
         return data
 
-    def exit_without_ignore(options, rc=1):
+    def exit_without_ignore(self, rc=1):
         """
         Exits with the specified return code unless the
         option --ignore-errors was specified
         """
 
-        if not get_opt(options, "ignore_errors", False):
-            print '- you can use --ignore-errors to skip failed roles.'
-            sys.exit(rc)
+        if not self.get_opt("ignore_errors", False):
+            self.display.error('- you can use --ignore-errors to skip failed tasks/roles.')
+            return rc
 
 
 
-    def execute_init(args, options, parser):
+    def execute_init(self):
         """
         Executes the init action, which creates the skeleton framework
         of a role that complies with the galaxy metadata format.
         """
 
-        init_path  = get_opt(options, 'init_path', './')
-        api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-        force      = get_opt(options, 'force', False)
-        offline    = get_opt(options, 'offline', False)
+        init_path  = self.get_opt('init_path', './')
+        force      = self.get_opt('force', False)
+        offline    = self.get_opt('offline', False)
 
-        if not offline:
-            api_config = api_get_config(api_server)
-            if not api_config:
-                print "- the API server (%s) is not responding, please try again later." % api_server
-                sys.exit(1)
-
-        try:
-            role_name = args.pop(0).strip()
-            if role_name == "":
-                raise Exception("")
-            role_path = os.path.join(init_path, role_name)
-            if os.path.exists(role_path):
-                if os.path.isfile(role_path):
-                    print "- the path %s already exists, but is a file - aborting" % role_path
-                    sys.exit(1)
-                elif not force:
-                    print "- the directory %s already exists." % role_path
-                    print "  you can use --force to re-initialize this directory,\n" + \
-                          "  however it will reset any main.yml files that may have\n" + \
-                          "  been modified there already."
-                    sys.exit(1)
-        except Exception, e:
-            parser.print_help()
-            print "- no role name specified for init"
-            sys.exit(1)
-
-        ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
+        role_name = self.args.pop(0).strip()
+        if role_name == "":
+            raise AnsibleOptionsError("- no role name specified for init")
+        role_path = os.path.join(init_path, role_name)
+        if os.path.exists(role_path):
+            if os.path.isfile(role_path):
+                raise AnsibleError("- the path %s already exists, but is a file - aborting" % role_path)
+            elif not force:
+                raise AnsibleError("- the directory %s already exists." % role_path + \
+                            "you can use --force to re-initialize this directory,\n" + \
+                            "however it will reset any main.yml files that may have\n" + \
+                                "been modified there already.")
 
         # create the default README.md
         if not os.path.exists(role_path):
@@ -215,7 +195,7 @@ class Cli(object):
         f.write(default_readme_template)
         f.close
 
-        for dir in ROLE_DIRS:
+        for dir in self.ROLE_DIRS:
             dir_path = os.path.join(init_path, role_name, dir)
             main_yml_path = os.path.join(dir_path, 'main.yml')
             # create the directory if it doesn't exist already
@@ -229,11 +209,11 @@ class Cli(object):
                 # tags/platforms included (but commented out) and the
                 # dependencies section
                 platforms = []
-                if not offline:
-                    platforms = api_get_list(api_server, "platforms") or []
+                if not offline and self.api:
+                    platforms = self.api.get_list("platforms") or []
                 categories = []
-                if not offline:
-                    categories = api_get_list(api_server, "categories") or []
+                if not offline and self.api:
+                    categories = self.api.get_list("categories") or []
 
                 # group the list of platforms from the api based
                 # on their names, with the release field being
@@ -264,24 +244,20 @@ class Cli(object):
                 f.close()
         print "- %s was created successfully" % role_name
 
-    def execute_info(args, options, parser):
+    def execute_info(self):
         """
         Executes the info action. This action prints out detailed
         information about an installed role as well as info available
         from the galaxy API.
         """
 
-        if len(args) == 0:
+        if len(self.args) == 0:
             # the user needs to specify a role
-            parser.print_help()
-            print "- you must specify a user/role name"
-            sys.exit(1)
+            raise AnsibleOptionsError("- you must specify a user/role name")
 
-        api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-        api_config = api_get_config(api_server)
-        roles_path = get_opt(options, "roles_path")
+        roles_path = self.get_opt("roles_path")
 
-        for role in args:
+        for role in self.args:
 
             role_info = {}
 
@@ -292,11 +268,11 @@ class Cli(object):
                     del install_info['version']
                 role_info.update(install_info)
 
-            remote_data = api_lookup_role_by_name(api_server, role, False)
+            remote_data = self.api.lookup_role_by_name(role, False)
             if remote_data:
                 role_info.update(remote_data)
 
-            metadata = get_role_metadata(role, options)
+            metadata = get_metadata(role, options)
             if metadata:
                 role_info.update(metadata)
 
@@ -322,7 +298,7 @@ class Cli(object):
             else:
                 print "- the role %s was not found" % role
 
-    def execute_install(args, options, parser):
+    def execute_install(self):
         """
         Executes the installation action. The args list contains the
         roles to be installed, unless -f was specified. The list of roles
@@ -330,24 +306,19 @@ class Cli(object):
         or it can be a local .tar.gz file.
         """
 
-        role_file  = get_opt(options, "role_file", None)
+        role_file  = self.get_opt("role_file", None)
 
-        if len(args) == 0 and role_file is None:
+        if len(self.args) == 0 and role_file is None:
             # the user needs to specify one of either --role-file
             # or specify a single user/role name
-            parser.print_help()
-            print "- you must specify a user/role name or a roles file"
-            sys.exit()
-        elif len(args) == 1 and not role_file is None:
+            raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
+        elif len(self.args) == 1 and not role_file is None:
             # using a role file is mutually exclusive of specifying
             # the role name on the command line
-            parser.print_help()
-            print "- please specify a user/role name, or a roles file, but not both"
-            sys.exit(1)
+            raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
-        api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-        no_deps    = get_opt(options, "no_deps", False)
-        roles_path = get_opt(options, "roles_path")
+        no_deps    = self.get_opt("no_deps", False)
+        roles_path = self.get_opt("roles_path")
 
         roles_done = []
         if role_file:
@@ -356,12 +327,12 @@ class Cli(object):
                 roles_left = map(ansible.utils.role_yaml_parse, yaml.safe_load(f))
             else:
                 # roles listed in a file, one per line
-                roles_left = map(ansible.utils.role_spec_parse, f.readlines())
+                roles_left = map(gr.get_spec, f.readlines())
             f.close()
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
-            roles_left = map(ansible.utils.role_spec_parse, args)
+            roles_left = map(gr.get_spec, self.args)
 
         while len(roles_left) > 0:
             # query the galaxy API for the role data
@@ -387,19 +358,13 @@ class Cli(object):
                     # just download a URL - version will probably be in the URL
                     tmp_file = fetch_role(role_src, None, None, options)
                 else:
-                    # installing from galaxy
-                    api_config = api_get_config(api_server)
-                    if not api_config:
-                        print "- the API server (%s) is not responding, please try again later." % api_server
-                        sys.exit(1)
-
-                    role_data = api_lookup_role_by_name(api_server, role_src)
+                    role_data = self.api.lookup_role_by_name(role_src)
                     if not role_data:
-                        print "- sorry, %s was not found on %s." % (role_src, api_server)
+                        print "- sorry, %s was not found on %s." % (role_src, self.options.api_server)
                         exit_without_ignore(options)
                         continue
 
-                    role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
+                    role_versions = self.api.fetch_role_related('versions', role_data['id'])
                     if "version" not in role or role['version'] == '':
                         # convert the version names to LooseVersion objects
                         # and sort them to get the latest version. If there
@@ -430,7 +395,7 @@ class Cli(object):
                 # install dependencies, if we want them
                 if not no_deps and installed:
                     if not role_data:
-                        role_data = get_role_metadata(role.get("name"), options)
+                        role_data = gr.get_metadata(role.get("name"), options)
                         role_dependencies = role_data['dependencies']
                     else:
                         role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
@@ -450,30 +415,28 @@ class Cli(object):
             if not tmp_file or not installed:
                 print "- %s was NOT installed successfully." % role.get("name")
                 exit_without_ignore(options)
-        sys.exit(0)
+        return 0
 
-    def execute_remove(args, options, parser):
+    def execute_remove(self):
         """
         Executes the remove action. The args list contains the list
         of roles to be removed. This list can contain more than one role.
         """
 
-        if len(args) == 0:
-            parser.print_help()
-            print '- you must specify at least one role to remove.'
-            sys.exit()
+        if len(self.args) == 0:
+            raise AnsibleOptionsError('- you must specify at least one role to remove.')
 
-        for role in args:
+        for role in self.args:
             if get_role_metadata(role, options):
                 if remove_role(role, options):
-                    print '- successfully removed %s' % role
+                    self.display.display('- successfully removed %s' % role)
                 else:
-                    print "- failed to remove role: %s" % role
+                    self.display.display("- failed to remove role: %s" % role)
             else:
-                print '- %s is not installed, skipping.' % role
-        sys.exit(0)
+                self.display.display('- %s is not installed, skipping.' % role)
+        return 0
 
-    def execute_list(args, options, parser):
+    def execute_list(self):
         """
         Executes the list action. The args list can contain zero
         or one role. If one is specified, only that role will be
@@ -481,37 +444,33 @@ class Cli(object):
         be shown.
         """
 
-        if len(args) > 1:
-            print "- please specify only one role to list, or specify no roles to see a full list"
-            sys.exit(1)
+        if len(self.args) > 1:
+            raise AnsibleOptionsError("- please specify only one role to list, or specify no roles to see a full list")
 
-        if len(args) == 1:
+        if len(self.args) == 1:
             # show only the request role, if it exists
-            role_name = args[0]
-            metadata = get_role_metadata(role_name, options)
+            role_name = self.args[0]
+            gr = GalaxyRole(self.galaxy, role_name)
+            metadata = gr.get_metadata()
             if metadata:
-                install_info = get_galaxy_install_info(role_name, options)
+                install_info = gr.get_galaxy_install_info()
                 version = None
                 if install_info:
                     version = install_info.get("version", None)
                 if not version:
                     version = "(unknown version)"
                 # show some more info about single roles here
-                print "- %s, %s" % (role_name, version)
+                self.display.display("- %s, %s" % (role_name, version))
             else:
-                print "- the role %s was not found" % role_name
+                self.display.display("- the role %s was not found" % role_name)
         else:
             # show all valid roles in the roles_path directory
-            roles_path = get_opt(options, 'roles_path')
+            roles_path = self.get_opt('roles_path')
             roles_path = os.path.expanduser(roles_path)
             if not os.path.exists(roles_path):
-                parser.print_help()
-                print "- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path
-                sys.exit(1)
+                raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
             elif not os.path.isdir(roles_path):
-                print "- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path
-                parser.print_help()
-                sys.exit(1)
+                raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
             path_files = os.listdir(roles_path)
             for path_file in path_files:
                 if get_role_metadata(path_file, options):
@@ -521,40 +480,26 @@ class Cli(object):
                         version = install_info.get("version", None)
                     if not version:
                         version = "(unknown version)"
-                    print "- %s, %s" % (path_file, version)
-        sys.exit(0)
+                    self.display.display("- %s, %s" % (path_file, version))
+        return 0
 
 #-------------------------------------------------------------------------------------
 # The main entry point
 #-------------------------------------------------------------------------------------
-
-#def main():
-#    # parse the CLI options
-#    action = get_action(sys.argv)
-#    parser = build_option_parser(action)
-#    (options, args) = parser.parse_args()
-#
-#    # execute the desired action
-#    if 1: #try:
-#        fn = globals()["execute_%s" % action]
-#        fn(args, options, parser)
-#    #except KeyError, e:
-#    #    print "- error: %s is not a valid action. Valid actions are: %s" % (action, ", ".join(VALID_ACTIONS))
-#    #    sys.exit(1)
-
-
 if __name__ == '__main__':
 
     display = Display()
-
     try:
-        cli = Cli(display=display)
-        cli.set_action(sys.argv)
-        (options, args) = cli.parse()
-        sys.exit(cli.run(options, args))
-    except AnsibleError as e:
-        display.error(str(e))
+        cli = GalaxyCLI(sys.argv, display=display)
+        cli.parse()
+        sys.exit(cli.run())
+    except AnsibleOptionsError as e:
+        cli.parser.print_help()
+        display.display(str(e), stderr=True, color='red')
         sys.exit(1)
+    except AnsibleError as e:
+        display.display(str(e), stderr=True, color='red')
+        sys.exit(2)
     except KeyboardInterrupt:
         display.error("interrupted")
-        sys.exit(1)
+        sys.exit(3)

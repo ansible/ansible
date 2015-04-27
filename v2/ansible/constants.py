@@ -40,13 +40,15 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
-        return mk_boolean(value)
-    if value and integer:
-        return int(value)
-    if value and floating:
-        return float(value)
-    if value and islist:
-        return [x.strip() for x in value.split(',')]
+        value = mk_boolean(value)
+    if value:
+        if integer:
+            value = int(value)
+        if floating:
+            value = float(value)
+        if islist:
+            if isinstance(value, basestring):
+                value = [x.strip() for x in value.split(',')]
     return value
 
 def _get_config(p, section, key, env_var, default):
@@ -104,7 +106,7 @@ DEFAULTS='defaults'
 
 # configurable things
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
-DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'inventory', 'ANSIBLE_INVENTORY', get_config(p, DEFAULTS,'hostfile','ANSIBLE_HOSTS', '/etc/ansible/hosts')))
+DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', get_config(p, DEFAULTS,'inventory','ANSIBLE_INVENTORY', '/etc/ansible/hosts')))
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
 DEFAULT_ROLES_PATH        = shell_expand_path(get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles'))
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
@@ -212,6 +214,7 @@ GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
 # non-configurable things
+MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
