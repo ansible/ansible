@@ -326,7 +326,10 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
             security_group = self._poll_job(res, 'securitygroup')
-        return security_group
+            key = sg_type + "rule" # ingressrule / egressrule
+            if key in security_group:
+                rule = security_group[key][0]
+        return rule
 
 
     def remove_rule(self):
@@ -354,34 +357,30 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
             res = self._poll_job(res, 'securitygroup')
-        return security_group
+        return rule
 
 
     def get_result(self, security_group_rule):
-        type = self.module.params.get('type')
-        
-        key = 'ingressrule'
-        if type == 'egress':
-            key = 'egressrule'
 
-        self.result['type'] = type
+        self.result['type'] = self.module.params.get('type')
         self.result['security_group'] = self.module.params.get('security_group')
-
-        if key in security_group_rule and security_group_rule[key]:
-            if 'securitygroupname' in security_group_rule[key][0]:
-                self.result['user_security_group'] = security_group_rule[key][0]['securitygroupname']
-            if 'cidr' in security_group_rule[key][0]:
-                self.result['cidr'] = security_group_rule[key][0]['cidr']
-            if 'protocol' in security_group_rule[key][0]:
-                self.result['protocol'] = security_group_rule[key][0]['protocol']
-            if 'startport' in security_group_rule[key][0]:
-                self.result['start_port'] = security_group_rule[key][0]['startport']
-            if 'endport' in security_group_rule[key][0]:
-                self.result['end_port'] = security_group_rule[key][0]['endport']
-            if 'icmpcode' in security_group_rule[key][0]:
-                self.result['icmp_code'] = security_group_rule[key][0]['icmpcode']
-            if 'icmptype' in security_group_rule[key][0]:
-                self.result['icmp_type'] = security_group_rule[key][0]['icmptype']
+        
+        if security_group_rule:
+            rule = security_group_rule
+            if 'securitygroupname' in rule:
+                self.result['user_security_group'] = rule['securitygroupname']
+            if 'cidr' in rule:
+                self.result['cidr'] = rule['cidr']
+            if 'protocol' in rule:
+                self.result['protocol'] = rule['protocol']
+            if 'startport' in rule:
+                self.result['start_port'] = rule['startport']
+            if 'endport' in rule:
+                self.result['end_port'] = rule['endport']
+            if 'icmpcode' in rule:
+                self.result['icmp_code'] = rule['icmpcode']
+            if 'icmptype' in rule:
+                self.result['icmp_type'] = rule['icmptype']
         return self.result
 
 
