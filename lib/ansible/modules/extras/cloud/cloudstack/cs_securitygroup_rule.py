@@ -305,15 +305,15 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         rule = None
         res  = None
-        type = self.module.params.get('type')
-        if type == 'ingress':
+        sg_type = self.module.params.get('type')
+        if sg_type == 'ingress':
             rule = self._get_rule(security_group['ingressrule'])
             if not rule:
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     res = self.cs.authorizeSecurityGroupIngress(**args)
 
-        elif type == 'egress':
+        elif sg_type == 'egress':
             rule = self._get_rule(security_group['egressrule'])
             if not rule:
                 self.result['changed'] = True
@@ -333,15 +333,15 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         security_group = self.get_security_group()
         rule = None
         res  = None
-        type = self.module.params.get('type')
-        if type == 'ingress':
+        sg_type = self.module.params.get('type')
+        if sg_type == 'ingress':
             rule = self._get_rule(security_group['ingressrule'])
             if rule:
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     res = self.cs.revokeSecurityGroupIngress(id=rule['ruleid'])
 
-        elif type == 'egress':
+        elif sg_type == 'egress':
             rule = self._get_rule(security_group['egressrule'])
             if rule:
                 self.result['changed'] = True
