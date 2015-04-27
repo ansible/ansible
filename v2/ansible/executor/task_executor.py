@@ -19,6 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
+import pipes
+import subprocess
+import sys
+import time
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.connection_info import ConnectionInformation
@@ -31,10 +37,6 @@ from ansible.utils.unicode import to_unicode
 from ansible.utils.debug import debug
 
 __all__ = ['TaskExecutor']
-
-import json
-import time
-import pipes
 
 class TaskExecutor:
 
@@ -365,11 +367,20 @@ class TaskExecutor:
         if self._task.delegate_to is not None:
             self._compute_delegate(variables)
 
-        # FIXME: add all port/connection type munging here (accelerated mode,
-        #        fixing up options for ssh, etc.)? and 'smart' conversion
         conn_type = self._connection_info.connection
         if conn_type == 'smart':
             conn_type = 'ssh'
+            if sys.platform.startswith('darwin') and self._connection_info.remote_pass:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
+                conn_type = "paramiko"
+            else:
+                # see if SSH can support ControlPersist if not use paramiko
+                cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                if "Bad configuration option" in err:
+                    conn_type = "paramiko"
 
         connection = connection_loader.get(conn_type, self._connection_info, self._new_stdin)
         if not connection:
