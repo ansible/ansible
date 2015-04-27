@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import StringIO
+
 from ansible.compat.tests import unittest
 from ansible.executor.connection_info import ConnectionInformation
 
@@ -29,7 +31,7 @@ from ansible.plugins.connections import ConnectionBase
 #from ansible.plugins.connections.jail import Connection as JailConnection
 #from ansible.plugins.connections.libvirt_lxc import Connection as LibvirtLXCConnection
 from ansible.plugins.connections.local import Connection as LocalConnection
-#from ansible.plugins.connections.paramiko_ssh import Connection as ParamikoConnection
+from ansible.plugins.connections.paramiko_ssh import Connection as ParamikoConnection
 from ansible.plugins.connections.ssh import Connection as SSHConnection
 #from ansible.plugins.connections.winrm import Connection as WinRmConnection
 
@@ -37,6 +39,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def setUp(self):
         self.conn_info = ConnectionInformation()
+        self.in_stream = StringIO()
 
     def tearDown(self):
         pass
@@ -69,7 +72,7 @@ class TestConnectionBaseClass(unittest.TestCase):
                 pass
             def close(self):
                 pass
-        self.assertIsInstance(ConnectionModule3(self.conn_info), ConnectionModule3)
+        self.assertIsInstance(ConnectionModule3(self.conn_info, self.in_stream), ConnectionModule3)
 
 #    def test_accelerate_connection_module(self):
 #        self.assertIsInstance(AccelerateConnection(), AccelerateConnection)
@@ -87,13 +90,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 #        self.assertIsInstance(LibvirtLXCConnection(), LibvirtLXCConnection)
 
     def test_local_connection_module(self):
-        self.assertIsInstance(LocalConnection(self.conn_info), LocalConnection)
+        self.assertIsInstance(LocalConnection(self.conn_info, self.in_stream), LocalConnection)
 
-#    def test_paramiko_connection_module(self):
-#        self.assertIsInstance(ParamikoConnection(self.conn_info), ParamikoConnection)
+    def test_paramiko_connection_module(self):
+        self.assertIsInstance(ParamikoConnection(self.conn_info, self.in_stream), ParamikoConnection)
 
     def test_ssh_connection_module(self):
-        self.assertIsInstance(SSHConnection(self.conn_info), SSHConnection)
+        self.assertIsInstance(SSHConnection(self.conn_info, self.in_stream), SSHConnection)
 
 #    def test_winrm_connection_module(self):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)
