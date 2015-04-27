@@ -260,7 +260,7 @@ def main():
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            region=dict(aliases=['aws_region', 'ec2_region']),
            )
     )
 
