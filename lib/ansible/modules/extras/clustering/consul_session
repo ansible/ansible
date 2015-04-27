@@ -25,6 +25,9 @@ description:
    cluster. These sessions can then be used in conjunction with key value pairs
    to implement distributed locks. In depth documentation for working with
    sessions can be found here http://www.consul.io/docs/internals/sessions.html
+requirements:
+  - python-consul
+  - requests
 version_added: "1.9"
 author: Steve Gargan (steve.gargan@gmail.com)
 options:
@@ -50,7 +53,8 @@ options:
         description:
           - the optional lock delay that can be attached to the session when it
             is created. Locks for invalidated sessions ar blocked from being
-            acquired until this delay has expired.
+            acquired until this delay has expired. Valid units for delays
+            include 'ns', 'us', 'ms', 's', 'm', 'h' 
         default: 15s
         required: false
     node:
@@ -99,7 +103,7 @@ EXAMPLES = '''
 - name: register a session with lock_delay
   consul_session:
     name: session_with_delay
-    delay: 20
+    delay: 20s
 
 - name: retrieve info about session by id
   consul_session: id=session_id state=info
@@ -113,12 +117,10 @@ import urllib2
 
 try:
     import consul
+    from requests.exceptions import ConnectionError
+    python_consul_installed = True
 except ImportError, e:
-    print "failed=True msg='python-consul required for this module. see "\
-            "http://python-consul.readthedocs.org/en/latest/#installation'"
-    sys.exit(1)
-
-from requests.errors import ConnectionError
+    python_consul_installed = False
 
 def execute(module):
 
@@ -182,11 +184,11 @@ def update_session(module):
     changed = True
 
     try:
-
+        
         session = consul.session.create(
             name=name,
             node=node,
-            lock_delay=delay,
+            lock_delay=validate_duration('delay', delay),
             dc=datacenter,
             checks=checks
         )
@@ -219,15 +221,27 @@ def remove_session(module):
         module.fail_json(msg="Could not remove session with id '%s' %s" % (
                          session_id, e))
 
+def validate_duration(name, duration):
+    if duration:
+        duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
+        if not any((duration.endswith(suffix) for suffix in duration_units)):
+                raise Exception('Invalid %s %s you must specify units (%s)' %
+                    (name, duration, ', '.join(duration_units)))
+    return duration
 
 def get_consul_api(module):
     return consul.Consul(host=module.params.get('host'),
                          port=module.params.get('port'))
+                         
+def test_dependencies(module):
+    if not python_consul_installed:
+        module.fail_json(msg="python-consul required for this module. "\
+              "see http://python-consul.readthedocs.org/en/latest/#installation")
 
 def main():
     argument_spec = dict(
         checks=dict(default=None, required=False, type='list'),
-        delay=dict(required=False,type='int', default=15),
+        delay=dict(required=False,type='str', default='15s'),
         host=dict(default='localhost'),
         port=dict(default=8500, type='int'),
         id=dict(required=False),
@@ -237,8 +251,10 @@ def main():
                    choices=['present', 'absent', 'info', 'node', 'list'])
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True)
-
+    module = AnsibleModule(argument_spec, supports_check_mode=False)
+    
+    test_dependencies(module)
+    
     try:
         execute(module)
     except ConnectionError, e:

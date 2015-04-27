@@ -37,6 +37,9 @@ description:
    result this does not attempt to determine changes and will always report a 
    changed occurred. An api method is planned to supply this metadata so at that
    stage change management will be added.
+requirements:
+  - python-consul
+  - requests
 version_added: "1.9"
 author: Steve Gargan (steve.gargan@gmail.com)
 options:
@@ -172,13 +175,11 @@ except ImportError:
 
 try:
     import consul
+    from requests.exceptions import ConnectionError
+    python_consul_installed = True
 except ImportError, e:
-    print "failed=True msg='python-consul required for this module. "\
-          "see http://python-consul.readthedocs.org/en/latest/#installation'"
-    sys.exit(1)
-
-from requests.exceptions import ConnectionError
-
+    python_consul_installed = False
+    
 def register_with_consul(module):
 
     state = module.params.get('state')
@@ -462,6 +463,10 @@ class ConsulCheck():
         except:
             pass
 
+def test_dependencies(module):
+    if not python_consul_installed:
+        module.fail_json(msg="python-consul required for this module. "\
+              "see http://python-consul.readthedocs.org/en/latest/#installation")
 
 def main():
     module = AnsibleModule(
@@ -485,6 +490,9 @@ def main():
         ),
         supports_check_mode=False,
     )
+    
+    test_dependencies(module)
+        
     try:
         register_with_consul(module)
     except ConnectionError, e:

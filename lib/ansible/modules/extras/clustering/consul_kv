@@ -27,6 +27,9 @@ description:
     the indices, flags and session are returned as 'value'. If the key
     represents a prefix then Note that when a value is removed, the existing
     value if any is returned as part of the results.
+requirements:
+  - python-consul
+  - requests
 version_added: "1.9"
 author: Steve Gargan (steve.gargan@gmail.com)
 options:
@@ -126,10 +129,10 @@ except ImportError:
 
 try:
     import consul
+    from requests.exceptions import ConnectionError
+    python_consul_installed = True
 except ImportError, e:
-    print """failed=True msg='python-consul required for this module. \
-    see http://python-consul.readthedocs.org/en/latest/#installation'"""
-    sys.exit(1)
+    python_consul_installed = False
 
 from requests.exceptions import ConnectionError
 
@@ -222,7 +225,11 @@ def get_consul_api(module, token=None):
                          port=module.params.get('port'),
                          token=module.params.get('token'))
 
-
+def test_dependencies(module):
+    if not python_consul_installed:
+        module.fail_json(msg="python-consul required for this module. "\
+              "see http://python-consul.readthedocs.org/en/latest/#installation")
+    
 def main():
 
     argument_spec = dict(
@@ -238,8 +245,10 @@ def main():
         value=dict(required=False)
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec, supports_check_mode=False)
 
+    test_dependencies(module)
+        
     try:
         execute(module)
     except ConnectionError, e:

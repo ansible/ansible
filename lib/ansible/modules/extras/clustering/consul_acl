@@ -23,7 +23,11 @@ short_description: "manipulate consul acl keys and rules"
 description:
  - allows the addition, modification and deletion of ACL keys and associated
    rules in a consul cluster via the agent. For more details on using and 
-   configuring ACLs, see https://www.consul.io/docs/internals/acl.html
+   configuring ACLs, see https://www.consul.io/docs/internals/acl.html.
+requirements:
+  - python-consul
+  - pyhcl
+  - requests
 version_added: "1.9"
 author: Steve Gargan (steve.gargan@gmail.com)
 options:
@@ -91,17 +95,16 @@ import urllib2
 
 try:
     import consul
+    from requests.exceptions import ConnectionError
+    python_consul_installed = True
 except ImportError, e:
-    print "failed=True msg='python-consul required for this module. "\
-          "see http://python-consul.readthedocs.org/en/latest/#installation'"
-    sys.exit(1)
+    python_consul_installed = False
 
 try:
     import hcl
+    pyhcl_installed = True
 except ImportError:
-    print "failed=True msg='pyhcl required for this module."\
-          " see https://pypi.python.org/pypi/pyhcl'"
-    sys.exit(1)
+    pyhcl_installed = False
 
 from requests.exceptions import ConnectionError
 
@@ -271,6 +274,7 @@ class Rule:
 
     def __str__(self):
         return '%s %s' % (self.key, self.policy)
+
 def get_consul_api(module, token=None):
     if not token:
         token = token = module.params.get('token')
@@ -278,6 +282,14 @@ def get_consul_api(module, token=None):
                          port=module.params.get('port'),
                          token=token)
 
+def test_dependencies(module):
+    if not python_consul_installed:
+        module.fail_json(msg="python-consul required for this module. "\
+              "see http://python-consul.readthedocs.org/en/latest/#installation")
+    
+    if not pyhcl_installed:
+        module.fail_json( msg="pyhcl required for this module."\
+              " see https://pypi.python.org/pypi/pyhcl")
 
 def main():
     argument_spec = dict(
@@ -291,9 +303,10 @@ def main():
         token_type=dict(
             required=False, choices=['client', 'management'], default='client')
     )
+    module = AnsibleModule(argument_spec, supports_check_mode=False)
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True)
-
+    test_dependencies(module)
+    
     try:
         execute(module)
     except ConnectionError, e:
