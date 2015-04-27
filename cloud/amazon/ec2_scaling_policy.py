@@ -147,7 +147,6 @@ def main():
             scaling_adjustment = dict(type='int'),
             min_adjustment_step = dict(type='int'),
             cooldown = dict(type='int'),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
