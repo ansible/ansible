@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -tt -3 -Wd
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
@@ -18,6 +18,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
+
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
 
 import os
 import sys
