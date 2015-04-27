@@ -44,9 +44,9 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
     if value:
         if integer:
             value = int(value)
-        if floating:
+        elif floating:
             value = float(value)
-        if islist:
+        elif islist:
             if isinstance(value, basestring):
                 value = [x.strip() for x in value.split(',')]
     return value
