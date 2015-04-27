@@ -84,6 +84,11 @@ def rax_to_dict(obj, obj_type='standard'):
                 instance[key].append(rax_to_dict(item))
         elif (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
             if obj_type == 'server':
+                if key == 'image':
+                    if not value:
+                        instance['rax_boot_source'] = 'volume'
+                    else:
+                        instance['rax_boot_source'] = 'local'
                 key = rax_slugify(key)
             instance[key] = value
 
@@ -94,7 +99,35 @@ def rax_to_dict(obj, obj_type='standard'):
     return instance
 
 
-def rax_find_image(module, rax_module, image):
+def rax_find_bootable_volume(module, rax_module, server, exit=True):
+    """Find a servers bootable volume"""
+    cs = rax_module.cloudservers
+    cbs = rax_module.cloud_blockstorage
+    server_id = rax_module.utils.get_id(server)
+    volumes = cs.volumes.get_server_volumes(server_id)
+    bootable_volumes = []
+    for volume in volumes:
+        vol = cbs.get(volume)
+        if module.boolean(vol.bootable):
+            bootable_volumes.append(vol)
+    if not bootable_volumes:
+        if exit:
+            module.fail_json(msg='No bootable volumes could be found for '
+                                 'server %s' % server_id)
+        else:
+            return False
+    elif len(bootable_volumes) > 1:
+        if exit:
+            module.fail_json(msg='Multiple bootable volumes found for server '
+                                 '%s' % server_id)
+        else:
+            return False
+
+    return bootable_volumes[0]
+
+
+def rax_find_image(module, rax_module, image, exit=True):
+    """Find a server image by ID or Name"""
     cs = rax_module.cloudservers
     try:
         UUID(image)
@@ -107,13 +140,17 @@ def rax_find_image(module, rax_module, image):
                 image = cs.images.find(name=image)
             except (cs.exceptions.NotFound,
                     cs.exceptions.NoUniqueMatch):
-                module.fail_json(msg='No matching image found (%s)' %
-                                     image)
+                if exit:
+                    module.fail_json(msg='No matching image found (%s)' %
+                                         image)
+                else:
+                    return False
 
     return rax_module.utils.get_id(image)
 
 
 def rax_find_volume(module, rax_module, name):
+    """Find a Block storage volume by ID or name"""
     cbs = rax_module.cloud_blockstorage
     try:
         UUID(name)
@@ -129,6 +166,7 @@ def rax_find_volume(module, rax_module, name):
 
 
 def rax_find_network(module, rax_module, network):
+    """Find a cloud network by ID or name"""
     cnw = rax_module.cloud_networks
     try:
         UUID(network)
@@ -151,6 +189,7 @@ def rax_find_network(module, rax_module, network):
 
 
 def rax_find_server(module, rax_module, server):
+    """Find a Cloud Server by ID or name"""
     cs = rax_module.cloudservers
     try:
         UUID(server)
@@ -171,6 +210,7 @@ def rax_find_server(module, rax_module, server):
 
 
 def rax_find_loadbalancer(module, rax_module, loadbalancer):
+    """Find a Cloud Load Balancer by ID or name"""
     clb = rax_module.cloud_loadbalancers
     try:
         found = clb.get(loadbalancer)
@@ -194,6 +234,10 @@ def rax_find_loadbalancer(module, rax_module, loadbalancer):
 
 
 def rax_argument_spec():
+    """Return standard base dictionary used for the argument_spec
+    argument in AnsibleModule
+
+    """
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),
         auth_endpoint=dict(type='str'),
@@ -209,10 +253,13 @@ def rax_argument_spec():
 
 
 def rax_required_together():
+    """Return the default list used for the required_together argument to
+    AnsibleModule"""
     return [['api_key', 'username']]
 
 
 def setup_rax_module(module, rax_module, region_required=True):
+    """Set up pyrax in a standard way for all modules"""
     rax_module.USER_AGENT = 'ansible/%s %s' % (ANSIBLE_VERSION,
                                                rax_module.USER_AGENT)
 
