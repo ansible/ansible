@@ -361,7 +361,7 @@ class AnsibleModule(object):
 
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
+        self._legal_inputs = ['CHECKMODE', 'NO_LOG', 'HOSTNAME']
         
         self.aliases = self._handle_aliases()
 
