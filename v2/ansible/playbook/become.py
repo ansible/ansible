@@ -37,7 +37,7 @@ class Become:
 
     def _detect_privilege_escalation_conflict(self, ds):
 
-        # Fail out if user specifies conflicting privelege escalations
+        # Fail out if user specifies conflicting privilege escalations
         has_become = 'become' in ds or 'become_user'in ds
         has_sudo   = 'sudo' in ds or 'sudo_user' in ds
         has_su     = 'su' in ds or 'su_user' in ds

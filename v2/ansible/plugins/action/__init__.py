@@ -354,9 +354,9 @@ class ActionBase:
         # FIXME: async stuff here?
         #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
         if remote_module_path:
-            debug("transfering module to remote")
+            debug("transferring module to remote")
             self._transfer_data(remote_module_path, module_data)
-            debug("done transfering module to remote")
+            debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
 

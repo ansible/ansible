@@ -152,7 +152,7 @@ class Runner(object):
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         run_once=False,                     # option to enable/disable host bypass loop for a given task
-        become=False,                         # whether to run privelege escalation or not
+        become=False,                       # whether to run privilege escalation or not
         become_method=C.DEFAULT_BECOME_METHOD,
         become_user=C.DEFAULT_BECOME_USER,      # ex: 'root'
         become_pass=C.DEFAULT_BECOME_PASS,      # ex: 'password123' or None

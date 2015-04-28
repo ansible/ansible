@@ -156,7 +156,7 @@ class Play(object):
         self.no_log           = utils.boolean(ds.get('no_log', 'false'))
         self.force_handlers   = utils.boolean(ds.get('force_handlers', self.playbook.force_handlers))
 
-        # Fail out if user specifies conflicting privelege escalations
+        # Fail out if user specifies conflicting privilege escalations
         if (ds.get('become') or ds.get('become_user')) and (ds.get('sudo') or ds.get('sudo_user')):
             raise errors.AnsibleError('sudo params ("become", "become_user") and su params ("sudo", "sudo_user") cannot be used together')
         if (ds.get('become') or ds.get('become_user')) and (ds.get('su') or ds.get('su_user')):

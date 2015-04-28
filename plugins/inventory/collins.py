@@ -41,7 +41,7 @@ that will be used instead of the configured values if they are set:
 If errors are encountered during operation, this script will return an exit code of
 255; otherwise, it will return an exit code of 0.
 
-Collins attributes are accessable as variables in ansible via the COLLINS['attribute_name'].
+Collins attributes are accessible as variables in ansible via the COLLINS['attribute_name'].
 
 Tested against Ansible 1.8.2 and Collins 1.3.0.
 """

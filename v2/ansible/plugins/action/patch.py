@@ -34,7 +34,7 @@ class ActionModule(ActionBase):
         if src is None:
             return dict(failed=True, msg="src is required")
         elif remote_src:
-            # everyting is remote, so we just execute the module
+            # everything is remote, so we just execute the module
             # without changing any of the module arguments
             return self._execute_module()
 

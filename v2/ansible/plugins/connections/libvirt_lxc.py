@@ -78,7 +78,7 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We ignore privelege escalation!
+        # We ignore privilege escalation!
         local_cmd = self._generate_cmd(executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.lxc)
