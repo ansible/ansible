@@ -53,28 +53,28 @@ options:
       - CIDR (full notation) to be used for security group rule.
     required: false
     default: '0.0.0.0/0'
-  user_security_group
+  user_security_group:
     description:
       - Security group this rule is based of.
     required: false
     default: null
-  start_port
+  start_port:
     description:
       - Start port for this rule. Required if C(protocol=tcp) or C(protocol=udp).
     required: false
     default: null
     aliases: [ 'port' ]
-  end_port
+  end_port:
     description:
       - End port for this rule. Required if C(protocol=tcp) or C(protocol=udp), but C(start_port) will be used if not set.
     required: false
     default: null
-  icmp_type
+  icmp_type:
     description:
       - Type of the icmp message being sent. Required if C(protocol=icmp).
     required: false
     default: null
-  icmp_code
+  icmp_code:
     description:
       - Error code for this icmp message. Required if C(protocol=icmp).
     required: false
