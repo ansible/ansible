@@ -536,7 +536,7 @@ class DockerManager(object):
             self.lxc_conf = []
             options = self.module.params.get('lxc_conf')
             for option in options:
-                parts = option.split(':')
+                parts = option.split(':', 1)
                 self.lxc_conf.append({"Key": parts[0], "Value": parts[1]})
 
         self.exposed_ports = None
