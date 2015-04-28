@@ -76,6 +76,10 @@ options:
         description:
             - The timeout of API request (seconds).
         default: 10
+    proxy:
+        description:
+            - The name of the Zabbix Proxy to be used
+        default: None
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
@@ -115,6 +119,7 @@ EXAMPLES = '''
         ip: 10.xx.xx.xx
         dns: ""
         port: 12345
+    proxy: a.zabbix.proxy
 '''
 
 import logging
@@ -171,21 +176,25 @@ class Host(object):
                 template_ids.append(template_id)
         return template_ids
 
-    def add_host(self, host_name, group_ids, status, interfaces):
+    def add_host(self, host_name, group_ids, status, interfaces, proxy_id):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            host_list = self._zapi.host.create({'host': host_name, 'interfaces': interfaces, 'groups': group_ids, 'status': status})
+            parameters = {'host': host_name, 'interfaces': interfaces, 'groups': group_ids, 'status': status}
+            if proxy_id:
+                parameters['proxy_hostid'] = proxy_id
+            host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
                 return host_list['hostids'][0]
         except Exception, e:
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
-    def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list):
+    def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            self._zapi.host.update({'hostid': host_id, 'groups': group_ids, 'status': status})
+            parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'proxy_hostid': proxy_id}
+            self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
             if interfaces:
                 for interface in interfaces:
@@ -230,6 +239,14 @@ class Host(object):
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
             return host_list[0]
+
+    # get proxyid by proxy name
+    def get_proxyid_by_proxy_name(self, proxy_name):
+        proxy_list = self._zapi.proxy.get({'output': 'extend', 'filter': {'host': [proxy_name]}})
+        if len(proxy_list) < 1:
+            self._module.fail_json(msg="Proxy not found: %s" % proxy_name)
+        else:
+            return proxy_list[0]['proxyid']
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
@@ -291,7 +308,7 @@ class Host(object):
 
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
-                             exist_interfaces, host):
+                             exist_interfaces, host, proxy_id):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -309,6 +326,9 @@ class Host(object):
         # get the existing templates
         exist_template_ids = self.get_host_templates_by_host_id(host_id)
         if set(list(template_ids)) != set(exist_template_ids):
+            return True
+
+        if host['proxy_hostid'] != proxy_id:
             return True
 
         return False
@@ -346,7 +366,8 @@ def main():
             status=dict(default="enabled", choices=['enabled', 'disabled']),
             state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10),
-            interfaces=dict(required=False)
+            interfaces=dict(required=False),
+            proxy=dict(required=False)
         ),
         supports_check_mode=True
     )
@@ -364,6 +385,7 @@ def main():
     state = module.params['state']
     timeout = module.params['timeout']
     interfaces = module.params['interfaces']
+    proxy = module.params['proxy']
 
     # convert enabled to 0; disabled to 1
     status = 1 if status == "disabled" else 0
@@ -393,6 +415,11 @@ def main():
             if interface['type'] == 1:
                 ip = interface['ip']
 
+    proxy_id = "0"
+
+    if proxy:
+        proxy_id = host.get_proxyid_by_proxy_name(proxy)
+
     # check if host exist
     is_host_exist = host.is_host_exist(host_name)
 
@@ -418,10 +445,10 @@ def main():
 
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces, zabbix_host_obj):
+                                             exist_interfaces, zabbix_host_obj, proxy_id):
                     host.link_or_clear_template(host_id, template_ids)
                     host.update_host(host_name, group_ids, status, host_id,
-                                     interfaces, exist_interfaces)
+                                     interfaces, exist_interfaces, proxy_id)
                     module.exit_json(changed=True,
                                      result="Successfully update host %s (%s) and linked with template '%s'"
                                      % (host_name, ip, link_templates))
@@ -429,8 +456,8 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj):
-                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces)
+                                             exist_interfaces_copy, zabbix_host_obj, proxy_id):
+                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id)
                     host.link_or_clear_template(host_id, template_ids)
                     module.exit_json(changed=True,
                                      result="Successfully update host %s (%s) and linked with template '%s'"
@@ -445,7 +472,7 @@ def main():
             module.fail_json(msg="Specify at least one interface for creating host '%s'." % host_name)
 
         # create host
-        host_id = host.add_host(host_name, group_ids, status, interfaces)
+        host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id)
         host.link_or_clear_template(host_id, template_ids)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
             host_name, ip, link_templates))
