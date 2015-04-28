@@ -65,14 +65,13 @@ class ConnectionInformation:
         self.no_log      = False
         self.check_mode  = False
 
-        if play:
-            self.set_play(play)
-
         #TODO: just pull options setup to above?
         # set options before play to allow play to override them
         if options:
             self.set_options(options)
 
+        if play:
+            self.set_play(play)
 
     def __repr__(self):
         value = "CONNECTION INFO:\n"
@@ -135,8 +134,6 @@ class ConnectionInformation:
         #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
-
-
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
