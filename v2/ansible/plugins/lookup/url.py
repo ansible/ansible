@@ -37,7 +37,7 @@ class LookupModule(LookupBase):
                 utils.warnings("Failed lookup url for %s : %s" % (term, str(e)))
                 continue
             except HTTPError as e:
-                utils.warnings("Recieved HTTP error for %s : %s" % (term, str(e)))
+                utils.warnings("Received HTTP error for %s : %s" % (term, str(e)))
                 continue
 
             for line in response.read().splitlines():

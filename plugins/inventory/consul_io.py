@@ -211,7 +211,7 @@ class ConsulInventory(object):
 
   def load_data_for_node(self, node, datacenter):
     '''loads the data for a sinle node adding it to various groups based on
-    metadata retrieved from the kv store and service availablity'''
+    metadata retrieved from the kv store and service availability'''
 
     index, node_data = self.consul_api.catalog.node(node, dc=datacenter)
     node = node_data['Node']

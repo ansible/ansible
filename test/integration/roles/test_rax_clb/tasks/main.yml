@@ -601,7 +601,7 @@
       - rax_clb_a1.balancer.algorithm == 'LEAST_CONNECTIONS'
       - rax_clb_a1.balancer.status == 'ACTIVE'
 
-- name: Test rax_clb with updated algoritm 2
+- name: Test rax_clb with updated algorithm 2
   rax_clb:
     username: "{{ rackspace_username }}"
     api_key: "{{ rackspace_api_key }}"

@@ -76,7 +76,7 @@ class PlayBook(object):
         any_errors_fatal = False,
         vault_password   = False,
         force_handlers   = False,
-        # privelege escalation
+        # privilege escalation
         become           = C.DEFAULT_BECOME,
         become_method    = C.DEFAULT_BECOME_METHOD,
         become_user      = C.DEFAULT_BECOME_USER,
