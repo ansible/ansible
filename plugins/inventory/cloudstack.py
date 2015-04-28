@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# (c) 2014, René Moser <mail@renemoser.net>
+# (c) 2015, René Moser <mail@renemoser.net>
 #
 # This file is part of Ansible,
 #
@@ -70,7 +70,8 @@ based on the data obtained from CloudStack API:
 usage: cloudstack.py [--list] [--host HOST] [--project PROJECT]
 """
 
-import os, sys
+import os
+import sys
 import argparse
 
 try:
