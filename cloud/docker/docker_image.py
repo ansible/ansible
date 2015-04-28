@@ -23,7 +23,6 @@
 DOCUMENTATION = '''
 ---
 module: docker_image
-deprecated: "functions are being rolled into the 'docker' module"
 author: Pavel Antonov
 version_added: "1.5"
 short_description: manage docker images
