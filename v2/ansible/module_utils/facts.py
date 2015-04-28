@@ -99,8 +99,8 @@ class Facts(object):
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
                     ('/etc/os-release', 'Debian'),
-                    ('/etc/lsb-release', 'Mandriva'),
-                    ('/etc/os-release', 'NA') )
+                    ('/etc/os-release', 'NA'),
+                    ('/etc/lsb-release', 'Mandriva'))
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
