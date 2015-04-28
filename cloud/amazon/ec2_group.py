@@ -223,7 +223,12 @@ def main():
     groups = {}
     for curGroup in ec2.get_all_security_groups():
         groups[curGroup.id] = curGroup
-        groups[curGroup.name] = curGroup
+        if curGroup.name in groups:
+            # Prioritise groups from the current VPC
+            if vpc_id is None or curGroup.vpc_id == vpc_id:
+                groups[curGroup.name] = curGroup
+        else:
+            groups[curGroup.name] = curGroup
 
         if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
             group = curGroup
