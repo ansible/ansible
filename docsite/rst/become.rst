@@ -44,7 +44,7 @@ ansible_become_pass
 
 
 New command line options
------------------------
+------------------------
 
 --ask-become-pass
     ask for privilege escalation password
