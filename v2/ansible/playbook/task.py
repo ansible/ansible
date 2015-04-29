@@ -285,12 +285,6 @@ class Task(Base, Conditional, Taggable, Become):
                 return False
         return super(Task, self).evaluate_conditional(all_vars)
 
-    def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        result = False
-        if self._block is not None:
-            result |= self._block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        return result | super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-
     def set_loader(self, loader):
         '''
         Sets the loader on this object and recursively on parent, child objects.

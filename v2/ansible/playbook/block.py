@@ -235,17 +235,6 @@ class Block(Base, Become, Conditional, Taggable):
                 return False
         return super(Block, self).evaluate_conditional(all_vars)
 
-    def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        result = False
-        if len(self._dep_chain):
-            for dep in self._dep_chain:
-                result |= dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        if self._parent_block is not None:
-            result |= self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        elif self._role is not None:
-            result |= self._role.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        return result | super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-
     def set_loader(self, loader):
         self._loader = loader
         if self._parent_block:
