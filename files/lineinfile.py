@@ -370,25 +370,13 @@ def main():
 
         line = params['line']
 
-        # The safe_eval call will remove some quoting, but not others,
-        # so we need to know if we should specifically unquote it.
-        should_unquote = not is_quoted(line)
-
-        # always add one layer of quotes
-        line = "'%s'" % line
-
         # Replace escape sequences like '\n' while being sure 
         # not to replace octal escape sequences (\ooo) since they
         # match the backref syntax.
         if backrefs:
             line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', line)
-        line = module.safe_eval(line)
 
-        # Now remove quotes around the string, if needed after
-        # removing the layer we added above
-        line = unquote(line)
-        if should_unquote:
-            line = unquote(line)
+        line = line.decode("string_escape")
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
