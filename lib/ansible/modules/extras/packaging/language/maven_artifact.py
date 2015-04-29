@@ -184,28 +184,11 @@ class MavenDownloader:
         if artifact.is_snapshot():
             path = "/%s/maven-metadata.xml" % (artifact.path())
             xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
-            basexpath = "/metadata/versioning/"
-            p = xml.xpath(basexpath + "/snapshotVersions/snapshotVersion")
-            if p:
-                return self._find_matching_artifact(p, artifact)
+            timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
+            buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+            return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
         else:
             return self._uri_for_artifact(artifact)
-
-    def _find_matching_artifact(self, elems, artifact):
-        filtered = filter(lambda e: e.xpath("extension/text() = '%s'" % artifact.extension), elems)
-        if artifact.classifier:
-            filtered = filter(lambda e: e.xpath("classifier/text() = '%s'" % artifact.classifier), elems)
-
-        if len(filtered) > 1:
-            print(
-                "There was more than one match. Selecting the first one. Try adding a classifier to get a better match.")
-        elif not len(filtered):
-            print("There were no matches.")
-            return None
-
-        elem = filtered[0]
-        value = elem.xpath("value/text()")
-        return self._uri_for_artifact(artifact, value[0])
 
     def _uri_for_artifact(self, artifact, version=None):
         if artifact.is_snapshot() and not version:
@@ -309,7 +292,7 @@ def main():
             repository_url = dict(default=None),
             username = dict(default=None),
             password = dict(default=None),
-            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state 
+            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
             dest = dict(default=None),
         )
     )
