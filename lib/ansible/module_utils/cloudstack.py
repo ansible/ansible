@@ -41,6 +41,10 @@ class AnsibleCloudStack:
         if not has_lib_cs:
             module.fail_json(msg="python library cs required: pip install cs")
 
+        self.result = {
+            'changed': False,
+        }
+
         self.module = module
         self._connect()
 
@@ -235,6 +239,63 @@ class AnsibleCloudStack:
                 self.hypervisor = h['name']
                 return self.hypervisor
         self.module.fail_json(msg="Hypervisor '%s' not found" % hypervisor)
+
+
+    def get_tags(self, resource=None):
+        existing_tags = self.cs.listTags(resourceid=resource['id'])
+        if existing_tags:
+            return existing_tags['tag']
+        return []
+
+
+    def _delete_tags(self, resource, resource_type, tags):
+        existing_tags = resource['tags']
+        tags_to_delete = []
+        for existing_tag in existing_tags:
+            if existing_tag['key'] in tags:
+                if existing_tag['value'] != tags[key]:
+                    tags_to_delete.append(existing_tag)
+            else:
+                tags_to_delete.append(existing_tag)
+        if tags_to_delete:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args = {}
+                args['resourceids']  = resource['id']
+                args['resourcetype'] = resource_type
+                args['tags']         = tags_to_delete
+                self.cs.deleteTags(**args)
+
+
+    def _create_tags(self, resource, resource_type, tags):
+        tags_to_create = []
+        for i, tag_entry in enumerate(tags):
+            tag = {
+                'key':   tag_entry['key'],
+                'value': tag_entry['value'],
+            }
+            tags_to_create.append(tag)
+        if tags_to_create:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args = {}
+                args['resourceids']  = resource['id']
+                args['resourcetype'] = resource_type
+                args['tags']         = tags_to_create
+                self.cs.createTags(**args)
+
+
+    def ensure_tags(self, resource, resource_type=None):
+        if not resource_type or not resource:
+            self.module.fail_json(msg="Error: Missing resource or resource_type for tags.")
+
+        if 'tags' in resource:
+            tags = self.module.params.get('tags')
+            if tags is not None:
+                self._delete_tags(resource, resource_type, tags)
+                self._create_tags(resource, resource_type, tags)
+                resource['tags'] = self.get_tags(resource)
+        return resource
 
 
     def get_capabilities(self, key=None):
