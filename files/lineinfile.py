@@ -22,7 +22,6 @@
 import re
 import os
 import pipes
-import codecs
 import tempfile
 
 DOCUMENTATION = """
@@ -369,14 +368,6 @@ def main():
             ins_aft = 'EOF'
 
         line = params['line']
-
-        # Replace escape sequences like '\n' while being sure 
-        # not to replace octal escape sequences (\ooo) since they
-        # match the backref syntax.
-        if backrefs:
-            line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', line)
-
-        line = codecs.escape_decode(line)[0]
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
