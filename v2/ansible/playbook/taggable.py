@@ -39,6 +39,15 @@ class Taggable:
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
+    def _get_attr_tags(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        tags = self._attributes['tags']
+        if hasattr(self, '_get_parent_attribute'):
+            tags.extend(self._get_parent_attribute('tags'))
+        return list(set(tags))
+
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
 
