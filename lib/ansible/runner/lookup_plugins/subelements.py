@@ -44,22 +44,35 @@ class LookupModule(object):
             elementlist = []
             for key in terms[0].iterkeys():
                 elementlist.append(terms[0][key])
-        else: 
+        else:
             elementlist = terms[0]
-        subelement = terms[1]
+        subelements = terms[1].split(".")
 
         ret = []
         for item0 in elementlist:
             if not isinstance(item0, dict):
                 raise errors.AnsibleError("subelements lookup expects a dictionary, got '%s'" %item0)
-            if item0.get('skipped',False) != False:
+            if item0.get('skipped', False) != False:
                 # this particular item is to be skipped
-                continue 
-            if not subelement in item0:
-                raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
-            if not isinstance(item0[subelement], list):
-                raise errors.AnsibleError("the key %s should point to a list, got '%s'" % (subelement, item0[subelement]))
-            sublist = item0.pop(subelement, [])
+                continue
+
+            subvalue = item0
+            lastsubkey = False
+            for subkey in subelements:
+                if subkey == subelements[-1]:
+                    lastsubkey = True
+                if not subkey in subvalue:
+                    raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subkey, subvalue))
+                if not lastsubkey:
+                    if not isinstance(subvalue[subkey], dict):
+                        raise errors.AnsibleError("the key %s should point to a dictionary, got '%s'" % (subkey, subvalue[subkey]))
+                    else:
+                        subvalue = subvalue[subkey]
+                else: # lastsubkey
+                    if not isinstance(subvalue[subkey], list):
+                        raise errors.AnsibleError("the key %s should point to a list, got '%s'" % (subkey, subvalue[subkey]))
+                    else:
+                        sublist = subvalue.pop(subkey, [])
             for item1 in sublist:
                 ret.append((item0, item1))
 
