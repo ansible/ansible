@@ -1228,7 +1228,7 @@ class Runner(object):
         # Lookup the python interp from the host or delegate
 
         # host == inven_host when there is no delegate
-        host = inject['inventory_hostname']
+        host = inject['hostvars'].get('inventory_hostname')
         if 'delegate_to' in inject:
             delegate = inject['delegate_to']
             if delegate:
