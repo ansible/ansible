@@ -213,7 +213,7 @@ class Play(object):
         role_vars = {}
         if type(orig_path) == dict:
             # what, not a path?
-            role_name = orig_path.get('role', None)
+            role_name = utils.role_yaml_parse(orig_path)["name"]
             if role_name is None:
                 raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
             role_vars = orig_path
