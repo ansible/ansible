@@ -114,11 +114,6 @@ class LookupModule(object):
                     with open(path, 'w') as f:
                         os.chmod(path, 0600)
                         f.write(content + '\n')
-                # crypt not requested, remove salt if present
-                elif (encrypt is None and salt):
-                    with open(path, 'w') as f:
-                        os.chmod(path, 0600)
-                        f.write(password + '\n')
 
             if encrypt:
                 password = utils.do_encrypt(password, encrypt, salt=salt)
