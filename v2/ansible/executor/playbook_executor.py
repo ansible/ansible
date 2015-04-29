@@ -48,7 +48,7 @@ class PlaybookExecutor:
         if options.listhosts or options.listtasks or options.listtags:
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, callback='default', variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=self.passwords)
+            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=self.passwords)
 
     def run(self):
 

@@ -24,6 +24,7 @@ import os
 import socket
 import sys
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.play_iterator import PlayIterator
@@ -48,7 +49,7 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, callback, variable_manager, loader, display, options, passwords):
+    def __init__(self, inventory, variable_manager, loader, display, options, passwords, stdout_callback=None):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -70,14 +71,8 @@ class TaskQueueManager:
 
         self._final_q = multiprocessing.Queue()
 
-        # load all available callback plugins
-        # FIXME: we need an option to white-list callback plugins
-        self._callback_plugins = []
-        for callback_plugin in callback_loader.all(class_only=True):
-            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
-                self._callback_plugins.append(callback_plugin(self._display))
-            else:
-                self._callback_plugins.append(callback_plugin())
+        # load callback plugins
+        self._callback_plugins = self._load_callbacks(stdout_callback)
 
         # create the pool of worker threads, based on the number of forks specified
         try:
@@ -119,6 +114,40 @@ class TaskQueueManager:
         # then initalize it with the handler names from the handler list
         for handler in handler_list:
             self._notified_handlers[handler.get_name()] = []
+
+    def _load_callbacks(self, stdout_callback):
+        '''
+        Loads all available callbacks, with the exception of those which
+        utilize the CALLBACK_TYPE option. When CALLBACK_TYPE is set to 'stdout',
+        only one such callback plugin will be loaded.
+        '''
+
+        loaded_plugins = []
+
+        stdout_callback_loaded = False
+        if stdout_callback is None:
+            stdout_callback = C.DEFAULT_STDOUT_CALLBACK
+
+        if stdout_callback not in callback_loader:
+            raise AnsibleError("Invalid callback for stdout specified: %s" % stdout_callback)
+
+        for callback_plugin in callback_loader.all(class_only=True):
+            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
+                # we only allow one callback of type 'stdout' to be loaded, so check
+                # the name of the current plugin and type to see if we need to skip
+                # loading this callback plugin
+                callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
+                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+                if callback_type == 'stdout':
+                    if callback_name != stdout_callback or stdout_callback_loaded:
+                        continue
+                    stdout_callback_loaded = True
+
+                loaded_plugins.append(callback_plugin(self._display))
+            else:
+                loaded_plugins.append(callback_plugin())
+
+        return loaded_plugins
 
     def run(self, play):
         '''
