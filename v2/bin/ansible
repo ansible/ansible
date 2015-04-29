@@ -150,7 +150,7 @@ class Cli(object):
         # now create a task queue manager to execute the play
         try:
             display = Display()
-            tqm = TaskQueueManager(inventory=inventory, callback='minimal', variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=passwords)
+            tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=passwords, stdout_callback='minimal')
             result = tqm.run(play)
             tqm.cleanup()
         except AnsibleError:
