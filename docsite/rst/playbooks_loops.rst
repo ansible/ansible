@@ -147,9 +147,26 @@ How might that be accomplished?  Let's assume you had the following defined and 
         authorized: 
           - /tmp/alice/onekey.pub
           - /tmp/alice/twokey.pub
+        mysql:
+            password: mysql-password
+            hosts:
+              - "%"
+              - "127.0.0.1"
+              - "::1"
+              - "localhost"
+            privs:
+              - "*.*:SELECT"
+              - "DB1.*:ALL"
       - name: bob
         authorized:
           - /tmp/bob/id_rsa.pub
+        mysql:
+            password: other-mysql-password
+            hosts:
+              - "db1"
+            privs:
+              - "*.*:SELECT"
+              - "DB2.*:ALL"
 
 It might happen like so::
 
@@ -161,7 +178,15 @@ It might happen like so::
          - users
          - authorized
 
-Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given key inside of those
+Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
+
+    - name: Setup MySQL users
+      mysql_user: name={{ item.0.user }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
+      with_subelements:
+        - users
+        - mysql.hosts
+
+Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
 
 The authorized_key pattern is exactly where it comes up most.
