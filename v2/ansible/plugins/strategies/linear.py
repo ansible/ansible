@@ -272,7 +272,7 @@ class StrategyModule(StrategyBase):
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             new_blocks = self._load_included_file(included_file)
-                        except AnsibleError, e:
+                        except AnsibleError as e:
                             for host in included_file._hosts:
                                 iterator.mark_host_failed(host)
                             # FIXME: callback here?
@@ -293,7 +293,7 @@ class StrategyModule(StrategyBase):
                         iterator.add_tasks(host, all_blocks[host])
 
                 debug("results queue empty")
-            except (IOError, EOFError), e:
+            except (IOError, EOFError) as e:
                 debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return 1

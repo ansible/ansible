@@ -58,7 +58,7 @@ def main(display, args):
 
     # create parser for CLI options
     parser = base_parser(
-        usage = "%prog playbook.yml",
+        usage="%prog playbook.yml",
         connect_opts=True,
         meta_opts=True,
         runas_opts=True,
@@ -89,14 +89,14 @@ def main(display, args):
     # Note: slightly wrong, this is written so that implicit localhost
     # Manage passwords
     sshpass    = None
-    becomepass    = None
+    becomepass = None
     vault_pass = None
 
     # don't deal with privilege escalation when we don't need to
     if not options.listhosts and not options.listtasks and not options.listtags:
         normalize_become_options(options)
         (sshpass, becomepass, vault_pass) = ask_passwords(options)
-        passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+        passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
     if options.vault_password_file:
         # read vault_pass from a file
@@ -129,7 +129,7 @@ def main(display, args):
     for playbook in args:
         if not os.path.exists(playbook):
             raise AnsibleError("the playbook: %s could not be found" % playbook)
-        if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+        if not os.path.isfile(playbook) and not stat.S_ISFIFO(os.stat(playbook).st_mode):
             raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     # create the variable manager, which will be shared throughout
@@ -155,7 +155,7 @@ def main(display, args):
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0 and no_hosts is False:
         # Invalid limit
-        raise errors.AnsibleError("Specified --limit does not match any hosts")
+        raise AnsibleError("Specified --limit does not match any hosts")
 
     # create the playbook executor, which manages running the plays via a task queue manager
     pbex = PlaybookExecutor(playbooks=args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=passwords)

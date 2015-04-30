@@ -91,7 +91,7 @@ class TestVaultEditor(unittest.TestCase):
                  'write_data',
                  'shuffle_files']
         for slot in slots:
-            assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
+            self.assertTrue(hasattr(v, slot), "VaultLib is missing the %s method" % slot)
 
     @patch.object(VaultEditor, '_editor_shell_command')
     def test_create_file(self, mock_editor_shell_command):
@@ -136,9 +136,8 @@ class TestVaultEditor(unittest.TestCase):
 
         os.unlink(v10_file.name)
 
-        assert error_hit == False, "error decrypting 1.0 file"
-        assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
-
+        self.assertFalse(error_hit, "error decrypting 1.0 file")
+        self.assertEqual(fdata.strip(), "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip())
 
     def test_decrypt_1_1(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
@@ -164,9 +163,8 @@ class TestVaultEditor(unittest.TestCase):
 
         os.unlink(v11_file.name)
 
-        assert error_hit == False, "error decrypting 1.0 file"
-        assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
-
+        self.assertFalse(error_hit, "error decrypting 1.0 file")
+        self.assertEqual(fdata.strip(), "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip())
 
     def test_rekey_migration(self):
         """
@@ -186,7 +184,7 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:
             ve.rekey_file('ansible2')
-        except errors.AnsibleError as e:
+        except errors.AnsibleError:
             error_hit = True
 
         # verify decrypted content
@@ -194,7 +192,7 @@ class TestVaultEditor(unittest.TestCase):
         fdata = f.read()
         f.close()
 
-        assert error_hit == False, "error rekeying 1.0 file to 1.1"
+        self.assertFalse(error_hit, "error rekeying 1.0 file to 1.1")
 
         # ensure filedata can be decrypted, is 1.1 and is AES256
         vl = VaultLib("ansible2")
@@ -207,8 +205,6 @@ class TestVaultEditor(unittest.TestCase):
 
         os.unlink(v10_file.name)
 
-        assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
-        assert error_hit == False, "error decrypting migrated 1.0 file"
-        assert dec_data.strip() == "foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
-
-
+        self.assertEqual(vl.cipher_name, "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name)
+        self.assertFalse(error_hit, "error decrypting migrated 1.0 file")
+        self.assertEqual(dec_data.strip(), "foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data)

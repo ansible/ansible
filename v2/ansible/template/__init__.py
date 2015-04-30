@@ -43,7 +43,7 @@ __all__ = ['Templar']
 SINGLE_VAR = re.compile(r"^{{\s*(\w*)\s*}}$")
 
 # Primitive Types which we don't want Jinja to convert to strings.
-NON_TEMPLATED_TYPES = ( bool, Number )
+NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
@@ -54,6 +54,7 @@ class Templar:
     '''
 
     def __init__(self, loader, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
+        # TODO: use mutable default argument! fix it?
         self._loader              = loader
         self._basedir             = loader.get_basedir()
         self._filters             = None
@@ -213,7 +214,7 @@ class Templar:
                 ran = instance.run(*args, variables=self._available_variables, **kwargs)
             except AnsibleUndefinedVariable:
                 raise
-            except Exception, e:
+            except Exception as e:
                 if self._fail_on_lookup_errors:
                     raise
                 ran = None
@@ -241,9 +242,9 @@ class Templar:
 
             try:
                 t = environment.from_string(data)
-            except TemplateSyntaxError, e:
+            except TemplateSyntaxError as e:
                 raise AnsibleError("template error while templating string: %s" % str(e))
-            except Exception, e:
+            except Exception as e:
                 if 'recursion' in str(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % data)
                 else:
@@ -259,7 +260,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-            except TypeError, te:
+            except TypeError as te:
                 if 'StrictUndefined' in str(te):
                     raise AnsibleUndefinedVariable(
                         "Unable to look up a name or access an attribute in template string. " + \
@@ -280,7 +281,7 @@ class Templar:
                     res += '\n' * (data_newlines - res_newlines)
 
             return res
-        except (UndefinedError, AnsibleUndefinedVariable), e:
+        except (UndefinedError, AnsibleUndefinedVariable) as e:
             if self._fail_on_undefined_errors:
                 raise
             else:

@@ -60,7 +60,7 @@ def listify_lookup_plugin_terms(terms, variables, loader):
             return safe_eval(terms)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
     return terms
 
