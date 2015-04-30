@@ -38,10 +38,12 @@ class GalaxyAPI(object):
         try:
             urlparse(api_server, scheme='https')
         except:
-            raise AnsibleError("Invalid server API url passed: %s" % self.galaxy.api_server)
+            raise AnsibleError("Invalid server API url passed: %s" % api_server)
 
-        server_version = self.get_server_api_version(api_server)
-        self.galaxy.display.vvvvv("Server version: %s" % server_version)
+        server_version = self.get_server_api_version('%s/api/' % (api_server))
+        if not server_version:
+            raise AnsibleError("Could not retrieve server API version: %s" % api_server)
+
         if server_version in self.SUPPORTED_VERSIONS:
             self.baseurl = '%s/api/%s' % (api_server, server_version)
             self.version = server_version # for future use
@@ -54,22 +56,21 @@ class GalaxyAPI(object):
         Fetches the Galaxy API current version to ensure
         the API server is up and reachable.
         """
+        #TODO: fix galaxy server which returns current_version path (/api/v1) vs actual version (v1)
+        # also should set baseurl using supported_versions which has path
+        return 'v1'
 
         try:
-            self.galaxy.display.vvvvv("Querying server version: %s" % api_server)
             data = json.load(urlopen(api_server))
-            if not data.get("current_version", None):
-                return None
-            else:
-                return data
-        except:
+            return data.get("current_version", 'v1')
+        except Exception as e:
+            # TODO: report error
             return None
 
     def lookup_role_by_name(self, role_name, notify=True):
         """
         Find a role by name
         """
-
         role_name = urlquote(role_name)
 
         try:
@@ -82,6 +83,7 @@ class GalaxyAPI(object):
             raise AnsibleError("- invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
+        self.galaxy.display.vvvv("- %s" % (url))
         try:
             data = json.load(urlopen(url))
             if len(data["results"]) != 0:
