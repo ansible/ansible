@@ -31,9 +31,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.unicode import to_bytes
 
-# FIXME: documentation for methods here, which have mostly been
-#        copied directly over from the old utils/__init__.py
-
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
@@ -92,6 +89,7 @@ class CLI(object):
 
     @staticmethod
     def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
+        ''' prompt for vault password and/or password change '''
 
         vault_pass = None
         new_vault_pass = None
@@ -122,6 +120,7 @@ class CLI(object):
 
 
     def ask_passwords(self):
+        ''' prompt for connection and become passwords if needed '''
 
         op = self.options
         sshpass = None
@@ -162,6 +161,7 @@ class CLI(object):
 
 
     def validate_conflicts(self):
+        ''' check for conflicting options '''
 
         op = self.options
 
@@ -186,7 +186,7 @@ class CLI(object):
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False,
         async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
-        ''' create an options parser for any ansible script '''
+        ''' create an options parser for most ansible scripts '''
 
         parser = SortedOptParser(usage, version=CLI.version("%prog"))
 
@@ -290,6 +290,7 @@ class CLI(object):
 
     @staticmethod
     def version(prog):
+        ''' return ansible version '''
         result = "{0} {1}".format(prog, __version__)
         gitinfo = _gitinfo()
         if gitinfo:
@@ -299,6 +300,7 @@ class CLI(object):
 
     @staticmethod
     def version_info(gitinfo=False):
+        ''' return full ansible version info '''
         if gitinfo:
             # expensive call, user with care
             ansible_version_string = version('')
@@ -322,61 +324,63 @@ class CLI(object):
                 'minor':       ansible_versions[1],
                 'revision':    ansible_versions[2]}
 
-def _git_repo_info(repo_path):
-    ''' returns a string containing git branch, commit id and commit date '''
-    result = None
-    if os.path.exists(repo_path):
-        # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
-        if os.path.isfile(repo_path):
-            try:
-                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
-                # There is a possibility the .git file to have an absolute path.
-                if os.path.isabs(gitdir):
-                    repo_path = gitdir
-                else:
-                    repo_path = os.path.join(repo_path[:-4], gitdir)
-            except (IOError, AttributeError):
-                return ''
-        f = open(os.path.join(repo_path, "HEAD"))
-        branch = f.readline().split('/')[-1].rstrip("\n")
-        f.close()
-        branch_path = os.path.join(repo_path, "refs", "heads", branch)
-        if os.path.exists(branch_path):
-            f = open(branch_path)
-            commit = f.readline()[:10]
+    @staticmethod
+    def _git_repo_info(repo_path):
+        ''' returns a string containing git branch, commit id and commit date '''
+        result = None
+        if os.path.exists(repo_path):
+            # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+            if os.path.isfile(repo_path):
+                try:
+                    gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+                    # There is a possibility the .git file to have an absolute path.
+                    if os.path.isabs(gitdir):
+                        repo_path = gitdir
+                    else:
+                        repo_path = os.path.join(repo_path[:-4], gitdir)
+                except (IOError, AttributeError):
+                    return ''
+            f = open(os.path.join(repo_path, "HEAD"))
+            branch = f.readline().split('/')[-1].rstrip("\n")
             f.close()
-        else:
-            # detached HEAD
-            commit = branch[:10]
-            branch = 'detached HEAD'
-            branch_path = os.path.join(repo_path, "HEAD")
+            branch_path = os.path.join(repo_path, "refs", "heads", branch)
+            if os.path.exists(branch_path):
+                f = open(branch_path)
+                commit = f.readline()[:10]
+                f.close()
+            else:
+                # detached HEAD
+                commit = branch[:10]
+                branch = 'detached HEAD'
+                branch_path = os.path.join(repo_path, "HEAD")
 
-        date = time.localtime(os.stat(branch_path).st_mtime)
-        if time.daylight == 0:
-            offset = time.timezone
+            date = time.localtime(os.stat(branch_path).st_mtime)
+            if time.daylight == 0:
+                offset = time.timezone
+            else:
+                offset = time.altzone
+            result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
+                time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
         else:
-            offset = time.altzone
-        result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-            time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
-    else:
-        result = ''
-    return result
+            result = ''
+        return result
 
-def _gitinfo():
-    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-    repo_path = os.path.join(basedir, '.git')
-    result = _git_repo_info(repo_path)
-    submodules = os.path.join(basedir, '.gitmodules')
-    if not os.path.exists(submodules):
-       return result
-    f = open(submodules)
-    for line in f:
-        tokens = line.strip().split(' ')
-        if tokens[0] == 'path':
-            submodule_path = tokens[2]
-            submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
-            if not submodule_info:
-                submodule_info = ' not found - use git submodule update --init ' + submodule_path
-            result += "\n  {0}: {1}".format(submodule_path, submodule_info)
-    f.close()
-    return result
+    @staticmethod
+    def _gitinfo():
+        basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+        repo_path = os.path.join(basedir, '.git')
+        result = _git_repo_info(repo_path)
+        submodules = os.path.join(basedir, '.gitmodules')
+        if not os.path.exists(submodules):
+           return result
+        f = open(submodules)
+        for line in f:
+            tokens = line.strip().split(' ')
+            if tokens[0] == 'path':
+                submodule_path = tokens[2]
+                submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
+                if not submodule_info:
+                    submodule_info = ' not found - use git submodule update --init ' + submodule_path
+                result += "\n  {0}: {1}".format(submodule_path, submodule_info)
+        f.close()
+        return result

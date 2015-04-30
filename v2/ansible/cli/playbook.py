@@ -18,20 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-__requires__ = ['ansible']
-try:
-    import pkg_resources
-except Exception:
-    # Use pkg_resources to find the correct versions of libraries and set
-    # sys.path appropriately when there are multiversion installs.  But we
-    # have code that better expresses the errors in the places where the code
-    # is actually used (the deps are optional for many code paths) so we don't
-    # want to fail here.
-    pass
-
 import os
 import stat
 import sys
@@ -191,24 +177,3 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
-
-########################################################
-
-if __name__ == "__main__":
-
-    display = Display()
-    try:
-        cli = PlaybookCLI(sys.argv, display=display)
-        cli.parse()
-        sys.exit(cli.run())
-    except AnsibleOptionsError as e:
-        cli.parser.print_help()
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(1)
-    except AnsibleError as e:
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(2)
-    except KeyboardInterrupt:
-        display.error("interrupted")
-        sys.exit(4)
-
