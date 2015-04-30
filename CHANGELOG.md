@@ -27,6 +27,7 @@ New Modules:
   * cloudstack: cs_securitygroup_rule
   * cloudstack: cs_vmsnapshot
   * maven_artifact
+  * openstack: os_server_facts
   * pushover
   * zabbix_host
   * zabbix_hostmacro
