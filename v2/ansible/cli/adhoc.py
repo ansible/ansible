@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
@@ -18,18 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
-
-__requires__ = ['ansible']
-try:
-    import pkg_resources
-except Exception:
-    # Use pkg_resources to find the correct versions of libraries and set
-    # sys.path appropriately when there are multiversion installs.  But we
-    # have code that better expresses the errors in the places where the code
-    # is actually used (the deps are optional for many code paths) so we don't
-    # want to fail here.
-    pass
-
 import os
 import sys
 
@@ -47,7 +33,7 @@ from ansible.vars import VariableManager
 
 ########################################################
 
-class AdHocCli(CLI):
+class AdHocCLI(CLI):
     ''' code behind ansible ad-hoc cli'''
 
     def parse(self):
@@ -72,8 +58,7 @@ class AdHocCli(CLI):
         self.options, self.args = self.parser.parse_args()
 
         if len(self.args) != 1:
-            self.parser.print_help()
-            sys.exit(1)
+            raise AnsibleOptionsError("Missing target hosts")
 
         self.display.verbosity = self.options.verbosity
         self.validate_conflicts()
@@ -141,10 +126,10 @@ class AdHocCli(CLI):
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # now create a task queue manager to execute the play
+        tqm = None
         try:
             tqm = TaskQueueManager(
                     inventory=inventory,
-                    callback='minimal',
                     variable_manager=variable_manager,
                     loader=loader,
                     display=self.display,
@@ -170,23 +155,3 @@ class AdHocCli(CLI):
 
         return poller.results
 
-
-########################################################
-
-if __name__ == '__main__':
-
-    display = Display()
-    try:
-        cli = AdHocCli(sys.argv, display=display)
-        cli.parse()
-        sys.exit(cli.run())
-    except AnsibleOptionsError as e:
-        cli.parser.print_help()
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(1)
-    except AnsibleError as e:
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(2)
-    except KeyboardInterrupt:
-        display.error("interrupted")
-        sys.exit(4)

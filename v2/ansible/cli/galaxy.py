@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ########################################################################
 #
 # (C) 2013, James Cammarata <jcammarata@ansible.com>
@@ -495,24 +493,3 @@ class GalaxyCLI(CLI):
                         version = "(unknown version)"
                     self.display.display("- %s, %s" % (path_file, version))
         return 0
-
-#-------------------------------------------------------------------------------------
-# The main entry point
-#-------------------------------------------------------------------------------------
-if __name__ == '__main__':
-
-    display = Display()
-    try:
-        cli = GalaxyCLI(sys.argv, display=display)
-        cli.parse()
-        sys.exit(cli.run())
-    except AnsibleOptionsError as e:
-        cli.parser.print_help()
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(1)
-    except AnsibleError as e:
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(2)
-    except KeyboardInterrupt:
-        display.error("interrupted")
-        sys.exit(4)

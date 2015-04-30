@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -18,17 +16,6 @@
 # ansible-vault is a script that encrypts/decrypts YAML files. See
 # http://docs.ansible.com/playbooks_vault.html for more details.
 
-__requires__ = ['ansible']
-try:
-    import pkg_resources
-except Exception:
-    # Use pkg_resources to find the correct versions of libraries and set
-    # sys.path appropriately when there are multiversion installs.  But we
-    # have code that better expresses the errors in the places where the code
-    # is actually used (the deps are optional for many code paths) so we don't
-    # want to fail here.
-    pass
-
 import os
 import sys
 import traceback
@@ -38,7 +25,7 @@ from ansible.parsing.vault import VaultEditor
 from ansible.utils.cli import CLI
 from ansible.utils.display import Display
 
-class VaultCli(CLI):
+class VaultCLI(CLI):
     """ Vault command line class """
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
@@ -132,23 +119,3 @@ class VaultCli(CLI):
             this_editor.rekey_file(new_password)
 
         self.display.display("Rekey successful")
-
-########################################################
-
-if __name__ == "__main__":
-
-    display = Display()
-    try:
-        cli = VaultCli(sys.argv, display=display)
-        cli.parse()
-        sys.exit(cli.run())
-    except AnsibleOptionsError as e:
-        cli.parser.print_help()
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(1)
-    except AnsibleError as e:
-        display.display(str(e), stderr=True, color='red')
-        sys.exit(2)
-    except KeyboardInterrupt:
-        display.error("interrupted")
-        sys.exit(4)
