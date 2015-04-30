@@ -182,7 +182,7 @@ class InvalidPrivsError(Exception):
 # MySQL module specific support methods.
 #
 
-def connect(module, login_user, login_password, config_file='~/.my.cnf'):
+def connect(module, login_user=None, login_password=None, config_file='~/.my.cnf'):
     config = {
         'host': module.params['login_host'],
         'db': 'mysql'
@@ -195,10 +195,14 @@ def connect(module, login_user, login_password, config_file='~/.my.cnf'):
 
     if os.path.exists(config_file):
         config['read_default_file'] = config_file
-    else:
+
+    # If login_user or login_password are given, they should override the
+    # config file
+    if login_user is not None:
         config['user'] = login_user
+    if login_password is not None:
         config['passwd'] = login_password
-        
+
     db_connection = MySQLdb.connect(**config)
     return db_connection.cursor()
 
