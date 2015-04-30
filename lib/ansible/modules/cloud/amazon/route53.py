@@ -208,7 +208,7 @@ def main():
 
     command_in              = module.params.get('command')
     zone_in                 = module.params.get('zone').lower()
-    ttl_in                  = module.params.get('ttl')
+    ttl_in                  = int(module.params.get('ttl'))
     record_in               = module.params.get('record').lower()
     type_in                 = module.params.get('type')
     value_in                = module.params.get('value')
