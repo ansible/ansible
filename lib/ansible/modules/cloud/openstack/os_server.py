@@ -279,16 +279,16 @@ def _create_server(module, cloud):
             module.params['image'], module.params['image_exclude'])
 
     if flavor:
-        flavor_id = cloud.get_flavor(flavor)
+        flavor_dict = cloud.get_flavor(flavor)
     else:
-        flavor_id = cloud.get_flavor_by_ram(flavor_ram, flavor_include)
+        flavor_dict = cloud.get_flavor_by_ram(flavor_ram, flavor_include)
 
     nics = _network_args(module, cloud)
 
     bootkwargs = dict(
         name=module.params['name'],
         image=image_id,
-        flavor=flavor_id,
+        flavor=flavor_dict['id'],
         nics=nics,
         meta=module.params['meta'],
         security_groups=module.params['security_groups'].split(','),
