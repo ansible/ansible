@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# (c) 2014-2015, Epic Games, Inc.
+
 import requests
 import time
 import json
@@ -46,13 +48,13 @@ options:
         required: false
 '''
 EXAMPLES = '''
-# Create a simple annotation event with a source
+# Create a simple annotation event with a source, defaults to start and end time of now
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
     title: 'App Config Change'
     description: 'This is a detailed description of the config change'
     category: 'This category groups like annotations'
-# Create an annotation with a duration of 5 minutes
+# Create an annotation with a duration of 5 minutes and a default start time of now
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
     title: 'App Config Change'
@@ -88,7 +90,7 @@ def create_annotation(module):
     if module.params['stop'] != None:
         stop = module.params['stop']
     else:
-        stop = int(time.time())+duration
+        stop = int(time.time())+ duration
     annotation['start'] = int(start)
     annotation['stop'] = int(stop)
     annotation['category'] = module.params['category']
