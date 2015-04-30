@@ -324,6 +324,20 @@ class Base:
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
 
+    def _extend_value(self, value, new_value):
+        '''
+        Will extend the value given with new_value (and will turn both
+        into lists if they are not so already). The values are run through
+        a set to remove duplicate values.
+        '''
+
+        if not isinstance(value, list):
+            value = [ value ]
+        if not isinstance(new_value, list):
+            new_value = [ new_value ]
+
+        return list(set(value + new_value))
+
     def __getstate__(self):
         return self.serialize()
 

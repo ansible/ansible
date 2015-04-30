@@ -308,6 +308,7 @@ class StrategyBase:
         is_handler = isinstance(included_file._task, Handler)
         block_list = load_list_of_blocks(
             data,
+            play=included_file._task._block._play,
             parent_block=included_file._task._block,
             task_include=included_file._task,
             role=included_file._task._role,
