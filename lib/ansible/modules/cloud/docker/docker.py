@@ -377,6 +377,13 @@ if HAS_DOCKER_PY:
         from docker.errors import APIError as DockerAPIError
     except ImportError:
         from docker.client import APIError as DockerAPIError
+    try:
+        # docker-py 1.2+
+        import docker.constants
+        DEFAULT_DOCKER_API_VERSION = docker.constants.DEFAULT_DOCKER_API_VERSION
+    except (ImportError, AttributeError):
+        # docker-py less than 1.2
+        DEFAULT_DOCKER_API_VERSION = docker.client.DEFAULT_DOCKER_API_VERSION
 
 
 def _human_to_bytes(number):
@@ -567,9 +574,7 @@ class DockerManager(object):
             else:
                 docker_url = 'unix://var/run/docker.sock'
 
-        docker_api_version = module.params.get('docker_api_version')
-        if not docker_api_version:
-            docker_api_version=docker.client.DEFAULT_DOCKER_API_VERSION
+        docker_api_version = module.params.get('docker_api_version', DEFAULT_DOCKER_API_VERSION)
 
         tls_client_cert = module.params.get('tls_client_cert', None)
         if not tls_client_cert and env_cert_path:
