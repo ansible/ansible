@@ -40,13 +40,15 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
-        return mk_boolean(value)
-    if value and integer:
-        return int(value)
-    if value and floating:
-        return float(value)
-    if value and islist:
-        return [x.strip() for x in value.split(',')]
+        value = mk_boolean(value)
+    if value:
+        if integer:
+            value = int(value)
+        elif floating:
+            value = float(value)
+        elif islist:
+            if isinstance(value, basestring):
+                value = [x.strip() for x in value.split(',')]
     return value
 
 def _get_config(p, section, key, env_var, default):
@@ -104,7 +106,7 @@ DEFAULTS='defaults'
 
 # configurable things
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
-DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'inventory', 'ANSIBLE_INVENTORY', get_config(p, DEFAULTS,'hostfile','ANSIBLE_HOSTS', '/etc/ansible/hosts')))
+DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', get_config(p, DEFAULTS,'inventory','ANSIBLE_INVENTORY', '/etc/ansible/hosts')))
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
 DEFAULT_ROLES_PATH        = shell_expand_path(get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles'))
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
@@ -203,10 +205,16 @@ ACCELERATE_KEYS_FILE_PERMS     = get_config(p, 'accelerate', 'accelerate_keys_fi
 ACCELERATE_MULTI_KEY           = get_config(p, 'accelerate', 'accelerate_multi_key', 'ACCELERATE_MULTI_KEY', False, boolean=True)
 PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
+# galaxy related
+DEFAULT_GALAXY_URI             = get_config(p, 'galaxy', 'server_uri', 'ANSIBLE_GALAXY_SERVER_URI', 'https://galaxy.ansible.com')
+# this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
+GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', ['git','hg'], islist=True)
+
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
 # non-configurable things
+MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None

@@ -140,6 +140,10 @@ class AnsibleError(Exception):
 
         return error_message
 
+class AnsibleOptionsError(AnsibleError):
+    ''' bad or incomplete options passed '''
+    pass
+
 class AnsibleParserError(AnsibleError):
     ''' something was detected early that is wrong about a playbook or data file '''
     pass
@@ -164,14 +168,18 @@ class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
 
+class AnsibleLookupError(AnsibleRuntimeError):
+    ''' a lookup failure '''
+    pass
+
+class AnsibleCallbackError(AnsibleRuntimeError):
+    ''' a callback failure '''
+    pass
+
 class AnsibleUndefinedVariable(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
 
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
-    pass
-
-class AnsibleParserError(AnsibleRuntimeError):
-    ''' a parser error '''
     pass
