@@ -180,9 +180,13 @@ if __name__ == '__main__':
         cli = AdHocCli(sys.argv, display=display)
         cli.parse()
         sys.exit(cli.run())
-    except AnsibleError as e:
+    except AnsibleOptionsError as e:
+        cli.parser.print_help()
         display.display(str(e), stderr=True, color='red')
         sys.exit(1)
+    except AnsibleError as e:
+        display.display(str(e), stderr=True, color='red')
+        sys.exit(2)
     except KeyboardInterrupt:
         display.error("interrupted")
-        sys.exit(1)
+        sys.exit(4)

@@ -39,30 +39,20 @@ class GalaxyRole(object):
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
 
 
-    def __init__(self, galaxy, role_name, role_version=None, role_url=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None):
+
+        self._metadata = None
+        self._install_info = None
 
         self.options = galaxy.options
         self.display = galaxy.display
 
-        self.name = role_name
-        self.meta_data = None
-        self.install_info = None
+        self.name = name
+        self.version = version
+        self.src = src
+        self.scm = scm
+
         self.path = (os.path.join(galaxy.roles_path, self.name))
-
-        # TODO: possibly parse version and url from role_name
-        self.version = role_version
-        self.url = role_url
-        if self.url is None:
-            self._spec_parse()
-
-        if C.GALAXY_SCMS:
-            self.scms = self.SUPPORTED_SCMS.intersection(set(C.GALAXY_SCMS))
-        else:
-            self.scms = self.SUPPORTED_SCMS
-
-        if not self.scms:
-            self.display.warning("No valid SCMs configured for Galaxy.")
-
 
     def fetch_from_scm_archive(self):
 
@@ -112,59 +102,44 @@ class GalaxyRole(object):
 
         return temp_file.name
 
-
-    def get_metadata(self):
+    @property
+    def metadata(self):
         """
         Returns role metadata
         """
-        if self.meta_data is None:
-            self._read_metadata
+        if self._metadata is None:
+            meta_path = os.path.join(self.path, self.META_MAIN)
+            if os.path.isfile(meta_path):
+                try:
+                    f = open(meta_path, 'r')
+                    self._metadata = yaml.safe_load(f)
+                except:
+                    self.display.vvvvv("Unable to load metadata for %s" % self.name)
+                    return False
+                finally:
+                    f.close()
 
-        return self.meta_data
-
-
-    def _read_metadata(self):
-        """
-        Reads the metadata as YAML, if the file 'meta/main.yml' exists
-        """
-        meta_path = os.path.join(self.path, self.META_MAIN)
-        if os.path.isfile(meta_path):
-            try:
-                f = open(meta_path, 'r')
-                self.meta_data = yaml.safe_load(f)
-            except:
-                self.display.vvvvv("Unable to load metadata for %s" % self.name)
-                return False
-            finally:
-                f.close()
+        return self._metadata
 
 
-    def get_galaxy_install_info(self):
+    @property
+    def install_info(self):
         """
         Returns role install info
         """
-        if self.install_info is None:
-            self._read_galaxy_isntall_info()
+        if self._install_info is None:
 
-        return self.install_info
-
-
-    def _read_galaxy_install_info(self):
-        """
-        Returns the YAML data contained in 'meta/.galaxy_install_info',
-        if it exists.
-        """
-
-        info_path = os.path.join(self.path, self.META_INSTALL)
-        if os.path.isfile(info_path):
-            try:
-                f = open(info_path, 'r')
-                self.install_info = yaml.safe_load(f)
-            except:
-                self.display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
-                return False
-            finally:
-                f.close()
+            info_path = os.path.join(self.path, self.META_INSTALL)
+            if os.path.isfile(info_path):
+                try:
+                    f = open(info_path, 'r')
+                    self._install_info = yaml.safe_load(f)
+                except:
+                    self.display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
+                    return False
+                finally:
+                    f.close()
+        return self._install_info
 
     def _write_galaxy_install_info(self):
         """
@@ -180,7 +155,7 @@ class GalaxyRole(object):
         info_path = os.path.join(self.path, self.META_INSTALL)
         try:
             f = open(info_path, 'w+')
-            self.install_info = yaml.safe_dump(info, f)
+            self._install_info = yaml.safe_dump(info, f)
         except:
             return False
         finally:
@@ -194,7 +169,7 @@ class GalaxyRole(object):
         sanity check to make sure there's a meta/main.yml file at this
         path so the user doesn't blow away random directories
         """
-        if self.read_metadata():
+        if self.metadata:
             try:
                 rmtree(self.path)
                 return True
@@ -210,8 +185,8 @@ class GalaxyRole(object):
         """
 
         # first grab the file and save it to a temp location
-        if self.url:
-            archive_url = self.url
+        if self.src:
+            archive_url = self.src
         else:
             archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], target)
         self.display.display("- downloading role from %s" % archive_url)
@@ -256,7 +231,7 @@ class GalaxyRole(object):
                 return False
             else:
                 try:
-                    self.meta_data = yaml.safe_load(role_tar_file.extractfile(meta_file))
+                    self._metadata = yaml.safe_load(role_tar_file.extractfile(meta_file))
                 except:
                     self.display.error("this role does not appear to have a valid meta/main.yml file.")
                     return False
@@ -306,7 +281,8 @@ class GalaxyRole(object):
             self.display.display("- %s was installed successfully" % self.name)
             return True
 
-    def get_spec(self):
+    @property
+    def spec(self):
         """
         Returns role spec info
         {
@@ -316,40 +292,4 @@ class GalaxyRole(object):
            'name': 'repo'
         }
         """
-        if self.scm is None and self.url is None:
-            self._read_galaxy_isntall_info()
-
-        return dict(scm=self.scm, src=self.url, version=self.version, role_name=self.name)
-
-    def _spec_parse(self):
-        ''' creates separated parts of role spec '''
-        default_role_versions = dict(git='master', hg='tip')
-
-        if not self.url and '://' in self.name:
-            role_spec = self.name.strip()
-
-            if role_spec == "" or role_spec.startswith("#"):
-                return
-
-            tokens = [s.strip() for s in role_spec.split(',')]
-
-            # assume https://github.com URLs are git+https:// URLs and not tarballs unless they end in '.zip'
-            if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
-                tokens[0] = 'git+' + tokens[0]
-
-            if '+' in tokens[0]:
-                (self.scm, self.url) = tokens[0].split('+')
-            else:
-                self.scm = None
-                self.url = tokens[0]
-
-            if len(tokens) >= 2:
-                self.version = tokens[1]
-
-            if len(tokens) == 3:
-                self.name = tokens[2]
-            else:
-                self.name = self._repo_url_to_role_name(tokens[0])
-
-            if self.scm and not self.version:
-                self.version = default_role_versions.get(scm, '')
+        return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)

@@ -33,7 +33,7 @@ import os
 import sys
 import traceback
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.vault import VaultEditor
 from ansible.utils.cli import CLI
 from ansible.utils.display import Display
@@ -142,9 +142,13 @@ if __name__ == "__main__":
         cli = VaultCli(sys.argv, display=display)
         cli.parse()
         sys.exit(cli.run())
-    except AnsibleError as e:
+    except AnsibleOptionsError as e:
+        cli.parser.print_help()
         display.display(str(e), stderr=True, color='red')
         sys.exit(1)
+    except AnsibleError as e:
+        display.display(str(e), stderr=True, color='red')
+        sys.exit(2)
     except KeyboardInterrupt:
         display.error("interrupted")
-        sys.exit(1)
+        sys.exit(4)

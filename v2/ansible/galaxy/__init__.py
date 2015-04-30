@@ -25,6 +25,10 @@ import os
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 
+#      default_readme_template
+#      default_meta_template
+
+
 class Galaxy(object):
     ''' Keeps global galaxy info '''
 
@@ -36,13 +40,31 @@ class Galaxy(object):
             self.display = display
 
         self.options = options
-        self.roles_path = os.path.expanduser(self.options.roles_path)
+        self.roles_path = getattr(self.options, 'roles_path', None)
+        if self.roles_path:
+            self.roles_path = os.path.expanduser(self.roles_path)
 
         self.roles =  {}
+
+        # load data path for resource usage
+        this_dir, this_filename = os.path.split(__file__)
+        self.DATA_PATH = os.path.join(this_dir, "data")
+
+        #TODO: move to getter for lazy loading
+        self.default_readme = self._str_from_data_file('readme')
+        self.default_meta = self._str_from_data_file('metadata_template.j2')
 
     def add_role(self, role):
         self.roles[role.name] = role
 
     def remove_role(self, role_name):
         del self.roles[role_name]
+
+
+    def _str_from_data_file(self, filename):
+        myfile = os.path.join(self.DATA_PATH, filename)
+        try:
+            return open(myfile).read()
+        except Exception as e:
+            raise AnsibleError("Could not open %s: %s" % (filename, str(e)))
 
