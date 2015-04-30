@@ -600,6 +600,49 @@ Configures the path to the Vault password file as an alternative to specifying `
 
 As of 1.7 this file can also be a script. If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output. If your script needs to prompt for data, prompts can be sent to standard error.
 
+.. _privilege_escalation:
+
+Privilege Escalation Settings
+-----------------------------
+
+Ansible can use existing privilege escalation systems to allow a user to execute tasks as another. As of 1.9 ‘become’ supersedes the old sudo/su, while still being backwards compatible.  Settings live under the [privilege_escalation] header.
+
+.. _become:
+
+become
+======
+
+The equivalent of adding sudo: or su: to a play or task, set to true/yes to activate privilege escalation. The default behavior is no::
+
+    become=True
+
+.. _become_method:
+
+become_method
+=============
+
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``::
+
+    become_method=su
+
+.. _become_user:
+
+become_user
+=============
+
+The equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation. The default is 'root'::
+
+    become_user=root
+
+.. _become_ask_pass:
+
+become_ask_pass
+===============
+
+Ask for privilege escalation password, the default is False::
+
+    become_ask_pass=True
+
 .. _paramiko_settings:
 
 Paramiko Specific Settings
