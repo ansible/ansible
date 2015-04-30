@@ -138,7 +138,7 @@ Other Notable Changes:
     Operations that depend on a clean working tree may fail unless force=yes is
     added.
   * git: When local modifications exist in a checkout, the git module will now
-    fail unless force is explictly specified.  Specifying force=yes will allow
+    fail unless force is explicitly specified.  Specifying force=yes will allow
     the module to revert and overwrite local modifications to make git actions
     succeed.
   * hg: When local modifications exist in a checkout, the hg module used to

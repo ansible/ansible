@@ -138,7 +138,7 @@ class Templar:
                 if self._contains_vars(variable):
 
                     # Check to see if the string we are trying to render is just referencing a single
-                    # var.  In this case we don't wont to accidentally change the type of the variable
+                    # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
                     only_one = SINGLE_VAR.match(variable)
                     if only_one:

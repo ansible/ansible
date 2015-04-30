@@ -277,7 +277,7 @@ Get a string checksum::
 
     {{ 'test2'|checksum }}
 
-Other hashes (platform dependant)::
+Other hashes (platform dependent)::
 
     {{ 'test2'|hash('blowfish') }}
 

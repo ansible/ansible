@@ -1494,7 +1494,7 @@ class AIX(Hardware):
 
 class HPUX(Hardware):
     """
-    HP-UX-specifig subclass of Hardware. Defines memory and CPU facts:
+    HP-UX-specific subclass of Hardware. Defines memory and CPU facts:
     - memfree_mb
     - memtotal_mb
     - swapfree_mb
@@ -2062,7 +2062,7 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['options'] = self.get_options(words[0])
 
     def parse_nd6_line(self, words, current_if, ips):
-        # FreBSD has options like this...
+        # FreeBSD has options like this...
         current_if['options'] = self.get_options(words[1])
 
     def parse_ether_line(self, words, current_if, ips):
@@ -2642,7 +2642,7 @@ class SunOSVirtual(Virtual):
             rc, out, err = module.run_command("/usr/sbin/virtinfo -p")
             # The output contains multiple lines with different keys like this:
             #   DOMAINROLE|impl=LDoms|control=false|io=false|service=false|root=false
-            # The output may also be not formated and the returncode is set to 0 regardless of the error condition:
+            # The output may also be not formatted and the returncode is set to 0 regardless of the error condition:
             #   virtinfo can only be run from the global zone
             try:
                 for line in out.split('\n'):

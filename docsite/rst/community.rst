@@ -183,7 +183,7 @@ to the `module development documentation <http://docs.ansible.com/developing_mod
 Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending,
 backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+,
 while code in modules must run under Python 2.4 or higher.  Please also use a 4-space indent
-and no tabs, we do not enforce 80 column lines, we are fine wtih 120-140. We do not take 'style only'
+and no tabs, we do not enforce 80 column lines, we are fine with 120-140. We do not take 'style only'
 requests unless the code is nearly unreadable, we are "PEP8ish", but not strictly compliant.
 
 You can also contribute by testing and revising other requests, specially if it is one you are interested

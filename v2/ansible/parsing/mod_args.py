@@ -55,7 +55,7 @@ class ModuleArgsParser:
           dest: b
 
     # extra gross, but also legal. in this case, the args specified
-    # will act as 'defaults' and will be overriden by any args specified
+    # will act as 'defaults' and will be overridden by any args specified
     # in one of the other formats (complex args under the action, or
     # parsed from the k=v string
     - command: 'pwd'
