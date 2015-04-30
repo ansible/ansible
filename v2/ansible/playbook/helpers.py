@@ -26,7 +26,7 @@ from ansible.errors import AnsibleParserError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleSequence
 
 
-def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
     '''
     Given a list of mixed task/block data (parsed from YAML),
     return a list of Block() objects, where implicit blocks
@@ -43,6 +43,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
         for block in ds:
             b = Block.load(
                 block,
+                play=play,
                 parent_block=parent_block,
                 role=role,
                 task_include=task_include,
@@ -55,7 +56,7 @@ def load_list_of_blocks(ds, parent_block=None, role=None, task_include=None, use
     return block_list
 
 
-def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
     '''
     Given a list of task datastructures (parsed from YAML),
     return a list of Task() or TaskInclude() objects.
@@ -76,6 +77,7 @@ def load_list_of_tasks(ds, block=None, role=None, task_include=None, use_handler
         if 'block' in task:
             t = Block.load(
                 task,
+                play=play,
                 parent_block=block,
                 role=role,
                 task_include=task_include,

@@ -26,7 +26,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = set(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[])
+    _tags = FieldAttribute(isa='list', default=None)
 
     def __init__(self):
         super(Taggable, self).__init__()
@@ -44,9 +44,11 @@ class Taggable:
         Override for the 'tags' getattr fetcher, used from Base.
         '''
         tags = self._attributes['tags']
+        if tags is None:
+            tags = []
         if hasattr(self, '_get_parent_attribute'):
-            tags.extend(self._get_parent_attribute('tags'))
-        return list(set(tags))
+            tags = self._get_parent_attribute('tags', extend=True)
+        return tags
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''

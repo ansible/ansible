@@ -37,10 +37,11 @@ class Block(Base, Become, Conditional, Taggable):
     # similar to the 'else' clause for exceptions
     #_otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, parent_block=None, role=None, task_include=None, use_handlers=False):
-        self._parent_block = parent_block
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False):
+        self._play         = play
         self._role         = role
         self._task_include = task_include
+        self._parent_block = parent_block
         self._use_handlers = use_handlers
         self._dep_chain    = []
 
@@ -65,8 +66,8 @@ class Block(Base, Become, Conditional, Taggable):
         return all_vars
 
     @staticmethod
-    def load(data, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-        b = Block(parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
+    def load(data, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -92,6 +93,7 @@ class Block(Base, Become, Conditional, Taggable):
     def _load_block(self, attr, ds):
         return load_list_of_tasks(
             ds,
+            play=self._play,
             block=self,
             role=self._role,
             task_include=self._task_include,
@@ -103,6 +105,7 @@ class Block(Base, Become, Conditional, Taggable):
     def _load_rescue(self, attr, ds):
         return load_list_of_tasks(
             ds,
+            play=self._play,
             block=self,
             role=self._role,
             task_include=self._task_include,
@@ -114,6 +117,7 @@ class Block(Base, Become, Conditional, Taggable):
     def _load_always(self, attr, ds):
         return load_list_of_tasks(
             ds, 
+            play=self._play,
             block=self, 
             role=self._role, 
             task_include=self._task_include,
@@ -126,6 +130,7 @@ class Block(Base, Become, Conditional, Taggable):
     #def _load_otherwise(self, attr, ds):
     #    return load_list_of_tasks(
     #        ds, 
+    #        play=self._play,
     #        block=self, 
     #        role=self._role, 
     #        task_include=self._task_include,
@@ -148,6 +153,7 @@ class Block(Base, Become, Conditional, Taggable):
             return new_task_list
 
         new_me = super(Block, self).copy()
+        new_me._play         = self._play
         new_me._use_handlers = self._use_handlers
         new_me._dep_chain    = self._dep_chain[:]
 
@@ -248,24 +254,44 @@ class Block(Base, Become, Conditional, Taggable):
         for dep in self._dep_chain:
             dep.set_loader(loader)
 
-    def _get_parent_attribute(self, attr):
+    def _get_parent_attribute(self, attr, extend=False):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
 
         value = self._attributes[attr]
-        if not value:
-            if self._parent_block:
-                value = getattr(self._parent_block, attr)
-            elif self._role:
-                value = getattr(self._role, attr)
-                if not value and len(self._dep_chain):
-                    reverse_dep_chain = self._dep_chain[:]
-                    reverse_dep_chain.reverse()
-                    for dep in reverse_dep_chain:
-                        value = getattr(dep, attr)
-                        if value:
-                            break
+        if self._parent_block and (not value or extend):
+            parent_value = getattr(self._parent_block, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+        if self._task_include and (not value or extend):
+            parent_value = getattr(self._task_include, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+        if self._role and (not value or extend):
+            parent_value = getattr(self._role, attr)
+            if len(self._dep_chain) and (not value or extend):
+                reverse_dep_chain = self._dep_chain[:]
+                reverse_dep_chain.reverse()
+                for dep in reverse_dep_chain:
+                    dep_value = getattr(dep, attr)
+                    if extend:
+                        value = self._extend_value(value, parent_value)
+                    else:
+                        value = parent_value
+
+                    if value and not extend:
+                        break
+        if self._play and (not value or extend):
+            parent_value = getattr(self._play, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
 
         return value
 

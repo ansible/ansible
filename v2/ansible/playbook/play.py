@@ -145,28 +145,28 @@ class Play(Base, Taggable, Become):
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_pre_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_post_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_handlers(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_roles(self, attr, ds):
         '''
@@ -196,7 +196,7 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
-                block_list.extend(r.compile())
+                block_list.extend(r.compile(play=self))
 
         return block_list
 

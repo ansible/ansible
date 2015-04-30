@@ -79,6 +79,7 @@ class Role(Base, Become, Conditional, Taggable):
         self._loader           = None
 
         self._metadata         = None
+        self._play             = None
         self._parents          = []
         self._dependencies     = []
         self._task_blocks      = []
@@ -163,11 +164,11 @@ class Role(Base, Become, Conditional, Taggable):
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = load_list_of_blocks(task_data, role=self, loader=self._loader)
+            self._task_blocks = load_list_of_blocks(task_data, play=None, role=self, loader=self._loader)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data, role=self, loader=self._loader)
+            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
@@ -293,7 +294,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         return self._had_task_run and self._completed
 
-    def compile(self, dep_chain=[]):
+    def compile(self, play, dep_chain=[]):
         '''
         Returns the task list for this role, which is created by first
         recursively compiling the tasks for all direct dependencies, and
@@ -311,10 +312,11 @@ class Role(Base, Become, Conditional, Taggable):
 
         deps = self.get_direct_dependencies()
         for dep in deps:
-            dep_blocks = dep.compile(dep_chain=new_dep_chain)
+            dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             for dep_block in dep_blocks:
                 new_dep_block = dep_block.copy()
                 new_dep_block._dep_chain = new_dep_chain
+                new_dep_block._play = play
                 block_list.append(new_dep_block)
 
         block_list.extend(self._task_blocks)
