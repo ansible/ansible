@@ -88,13 +88,21 @@ class RabbitMqPlugins(object):
         return list()
 
     def get_all(self):
-        return self._exec(['list', '-E', '-m'], True)
+        list_output = self._exec(['list', '-E', '-m'], True)
+        plugins = []
+        for plugin in list_output:
+            if not plugin:
+                break
+            plugins.append(plugin)
+
+        return plugins
 
     def enable(self, name):
         self._exec(['enable', name])
 
     def disable(self, name):
         self._exec(['disable', name])
+
 
 def main():
     arg_spec = dict(
