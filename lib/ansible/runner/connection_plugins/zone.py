@@ -109,7 +109,7 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We happily ignore privelege escalation
+        # We happily ignore privilege escalation
         if executable == '/bin/sh':
           executable = None
         local_cmd = self._generate_cmd(executable, cmd)

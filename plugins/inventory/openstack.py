@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-# The OpenStack Inventory module uses os-client-config for configuation.
+# The OpenStack Inventory module uses os-client-config for configuration.
 # https://github.com/stackforge/os-client-config
 # This means it will either:
 #  - Respect normal OS_* environment variables like other OpenStack tools

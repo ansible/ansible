@@ -111,7 +111,7 @@ class TaskQueueManager:
             for handler in handler_block.block:
                 handler_list.append(handler)
 
-        # then initalize it with the handler names from the handler list
+        # then initialize it with the handler names from the handler list
         for handler in handler_list:
             self._notified_handlers[handler.get_name()] = []
 
