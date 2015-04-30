@@ -385,7 +385,7 @@ def main():
             append_privs=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
             update_password=dict(default="always", choices=["always", "on_create"]),
-            config_file=dict(default=None),
+            config_file=dict(default="~/.my.cnf"),
         )
     )
     login_user = module.params["login_user"]
