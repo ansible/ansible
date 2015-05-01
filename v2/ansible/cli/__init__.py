@@ -34,11 +34,12 @@ from ansible.utils.unicode import to_bytes
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
-    def format_help(self, formatter=None):
+    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
+
+    def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
-#TODO: move many cli only functions in this file into the CLI class
 class CLI(object):
     ''' code behind bin/ansible* programs '''
 
@@ -71,8 +72,7 @@ class CLI(object):
                 break
 
         if not self.action:
-            self.parser.print_help()
-            raise AnsibleError("Missing required action")
+            raise AnsibleOptionsError("Missing required action")
 
     def execute(self):
         """
@@ -184,36 +184,37 @@ class CLI(object):
                               " are exclusive of each other")
 
     @staticmethod
-    def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False,
-        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
+    def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False,
+        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False, epilog=None):
         ''' create an options parser for most ansible scripts '''
 
-        parser = SortedOptParser(usage, version=CLI.version("%prog"))
+        #FIXME: implemente epilog parsing
+        #OptionParser.format_epilog = lambda self, formatter: self.epilog
 
-        parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
-            help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+        # base opts
+        parser = SortedOptParser(usage, version=CLI.version("%prog"))
         parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
-        parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
-            help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
-        parser.add_option('-i', '--inventory-file', dest='inventory',
-            help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
-            default=C.DEFAULT_HOST_LIST)
-        parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
-            help='ask for connection password')
-        parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-            help='use this file to authenticate the connection')
-        parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
-            help='ask for vault password')
-        parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
-            dest='vault_password_file', help="vault password file")
-        parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-            help='outputs a list of matching hosts; does not execute anything else')
-        parser.add_option('-M', '--module-path', dest='module_path',
-            help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-            default=None)
-        parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-            help="set additional variables as key=value or YAML/JSON", default=[])
+
+        if runtask_opts:
+            parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
+                help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
+            parser.add_option('-i', '--inventory-file', dest='inventory',
+                help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
+                default=C.DEFAULT_HOST_LIST)
+            parser.add_option('--list-hosts', dest='listhosts', action='store_true',
+                help='outputs a list of matching hosts; does not execute anything else')
+            parser.add_option('-M', '--module-path', dest='module_path',
+                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None)
+            parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+                help="set additional variables as key=value or YAML/JSON", default=[])
+
+        if vault_opts:
+            parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
+                help='ask for vault password')
+            parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
+                dest='vault_password_file', help="vault password file")
+
 
         if subset_opts:
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
@@ -256,6 +257,12 @@ class CLI(object):
 
 
         if connect_opts:
+            parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
+                help='ask for connection password')
+            parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+                help='use this file to authenticate the connection')
+            parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
             parser.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
                 help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
             parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
@@ -292,7 +299,7 @@ class CLI(object):
     def version(prog):
         ''' return ansible version '''
         result = "{0} {1}".format(prog, __version__)
-        gitinfo = _gitinfo()
+        gitinfo = CLI._gitinfo()
         if gitinfo:
             result = result + " {0}".format(gitinfo)
         result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
@@ -369,7 +376,7 @@ class CLI(object):
     def _gitinfo():
         basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
         repo_path = os.path.join(basedir, '.git')
-        result = _git_repo_info(repo_path)
+        result = CLI._git_repo_info(repo_path)
         submodules = os.path.join(basedir, '.gitmodules')
         if not os.path.exists(submodules):
            return result
@@ -378,7 +385,7 @@ class CLI(object):
             tokens = line.strip().split(' ')
             if tokens[0] == 'path':
                 submodule_path = tokens[2]
-                submodule_info =_git_repo_info(os.path.join(basedir, submodule_path, '.git'))
+                submodule_info = CLI._git_repo_info(os.path.join(basedir, submodule_path, '.git'))
                 if not submodule_info:
                     submodule_info = ' not found - use git submodule update --init ' + submodule_path
                 result += "\n  {0}: {1}".format(submodule_path, submodule_info)

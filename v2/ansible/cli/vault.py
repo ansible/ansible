@@ -20,9 +20,10 @@ import os
 import sys
 import traceback
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.vault import VaultEditor
-from ansible.utils.cli import CLI
+from ansible.cli import CLI
 from ansible.utils.display import Display
 
 class VaultCLI(CLI):
@@ -34,13 +35,14 @@ class VaultCLI(CLI):
     def __init__(self, args, display=None):
 
         self.vault_pass = None
-        super(VaultCli, self).__init__(args, display)
+        super(VaultCLI, self).__init__(args, display)
 
     def parse(self):
 
-        # create parser for CLI options
         self.parser = CLI.base_parser(
-            usage = "%prog vaultfile.yml",
+            vault_opts=True,
+            usage = "usage: %%prog [%s] [--help] [options] vaultfile.yml" % "|".join(self.VALID_ACTIONS),
+            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
         self.set_action()
@@ -60,10 +62,10 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
         self.options, self.args = self.parser.parse_args()
+        self.display.verbosity = self.options.verbosity
 
         if len(self.args) == 0 or len(self.args) > 1:
-            self.parser.print_help()
-            raise AnsibleError("Vault requires a single filename as a parameter")
+            raise AnsibleOptionsError("Vault requires a single filename as a parameter")
 
     def run(self):
 

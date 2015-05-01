@@ -16,17 +16,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
-import os
-import sys
-
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.utils.cli import CLI
+from ansible.cli import CLI
 from ansible.utils.display import Display
 from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
@@ -46,6 +43,8 @@ class AdHocCLI(CLI):
             output_opts=True,
             connect_opts=True,
             check_opts=True,
+            runtask_opts=True,
+            vault_opts=True,
         )
 
         # options unique to ansible ad-hoc
@@ -101,7 +100,7 @@ class AdHocCLI(CLI):
 
         if self.options.listhosts:
             for host in hosts:
-                self.display.display('    %s' % host.name)
+                self.display.display('    %s' % host)
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
