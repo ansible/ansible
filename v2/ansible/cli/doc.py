@@ -17,12 +17,12 @@
 # http://docs.ansible.com/playbooks_vault.html for more details.
 
 import fcntl
+import datetime
 import os
-import re
 import struct
-import sys
 import termios
 import traceback
+import textwrap
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -35,16 +35,6 @@ class DocCLI(CLI):
 
     BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
     IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION"]
-
-    _ITALIC = re.compile(r"I\(([^)]+)\)")
-    _BOLD   = re.compile(r"B\(([^)]+)\)")
-    _MODULE = re.compile(r"M\(([^)]+)\)")
-    _URL    = re.compile(r"U\(([^)]+)\)")
-    _CONST  = re.compile(r"C\(([^)]+)\)")
-
-    PAGER   = 'less'
-    LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
-                        # -S (chop long lines) -X (disable termcap init and de-init)
 
     def __init__(self, args, display=None):
 
@@ -75,19 +65,62 @@ class DocCLI(CLI):
             for i in self.options.module_path.split(os.pathsep):
                 module_loader.add_directory(i)
 
+        # list modules
         if self.options.list_dir:
-            # list modules
             paths = module_loader._get_paths()
             for path in paths:
                 self.find_modules(path)
 
-            #self.pager(get_module_list_text(module_list))
-            print self.get_module_list_text()
+            CLI.pager(self.get_module_list_text())
             return 0
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
 
+        # process command line module list
+        text = ''
+        for module in self.args:
+
+            filename = module_loader.find_plugin(module)
+            if filename is None:
+                self.display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
+                continue
+
+            if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
+                continue
+
+            try:
+                doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+            except:
+                self.display.vvv(traceback.print_exc())
+                self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
+                continue
+
+            if doc is not None:
+
+                all_keys = []
+                for (k,v) in doc['options'].iteritems():
+                    all_keys.append(k)
+                all_keys = sorted(all_keys)
+                doc['option_keys'] = all_keys
+
+                doc['filename']         = filename
+                doc['docuri']           = doc['module'].replace('_', '-')
+                doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
+                doc['plainexamples']    = plainexamples
+                doc['returndocs']       = returndocs
+
+                if self.options.show_snippet:
+                    text += DocCLI.get_snippet_text(doc)
+                else:
+                    text += DocCLI.get_man_text(doc)
+            else:
+                # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
+                # probably a quoting issue.
+                self.display.warning("module %s missing documentation (or could not parse documentation)\n" % module)
+
+        CLI.pager(text)
+        return 0
 
     def find_modules(self, path):
 
@@ -147,21 +180,104 @@ class DocCLI(CLI):
                 else:
                     text.append("%-*s %-*.*s" % (displace, module, linelimit, len(desc), desc))
             except:
-                traceback.print_exc()
-                sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
+                raise AnsibleError("module %s has a documentation error formatting or is missing documentation\n" % module)
 
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
             text.extend(deprecated)
         return "\n".join(text)
 
-    @classmethod
-    def tty_ify(self, text):
 
-        t = self._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-        t = self._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-        t = self._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = self._URL.sub(r"\1", t)                      # U(word) => word
-        t = self._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+    @staticmethod
+    def print_paths(finder):
+        ''' Returns a string suitable for printing of the search path '''
 
-        return t
+        # Uses a list to get the order right
+        ret = []
+        for i in finder._get_paths():
+            if i not in ret:
+                ret.append(i)
+        return os.pathsep.join(ret)
+
+    @staticmethod
+    def get_snippet_text(doc):
+
+        text = []
+        desc = CLI.tty_ify(" ".join(doc['short_description']))
+        text.append("- name: %s" % (desc))
+        text.append("  action: %s" % (doc['module']))
+
+        for o in sorted(doc['options'].keys()):
+            opt = doc['options'][o]
+            desc = CLI.tty_ify(" ".join(opt['description']))
+
+            if opt.get('required', False):
+                s = o + "="
+            else:
+                s = o
+
+            text.append("      %-20s   # %s" % (s, desc))
+        text.append('')
+
+        return "\n".join(text)
+
+    @staticmethod
+    def get_man_text(doc):
+
+        opt_indent="        "
+        text = []
+        text.append("> %s\n" % doc['module'].upper())
+
+        desc = " ".join(doc['description'])
+
+        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
+
+        if 'option_keys' in doc and len(doc['option_keys']) > 0:
+            text.append("Options (= is mandatory):\n")
+
+        for o in sorted(doc['option_keys']):
+            opt = doc['options'][o]
+
+            if opt.get('required', False):
+                opt_leadin = "="
+            else:
+                opt_leadin = "-"
+
+            text.append("%s %s" % (opt_leadin, o))
+
+            desc = " ".join(opt['description'])
+
+            if 'choices' in opt:
+                choices = ", ".join(str(i) for i in opt['choices'])
+                desc = desc + " (Choices: " + choices + ")"
+            if 'default' in opt:
+                default = str(opt['default'])
+                desc = desc + " [Default: " + default + "]"
+            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent=opt_indent,
+                                 subsequent_indent=opt_indent))
+
+        if 'notes' in doc and len(doc['notes']) > 0:
+            notes = " ".join(doc['notes'])
+            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), initial_indent="  ",
+                                subsequent_indent=opt_indent))
+
+
+        if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
+            req = ", ".join(doc['requirements'])
+            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), initial_indent="  ",
+                                subsequent_indent=opt_indent))
+
+        if 'examples' in doc and len(doc['examples']) > 0:
+            text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))
+            for ex in doc['examples']:
+                text.append("%s\n" % (ex['code']))
+
+        if 'plainexamples' in doc and doc['plainexamples'] is not None:
+            text.append("EXAMPLES:")
+            text.append(doc['plainexamples'])
+        if 'returndocs' in doc and doc['returndocs'] is not None:
+            text.append("RETURN VALUES:")
+            text.append(doc['returndocs'])
+        text.append('')
+
+        return "\n".join(text)
