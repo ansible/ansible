@@ -39,7 +39,7 @@
   set_fact: "{{ item.0 + item.1 }}=x"
   with_nested:
     - [ 'a', 'b' ]
-    - [ 'c', 'd' ]        
+    - [ 'c', 'd' ]
 
 - debug: var=ac
 - debug: var=ad
@@ -110,6 +110,25 @@
         - "_xr == 'r'"
         - "_yi == 'i'"
         - "_yo == 'o'"
+
+- name: test with_subelements with missing key or subkey
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - element_data_missing
+    - the.sub.key.list
+    - skip_missing: yes
+  register: _subelements_missing_subkeys
+
+- debug: var=_subelements_missing_subkeys.skipped
+- debug: var=_subelements_missing_subkeys.results|length
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - _subelements_missing_subkeys.skipped is not defined
+        - _subelements_missing_subkeys.results|length == 2
+        - "_xk == 'k'"
+        - "_xl == 'l'"
+
 
 # WITH_TOGETHER        
 
