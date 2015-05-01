@@ -189,6 +189,12 @@ Given the mysql hosts and privs subkey lists, you can also iterate over a list i
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
 
+Optionally,  you can add a third element to the subelements list, that holds a
+dictionary of flags. Currently you can add the 'skip_missing' flag. If set to
+True, the lookup plugin will skip the lists items that do not contain the given
+subkey. Without this flag, or if that flag is set to False, the plugin will
+yield an error and complain about the missing subkey.
+
 The authorized_key pattern is exactly where it comes up most.
 
 .. _looping_over_integer_sequences:
