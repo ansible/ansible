@@ -118,7 +118,7 @@ class PlaybookCLI(CLI):
         only_tags = self.options.tags.split(",")
         skip_tags = self.options.skip_tags
         if self.options.skip_tags is not None:
-            skip_tags = self.ptions.skip_tags.split(",")
+            skip_tags = self.options.skip_tags.split(",")
 
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
