@@ -81,6 +81,10 @@ class AnsibleCloudStack:
             if only_keys and key not in only_keys:
                 continue;
 
+            # Skip None values
+            if value is None:
+                continue;
+
             if key in current_dict:
 
                 # API returns string for int in some cases, just to make sure
