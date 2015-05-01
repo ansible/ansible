@@ -22,9 +22,12 @@ __metaclass__ = type
 import operator
 import optparse
 import os
+import sys
 import time
 import yaml
+import re
 import getpass
+import subprocess
 
 from ansible import __version__
 from ansible import constants as C
@@ -44,6 +47,16 @@ class CLI(object):
     ''' code behind bin/ansible* programs '''
 
     VALID_ACTIONS = ['No Actions']
+
+    _ITALIC = re.compile(r"I\(([^)]+)\)")
+    _BOLD   = re.compile(r"B\(([^)]+)\)")
+    _MODULE = re.compile(r"M\(([^)]+)\)")
+    _URL    = re.compile(r"U\(([^)]+)\)")
+    _CONST  = re.compile(r"C\(([^)]+)\)")
+
+    PAGER   = 'less'
+    LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
+                        # -S (chop long lines) -X (disable termcap init and de-init)
 
     def __init__(self, args, display=None):
         """
@@ -391,3 +404,44 @@ class CLI(object):
                 result += "\n  {0}: {1}".format(submodule_path, submodule_info)
         f.close()
         return result
+
+
+    @staticmethod
+    def pager(text):
+        ''' find reasonable way to display text '''
+        # this is a much simpler form of what is in pydoc.py
+        if not sys.stdout.isatty():
+            pager_print(text)
+        elif 'PAGER' in os.environ:
+            if sys.platform == 'win32':
+                pager_print(text)
+            else:
+                CLI.pager_pipe(text, os.environ['PAGER'])
+        elif subprocess.call('(less --version) 2> /dev/null', shell = True) == 0:
+            CLI.pager_pipe(text, 'less')
+        else:
+            pager_print(text)
+
+    @staticmethod
+    def pager_pipe(text, cmd):
+        ''' pipe text through a pager '''
+        if 'LESS' not in os.environ:
+            os.environ['LESS'] = LESS_OPTS
+        try:
+            cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd.communicate(input=text)
+        except IOError:
+            pass
+        except KeyboardInterrupt:
+            pass
+
+    @classmethod
+    def tty_ify(self, text):
+
+        t = self._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
+        t = self._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
+        t = self._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
+        t = self._URL.sub(r"\1", t)                      # U(word) => word
+        t = self._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+
+        return t
