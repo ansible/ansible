@@ -192,7 +192,7 @@ def main():
             command              = dict(choices=['get', 'create', 'delete'], required=True),
             zone                 = dict(required=True),
             record               = dict(required=True),
-            ttl                  = dict(required=False, default=3600),
+            ttl                  = dict(required=False, type='int', default=3600),
             type                 = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             alias                = dict(required=False, type='bool'),
             alias_hosted_zone_id = dict(required=False),
@@ -209,7 +209,7 @@ def main():
 
     command_in              = module.params.get('command')
     zone_in                 = module.params.get('zone').lower()
-    ttl_in                  = int(module.params.get('ttl'))
+    ttl_in                  = module.params.get('ttl')
     record_in               = module.params.get('record').lower()
     type_in                 = module.params.get('type')
     value_in                = module.params.get('value')
