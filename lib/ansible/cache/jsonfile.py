@@ -108,6 +108,7 @@ class CacheModule(BaseCacheModule):
         return keys
 
     def contains(self, key):
+        cachefile = "%s/%s" % (self._cache_dir, key)
 
         if key in self._cache:
             return True
@@ -115,7 +116,7 @@ class CacheModule(BaseCacheModule):
         if self.has_expired(key):
             return False
         try:
-            st = os.stat("%s/%s" % (self._cache_dir, key))
+            st = os.stat(cachefile)
             return True
         except (OSError,IOError), e:
             if e.errno == errno.ENOENT:
