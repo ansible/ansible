@@ -231,7 +231,7 @@ def sync_repositories(module, webrsync=False):
         webrsync_path = module.get_bin_path('emerge-webrsync', required=True)
         cmd = '%s --quiet' % webrsync_path
     else:
-        cmd = '%s --sync --quiet' % module.emerge_path
+        cmd = '%s --sync --quiet --ask=n' % module.emerge_path
 
     rc, out, err = module.run_command(cmd)
     if rc != 0:
