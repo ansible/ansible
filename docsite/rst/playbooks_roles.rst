@@ -86,10 +86,9 @@ which also supports structured variables::
       - include: wordpress.yml
         vars:
             wp_user: timmy
-            some_list_variable:
-              - alpha
-              - beta
-              - gamma
+            ssh_keys:
+              - keys/one.txt
+              - keys/two.txt
 
 Playbooks can include other playbooks too, but that's mentioned in a later section.
 
