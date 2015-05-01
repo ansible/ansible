@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Trond Hindenes <trond@hindenes.com>
+# (c) 2015, Peter Mounce <public@neverrunwithscissors.com>
 #
 # This file is part of Ansible
 #
