@@ -22,12 +22,11 @@ try:
 except ImportError:
     HAS_SHADE = False
 
-# TODO FIX UUID/Add node support
+import jsonpatch
 DOCUMENTATION = '''
 ---
 module: os_ironic
 short_description: Create/Delete Bare Metal Resources from OpenStack
-version_added: "1.10"
 extends_documentation_fragment: openstack
 description:
     - Create or Remove Ironic nodes from OpenStack.
@@ -40,7 +39,13 @@ options:
     uuid:
       description:
         - globally unique identifier (UUID) to be given to the resource. Will
-          be auto-generated if not specified.
+          be auto-generated if not specified, and name is specified.
+        - Definition of a UUID will always take precedence to a name value.
+      required: false
+      default: None
+    name:
+      description:
+        - unique name identifier to be given to the resource.
       required: false
       default: None
     driver:
@@ -48,10 +53,15 @@ options:
         - The name of the Ironic Driver to use with this node.
       required: true
       default: None
+    chassis_uuid:
+      description:
+        - Associate the node with a pre-defined chassis.
+      required: false
+      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the
-          endpoint URL for the Ironic API.  Use with "auth" and "auth_plugin"
+          endpoint URL for the Ironic API.  Use with "auth" and "auth_type"
           settings set to None.
       required: false
       default: None
@@ -99,8 +109,17 @@ options:
             - size of first storage device in this machine (typically
               /dev/sda), in GB
           default: 1
+    skip_update_of_driver_password:
+      description:
+        - Allows the code that would assert changes to nodes to skip the
+          update if the change is a single line consisting of the password
+          field.  As of Kilo, by default, passwords are always masked to API
+          requests, which means the logic as a result always attempts to
+          re-assert the password field.
+      required: false
+      default: false
 
-requirements: ["shade"]
+requirements: ["shade", "jsonpatch"]
 '''
 
 EXAMPLES = '''
@@ -108,7 +127,7 @@ EXAMPLES = '''
 - os_ironic:
     cloud: "devstack"
     driver: "pxe_ipmitool"
-    uuid: "a8cb6624-0d9f-4882-affc-046ebb96ec92"
+    uuid: "00000000-0000-0000-0000-000000000002"
     properties:
       cpus: 2
       cpu_arch: "x86_64"
@@ -122,6 +141,7 @@ EXAMPLES = '''
         ipmi_address: "1.2.3.4"
         ipmi_username: "admin"
         ipmi_password: "adminpass"
+    chassis_uuid: "00000000-0000-0000-0000-000000000001"
 
 '''
 
@@ -152,56 +172,174 @@ def _parse_driver_info(module):
     return info
 
 
+def _choose_id_value(module):
+    if module.params['uuid']:
+        return module.params['uuid']
+    if module.params['name']:
+        return module.params['name']
+    return None
+
+
+def _is_value_true(value):
+    true_values = [True, 'yes', 'Yes', 'True', 'true']
+    if value in true_values:
+        return True
+    return False
+
+
+def _choose_if_password_only(module, patch):
+    if len(patch) is 1:
+        if 'password' in patch[0]['path'] and _is_value_true(
+                module.params['skip_update_of_masked_password']):
+            # Return false to aabort update as the password appears
+            # to be the only element in the patch.
+            return False
+    return True
+
+
+def _exit_node_not_updated(module, server):
+    module.exit_json(
+        changed=False,
+        result="Node not updated",
+        uuid=server['uuid'],
+        provision_state=server['provision_state']
+    )
+
+
 def main():
     argument_spec = openstack_full_argument_spec(
         uuid=dict(required=False),
-        driver=dict(required=True),
+        name=dict(required=False),
+        driver=dict(required=False),
         driver_info=dict(type='dict', required=True),
         nics=dict(type='list', required=True),
         properties=dict(type='dict', default={}),
         ironic_url=dict(required=False),
+        chassis_uuid=dict(required=False),
+        skip_update_of_masked_password=dict(required=False, choices=BOOLEANS),
+        state=dict(required=False, default='present')
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
-    if (module.params['auth_plugin'] == 'None' and
+    if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
-        module.fail_json(msg="Authentication appears disabled, Please "
-                             "define an ironic_url parameter")
+        module.fail_json(msg="Authentication appears to be disabled, "
+                             "Please define an ironic_url parameter")
 
-    if module.params['ironic_url'] and module.params['auth_plugin'] == 'None':
-        module.params['auth'] = dict(endpoint=module.params['ironic_url'])
+    if (module.params['ironic_url'] and
+            module.params['auth_type'] in [None, 'None']):
+        module.params['auth'] = dict(
+            endpoint=module.params['ironic_url']
+        )
+
+    node_id = _choose_id_value(module)
+
     try:
         cloud = shade.operator_cloud(**module.params)
-        server = cloud.get_machine_by_uuid(module.params['uuid'])
-
+        server = cloud.get_machine(node_id)
         if module.params['state'] == 'present':
+            if module.params['driver'] is None:
+                module.fail_json(msg="A driver must be defined in order "
+                                     "to set a node to present.")
+
             properties = _parse_properties(module)
             driver_info = _parse_driver_info(module)
             kwargs = dict(
-                uuid=module.params['uuid'],
                 driver=module.params['driver'],
                 properties=properties,
                 driver_info=driver_info,
+                name=module.params['name'],
             )
+
+            if module.params['chassis_uuid']:
+                kwargs['chassis_uuid'] = module.params['chassis_uuid']
+
             if server is None:
+                # Note(TheJulia): Add a specific UUID to the request if
+                # present in order to be able to re-use kwargs for if
+                # the node already exists logic, since uuid cannot be
+                # updated.
+                if module.params['uuid']:
+                    kwargs['uuid'] = module.params['uuid']
+
                 server = cloud.register_machine(module.params['nics'],
                                                 **kwargs)
-                module.exit_json(changed=True, uuid=server.uuid)
+                module.exit_json(changed=True, uuid=server['uuid'],
+                                 provision_state=server['provision_state'])
             else:
-                # TODO: compare properties here and update if necessary
-                #       ... but the interface for that is terrible!
-                module.exit_json(changed=False,
-                                 result="Server already present")
+                # TODO(TheJulia): Presently this does not support updating
+                # nics.  Support needs to be added.
+                #
+                # Note(TheJulia): This message should never get logged
+                # however we cannot realistically proceed if neither a
+                # name or uuid was supplied to begin with.
+                if not node_id:
+                    module.fail_json(msg="A uuid or name value "
+                                         "must be defined")
+
+                # Note(TheJulia): Constructing the configuration to compare
+                # against.  The items listed in the server_config block can
+                # be updated via the API.
+
+                server_config = dict(
+                    driver=server['driver'],
+                    properties=server['properties'],
+                    driver_info=server['driver_info'],
+                    name=server['name'],
+                )
+
+                # Add the pre-existing chassis_uuid only if
+                # it is present in the server configuration.
+                if hasattr(server, 'chassis_uuid'):
+                    server_config['chassis_uuid'] = server['chassis_uuid']
+
+                # Note(TheJulia): If a password is defined and concealed, a
+                # patch will always be generated and re-asserted.
+                patch = jsonpatch.JsonPatch.from_diff(server_config, kwargs)
+
+                if not patch:
+                    _exit_node_not_updated(module, server)
+                elif _choose_if_password_only(module, list(patch)):
+                    # Note(TheJulia): Normally we would allow the general
+                    # exception catch below, however this allows a specific
+                    # message.
+                    try:
+                        server = cloud.patch_machine(
+                            server['uuid'],
+                            list(patch))
+                    except Exception as e:
+                        module.fail_json(msg="Failed to update node, "
+                                         "Error: %s" % e.message)
+
+                    # Enumerate out a list of changed paths.
+                    change_list = []
+                    for change in list(patch):
+                        change_list.append(change['path'])
+                    module.exit_json(changed=True,
+                                     result="Node Updated",
+                                     changes=change_list,
+                                     uuid=server['uuid'],
+                                     provision_state=server['provision_state'])
+
+            # Return not updated by default as the conditions were not met
+            # to update.
+            _exit_node_not_updated(module, server)
+
         if module.params['state'] == 'absent':
+            if not node_id:
+                module.fail_json(msg="A uuid or name value must be defined "
+                                     "in order to remove a node.")
+
             if server is not None:
                 cloud.unregister_machine(module.params['nics'],
-                                         module.params['uuid'])
+                                         server['uuid'])
                 module.exit_json(changed=True, result="deleted")
             else:
                 module.exit_json(changed=False, result="Server not found")
+
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
 
