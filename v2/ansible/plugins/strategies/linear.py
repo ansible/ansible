@@ -285,7 +285,9 @@ class StrategyModule(StrategyBase):
                             noop_block.rescue = [noop_task for t in new_block.rescue]
                             for host in hosts_left:
                                 if host in included_file._hosts:
-                                    all_blocks[host].append(new_block)
+                                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
+                                    final_block = new_block.filter_tagged_tasks(connection_info, task_vars)
+                                    all_blocks[host].append(final_block)
                                 else:
                                     all_blocks[host].append(noop_block)
 

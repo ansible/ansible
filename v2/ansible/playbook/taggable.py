@@ -26,7 +26,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = set(['untagged'])
-    _tags = FieldAttribute(isa='list', default=None)
+    _tags = FieldAttribute(isa='list', default=[])
 
     def __init__(self):
         super(Taggable, self).__init__()
