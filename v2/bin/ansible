@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+########################################################
+from __future__ import (absolute_import)
+__metaclass__ = type
+
+__requires__ = ['ansible']
+try:
+    import pkg_resources
+except Exception:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs.  But we
+    # have code that better expresses the errors in the places where the code
+    # is actually used (the deps are optional for many code paths) so we don't
+    # want to fail here.
+    pass
+
+import os
+import sys
+
+from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.utils.display import Display
+
+########################################################
+
+if __name__ == '__main__':
+
+    cli = None
+    display = Display()
+    me = os.path.basename(__file__)
+
+    try:
+        if me == 'ansible-playbook':
+            from ansible.cli.playbook import PlaybookCLI as mycli
+        elif me == 'ansible':
+            from ansible.cli.adhoc import AdHocCLI as mycli
+        elif me == 'ansible-pull':
+            from ansible.cli.pull import PullCLI as mycli
+        elif me == 'ansible-doc':
+            from ansible.cli.doc import DocCLI as mycli
+        elif me == 'ansible-vault':
+            from ansible.cli.vault import VaultCLI as mycli
+        elif me == 'ansible-galaxy':
+            from ansible.cli.galaxy import GalaxyCLI as mycli
+
+        cli = mycli(sys.argv, display=display)
+        if cli:
+            cli.parse()
+            sys.exit(cli.run())
+        else:
+            raise AnsibleError("Program not implemented: %s" % me)
+
+    except AnsibleOptionsError as e:
+        cli.parser.print_help()
+        display.display(str(e), stderr=True, color='red')
+        sys.exit(1)
+    except AnsibleError as e:
+        display.display(str(e), stderr=True, color='red')
+        sys.exit(2)
+    except KeyboardInterrupt:
+        display.error("interrupted")
+        sys.exit(4)

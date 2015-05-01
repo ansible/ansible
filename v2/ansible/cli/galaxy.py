@@ -40,13 +40,13 @@ from optparse import OptionParser
 import ansible.constants as C
 import ansible.utils
 import ansible.galaxy
+from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
-from ansible.utils.cli import CLI
 
 class GalaxyCLI(CLI):
 
@@ -62,17 +62,13 @@ class GalaxyCLI(CLI):
     def parse(self):
         ''' create an options parser for bin/ansible '''
 
-        usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS)
-        epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
-        OptionParser.format_epilog = lambda self, formatter: self.epilog
-        parser = OptionParser(usage=usage, epilog=epilog)
+        self.parser = CLI.base_parser(
+            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
+            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+        )
 
-        self.parser = parser
+
         self.set_action()
-
-        # verbose
-        self.parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
-                    help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         # options specific to actions
         if self.action == "info":

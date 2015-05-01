@@ -23,6 +23,7 @@ import stat
 import sys
 
 from ansible import constants as C
+from ansible.cli import CLI
 from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
@@ -30,7 +31,6 @@ from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.task import Task
-from ansible.utils.cli import CLI
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import combine_vars
@@ -53,6 +53,8 @@ class PlaybookCLI(CLI):
             subset_opts=True,
             check_opts=True,
             diff_opts=True,
+            runtask_opts=True,
+            vault_opts=True,
         )
 
         # ansible playbook specific opts
@@ -68,8 +70,7 @@ class PlaybookCLI(CLI):
         self.options, self.args = parser.parse_args()
 
         if len(self.args) == 0:
-            parser.print_help(file=sys.stderr)
-            raise AnsibleError("You must specify a playbook file to run")
+            raise AnsibleOptionsError("You must specify a playbook file to run")
 
         self.parser = parser
 
