@@ -824,7 +824,7 @@ class DockerManager(object):
         for image in self.client.images(name=image):
             if resource in image.get('RepoTags', []):
                 return image['RepoTags']
-        return None
+        return []
 
     def get_inspect_containers(self, containers):
         inspect = []
