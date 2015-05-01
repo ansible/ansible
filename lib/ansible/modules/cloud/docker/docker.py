@@ -574,7 +574,7 @@ class DockerManager(object):
             else:
                 docker_url = 'unix://var/run/docker.sock'
 
-        docker_api_version = module.params.get('docker_api_version', DEFAULT_DOCKER_API_VERSION)
+        docker_api_version = module.params.get('docker_api_version')
 
         tls_client_cert = module.params.get('tls_client_cert', None)
         if not tls_client_cert and env_cert_path:
@@ -1454,7 +1454,7 @@ def main():
             tls_client_key  = dict(required=False, default=None, type='str'),
             tls_ca_cert     = dict(required=False, default=None, type='str'),
             tls_hostname    = dict(required=False, type='str', default=None),
-            docker_api_version = dict(),
+            docker_api_version = dict(required=False, default=DEFAULT_DOCKER_API_VERSION, type='str'),
             username        = dict(default=None),
             password        = dict(),
             email           = dict(),
