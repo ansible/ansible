@@ -192,7 +192,7 @@ def main():
             command              = dict(choices=['get', 'create', 'delete'], required=True),
             zone                 = dict(required=True),
             record               = dict(required=True),
-            ttl                  = dict(required=False, default=3600),
+            ttl                  = dict(required=False, type='int', default=3600),
             type                 = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             alias                = dict(required=False, type='bool'),
             alias_hosted_zone_id = dict(required=False),
