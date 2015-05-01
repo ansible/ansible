@@ -62,7 +62,11 @@ class CacheModule(BaseCacheModule):
         except (OSError,IOError), e:
             utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
         else:
-            value = json.load(f)
+            try:
+                value = json.load(f)
+            except ValueError, e:
+                utils.warning("cannot decode file %s : %s " % (cachefile, str(e)))
+                return None                 
             self._cache[key] = value
             return value
         finally:
