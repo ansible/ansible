@@ -3,7 +3,7 @@ Vault
 
 .. contents:: Topics
 
-New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping encrypted data in source control.
+New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
 
 To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used.
 
