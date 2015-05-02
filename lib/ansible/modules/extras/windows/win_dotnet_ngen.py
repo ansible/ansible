@@ -33,6 +33,7 @@ description:
     - http://blogs.msdn.com/b/dotnet/archive/2013/08/06/wondering-why-mscorsvw-exe-has-high-cpu-usage-you-can-speed-it-up.aspx
     - Note: there are in fact two scheduled tasks for ngen but they have no triggers so aren't a problem
     - Note: there's no way to test if they've been completed (?)
+    - Note: the stdout is quite likely to be several megabytes
 options:
 author: Peter Mounce
 '''
