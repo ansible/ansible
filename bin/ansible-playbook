@@ -102,6 +102,8 @@ def main(args):
         help="run handlers even if a task fails")
     parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
         help="clear the fact cache")
+    parser.add_option('--all-hosts', dest='all_hosts', action='store_true',
+        help="override playbook hosts to use all")
 
     options, args = parser.parse_args(args)
 
@@ -223,6 +225,11 @@ def main(args):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir,
                                               vault_password=pb.vault_password)
+
+                if options.all_hosts:
+                    print '  play ALL hosts'
+                    play.hosts = 'all'
+
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
 
