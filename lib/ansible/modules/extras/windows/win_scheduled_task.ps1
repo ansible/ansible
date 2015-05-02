@@ -50,8 +50,8 @@ else
 try
 {
   $tasks = Get-ScheduledTask -TaskPath $name
-  $tasks_needing_changing |? { $_.State -ne $state }
-  if ($tasks_needing_changing -eq $null)
+  $tasks_needing_changing = $tasks |? { $_.State -ne $state }
+  if (-not($tasks_needing_changing -eq $null))
   {
     if ($state -eq 'Disabled')
     {
@@ -69,6 +69,7 @@ try
     Set-Attr $result "tasks_changed" @()
     $result.changed = $false
   }
+
   Exit-Json $result;
 }
 catch
