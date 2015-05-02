@@ -37,10 +37,8 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins import PluginLoader
+from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import combine_vars
-
-from ansible import plugins as ansible_plugins
 
 
 __all__ = ['Role', 'ROLE_CACHE', 'hash_params']
@@ -156,12 +154,11 @@ class Role(Base, Become, Conditional, Taggable):
         setattr(self, 'tags', current_tags)
 
         # dynamically load any plugins from the role directory
-        for name, obj in inspect.getmembers(ansible_plugins):
-            if isinstance(obj, PluginLoader):
-                if obj.subdir:
-                    plugin_path = os.path.join(self._role_path, obj.subdir)
-                    if os.path.isdir(plugin_path):
-                        obj.add_directory(plugin_path)
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(self._role_path, obj.subdir)
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(plugin_path)
 
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')

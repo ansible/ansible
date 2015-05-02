@@ -20,11 +20,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import glob
+import imp
+import inspect
 import os
 import os.path
 import sys
-import glob
-import imp
+
 from ansible import constants as C
 from ansible.utils.display import Display
 from ansible import errors
@@ -39,6 +41,9 @@ def push_basedir(basedir):
     basedir = os.path.realpath(basedir)
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
+
+def get_all_plugin_loaders():
+    return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
 
 class PluginLoader:
 
