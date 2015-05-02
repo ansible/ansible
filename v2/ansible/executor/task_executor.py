@@ -31,6 +31,7 @@ from ansible.executor.connection_info import ConnectionInformation
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import lookup_loader, connection_loader, action_loader
+from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
 
@@ -47,14 +48,14 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, connection_info, new_stdin, loader, module_loader):
-        self._host            = host
-        self._task            = task
-        self._job_vars        = job_vars
-        self._connection_info = connection_info
-        self._new_stdin       = new_stdin
-        self._loader          = loader
-        self._module_loader   = module_loader
+    def __init__(self, host, task, job_vars, connection_info, new_stdin, loader, shared_loader_obj):
+        self._host              = host
+        self._task              = task
+        self._job_vars          = job_vars
+        self._connection_info   = connection_info
+        self._new_stdin         = new_stdin
+        self._loader            = loader
+        self._shared_loader_obj = shared_loader_obj
 
     def run(self):
         '''
@@ -195,9 +196,11 @@ class TaskExecutor:
         if variables is None:
             variables = self._job_vars
 
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+
         # fields set from the play/task may be based on variables, so we have to
         # do the same kind of post validation step on it here before we use it.
-        self._connection_info.post_validate(variables=variables, loader=self._loader)
+        self._connection_info.post_validate(templar=templar)
 
         # now that the connection information is finalized, we can add 'magic'
         # variables to the variable dictionary
@@ -216,7 +219,7 @@ class TaskExecutor:
             return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
 
         # Now we do final validation on the task, which sets all fields to their final values
-        self._task.post_validate(variables)
+        self._task.post_validate(templar=templar)
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
@@ -336,7 +339,7 @@ class TaskExecutor:
             connection=self._connection,
             connection_info=self._connection_info,
             loader=self._loader,
-            module_loader=self._module_loader,
+            shared_loader_obj=self._shared_loader_obj,
         )
 
         time_left = self._task.async
@@ -408,7 +411,7 @@ class TaskExecutor:
             connection=connection,
             connection_info=self._connection_info,
             loader=self._loader,
-            module_loader=self._module_loader,
+            shared_loader_obj=self._shared_loader_obj,
         )
 
         if not handler:

@@ -94,7 +94,7 @@ class WorkerProcess(multiprocessing.Process):
             try:
                 if not self._main_q.empty():
                     debug("there's work to be done!")
-                    (host, task, basedir, job_vars, connection_info, module_loader) = self._main_q.get(block=False)
+                    (host, task, basedir, job_vars, connection_info, shared_loader_obj) = self._main_q.get(block=False)
                     debug("got a task/handler to work on: %s" % task)
 
                     # because the task queue manager starts workers (forks) before the
@@ -115,7 +115,7 @@ class WorkerProcess(multiprocessing.Process):
 
                     # execute the task and build a TaskResult from the result
                     debug("running TaskExecutor() for %s/%s" % (host, task))
-                    executor_result = TaskExecutor(host, task, job_vars, new_connection_info, self._new_stdin, self._loader, module_loader).run()
+                    executor_result = TaskExecutor(host, task, job_vars, new_connection_info, self._new_stdin, self._loader, shared_loader_obj).run()
                     debug("done running TaskExecutor() for %s/%s" % (host, task))
                     task_result = TaskResult(host, task, executor_result)
 

@@ -248,12 +248,11 @@ class ConnectionInformation:
     def _get_fields(self):
         return [i for i in self.__dict__.keys() if i[:1] != '_']
 
-    def post_validate(self, variables, loader):
+    def post_validate(self, templar):
         '''
         Finalizes templated values which may be set on this objects fields.
         '''
 
-        templar = Templar(loader=loader, variables=variables)
         for field in self._get_fields():
             value = templar.template(getattr(self, field))
             setattr(self, field, value)
