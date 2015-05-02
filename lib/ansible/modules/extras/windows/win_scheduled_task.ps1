@@ -27,7 +27,7 @@ Set-Attr $result "changed" $false;
 
 if ($params.name)
 {
-    $package = $params.name
+    $name = $params.name
 }
 else
 {
