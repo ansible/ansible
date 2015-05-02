@@ -32,6 +32,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
 from ansible.plugins import callback_loader, strategy_loader
+from ansible.template import Templar
 
 from ansible.utils.debug import debug
 
@@ -159,9 +160,10 @@ class TaskQueueManager:
         '''
 
         all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
 
         new_play = play.copy()
-        new_play.post_validate(all_vars, fail_on_undefined=False)
+        new_play.post_validate(templar)
 
         connection_info = ConnectionInformation(new_play, self._options, self.passwords)
         for callback_plugin in self._callback_plugins:

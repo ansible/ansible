@@ -177,18 +177,18 @@ class Task(Base, Conditional, Taggable, Become):
 
         return super(Task, self).preprocess_data(new_ds)
 
-    def post_validate(self, all_vars=dict(), fail_on_undefined=True):
+    def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on
         the block and task include (if any) to which this task belongs.
         '''
 
         if self._block:
-            self._block.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+            self._block.post_validate(templar)
         if self._task_include:
-            self._task_include.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+            self._task_include.post_validate(templar)
 
-        super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+        super(Task, self).post_validate(templar)
 
     def get_vars(self):
         all_vars = self.vars.copy()

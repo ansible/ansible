@@ -30,12 +30,24 @@ from ansible.inventory.group import Group
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role import ROLE_CACHE, hash_params
-from ansible.plugins import module_loader
+from ansible.plugins import module_loader, filter_loader, lookup_loader
 from ansible.utils.debug import debug
 
 
 __all__ = ['StrategyBase']
 
+# FIXME: this should probably be in the plugins/__init__.py, with
+#        a smarter mechanism to set all of the attributes based on
+#        the loaders created there
+class SharedPluginLoaderObj:
+    '''
+    A simple object to make pass the various plugin loaders to
+    the forked processes over the queue easier
+    '''
+    def __init__(self):
+        self.module_loader = module_loader
+        self.filter_loader = filter_loader
+        self.lookup_loader = lookup_loader
 
 class StrategyBase:
 
@@ -108,7 +120,12 @@ class StrategyBase:
                 self._cur_worker = 0
 
             self._pending_results += 1
-            main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info, module_loader), block=False)
+
+            # create a dummy object with plugin loaders set as an easier
+            # way to share them with the forked processes
+            shared_loader_obj = SharedPluginLoaderObj()
+
+            main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info, shared_loader_obj), block=False)
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
             debug("got an error while queuing: %s" % e)

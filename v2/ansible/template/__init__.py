@@ -53,11 +53,18 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
+    def __init__(self, loader, shared_loader_obj=None, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
         self._loader              = loader
         self._basedir             = loader.get_basedir()
         self._filters             = None
         self._available_variables = variables
+
+        if shared_loader_obj:
+            self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
+            self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
+        else:
+            self._filter_loader = filter_loader
+            self._lookup_loader = lookup_loader
 
         # flags to determine whether certain failures during templating
         # should result in fatal errors being raised
@@ -88,7 +95,7 @@ class Templar:
         if self._filters is not None:
             return self._filters.copy()
 
-        plugins = [x for x in filter_loader.all()]
+        plugins = [x for x in self._filter_loader.all()]
 
         self._filters = dict()
         for fp in plugins:
@@ -205,7 +212,7 @@ class Templar:
         return thing if thing is not None else ''
 
     def _lookup(self, name, *args, **kwargs):
-        instance = lookup_loader.get(name.lower(), loader=self._loader)
+        instance = self._lookup_loader.get(name.lower(), loader=self._loader)
 
         if instance is not None:
             # safely catch run failures per #5059

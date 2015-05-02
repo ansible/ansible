@@ -44,13 +44,13 @@ class ActionBase:
     action in use.
     '''
 
-    def __init__(self, task, connection, connection_info, loader, module_loader):
-        self._task            = task
-        self._connection      = connection
-        self._connection_info = connection_info
-        self._loader          = loader
-        self._module_loader   = module_loader
-        self._shell           = self.get_shell()
+    def __init__(self, task, connection, connection_info, loader, shared_loader_obj):
+        self._task              = task
+        self._connection        = connection
+        self._connection_info   = connection_info
+        self._loader            = loader
+        self._shared_loader_obj = shared_loader_obj
+        self._shell             = self.get_shell()
 
         self._supports_check_mode = True
 
@@ -73,9 +73,9 @@ class ActionBase:
 
         # Search module path(s) for named module.
         module_suffixes = getattr(self._connection, 'default_suffixes', None)
-        module_path = self._module_loader.find_plugin(module_name, module_suffixes)
+        module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, module_suffixes)
         if module_path is None:
-            module_path2 = self._module_loader.find_plugin('ping', module_suffixes)
+            module_path2 = self._shared_loader_obj.module_loader.find_plugin('ping', module_suffixes)
             if module_path2 is not None:
                 raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
             else:

@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from six import iteritems, string_types
 
+import inspect
 import os
 
 from hashlib import sha1
@@ -36,8 +37,10 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins import module_loader
+from ansible.plugins import PluginLoader
 from ansible.utils.vars import combine_vars
+
+from ansible import plugins as ansible_plugins
 
 
 __all__ = ['Role', 'ROLE_CACHE', 'hash_params']
@@ -152,11 +155,15 @@ class Role(Base, Become, Conditional, Taggable):
         current_tags.extend(role_include.tags)
         setattr(self, 'tags', current_tags)
 
-        # load the role's files, if they exist
-        library = os.path.join(self._role_path, 'library')
-        if os.path.isdir(library):
-            module_loader.add_directory(library)
+        # dynamically load any plugins from the role directory
+        for name, obj in inspect.getmembers(ansible_plugins):
+            if isinstance(obj, PluginLoader):
+                if obj.subdir:
+                    plugin_path = os.path.join(self._role_path, obj.subdir)
+                    if os.path.isdir(plugin_path):
+                        obj.add_directory(plugin_path)
 
+        # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)

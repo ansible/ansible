@@ -25,6 +25,7 @@ from ansible import constants as C
 from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
+from ansible.template import Templar
 
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.debug import debug
@@ -80,8 +81,9 @@ class PlaybookExecutor:
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
                     all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+                    templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
                     new_play = play.copy()
-                    new_play.post_validate(all_vars, fail_on_undefined=False)
+                    new_play.post_validate(templar)
 
                     if self._tqm is None:
                         # we are just doing a listing
