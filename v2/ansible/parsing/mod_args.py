@@ -135,7 +135,11 @@ class ModuleArgsParser:
 
         # this can occasionally happen, simplify
         if args and 'args' in args:
-            args = args['args']
+            tmp_args = args['args']
+            del args['args']
+            if isinstance(tmp_args, string_types):
+                tmp_args = parse_kv(tmp_args)
+            args.update(tmp_args)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
