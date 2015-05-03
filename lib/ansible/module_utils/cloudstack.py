@@ -121,8 +121,11 @@ class AnsibleCloudStack:
         project = self.module.params.get('project')
         if not project:
             return None
-
-        projects = self.cs.listProjects(listall=True)
+        args = {}
+        args['listall'] = True
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
+        projects = self.cs.listProjects(**args)
         if projects:
             for p in projects['project']:
                 if project in [ p['name'], p['displaytext'], p['id'] ]:
@@ -146,6 +149,8 @@ class AnsibleCloudStack:
 
         args = {}
         args['ipaddress'] = ip_address
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
         args['projectid'] = self.get_project(key='id')
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
@@ -170,6 +175,8 @@ class AnsibleCloudStack:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
         args = {}
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
         args['projectid'] = self.get_project(key='id')
         args['zoneid'] = self.get_zone(key='id')
         vms = self.cs.listVirtualMachines(**args)
@@ -255,8 +262,13 @@ class AnsibleCloudStack:
         if not account:
             return None
 
+        domain = self.module.params.get('domain')
+        if not domain:
+            self.module.fail_json(msg="Account must be specified with Domain")
+
         args = {}
         args['name'] = account
+        args['domainid'] = self.get_domain(key='id')
         args['listall'] = True
         accounts = self.cs.listAccounts(**args)
         if accounts:
