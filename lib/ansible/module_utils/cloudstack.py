@@ -48,6 +48,8 @@ class AnsibleCloudStack:
         self.module = module
         self._connect()
 
+        self.domain = None
+        self.account = None
         self.project = None
         self.ip_address = None
         self.zone = None
@@ -73,7 +75,7 @@ class AnsibleCloudStack:
         else:
             self.cs = CloudStack(**read_config())
 
-
+    # TODO: rename to has_changed()
     def _has_changed(self, want_dict, current_dict, only_keys=None):
         for key, value in want_dict.iteritems():
 
@@ -245,6 +247,42 @@ class AnsibleCloudStack:
         self.module.fail_json(msg="Hypervisor '%s' not found" % hypervisor)
 
 
+    def get_account(self, key=None):
+        if self.account:
+            return self._get_by_key(key, self.account)
+
+        account = self.module.params.get('account')
+        if not account:
+            return None
+
+        args = {}
+        args['name'] = account
+        args['listall'] = True
+        accounts = self.cs.listAccounts(**args)
+        if accounts:
+            self.account = accounts['account'][0]
+            return self._get_by_key(key, self.account)
+        self.module.fail_json(msg="Account '%s' not found" % account)
+
+
+    def get_domain(self, key=None):
+        if self.domain:
+            return self._get_by_key(key, self.domain)
+
+        domain = self.module.params.get('domain')
+        if not domain:
+            return None
+
+        args = {}
+        args['name'] = domain
+        args['listall'] = True
+        domain = self.cs.listDomains(**args)
+        if domains:
+            self.domain = domains['domain'][0]
+            return self._get_by_key(key, self.domain)
+        self.module.fail_json(msg="Domain '%s' not found" % domain)
+
+
     def get_tags(self, resource=None):
         existing_tags = self.cs.listTags(resourceid=resource['id'])
         if existing_tags:
@@ -309,7 +347,7 @@ class AnsibleCloudStack:
         self.capabilities = capabilities['capability']
         return self._get_by_key(key, self.capabilities)
 
-
+    # TODO: rename to poll_job()
     def _poll_job(self, job=None, key=None):
         if 'jobid' in job:
             while True:
