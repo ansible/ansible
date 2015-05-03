@@ -260,7 +260,7 @@ class Base:
                 # run the post-validator if present
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
-                    value = method(attribute, value, all_vars, fail_on_undefined)
+                    value = method(attribute, value, all_vars, templar._fail_on_undefined_errors)
                 else:
                     # otherwise, just make sure the attribute is of the type it should be
                     if attribute.isa == 'string':
@@ -281,7 +281,7 @@ class Base:
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
             except UndefinedError as e:
-                if fail_on_undefined:
+                if templar._fail_on_undefined_errors:
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):
