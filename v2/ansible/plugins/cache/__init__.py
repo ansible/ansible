@@ -27,6 +27,7 @@ class FactCache(MutableMapping):
     def __init__(self, *args, **kwargs):
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
         if self._plugin is None:
+            # FIXME: this should be an exception
             return
 
     def __getitem__(self, key):
