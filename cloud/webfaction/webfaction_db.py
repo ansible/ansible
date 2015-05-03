@@ -10,7 +10,7 @@ short_description: Add or remove a database on Webfaction
 description:
     - Add or remove a database on a Webfaction host. Further documentation at http://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser
-version_added: 1.99
+version_added: 2.0
 notes:
     - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."
     - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
@@ -20,7 +20,6 @@ options:
         description:
             - The name of the database
         required: true
-        default: null
 
     state:
         description:
@@ -61,7 +60,6 @@ EXAMPLES = '''
 
 import socket
 import xmlrpclib
-from ansible.module_utils.basic import *
 
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 
@@ -69,10 +67,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             state = dict(required=False, default='present'),
             # You can specify an IP address or hostname.
-            type = dict(required=True, default=None),
+            type = dict(required=True),
             password = dict(required=False, default=None),
             login_name = dict(required=True),
             login_password = dict(required=True),
@@ -142,6 +140,6 @@ def main():
         result = result
     )
 
-# The conventional ending
+from ansible.module_utils.basic import *
 main()
 
