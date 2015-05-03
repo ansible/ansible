@@ -10,7 +10,7 @@ short_description: Add or remove mailboxes on Webfaction
 description:
     - Add or remove mailboxes on a Webfaction account. Further documentation at http://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser
-version_added: 1.99
+version_added: 2.0
 notes:
     - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."
     - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
@@ -20,7 +20,6 @@ options:
         description:
             - The name of the mailbox
         required: true
-        default: null
 
     mailbox_password:
         description:
@@ -48,7 +47,6 @@ options:
 
 import socket
 import xmlrpclib
-from ansible.module_utils.basic import *
 
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 
@@ -56,7 +54,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            mailbox_name=dict(required=True, default=None),
+            mailbox_name=dict(required=True),
             mailbox_password=dict(required=True),
             state=dict(required=False, default='present'),
             login_name=dict(required=True),
@@ -107,6 +105,7 @@ def main():
 
     module.exit_json(changed=True, result=result)
 
-# The conventional ending
+
+from ansible.module_utils.basic import *
 main()
 
