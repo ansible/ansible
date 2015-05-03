@@ -10,7 +10,7 @@ short_description: Add or remove a website on a Webfaction host
 description:
     - Add or remove a website on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser
-version_added: 1.99
+version_added: 2.0
 notes:
     - Sadly, you I(do) need to know your webfaction hostname for the C(host) parameter.  But at least, unlike the API, you don't need to know the IP address - you can use a DNS name.
     - If a site of the same name exists in the account but on a different host, the operation will exit.
@@ -23,7 +23,6 @@ options:
         description:
             - The name of the website
         required: true
-        default: null
 
     state:
         description:
@@ -83,7 +82,6 @@ EXAMPLES = '''
 
 import socket
 import xmlrpclib
-from ansible.module_utils.basic import *
 
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 
@@ -91,11 +89,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             state = dict(required=False, default='present'),
             # You can specify an IP address or hostname.
-            host = dict(required=True, default=None),
-            https = dict(required=False, choices=BOOLEANS, default='false'),
+            host = dict(required=True),
+            https = dict(required=False, choices=BOOLEANS, default=False),
             subdomains = dict(required=False, default=[]),
             site_apps = dict(required=False, default=[]),
             login_name = dict(required=True),
@@ -184,6 +182,8 @@ def main():
         result = result
     )
 
-# The conventional ending
+
+
+from ansible.module_utils.basic import *
 main()
 

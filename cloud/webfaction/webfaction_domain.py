@@ -10,7 +10,7 @@ short_description: Add or remove domains and subdomains on Webfaction
 description:
     - Add or remove domains or subdomains on a Webfaction host. Further documentation at http://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser
-version_added: 1.99
+version_added: 2.0
 notes:
     - If you are I(deleting) domains by using C(state=absent), then note that if you specify subdomains, just those particular subdomains will be deleted.  If you don't specify subdomains, the domain will be deleted.
     - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."
@@ -22,7 +22,6 @@ options:
         description:
             - The name of the domain
         required: true
-        default: null
 
     state:
         description:
@@ -50,7 +49,6 @@ options:
 
 import socket
 import xmlrpclib
-from ansible.module_utils.basic import *
 
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
 
@@ -58,7 +56,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             state = dict(required=False, default='present'),
             subdomains = dict(required=False, default=[]),
             login_name = dict(required=True),
@@ -129,6 +127,6 @@ def main():
         result = result
     )
 
-# The conventional ending
+from ansible.module_utils.basic import *
 main()
 
