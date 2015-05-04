@@ -216,6 +216,8 @@ class Play(object):
             role_name = orig_path.get('role', None)
             if role_name is None:
                 raise errors.AnsibleError("expected a role name in dictionary: %s" % orig_path)
+            if role_name.startswith('git+'):
+                role_name = role_name.split('/')[-1]
             role_vars = orig_path
         else:
             role_name = utils.role_spec_parse(orig_path)["name"]
