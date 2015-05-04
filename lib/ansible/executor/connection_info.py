@@ -226,7 +226,7 @@ class ConnectionInformation:
             elif self.become_method == 'pbrun':
                 exe = become_settings.get('pbrun_exe', 'pbrun')
                 flags = become_settings.get('pbrun_flags', '')
-                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, self.become_user, success_cmd)
+                becomecmd = '%s -b -l %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'pfexec':
                 exe = become_settings.get('pfexec_exe', 'pbrun')
