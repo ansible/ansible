@@ -23,7 +23,7 @@ import ast
 import yaml
 import traceback
 
-from ansible.plugins import fragment_loader
+from ansible import utils
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
@@ -66,7 +66,7 @@ def get_docstring(filename, verbose=False):
 
 
                     if fragment_slug != 'doesnotexist':
-                        fragment_class = fragment_loader.get(fragment_name)
+                        fragment_class = utils.plugins.fragment_loader.get(fragment_name)
                         assert fragment_class is not None
 
                         fragment_yaml = getattr(fragment_class, fragment_var, '{}')

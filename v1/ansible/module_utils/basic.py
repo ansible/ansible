@@ -43,7 +43,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # can be inserted in any module source automatically by including
 # #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
 # of an ansible module. The source of this common code lives
-# in ansible/executor/module_common.py
+# in lib/ansible/module_common.py
 
 import locale
 import os
@@ -65,7 +65,6 @@ import pwd
 import platform
 import errno
 import tempfile
-from itertools import imap, repeat
 
 try:
     import json
@@ -235,7 +234,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     return super(cls, subclass).__new__(subclass)
 
 
-def json_dict_unicode_to_bytes(d, encoding='utf-8'):
+def json_dict_unicode_to_bytes(d):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -243,17 +242,17 @@ def json_dict_unicode_to_bytes(d, encoding='utf-8'):
     '''
 
     if isinstance(d, unicode):
-        return d.encode(encoding)
+        return d.encode('utf-8')
     elif isinstance(d, dict):
-        return dict(imap(json_dict_unicode_to_bytes, d.iteritems(), repeat(encoding)))
+        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
     elif isinstance(d, list):
-        return list(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
+        return list(map(json_dict_unicode_to_bytes, d))
     elif isinstance(d, tuple):
-        return tuple(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
+        return tuple(map(json_dict_unicode_to_bytes, d))
     else:
         return d
 
-def json_dict_bytes_to_unicode(d, encoding='utf-8'):
+def json_dict_bytes_to_unicode(d):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -261,13 +260,13 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8'):
     '''
 
     if isinstance(d, str):
-        return unicode(d, encoding)
+        return unicode(d, 'utf-8')
     elif isinstance(d, dict):
-        return dict(imap(json_dict_bytes_to_unicode, d.iteritems(), repeat(encoding)))
+        return dict(map(json_dict_bytes_to_unicode, d.iteritems()))
     elif isinstance(d, list):
-        return list(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
+        return list(map(json_dict_bytes_to_unicode, d))
     elif isinstance(d, tuple):
-        return tuple(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
+        return tuple(map(json_dict_bytes_to_unicode, d))
     else:
         return d
 
@@ -360,9 +359,9 @@ class AnsibleModule(object):
         # reset to LANG=C if it's an invalid/unavailable locale
         self._check_locale()
 
-        self.params = self._load_params()
+        (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
+        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
         
         self.aliases = self._handle_aliases()
 
@@ -889,7 +888,7 @@ class AnsibleModule(object):
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
-            if k == '_ansible_check_mode':
+            if k == 'CHECKMODE':
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
                 if self.supports_check_mode:
@@ -897,13 +896,13 @@ class AnsibleModule(object):
 
     def _check_for_no_log(self):
         for (k,v) in self.params.iteritems():
-            if k == '_ansible_no_log':
+            if k == 'NO_LOG':
                 self.no_log = self.boolean(v)
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
             # these should be in legal inputs already
-            #if k in ('_ansible_check_mode', '_ansible_no_log'):
+            #if k in ('CHECKMODE', 'NO_LOG'):
             #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -1076,11 +1075,20 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-        if params is None:
-            params = dict()
-        return params
-
+        args = MODULE_ARGS
+        items   = shlex.split(args)
+        params = {}
+        for x in items:
+            try:
+                (k, v) = x.split("=",1)
+            except Exception, e:
+                self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
+            if k in params:
+                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
+            params[k] = v
+        params2 = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
+        params2.update(params)
+        return (params2, args)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1201,17 +1209,13 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1"):
+        for encoding in ("utf-8", "latin-1", "unicode_escape"):
             try:
                 return json.dumps(data, encoding=encoding)
-            # Old systems using old simplejson module does not support encoding keyword.
-            except TypeError:
-                try:
-                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
-                except UnicodeDecodeError:
-                    continue
-                return json.dumps(new_data)
-            except UnicodeDecodeError:
+            # Old systems using simplejson module does not support encoding keyword.
+            except TypeError, e:
+                return json.dumps(data)
+            except UnicodeDecodeError, e:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
 
@@ -1448,7 +1452,7 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporary env path if a prefix is passed
+        # Set a temporart env path if a prefix is passed
         env=os.environ
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
