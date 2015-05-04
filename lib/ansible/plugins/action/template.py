@@ -21,7 +21,6 @@ import base64
 import os
 
 from ansible.plugins.action import ActionBase
-from ansible.template import Templar
 from ansible.utils.hashing import checksum_s
 
 class ActionModule(ActionBase):
@@ -99,11 +98,10 @@ class ActionModule(ActionBase):
             dest = os.path.join(dest, base)
 
         # template the source data locally & get ready to transfer
-        templar = Templar(loader=self._loader, variables=task_vars)
         try:
             with open(source, 'r') as f:
                 template_data = f.read()
-            resultant = templar.template(template_data, preserve_trailing_newlines=True)
+            resultant = self._templar.template(template_data, preserve_trailing_newlines=True)
         except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 

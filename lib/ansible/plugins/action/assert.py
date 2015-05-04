@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
         cond = Conditional(loader=self._loader)
         for that in thats:
             cond.when = [ that ]
-            test_result = cond.evaluate_conditional(all_vars=task_vars)
+            test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
             if not test_result:
                 result = dict(
                    failed       = True,

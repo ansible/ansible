@@ -47,16 +47,16 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [ value ])
 
-    def evaluate_conditional(self, all_vars):
+    def evaluate_conditional(self, templar, all_vars):
         '''
         Loops through the conditionals set on this object, returning
         False if any of them evaluate as such.
         '''
 
-        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
         for conditional in self.when:
             if not self._check_conditional(conditional, templar, all_vars):
                 return False
+
         return True
 
     def _check_conditional(self, conditional, templar, all_vars):

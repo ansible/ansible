@@ -225,21 +225,21 @@ class Block(Base, Become, Conditional, Taggable):
             ti.deserialize(ti_data)
             self._task_include = ti
 
-    def evaluate_conditional(self, all_vars):
+    def evaluate_conditional(self, templar, all_vars):
         if len(self._dep_chain):
             for dep in self._dep_chain:
-                if not dep.evaluate_conditional(all_vars):
+                if not dep.evaluate_conditional(templar, all_vars):
                     return False
         if self._task_include is not None:
-            if not self._task_include.evaluate_conditional(all_vars):
+            if not self._task_include.evaluate_conditional(templar, all_vars):
                 return False
         if self._parent_block is not None:
-            if not self._parent_block.evaluate_conditional(all_vars):
+            if not self._parent_block.evaluate_conditional(templar, all_vars):
                 return False
         elif self._role is not None:
-            if not self._role.evaluate_conditional(all_vars):
+            if not self._role.evaluate_conditional(templar, all_vars):
                 return False
-        return super(Block, self).evaluate_conditional(all_vars)
+        return super(Block, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):
         self._loader = loader

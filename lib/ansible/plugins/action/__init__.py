@@ -44,11 +44,12 @@ class ActionBase:
     action in use.
     '''
 
-    def __init__(self, task, connection, connection_info, loader, shared_loader_obj):
+    def __init__(self, task, connection, connection_info, loader, templar, shared_loader_obj):
         self._task              = task
         self._connection        = connection
         self._connection_info   = connection_info
         self._loader            = loader
+        self._templar           = templar
         self._shared_loader_obj = shared_loader_obj
         self._shell             = self.get_shell()
 
