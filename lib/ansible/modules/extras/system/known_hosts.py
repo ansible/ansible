@@ -82,7 +82,7 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
-    host = params["host"]
+    host = params["name"]
     key = params.get("key",None)
     port = params.get("port",None)
     #expand the path parameter; otherwise module.add_path_info
