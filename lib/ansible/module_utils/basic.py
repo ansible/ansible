@@ -1365,8 +1365,9 @@ class AnsibleModule(object):
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
-            # only try workarounds for errno 18 (cross device), 1 (not permitted) and 13 (permission denied)
-            if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
+            # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
+            # and 26 (text file busy) which happens on vagrant synced folders
+            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
             dest_dir = os.path.dirname(dest)
