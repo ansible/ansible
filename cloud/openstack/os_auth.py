@@ -33,7 +33,7 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Authenticate to the cloud and retreive the service catalog
+# Authenticate to the cloud and retrieve the service catalog
 - os_auth:
     cloud: rax-dfw
 - debug: var=service_catalog

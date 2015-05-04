@@ -34,12 +34,12 @@ options:
     default: null
   subscription_id:
     description:
-      - azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environement variable.
+      - azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environment variable.
     required: false
     default: null
   management_cert_path:
     description:
-      - path to an azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environement variable.
+      - path to an azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environment variable.
     required: false
     default: null
   storage_account:
@@ -184,7 +184,7 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Standard_D14',
                     'Standard_G1',
                     'Standard_G2',
-                    'Sandard_G3',
+                    'Standard_G3',
                     'Standard_G4',
                     'Standard_G5']
 
@@ -398,7 +398,7 @@ def terminate_virtual_machine(module, azure):
 
 
 def get_azure_creds(module):
-    # Check modul args for credentials, then check environment vars
+    # Check module args for credentials, then check environment vars
     subscription_id = module.params.get('subscription_id')
     if not subscription_id:
         subscription_id = os.environ.get('AZURE_SUBSCRIPTION_ID', None)

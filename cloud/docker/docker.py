@@ -639,7 +639,7 @@ class DockerManager(object):
 
         self.docker_py_versioninfo = get_docker_py_versioninfo()
 
-    def _check_capabilties(self):
+    def _check_capabilities(self):
         """
         Create a list of available capabilities
         """
@@ -660,7 +660,7 @@ class DockerManager(object):
         we lack the capability.
         """
         if not self._capabilities:
-            self._check_capabilties()
+            self._check_capabilities()
 
         if capability in self._capabilities:
             return True
@@ -737,7 +737,7 @@ class DockerManager(object):
             elif p_len == 3:
                 # Bind `container_port` of the container to port `parts[1]` on
                 # IP `parts[0]` of the host machine. If `parts[1]` empty bind
-                # to a dynamically allocacted port of IP `parts[0]`.
+                # to a dynamically allocated port of IP `parts[0]`.
                 bind = (parts[0], int(parts[1])) if parts[1] else (parts[0],)
 
             if container_port in binds:

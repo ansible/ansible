@@ -58,7 +58,7 @@ options:
     required: false
   replace_all_instances:
     description:
-      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuraiton.
+      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration.
     required: false
     version_added: "1.8"
     default: False
