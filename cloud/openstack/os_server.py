@@ -32,7 +32,7 @@ DOCUMENTATION = '''
 module: os_server
 short_description: Create/Delete Compute Instances from OpenStack
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Create or Remove compute instances from OpenStack.
 options:
@@ -40,12 +40,10 @@ options:
      description:
         - Name that has to be given to the instance
      required: true
-     default: None
    image:
      description:
         - The name or id of the base image to boot.
      required: true
-     default: None
    image_exclude:
      description:
         - Text to use to filter image names, for the case, such as HP, where
@@ -92,7 +90,7 @@ options:
      required: false
      default: 'yes'
    floating_ips:
-     decription:
+     description:
         - list of valid floating IPs that pre-exist to assign to this node
      required: false
      default: None
