@@ -22,12 +22,16 @@ New Modules:
   * cloudstack: cs_affinitygroup
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
+  * cloudstack: cs_instance
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
   * cloudstack: cs_vmsnapshot
   * maven_artifact
   * openstack: os_server_facts
+  * openstack: os_server_volume
+  * openstack: os_subnet
+  * openstack: os_volume
   * pushover
   * zabbix_host
   * zabbix_hostmacro
