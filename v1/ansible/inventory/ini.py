@@ -16,20 +16,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 #############################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
-import ast
-import shlex
-import re
-
-from ansible import constants as C
-from ansible.errors import *
+import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
-from ansible.utils.unicode import to_unicode
+from ansible import errors
+from ansible import utils
+import shlex
+import re
+import ast
 
 class InventoryParser(object):
     """
@@ -37,8 +34,9 @@ class InventoryParser(object):
     """
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
-        self.filename = filename
+
         with open(filename) as fh:
+            self.filename = filename
             self.lines = fh.readlines()
             self.groups = {}
             self.hosts = {}
@@ -56,7 +54,10 @@ class InventoryParser(object):
     def _parse_value(v):
         if "#" not in v:
             try:
-                v = ast.literal_eval(v)
+                ret = ast.literal_eval(v)
+                if not isinstance(ret, float):
+                    # Do not trim floats. Eg: "1.20" to 1.2
+                    return ret
             # Using explicit exceptions.
             # Likely a string that literal_eval does not like. We wil then just set it.
             except ValueError:
@@ -65,7 +66,7 @@ class InventoryParser(object):
             except SyntaxError:
                 # Is this a hash with an equals at the end?
                 pass
-        return to_unicode(v, nonstring='passthru', errors='strict')
+        return v
 
     # [webservers]
     # alpha
@@ -90,8 +91,8 @@ class InventoryParser(object):
         self.groups = dict(all=all, ungrouped=ungrouped)
         active_group_name = 'ungrouped'
 
-        for line in self.lines:
-            line = self._before_comment(line).strip()
+        for lineno in range(len(self.lines)):
+            line = utils.before_comment(self.lines[lineno]).strip()
             if line.startswith("[") and line.endswith("]"):
                 active_group_name = line.replace("[","").replace("]","")
                 if ":vars" in line or ":children" in line:
@@ -145,11 +146,8 @@ class InventoryParser(object):
                             try:
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
-                                raise AnsibleError("Invalid ini entry in %s: %s - %s" % (self.filename, t, str(e)))
-                            if k == 'ansible_ssh_host':
-                                host.ipv4_address = self._parse_value(v)
-                            else:
-                                host.set_variable(k, self._parse_value(v))
+                                raise errors.AnsibleError("%s:%s: Invalid ini entry: %s - %s" % (self.filename, lineno + 1, t, str(e)))
+                            host.set_variable(k, self._parse_value(v))
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
@@ -159,8 +157,8 @@ class InventoryParser(object):
     def _parse_group_children(self):
         group = None
 
-        for line in self.lines:
-            line = line.strip()
+        for lineno in range(len(self.lines)):
+            line = self.lines[lineno].strip()
             if line is None or line == '':
                 continue
             if line.startswith("[") and ":children]" in line:
@@ -175,7 +173,7 @@ class InventoryParser(object):
             elif group:
                 kid_group = self.groups.get(line, None)
                 if kid_group is None:
-                    raise AnsibleError("child group is not defined: (%s)" % line)
+                    raise errors.AnsibleError("%s:%d: child group is not defined: (%s)" % (self.filename, lineno + 1, line))
                 else:
                     group.add_child_group(kid_group)
 
@@ -186,13 +184,13 @@ class InventoryParser(object):
 
     def _parse_group_variables(self):
         group = None
-        for line in self.lines:
-            line = line.strip()
+        for lineno in range(len(self.lines)):
+            line = self.lines[lineno].strip()
             if line.startswith("[") and ":vars]" in line:
                 line = line.replace("[","").replace(":vars]","")
                 group = self.groups.get(line, None)
                 if group is None:
-                    raise AnsibleError("can't add vars to undefined group: %s" % line)
+                    raise errors.AnsibleError("%s:%d: can't add vars to undefined group: %s" % (self.filename, lineno + 1, line))
             elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
@@ -201,18 +199,10 @@ class InventoryParser(object):
                 pass
             elif group:
                 if "=" not in line:
-                    raise AnsibleError("variables assigned to group must be in key=value form")
+                    raise errors.AnsibleError("%s:%d: variables assigned to group must be in key=value form" % (self.filename, lineno + 1))
                 else:
                     (k, v) = [e.strip() for e in line.split("=", 1)]
                     group.set_variable(k, self._parse_value(v))
 
     def get_host_variables(self, host):
         return {}
-
-    def _before_comment(self, msg):
-        ''' what's the part of a string before a comment? '''
-        msg = msg.replace("\#","**NOT_A_COMMENT**")
-        msg = msg.split("#")[0]
-        msg = msg.replace("**NOT_A_COMMENT**","#")
-        return msg
-

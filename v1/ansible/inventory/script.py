@@ -16,26 +16,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 #############################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import subprocess
-import sys
-
-from ansible import constants as C
-from ansible.errors import *
+import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
+from ansible import utils
+from ansible import errors
+import sys
 
 
-class InventoryScript:
+class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
-
-        self._loader = loader
+    def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
@@ -45,11 +41,11 @@ class InventoryScript:
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
-            raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
 
         if sp.returncode != 0:
-            raise AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
+            raise errors.AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
 
         self.data = stdout
         # see comment about _meta below
@@ -62,7 +58,7 @@ class InventoryScript:
         all_hosts = {}
 
         # not passing from_remote because data from CMDB is trusted
-        self.raw = self._loader.load(self.data)
+        self.raw  = utils.parse_json(self.data)
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
         all       = Group('all')
@@ -72,7 +68,7 @@ class InventoryScript:
 
         if 'failed' in self.raw:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
+            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
 
@@ -96,12 +92,12 @@ class InventoryScript:
             if not isinstance(data, dict):
                 data = {'hosts': data}
             # is not those subkeys, then simplified syntax, host with vars
-            elif not any(k in data for k in ('hosts','vars')):
+            elif not any(k in data for k in ('hosts','vars','children')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
                 if not isinstance(data['hosts'], list):
-                    raise AnsibleError("You defined a group \"%s\" with bad "
+                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
                         "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
@@ -112,7 +108,7 @@ class InventoryScript:
 
             if 'vars' in data:
                 if not isinstance(data['vars'], dict):
-                    raise AnsibleError("You defined a group \"%s\" with bad "
+                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
                         "data for variables:\n %s" % (group_name, data))
 
                 for k, v in data['vars'].iteritems():
@@ -147,12 +143,12 @@ class InventoryScript:
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
-            raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, err) = sp.communicate()
         if out.strip() == '':
             return dict()
         try:
-            return json_dict_bytes_to_unicode(self._loader.load(out))
+            return json_dict_bytes_to_unicode(utils.parse_json(out))
         except ValueError:
-            raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
+            raise errors.AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
 
