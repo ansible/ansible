@@ -60,7 +60,7 @@ options:
     default: '{}'
   expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only avaialbe when public-read is the acl for the object.
+      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only available when public-read is the acl for the object.
     required: false
     default: null
   mode:

@@ -58,7 +58,7 @@ options:
     version_added: "1.6"
   health_check:
     description:
-      - An associative array of health check configuration settigs (see example)
+      - An associative array of health check configuration settings (see example)
     require: false
     default: None
   region:
@@ -101,7 +101,7 @@ options:
     version_added: "1.8"
   cross_az_load_balancing:
     description:
-      - Distribute load across all configured Availablity Zones
+      - Distribute load across all configured Availability Zones
     required: false
     default: "no"
     choices: ["yes", "no"]
@@ -193,7 +193,7 @@ EXAMPLES = """
     purge_listeners: no
 
 # Normally, this module will leave availability zones that are enabled
-# on the ELB alone. If purge_zones is true, then any extreneous zones
+# on the ELB alone. If purge_zones is true, then any extraneous zones
 # will be removed
 - local_action:
     module: ec2_elb_lb
@@ -428,7 +428,7 @@ class ElbManager(object):
             existing_listener_found = None
             for existing_listener in self.elb.listeners:
                 # Since ELB allows only one listener on each incoming port, a
-                # single match on the incomping port is all we're looking for
+                # single match on the incoming port is all we're looking for
                 if existing_listener[0] == listener['load_balancer_port']:
                     existing_listener_found = self._api_listener_as_tuple(existing_listener)
                     break
@@ -437,7 +437,7 @@ class ElbManager(object):
                 # Does it match exactly?
                 if listener_as_tuple != existing_listener_found:
                     # The ports are the same but something else is different,
-                    # so we'll remove the exsiting one and add the new one
+                    # so we'll remove the existing one and add the new one
                     listeners_to_remove.append(existing_listener_found)
                     listeners_to_add.append(listener_as_tuple)
                 else:

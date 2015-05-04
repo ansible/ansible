@@ -23,7 +23,7 @@ options:
       - Name of the associated autoscaling group
     required: true
   adjustment_type:
-    desciption:
+    description:
       - The type of change in capacity of the autoscaling group
     required: false
     choices: ['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']
