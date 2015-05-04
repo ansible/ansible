@@ -316,7 +316,11 @@ def main():
     else:
         private_key = '-i '+ private_key 
 
-    ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
+    if ssh_args:
+      ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
+    else:
+      ssh_opts = '-S none -o StrictHostKeyChecking=no'
+
     if dest_port != 22:
         cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
     else:
