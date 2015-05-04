@@ -142,7 +142,7 @@ options:
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - If you want to delete all tags, set a empty list e.g. C(tags: []).
+      - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
     required: false
     default: null
   poll_async:
