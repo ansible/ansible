@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_subnet
 short_description: Add/Remove subnet to an OpenStack network
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Add or Remove a subnet to an OpenStack network
 options:
@@ -36,6 +36,7 @@ options:
      description:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
+     required: false
      default: present
    network_name:
      description:
@@ -52,6 +53,7 @@ options:
         - The CIDR representation of the subnet that should be assigned to
           the subnet.
      required: true when state is 'present'
+     default: None
    ip_version:
      description:
         - The IP version of the subnet 4 or 6

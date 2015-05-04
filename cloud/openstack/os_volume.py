@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_volume
 short_description: Create/Delete Cinder Volumes
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Create or Remove cinder block storage volumes
 options:
@@ -41,7 +41,6 @@ options:
      description:
         - Name of volume
      required: true
-     default: None
    display_description:
      description:
        - String describing the volume
@@ -53,7 +52,7 @@ options:
      required: false
      default: None
    image:
-     descritpion:
+     description:
        - Image name or id for boot from volume
      required: false
      default: None

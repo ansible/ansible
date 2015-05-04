@@ -30,7 +30,7 @@ DOCUMENTATION = '''
 module: os_server_volume
 short_description: Attach/Detach Volumes from OpenStack VM's
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Attach or Detach volumes from OpenStack VM's
 options:
@@ -39,11 +39,11 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+     required: false
    server:
      description:
        - Name or ID of server you want to attach a volume to
      required: true
-     default: None
    volume:
      description:
       - Name or id of volume you want to attach to a server
