@@ -44,6 +44,7 @@ New Modules:
   * vmware_datacenter
 
 New Inventory scripts:
+  * cloudstack
   * fleetctl
 
 Other Notable Changes:
