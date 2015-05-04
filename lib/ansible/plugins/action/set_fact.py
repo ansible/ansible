@@ -19,7 +19,6 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-from ansible.template import Templar
 from ansible.utils.boolean import boolean
 
 class ActionModule(ActionBase):
@@ -27,11 +26,10 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=dict()):
-        templar = Templar(loader=self._loader, variables=task_vars)
         facts = dict()
         if self._task.args:
             for (k, v) in self._task.args.iteritems():
-                k = templar.template(k)
+                k = self._templar.template(k)
                 if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v

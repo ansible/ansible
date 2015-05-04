@@ -266,14 +266,14 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).deserialize(data)
 
-    def evaluate_conditional(self, all_vars):
+    def evaluate_conditional(self, templar, all_vars):
         if self._block is not None:
-            if not self._block.evaluate_conditional(all_vars):
+            if not self._block.evaluate_conditional(templar, all_vars):
                 return False
         if self._task_include is not None:
-            if not self._task_include.evaluate_conditional(all_vars):
+            if not self._task_include.evaluate_conditional(templar, all_vars):
                 return False
-        return super(Task, self).evaluate_conditional(all_vars)
+        return super(Task, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):
         '''

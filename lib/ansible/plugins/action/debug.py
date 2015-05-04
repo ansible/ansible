@@ -19,7 +19,6 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
-from ansible.template import Templar
 
 class ActionModule(ActionBase):
     ''' Print statements during execution '''
@@ -35,8 +34,7 @@ class ActionModule(ActionBase):
                 result = dict(msg=self._task.args['msg'])
         # FIXME: move the LOOKUP_REGEX somewhere else
         elif 'var' in self._task.args: # and not utils.LOOKUP_REGEX.search(self._task.args['var']):
-            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=task_vars)
-            results = templar.template(self._task.args['var'], convert_bare=True)
+            results = self._templar.template(self._task.args['var'], convert_bare=True)
             result = dict()
             result[self._task.args['var']] = results
         else:
