@@ -91,7 +91,8 @@ options:
     choices: [public, internal, admin]
     required: false
     default: public
-requirements: [shade]
+requirements:
+  - shade
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
     may be user instead of providing explicit values.
