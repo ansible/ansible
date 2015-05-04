@@ -31,6 +31,10 @@ options:
       - Unique Name of the snapshot. In CloudStack terms C(displayname).
     required: true
     aliases: ['displayname']
+  vm:
+    description:
+      - Name of the virtual machine.
+    required: true
   description:
     description:
       - Description of the snapshot.
@@ -41,6 +45,11 @@ options:
       - Snapshot memory if set to true.
     required: false
     default: false
+  zone:
+    description:
+      - Name of the zone in which the VM is in. If not set, default zone is used.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the VM is assigned to.
@@ -241,6 +250,7 @@ def main():
             vm = dict(required=True),
             description = dict(default=None),
             project = dict(default=None),
+            zone = dict(default=None),
             snapshot_memory = dict(choices=BOOLEANS, default=False),
             state = dict(choices=['present', 'absent', 'revert'], default='present'),
             poll_async = dict(choices=BOOLEANS, default=True),
