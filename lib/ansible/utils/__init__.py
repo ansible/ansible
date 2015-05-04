@@ -1024,9 +1024,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     if runas_opts:
         # priv user defaults to root later on to enable detecting when this option was given here
-        parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+        parser.add_option('-K', '--ask-sudo-pass', default=constants.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
             help='ask for sudo password (deprecated, use become)')
-        parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
+        parser.add_option('--ask-su-pass', default=constants.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
             help='ask for su password (deprecated, use become)')
         parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true", dest='sudo',
             help="run operations with sudo (nopasswd) (deprecated, use become)")
