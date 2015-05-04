@@ -1127,17 +1127,20 @@ class DockerManager(object):
         else:
             repo_tags = [normalize_image(self.module.params.get('image'))]
 
-        for i in self.client.containers(all=True):
+        for container in self.client.containers(all=True):
             details = None
 
             if name:
-                matches = name in i.get('Names', [])
+                name_list = container.get('Names')
+                if name_list is None:
+                    name_list = []
+                matches = name in name_list
             else:
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
 
                 running_image = normalize_image(details['Config']['Image'])
-                running_command = i['Command'].strip()
+                running_command = container['Command'].strip()
 
                 image_matches = running_image in repo_tags
 
@@ -1149,7 +1152,7 @@ class DockerManager(object):
 
             if matches:
                 if not details:
-                    details = self.client.inspect_container(i['Id'])
+                    details = self.client.inspect_container(container['Id'])
                     details = _docker_id_quirk(details)
 
                 deployed.append(details)
