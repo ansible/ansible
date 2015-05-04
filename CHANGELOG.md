@@ -8,8 +8,9 @@ Major Changes:
  * template code now retains types for bools and Numbers instead of turning them into strings
    If you need the old behaviour, quote the value and it will get passed around as a string
 
-Deprecated Modules:
-  * ec2_ami_search, in favor of the new ec2_ami_find
+Deprecated Modules (new ones in parens):
+  * ec2_ami_search (ec2_ami_find)
+  * nova_compute   (os_server)
 
 New Modules:
   * find
@@ -28,6 +29,7 @@ New Modules:
   * cloudstack: cs_securitygroup_rule
   * cloudstack: cs_vmsnapshot
   * maven_artifact
+  * openstack: os_server
   * openstack: os_server_facts
   * openstack: os_server_volume
   * openstack: os_subnet
