@@ -209,7 +209,9 @@ class TaskExecutor:
 
         # get the connection and the handler for this execution
         self._connection = self._get_connection(variables)
-        self._handler    = self._get_action_handler(connection=self._connection, templar=templar)
+        self._connection.set_host_overrides(host=self._host)
+
+        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
