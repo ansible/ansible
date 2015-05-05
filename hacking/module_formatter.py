@@ -68,7 +68,7 @@ def rst_ify(text):
 
     t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
     t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-    t = _MODULE.sub(r'``' + r"\1" + r"``", t)
+    t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
     t = _URL.sub(r"\1", t)
     t = _CONST.sub(r'``' + r"\1" + r"``", t)
 
