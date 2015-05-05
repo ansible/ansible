@@ -174,6 +174,9 @@ class Play(Base, Taggable, Become):
         list of role definitions and creates the Role from those objects
         '''
 
+        if ds is None:
+            ds = []
+
         role_includes = load_list_of_roles(ds, variable_manager=self._variable_manager, loader=self._loader)
 
         roles = []
