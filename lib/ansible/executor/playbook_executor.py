@@ -117,15 +117,17 @@ class PlaybookExecutor:
                             if len(batch) == 0:
                                 self._tqm.send_callback('v2_playbook_on_play_start', new_play)
                                 self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                                result = 0
+                                result = 1
                                 break
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
                             result = self._tqm.run(play=play)
+                            # if the last result wasn't zero, break out of the serial batch loop
                             if result != 0:
                                 break
 
+                        # if the last result wasn't zero, break out of the play loop
                         if result != 0:
                             break
 
@@ -133,6 +135,10 @@ class PlaybookExecutor:
 
                 if entry:
                     entrylist.append(entry) # per playbook
+
+                # if the last result wasn't zero, break out of the playbook file name loop
+                if result != 0:
+                    break
 
             if entrylist:
                 return entrylist
