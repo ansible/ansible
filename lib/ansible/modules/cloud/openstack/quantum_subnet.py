@@ -30,6 +30,7 @@ DOCUMENTATION = '''
 module: quantum_subnet
 deprecated: Deprecated in 2.0. Use os_subnet instead
 version_added: "1.2"
+deprecated: Deprecated in 2.0. Use os_subnet instead
 short_description: Add/remove subnet from a network
 description:
    - Add/remove subnet from a network
