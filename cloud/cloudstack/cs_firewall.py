@@ -21,7 +21,8 @@
 DOCUMENTATION = '''
 module: cs_firewall
 short_description: Manages firewall rules on Apache CloudStack based clouds.
-description: Creates and removes firewall rules.
+description:
+    - Creates and removes firewall rules.
 version_added: '2.0'
 author: René Moser
 options:

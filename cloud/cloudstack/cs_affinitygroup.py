@@ -22,7 +22,8 @@ DOCUMENTATION = '''
 ---
 module: cs_affinitygroup
 short_description: Manages affinity groups on Apache CloudStack based clouds.
-description: Create and remove affinity groups.
+description:
+    - Create and remove affinity groups.
 version_added: '2.0'
 author: René Moser
 options:

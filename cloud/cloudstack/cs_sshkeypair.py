@@ -23,8 +23,8 @@ DOCUMENTATION = '''
 module: cs_sshkeypair
 short_description: Manages SSH keys on Apache CloudStack based clouds.
 description:
-  - If no key was found and no public key was provided and a new SSH
-    private/public key pair will be created and the private key will be returned.
+    - If no key was found and no public key was provided and a new SSH
+      private/public key pair will be created and the private key will be returned.
 version_added: '2.0'
 author: René Moser
 options:

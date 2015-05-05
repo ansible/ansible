@@ -19,9 +19,11 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
+---
 module: cs_securitygroup
 short_description: Manages security groups on Apache CloudStack based clouds.
-description: Create and remove security groups.
+description:
+    - Create and remove security groups.
 version_added: '2.0'
 author: René Moser
 options:

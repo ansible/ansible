@@ -22,7 +22,8 @@ DOCUMENTATION = '''
 ---
 module: cs_vmsnapshot
 short_description: Manages VM snapshots on Apache CloudStack based clouds.
-description: Create, remove and revert VM from snapshots.
+description:
+    - Create, remove and revert VM from snapshots.
 version_added: '2.0'
 author: René Moser
 options:
