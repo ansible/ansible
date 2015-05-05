@@ -264,7 +264,7 @@ This option causes notified handlers to run on a host even if a failure occurs o
 		force_handlers = True
 
 The default is False, meaning that handlers will not run if a failure has occurred on a host.
-This can also be set per play or on the command line. See :doc:`_handlers_and_failure` for more details.
+This can also be set per play or on the command line. See :ref:`handlers_and_failure` for more details.
 
 .. _forks:
 

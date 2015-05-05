@@ -26,8 +26,8 @@ become_method
     at play or task level overrides the default method set in ansible.cfg
 
 
-New ansible_ variables
-----------------------
+New ansible\_ variables
+-----------------------
 Each allows you to set an option per group and/or host
 
 ansible_become
