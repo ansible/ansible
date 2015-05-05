@@ -71,6 +71,7 @@ options:
       - Name of the project.
     required: false
     default: null
+extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''

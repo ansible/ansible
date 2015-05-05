@@ -150,6 +150,7 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
