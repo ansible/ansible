@@ -95,6 +95,7 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
+extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
