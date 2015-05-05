@@ -78,7 +78,7 @@ EXAMPLES = '''
       name: norwegian_blue
       description: 'My Fancy Ex Parrot Group'
       engine: 'mysql5.6'
-      params: 
+      params:
           auto_increment_increment: "42K"
 
 # Remove a parameter group
@@ -196,8 +196,8 @@ def modify_group(group, params, immediate=False):
                 if not param.is_modifiable:
                     raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
-                changed[key] = {'old': param.value, 'new': new_value}
-                
+                changed[key] = {'old': old_value, 'new': new_value}
+
                 set_parameter(param, new_value, immediate)
 
                 del new_params[key]
@@ -260,7 +260,7 @@ def main():
             if e.error_code != 'DBParameterGroupNotFound':
                 module.fail_json(msg = e.error_message)
             exists = False
-        
+
         if state == 'absent':
             if exists:
                 conn.delete_parameter_group(group_name)
@@ -284,7 +284,7 @@ def main():
                     marker = next_group.Marker
                 else:
                     break
-                
+
 
     except BotoServerError, e:
         module.fail_json(msg = e.error_message)
