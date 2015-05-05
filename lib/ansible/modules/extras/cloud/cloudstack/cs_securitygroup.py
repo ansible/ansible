@@ -45,6 +45,7 @@ options:
       - Name of the project the security group to be created in.
     required: false
     default: null
+extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''

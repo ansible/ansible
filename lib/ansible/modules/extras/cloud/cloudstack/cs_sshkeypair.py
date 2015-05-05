@@ -48,6 +48,7 @@ options:
       - String of the public key.
     required: false
     default: null
+extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
