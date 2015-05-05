@@ -939,7 +939,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 if private_ip:
                     module.fail_json(
                         msg='private_ip only available with on-demand (non-spot) instances')
-                if boto_supports_param_in_spot_request(ec2, placement_group):
+                if boto_supports_param_in_spot_request(ec2, 'placement_group'):
                     params['placement_group'] = placement_group
                 elif placement_group :
                         module.fail_json(
