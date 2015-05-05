@@ -22,7 +22,8 @@ DOCUMENTATION = '''
 ---
 module: cs_securitygroup_rule
 short_description: Manages security group rules on Apache CloudStack based clouds.
-description: Add and remove security group rules.
+description:
+    - Add and remove security group rules.
 version_added: '2.0'
 author: René Moser
 options:
