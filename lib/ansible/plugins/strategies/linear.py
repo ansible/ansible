@@ -226,6 +226,9 @@ class StrategyModule(StrategyBase):
                 # FIXME: this should also be moved to the base class in a method
                 included_files = []
                 for res in host_results:
+                    if res.is_failed():
+                        return 1
+
                     if res._task.action == 'include':
                         if res._task.loop:
                             include_results = res._result['results']
