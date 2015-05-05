@@ -137,13 +137,17 @@ which point at Ansible's own modules (not the same kind of modules, alas).
     $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`)
 other than /etc/ansible/hosts:
 
 .. code-block:: bash
 
     $ echo "127.0.0.1" > ~/ansible_hosts
-    $ export ANSIBLE_HOSTS=~/ansible_hosts
+    $ export ANSIBLE_INVENTORY=~/ansible_hosts
+
+.. note::
+
+    ANSIBLE_INVENTORY is available starting at 1.9 and subtitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 
