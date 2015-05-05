@@ -105,12 +105,15 @@ test_tags:
 	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
 
 
-cloud: amazon rackspace
+cloud: amazon rackspace azure
 
 cloud_cleanup: amazon_cleanup rackspace_cleanup
 
 amazon_cleanup:
 	python cleanup_ec2.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
+
+azure_cleanup:
+	python cleanup_azure.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
 
 gce_setup:
 	python setup_gce.py "$(CLOUD_RESOURCE_PREFIX)"
@@ -129,6 +132,12 @@ amazon: $(CREDENTIALS_FILE)
 	ANSIBLE_HOST_KEY_CHECKING=False ANSIBLE_SSH_PIPELINING=no BOTO_CONFIG=/dev/null ansible-playbook amazon.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make amazon_cleanup ; \
+    exit $$RC;
+
+azure: $(CREDENTIALS_FILE)
+	ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook azure.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make azure_cleanup ; \
     exit $$RC;
 
 gce: $(CREDENTIALS_FILE)
