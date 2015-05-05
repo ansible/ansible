@@ -65,6 +65,9 @@ class RoleMetadata(Base):
         which returns a list of RoleInclude objects
         '''
 
+        if ds is None:
+            ds = []
+
         current_role_path = None
         if self._owner:
             current_role_path = os.path.dirname(self._owner._role_path)
