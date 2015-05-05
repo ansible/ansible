@@ -98,6 +98,12 @@ options:
     required: false
     default: 10
     version_added: '1.8'
+  headers:
+    description:
+       - Add custom HTTP headers to a request in the format 'key:value,key:value'
+     required: false
+     default: null
+     version_added: '1.9'
   url_username:
     description:
       - The username for use in HTTP basic authentication. This parameter can be used
@@ -138,6 +144,9 @@ EXAMPLES='''
 
 - name: download file and force basic auth
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf force_basic_auth=yes
+
+- name: download file with custom HTTP headers
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf headers: 'key:value,key:value'
 '''
 
 import urlparse
@@ -157,14 +166,14 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None):
     """
     Download data from the url and store in a temporary file.
 
     Return (tempfile, info about the request)
     """
 
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers)
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
@@ -214,6 +223,7 @@ def main():
         dest = dict(required=True),
         sha256sum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
+        headers = dict(required=False, default=None),
     )
 
     module = AnsibleModule(
@@ -228,6 +238,15 @@ def main():
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
+    
+    # Parse headers to dict
+    if module.params['headers']:
+        try:
+            headers = dict(item.split(':') for item in module.params['headers'].split(','))
+        except:
+            module.fail_json(msg="The header parameter requires a key:value,key:value syntax to be properly parsed.")
+    else:
+        headers = None
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
@@ -263,7 +282,7 @@ def main():
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
