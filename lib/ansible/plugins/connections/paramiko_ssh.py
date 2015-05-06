@@ -370,7 +370,7 @@ class Connection(ConnectionBase):
                 # the file will be moved into place rather than cleaned up.
 
                 tmp_keyfile = tempfile.NamedTemporaryFile(dir=key_dir, delete=False)
-                os.chmod(tmp_keyfile.name, key_stat.st_mode & 07777)
+                os.chmod(tmp_keyfile.name, key_stat.st_mode & 0o7777)
                 os.chown(tmp_keyfile.name, key_stat.st_uid, key_stat.st_gid)
 
                 self._save_ssh_host_keys(tmp_keyfile.name)
