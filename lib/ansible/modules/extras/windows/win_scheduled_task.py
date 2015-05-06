@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_scheduled_task
-version_added: "1.9"
+version_added: "2.0"
 short_description: Manage scheduled tasks
 description:
     - Manage scheduled tasks
@@ -35,7 +35,6 @@ options:
       - Supports * as wildcard
     required: true
     default: null
-    aliases: []
   state:
     description:
       - State that the task should become
@@ -44,7 +43,6 @@ options:
       - Disabled
       - Enabled
     default: Enabled
-    aliases: []
 author: Peter Mounce
 '''
 
