@@ -58,7 +58,7 @@ class Play(Base, Taggable, Become):
     # Connection
     _gather_facts        = FieldAttribute(isa='string', default='smart')
     _hosts               = FieldAttribute(isa='list', default=[], required=True)
-    _name                = FieldAttribute(isa='string', default='<no name specified>')
+    _name                = FieldAttribute(isa='string', default='')
 
     # Variable Attributes
     _vars_files          = FieldAttribute(isa='list', default=[])
