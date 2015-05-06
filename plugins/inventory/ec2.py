@@ -120,6 +120,7 @@ import re
 from time import time
 import boto
 from boto import ec2
+from boto.ec2 import elb
 from boto import rds
 from boto import route53
 import six
@@ -140,8 +141,7 @@ class Ec2Inventory(object):
     def __init__(self):
         ''' Main execution path '''
 
-        # Inventory grouped by instance IDs, tags, security groups, regions,
-        # and availability zones
+        # Inventory grouped by instance IDs, tags, security groups, regions, elbs and availability zones
         self.inventory = self._empty_inventory()
 
         # Index of hostname (address) to instance ID
@@ -227,6 +227,9 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
+        # elbs
+        self.elbs_enabled = config.getboolean('ec2', 'route53')
+
         # Include RDS instances?
         self.rds_enabled = True
         if config.has_option('ec2', 'rds'):
@@ -270,6 +273,8 @@ class Ec2Inventory(object):
             'group_by_tag_keys',
             'group_by_tag_none',
             'group_by_route53_names',
+            'group_by_elbs_dns_name',
+            'group_by_elbs_route53_names',
             'group_by_rds_engine',
             'group_by_rds_parameter_group',
         ]
@@ -331,7 +336,12 @@ class Ec2Inventory(object):
             self.get_route53_records()
 
         for region in self.regions:
+            if self.elbs_enabled:
+                self.elbs_records = {}
+                self.get_elbs_records(region)
+
             self.get_instances_by_region(region)
+
             if self.rds_enabled:
                 self.get_rds_instances_by_region(region)
 
@@ -534,6 +544,22 @@ class Ec2Inventory(object):
                 if self.nested_groups:
                     self.push_group(self.inventory, 'route53', name)
 
+        # Inventory: Group by elbs if enabled
+        if self.elbs_enabled: #TODO self.route53_enabled and self.group_by_route53_names:
+            #route53_names = self.get_instance_route53_names(instance)
+            elbs = self.get_instance_elbs(instance)
+            for elb in elbs:
+                if self.group_by_elbs_dns_name:
+                    self.push(self.inventory, elb.dns_name, dest)
+
+                if self.group_by_elbs_route53_names:
+                    route53_names = self.get_elbs_route53_names(elb)
+                    for name in route53_names:
+                        self.push(self.inventory, name, dest)
+
+                if self.nested_groups:
+                    self.push_group(self.inventory, 'elbs', elb.name)
+
         # Global Tag: instances without tags
         if self.group_by_tag_none and len(instance.tags) == 0:
             self.push(self.inventory, 'tag_none', dest)
@@ -630,6 +656,36 @@ class Ec2Inventory(object):
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
 
 
+    def elb_connect(self, region):
+        ''' create connection to api server'''
+        if self.eucalyptus:
+            self.fail_with_error("Untested elb connection to eucalyptus. Please turn 'elbs' flag to False.")
+        else:
+            conn = elb.connect_to_region(region)
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+        if conn is None:
+            self.fail_with_error("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+        return conn
+
+    def get_elbs_records(self, region):
+        ''' Makes an AWS EC2 API call to the list of elbs in a particular region '''
+        try:
+            conn = self.elb_connect(region)
+            elbs = conn.get_all_load_balancers()
+
+            for load_balancer in elbs:
+                for instance in load_balancer.instances:
+                    self.elbs_records.setdefault(instance.id, set())
+                    self.elbs_records[instance.id].add(load_balancer)
+
+        except boto.exception.BotoServerError, e:
+            if e.error_code == 'AuthFailure':
+                error = self.get_auth_error_message()
+            else:
+                backend = 'Eucalyptus' if self.eucalyptus else 'AWS'
+                error = "Error connecting to %s backend.\n%s" % (backend, e.message)
+            self.fail_with_error(error)
+
     def get_route53_records(self):
         ''' Get and store the map of resource records to domain names that
         point to them. '''
@@ -676,6 +732,29 @@ class Ec2Inventory(object):
                 name_list.update(self.route53_records[value])
 
         return list(name_list)
+
+    def get_elbs_route53_names(self, elb):
+        ''' Check if an elb is referenced in the records we have from
+        Route53. If it is, return the list of domain names pointing to said
+        elb. If nothing points to it, return an empty list. '''
+        name_list = set()
+
+        if elb.dns_name in self.route53_records:
+            name_list.update(self.route53_records[elb.dns_name])
+
+        return list(name_list)
+
+    def get_instance_elbs(self, instance):
+        ''' Check if an instance is referenced in the records we have from
+        elbs. If it is, return the list of elbs pointing to said
+        instance. If nothing points to it, return an empty list. '''
+
+        elb_list = set()
+
+        if instance.id in self.elbs_records:
+            elb_list.update(self.elbs_records[instance.id])
+
+        return list(elb_list)
 
 
     def get_host_info_dict_from_instance(self, instance):
