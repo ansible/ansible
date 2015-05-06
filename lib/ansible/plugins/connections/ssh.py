@@ -144,7 +144,7 @@ class Connection(ConnectionBase):
             except OSError:
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
-            return ("sshpass", "-d{0}".format(self.rfd))
+            return ["sshpass", "-d{0}".format(self.rfd)]
         return []
 
     def _send_password(self):
