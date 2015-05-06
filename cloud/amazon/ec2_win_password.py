@@ -13,14 +13,10 @@ options:
     description:
       - The instance id to get the password data from. 
     required: true
-    default: null 
-    aliases: []
   key_file:
     description:
       - path to the file containing the key pair used on the instance
     required: true
-    default: null
-    aliases: []
   region:
     description:
       - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -42,7 +38,6 @@ tasks:
     key_file: "~/aws-creds/my_test_key.pem"
 '''
 
-import sys
 from base64 import b64decode
 from os.path import expanduser
 from Crypto.Cipher import PKCS1_v1_5
