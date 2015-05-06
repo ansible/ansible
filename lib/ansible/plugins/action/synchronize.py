@@ -22,6 +22,8 @@ import os.path
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
+from ansible import constants
+
 
 class ActionModule(ActionBase):
 
@@ -81,6 +83,7 @@ class ActionModule(ActionBase):
 
         src  = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
+        use_ssh_args = self._task.args.pop('use_ssh_args', None)
 
         # FIXME: this doesn't appear to be used anywhere?
         local_rsync_path = task_vars.get('ansible_rsync_path')
@@ -161,6 +164,9 @@ class ActionModule(ActionBase):
         # make sure rsync path is quoted.
         if rsync_path:
             self._task.args['rsync_path'] = '"%s"' % rsync_path
+
+        if use_ssh_args:
+            self._task.args['ssh_args'] = constants.ANSIBLE_SSH_ARGS
 
         # run the module and store the result
         result = self._execute_module('synchronize')
