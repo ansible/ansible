@@ -229,7 +229,7 @@ def main():
     try:
         manager = DockerLoginManager(module)
         manager.login()
-        module.exit_json(changed=manager.has_changed(), msg=manager.get_msg(), registry=manager.registry)
+        module.exit_json(changed=manager.has_changed(), msg=manager.get_msg())
 
     except Exception as e:
         module.fail_json(msg="Module execution has failed due to an unexpected error", error=repr(e))
