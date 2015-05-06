@@ -2535,6 +2535,43 @@ class LinuxVirtual(Virtual):
         self.facts['virtualization_role'] = 'NA'
         return
 
+class FreeBSDVirtual(Virtual):
+    """
+    This is a FreeBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'FreeBSD'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
+
+class OpenBSDVirtual(Virtual):
+    """
+    This is a OpenBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'OpenBSD'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
 
 class HPUXVirtual(Virtual):
     """
