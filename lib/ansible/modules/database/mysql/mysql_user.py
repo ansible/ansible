@@ -158,6 +158,7 @@ password=n<_665{vS43y
 
 import getpass
 import tempfile
+import re
 try:
     import MySQLdb
 except ImportError:
@@ -313,13 +314,19 @@ def privileges_unpack(priv):
     not specified in the string, as MySQL will always provide this by default.
     """
     output = {}
+    privs = []
     for item in priv.strip().split('/'):
         pieces = item.strip().split(':')
         dbpriv = pieces[0].rsplit(".", 1)
         pieces[0] = "`%s`.%s" % (dbpriv[0].strip('`'), dbpriv[1])
-
-        output[pieces[0]] = [s.strip() for s in pieces[1].upper().split(',')]
-        new_privs = frozenset(output[pieces[0]])
+        if '(' in pieces[1]:
+            output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
+            for i in output[pieces[0]]:
+                privs.append(re.sub(r'\(.*\)','',i))
+        else:
+            output[pieces[0]] = pieces[1].upper().split(',')
+            privs = output[pieces[0]]
+        new_privs = frozenset(privs)
         if not new_privs.issubset(VALID_PRIVS):
             raise InvalidPrivsError('Invalid privileges specified: %s' % new_privs.difference(VALID_PRIVS))
 
