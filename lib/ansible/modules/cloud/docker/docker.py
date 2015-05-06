@@ -1140,7 +1140,7 @@ class DockerManager(object):
                     name_list = []
                 matches = name in name_list
             else:
-                details = self.client.inspect_container(i['Id'])
+                details = self.client.inspect_container(container['Id'])
                 details = _docker_id_quirk(details)
 
                 running_image = normalize_image(details['Config']['Image'])
