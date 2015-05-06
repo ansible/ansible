@@ -88,6 +88,9 @@ class PluginLoader:
         subdir     = data.get('subdir')
         aliases    = data.get('aliases')
 
+        PATH_CACHE[class_name] = data.get('PATH_CACHE')
+        PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
+
         self.__init__(class_name, package, config, subdir, aliases)
         self._extra_dirs = data.get('_extra_dirs', [])
         self._searched_paths = data.get('_searched_paths', set())
@@ -98,13 +101,15 @@ class PluginLoader:
         '''
 
         return dict(
-            class_name      = self.class_name,
-            package         = self.package,
-            config          = self.config,
-            subdir          = self.subdir,
-            aliases         = self.aliases,
-            _extra_dirs     = self._extra_dirs,
-            _searched_paths = self._searched_paths,
+            class_name        = self.class_name,
+            package           = self.package,
+            config            = self.config,
+            subdir            = self.subdir,
+            aliases           = self.aliases,
+            _extra_dirs       = self._extra_dirs,
+            _searched_paths   = self._searched_paths,
+            PATH_CACHE        = PATH_CACHE[self.class_name],
+            PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE[self.class_name],
         )
 
     def print_paths(self):
@@ -258,12 +263,14 @@ class PluginLoader:
         path = self.find_plugin(name)
         if path is None:
             return None
-        elif kwargs.get('class_only', False):
-            return getattr(self._module_cache[path], self.class_name)
 
         if path not in self._module_cache:
             self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
-        return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+
+        if kwargs.get('class_only', False):
+            return getattr(self._module_cache[path], self.class_name)
+        else:
+            return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
@@ -275,12 +282,15 @@ class PluginLoader:
                 name, ext = os.path.splitext(os.path.basename(path))
                 if name.startswith("_"):
                     continue
+
                 if path not in self._module_cache:
                     self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
+
                 if kwargs.get('class_only', False):
                     obj = getattr(self._module_cache[path], self.class_name)
                 else:
                     obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+
                 # set extra info on the module, in case we want it later
                 setattr(obj, '_original_path', path)
                 yield obj
