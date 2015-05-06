@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: docker_login
 author: Olaf Kilian
-version_added: "1.9"
+version_added: "2.0"
 short_description: Manage Docker registry logins
 description:
      - Ansible version of the "docker login" CLI command.
@@ -35,50 +35,38 @@ options:
     description:
        - URL of the registry, for example: https://index.docker.io/v1/
     required: true
-    default: null
-    aliases: []
   username:
     description:
        - The username for the registry account
     required: true
-    default: null
-    aliases: []
   password:
     description:
        - The plaintext password for the registry account
     required: true
-    default: null
-    aliases: []
   email:
     description:
        - The email address for the registry account
     required: false
-    default: None
-    aliases: []
   reauth:
     description:
        - Whether refresh existing authentication on the Docker server (boolean)
     required: false
     default: false
-    aliases: []
   dockercfg_path:
     description:
        - Use a custom path for the .dockercfg file
     required: false
     default: ~/.dockercfg
-    aliases: []
   docker_url:
     descriptions:
        - Refers to the protocol+hostname+port where the Docker server is hosted
     required: false
     default: unix://var/run/docker.sock
-    aliases: []
   timeout:
     description:
        - The HTTP request timeout in seconds
     required: false
     default: 600
-    aliases: []
 
 requirements: [ "docker-py" ]
 '''
@@ -108,22 +96,24 @@ Login to a Docker registry without performing any other action. Make sure that t
 
 '''
 
-try:
-    import os.path
-    import sys
-    import json
-    import base64
-    import docker.client
-    from requests.exceptions import *
-    from urlparse import urlparse
-except ImportError, e:
-    print "failed=True msg='failed to import python module: %s'" % e
-    sys.exit(1)
+import os.path
+import sys
+import json
+import base64
+from urlparse import urlparse
 
 try:
+    import docker.client
     from docker.errors import APIError as DockerAPIError
-except ImportError:
-    from docker.client import APIError as DockerAPIError
+    has_lib_docker = True
+except ImportError, e:
+    has_lib_docker = False
+
+try:
+    from requests.exceptions import *
+    has_lib_requests_execeptions = True
+except ImportError, e:
+    has_lib_requests_execeptions = False
 
 class DockerLoginManager:
 
@@ -171,7 +161,7 @@ class DockerLoginManager:
             self.log.append("Already Authentificated")
 
         # Update the dockercfg if changed but not failed.
-        if self.has_changed():
+        if self.has_changed() and not self.module.check_mode:
             self.update_dockercfg()
 
     # This is what the underlaying docker-py unfortunately doesn't do (yet).
@@ -218,16 +208,23 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            registry        = dict(required=True, default=None),
-            username        = dict(required=True, default=None),
-            password        = dict(required=True, default=None),
+            registry        = dict(required=True),
+            username        = dict(required=True),
+            password        = dict(required=True),
             email           = dict(required=False, default=None),
             reauth          = dict(required=False, default=False, type='bool'),
             dockercfg_path  = dict(required=False, default='~/.dockercfg'),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             timeout         = dict(default=10, type='int')
-        )
+        ),
+        supports_check_mode=True
     )
+
+    if not has_lib_docker:
+        module.fail_json(msg="python library docker-py required: pip install docker-py==1.1.0")
+
+    if not has_lib_requests_execeptions:
+        module.fail_json(msg="python library requests required: pip install requests")
 
     try:
         manager = DockerLoginManager(module)
