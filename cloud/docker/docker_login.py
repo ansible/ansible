@@ -139,6 +139,10 @@ class DockerLoginManager:
         if self.reauth:
             self.log.append("Enforcing reauthentification")
 
+        # Extract hostname part from self.registry if url was specified.
+        registry_url = urlparse(self.registry)
+        self.registry = registry_url.netloc or registry_url.path
+
         # Connect to registry and login if not already logged in or reauth is enforced.
         try:
             self.response = self.client.login(
