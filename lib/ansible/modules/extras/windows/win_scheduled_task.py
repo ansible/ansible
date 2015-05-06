@@ -34,7 +34,6 @@ options:
       - Name of the scheduled task
       - Supports * as wildcard
     required: true
-    default: null
   state:
     description:
       - State that the task should become
