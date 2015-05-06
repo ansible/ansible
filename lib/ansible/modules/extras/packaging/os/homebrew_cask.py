@@ -32,7 +32,7 @@ options:
     state:
         description:
             - state of the cask
-        choices: [ 'installed', 'uninstalled' ]
+        choices: [ 'present', 'absent' ]
         required: false
         default: present
 '''
