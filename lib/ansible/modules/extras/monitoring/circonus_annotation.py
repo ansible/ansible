@@ -71,13 +71,16 @@ EXAMPLES = '''
     end_time: 1395954407
 '''
 def post_annotation(annotation, api_key):
+    ''' Takes annotation dict and api_key string'''
     base_url = 'https://api.circonus.com/v2'
     anootate_post_endpoint = '/annotation'
-    resp = requests.post(base_url + anootate_post_endpoint, headers=build_headers(api_key), data=json.dumps(annotation))
+    resp = requests.post(base_url + anootate_post_endpoint,
+            headers=build_headers(api_key), data=json.dumps(annotation))
     resp.raise_for_status()
     return resp
 
 def create_annotation(module):
+    ''' Takes ansible module object '''
     annotation = {}
     if module.params['duration'] != None:
         duration = module.params['duration']
@@ -97,23 +100,24 @@ def create_annotation(module):
     annotation['description'] = module.params['description']
     annotation['title'] = module.params['title']
     return annotation
-    
 def build_headers(api_token):
-    headers = {'X-Circonus-App-Name': 'ansible', 
-    'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token, 
-    'Accept': 'application/json'}    
+    '''Takes api token, returns headers with it included.'''
+    headers = {'X-Circonus-App-Name': 'ansible',
+        'Host': 'api.circonus.com', 'X-Circonus-Auth-Token': api_token,
+        'Accept': 'application/json'}
     return headers
 
 def main():
+    '''Main function, dispatches logic'''
     module = AnsibleModule(
-        argument_spec = dict(
-            start = dict(required=False, type='int'),
-            stop = dict(required=False, type='int'),
-            category = dict(required=True),
-            title = dict(required=True),
-            description = dict(required=True),
-            duration = dict(required=False, type='int'),
-            api_key = dict(required=True)
+        argument_spec=dict(
+            start=dict(required=False, type='int'),
+            stop=dict(required=False, type='int'),
+            category=dict(required=True),
+            title=dict(required=True),
+            description=dict(required=True),
+            duration=dict(required=False, type='int'),
+            api_key=dict(required=True)
             )
         )
     annotation = create_annotation(module)
@@ -123,5 +127,5 @@ def main():
         module.fail_json(msg='Request Failed', reason=e)
     module.exit_json(changed=True, annotation=resp.json())
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 main()
