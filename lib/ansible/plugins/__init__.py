@@ -77,6 +77,36 @@ class PluginLoader:
         self._extra_dirs = []
         self._searched_paths = set()
 
+    def __setstate__(self, data):
+        '''
+        Deserializer.
+        '''
+
+        class_name = data.get('class_name')
+        package    = data.get('package')
+        config     = data.get('config')
+        subdir     = data.get('subdir')
+        aliases    = data.get('aliases')
+
+        self.__init__(class_name, package, config, subdir, aliases)
+        self._extra_dirs = data.get('_extra_dirs', [])
+        self._searched_paths = data.get('_searched_paths', set())
+
+    def __getstate__(self):
+        '''
+        Serializer.
+        '''
+
+        return dict(
+            class_name      = self.class_name,
+            package         = self.package,
+            config          = self.config,
+            subdir          = self.subdir,
+            aliases         = self.aliases,
+            _extra_dirs     = self._extra_dirs,
+            _searched_paths = self._searched_paths,
+        )
+
     def print_paths(self):
         ''' Returns a string suitable for printing of the search path '''
 
