@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_webpicmd
-version_added: "1.9"
+version_added: "2.0"
 short_description: Installs packages using Web Platform Installer command-line
 description:
     - Installs packages using Web Platform Installer command-line (http://www.iis.net/learn/install/web-platform-installer/web-platform-installer-v4-command-line-webpicmdexe-rtw-release).
@@ -36,8 +36,6 @@ options:
     description:
       - Name of the package to be installed
     required: true
-    default: null
-    aliases: []
 author: Peter Mounce
 '''
 
