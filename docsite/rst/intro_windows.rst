@@ -84,6 +84,17 @@ To automate setup of WinRM, you can run `this PowerShell script <https://github.
 Admins may wish to modify this setup slightly, for instance to increase the timeframe of
 the certificate.
 
+.. note::
+   On Windows 7 and Server 2008 R2 machines, due to a bug in Windows 
+   Management Framework 3.0, it may be necessary to install this
+   hotfix http://support.microsoft.com/kb/2842230 to avoid receiving
+   out of memory and stack overflow exceptions.  Newly-installed Server 2008
+   R2 systems which are not fully up to date with windows updates are known
+   to have this issue.   
+
+   Windows 8.1 and Server 2012 R2 are not affected by this issue as they
+   come with Windows Management Framework 4.0.
+
 .. _getting_to_powershell_three_or_higher:
 
 Getting to PowerShell 3.0 or higher
