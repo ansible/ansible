@@ -227,6 +227,100 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
     return (found_vpc)
 
+def routes_match(rt_list=None, rt=None, igw=None):
+
+    """
+    Check if the route table has all routes as in given list
+    
+    rt_list      : A list if routes provided in the module 
+    rt           : The Remote route table object
+    igw          : The internet gateway object for this vpc
+
+    Returns:
+        True when there provided routes and remote routes are the same. 
+        False when provided routes and remote routes are diffrent.
+    """
+
+    local_routes = []
+    remote_routes = []
+    for route in rt_list:
+        route_kwargs = {}
+        if route['gw'] == 'igw':
+            route_kwargs['gateway_id'] = igw.id
+            route_kwargs['instance_id'] = None
+            route_kwargs['state'] = 'active'
+        elif route['gw'].startswith('i-'):
+            route_kwargs['instance_id'] = route['gw']
+            route_kwargs['gateway_id'] = None
+            route_kwargs['state'] = 'active'
+        else:
+            route_kwargs['gateway_id'] = route['gw']
+            route_kwargs['instance_id'] = None
+            route_kwargs['state'] = 'active'
+        route_kwargs['destination_cidr_block'] = route['dest']
+        local_routes.append(route_kwargs)
+    for j in rt.routes:
+        remote_routes.append(j.__dict__)
+    match = []
+    for i in local_routes:
+        change = "false"
+        for j in remote_routes:
+            if set(i.items()).issubset(set(j.items())):
+                change = "true"
+        match.append(change)
+    if 'false' in match:
+        return False
+    else:
+        return True
+
+def rtb_changed(route_tables=None, vpc_conn=None, module=None, vpc=None, igw=None):
+    """
+    Checks if the remote routes match the local routes.
+
+    route_tables : Route_tables parameter in the module
+    vpc_conn     : The VPC conection object
+    module       : The module object
+    vpc          : The vpc object for this route table
+    igw          : The internet gateway object for this vpc
+
+    Returns:
+        True when there is diffrence beween the provided routes and remote routes and if subnet assosications are diffrent.
+        False when both routes and subnet associations matched.
+ 
+    """
+    #We add a one for the main table
+    rtb_len = len(route_tables) + 1
+    remote_rtb_len = len(vpc_conn.get_all_route_tables(filters={'vpc_id': vpc.id}))
+    if remote_rtb_len != rtb_len:
+        return True
+    for rt in route_tables:
+        rt_id = None
+        for sn in rt['subnets']:
+            rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id })
+            if len(rsn) != 1:
+                module.fail_json(
+                    msg='The subnet {0} to associate with route_table {1} ' \
+                    'does not exist, aborting'.format(sn, rt)
+                )
+            nrt  = vpc_conn.get_all_route_tables(filters={'vpc_id': vpc.id, 'association.subnet-id': rsn[0].id})
+            if not nrt:
+                return True
+            else:
+                nrt = nrt[0]
+                if not rt_id:
+                    rt_id = nrt.id
+                    if not routes_match(rt['routes'], nrt, igw):
+                        return True
+                    continue
+                else:
+                    if rt_id == nrt.id:
+                        continue
+                    else:
+                        return True
+            return True
+    return False
+
+
 def create_vpc(module, vpc_conn):
     """
     Creates a new or modifies an existing VPC.
@@ -391,6 +485,8 @@ def create_vpc(module, vpc_conn):
     # the replace-route-table API to make this smoother and
     # allow control of the 'main' routing table.
     if route_tables is not None:
+        rtb_needs_change = rtb_changed(route_tables, vpc_conn, module, vpc, igw)
+    if route_tables is not None and rtb_needs_change:
         if not isinstance(route_tables, list):
             module.fail_json(msg='route tables need to be a list of dictionaries')
 
