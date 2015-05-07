@@ -93,6 +93,7 @@ class AdHocCLI(CLI):
         variable_manager = VariableManager()
 
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
+        variable_manager.set_inventory(inventory)
 
         hosts = inventory.list_hosts(pattern)
         if len(hosts) == 0:
