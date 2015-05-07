@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
                     path = self._get_absolute_path(path=path)
             return path
 
-    def _process_remote(self, host, task, path, user):
+    def _process_remote(self, host, path, user):
         transport = self._connection_info.connection
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' generates params and passes them on to the rsync module '''
 
-        original_transport   = task_vars.get('ansible_connection', self._connection_info.connection)
+        original_transport = task_vars.get('ansible_connection') or self._connection_info.connection
         transport_overridden = False
         if task_vars.get('delegate_to') is None:
             task_vars['delegate_to'] = '127.0.0.1'
@@ -79,7 +79,7 @@ class ActionModule(ActionBase):
             if original_transport != 'local':
                 task_vars['ansible_connection'] = 'local'
                 transport_overridden = True
-                self.runner.sudo = False
+                self._connection_info.become = False
 
         src  = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
@@ -90,14 +90,14 @@ class ActionModule(ActionBase):
 
         # from the perspective of the rsync call the delegate is the localhost
         src_host  = '127.0.0.1'
-        dest_host = task_vars.get('ansible_ssh_host', task_vars.get('inventory_hostname'))
+        dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
 
         # allow ansible_ssh_host to be templated
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
 
         # CHECK FOR NON-DEFAULT SSH PORT
         dest_port = self._task.args.get('dest_port')
-        inv_port  = task_vars.get('ansible_ssh_port', task_vars.get('inventory_hostname'))
+        inv_port  = task_vars.get('ansible_ssh_port') or task_vars.get('inventory_hostname')
         if inv_port != dest_port and inv_port != task_vars.get('inventory_hostname'):
             dest_port = inv_port
 
@@ -133,17 +133,18 @@ class ActionModule(ActionBase):
                     user = task_vars['hostvars'][conn.delegate].get('ansible_ssh_user')
 
                 if not use_delegate or not user:
-                    user = task_vars.get('ansible_ssh_user', self.runner.remote_user)
+                    user = task_vars.get('ansible_ssh_user') or self._connection_info.remote_user
                 
             if use_delegate:
                 # FIXME
-                private_key = task_vars.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+                private_key = task_vars.get('ansible_ssh_private_key_file') or self._connection_info.private_key_file
             else:
-                private_key = task_vars.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+                private_key = task_vars.get('ansible_ssh_private_key_file') or self._connection_info.private_key_file
 
             if private_key is not None:
                 private_key = os.path.expanduser(private_key)
-                
+                self._task.args['private_key'] = private_key
+
             # use the mode to define src and dest's url
             if self._task.args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
@@ -153,6 +154,9 @@ class ActionModule(ActionBase):
                 # src is a local path, dest is a remote path: <user>@<host>
                 src  = self._process_origin(src_host, src, user)
                 dest = self._process_remote(dest_host, dest, user)
+
+            self._task.args['src'] = src
+            self._task.args['dest'] = dest
 
         # Allow custom rsync path argument.
         rsync_path = self._task.args.get('rsync_path', None)
