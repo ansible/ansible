@@ -97,7 +97,6 @@ Login to a Docker registry without performing any other action. Make sure that t
 '''
 
 import os.path
-import sys
 import json
 import base64
 from urlparse import urlparse
