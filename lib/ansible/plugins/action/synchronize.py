@@ -96,10 +96,7 @@ class ActionModule(ActionBase):
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
 
         # CHECK FOR NON-DEFAULT SSH PORT
-        dest_port = self._task.args.get('dest_port')
-        inv_port  = task_vars.get('ansible_ssh_port') or task_vars.get('inventory_hostname')
-        if inv_port != dest_port and inv_port != task_vars.get('inventory_hostname'):
-            dest_port = inv_port
+        dest_port = task_vars.get('ansible_ssh_port') or self._task.args.get('dest_port') or 22
 
         # edge case: explicit delegate and dest_host are the same
         if dest_host == task_vars.get('delegate_to'):
