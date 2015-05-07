@@ -153,6 +153,8 @@ class DockerLoginManager:
                 reauth=self.reauth,
                 dockercfg_path=self.dockercfg_path
             )
+        except DockerAPIError as e:
+            self.module.fail_json(msg="Docker API Error: %s" % e.explanation)
         except Exception as e:
             self.module.fail_json(msg="failed to login to the remote registry", error=repr(e))
 
