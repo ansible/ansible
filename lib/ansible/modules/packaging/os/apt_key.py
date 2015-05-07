@@ -36,7 +36,7 @@ options:
         required: false
         default: none
         description:
-            - identifier of key
+            - identifier of key. Including this allows check mode to correctly report the changed state.
     data:
         required: false
         default: none
