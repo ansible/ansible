@@ -6,6 +6,10 @@ Can you help us out in labelling this by telling us what kind of ticket this thi
 
 Let us know what version of Ansible you are using.  Please supply the verbatim output from running “ansible --version”.  If you're filing a ticket on a version of Ansible which is not the latest, we'd greatly appreciate it if you could retest on the latest version first.  We don't expect you to test against the development branch most of the time, but we may ask for that if you have cycles.  Thanks!
 
+##### Ansible Configuration:
+
+What have you changed about your Ansible installation?  What configuration settings have you changed/added/removed?  Compare your /etc/ansible/ansible.cfg against a clean version from Github and let us know what's different.
+
 ##### Environment:
 
 What OS are you running Ansible from and what OS are you managing?  Examples include RHEL 5/6, Centos 5/6, Ubuntu 12.04/13.10, *BSD, Solaris.  If this is a generic feature request or it doesn’t apply, just say “N/A”.  Not all tickets may be about operating system related things and we understand that.
