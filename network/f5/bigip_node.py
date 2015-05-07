@@ -54,12 +54,20 @@ options:
         default: null
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 2.0
     state:
         description:
             - Pool member state
         required: true
         default: present
-        choices: ['present', 'absent']
+        choices: ['present', 'absent', 'enabled', 'disabled']
         aliases: []
     partition:
         description:
@@ -70,7 +78,7 @@ options:
         aliases: []
     name:
         description:
-            - "Node name"
+            - "Node name. Required when state=enabled/disabled"
         required: false
         default: null
         choices: []
@@ -137,6 +145,11 @@ EXAMPLES = '''
       partition=matthite
       name="{{ ansible_default_ipv4["address"] }}"
 
+  - name: Disable node
+    bigip_node: server=lb.mydomain.com user=admin password=mysecret
+                state=disabled name=mynodename
+    delegate_to: localhost
+
 '''
 
 try:
@@ -150,9 +163,22 @@ else:
 # bigip_node module specific
 #
 
+# map of state values
+STATES={'enabled': 'STATE_ENABLED',
+        'disabled': 'STATE_DISABLED'}
+STATUSES={'enabled': 'SESSION_STATUS_ENABLED',
+          'disabled': 'SESSION_STATUS_DISABLED',
+          'offline': 'SESSION_STATUS_FORCED_DISABLED'}
+
 def bigip_api(bigip, user, password):
     api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
     return api
+
+def disable_ssl_cert_validation():
+    # You probably only want to do this for testing and never in production.
+    # From https://www.python.org/dev/peps/pep-0476/#id29
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 def node_exists(api, address):
     # hack to determine if node exists
@@ -206,13 +232,34 @@ def set_node_description(api, name, description):
 def get_node_description(api, name):
     return api.LocalLB.NodeAddressV2.get_description(nodes=[name])[0]
 
+def set_node_disabled(api, name):
+    set_node_session_enabled_state(api, name, STATES['disabled'])
+    result = True
+    desc = ""
+    return (result, desc)
+
+def set_node_enabled(api, name):
+    set_node_session_enabled_state(api, name, STATES['enabled'])
+    result = True
+    desc = ""
+    return (result, desc)
+
+def set_node_session_enabled_state(api, name, state):
+    api.LocalLB.NodeAddressV2.set_session_enabled_state(nodes=[name],
+                                                        states=[state])
+
+def get_node_session_status(api, name):
+    return api.LocalLB.NodeAddressV2.get_session_status(nodes=[name])[0]
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             server = dict(type='str', required=True),
             user = dict(type='str', required=True),
             password = dict(type='str', required=True),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
+            validate_certs = dict(default='yes', type='bool'),
+            state = dict(type='str', default='present',
+                         choices=['present', 'absent', 'disabled', 'enabled']),
             partition = dict(type='str', default='Common'),
             name = dict(type='str', required=True),
             host = dict(type='str', aliases=['address', 'ip']),
@@ -227,12 +274,16 @@ def main():
     server = module.params['server']
     user = module.params['user']
     password = module.params['password']
+    validate_certs = module.params['validate_certs']
     state = module.params['state']
     partition = module.params['partition']
     host = module.params['host']
     name = module.params['name']
     address = "/%s/%s" % (partition, name)
     description = module.params['description']
+
+    if not validate_certs:
+        disable_ssl_cert_validation()
 
     if state == 'absent' and host is not None:
         module.fail_json(msg="host parameter invalid when state=absent")
@@ -282,6 +333,32 @@ def main():
                         if not module.check_mode:
                             set_node_description(api, address, description)
                         result = {'changed': True}
+
+        elif state in ('disabled', 'enabled'):
+            if name is None:
+                module.fail_json(msg="name parameter required when " \
+                                     "state=enabled/disabled")
+            if not module.check_mode:
+                if not node_exists(api, name):
+                    module.fail_json(msg="node does not exist")
+                status = get_node_session_status(api, name)
+                if state == 'disabled':
+                    if status not in (STATUSES['disabled'], STATUSES['offline']):
+                        disabled, desc = set_node_disabled(api, name)
+                        if not disabled:
+                            module.fail_json(msg="unable to disable: %s" % desc)
+                        else:
+                            result = {'changed': True}
+                else:
+                    if status != STATUSES['enabled']:
+                        enabled, desc = set_node_enabled(api, name)
+                        if not enabled:
+                            module.fail_json(msg="unable to enable: %s" % desc)
+                        else:
+                            result = {'changed': True}
+            else:
+                # check-mode return value
+                result = {'changed': True}
 
     except Exception, e:
         module.fail_json(msg="received exception: %s" % e)

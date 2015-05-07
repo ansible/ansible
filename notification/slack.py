@@ -28,12 +28,20 @@ author: Ramon de la Fuente <ramon@delafuente.nl>
 options:
   domain:
     description:
-      - Slack (sub)domain for your environment without protocol.
-        (i.e. C(future500.slack.com))
-    required: true
+      - Slack (sub)domain for your environment without protocol. (i.e.
+        C(future500.slack.com)) In 1.8 and beyond, this is deprecated and may
+        be ignored.  See token documentation for information.
+    required: false
   token:
     description:
-      - Slack integration token
+      - Slack integration token.  This authenticates you to the slack service.
+        Prior to 1.8, a token looked like C(3Ffe373sfhRE6y42Fg3rvf4GlK).  In
+        1.8 and above, ansible adapts to the new slack API where tokens look
+        like C(G922VJP24/D921DW937/3Ffe373sfhRE6y42Fg3rvf4GlK).  If tokens
+        are in the new format then slack will ignore any value of domain.  If
+        the token is in the old format the domain is required.  Ansible has no
+        control of when slack will get rid of the old API.  When slack does
+        that the old format will stop working.
     required: true
   msg:
     description:
@@ -81,6 +89,17 @@ options:
     choices:
       - 'yes'
       - 'no'
+  color:
+    version_added: 2.0
+    description:
+      - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
+    required: false
+    default: 'normal'
+    choices:
+      - 'normal'
+      - 'good'
+      - 'warning'
+      - 'danger'
 """
 
 EXAMPLES = """
@@ -103,13 +122,24 @@ EXAMPLES = """
     link_names: 0
     parse: 'none'
 
+- name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in Slack
+  slack:
+    domain: future500.slack.com
+    token: thetokengeneratedbyslack
+    msg: "{{ inventory_hostname }} is alive!"
+    color: good
+    username: ""
+    icon_url: ""
 """
 
+OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
-def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse):
-    payload = dict(text=text)
-
+def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color):
+    if color == 'normal':
+        payload = dict(text=text)
+    else:
+        payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
         payload['channel'] = channel if (channel[0] == '#') else '#'+channel
     if username is not None:
@@ -127,7 +157,13 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     return payload
 
 def do_notify_slack(module, domain, token, payload):
-    slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (token)
+    if token.count('/') >= 2:
+        # New style token
+        slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (token)
+    else:
+        if not domain:
+            module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form XXXX/YYYY/ZZZZ in your playbook")
+        slack_incoming_webhook = OLD_SLACK_INCOMING_WEBHOOK % (domain, token)
 
     response, info = fetch_url(module, slack_incoming_webhook, data=payload)
     if info['status'] != 200:
@@ -137,7 +173,7 @@ def do_notify_slack(module, domain, token, payload):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            domain      = dict(type='str', required=True),
+            domain      = dict(type='str', required=False, default=None),
             token       = dict(type='str', required=True),
             msg         = dict(type='str', required=True),
             channel     = dict(type='str', default=None),
@@ -146,8 +182,8 @@ def main():
             icon_emoji  = dict(type='str', default=None),
             link_names  = dict(type='int', default=1, choices=[0,1]),
             parse       = dict(type='str', default=None, choices=['none', 'full']),
-
             validate_certs = dict(default='yes', type='bool'),
+            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger'])
         )
     )
 
@@ -160,8 +196,9 @@ def main():
     icon_emoji = module.params['icon_emoji']
     link_names = module.params['link_names']
     parse = module.params['parse']
+    color = module.params['color']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse)
+    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")

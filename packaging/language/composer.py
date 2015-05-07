@@ -128,29 +128,34 @@ def main():
         supports_check_mode=True
     )
 
-    module.params["working_dir"] = os.path.abspath(module.params["working_dir"])
+    options = []
 
-    options = set([])
     # Default options
-    options.add("--no-ansi")
-    options.add("--no-progress")
-    options.add("--no-interaction")
+    options.append('--no-ansi')
+    options.append('--no-progress')
+    options.append('--no-interaction')
 
-    if module.check_mode:
-        options.add("--dry-run")
+    options.extend(['--working-dir', os.path.abspath(module.params['working_dir'])])
 
-    # Get composer command with fallback to default  
+    # Get composer command with fallback to default
     command = module.params['command']
-    del module.params['command'];
 
     # Prepare options
-    for i in module.params:
-        opt = "--%s" % i.replace("_","-")
-        p = module.params[i]
-        if isinstance(p, (bool)) and p:
-            options.add(opt)
-        elif isinstance(p, (str)):
-            options.add("%s=%s" % (opt, p))
+    if module.params['prefer_source']:
+        options.append('--prefer-source')
+    if module.params['prefer_dist']:
+        options.append('--prefer-dist')
+    if module.params['no_dev']:
+        options.append('--no-dev')
+    if module.params['no_scripts']:
+        options.append('--no-scripts')
+    if module.params['no_plugins']:
+        options.append('--no-plugins')
+    if module.params['optimize_autoloader']:
+        options.append('--optimize-autoloader')
+
+    if module.check_mode:
+        options.append('--dry-run')
 
     rc, out, err = composer_install(module, command, options)
 
@@ -158,7 +163,8 @@ def main():
         output = parse_out(err)
         module.fail_json(msg=output)
     else:
-        output = parse_out(out)
+        # Composer version > 1.0.0-alpha9 now use stderr for standard notification messages
+        output = parse_out(out + err)
         module.exit_json(changed=has_changed(output), msg=output)
 
 # import module snippets

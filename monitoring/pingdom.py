@@ -111,7 +111,7 @@ def main():
     )
 
     if not HAS_PINGDOM:
-        module.fail_json(msg="Missing requried pingdom module (check docs)")
+        module.fail_json(msg="Missing required pingdom module (check docs)")
 
     checkid = module.params['checkid']
     state = module.params['state']

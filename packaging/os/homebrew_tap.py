@@ -52,7 +52,7 @@ homebrew_tap: tap=homebrew/dupes,homebrew/science state=present
 
 def a_valid_tap(tap):
     '''Returns True if the tap is valid.'''
-    regex = re.compile(r'^(\S+)/(homebrew-)?(\w+)$')
+    regex = re.compile(r'^([\w-]+)/(homebrew-)?([\w-]+)$')
     return regex.match(tap)
 
 

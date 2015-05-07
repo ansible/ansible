@@ -163,9 +163,13 @@ def main():
             out = out[:75]
 
     if rc is None:
+        # pkgutil was not executed because the package was already present/absent
         result['changed'] = False
-    else:
+    elif rc == 0:
         result['changed'] = True
+    else:
+        result['changed'] = False
+        result['failed'] = True
 
     if out:
         result['stdout'] = out

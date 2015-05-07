@@ -149,6 +149,7 @@ class Npm(object):
             #If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
+                self.path = os.path.abspath(os.path.expanduser(self.path))
                 if not os.path.exists(self.path):
                     os.makedirs(self.path)
                 if not os.path.isdir(self.path):

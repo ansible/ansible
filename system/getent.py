@@ -86,7 +86,7 @@ def main():
             database = dict(required=True),
             key      = dict(required=False, default=None),
             split    = dict(required=False, default=None),
-            fail_key = dict(required=False, default=True),
+            fail_key = dict(required=False, type='bool', default=True),
         ),
         supports_check_mode = True,
     )

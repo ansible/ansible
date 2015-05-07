@@ -24,7 +24,7 @@ module: bower
 short_description: Manage bower packages with bower
 description:
   - Manage bower packages with bower
-version_added: 1.7
+version_added: 1.9
 author: Michael Warkentin
 options:
   name:
@@ -108,7 +108,7 @@ class Bower(object):
         return ''
 
     def list(self):
-        cmd = ['list', '--json']
+        cmd = ['list', '--json', '--config.interactive=false', '--allow-root']
 
         installed = list()
         missing = list()

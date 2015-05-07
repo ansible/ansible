@@ -56,6 +56,14 @@ options:
         default: null
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 2.0
     session:
         description:
             - BIG-IP session support; may be useful to avoid concurrency
@@ -70,8 +78,8 @@ options:
         required: true
         default: null
         choices: ['address_class', 'certificate', 'client_ssl_profile',
-                  'device_group', 'interface', 'key', 'node', 'pool', 'rule',
-                  'self_ip', 'software', 'system_info', 'traffic_group',
+                  'device', 'device_group', 'interface', 'key', 'node', 'pool',
+                  'rule', 'self_ip', 'software', 'system_info', 'traffic_group',
                   'trunk', 'virtual_address', 'virtual_server', 'vlan']
         aliases: []
     filter:
@@ -105,7 +113,7 @@ EXAMPLES = '''
 
 try:
     import bigsuds
-    from suds import MethodNotFound
+    from suds import MethodNotFound, WebFault
 except ImportError:
     bigsuds_found = False
 else:
@@ -1364,7 +1372,7 @@ def generate_dict(api_obj, fields):
         for field in fields:
             try:
                 api_response = getattr(api_obj, "get_" + field)()
-            except MethodNotFound:
+            except (MethodNotFound, WebFault):
                 pass
             else:
                 lists.append(api_response)
@@ -1380,7 +1388,7 @@ def generate_simple_dict(api_obj, fields):
     for field in fields:
         try:
             api_response = getattr(api_obj, "get_" + field)()
-        except MethodNotFound:
+        except (MethodNotFound, WebFault):
             pass
         else:
             result_dict[field] = api_response
@@ -1566,6 +1574,12 @@ def generate_software_list(f5):
     software_list = software.get_all_software_status()
     return software_list
 
+def disable_ssl_cert_validation():
+    # You probably only want to do this for testing and never in production.
+    # From https://www.python.org/dev/peps/pep-0476/#id29
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def main():
     module = AnsibleModule(
@@ -1573,6 +1587,7 @@ def main():
             server = dict(type='str', required=True),
             user = dict(type='str', required=True),
             password = dict(type='str', required=True),
+            validate_certs = dict(default='yes', type='bool'),
             session = dict(type='bool', default=False),
             include = dict(type='list', required=True),
             filter = dict(type='str', required=False),
@@ -1585,6 +1600,7 @@ def main():
     server = module.params['server']
     user = module.params['user']
     password = module.params['password']
+    validate_certs = module.params['validate_certs']
     session = module.params['session']
     fact_filter = module.params['filter']
     if fact_filter:
@@ -1593,13 +1609,16 @@ def main():
         regex = None
     include = map(lambda x: x.lower(), module.params['include'])
     valid_includes = ('address_class', 'certificate', 'client_ssl_profile',
-                      'device_group', 'interface', 'key', 'node', 'pool',
-                      'rule', 'self_ip', 'software', 'system_info',
+                      'device', 'device_group', 'interface', 'key', 'node',
+                      'pool', 'rule', 'self_ip', 'software', 'system_info',
                       'traffic_group', 'trunk', 'virtual_address',
                       'virtual_server', 'vlan')
     include_test = map(lambda x: x in valid_includes, include)
     if not all(include_test):
         module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
+
+    if not validate_certs:
+        disable_ssl_cert_validation()
 
     try:
         facts = {}

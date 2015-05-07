@@ -149,6 +149,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
         else:
             pkgsite = "-r %s" % (pkgsite)
 
+    batch_var = 'env BATCH=yes' # This environment variable skips mid-install prompts,
+                                # setting them to their default values.
+
     if not module.check_mode and not cached:
         if old_pkgng:
             rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgng_path))
@@ -163,9 +166,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
 
         if not module.check_mode:
             if old_pkgng:
-                rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgng_path, package))
+                rc, out, err = module.run_command("%s %s %s install -g -U -y %s" % (batch_var, pkgsite, pkgng_path, package))
             else:
-                rc, out, err = module.run_command("%s install %s -g -U -y %s" % (pkgng_path, pkgsite, package))
+                rc, out, err = module.run_command("%s %s install %s -g -U -y %s" % (batch_var, pkgng_path, pkgsite, package))
 
         if not module.check_mode and not query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)

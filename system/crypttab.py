@@ -24,7 +24,7 @@ module: crypttab
 short_description: Encrypted Linux block devices
 description:
   - Control Linux encrypted block devices that are set up during system boot in C(/etc/crypttab).
-version_added: "1.8"
+version_added: "1.9"
 options:
   name:
     description:
@@ -103,7 +103,7 @@ def main():
     state          = module.params['state']
     path           = module.params['path']
 
-    if backing_device is None and password is None and opts is None:
+    if state != 'absent' and backing_device is None and password is None and opts is None:
         module.fail_json(msg="expected one or more of 'backing_device', 'password' or 'opts'",
                          **module.params)
 
