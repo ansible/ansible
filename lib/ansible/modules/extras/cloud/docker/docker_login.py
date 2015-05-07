@@ -47,6 +47,7 @@ options:
     description:
        - The email address for the registry account
     required: false
+    default: anonymous@localhost.local
   reauth:
     description:
        - Whether refresh existing authentication on the Docker server (boolean)
@@ -214,7 +215,7 @@ def main():
             registry        = dict(required=True),
             username        = dict(required=True),
             password        = dict(required=True),
-            email           = dict(required=False, default=None),
+            email           = dict(required=False, default='anonymous@localhost.local'),
             reauth          = dict(required=False, default=False, type='bool'),
             dockercfg_path  = dict(required=False, default='~/.dockercfg'),
             docker_url      = dict(default='unix://var/run/docker.sock'),
