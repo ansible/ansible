@@ -288,7 +288,7 @@ class AnsibleCloudStack:
         args = {}
         args['name'] = domain
         args['listall'] = True
-        domain = self.cs.listDomains(**args)
+        domains = self.cs.listDomains(**args)
         if domains:
             self.domain = domains['domain'][0]
             return self._get_by_key(key, self.domain)
