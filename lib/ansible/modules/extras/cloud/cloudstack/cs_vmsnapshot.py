@@ -61,6 +61,16 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent', 'revert' ]
+  domain:
+    description:
+      - Domain the VM snapshot is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the VM snapshot is related to.
+    required: false
+    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -133,6 +143,21 @@ description:
   returned: success
   type: string
   sample: snapshot brought to you by Ansible
+domain:
+  description: Domain the the vm snapshot is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the vm snapshot is related to.
+  returned: success
+  type: string
+  sample: example account
+project:
+  description: Name of project the vm snapshot is related to.
+  returned: success
+  type: string
+  sample: Production
 '''
 
 try:
@@ -155,10 +180,12 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
 
     def get_snapshot(self):
-        args = {}
-        args['virtualmachineid'] = self.get_vm_id()
-        args['projectid'] = self.get_project_id()
-        args['name'] = self.module.params.get('name')
+        args                        = {}
+        args['virtualmachineid']    = self.get_vm('id')
+        args['account']             = self.get_account('name')
+        args['domainid']            = self.get_domain('id')
+        args['projectid']           = self.get_project('id')
+        args['name']                = self.module.params.get('name')
 
         snapshots = self.cs.listVMSnapshot(**args)
         if snapshots:
@@ -171,11 +198,11 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
         if not snapshot:
             self.result['changed'] = True
 
-            args = {}
-            args['virtualmachineid'] = self.get_vm_id()
-            args['name'] = self.module.params.get('name')
-            args['description'] = self.module.params.get('description')
-            args['snapshotmemory'] = self.module.params.get('snapshot_memory')
+            args                        = {}
+            args['virtualmachineid']    = self.get_vm('id')
+            args['name']                = self.module.params.get('name')
+            args['description']         = self.module.params.get('description')
+            args['snapshotmemory']      = self.module.params.get('snapshot_memory')
 
             if not self.module.check_mode:
                 res = self.cs.createVMSnapshot(**args)
@@ -241,6 +268,12 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
                 self.result['name'] = snapshot['name']
             if 'description' in snapshot:
                 self.result['description'] = snapshot['description']
+            if 'domain' in snapshot:
+                self.result['domain'] = snapshot['domain']
+            if 'account' in snapshot:
+                self.result['account'] = snapshot['account']
+            if 'project' in snapshot:
+                self.result['project'] = snapshot['project']
         return self.result
 
 
@@ -250,10 +283,12 @@ def main():
             name = dict(required=True, aliases=['displayname']),
             vm = dict(required=True),
             description = dict(default=None),
-            project = dict(default=None),
             zone = dict(default=None),
             snapshot_memory = dict(choices=BOOLEANS, default=False),
             state = dict(choices=['present', 'absent', 'revert'], default='present'),
+            domain = dict(default=None),
+            account = dict(default=None),
+            project = dict(default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
             api_secret = dict(default=None),
