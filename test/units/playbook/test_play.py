@@ -27,7 +27,7 @@ from ansible.playbook.play import Play
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 
-from test.mock.loader import DictDataLoader
+from units.mock.loader import DictDataLoader
 
 class TestPlay(unittest.TestCase):
 
