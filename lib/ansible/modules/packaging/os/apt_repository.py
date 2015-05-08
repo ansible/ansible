@@ -267,14 +267,18 @@ class SourcesList(object):
     def dump(self):
         return '\n'.join([str(i) for i in self])
 
+    def _choice(self, new, old):
+        if new is None:
+            return old
+        return new
+
     def modify(self, file, n, enabled=None, source=None, comment=None):
         '''
         This function to be used with iterator, so we don't care of invalid sources.
         If source, enabled, or comment is None, original value from line ``n`` will be preserved.
         '''
         valid, enabled_old, source_old, comment_old = self.files[file][n][1:]
-        choice = lambda new, old: old if new is None else new
-        self.files[file][n] = (n, valid, choice(enabled, enabled_old), choice(source, source_old), choice(comment, comment_old))
+        self.files[file][n] = (n, valid, self._choice(enabled, enabled_old), self._choice(source, source_old), self._choice(comment, comment_old))
 
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
