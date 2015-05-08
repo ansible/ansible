@@ -113,6 +113,8 @@ class CacheModuleKeys(collections.MutableSet):
         self._cache = cache
         self._keyset = dict(*args, **kwargs)
 
+        super(CacheModule, self).__init__()
+
     def __contains__(self, key):
         return key in self._keyset
 

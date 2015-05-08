@@ -24,6 +24,8 @@ class CacheModule(BaseCacheModule):
     def __init__(self, *args, **kwargs):
         self._cache = {}
 
+        super(CacheModule, self).__init__()
+
     def get(self, key):
         return self._cache.get(key)
 
