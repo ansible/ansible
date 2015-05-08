@@ -40,7 +40,7 @@ def mk_boolean(value):
     else:
         return False
 
-def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False):
+def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False):
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
@@ -53,6 +53,9 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         elif islist:
             if isinstance(value, string_types):
                 value = [x.strip() for x in value.split(',')]
+        elif isnone:
+            if value == "None":
+                value = None
         elif isinstance(value, string_types):
             value = unquote(value)
     return value
@@ -205,6 +208,7 @@ DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks'
 DEFAULT_CALLBACK_WHITELIST     = get_config(p, DEFAULTS, 'callback_whitelist', 'ANSIBLE_CALLBACK_WHITELIST', [], islist=True)
 RETRY_FILES_ENABLED            = get_config(p, DEFAULTS, 'retry_files_enabled', 'ANSIBLE_RETRY_FILES_ENABLED', True, boolean=True)
 RETRY_FILES_SAVE_PATH          = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', '~/')
+DEFAULT_NULL_REPRESENTATION    = get_config(p, DEFAULTS, 'null_representation', 'ANSIBLE_NULL_REPRESENTATION', None, isnone=True)
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)

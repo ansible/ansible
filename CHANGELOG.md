@@ -18,6 +18,13 @@ Major Changes:
    If you need the old behaviour, quote the value and it will get passed around as a string
  * added meta: refresh_inventory to force rereading the inventory in a play
  * vars are now settable at play, block, role and task level
+ * template code now retains types for bools, and Numbers instead of turning them into strings
+   If you need the old behaviour, quote the value and it will get passed around as a string. In the
+   case of nulls, the output used to be an empty string.
+ * Empty variables and variables set to null in yaml will no longer be converted to empty strings.
+   They will retain the value of `None`.  To go back to the old behaviour, you can override
+   the `null_representation` setting to an empty string in your config file or by setting the
+   `ANSIBLE_NULL_REPRESENTATION` environment variable.
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
