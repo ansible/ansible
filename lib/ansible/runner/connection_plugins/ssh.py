@@ -266,7 +266,7 @@ class Connection(object):
             raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-C"]
+        ssh_cmd += ["ssh"]
         if not in_data:
             # we can only use tty when we are not pipelining the modules. piping data into /usr/bin/python
             # inside a tty automatically invokes the python interactive-mode but the modules are not
