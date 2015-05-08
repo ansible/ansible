@@ -169,7 +169,15 @@ class Connection(object):
                 key_filename = os.path.expanduser(self.runner.private_key_file)
             else:
                 key_filename = None
-            ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
+
+	    compress = False
+
+	    if C.PARAMIKO_COMPRESS:
+		    compress = True
+
+            vvv("CONNECTION COMPRESS SET TO: %s " % compress, host=self.host)
+
+            ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True, compress=compress,
                 key_filename=key_filename, password=self.password,
                 timeout=self.runner.timeout, port=self.port)
 
