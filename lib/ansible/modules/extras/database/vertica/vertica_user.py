@@ -233,7 +233,10 @@ def present(user_facts, cursor, user, profile, resource_pool,
         changed = False
         query_fragments = ["alter user {0}".format(user)]
         if locked is not None and locked != (user_facts[user_key]['locked'] == 'True'):
-            state = 'lock' if locked else 'unlock'
+            if locked:
+                state = 'lock'
+            else:
+                state = 'unlock'
             query_fragments.append("account {0}".format(state))
             changed = True
         if password and password != user_facts[user_key]['password']:

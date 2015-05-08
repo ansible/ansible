@@ -127,13 +127,18 @@ def ensure(module, state, packages, params):
         },
     }
 
+    if params['accept_licenses']:
+        accept_licenses = ['--accept']
+    else:
+        accept_licenses = []
+
     to_modify = filter(behaviour[state]['filter'], packages)
     if to_modify:
         rc, out, err = module.run_command(
             [
                 'pkg', behaviour[state]['subcommand']
             ]
-            + (['--accept'] if params['accept_licenses'] else [])
+            + accept_licenses
             + [
                 '-q', '--'
             ] + to_modify
@@ -150,12 +155,12 @@ def ensure(module, state, packages, params):
 
 def is_installed(module, package):
     rc, out, err = module.run_command(['pkg', 'list', '--', package])
-    return True if rc == 0 else False
+    return not bool(int(rc))
 
 
 def is_latest(module, package):
     rc, out, err = module.run_command(['pkg', 'list', '-u', '--', package])
-    return True if rc == 1 else False
+    return bool(int(rc))
 
 
 from ansible.module_utils.basic import *

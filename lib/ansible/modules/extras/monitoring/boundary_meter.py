@@ -213,7 +213,7 @@ def download_request(module, name, apiid, apikey, cert_type):
                 cert_file = open(cert_file_path, 'w')
                 cert_file.write(body)
                 cert_file.close
-                os.chmod(cert_file_path, 0o600)
+                os.chmod(cert_file_path, 0600)
             except: 
                 module.fail_json("Could not write to certificate file")
 

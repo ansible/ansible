@@ -132,7 +132,7 @@ def main():
             )
 
             module.exit_json(changed=True)
-        except subprocess.CalledProcessError as cpe:
+        except subprocess.CalledProcessError, cpe:
             module.fail_json(msg=str(dir(cpe)))
     else:
         module.exit_json(changed=False)
