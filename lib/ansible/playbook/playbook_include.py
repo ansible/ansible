@@ -25,11 +25,10 @@ from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.errors import AnsibleParserError
 
-class PlaybookInclude(Base):
+class PlaybookInclude(Base, Taggable):
 
     _name      = FieldAttribute(isa='string')
     _include   = FieldAttribute(isa='string')
