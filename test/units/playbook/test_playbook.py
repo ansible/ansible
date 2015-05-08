@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook import Playbook
 from ansible.vars import VariableManager
 
-from test.mock.loader import DictDataLoader
+from units.mock.loader import DictDataLoader
 
 class TestPlaybook(unittest.TestCase):
 
