@@ -102,7 +102,7 @@ class VaultLib(object):
             cipher = globals()['Vault' + self.cipher_name]
             this_cipher = cipher()
         else:
-            raise errors.AnsibleError("{} cipher could not be found".format(self.cipher_name))
+            raise errors.AnsibleError("{0} cipher could not be found".format(self.cipher_name))
 
         """
         # combine sha + data
@@ -135,7 +135,7 @@ class VaultLib(object):
             cipher = globals()['Vault' + ciphername]
             this_cipher = cipher()
         else:
-            raise errors.AnsibleError("{} cipher could not be found".format(ciphername))
+            raise errors.AnsibleError("{0} cipher could not be found".format(ciphername))
 
         # try to unencrypt data
         data = this_cipher.decrypt(data, self.password)
@@ -379,7 +379,7 @@ class VaultAES(object):
 
         d = d_i = b''
         while len(d) < key_length + iv_length:
-            text = "{}{}{}".format(d_i, password, salt)
+            text = "{0}{1}{2}".format(d_i, password, salt)
             d_i = md5(to_bytes(text)).digest()
             d += d_i
 
