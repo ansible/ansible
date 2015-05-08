@@ -60,18 +60,18 @@ class TestBlock(unittest.TestCase):
         )
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
-        assert isinstance(b.block[0], Task)
+        self.assertIsInstance(b.block[0], Task)
         self.assertEqual(len(b.rescue), 1)
-        assert isinstance(b.rescue[0], Task)
+        self.assertIsInstance(b.rescue[0], Task)
         self.assertEqual(len(b.always), 1)
-        assert isinstance(b.always[0], Task)
+        self.assertIsInstance(b.always[0], Task)
         # not currently used
         #self.assertEqual(len(b.otherwise), 1)
-        #assert isinstance(b.otherwise[0], Task)
+        #self.assertIsInstance(b.otherwise[0], Task)
 
     def test_load_implicit_block(self):
         ds = [dict(action='foo')]
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
-        assert isinstance(b.block[0], Task)
+        self.assertIsInstance(b.block[0], Task)
 
