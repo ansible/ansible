@@ -105,7 +105,19 @@ options:
       - Data to be uploaded to the servers config drive. This option implies
         I(config_drive). Can be a file path or a string
     version_added: 1.8
-author: "Matt Martz (@sivel)"
+  wait
+    description:
+      - wait for the scaling group to finish provisioning the minimum amount of
+        servers
+    default: "no"
+    choices:
+      - "yes"
+      - "no"
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 300
+author: Matt Martz
 extends_documentation_fragment: rackspace
 '''
 
@@ -144,7 +156,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             image=None, key_name=None, loadbalancers=[], meta={},
             min_entities=0, max_entities=0, name=None, networks=[],
             server_name=None, state='present', user_data=None,
-            config_drive=False):
+            config_drive=False, wait=True, wait_timeout=300):
     changed = False
 
     au = pyrax.autoscale
@@ -315,6 +327,16 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
 
             sg.get()
 
+        if wait:
+            end_time = time.time() + wait_timeout
+            infinite = wait_timeout == 0
+            while infinite or time.time() < end_time:
+                state = sg.get_state()
+                if state["pending_capacity"] == 0:
+                    break
+
+                time.sleep(5)
+
         module.exit_json(changed=changed, autoscale_group=rax_to_dict(sg))
 
     else:
@@ -350,6 +372,8 @@ def main():
             server_name=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
             user_data=dict(no_log=True),
+            wait=dict(default=False, type='bool'),
+            wait_timeout=dict(default=300),
         )
     )
 
