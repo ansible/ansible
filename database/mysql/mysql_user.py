@@ -182,7 +182,7 @@ class InvalidPrivsError(Exception):
 # MySQL module specific support methods.
 #
 
-def connect(module, login_user=None, login_password=None, config_file='~/.my.cnf'):
+def connect(module, login_user=None, login_password=None, config_file=''):
     config = {
         'host': module.params['login_host'],
         'db': 'mysql'
@@ -403,6 +403,7 @@ def main():
     append_privs = module.boolean(module.params["append_privs"])
     update_password = module.params['update_password']
 
+    config_file = os.path.expanduser(os.path.expandvars(config_file))
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
 
@@ -423,7 +424,7 @@ def main():
         if not cursor:
             cursor = connect(module, login_user, login_password, config_file)
     except Exception, e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials. Exception message: %s" % e)
 
     if state == "present":
         if user_exists(cursor, user, host):
