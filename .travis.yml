@@ -1,0 +1,10 @@
+sudo: false
+language: python
+addons:
+  apt:
+    sources:
+      - deadsnakes
+    packages:
+      - python2.4
+script:
+  - python2.4 -m compileall -fq -x 'cloud/' .
