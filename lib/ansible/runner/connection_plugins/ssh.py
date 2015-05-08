@@ -85,6 +85,9 @@ class Connection(object):
         if not C.HOST_KEY_CHECKING:
             self.common_args += ["-o", "StrictHostKeyChecking=no"]
 
+        if C.ANSIBLE_SSH_COMPRESSION:
+            self.common_args += ["-o", "Compression=yes"]
+
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.private_key_file is not None:
