@@ -46,7 +46,7 @@ class PlaybookExecutor:
         self._options          = options
         self.passwords         = passwords
 
-        if options.listhosts or options.listtasks or options.listtags:
+        if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
         else:
             self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=self.passwords)
@@ -84,6 +84,9 @@ class PlaybookExecutor:
                     templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
                     new_play = play.copy()
                     new_play.post_validate(templar)
+
+                    if self._options.syntax:
+                        continue
 
                     if self._tqm is None:
                         # we are just doing a listing
@@ -146,6 +149,10 @@ class PlaybookExecutor:
         finally:
             if self._tqm is not None:
                 self._cleanup()
+
+        if self._options.syntax:
+            self.display.display("No issues encountered")
+            return result
 
         # FIXME: this stat summary stuff should be cleaned up and moved
         #        to a new method, if it even belongs here...
