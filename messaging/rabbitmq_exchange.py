@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 module: rabbitmq_exchange
 author: Manuel Sousa
-version_added: 1.5.4
+version_added: 2.0
 
 short_description: This module manages rabbitMQ exchanges
 description:
@@ -148,7 +148,6 @@ def main():
     if module.check_mode:
         module.exit_json(
             changed= changeRequired,
-            result = "Success",
             name = module.params['name'],
             details = response,
             arguments = module.params['arguments']
@@ -175,7 +174,6 @@ def main():
         if r.status_code == 204:
             module.exit_json(
                 changed = True,
-                result = "Success",
                 name = module.params['name']
             )
         else:
@@ -188,7 +186,6 @@ def main():
     else:
         module.exit_json(
             changed = False,
-            result = "Success",
             name = module.params['name']
         )
 
