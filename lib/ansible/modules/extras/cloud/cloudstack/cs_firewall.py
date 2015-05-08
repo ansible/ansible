@@ -19,6 +19,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
+---
 module: cs_firewall
 short_description: Manages firewall rules on Apache CloudStack based clouds.
 description: Creates and removes firewall rules.
@@ -116,6 +117,45 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+---
+ip_address:
+  description: IP address of the rule.
+  returned: success
+  type: string
+  sample: 10.100.212.10
+cidr:
+  description: CIDR of the rule.
+  returned: success
+  type: string
+  sample: 0.0.0.0/0
+protocol:
+  description: Protocol of the rule.
+  returned: success
+  type: string
+  sample: tcp
+start_port:
+  description: Start port of the rule.
+  returned: success
+  type: int
+  sample: 80
+end_port:
+  description: End port of the rule.
+  returned: success
+  type: int
+  sample: 80
+icmp_code:
+  description: ICMP code of the rule.
+  returned: success
+  type: int
+  sample: 1
+icmp_type:
+  description: ICMP type of the rule.
+  returned: success
+  type: int
+  sample: 1
+'''
+
 try:
     from cs import CloudStack, CloudStackException, read_config
     has_lib_cs = True
@@ -199,6 +239,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
         firewall_rule = self.get_firewall_rule()
         if not firewall_rule:
             self.result['changed'] = True
+
             args                = {}
             args['cidrlist']    = self.module.params.get('cidr')
             args['protocol']    = self.module.params.get('protocol')
@@ -207,7 +248,6 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             args['icmptype']    = self.module.params.get('icmp_type')
             args['icmpcode']    = self.module.params.get('icmp_code')
             args['ipaddressid'] = self.get_ip_address('id')
-
 
             if not self.module.check_mode:
                 firewall_rule = self.cs.createFirewallRule(**args)
@@ -229,6 +269,21 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
 
     def get_result(self, firewall_rule):
+        if firewall_rule:
+            if 'cidrlist' in firewall_rule:
+                self.result['cidr'] = firewall_rule['cidrlist']
+            if 'startport' in firewall_rule:
+                self.result['start_port'] = int(firewall_rule['startport'])
+            if 'endport' in firewall_rule:
+                self.result['end_port'] = int(firewall_rule['endport'])
+            if 'protocol' in firewall_rule:
+                self.result['protocol'] = firewall_rule['protocol']
+            if 'ipaddress' in firewall_rule:
+                self.result['ip_address'] = firewall_rule['ipaddress']
+            if 'icmpcode' in firewall_rule:
+                self.result['icmp_code'] = int(firewall_rule['icmpcode'])
+            if 'icmptype' in firewall_rule:
+                self.result['icmp_type'] = int(firewall_rule['icmptype'])
         return self.result
 
 
