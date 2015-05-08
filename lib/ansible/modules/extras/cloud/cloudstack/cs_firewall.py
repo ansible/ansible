@@ -67,9 +67,19 @@ options:
       - Error code for this icmp message. Considered if C(protocol=icmp).
     required: false
     default: null
+  domain:
+    description:
+      - Domain the firewall rule is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the firewall rule is related to.
+    required: false
+    default: null
   project:
     description:
-      - Name of the project.
+      - Name of the project the firewall rule is related to.
     required: false
     default: null
 extends_documentation_fragment: cloudstack
@@ -147,9 +157,11 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             if protocol == 'icmp' and not icmp_type:
                 self.module.fail_json(msg="no icmp_type set")
 
-            args = {}
-            args['ipaddressid'] = self.get_ip_address_id()
-            args['projectid'] = self.get_project_id()
+            args                = {}
+            args['ipaddressid'] = self.get_ip_address('id')
+            args['account']     = self.get_account('name')
+            args['domainid']    = self.get_domain('id')
+            args['projectid']   = self.get_project('id')
 
             firewall_rules = self.cs.listFirewallRules(**args)
             if firewall_rules and 'firewallrule' in firewall_rules:
@@ -187,14 +199,15 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
         firewall_rule = self.get_firewall_rule()
         if not firewall_rule:
             self.result['changed'] = True
-            args = {}
-            args['cidrlist'] = self.module.params.get('cidr')
-            args['protocol'] = self.module.params.get('protocol')
-            args['startport'] = self.module.params.get('start_port')
-            args['endport'] = self.get_end_port()
-            args['icmptype'] = self.module.params.get('icmp_type')
-            args['icmpcode'] = self.module.params.get('icmp_code')
-            args['ipaddressid'] = self.get_ip_address_id()
+            args                = {}
+            args['cidrlist']    = self.module.params.get('cidr')
+            args['protocol']    = self.module.params.get('protocol')
+            args['startport']   = self.module.params.get('start_port')
+            args['endport']     = self.get_end_port()
+            args['icmptype']    = self.module.params.get('icmp_type')
+            args['icmpcode']    = self.module.params.get('icmp_code')
+            args['ipaddressid'] = self.get_ip_address('id')
+
 
             if not self.module.check_mode:
                 firewall_rule = self.cs.createFirewallRule(**args)
@@ -230,6 +243,8 @@ def main():
             start_port = dict(type='int', aliases=['port'], default=None),
             end_port = dict(type='int', default=None),
             state = dict(choices=['present', 'absent'], default='present'),
+            domain = dict(default=None),
+            account = dict(default=None),
             project = dict(default=None),
             api_key = dict(default=None),
             api_secret = dict(default=None),
