@@ -262,8 +262,8 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             # Launch Configuration Updates
             lc = sg.get_launch_config()
             lc_args = {}
-            if server_name != lc.get('name'):
-                lc_args['name'] = server_name
+            if server_name != lc.get('server_name'):
+                lc_args['server_name'] = server_name
 
             if image != lc.get('image'):
                 lc_args['image'] = image
