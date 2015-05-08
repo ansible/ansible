@@ -32,6 +32,7 @@ import pwd
 import ast
 import traceback
 from numbers import Number
+from types import NoneType
 
 from ansible.utils.string_functions import count_newlines_from_end
 from ansible.utils import to_bytes, to_unicode
@@ -343,7 +344,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
                 var_name = only_one.group(1)
                 if var_name in vars:
                     resolved_val = vars[var_name]
-                    if isinstance(resolved_val, (bool, Number)):
+                    if isinstance(resolved_val, (bool, Number, NoneType)):
                         return resolved_val
 
         def my_finalize(thing):
