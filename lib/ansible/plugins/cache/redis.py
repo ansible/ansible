@@ -51,6 +51,8 @@ class CacheModule(BaseCacheModule):
         self._cache = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
 
+        super(CacheModule, self).__init__()
+
     def _make_key(self, key):
         return self._prefix + key
 
@@ -100,3 +102,4 @@ class CacheModule(BaseCacheModule):
         for key in self.keys():
             ret[key] = self.get(key)
         return ret
+
