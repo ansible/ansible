@@ -24,6 +24,7 @@ New Modules:
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
   * cloudstack: cs_instance
+  * cloudstack: cs_instancegroup
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
