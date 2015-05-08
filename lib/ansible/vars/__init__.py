@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from collections import defaultdict
+from collections import MutableMapping
 
 try:
     from hashlib import sha1
@@ -73,7 +74,7 @@ class VariableManager:
 
     def set_extra_vars(self, value):
         ''' ensures a clean copy of the extra_vars are used to set the value '''
-        assert isinstance(value, dict)
+        assert isinstance(value, MutableMapping)
         self._extra_vars = value.copy()
 
     def set_inventory(self, inventory):
@@ -83,7 +84,7 @@ class VariableManager:
         '''
         Validates that both arguments are dictionaries, or an error is raised.
         '''
-        if not (isinstance(a, dict) and isinstance(b, dict)):
+        if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
             raise AnsibleError("failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__))
 
     def _combine_vars(self, a, b):
