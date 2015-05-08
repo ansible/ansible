@@ -110,7 +110,7 @@ def apply_patch(patch_func, patch_file, basedir, dest_file=None, strip=0, dry_ru
 
     (rc, out, err) = patch_func(opts)
     if rc != 0:
-        msg = out if not err else err
+        msg = err or out
         raise PatchError(msg)
 
 

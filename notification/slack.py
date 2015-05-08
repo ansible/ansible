@@ -141,9 +141,9 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     else:
         payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
-        if (channel[0] == '#') or (channel[0] == '@')
+        if (channel[0] == '#') or (channel[0] == '@'):
             payload['channel'] = channel
-        else 
+        else:
             payload['channel'] = '#'+channel
     if username is not None:
         payload['username'] = username
