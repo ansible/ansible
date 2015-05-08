@@ -76,6 +76,7 @@ class PlayBook(object):
         any_errors_fatal = False,
         vault_password   = False,
         force_handlers   = False,
+        all_hosts        = False,
         # privilege escalation
         become           = C.DEFAULT_BECOME,
         become_method    = C.DEFAULT_BECOME_METHOD,
@@ -144,6 +145,7 @@ class PlayBook(object):
         self.any_errors_fatal = any_errors_fatal
         self.vault_password   = vault_password
         self.force_handlers   = force_handlers
+        self.all_hosts        = all_hosts
 
         self.become           = become
         self.become_method    = become_method
@@ -317,6 +319,9 @@ class PlayBook(object):
 
             # Remove tasks we wish to skip
             matched_tags = matched_tags - set(self.skip_tags)
+
+            if self.all_hosts:
+                play.hosts = 'all'
 
             # if we have matched_tags, the play must be run.
             # if the play contains no tasks, assume we just want to gather facts

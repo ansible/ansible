@@ -210,6 +210,7 @@ def main(args):
             diff=options.diff,
             vault_password=vault_pass,
             force_handlers=options.force_handlers,
+            all_hosts=options.all_hosts
         )
 
         if options.flush_cache:
