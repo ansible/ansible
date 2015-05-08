@@ -24,7 +24,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.vars import VariableManager
 
-from test.mock.loader import DictDataLoader
+from units.mock.loader import DictDataLoader
 
 class TestVariableManager(unittest.TestCase):
 

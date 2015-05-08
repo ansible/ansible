@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook import Playbook
 
-from test.mock.loader import DictDataLoader
+from units.mock.loader import DictDataLoader
 
 class TestPlayIterator(unittest.TestCase):
 

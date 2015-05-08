@@ -3,6 +3,12 @@ language: python
 env:
   - TOXENV=py26
   - TOXENV=py27
+addons:
+  apt:
+    sources:
+      - deadsnakes
+    packages:
+      - python2.4
 install:
   - pip install tox
 script:
