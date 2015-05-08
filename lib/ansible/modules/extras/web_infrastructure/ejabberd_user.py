@@ -113,7 +113,7 @@ class EjabberdUser(object):
             (rc, out, err) = self.run_command('check_account', options)
         except EjabberdUserException, e:
             (rc, out, err) = (1, None, "required attribute(s) missing")
-        return True if rc == 0 else False
+        return not bool(int(rc))
 
     def log(self, entry):
         """ This method will log information to the local syslog facility """

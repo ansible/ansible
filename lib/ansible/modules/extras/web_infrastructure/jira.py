@@ -335,7 +335,7 @@ def main():
 
         ret = method(restbase, user, passwd, module.params)
 
-    except Exception as e:
+    except Exception, e:
         return module.fail_json(msg=e.message)
 
 

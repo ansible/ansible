@@ -155,8 +155,9 @@ def main():
 
 
     if changed and not module.check_mode:
-        with open(path, 'wb') as f:
-            f.write(str(crypttab))
+        f = open(path, 'wb')
+        f.write(str(crypttab))
+        f.close()
 
     module.exit_json(changed=changed, msg=reason, **module.params)
 
@@ -172,9 +173,10 @@ class Crypttab(object):
                 os.makedirs(os.path.dirname(path))
             open(path,'a').close()
 
-        with open(path, 'r') as f:
-            for line in f.readlines():
-                self._lines.append(Line(line))
+        f = open(path, 'r')
+        for line in f.readlines():
+            self._lines.append(Line(line))
+        f.close()
 
     def add(self, line):
         self._lines.append(line)
@@ -242,10 +244,19 @@ class Line(object):
 
     def _split_line(self, line):
         fields = line.split()
+        try:
+            field2 = field[2]
+        except IndexError:
+            field2 = None
+        try:
+            field3 = field[3]
+        except IndexError:
+            field3 = None
+
         return (fields[0],
                 fields[1],
-                fields[2] if len(fields) >= 3 else None,
-                fields[3] if len(fields) >= 4 else None)
+                field2,
+                fields3)
 
     def remove(self):
         self.line, self.name, self.backing_device = '', None, None
@@ -260,7 +271,10 @@ class Line(object):
         if self.valid():
             fields = [self.name, self.backing_device]
             if self.password is not None or self.opts:
-                fields.append(self.password if self.password is not None else 'none')
+                if self.password is not None:
+                    fields.append(self.password)
+                else:
+                    self.password('none')
             if self.opts:
                 fields.append(str(self.opts))
             return ' '.join(fields)
@@ -276,7 +290,10 @@ class Options(dict):
         if opts_string is not None:
             for opt in opts_string.split(','):
                 kv = opt.split('=')
-                k, v = (kv[0], kv[1]) if len(kv) > 1 else (kv[0], None)
+                if len(kv) > 1:
+                    k, v = (kv[0], kv[1])
+                else:
+                    k, v = (kv[0], None)
                 self[k] = v
 
     def add(self, opts_string):
@@ -324,8 +341,13 @@ class Options(dict):
                     and sorted(self.items()) == sorted(obj.items()))
 
     def __str__(self):
-        return ','.join([k if v is None else '%s=%s' % (k, v)
-                         for k, v in self.items()])
+        ret = []
+        for k, v in self.items():
+            if v is None:
+                ret.append(k)
+            else:
+                ret.append('%s=%s' % (k, v))
+        return ','.join(ret)
 
 # import module snippets
 from ansible.module_utils.basic import *

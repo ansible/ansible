@@ -121,10 +121,15 @@ def set_publisher(module, params):
         args.append('--remove-mirror=*')
         args.extend(['--add-mirror=' + u for u in params['mirror']])
 
-    if params['sticky'] != None:
-        args.append('--sticky' if params['sticky'] else '--non-sticky')
-    if params['enabled'] != None:
-        args.append('--enable' if params['enabled'] else '--disable')
+    if params['sticky'] != None and params['sticky']:
+        args.append('--sticky')
+    elif params['sticky'] != None:
+        args.append('--non-sticky')
+
+    if params['enabled'] != None and params['enabled']:
+        args.append('--enable')
+    elif params['enabled'] != None:
+        args.append('--disable')
 
     rc, out, err = module.run_command(
         ["pkg", "set-publisher"] + args + [name],
