@@ -26,9 +26,6 @@ from six import add_metaclass
 @add_metaclass(ABCMeta)
 class BaseCacheModule:
 
-    def __init__(self):
-        self.__getstate__ = self.copy
-
     @abstractmethod
     def get(self, key):
         pass

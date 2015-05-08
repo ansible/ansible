@@ -113,8 +113,6 @@ class CacheModuleKeys(collections.MutableSet):
         self._cache = cache
         self._keyset = dict(*args, **kwargs)
 
-        super(CacheModule, self).__init__()
-
     def __contains__(self, key):
         return key in self._keyset
 
@@ -193,3 +191,9 @@ class CacheModule(BaseCacheModule):
 
     def copy(self):
         return self._keys.copy()
+
+    def __getstate__(self):
+        return dict()
+
+    def __setstate__(self, data):
+        self.__init__()
