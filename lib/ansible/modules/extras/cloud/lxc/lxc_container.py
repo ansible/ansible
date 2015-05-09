@@ -797,7 +797,7 @@ class LxcContainerManagement(object):
                 rc=1,
                 msg='The container [ %s ] failed to start. Check to lxc is'
                     ' available and that the container is in a functional'
-                    ' state.'
+                    ' state.' % self.container_name
             )
 
     def _check_archive(self):
