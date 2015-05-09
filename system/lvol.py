@@ -85,6 +85,8 @@ import re
 
 decimal_point = re.compile(r"(\.|,)")
 
+def mkversion(major, minor, patch):
+    return (1000 * 1000 * int(major)) + (1000 * int(minor)) + int(patch)
 
 def parse_lvs(data):
     lvs = []
@@ -95,6 +97,17 @@ def parse_lvs(data):
             'size': int(decimal_point.split(parts[1])[0]),
         })
     return lvs
+
+
+def get_lvm_version(module):
+    ver_cmd = module.get_bin_path("lvm", required=True)
+    rc, out, err = module.run_command("%s version" % (ver_cmd))
+    if rc != 0:
+        return None
+    m = re.search("LVM version:\s+(\d+)\.(\d+)\.(\d+).*(\d{4}-\d{2}-\d{2})", out)
+    if not m:
+        return None
+    return mkversion(m.group(1), m.group(2), m.group(3))
 
 
 def main():
@@ -108,6 +121,13 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    # Determine if the "--yes" option should be used
+    version_found = get_lvm_version(module)
+    if version_found == None:
+        module.fail_json(msg="Failed to get LVM version number")
+    version_yesopt = mkversion(2, 2, 99) # First LVM with the "--yes" option
+    yesopt = "--yes" if version_found >= version_yesopt else ""
 
     vg = module.params['vg']
     lv = module.params['lv']
@@ -189,7 +209,7 @@ def main():
                 changed = True
             else:
                 lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
-                rc, _, err = module.run_command("%s -n %s -%s %s%s %s" % (lvcreate_cmd, lv, size_opt, size, size_unit, vg))
+                rc, _, err = module.run_command("%s %s -n %s -%s %s%s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, vg))
                 if rc == 0:
                     changed = True
                 else:
