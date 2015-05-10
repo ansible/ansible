@@ -47,6 +47,26 @@ options:
         required: true
 '''
 
+EXAMPLES = '''
+  - name: Create a test domain
+    webfaction_domain:
+      name: mydomain.com
+      state: present
+      subdomains:
+       - www
+       - blog
+      login_name: "{{webfaction_user}}"
+      login_password: "{{webfaction_passwd}}"
+
+  - name: Delete test domain and any subdomains
+    webfaction_domain:
+      name: mydomain.com
+      state: absent
+      login_name: "{{webfaction_user}}"
+      login_password: "{{webfaction_passwd}}"
+
+'''
+
 import socket
 import xmlrpclib
 
