@@ -1836,7 +1836,7 @@ class LinuxNetwork(Network):
                     if words[0] == 'inet':
                         if '/' in words[1]:
                             address, netmask_length = words[1].split('/')
-			    broadcast = words[3]
+			     broadcast = words[3]
                         else:
                             # pointopoint interfaces do not have a prefix
                             address = words[1]
@@ -1850,7 +1850,7 @@ class LinuxNetwork(Network):
                             interfaces[iface] = {}
                         if not secondary and "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
-					    		 'broadcast': broadcast,
+							  'broadcast': broadcast,
                                                          'netmask': netmask,
                                                          'network': network}
                         else:
@@ -1858,7 +1858,7 @@ class LinuxNetwork(Network):
                                 interfaces[iface]["ipv4_secondaries"] = []
                             interfaces[iface]["ipv4_secondaries"].append({
                                 'address': address,
-				'broadcast': broadcast,
+				 'broadcast': broadcast,
                                 'netmask': netmask,
                                 'network': network,
                             })
@@ -1869,7 +1869,7 @@ class LinuxNetwork(Network):
                                 interfaces[device]["ipv4_secondaries"] = []
                             interfaces[device]["ipv4_secondaries"].append({
                                 'address': address,
-				'broadcast': broadcast,
+				 'broadcast': broadcast,
                                 'netmask': netmask,
                                 'network': network,
                             })
