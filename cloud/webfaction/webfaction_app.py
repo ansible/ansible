@@ -72,7 +72,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(required=False, default='present'),
+            state = dict(required=False, choices=['present', 'absent'], default='present'),
             type = dict(required=True),
             autostart = dict(required=False, choices=BOOLEANS, default=False),
             extra_info = dict(required=False, default=""),

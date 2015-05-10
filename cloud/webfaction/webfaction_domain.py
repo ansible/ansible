@@ -57,7 +57,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(required=False, default='present'),
+            state = dict(required=False, choices=['present', 'absent'], default='present'),
             subdomains = dict(required=False, default=[]),
             login_name = dict(required=True),
             login_password = dict(required=True),
