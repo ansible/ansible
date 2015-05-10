@@ -45,6 +45,16 @@ options:
         required: true
 '''
 
+EXAMPLES = '''
+  - name: Create a mailbox
+    webfaction_mailbox:
+      mailbox_name="mybox"
+      mailbox_password="myboxpw"
+      state=present
+      login_name={{webfaction_user}}
+      login_password={{webfaction_passwd}}
+'''
+
 import socket
 import xmlrpclib
 

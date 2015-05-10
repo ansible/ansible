@@ -63,6 +63,16 @@ options:
         required: true
 '''
 
+EXAMPLES = '''
+  - name: Create a test app
+    webfaction_app:
+      name="my_wsgi_app1"
+      state=present
+      type=mod_wsgi35-python27 
+      login_name={{webfaction_user}}
+      login_password={{webfaction_passwd}}
+'''
+
 import xmlrpclib
 
 webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
