@@ -23,8 +23,9 @@ DOCUMENTATION = '''
 module: cs_sshkeypair
 short_description: Manages SSH keys on Apache CloudStack based clouds.
 description:
-  - If no key was found and no public key was provided and a new SSH
-    private/public key pair will be created and the private key will be returned.
+    - Create, register and remove SSH keys.
+    - If no key was found and no public key was provided and a new SSH
+      private/public key pair will be created and the private key will be returned.
 version_added: '2.0'
 author: René Moser
 options:
@@ -32,6 +33,16 @@ options:
     description:
       - Name of public key.
     required: true
+  domain:
+    description:
+      - Domain the public key is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the public key is related to.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the public key to be registered in.
@@ -111,10 +122,11 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def register_ssh_key(self, public_key):
         ssh_key = self.get_ssh_key()
-  
-        args = {}
-        args['projectid'] = self.get_project_id()
-        args['name'] = self.module.params.get('name')
+        args                = {}
+        args['domainid']    = self.get_domain('id')
+        args['account']     = self.get_account('name')
+        args['projectid']   = self.get_project('id')
+        args['name']        = self.module.params.get('name')
 
         res = None
         if not ssh_key:
@@ -142,9 +154,11 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
         ssh_key = self.get_ssh_key()
         if not ssh_key:
             self.result['changed'] = True
-            args = {}
-            args['projectid'] = self.get_project_id()
-            args['name'] = self.module.params.get('name')
+            args                = {}
+            args['domainid']    = self.get_domain('id')
+            args['account']     = self.get_account('name')
+            args['projectid']   = self.get_project('id')
+            args['name']        = self.module.params.get('name')
             if not self.module.check_mode:
                 res = self.cs.createSSHKeyPair(**args)
                 ssh_key = res['keypair']
@@ -155,9 +169,11 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
         ssh_key = self.get_ssh_key()
         if ssh_key:
             self.result['changed'] = True
-            args = {}
-            args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project_id()
+            args                = {}
+            args['domainid']    = self.get_domain('id')
+            args['account']     = self.get_account('name')
+            args['projectid']   = self.get_project('id')
+            args['name']        = self.module.params.get('name')
             if not self.module.check_mode:
                 res = self.cs.deleteSSHKeyPair(**args)
         return ssh_key
@@ -165,9 +181,11 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def get_ssh_key(self):
         if not self.ssh_key:
-            args = {}
-            args['projectid'] = self.get_project_id()
-            args['name'] = self.module.params.get('name')
+            args                = {}
+            args['domainid']    = self.get_domain('id')
+            args['account']     = self.get_account('name')
+            args['projectid']   = self.get_project('id')
+            args['name']        = self.module.params.get('name')
 
             ssh_keys = self.cs.listSSHKeyPairs(**args)
             if ssh_keys and 'sshkeypair' in ssh_keys:
@@ -179,10 +197,8 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
         if ssh_key:
             if 'fingerprint' in ssh_key:
                 self.result['fingerprint'] = ssh_key['fingerprint']
-
             if 'name' in ssh_key:
                 self.result['name'] = ssh_key['name']
-
             if 'privatekey' in ssh_key:
                 self.result['private_key'] = ssh_key['privatekey']
         return self.result
@@ -196,8 +212,10 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             public_key = dict(default=None),
+            domain = dict(default=None),
+            account = dict(default=None),
             project = dict(default=None),
             state = dict(choices=['present', 'absent'], default='present'),
             api_key = dict(default=None),
