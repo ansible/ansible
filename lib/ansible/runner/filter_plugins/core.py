@@ -32,6 +32,8 @@ from functools import partial
 import operator as py_operator
 from random import SystemRandom, shuffle
 import uuid
+import pwd
+import grp
 
 import yaml
 from jinja2.filters import environmentfilter
@@ -270,6 +272,12 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def getpwnam(user):
+    return pwd.getpwnam(user)
+
+def getgrnam(group):
+    return grp.getgrnam(group)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -348,4 +356,8 @@ class FilterModule(object):
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+
+            # users/groups
+            'getpwnam': getpwnam,
+            'getgrnam': getgrnam,
         }
