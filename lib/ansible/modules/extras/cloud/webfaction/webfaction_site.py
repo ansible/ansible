@@ -10,7 +10,7 @@ short_description: Add or remove a website on a Webfaction host
 description:
     - Add or remove a website on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser
-version_added: 2.0
+version_added: "2.0"
 notes:
     - Sadly, you I(do) need to know your webfaction hostname for the C(host) parameter.  But at least, unlike the API, you don't need to know the IP address - you can use a DNS name.
     - If a site of the same name exists in the account but on a different host, the operation will exit.
