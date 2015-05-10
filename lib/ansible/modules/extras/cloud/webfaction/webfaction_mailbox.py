@@ -56,7 +56,7 @@ def main():
         argument_spec=dict(
             mailbox_name=dict(required=True),
             mailbox_password=dict(required=True),
-            state=dict(required=False, default='present'),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             login_name=dict(required=True),
             login_password=dict(required=True),
         ),
