@@ -91,9 +91,6 @@ def openstack_full_argument_spec(**kwargs):
 
 def openstack_module_kwargs(**kwargs):
     ret = dict(
-        required_one_of=[
-            ['cloud', 'auth'],
-        ],
         mutually_exclusive=[
             ['auth', 'auth_token'],
             ['auth_plugin', 'auth_token'],
