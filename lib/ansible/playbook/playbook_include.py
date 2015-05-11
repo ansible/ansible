@@ -61,10 +61,11 @@ class PlaybookInclude(Base, Taggable):
 
         pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
 
-        # finally, playbook includes can specify a list of variables, which are simply
-        # used to update the vars of each play in the playbook
+        # finally, update each loaded playbook entry with any variables specified
+        # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
             entry.vars.update(new_obj.vars)
+            entry.tags = list(set(entry.tags).union(new_obj.tags))
 
         return pb
 
