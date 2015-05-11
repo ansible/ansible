@@ -17,13 +17,13 @@ New directives
 --------------
 
 become
-    equivalent to adding sudo: or su: to a play or task, set to true/yes to activate privilege escalation
+    equivalent to adding 'sudo:' or 'su:' to a play or task, set to 'true'/'yes' to activate privilege escalation
 
 become_user
-    equivalent to adding sudo_user: or su_user: to a play or task
+    equivalent to adding 'sudo_user:' or 'su_user:' to a play or task, set to user with desired privileges
 
 become_method
-    at play or task level overrides the default method set in ansible.cfg
+    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'
 
 
 New ansible\_ variables
