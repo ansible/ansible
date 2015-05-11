@@ -130,6 +130,7 @@ options:
     default: 'success'
     required: false
 requirements:
+  - "python >= 2.6"
   - boto
 
 '''

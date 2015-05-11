@@ -88,7 +88,10 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
-requirements: [ "linode-python", "pycurl" ]
+requirements:
+    - "python >= 2.6"
+    - "linode-python"
+    - "pycurl"
 author: Vincent Viallet
 notes:
   - LINODE_API_KEY env variable can be used instead
@@ -151,22 +154,21 @@ EXAMPLES = '''
      state: restarted
 '''
 
-import sys
 import time
 import os
 
 try:
     import pycurl
+    HAS_PYCURL = True
 except ImportError:
-    print("failed=True msg='pycurl required for this module'")
-    sys.exit(1)
+    HAS_PYCURL = False
 
 
 try:
     from linode import api as linode_api
+    HAS_LINODE = True
 except ImportError:
-    print("failed=True msg='linode-python required for this module'")
-    sys.exit(1)
+    HAS_LINODE = False
 
 
 def randompass():
@@ -456,6 +458,11 @@ def main():
         )
     )
 
+    if not HAS_PYCURL:
+        module.fail_json(msg='pycurl required for this module')
+    if not HAS_LINODE:
+        module.fail_json(msg='linode-python required for this module')
+
     state = module.params.get('state')
     api_key = module.params.get('api_key')
     name = module.params.get('name')
@@ -490,4 +497,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
