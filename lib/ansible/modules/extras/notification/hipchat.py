@@ -58,13 +58,13 @@ options:
     description:
       - API url if using a self-hosted hipchat server
     required: false
-    default: 'https://api.hipchat.com/v1/rooms/message'
+    default: 'https://api.hipchat.com/v2/room/{id_or_name}/message'
     version_added: 1.6.0
 
 
 # informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
-author: WAKAYAMA Shirou
+requirements: [ urllib, urllib2, requests, json ]
+author: WAKAYAMA Shirou, BOURDEL Paul
 '''
 
 EXAMPLES = '''
@@ -75,32 +75,27 @@ EXAMPLES = '''
 # HipChat module specific support methods.
 #
 
-MSG_URI = "https://api.hipchat.com/v1/rooms/message"
+MSG_URI = "https://api.hipchat.com/v2/room/{id_or_name}/message"
+NOTIFY_URI = "https://api.hipchat.com/v2/room/{id_or_name}/notification"
 
 def send_msg(module, token, room, msg_from, msg, msg_format='text',
              color='yellow', notify=False, api=MSG_URI):
     '''sending message to hipchat'''
 
-    params = {}
-    params['room_id'] = room
-    params['from'] = msg_from[:15]  # max length is 15
-    params['message'] = msg
-    params['message_format'] = msg_format
-    params['color'] = color
-    params['api'] = api
-
+    
+    payload = {'message': msg, 'color': color}
+    url_params = {'auth_token': token}
     if notify:
-        params['notify'] = 1
+      POST_URL = NOTIFY_URI
     else:
-        params['notify'] = 0
+      POST_URL = MSG_URI
 
-    url = api + "?auth_token=%s" % (token)
-    data = urllib.urlencode(params)
-    response, info = fetch_url(module, url, data=data)
-    if info['status'] == 200:
-        return response.read()
+    response = requests.post(POST_URL.replace('{id_or_name}',room), json=payload, params=url_params)
+
+    if response.status_code == 201 or response.status_code == 204:
+      return response.json
     else:
-        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
+      module.fail_json(msg="failed to send message, return status=%s" % str(response.status_code))
 
 
 # ===========================================
@@ -137,7 +132,7 @@ def main():
     try:
         send_msg(module, token, room, msg_from, msg, msg_format, color, notify, api)
     except Exception, e:
-        module.fail_json(msg="unable to send msg: %s" % e)
+        module.fail_json(msg="unable to sent msg: %s" % e)
 
     changed = True
     module.exit_json(changed=changed, room=room, msg_from=msg_from, msg=msg)
@@ -145,5 +140,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+import requests, json
 
 main()
