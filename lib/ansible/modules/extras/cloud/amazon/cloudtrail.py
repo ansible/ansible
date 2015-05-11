@@ -19,9 +19,11 @@ DOCUMENTATION = """
 module: cloudtrail
 short_description: manage CloudTrail creation and deletion
 description:
-  - Creates or deletes CloudTrail configuration. Ensures logging is also enabled. This module has a dependency on python-boto >= 2.21.
+  - Creates or deletes CloudTrail configuration. Ensures logging is also enabled.
 version_added: "2.0"
 author: Ted Timmons
+requirements:
+  - "boto >= 2.21"
 options:
   state:
     description:
