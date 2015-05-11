@@ -303,7 +303,10 @@ def main():
     # do we need to change perms?
     for filename in handler.files_in_archive:
         file_args['path'] = os.path.join(dest, filename)
-        res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+        try:
+            res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+        except (IOError, OSError), e:
+            module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e))
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
