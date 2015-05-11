@@ -8,3 +8,4 @@ addons:
       - python2.4
 script:
   - python2.4 -m compileall -fq -x 'cloud/|/accelerate.py' .
+  - python2.4 -m compileall -fq cloud/amazon/_ec2_ami_search.py cloud/amazon/ec2_facts.py
