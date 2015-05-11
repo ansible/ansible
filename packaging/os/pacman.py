@@ -76,7 +76,7 @@ EXAMPLES = '''
 # Recursively remove package baz
 - pacman: name=baz state=absent recurse=yes
 
-# Run the equivalent of "pacman -Syy" as a separate step
+# Run the equivalent of "pacman -Sy" as a separate step
 - pacman: update_cache=yes
 '''
 
@@ -122,7 +122,7 @@ def query_package(module, name, state="present"):
 
 
 def update_package_db(module):
-    cmd = "pacman -Syy"
+    cmd = "pacman -Sy"
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
