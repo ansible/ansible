@@ -161,6 +161,7 @@ class Cli(object):
             become_pass=becomepass,
             become_user=options.become_user,
             extra_vars=extra_vars,
+            check_first=options.check_first,
         )
 
         if options.seconds:

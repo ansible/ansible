@@ -153,6 +153,7 @@ class Runner(object):
         no_log=False,                       # option to enable/disable logging for a given task
         run_once=False,                     # option to enable/disable host bypass loop for a given task
         become=False,                       # whether to run privilege escalation or not
+        check_first=False,
         become_method=C.DEFAULT_BECOME_METHOD,
         become_user=C.DEFAULT_BECOME_USER,      # ex: 'root'
         become_pass=C.DEFAULT_BECOME_PASS,      # ex: 'password123' or None
@@ -217,6 +218,7 @@ class Runner(object):
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
+        self.check_first      = check_first
 
         if self.transport == 'smart':
             # If the transport is 'smart', check to see if certain conditions
@@ -1482,7 +1484,17 @@ class Runner(object):
 
         elif self.forks > 1:
             try:
-                results = self._parallel_exec(hosts)
+                if self.become and self.check_first:
+                    test_result = self._executor(hosts.pop(), None)
+                    if test_result.is_successful():
+                        results = self._parallel_exec(hosts)
+                        results.append(test_result)
+                    else:
+                        return self._partition_results([test_result])
+                else:
+                    results = self._parallel_exec(hosts)
+
+                return self._partition_results(results)
             except IOError, ie:
                 print ie.errno
                 if ie.errno == 32:
