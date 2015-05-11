@@ -23,7 +23,9 @@ class ModuleDocFragment(object):
 options:
   cloud:
     description:
-      - Named cloud to operate against. Provides default values for I(auth) and I(auth_plugin)
+      - Named cloud to operate against. Provides default values for I(auth) and
+        I(auth_type). This parameter is not needed if I(auth) is provided or if
+        OpenStack OS_* environment variables are present.
     required: false
   auth:
     description:
@@ -32,7 +34,8 @@ options:
         I(auth_url), I(username), I(password), I(project_name) and any
         information about domains if the cloud supports them. For other plugins,
         this param will need to contain whatever parameters that auth plugin
-        requires. This parameter is not needed if a named cloud is provided.
+        requires. This parameter is not needed if a named cloud is provided or
+        OpenStack OS_* environment variables are present.
     required: false
   auth_type:
     description:
