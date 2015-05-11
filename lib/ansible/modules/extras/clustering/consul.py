@@ -38,6 +38,7 @@ description:
    changed occurred. An api method is planned to supply this metadata so at that
    stage change management will be added.
 requirements:
+  - "python >= 2.6"
   - python-consul
   - requests
 version_added: "1.9"

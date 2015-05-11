@@ -28,7 +28,8 @@ description:
 version_added: "2.0"
 author: Tony Minfei Ding, Harrison Gu
 requirements:
-    - zabbix-api python module
+    - "python >= 2.6"
+    - zabbix-api
 options:
     server_url:
         description:
