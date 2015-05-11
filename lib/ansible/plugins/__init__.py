@@ -55,9 +55,10 @@ class PluginLoader:
     The first match is used.
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases={}):
+    def __init__(self, class_name, package, config, subdir, aliases={}, required_base_class=None):
 
         self.class_name         = class_name
+        self.base_class         = required_base_class
         self.package            = package
         self.config             = config
         self.subdir             = subdir
@@ -87,11 +88,12 @@ class PluginLoader:
         config     = data.get('config')
         subdir     = data.get('subdir')
         aliases    = data.get('aliases')
+        base_class = data.get('base_class')
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')
         PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
 
-        self.__init__(class_name, package, config, subdir, aliases)
+        self.__init__(class_name, package, config, subdir, aliases, base_class)
         self._extra_dirs = data.get('_extra_dirs', [])
         self._searched_paths = data.get('_searched_paths', set())
 
@@ -102,6 +104,7 @@ class PluginLoader:
 
         return dict(
             class_name        = self.class_name,
+            base_class        = self.base_class,
             package           = self.package,
             config            = self.config,
             subdir            = self.subdir,
@@ -268,9 +271,13 @@ class PluginLoader:
             self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
 
         if kwargs.get('class_only', False):
-            return getattr(self._module_cache[path], self.class_name)
+            obj = getattr(self._module_cache[path], self.class_name)
         else:
-            return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+            obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+            if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
+                return None
+
+        return obj
 
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
@@ -291,6 +298,9 @@ class PluginLoader:
                 else:
                     obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
+                    if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
+                        continue
+
                 # set extra info on the module, in case we want it later
                 setattr(obj, '_original_path', path)
                 yield obj
@@ -299,21 +309,22 @@ action_loader = PluginLoader(
     'ActionModule',
     'ansible.plugins.action',
     C.DEFAULT_ACTION_PLUGIN_PATH,
-    'action_plugins'
+    'action_plugins',
+    required_base_class='ActionBase',
 )
 
 cache_loader = PluginLoader(
     'CacheModule',
     'ansible.plugins.cache',
     C.DEFAULT_CACHE_PLUGIN_PATH,
-    'cache_plugins'
+    'cache_plugins',
 )
 
 callback_loader = PluginLoader(
     'CallbackModule',
     'ansible.plugins.callback',
     C.DEFAULT_CALLBACK_PLUGIN_PATH,
-    'callback_plugins'
+    'callback_plugins',
 )
 
 connection_loader = PluginLoader(
@@ -321,7 +332,8 @@ connection_loader = PluginLoader(
     'ansible.plugins.connections',
     C.DEFAULT_CONNECTION_PLUGIN_PATH,
     'connection_plugins',
-    aliases={'paramiko': 'paramiko_ssh'}
+    aliases={'paramiko': 'paramiko_ssh'},
+    required_base_class='ConnectionBase',
 )
 
 shell_loader = PluginLoader(
@@ -335,28 +347,29 @@ module_loader = PluginLoader(
     '',
     'ansible.modules',
     C.DEFAULT_MODULE_PATH,
-    'library'
+    'library',
 )
 
 lookup_loader = PluginLoader(
     'LookupModule',
     'ansible.plugins.lookup',
     C.DEFAULT_LOOKUP_PLUGIN_PATH,
-    'lookup_plugins'
+    'lookup_plugins',
+    required_base_class='LookupBase',
 )
 
 vars_loader = PluginLoader(
     'VarsModule',
     'ansible.plugins.vars',
     C.DEFAULT_VARS_PLUGIN_PATH,
-    'vars_plugins'
+    'vars_plugins',
 )
 
 filter_loader = PluginLoader(
     'FilterModule',
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
-    'filter_plugins'
+    'filter_plugins',
 )
 
 fragment_loader = PluginLoader(
@@ -371,4 +384,5 @@ strategy_loader = PluginLoader(
     'ansible.plugins.strategies',
     None,
     'strategy_plugins',
+    required_base_class='StrategyBase',
 )

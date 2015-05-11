@@ -212,9 +212,13 @@ class VariableManager:
         # FIXME: make sure all special vars are here
         # Finally, we create special vars
 
-        if host and self._inventory is not None:
-            hostvars = HostVars(vars_manager=self, inventory=self._inventory, loader=loader)
-            all_vars['hostvars'] = hostvars
+
+        if host:
+            all_vars['groups'] = [group.name for group in host.get_groups()]
+
+            if self._inventory is not None:
+                hostvars = HostVars(vars_manager=self, inventory=self._inventory, loader=loader)
+                all_vars['hostvars'] = hostvars
 
         if self._inventory is not None:
             all_vars['inventory_dir'] = self._inventory.basedir()

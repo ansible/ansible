@@ -111,7 +111,7 @@ class WorkerProcess(multiprocessing.Process):
                     # apply the given task's information to the connection info,
                     # which may override some fields already set by the play or
                     # the options specified on the command line
-                    new_connection_info = connection_info.set_task_override(task)
+                    new_connection_info = connection_info.set_task_and_host_override(task=task, host=host)
 
                     # execute the task and build a TaskResult from the result
                     debug("running TaskExecutor() for %s/%s" % (host, task))
