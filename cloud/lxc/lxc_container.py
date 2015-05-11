@@ -149,7 +149,10 @@ options:
         description:
           - list of 'key=value' options to use when configuring a container.
         required: false
-requirements: ['lxc >= 1.0', 'python2-lxc >= 0.1']
+requirements:
+  - 'lxc >= 1.0'
+  - 'python >= 2.6'
+  - 'python2-lxc >= 0.1'
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already exists in the users namespace the module will

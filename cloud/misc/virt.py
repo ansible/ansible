@@ -55,7 +55,9 @@ options:
       - XML document used with the define command
     required: false
     default: null
-requirements: [ "libvirt" ]
+requirements:
+    - "python >= 2.6"
+    - "libvirt-python"
 author: Michael DeHaan, Seth Vidal
 '''
 
