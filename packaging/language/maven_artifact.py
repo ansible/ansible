@@ -39,8 +39,8 @@ description:
     - available.
 author: Chris Schmidt <chris.schmidt () contrastsecurity.com>
 requirements:
-    - python libxml
-    - python urllib2
+    - "python >= 2.6"
+    - lxml
 options:
     group_id:
         description: The Maven groupId coordinate
