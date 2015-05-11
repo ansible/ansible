@@ -34,6 +34,7 @@ from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins import shell_loader
 
 from ansible.utils.debug import debug
+from ansible.utils.unicode import to_bytes
 
 class ActionBase:
 
@@ -51,20 +52,20 @@ class ActionBase:
         self._loader            = loader
         self._templar           = templar
         self._shared_loader_obj = shared_loader_obj
-        self._shell             = self.get_shell()
+
+        # load the shell plugin for this action/connection
+        if self._connection_info.shell:
+            shell_type = self._connection_info.shell
+        elif hasattr(connection, '_shell'):
+            shell_type = getattr(connection, '_shell')
+        else:
+            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
+
+        self._shell = shell_loader.get(shell_type)
+        if not self._shell:
+            raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
 
         self._supports_check_mode = True
-
-    def get_shell(self):
-
-        if hasattr(self._connection, '_shell'):
-            shell_plugin = getattr(self._connection, '_shell', '')
-        else:
-            shell_plugin = shell_loader.get(os.path.basename(C.DEFAULT_EXECUTABLE))
-            if shell_plugin is None:
-                shell_plugin = shell_loader.get('sh')
-
-        return shell_plugin
 
     def _configure_module(self, module_name, module_args):
         '''
@@ -201,18 +202,13 @@ class ActionBase:
         Copies the module data out to the temporary module path.
         '''
 
-        if type(data) == dict:
+        if isinstance(data, dict):
             data = jsonify(data)
 
         afd, afile = tempfile.mkstemp()
         afo = os.fdopen(afd, 'w')
         try:
-            # FIXME: is this still necessary?
-            #if not isinstance(data, unicode):
-            #    #ensure the data is valid UTF-8
-            #    data = data.decode('utf-8')
-            #else:
-            #    data = data.encode('utf-8')
+            data = to_bytes(data, errors='strict')
             afo.write(data)
         except Exception as e:
             #raise AnsibleError("failure encoding into utf-8: %s" % str(e))

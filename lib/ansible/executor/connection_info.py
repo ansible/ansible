@@ -29,6 +29,20 @@ from ansible.errors import AnsibleError
 
 __all__ = ['ConnectionInformation']
 
+# the magic variable mapping dictionary below is used to translate
+# host/inventory variables to fields in the ConnectionInformation
+# object. The dictionary values are tuples, to account for aliases
+# in variable names.
+
+MAGIC_VARIABLE_MAPPING = dict(
+   connection       = ('ansible_connection',),
+   remote_addr      = ('ansible_ssh_host', 'ansible_host'),
+   remote_user      = ('ansible_ssh_user', 'ansible_user'),
+   port             = ('ansible_ssh_port', 'ansible_port'),
+   password         = ('ansible_ssh_pass', 'ansible_password'),
+   private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
+   shell            = ('ansible_shell_type',),
+)
 
 class ConnectionInformation:
 
@@ -51,6 +65,7 @@ class ConnectionInformation:
         self.port             = None
         self.private_key_file = C.DEFAULT_PRIVATE_KEY_FILE
         self.timeout          = C.DEFAULT_TIMEOUT
+        self.shell            = None
 
         # privilege escalation
         self.become        = None
@@ -170,7 +185,7 @@ class ConnectionInformation:
             else:
                 setattr(self, field, value)
 
-    def set_task_override(self, task):
+    def set_task_and_host_override(self, task, host):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
@@ -179,11 +194,21 @@ class ConnectionInformation:
         new_info = ConnectionInformation()
         new_info.copy(self)
 
+        # loop through a subset of attributes on the task object and set
+        # connection fields based on their values
         for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val:
                     setattr(new_info, attr, attr_val)
+
+        # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
+        # connection info object with 'magic' variables from inventory
+        variables = host.get_vars()
+        for (attr, variable_names) in MAGIC_VARIABLE_MAPPING.iteritems():
+            for variable_name in variable_names:
+                if variable_name in variables:
+                    setattr(new_info, attr, variables[variable_name])
 
         return new_info
 
