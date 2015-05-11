@@ -1482,7 +1482,15 @@ class Runner(object):
 
         elif self.forks > 1:
             try:
-                results = self._parallel_exec(hosts)
+                if self.become:
+                    test_result = self._executor(hosts.pop(), None)
+                    if test_result.is_successful():
+                        results = self._parallel_exec(hosts)
+                        results.append(test_result)
+                    else:
+                        return self._partition_results([test_result])
+
+                return self._partition_results(self._parallel_exec(hosts))
             except IOError, ie:
                 print ie.errno
                 if ie.errno == 32:
