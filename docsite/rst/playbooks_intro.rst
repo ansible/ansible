@@ -148,7 +148,7 @@ Remote users can also be defined per task::
     The `remote_user` parameter for tasks was added in 1.4.
 
 
-Support for running things from as another user is also available (see :doc:`become`)::
+Support for running things as another user is also available (see :doc:`become`)::
 
     ---
     - hosts: webservers
