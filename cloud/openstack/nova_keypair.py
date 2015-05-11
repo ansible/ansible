@@ -17,12 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
 try:
     from novaclient.v1_1 import client as nova_client
     from novaclient import exceptions as exc
-    import time
+    HAS_NOVACLIENT = True
 except ImportError:
-    print("failed=True msg='novaclient is required for this module to work'")
+    HAS_NOVACLIENT = False
 
 DOCUMENTATION = '''
 ---
@@ -73,7 +74,9 @@ options:
      required: false
      default: None
 
-requirements: ["novaclient"]
+requirements:
+    - "python >= 2.6"
+    - "python-novaclient"
 '''
 EXAMPLES = '''
 # Creates a key pair with the running users public key
@@ -94,6 +97,8 @@ def main():
         state                           = dict(default='present', choices=['absent', 'present'])
     ))
     module = AnsibleModule(argument_spec=argument_spec)
+    if not HAVE_NOVACLIENT:
+        module.fail_json(msg='python-novaclient is required for this module to work')
 
     nova = nova_client.Client(module.params['login_username'],
                               module.params['login_password'],
@@ -135,5 +140,6 @@ def main():
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
 

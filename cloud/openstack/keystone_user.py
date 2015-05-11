@@ -72,7 +72,9 @@ options:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
      default: present
-requirements: [ python-keystoneclient ]
+requirements:
+    - "python >= 2.6"
+    -  python-keystoneclient
 author: Lorin Hochstein
 '''
 

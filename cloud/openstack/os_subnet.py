@@ -91,7 +91,9 @@ options:
         - A list of host route dictionaries for the subnet.
      required: false
      default: None
-requirements: ["shade"]
+requirements:
+    - "python >= 2.6"
+    - "shade"
 '''
 
 EXAMPLES = '''
@@ -251,4 +253,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ '__main__':
+    main()

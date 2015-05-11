@@ -28,9 +28,12 @@ module: os_server_facts
 short_description: Retrieve facts about a compute instance
 version_added: "2.0"
 description:
-   - Retrieve facts about a server instance from OpenStack.
+    - Retrieve facts about a server instance from OpenStack.
 notes:
-   - Facts are placed in the C(openstack) variable.
+    - Facts are placed in the C(openstack) variable.
+requirements:
+    - "python >= 2.6"
+    - "shade"
 options:
    server:
      description:
@@ -71,5 +74,6 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
 

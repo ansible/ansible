@@ -28,7 +28,10 @@ module: os_auth
 short_description: Retrieve an auth token
 version_added: "2.0"
 description:
-   - Retrieve an auth token from an OpenStack Cloud
+    - Retrieve an auth token from an OpenStack Cloud
+requirements:
+    - "python >= 2.6"
+    - "shade"
 extends_documentation_fragment: openstack
 '''
 
@@ -61,4 +64,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()

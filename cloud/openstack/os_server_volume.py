@@ -53,7 +53,9 @@ options:
       - Device you want to attach. Defaults to auto finding a device name.
      required: false
      default: None
-requirements: ["shade"]
+requirements:
+    - "python >= 2.6"
+    - "shade"
 '''
 
 EXAMPLES = '''
@@ -148,4 +150,5 @@ def main():
 # this is magic, see lib/ansible/module_utils/common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
