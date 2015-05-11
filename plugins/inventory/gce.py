@@ -215,6 +215,18 @@ class GceInventory(object):
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+
+        # If there is no public IP listed, set the public_ip field to a null.
+        if inst.public_ips.__len__() == 0:
+          inst.public_ips=[None]
+
+        # Use private IPs if we're told to, or we've got no choice.
+        if os.environ.has_key("ANSIBLE_USE_PRIVATE_SSH") or inst.public_ips==[None]:
+          ansible_ssh_host=inst.private_ips[0]
+        else:
+          ansible_ssh_host=inst.public_ips[0]
+
+
         return {
             'gce_uuid': inst.uuid,
             'gce_id': inst.id,
@@ -230,7 +242,7 @@ class GceInventory(object):
             'gce_metadata': md,
             'gce_network': net,
             # Hosts don't have a public name, so we add an IP
-            'ansible_ssh_host': inst.public_ips[0]
+            'ansible_ssh_host': ansible_ssh_host
         }
 
     def get_instance(self, instance_name):
