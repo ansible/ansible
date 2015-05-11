@@ -7,4 +7,4 @@ addons:
     packages:
       - python2.4
 script:
-  - python2.4 -m compileall -fq -x 'cloud/|zabbix|layman.py|maven_artifact.py' .
+  - python2.4 -m compileall -fq -x 'cloud/|zabbix|layman.py|maven_artifact.py|consul' .
