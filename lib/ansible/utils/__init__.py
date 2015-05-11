@@ -1007,6 +1007,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=None)
+    parser.add_option('--check-first', dest='check_first', action='store_true', default=False,
+        help="When running as another user, first run the command 1 time to prevent locking of users.")
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
