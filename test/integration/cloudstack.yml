@@ -11,3 +11,4 @@
     - { role: test_cs_securitygroup_rule,   tags: test_cs_securitygroup_rule }
     - { role: test_cs_instance,             tags: test_cs_instance }
     - { role: test_cs_instancegroup,        tags: test_cs_instancegroup }
+    - { role: test_cs_account,              tags: test_cs_account }
