@@ -87,7 +87,9 @@ options:
     required: true
     default: null
 
-requirements: [ "boto 2.9+" ]
+requirements:
+    - "python >= 2.6"
+    - "boto >= 2.9"
 
 author: benno@ansible.com Note. Most of the code has been taken from the S3 module.
 
@@ -116,16 +118,15 @@ EXAMPLES = '''
 - gc_storage: bucket=mybucket mode=delete
 '''
 
-import sys
 import os
 import urlparse
 import hashlib
 
 try:
     import boto
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto 2.9+ required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 def grant_check(module, gs, obj):
     try:
@@ -377,6 +378,9 @@ def main():
         ),
     )
 
+    if not HAS_BOTO:
+        module.fail_json(msg='boto 2.9+ required for this module')
+
     bucket        = module.params.get('bucket')
     obj           = module.params.get('object')
     src           = module.params.get('src')
@@ -445,5 +449,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

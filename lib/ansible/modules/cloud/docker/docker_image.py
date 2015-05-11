@@ -72,7 +72,10 @@ options:
     required: false
     default: 600
     aliases: []
-requirements: [ "docker-py" ]
+requirements:
+    - "python >= 2.6"
+    - "docker-py"
+    - "requests"
 '''
 
 EXAMPLES = '''
@@ -102,21 +105,31 @@ Remove image from local docker storage:
 
 '''
 
-try:
-    import sys
-    import re
-    import json
-    import docker.client
-    from requests.exceptions import *
-    from urlparse import urlparse
-except ImportError, e:
-    print "failed=True msg='failed to import python module: %s'" % e
-    sys.exit(1)
+import re
+from urlparse import urlparse
 
 try:
-    from docker.errors import APIError as DockerAPIError
+    import json
 except ImportError:
-    from docker.client import APIError as DockerAPIError
+    import simplejson as json
+
+try:
+    from requests.exceptions import *
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+try:
+    import docker.client
+    HAS_DOCKER_CLIENT = True
+except ImportError:
+    HAS_DOCKER_CLIENT = False
+
+if HAS_DOCKER_CLIENT:
+    try:
+        from docker.errors import APIError as DockerAPIError
+    except ImportError:
+        from docker.client import APIError as DockerAPIError
 
 class DockerImageManager:
 
@@ -209,6 +222,10 @@ def main():
             timeout         = dict(default=600, type='int'),
         )
     )
+    if not HAS_DOCKER_CLIENT:
+        module.fail_json(msg='docker-py is needed for this module')
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is needed for this module')
 
     try:
         manager = DockerImageManager(module)
@@ -245,8 +262,8 @@ def main():
 
     except RequestException as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg=repr(e))
-        
+
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

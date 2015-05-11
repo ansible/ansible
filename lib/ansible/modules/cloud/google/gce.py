@@ -137,7 +137,9 @@ options:
     default: "true"
     aliases: []
 
-requirements: [ "libcloud" ]
+requirements:
+    - "python >= 2.6"
+    - "apache-libcloud >= 0.13.3"
 notes:
   - Either I(name) or I(instance_names) is required.
 author: Eric Johnson <erjohnso@google.com>
@@ -202,25 +204,21 @@ EXAMPLES = '''
 
 '''
 
-import sys
-
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceInUseError, ResourceNotFoundError
     _ = Provider.GCE
+    HAS_LIBCLOUD = True
 except ImportError:
-    print("failed=True " + \
-        "msg='libcloud with GCE support (0.13.3+) required for this module'")
-    sys.exit(1)
+    HAS_LIBCLOUD = False
 
 try:
     from ast import literal_eval
+    HAS_PYTHON26 = True
 except ImportError:
-    print("failed=True " + \
-        "msg='GCE module requires python's 'ast' module, python v2.6+'")
-    sys.exit(1)
+    HAS_PYTHON26 = False
 
 
 def get_instance_info(inst):
@@ -323,11 +321,9 @@ def create_instances(module, gce, instance_names):
             if not isinstance(md, dict):
                 raise ValueError('metadata must be a dict')
         except ValueError, e:
-            print("failed=True msg='bad metadata: %s'" % str(e))
-            sys.exit(1)
+            module.fail_json(msg='bad metadata: %s' % str(e))
         except SyntaxError, e:
-            print("failed=True msg='bad metadata syntax'")
-            sys.exit(1)
+            module.fail_json(msg='bad metadata syntax')
 
         items = []
         for k,v in md.items():
@@ -450,6 +446,11 @@ def main():
         )
     )
 
+    if not HAS_PYTHON26:
+        module.fail_json(msg="GCE module requires python's 'ast' module, python v2.6+")
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg='libcloud with GCE support (0.13.3+) required for this module')
+
     gce = gce_connect(module)
 
     image = module.params.get('image')
@@ -503,11 +504,10 @@ def main():
 
 
     json_output['changed'] = changed
-    print json.dumps(json_output)
-    sys.exit(0)
+    module.exit_json(**json_output)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.gce import *
-
-main()
+if __name__ == '__main__':
+    main()

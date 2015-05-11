@@ -131,7 +131,9 @@ options:
     default: null
     aliases: []
 
-requirements: [ "libcloud" ]
+requirements:
+    - "python >= 2.6"
+    - "apache-libcloud >= 0.13.3"
 author: Eric Johnson <erjohnso@google.com>
 '''
 
@@ -147,9 +149,6 @@ EXAMPLES = '''
     httphealthcheck_path: "/up"
 '''
 
-import sys
-
-
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
@@ -158,10 +157,9 @@ try:
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError
     _ = Provider.GCE
+    HAS_LIBCLOUD = True
 except ImportError:
-    print("failed=True " + \
-            "msg='libcloud with GCE support required for this module.'")
-    sys.exit(1)
+    HAS_LIBCLOUD = False
 
 
 def main():
@@ -187,6 +185,9 @@ def main():
             project_id = dict(),
         )
     )
+
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg='libcloud with GCE support (0.13.3+) required for this module.')
 
     gce = gce_connect(module)
 
@@ -325,11 +326,11 @@ def main():
 
 
     json_output['changed'] = changed
-    print json.dumps(json_output)
-    sys.exit(0)
+    module.exit_json(**json_output)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.gce import *
 
-main()
+if __name__ == '__main__':
+    main()

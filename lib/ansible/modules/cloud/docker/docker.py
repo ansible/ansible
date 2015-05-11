@@ -261,7 +261,10 @@ options:
     version_added: "1.9"
 
 author: Cove Schneider, Joshua Conner, Pavel Antonov, Ash Wilson
-requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
+requirements:
+    - "python >= 2.6"
+    - "docker-py >= 0.3.0"
+    - "The docker server >= 0.10.0"
 '''
 
 EXAMPLES = '''
@@ -400,8 +403,7 @@ def _human_to_bytes(number):
             return int(number[:-len(each)]) * (1024 ** i)
         i = i + 1
 
-    print "failed=True msg='Could not convert %s to integer'" % (number)
-    sys.exit(1)
+    raise ValueError('Could not convert %s to integer' % (number,))
 
 
 def _ansible_facts(container_list):
@@ -912,7 +914,11 @@ class DockerManager(object):
 
             # MEM_LIMIT
 
-            expected_mem = _human_to_bytes(self.module.params.get('memory_limit'))
+            try:
+                expected_mem = _human_to_bytes(self.module.params.get('memory_limit'))
+            except ValueError as e:
+                self.module.fail_json(msg=str(e))
+
             actual_mem = container['Config']['Memory']
 
             if expected_mem and actual_mem != expected_mem:
@@ -1205,11 +1211,16 @@ class DockerManager(object):
             self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
     def create_containers(self, count=1):
+        try:
+            mem_limit = _human_to_bytes(self.module.params.get('memory_limit'))
+        except ValueError as e:
+            self.module.fail_json(msg=str(e))
+
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
-                  'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
+                  'mem_limit':    mem_limit,
                   'environment':  self.env,
                   'hostname':     self.module.params.get('hostname'),
                   'domainname':   self.module.params.get('domainname'),
