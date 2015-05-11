@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: azure
 short_description: create or terminate a virtual machine in azure
 description:
-     - Creates or terminates azure instances. When created optionally waits for it to be 'running'. This module has a dependency on python-azure >= 0.7.1
+     - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
 options:
   name:
@@ -111,7 +111,9 @@ options:
     default: 'present'
     aliases: []
 
-requirements: [ "azure" ]
+requirements:
+    - "python >= 2.6"
+    - "azure >= 0.7.1"
 author: John Whitbeck
 '''
 
@@ -141,7 +143,6 @@ EXAMPLES = '''
 import base64
 import datetime
 import os
-import sys
 import time
 from urlparse import urlparse
 from ansible.module_utils.facts import * # TimeoutError
@@ -196,9 +197,9 @@ try:
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
                                          ConfigurationSetInputEndpoint)
+    HAS_AZURE = True
 except ImportError:
-    print "failed=True msg='azure required for this module'"
-    sys.exit(1)
+    HAS_AZURE = False
 
 from distutils.version import LooseVersion
 from types import MethodType
@@ -463,6 +464,8 @@ def main():
             wait_timeout_redirects=dict(default=300)
         )
     )
+    if not HAS_AZURE:
+        module.fail_json(msg='azure python module required for this module')
     # create azure ServiceManagementService object
     subscription_id, management_cert_path = get_azure_creds(module)
 
@@ -529,5 +532,5 @@ class Wrapper(object):
 
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

@@ -100,7 +100,9 @@ options:
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
   - Version 2 of DigitalOcean API is used.
-requirements: [ dopy ]
+requirements:
+  - "python >= 2.6"
+  - dopy
 '''
 
 
@@ -162,20 +164,18 @@ EXAMPLES = '''
       image_id=fedora-19-x64
 '''
 
-import sys
 import os
 import time
+from distutils.version import LooseVersion
 
+HAS_DOPY = True
 try:
     import dopy
     from dopy.manager import DoError, DoManager
-except ImportError, e:
-    print "failed=True msg='dopy >= 0.3.2 required for this module'"
-    sys.exit(1)
-
-if dopy.__version__ < '0.3.2':
-    print "failed=True msg='dopy >= 0.3.2 required for this module'"
-    sys.exit(1)
+    if LooseVersion(dopy.__version__) < LooseVersion('0.3.2'):
+        HAS_DOPY = False
+except ImportError:
+    HAS_DOPY = False
 
 class TimeoutError(DoError):
     def __init__(self, msg, id):
@@ -421,6 +421,8 @@ def main():
             ['id', 'name'],
         ),
     )
+    if not HAS_DOPY:
+        module.fail_json(msg='dopy >= 0.3.2 required for this module')
 
     try:
         core(module)
@@ -432,4 +434,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

@@ -120,7 +120,9 @@ notes:
   - This module should run from a system that can access vSphere directly.
     Either by using local_action, or using delegate_to.
 author: Richard Hoop <wrhoop@gmail.com>
-requirements: [ pysphere ]
+requirements:
+  - "python >= 2.6"
+  - pysphere
 '''
 
 
@@ -1320,4 +1322,5 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+if __name__ == '__main__':
+    main()

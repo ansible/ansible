@@ -63,7 +63,9 @@ options:
     version_added: "1.6"
 notes:
     - See the advanced playbooks chapter for more about using accelerated mode.
-requirements: [ "python-keyczar" ]
+requirements:
+    - "python >= 2.6"
+    - "python-keyczar"
 author: James Cammarata
 '''
 

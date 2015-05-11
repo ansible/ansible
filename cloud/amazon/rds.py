@@ -241,7 +241,9 @@ options:
     default: null
     aliases: []
     version_added: 1.9
-requirements: [ "boto" ]
+requirements:
+    - "python >= 2.6"
+    - "boto"
 author: Bruce Pennypacker, Will Thames
 '''
 

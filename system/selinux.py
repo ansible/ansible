@@ -60,9 +60,9 @@ import sys
 
 try:
     import selinux
+    HAS_SELINUX = True
 except ImportError:
-    print "failed=True msg='libselinux-python required for this module'"
-    sys.exit(1)
+    HAS_SELINUX = False
 
 # getter subroutines
 def get_config_state(configfile):
@@ -129,6 +129,9 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    if not HAS_SELINUX:
+        module.fail_json(msg='libselinux-python required for this module')
 
     # global vars
     changed=False
@@ -204,5 +207,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
 
