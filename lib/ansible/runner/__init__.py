@@ -1491,8 +1491,10 @@ class Runner(object):
                         results.append(test_result)
                     else:
                         return self._partition_results([test_result])
+                else:
+                    results = self._parallel_exec(hosts)
 
-                return self._partition_results(self._parallel_exec(hosts))
+                return self._partition_results(results)
             except IOError, ie:
                 print ie.errno
                 if ie.errno == 32:
