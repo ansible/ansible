@@ -62,6 +62,7 @@ options:
     aliases: []
     version_added: "1.6"
 requirements:
+  - "python >= 2.6"
   - boto
 notes:
   - If parameters are not set within the module, the following
