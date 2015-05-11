@@ -25,6 +25,7 @@ description:
    rules in a consul cluster via the agent. For more details on using and 
    configuring ACLs, see https://www.consul.io/docs/internals/acl.html.
 requirements:
+  - "python >= 2.6"
   - python-consul
   - pyhcl
   - requests

@@ -26,7 +26,9 @@ short_description: Add or remove a host group to Zabbix.
 description:
     - This module uses the Zabbix API to add and remove host groups.
 version_added: '1.8'
-requirements: [ 'zabbix-api' ]
+requirements:
+    - "python >= 2.6"
+    - zabbix-api
 options:
     state:
         description:

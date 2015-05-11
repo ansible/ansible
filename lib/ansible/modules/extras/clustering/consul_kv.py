@@ -28,6 +28,7 @@ description:
     represents a prefix then Note that when a value is removed, the existing
     value if any is returned as part of the results.
 requirements:
+  - "python >= 2.6"
   - python-consul
   - requests
 version_added: "1.9"
