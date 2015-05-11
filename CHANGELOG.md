@@ -20,6 +20,7 @@ New Modules:
   * consul_kv
   * consul_session
   * cloudtrail
+  * cloudstack: cs_account
   * cloudstack: cs_affinitygroup
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
