@@ -78,7 +78,9 @@ options:
     default: null
     aliases: []
 
-requirements: [ "libcloud" ]
+requirements:
+    - "python >= 2.6"
+    - "apache-libcloud"
 author: Peter Tan <ptan@google.com>
 '''
 

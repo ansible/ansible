@@ -152,7 +152,9 @@ options:
     aliases: []
     choices: ['present', 'absent', 'shutdown', 'started', 'restarted']
 
-requirements: [ "ovirt-engine-sdk" ]
+requirements:
+  - "python >= 2.6"
+  - "ovirt-engine-sdk-python"
 '''
 EXAMPLES = '''
 # Basic example provisioning from image.
