@@ -80,14 +80,17 @@ options:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
     required: false
+    default: None
   cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction
     required: false
+    default: None
   key:
     description:
       - A path to a client key to use as part of the SSL transaction
     required: false
+    default: None
   endpoint_type:
     description:
         - Endpoint URL type to fetch from the service catalog.
@@ -102,5 +105,6 @@ notes:
     can come from a yaml config file in /etc/ansible/openstack.yaml,
     /etc/openstack/clouds.yaml or ~/.config/openstack/clouds.yaml, then from
     standard environment variables, then finally by explicit parameters in
-    plays.
+    plays. More information can be found at
+    U(http://docs.openstack.org/developer/os-client-config)
 '''
