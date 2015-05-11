@@ -138,11 +138,11 @@ def post_annotation(module):
 
     headers = {}
     headers['Content-Type'] = 'application/json'
-    headers['Authorization'] = b"Basic " + base64.b64encode(user + b":" + api_key).strip()
+    headers['Authorization'] = "Basic " + base64.b64encode(user + ":" + api_key).strip()
     req = urllib2.Request(url, json_body, headers)
     try:
         response = urllib2.urlopen(req)
-    except urllib2.HTTPError as e:
+    except urllib2.HTTPError, e:
         module.fail_json(msg="Request Failed", reason=e.reason)
     response = response.read()
     module.exit_json(changed=True, annotation=response)

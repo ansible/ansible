@@ -145,7 +145,7 @@ def run_gluster(gargs, **kwargs):
     try:
         rc, out, err = module.run_command(args, **kwargs)
         if rc != 0:
-            module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out if out != '' else err))
+            module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
     except Exception, e:
         module.fail_json(msg='error running gluster (%s) command: %s' % (' '.join(args), str(e)))
     return out
@@ -167,7 +167,7 @@ def run_gluster_yes(gargs):
     args.extend(gargs)
     rc, out, err = module.run_command(args, data='y\n')
     if rc != 0:
-        module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out if out != '' else err))
+        module.fail_json(msg='error running gluster (%s) command (rc=%d): %s' % (' '.join(args), rc, out or err))
     return out
 
 def get_peers():

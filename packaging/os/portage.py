@@ -422,7 +422,9 @@ def main():
         if not p['package']:
             module.exit_json(msg='Sync successfully finished.')
 
-    packages = p['package'].split(',') if p['package'] else []
+    packages = []
+    if p['package']:
+        packages.extend(p['package'].split(','))
 
     if p['depclean']:
         if packages and p['state'] not in portage_absent_states:
