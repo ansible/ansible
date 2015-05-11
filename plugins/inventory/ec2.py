@@ -382,6 +382,7 @@ class Ec2Inventory(object):
                 for instance in instances:
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError, e:
+            error = e.message
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
