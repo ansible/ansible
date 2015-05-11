@@ -47,6 +47,7 @@ options:
     default: 'get'
     aliases: []
 requirements:
+  - "python >= 2.6"
   - cs
 notes:
   - Ansible uses the C(cs) library's configuration method if credentials are not
