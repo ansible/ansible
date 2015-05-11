@@ -21,6 +21,20 @@ Example::
           tags:
              - configuration
 
+Alternate Syntax::
+
+    tasks:
+
+        - yum: name={{ item }} state=installed
+          with_items:
+             - httpd
+             - memcached
+          tags: [ packages, httpd, memcache ]
+
+        - template: src=templates/src.j2 dest=/etc/foo.conf
+          tags: [ templates, foo ]
+
+
 If you wanted to just run the "configuration" and "packages" part of a very long playbook, you could do this::
 
     ansible-playbook example.yml --tags "configuration,packages"
