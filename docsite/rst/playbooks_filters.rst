@@ -294,6 +294,22 @@ Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on crypt.
 
 
+Unix Group and Passwd filters
+-----------------------------
+.. versionadded:: 1.?
+
+Get the password database entry for a username::
+
+    {{ 'root'|getpwnam('root').pw_uid }}
+
+Get the group database entry for a group::
+
+    {{ 'root'|getgrnam('root').gr_gid }}
+
+These calls are based on the corresponding calls
+in the python pwd and grp modules.
+
+
 .. _other_useful_filters:
 
 Other Useful Filters

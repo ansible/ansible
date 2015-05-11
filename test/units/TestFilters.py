@@ -189,3 +189,14 @@ class TestFilters(unittest.TestCase):
     def test_max(self):
         a = ansible.runner.filter_plugins.mathstuff.max([3, 2, 5, 4])
         assert a == 5
+
+    def test_getpwnam(self):
+        a = ansible.runner.filter_plugins.core.getpwnam('root')
+        assert(a.pw_name == 'root')
+        assert(a.pw_uid == 0)
+        assert(a.pw_gid == 0)
+
+    def test_getgrnam(self):
+        a = ansible.runner.filter_plugins.core.getgrnam('root')
+        assert(a.gr_name == 'root')
+        assert(a.gr_gid == 0)
