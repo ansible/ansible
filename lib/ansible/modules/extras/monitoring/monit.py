@@ -86,7 +86,8 @@ def main():
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
         return status()
 
-    present = status() != ''
+    process_status = status()
+    present = process_status != ''
 
     if not present and not state == 'present':
         module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
@@ -102,7 +103,7 @@ def main():
                 module.exit_json(changed=True, name=name, state=state)
         module.exit_json(changed=False, name=name, state=state)
 
-    running = 'running' in status()
+    running = 'running' in process_status 
 
     if running and state in ['started', 'monitored']:
         module.exit_json(changed=False, name=name, state=state)
