@@ -1450,6 +1450,10 @@ def safe_eval(expr, locals={}, include_exceptions=False):
 def listify_lookup_plugin_terms(terms, basedir, inject):
 
     if inject.get('_lookup_context') != "with":
+
+        if isinstance(terms, basestring):
+            terms = [ terms ]
+        
         return terms
 
     from ansible.utils import template
