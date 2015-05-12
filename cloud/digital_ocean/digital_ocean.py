@@ -99,7 +99,8 @@ options:
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
-  - Version 2 of DigitalOcean API is used.
+  - As of Ansible 2.0, Version 2 of the DigitalOcean API is used.
+  - As of Ansible 2.0, the above parameters were changed significantly. If you are running 1.9.x or earlier, please use C(ansible-doc digital_ocean) to view the correct parameters for your version. Dedicated web docs will be available in the near future for the stable branch.
 requirements:
   - "python >= 2.6"
   - dopy
