@@ -712,7 +712,9 @@ class Runner(object):
             try:
                 items_terms = self.module_vars.get('items_lookup_terms', '')
                 items_terms = template.template(basedir, items_terms, inject)
-                items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+                context_inject = dict(inject)
+                context_inject['_lookup_context'] = "with"
+                items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=context_inject)
             except errors.AnsibleUndefinedVariable, e:
                 if 'has no attribute' in str(e):
                     # the undefined variable was an attribute of a variable that does
