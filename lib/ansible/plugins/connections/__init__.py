@@ -54,8 +54,6 @@ class ConnectionBase:
         if not hasattr(self, '_connected'):
             self._connected = False
 
-        self._connect()
-
     def _become_method_supported(self, become_method):
         ''' Checks if the current class supports this privilege escalation method '''
 

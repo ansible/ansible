@@ -41,6 +41,7 @@ class Connection(ConnectionBase):
 
     def __init__(self, *args, **kwargs):
         # SSH connection specific init stuff
+        self._common_args = []
         self.HASHED_KEY_MAGIC = "|1|"
         self._has_pipelining = True
 
@@ -65,7 +66,6 @@ class Connection(ConnectionBase):
         if self._connected:
             return self
 
-        self._common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
             # make sure there is no empty string added as this can produce weird errors
