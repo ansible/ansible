@@ -274,15 +274,20 @@ class Block(Base, Become, Conditional, Taggable):
                 value = parent_value
         if self._role and (not value or extend):
             parent_value = getattr(self._role, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+
             if len(self._dep_chain) and (not value or extend):
                 reverse_dep_chain = self._dep_chain[:]
                 reverse_dep_chain.reverse()
                 for dep in reverse_dep_chain:
                     dep_value = getattr(dep, attr)
                     if extend:
-                        value = self._extend_value(value, parent_value)
+                        value = self._extend_value(value, dep_value)
                     else:
-                        value = parent_value
+                        value = dep_value
 
                     if value and not extend:
                         break
