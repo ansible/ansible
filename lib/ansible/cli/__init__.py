@@ -426,7 +426,7 @@ class CLI(object):
     def pager_pipe(text, cmd):
         ''' pipe text through a pager '''
         if 'LESS' not in os.environ:
-            os.environ['LESS'] = self.LESS_OPTS
+            os.environ['LESS'] = CLI.LESS_OPTS
         try:
             cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=text)
