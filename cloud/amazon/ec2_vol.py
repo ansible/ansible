@@ -143,9 +143,9 @@ EXAMPLES = '''
     with_items: ec2.instances
   register: ec2_vol
 
-# Example: Launch an instance and then add a volume if not already present
+# Example: Launch an instance and then add a volume if not already attached
+#   * Volume will be created with the given name if not already created.
 #   * Nothing will happen if the volume is already attached.
-#   * Volume must exist in the same zone.
 
 - ec2:
     keypair: "{{ keypair }}"
@@ -215,7 +215,13 @@ def get_volume(module, ec2):
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     if not vols:
-        module.fail_json(msg="Could not find volume in zone (if specified): %s" % name or id)
+        if id:
+            msg = "Could not find the volume with id: %s" % id
+            if name:
+                msg += (" and name: %s" % name)
+            module.fail_json(msg=msg)
+        else:
+            return None
     if len(vols) > 1:
         module.fail_json(msg="Found more than one volume in zone (if specified) with name: %s" % name)
     return vols[0]
@@ -268,12 +274,8 @@ def create_volume(module, ec2, zone):
     if instance == 'None' or instance == '':
         instance = None
 
-    # If no instance supplied, try volume creation based on module parameters.
-    if name or id:
-        if iops or volume_size:
-            module.fail_json(msg = "Parameters are not compatible: [id or name] and [iops or volume_size]")
-
-        volume = get_volume(module, ec2)
+    volume = get_volume(module, ec2)
+    if volume:
         if volume.attachment_state() is not None:
             if instance is None:
                 return volume
@@ -297,8 +299,12 @@ def create_volume(module, ec2, zone):
             while volume.status != 'available':
                 time.sleep(3)
                 volume.update()
+
+            if name:
+                ec2.create_tags([volume.id], {"Name": name})
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
     return volume
 
 
@@ -409,13 +415,10 @@ def main():
 
         module.exit_json(changed=False, volumes=returned_volumes)
 
-    if id and name:
-        module.fail_json(msg="Both id and name cannot be specified")
-
     if encrypted and not boto_supports_volume_encryption():
         module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
 
-    # Here we need to get the zone info for the instance. This covers situation where 
+    # Here we need to get the zone info for the instance. This covers situation where
     # instance is specified but zone isn't.
     # Useful for playbooks chaining instance launch with volume create + attach and where the
     # zone doesn't matter to the user.
@@ -437,9 +440,8 @@ def main():
     if not volume_size and not (id or name):
         module.fail_json(msg="You must specify an existing volume with id or name or a volume_size")
 
-    if volume_size and (id or name):
-        module.fail_json(msg="Cannot specify volume_size and either one of name or id")
-
+    if volume_size and id:
+        module.fail_json(msg="Cannot specify volume_size and id")
 
     if state == 'absent':
         delete_volume(module, ec2)
