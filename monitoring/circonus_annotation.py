@@ -124,8 +124,8 @@ def main():
     annotation = create_annotation(module)
     try:
         resp = post_annotation(annotation, module.params['api_key'])
-    except requests.exceptions.RequestException as e:
-        module.fail_json(msg='Request Failed', reason=e)
+    except requests.exceptions.RequestException, err_str:
+        module.fail_json(msg='Request Failed', reason=err_str)
     module.exit_json(changed=True, annotation=resp.json())
 
 from ansible.module_utils.basic import *
