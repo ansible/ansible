@@ -66,8 +66,9 @@ options:
     default: null
   body_format:
     description:
-      - The serialization format of the body. Either raw, or json. When set to json, encodes the body argument and automatically sets the Content-Type header accordingly.
+      - The serialization format of the body. When set to json, encodes the body argument and automatically sets the Content-Type header accordingly.
     required: false
+    choices: [ "raw", "json" ]
     default: raw
   method:
     description:
