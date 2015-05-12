@@ -119,7 +119,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         status = run_command('unmonitor')
-        if status in ['not monitored']:
+        if status in ['not monitored'] or 'unmonitor pending' in status:
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg='%s process not unmonitored' % name, status=status)
 
