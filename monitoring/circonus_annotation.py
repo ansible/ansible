@@ -128,5 +128,5 @@ def main():
         module.fail_json(msg='Request Failed', reason=e)
     module.exit_json(changed=True, annotation=resp.json())
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import *
 main()
