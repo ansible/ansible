@@ -8,3 +8,4 @@ addons:
       - python2.4
 script:
   - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/layman.py|/maven_artifact.py|clustering/consul.*\.py' .
+  - python -m compileall -fq .
