@@ -129,3 +129,26 @@
   debug: msg={{item}}
   with_items: things2
 
+
+# BUG #10073 nested template handling
+
+- name: set variable that clashes
+  set_fact:
+      LOGNAME: foobar
+
+
+- name: get LOGNAME environment var value
+  shell: echo {{ '$LOGNAME' }}
+  register: known_var_value
+
+- name: do the lookup for env LOGNAME
+  set_fact:
+    test_val: "{{ lookup('env', 'LOGNAME') }}"
+
+- debug: var=test_val
+
+- name: compare values
+  assert:
+    that:
+        - "test_val == known_var_value.stdout"
+
