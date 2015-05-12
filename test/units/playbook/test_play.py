@@ -23,9 +23,9 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.playbook.block import Block
 from ansible.playbook.play import Play
 from ansible.playbook.role import Role
-from ansible.playbook.task import Task
 
 from units.mock.loader import DictDataLoader
 
@@ -39,7 +39,7 @@ class TestPlay(unittest.TestCase):
 
     def test_empty_play(self):
         p = Play.load(dict())
-        self.assertEqual(str(p), "PLAY: <no name specified>")
+        self.assertEqual(str(p), "PLAY: ")
 
     def test_basic_play(self):
         p = Play.load(dict(
@@ -129,4 +129,4 @@ class TestPlay(unittest.TestCase):
 
         tasks = p.compile()
         self.assertEqual(len(tasks), 1)
-        self.assertIsInstance(tasks[0], Task)
+        self.assertIsInstance(tasks[0], Block)
