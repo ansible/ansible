@@ -119,7 +119,7 @@
     - skip_missing: yes
   register: _subelements_missing_subkeys
 
-- debug: var=_subelements_missing_subkeys.skipped
+- debug: var=_subelements_missing_subkeys
 - debug: var=_subelements_missing_subkeys.results|length
 - name: verify with_subelements in subkeys results
   assert:
