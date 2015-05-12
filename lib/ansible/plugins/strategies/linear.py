@@ -226,7 +226,7 @@ class StrategyModule(StrategyBase):
                 # FIXME: this should also be moved to the base class in a method
                 included_files = []
                 for res in host_results:
-                    if res.is_failed():
+                    if res._host in self._tqm._failed_hosts:
                         return 1
 
                     if res._task.action == 'include':
