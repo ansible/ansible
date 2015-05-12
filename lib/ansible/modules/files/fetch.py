@@ -45,7 +45,7 @@ options:
   flat:
     version_added: "1.2"
     description:
-      - Allows you to override the default behavior of prepending
+      - Allows you to override the default behavior of appending
         hostname/path/to/file to the destination.  If dest ends with '/', it
         will use the basename of the source file, similar to the copy module.
         Obviously this is only handy if the filenames are unique.
