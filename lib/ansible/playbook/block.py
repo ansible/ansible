@@ -66,7 +66,7 @@ class Block(Base, Become, Conditional, Taggable):
         return all_vars
 
     @staticmethod
-    def load(data, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+    def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
         b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
