@@ -280,6 +280,7 @@ class StrategyModule(StrategyBase):
                                 iterator.mark_host_failed(host)
                             # FIXME: callback here?
                             print(e)
+                            continue
 
                         for new_block in new_blocks:
                             noop_block = Block(parent_block=task._block)
