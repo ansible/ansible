@@ -30,6 +30,7 @@ short_description: Manage MySQL replication
 description:
     - Manages MySQL server replication, slave, master status get and change master host.
 version_added: "1.3"
+author: "Balazs Pocze (@banyek)" <banyek@gawker.com>
 options:
     mode:
         description:
