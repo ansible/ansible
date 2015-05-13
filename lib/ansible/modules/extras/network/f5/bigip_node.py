@@ -67,7 +67,7 @@ options:
             - Pool member state
         required: true
         default: present
-        choices: ['present', 'absent', 'enabled', 'disabled']
+        choices: ['present', 'absent']
         aliases: []
     partition:
         description:
@@ -78,7 +78,7 @@ options:
         aliases: []
     name:
         description:
-            - "Node name. Required when state=enabled/disabled"
+            - "Node name"
         required: false
         default: null
         choices: []
@@ -145,11 +145,6 @@ EXAMPLES = '''
       partition=matthite
       name="{{ ansible_default_ipv4["address"] }}"
 
-  - name: Disable node
-    bigip_node: server=lb.mydomain.com user=admin password=mysecret
-                state=disabled name=mynodename
-    delegate_to: localhost
-
 '''
 
 try:
@@ -162,13 +157,6 @@ else:
 # ==========================
 # bigip_node module specific
 #
-
-# map of state values
-STATES={'enabled': 'STATE_ENABLED',
-        'disabled': 'STATE_DISABLED'}
-STATUSES={'enabled': 'SESSION_STATUS_ENABLED',
-          'disabled': 'SESSION_STATUS_DISABLED',
-          'offline': 'SESSION_STATUS_FORCED_DISABLED'}
 
 def bigip_api(bigip, user, password):
     api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
@@ -232,25 +220,6 @@ def set_node_description(api, name, description):
 def get_node_description(api, name):
     return api.LocalLB.NodeAddressV2.get_description(nodes=[name])[0]
 
-def set_node_disabled(api, name):
-    set_node_session_enabled_state(api, name, STATES['disabled'])
-    result = True
-    desc = ""
-    return (result, desc)
-
-def set_node_enabled(api, name):
-    set_node_session_enabled_state(api, name, STATES['enabled'])
-    result = True
-    desc = ""
-    return (result, desc)
-
-def set_node_session_enabled_state(api, name, state):
-    api.LocalLB.NodeAddressV2.set_session_enabled_state(nodes=[name],
-                                                        states=[state])
-
-def get_node_session_status(api, name):
-    return api.LocalLB.NodeAddressV2.get_session_status(nodes=[name])[0]
-
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -258,8 +227,7 @@ def main():
             user = dict(type='str', required=True),
             password = dict(type='str', required=True),
             validate_certs = dict(default='yes', type='bool'),
-            state = dict(type='str', default='present',
-                         choices=['present', 'absent', 'disabled', 'enabled']),
+            state = dict(type='str', default='present', choices=['present', 'absent']),
             partition = dict(type='str', default='Common'),
             name = dict(type='str', required=True),
             host = dict(type='str', aliases=['address', 'ip']),
@@ -333,32 +301,6 @@ def main():
                         if not module.check_mode:
                             set_node_description(api, address, description)
                         result = {'changed': True}
-
-        elif state in ('disabled', 'enabled'):
-            if name is None:
-                module.fail_json(msg="name parameter required when " \
-                                     "state=enabled/disabled")
-            if not module.check_mode:
-                if not node_exists(api, name):
-                    module.fail_json(msg="node does not exist")
-                status = get_node_session_status(api, name)
-                if state == 'disabled':
-                    if status not in (STATUSES['disabled'], STATUSES['offline']):
-                        disabled, desc = set_node_disabled(api, name)
-                        if not disabled:
-                            module.fail_json(msg="unable to disable: %s" % desc)
-                        else:
-                            result = {'changed': True}
-                else:
-                    if status != STATUSES['enabled']:
-                        enabled, desc = set_node_enabled(api, name)
-                        if not enabled:
-                            module.fail_json(msg="unable to enable: %s" % desc)
-                        else:
-                            result = {'changed': True}
-            else:
-                # check-mode return value
-                result = {'changed': True}
 
     except Exception, e:
         module.fail_json(msg="received exception: %s" % e)
