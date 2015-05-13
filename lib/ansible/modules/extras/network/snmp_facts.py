@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 ---
 module: snmp_facts
 version_added: "1.9"
-author: Patrick Ogenstad (@networklore)
+author: "Patrick Ogenstad (@networklore)"
 short_description: Retrive facts for a device using SNMP.
 description:
     - Retrieve facts for a device using SNMP, the facts will be
