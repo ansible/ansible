@@ -27,6 +27,7 @@ New Modules:
   * cloudstack: cs_iso
   * cloudstack: cs_instance
   * cloudstack: cs_instancegroup
+  * cloudstack: cs_portforward
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
