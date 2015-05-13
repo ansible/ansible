@@ -114,6 +114,9 @@ def main():
             title       = dict(type='str', required=True),
             body        = dict(type='str', default=None)
         ),
+        mutually_exclusive = (
+            ['channel', 'device'],
+        ),
         supports_check_mode=True
     )
 
@@ -132,9 +135,6 @@ def main():
     target = None
 
     # Checks for channel/device
-    if device is not None and channel is not None:
-        module.fail_json(msg="You can't use both device and channel at the same time.")
-
     if device is None and channel is None:
         module.fail_json(msg="You need to provide a channel or a device.")
 
@@ -158,7 +158,7 @@ def main():
 
     # If in check mode, exit saying that we succeeded
     if module.check_mode:
-        module.exit_json(changed=False)
+        module.exit_json(changed=False, msg="OK")
 
     # Send push notification
     success, result = target.push_note(title, body)
