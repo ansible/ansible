@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: bigpanda
-author: BigPanda
+author: "Hagai Kariti (@hkariti)"
 short_description: Notify BigPanda about deployments
 version_added: "1.8"
 description: 
