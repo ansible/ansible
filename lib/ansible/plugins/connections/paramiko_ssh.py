@@ -41,7 +41,7 @@ from binascii import hexlify
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connections import ConnectionBase, ensure_connect
 from ansible.utils.path import makedirs_safe
 
 AUTHENTICITY_MSG="""
@@ -60,6 +60,7 @@ with warnings.catch_warnings():
         logging.getLogger("paramiko").setLevel(logging.WARNING)
     except ImportError:
         pass
+
 
 class MyAddPolicy(object):
     """
@@ -188,6 +189,7 @@ class Connection(ConnectionBase):
 
         return ssh
 
+    @ensure_connect
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
@@ -248,6 +250,7 @@ class Connection(ConnectionBase):
 
         return (chan.recv_exit_status(), '', no_prompt_out + stdout, no_prompt_out + stderr)
 
+    @ensure_connect
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
 
@@ -272,9 +275,10 @@ class Connection(ConnectionBase):
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
-            result = SFTP_CONNECTION_CACHE[cache_key] = self.connect().ssh.open_sftp()
+            result = SFTP_CONNECTION_CACHE[cache_key] = self._connect().ssh.open_sftp()
             return result
 
+    @ensure_connect
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
 
