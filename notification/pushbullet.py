@@ -24,7 +24,7 @@ module: pushbullet
 short_description: Sends notifications to Pushbullet
 description:
    - This module sends push notifications via Pushbullet to channels or devices.
-version_added: "1.8"
+version_added: "2.0"
 options:
     api_key:
         description:
@@ -164,7 +164,7 @@ def main():
     success, result = target.push_note(title, body)
 
     if success:
-        module.exit_json(changed=True, msg="OK")
+        module.exit_json(changed=False, msg="OK")
 
     # General failure
     module.fail_json(msg="Some error ocurred, Pushbullet response: %s" % (result))
