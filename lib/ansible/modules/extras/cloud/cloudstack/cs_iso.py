@@ -189,11 +189,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         iso = self.get_iso()
         if not iso:
             args = {}
-            args['zoneid'] = self.get_zone_id()
-            args['projectid'] = self.get_project_id()
+            args['zoneid'] = self.get_zone('id')
+            args['projectid'] = self.get_project('id')
 
             args['bootable'] = self.module.params.get('bootable')
-            args['ostypeid'] = self.get_os_type_id()
+            args['ostypeid'] = self.get_os_type('id')
             if args['bootable'] and not args['ostypeid']:
                 self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
 
@@ -220,8 +220,8 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args = {}
             args['isready'] = self.module.params.get('is_ready')
             args['isofilter'] = self.module.params.get('iso_filter')
-            args['projectid'] = self.get_project_id()
-            args['zoneid'] = self.get_zone_id()
+            args['projectid'] = self.get_project('id')
+            args['zoneid'] = self.get_zone('id')
 
             # if checksum is set, we only look on that.
             checksum = self.module.params.get('checksum')
@@ -246,8 +246,8 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             self.result['changed'] = True
             args = {}
             args['id'] = iso['id']
-            args['projectid'] = self.get_project_id()
-            args['zoneid'] = self.get_zone_id()
+            args['projectid'] = self.get_project('id')
+            args['zoneid'] = self.get_zone('id')
             if not self.module.check_mode:
                 res = self.cs.deleteIso(**args)
         return iso
