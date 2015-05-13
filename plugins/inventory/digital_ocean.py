@@ -24,12 +24,12 @@ found.  You can force this script to use the cache with --force-cache.
 Configuration is read from `digital_ocean.ini`, then from environment variables,
 then and command-line arguments.
 
-Most notably, the DigitalOcean Client ID and API Key must be specified.  They
-can be specified in the INI file or with the following environment variables:
-    export DO_CLIENT_ID='DO123' DO_API_KEY='abc123'
+Most notably, the DigitalOcean API Token must be specified. It can be specified
+in the INI file or with the following environment variables:
+    export DO_API_TOKEN='abc123' or
+    export DO_API_KEY='abc123'
 
-Alternatively, they can be passed on the command-line with --client-id and
---api-key.
+Alternatively, it can be passed on the command-line with --api-token.
 
 If you specify DigitalOcean credentials in the INI file, a handy way to
 get them into your environment (e.g., to use the digital_ocean module)
@@ -43,31 +43,40 @@ The following groups are generated from --list:
  - image_ID
  - image_NAME
  - distro_NAME  (distribution NAME from image)
- - region_ID
  - region_NAME
- - size_ID
  - size_NAME
  - status_STATUS
 
 When run against a specific host, this script returns the following variables:
+ - do_backup_ids
  - do_created_at
- - do_distroy
+ - do_disk
+ - do_features - list
  - do_id
- - do_image
- - do_image_id
+ - do_image - object
  - do_ip_address
+ - do_kernel - object
+ - do_locked
+ - de_memory
  - do_name
- - do_region
- - do_region_id
- - do_size
- - do_size_id
+ - do_networks - object
+ - do_next_backup_window
+ - do_region - object
+ - do_size - object
+ - do_size_slug
+ - do_snapshot_ids - list
  - do_status
+ - do_vcpus
 
 -----
 ```
 usage: digital_ocean.py [-h] [--list] [--host HOST] [--all]
                                  [--droplets] [--regions] [--images] [--sizes]
                                  [--ssh-keys] [--domains] [--pretty]
+                                 [--cache-path CACHE_PATH]
+                                 [--cache-max_age CACHE_MAX_AGE]
+                                 [--force-cache]
+                                 [--refresh-cache]
                                  [--api-token API_TOKEN]
 
 Produce an Ansible Inventory file based on DigitalOcean credentials
@@ -86,6 +95,13 @@ optional arguments:
   --ssh-keys            List SSH keys as JSON
   --domains             List Domains as JSON
   --pretty, -p          Pretty-print results
+  --cache-path CACHE_PATH
+                        Path to the cache files (default: .)
+  --cache-max_age CACHE_MAX_AGE
+                        Maximum age of the cached items (default: 0)
+  --force-cache         Only use data from the cache
+  --refresh-cache       Force refresh of cache by making API requests to
+                        DigitalOcean (default: False - use cache files)
   --api-token API_TOKEN, -a API_TOKEN
                         DigitalOcean API Token
 ```
@@ -147,6 +163,10 @@ class DigitalOceanInventory(object):
         self.data = {}      # All DigitalOcean data
         self.inventory = {} # Ansible Inventory
 
+        # Define defaults
+        self.cache_path = '.'
+        self.cache_max_age = 0
+
         # Read settings, environment variables, and CLI arguments
         self.read_settings()
         self.read_environment()
@@ -164,27 +184,45 @@ or environment variables (DO_API_TOKEN)'''
             print "DO_API_TOKEN=%s" % self.api_token
             sys.exit(0)
 
+        # Manage cache
+        self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
+        self.cache_refreshed = False
+
+        if self.is_cache_valid:
+            self.load_from_cache()
+            if len(self.data) == 0:
+                if self.args.force_cache:
+                    print '''Cache is empty and --force-cache was specified'''
+                    sys.exit(-1)
+
         self.manager = DoManager(None, self.api_token, api_version=2)
 
         # Pick the json_data to print based on the CLI command
         if self.args.droplets:
-            json_data = self.load_from_digital_ocean('droplets')
+            self.load_from_digital_ocean('droplets')
+            json_data = {'droplets': self.data['droplets']}
         elif self.args.regions:
-            json_data = self.load_from_digital_ocean('regions')
+            self.load_from_digital_ocean('regions')
+            json_data = {'regions': self.data['regions']}
         elif self.args.images:
-            json_data = self.load_from_digital_ocean('images')
+            self.load_from_digital_ocean('images')
+            json_data = {'images': self.data['images']}
         elif self.args.sizes:
-            json_data = self.load_from_digital_ocean('sizes')
+            self.load_from_digital_ocean('sizes')
+            json_data = {'sizes': self.data['sizes']}
         elif self.args.ssh_keys:
-            json_data = self.load_from_digital_ocean('ssh_keys')
+            self.load_from_digital_ocean('ssh_keys')
+            json_data = {'ssh_keys': self.data['ssh_keys']}
         elif self.args.domains:
-            json_data = self.load_from_digital_ocean('domains')
+            self.load_from_digital_ocean('domains')
+            json_data = {'domains': self.data['domains']}
         elif self.args.all:
-            json_data = self.load_from_digital_ocean()
+            self.load_from_digital_ocean()
+            json_data = self.data
         elif self.args.host:
             json_data = self.load_droplet_variables_for_host()
         else:    # '--list' this is last to make it default
-            self.data = self.load_from_digital_ocean('droplets')
+            self.load_from_digital_ocean('droplets')
             self.build_inventory()
             json_data = self.inventory
 
@@ -241,6 +279,12 @@ or environment variables (DO_API_TOKEN)'''
 
         parser.add_argument('--pretty','-p', action='store_true', help='Pretty-print results')
 
+        parser.add_argument('--cache-path', action='store', help='Path to the cache files (default: .)')
+        parser.add_argument('--cache-max_age', action='store', help='Maximum age of the cached items (default: 0)')
+        parser.add_argument('--force-cache', action='store_true', default=False, help='Only use data from the cache')
+        parser.add_argument('--refresh-cache','-r', action='store_true', default=False,
+                            help='Force refresh of cache by making API requests to DigitalOcean (default: False - use cache files)')
+
         parser.add_argument('--env','-e', action='store_true', help='Display DO_API_TOKEN')
         parser.add_argument('--api-token','-a', action='store', help='DigitalOcean API Token')
 
@@ -263,20 +307,25 @@ or environment variables (DO_API_TOKEN)'''
 
     def load_from_digital_ocean(self, resource=None):
         '''Get JSON from DigitalOcean API'''
-        json_data = {}
+        if self.args.force_cache:
+            return
+        if self.args.refresh_cache:
+            resource=None
+
         if resource == 'droplets' or resource is None:
-            json_data['droplets'] = self.manager.all_active_droplets()
+            self.data['droplets'] = self.manager.all_active_droplets()
         if resource == 'regions' or resource is None:
-            json_data['regions'] = self.manager.all_regions()
+            self.data['regions'] = self.manager.all_regions()
         if resource == 'images' or resource is None:
-            json_data['images'] = self.manager.all_images(filter=None)
+            self.data['images'] = self.manager.all_images(filter=None)
         if resource == 'sizes' or resource is None:
-            json_data['sizes'] = self.manager.sizes()
+            self.data['sizes'] = self.manager.sizes()
         if resource == 'ssh_keys' or resource is None:
-            json_data['ssh_keys'] = self.manager.all_ssh_keys()
+            self.data['ssh_keys'] = self.manager.all_ssh_keys()
         if resource == 'domains' or resource is None:
-            json_data['domains'] = self.manager.all_domains()
-        return json_data
+            self.data['domains'] = self.manager.all_domains()
+
+        self.write_to_cache()
 
 
     def build_inventory(self):
@@ -309,8 +358,53 @@ or environment variables (DO_API_TOKEN)'''
         '''Generate a JSON response to a --host call'''
         host = int(self.args.host)
 
-        return self.manager.show_droplet(host)
+        droplet = self.manager.show_droplet(host)
 
+        # Put all the information in a 'do_' namespace
+        info = {}
+        for k, v in droplet.items():
+            info['do_'+k] = v
+
+        return {'droplet': info}
+
+
+
+    ###########################################################################
+    # Cache Management
+    ###########################################################################
+
+    def is_cache_valid(self):
+        ''' Determines if the cache files have expired, or if it is still valid '''
+        if os.path.isfile(self.cache_filename):
+            mod_time = os.path.getmtime(self.cache_filename)
+            current_time = time()
+            if (mod_time + self.cache_max_age) > current_time:
+                return True
+        return False
+
+
+    def load_from_cache(self):
+        ''' Reads the data from the cache file and assigns it to member variables as Python Objects'''
+        try:
+            cache = open(self.cache_filename, 'r')
+            json_data = cache.read()
+            cache.close()
+            data = json.loads(json_data)
+        except IOError:
+            data = {'data': {}, 'inventory': {}}
+
+        self.data = data['data']
+        self.inventory = data['inventory']
+
+
+    def write_to_cache(self):
+        ''' Writes data in JSON format to a file '''
+        data = { 'data': self.data, 'inventory': self.inventory }
+        json_data = json.dumps(data, sort_keys=True, indent=2)
+
+        cache = open(self.cache_filename, 'w')
+        cache.write(json_data)
+        cache.close()
 
 
     ###########################################################################
