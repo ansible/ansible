@@ -34,7 +34,8 @@ from hashlib import sha1
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connections import ConnectionBase, ensure_connect
+
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -269,6 +270,7 @@ class Connection(ConnectionBase):
             self._display.vvv("EXEC previous known host file not found for {0}".format(host))
         return True
 
+    @ensure_connect
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
@@ -390,6 +392,7 @@ class Connection(ConnectionBase):
 
         return (p.returncode, '', no_prompt_out + stdout, no_prompt_err + stderr)
 
+    @ensure_connect
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
         self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
@@ -425,6 +428,7 @@ class Connection(ConnectionBase):
         if returncode != 0:
             raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}".format(out_path, stdout, stderr))
 
+    @ensure_connect
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
         self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)

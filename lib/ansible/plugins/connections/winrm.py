@@ -42,9 +42,10 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connections import ConnectionBase, ensure_connect
 from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
+
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -151,6 +152,7 @@ class Connection(ConnectionBase):
             self.protocol = self._winrm_connect()
         return self
 
+    @ensure_connect
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
 
         cmd = cmd.encode('utf-8')
@@ -172,6 +174,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to exec cmd %s" % cmd)
         return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
 
+    @ensure_connect
     def put_file(self, in_path, out_path):
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
         if not os.path.exists(in_path):
@@ -210,6 +213,7 @@ class Connection(ConnectionBase):
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file to %s" % out_path)
 
+    @ensure_connect
     def fetch_file(self, in_path, out_path):
         out_path = out_path.replace('\\', '/')
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
