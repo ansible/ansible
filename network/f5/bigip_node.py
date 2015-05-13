@@ -69,6 +69,22 @@ options:
         default: present
         choices: ['present', 'absent']
         aliases: []
+    session_state:
+        description:
+            - Set new session availability status for node
+        version_added: "1.9"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
+        aliases: []
+    monitor_state:
+        description:
+            - Set monitor availability status for node
+        version_added: "1.9"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
+        aliases: []
     partition:
         description:
             - Partition
@@ -145,6 +161,31 @@ EXAMPLES = '''
       partition=matthite
       name="{{ ansible_default_ipv4["address"] }}"
 
+# The BIG-IP GUI doesn't map directly to the API calls for "Node ->
+# General Properties -> State". The following states map to API monitor
+# and session states.
+#
+# Enabled (all traffic allowed):
+# monitor_state=enabled, session_state=enabled
+# Disabled (only persistent or active connections allowed):
+# monitor_state=enabled, session_state=disabled
+# Forced offline (only active connections allowed):
+# monitor_state=disabled, session_state=disabled
+#
+# See https://devcentral.f5.com/questions/icontrol-equivalent-call-for-b-node-down
+
+  - name: Force node offline
+    local_action: >
+      bigip_node
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      session_state=disabled
+      monitor_state=disabled
+      partition=matthite
+      name="{{ ansible_default_ipv4["address"] }}"
+
 '''
 
 try:
@@ -215,10 +256,31 @@ def delete_node_address(api, address):
 
 def set_node_description(api, name, description):
     api.LocalLB.NodeAddressV2.set_description(nodes=[name],
-                                                  descriptions=[description])
+                                              descriptions=[description])
 
 def get_node_description(api, name):
     return api.LocalLB.NodeAddressV2.get_description(nodes=[name])[0]
+
+def set_node_session_enabled_state(api, name, session_state):
+    session_state = "STATE_%s" % session_state.strip().upper()
+    api.LocalLB.NodeAddressV2.set_session_enabled_state(nodes=[name],
+                                                        states=[session_state])
+
+def get_node_session_status(api, name):
+    result = api.LocalLB.NodeAddressV2.get_session_status(nodes=[name])[0]
+    result = result.split("SESSION_STATUS_")[-1].lower()
+    return result
+
+def set_node_monitor_state(api, name, monitor_state):
+    monitor_state = "STATE_%s" % monitor_state.strip().upper()
+    api.LocalLB.NodeAddressV2.set_monitor_state(nodes=[name],
+                                                states=[monitor_state])
+
+def get_node_monitor_status(api, name):
+    result = api.LocalLB.NodeAddressV2.get_monitor_status(nodes=[name])[0]
+    result = result.split("MONITOR_STATUS_")[-1].lower()
+    return result
+
 
 def main():
     module = AnsibleModule(
@@ -228,6 +290,8 @@ def main():
             password = dict(type='str', required=True),
             validate_certs = dict(default='yes', type='bool'),
             state = dict(type='str', default='present', choices=['present', 'absent']),
+            session_state = dict(type='str', choices=['enabled', 'disabled']),
+            monitor_state = dict(type='str', choices=['enabled', 'disabled']),
             partition = dict(type='str', default='Common'),
             name = dict(type='str', required=True),
             host = dict(type='str', aliases=['address', 'ip']),
@@ -244,6 +308,8 @@ def main():
     password = module.params['password']
     validate_certs = module.params['validate_certs']
     state = module.params['state']
+    session_state = module.params['session_state']
+    monitor_state = module.params['monitor_state']
     partition = module.params['partition']
     host = module.params['host']
     name = module.params['name']
@@ -283,6 +349,13 @@ def main():
                         module.fail_json(msg="unable to create: %s" % desc)
                     else:
                         result = {'changed': True}
+                    if session_state is not None:
+                        set_node_session_enabled_state(api, address,
+                                                       session_state)
+                        result = {'changed': True}
+                    if monitor_state is not None:
+                        set_node_monitor_state(api, address, monitor_state)
+                        result = {'changed': True}
                     if description is not None:
                         set_node_description(api, address, description)
                         result = {'changed': True}
@@ -296,6 +369,34 @@ def main():
                         module.fail_json(msg="Changing the node address is " \
                                              "not supported by the API; " \
                                              "delete and recreate the node.")
+                if session_state is not None:
+                    session_status = get_node_session_status(api, address)
+                    if session_state == 'enabled' and \
+                       session_status == 'forced_disabled':
+                        if not module.check_mode:
+                            set_node_session_enabled_state(api, address,
+                                                           session_state)
+                        result = {'changed': True}
+                    elif session_state == 'disabled' and \
+                         session_status != 'force_disabled':
+                        if not module.check_mode:
+                            set_node_session_enabled_state(api, address,
+                                                           session_state)
+                        result = {'changed': True}
+                if monitor_state is not None:
+                    monitor_status = get_node_monitor_status(api, address)
+                    if monitor_state == 'enabled' and \
+                       monitor_status == 'forced_down':
+                        if not module.check_mode:
+                            set_node_monitor_state(api, address,
+                                                   monitor_state)
+                        result = {'changed': True}
+                    elif monitor_state == 'disabled' and \
+                         monitor_status != 'forced_down':
+                        if not module.check_mode:
+                            set_node_monitor_state(api, address,
+                                                   monitor_state)
+                        result = {'changed': True}
                 if description is not None:
                     if get_node_description(api, address) != description:
                         if not module.check_mode:
