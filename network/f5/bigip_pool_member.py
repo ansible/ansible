@@ -39,23 +39,14 @@ options:
         description:
             - BIG-IP host
         required: true
-        default: null
-        choices: []
-        aliases: []
     user:
         description:
             - BIG-IP username
         required: true
-        default: null
-        choices: []
-        aliases: []
     password:
         description:
             - BIG-IP password
         required: true
-        default: null
-        choices: []
-        aliases: []
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
@@ -70,79 +61,58 @@ options:
         required: true
         default: present
         choices: ['present', 'absent']
-        aliases: []
     session_state:
         description:
             - Set new session availability status for pool member
-        version_added: "1.9"
+        version_added: "2.0"
         required: false
         default: null
         choices: ['enabled', 'disabled']
-        aliases: []
     monitor_state:
         description:
             - Set monitor availability status for pool member
-        version_added: "1.9"
+        version_added: "2.0"
         required: false
         default: null
         choices: ['enabled', 'disabled']
-        aliases: []
     pool:
         description:
             - Pool name. This pool must exist.
         required: true
-        default: null
-        choices: []
-        aliases: []
     partition:
         description:
             - Partition
         required: false
         default: 'Common'
-        choices: []
-        aliases: []
     host:
         description:
             - Pool member IP
         required: true
-        default: null
-        choices: []
         aliases: ['address', 'name']
     port:
         description:
             - Pool member port
         required: true
-        default: null
-        choices: []
-        aliases: []
     connection_limit:
         description:
             - Pool member connection limit. Setting this to 0 disables the limit.
         required: false
         default: null
-        choices: []
-        aliases: []
     description:
         description:
             - Pool member description
         required: false
         default: null
-        choices: []
-        aliases: []
     rate_limit:
         description:
             - Pool member rate limit (connections-per-second). Setting this to 0 disables the limit.
         required: false
         default: null
-        choices: []
-        aliases: []
     ratio:
         description:
             - Pool member ratio weight. Valid values range from 1 through 100. New pool members -- unless overriden with this value -- default to 1.
         required: false
         default: null
-        choices: []
-        aliases: []
 '''
 
 EXAMPLES = '''
