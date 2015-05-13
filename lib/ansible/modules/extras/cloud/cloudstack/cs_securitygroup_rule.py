@@ -193,9 +193,6 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
 
 
     def _tcp_udp_match(self, rule, protocol, start_port, end_port):

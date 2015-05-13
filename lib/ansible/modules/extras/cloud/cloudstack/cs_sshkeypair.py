@@ -63,7 +63,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # create a new private / public key pair:
 - local_action: cs_sshkeypair name=linus@example.com
   register: key
@@ -114,9 +113,6 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.ssh_key = None
 
 

@@ -49,7 +49,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create a security group
 - local_action:
     module: cs_securitygroup
@@ -92,9 +91,6 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.security_group = None
 
 
