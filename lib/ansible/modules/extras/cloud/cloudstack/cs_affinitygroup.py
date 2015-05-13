@@ -46,6 +46,16 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
+  domain:
+    description:
+      - Domain the affinity group is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the affinity group is related to.
+    required: false
+    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -111,12 +121,16 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
 
     def get_affinity_group(self):
         if not self.affinity_group:
-            affinity_group_name = self.module.params.get('name')
+            affinity_group = self.module.params.get('name')
 
-            affinity_groups = self.cs.listAffinityGroups()
+            args                = {}
+            args['account']     = self.get_account('name')
+            args['domainid']    = self.get_domain('id')
+
+            affinity_groups = self.cs.listAffinityGroups(**args)
             if affinity_groups:
                 for a in affinity_groups['affinitygroup']:
-                    if a['name'] == affinity_group_name:
+                    if affinity_group in [ a['name'], a['id'] ]:
                         self.affinity_group = a
                         break
         return self.affinity_group
@@ -141,10 +155,12 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
         if not affinity_group:
             self.result['changed'] = True
 
-            args = {}
-            args['name'] = self.module.params.get('name')
-            args['type'] = self.get_affinity_type()
+            args                = {}
+            args['name']        = self.module.params.get('name')
+            args['type']        = self.get_affinity_type()
             args['description'] = self.module.params.get('description')
+            args['account']     = self.get_account('name')
+            args['domainid']    = self.get_domain('id')
 
             if not self.module.check_mode:
                 res = self.cs.createAffinityGroup(**args)
@@ -155,7 +171,6 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
                     affinity_group = self._poll_job(res, 'affinitygroup')
-
         return affinity_group
 
 
@@ -164,8 +179,10 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
         if affinity_group:
             self.result['changed'] = True
 
-            args = {}
-            args['name'] = self.module.params.get('name')
+            args                = {}
+            args['name']        = self.module.params.get('name')
+            args['account']     = self.get_account('name')
+            args['domainid']    = self.get_domain('id')
 
             if not self.module.check_mode:
                 res = self.cs.deleteAffinityGroup(**args)
@@ -176,7 +193,6 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if res and poll_async:
                     res = self._poll_job(res, 'affinitygroup')
-
         return affinity_group
 
 
@@ -188,6 +204,10 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
                 self.result['description'] = affinity_group['description']
             if 'type' in affinity_group:
                 self.result['affinity_type'] = affinity_group['type']
+            if 'domain' in affinity_group:
+                self.result['domain'] = affinity_group['domain']
+            if 'account' in affinity_group:
+                self.result['account'] = affinity_group['account']
         return self.result
 
 
@@ -198,6 +218,8 @@ def main():
             affinty_type = dict(default=None),
             description = dict(default=None),
             state = dict(choices=['present', 'absent'], default='present'),
+            domain = dict(default=None),
+            account = dict(default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
