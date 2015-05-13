@@ -98,7 +98,7 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
         if not self.security_group:
             sg_name = self.module.params.get('name')
             args = {}
-            args['projectid'] = self.get_project_id()
+            args['projectid'] = self.get_project('id')
             sgs = self.cs.listSecurityGroups(**args)
             if sgs:
                 for s in sgs['securitygroup']:
@@ -115,7 +115,7 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
 
             args = {}
             args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project_id()
+            args['projectid'] = self.get_project('id')
             args['description'] = self.module.params.get('description')
 
             if not self.module.check_mode:
@@ -134,7 +134,7 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
 
             args = {}
             args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project_id()
+            args['projectid'] = self.get_project('id')
 
             if not self.module.check_mode:
                 res = self.cs.deleteSecurityGroup(**args)
