@@ -114,11 +114,15 @@ options:
         required: false
         default: INFO
     clone_name:
+        version_added: "2.0"
         description:
           - Name of the new cloned server. This is only used when state is
             clone.
         required: false
+        default: false
     clone_snapshot:
+        version_added: "2.0"
+        required: false
         choices:
           - true
           - false
