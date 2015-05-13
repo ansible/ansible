@@ -536,7 +536,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update['group']               = self.module.params.get('group')
         args_instance_update['displayname']         = self.get_display_name()
         args_instance_update['userdata']            = self.get_user_data()
-        args_instance_update['ostypeid']            = self.get_os_type_id()
+        args_instance_update['ostypeid']            = self.get_os_type('id')
 
         args_ssh_key                                = {}
         args_ssh_key['id']                          = instance['id']
