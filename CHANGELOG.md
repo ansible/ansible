@@ -15,6 +15,7 @@ Deprecated Modules (new ones in parens):
 New Modules:
   * find
   * ec2_ami_find
+  * circonus_annotation
   * consul
   * consul_acl
   * consul_kv
