@@ -35,7 +35,7 @@ except Exception:
 import os
 import sys
 
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 
 ########################################################
@@ -70,10 +70,20 @@ if __name__ == '__main__':
     except AnsibleOptionsError as e:
         cli.parser.print_help()
         display.display(str(e), stderr=True, color='red')
-        sys.exit(1)
+        sys.exit(5)
+    except AnsibleParserError as e:
+        display.display(str(e), stderr=True, color='red')
+        sys.exit(4)
+# TQM takes care of these, but leaving comment to reserve the exit codes
+#    except AnsibleHostUnreachable as e:
+#        display.display(str(e), stderr=True, color='red')
+#        sys.exit(3)
+#    except AnsibleHostFailed as e:
+#        display.display(str(e), stderr=True, color='red')
+#        sys.exit(2)
     except AnsibleError as e:
         display.display(str(e), stderr=True, color='red')
-        sys.exit(2)
+        sys.exit(1)
     except KeyboardInterrupt:
         display.error("interrupted")
-        sys.exit(4)
+        sys.exit(99)
