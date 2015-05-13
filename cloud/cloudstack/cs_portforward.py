@@ -106,7 +106,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # 1.2.3.4:80 -> web01:8080
 - local_action:
     module: cs_portforward
@@ -144,7 +143,6 @@ EXAMPLES = '''
     public_port: 22
     private_port: 22
     state: absent
-
 '''
 
 RETURN = '''

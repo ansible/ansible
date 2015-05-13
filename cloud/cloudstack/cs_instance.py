@@ -164,7 +164,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create a instance on CloudStack from an ISO
 # NOTE: Names of offerings and ISOs depending on the CloudStack configuration.
 - local_action:

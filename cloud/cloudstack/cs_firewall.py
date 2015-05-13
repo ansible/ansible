@@ -88,7 +88,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Allow inbound port 80/tcp from 1.2.3.4 to 4.3.2.1
 - local_action:
     module: cs_firewall
@@ -171,9 +170,6 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.firewall_rule = None
 
 

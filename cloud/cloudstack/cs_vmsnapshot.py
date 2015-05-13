@@ -81,7 +81,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create a VM snapshot of disk and memory before an upgrade
 - local_action:
     module: cs_vmsnapshot
@@ -175,9 +174,6 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
 
 
     def get_snapshot(self):

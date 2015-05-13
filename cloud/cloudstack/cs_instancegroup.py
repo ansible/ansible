@@ -56,7 +56,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create an instance group
 - local_action:
     module: cs_instancegroup

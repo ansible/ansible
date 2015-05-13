@@ -99,7 +99,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Register an ISO if ISO name does not already exist.
 - local_action:
     module: cs_iso
@@ -185,9 +184,6 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.iso = None
 
     def register_iso(self):
