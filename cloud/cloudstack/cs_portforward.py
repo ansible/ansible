@@ -48,20 +48,20 @@ options:
     required: false
     default: 'tcp'
     choices: [ 'tcp', 'udp' ]
-  public_port
+  public_port:
     description:
       - Start public port for this rule.
     required: true
-  public_end_port
+  public_end_port:
     description:
       - End public port for this rule. If not specific, equal C(public_port).
     required: false
     default: null
-  private_port
+  private_port:
     description:
       - Start private port for this rule.
     required: true
-  private_end_port
+  private_end_port:
     description:
       - End private port for this rule. If not specific, equal C(private_port)
     required: false
