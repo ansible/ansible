@@ -8,9 +8,9 @@ description:
     - This module will let you create PagerDuty maintenance windows
 version_added: "1.2"
 author:
-    - Andrew Newdigate (@suprememoocow)
-    - Dylan Silva (@thaumos)
-    - Justin Johns
+    - "Andrew Newdigate (@suprememoocow)"
+    - "Dylan Silva (@thaumos)"
+    - "Justin Johns"
 requirements:
     - PagerDuty API access
 options:
