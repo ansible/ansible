@@ -62,7 +62,7 @@ options:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
     required: conditional
     default: None
-    version_added: "1.7"
+    version_added: "2.0"
   security_group_ids:
     description:
       - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
