@@ -93,7 +93,7 @@ options:
     master_ssl:
         description:
             - same as mysql variable
-        possible values: 0,1
+        choices: [ 0, 1 ]
     master_ssl_ca:
         description:
             - same as mysql variable
@@ -110,8 +110,11 @@ options:
         description:
             - same as mysql variable
     master_auto_position:
-        descrtiption:
+        description:
             - does the host uses GTID based replication or not
+        required: false
+        default: null
+        version_added: "2.0"
 '''
 
 EXAMPLES = '''
