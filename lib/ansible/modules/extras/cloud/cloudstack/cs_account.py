@@ -97,7 +97,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # create an account in domain 'CUSTOMERS'
 local_action:
   module: cs_account

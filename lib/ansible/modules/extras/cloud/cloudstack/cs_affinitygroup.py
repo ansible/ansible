@@ -65,7 +65,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create a affinity group
 - local_action:
     module: cs_affinitygroup
@@ -113,9 +112,6 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.affinity_group = None
 
 
