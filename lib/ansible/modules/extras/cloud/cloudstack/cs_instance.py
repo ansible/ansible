@@ -785,7 +785,7 @@ def main():
             tags = dict(type='list', aliases=[ 'tag' ], default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),

@@ -165,7 +165,7 @@ def main():
             state = dict(choices=['present', 'absent'], default='present'),
             project = dict(default=None),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
