@@ -327,7 +327,7 @@ def create_instances(module, gce, instance_names):
     # [ {'key': key1, 'value': value1}, {'key': key2, 'value': value2}, ...]
     if metadata:
         try:
-            md = literal_eval(metadata)
+            md = literal_eval(str(metadata))
             if not isinstance(md, dict):
                 raise ValueError('metadata must be a dict')
         except ValueError, e:
