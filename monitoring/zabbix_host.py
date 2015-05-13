@@ -26,7 +26,9 @@ short_description: Zabbix host creates/updates/deletes
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
-author: Tony Minfei Ding, Harrison Gu
+author: 
+    - "Tony Minfei Ding"
+    - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
