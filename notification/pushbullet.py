@@ -95,6 +95,7 @@ EXAMPLES = '''
 
 try:
     from pushbullet import PushBullet
+    from pushbullet.errors import InvalidKeyError, PushError
 except ImportError:
     pushbullet_found = False
 else:
@@ -131,8 +132,11 @@ def main():
         module.fail_json(msg="Python 'pushbullet.py' module is required. Install via: $ pip install pushbullet.py")
 
     # Init pushbullet 
-    pb = PushBullet(api_key)
-    target = None
+    try:
+        pb = PushBullet(api_key)
+        target = None
+    except InvalidKeyError:
+        module.fail_json(msg="Invalid api_key")
 
     # Checks for channel/device
     if device is None and channel is None:
@@ -161,13 +165,13 @@ def main():
         module.exit_json(changed=False, msg="OK")
 
     # Send push notification
-    success, result = target.push_note(title, body)
-
-    if success:
+    try:
+        target.push_note(title, body)
         module.exit_json(changed=False, msg="OK")
+    except PushError as e:
+        module.fail_json(msg="An error occurred, Pushbullet's response: %s" % str(e))
 
-    # General failure
-    module.fail_json(msg="Some error ocurred, Pushbullet response: %s" % (result))
+    module.fail_json(msg="An unknown error has occurred")
 
 # import module snippets
 from ansible.module_utils.basic import *
