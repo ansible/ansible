@@ -39,7 +39,7 @@ options:
     default: null
     choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
 requirements: [ ]
-author: Darryl Stoflet
+author: "Darryl Stoflet (@dstoflet)" <stoflet@gmail.com>
 '''
 
 EXAMPLES = '''
