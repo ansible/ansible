@@ -107,7 +107,7 @@ notes:
     and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
     to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
 requirements: [ 'unixODBC', 'pyodbc' ]
-author: Dariusz Owczarek
+author: "Dariusz Owczarek (@dareko)"
 """
 
 EXAMPLES = """
