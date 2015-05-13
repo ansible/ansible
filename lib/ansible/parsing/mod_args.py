@@ -264,13 +264,23 @@ class ModuleArgsParser:
                 thing = value
                 action, args = self._normalize_parameters(value, action=action, additional_args=additional_args)
 
+        # FIXME: this should probably be somewhere else
+        RAW_PARAM_MODULES = (
+            'command',
+            'shell',
+            'script',
+            'include',
+            'include_vars',
+            'add_host',
+            'group_by',
+            'set_fact',
+            'meta',
+        )
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
             raise AnsibleParserError("no action detected in task", obj=self._task_ds)
-        # FIXME: disabled for now, as there are other places besides the shell/script modules where
-        #        having variables as the sole param for the module is valid (include_vars, add_host, and group_by?)
-        #elif args.get('_raw_params', '') != '' and action not in ('command', 'shell', 'script', 'include_vars'):
-        #    raise AnsibleParserError("this task has extra params, which is only allowed in the command, shell or script module.", obj=self._task_ds)
+        elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
+            raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)
