@@ -219,7 +219,7 @@ def main():
             project = dict(default=None),
             state = dict(choices=['present', 'absent'], default='present'),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),

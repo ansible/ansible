@@ -292,7 +292,7 @@ def main():
             is_dynamically_scalable = dict(choices=BOOLEANS, default=False),
             state = dict(choices=['present', 'absent'], default='present'),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
