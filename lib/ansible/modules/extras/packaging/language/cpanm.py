@@ -73,7 +73,7 @@ examples:
      description: Install I(Dancer) perl package from a specific mirror
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
-author: Franck Cuny
+author: '"Franck Cuny (@franckcuny)" <franck@lumberjaph.net>'
 '''
 
 def _is_package_installed(module, name, locallib, cpanm):

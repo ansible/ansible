@@ -100,7 +100,7 @@ options:
 notes: []
 # informational: requirements for nodes
 requirements: [ dnf ]
-author: Cristian van Ee
+author: '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
 '''
 
 EXAMPLES = '''

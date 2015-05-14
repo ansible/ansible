@@ -25,7 +25,7 @@ short_description: "Manages F5 BIG-IP LTM pools"
 description:
     - "Manages F5 BIG-IP LTM pools via iControl SOAP API"
 version_added: "1.2"
-author: Matt Hite
+author: '"Matt Hite (@mhite)" <mhite@hotmail.com>'
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"

@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 ---
 module: ejabberd_user
 version_added: "1.5"
-author: Peter Sprygada
+author: '"Peter Sprygada (@privateip)" <sprygada@gmail.com>'
 short_description: Manages users for ejabberd servers
 requirements:
     - ejabberd with mod_admin_extra
