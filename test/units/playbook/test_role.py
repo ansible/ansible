@@ -41,28 +41,28 @@ class TestRole(unittest.TestCase):
     def test_load_role_with_tasks(self):
 
         fake_loader = DictDataLoader({
-            "/etc/ansible/roles/foo/tasks/main.yml": """
+            "/etc/ansible/roles/foo_tasks/tasks/main.yml": """
             - shell: echo 'hello world'
             """,
         })
 
-        i = RoleInclude.load('foo', loader=fake_loader)
+        i = RoleInclude.load('foo_tasks', loader=fake_loader)
         r = Role.load(i)
 
-        self.assertEqual(str(r), 'foo')
+        self.assertEqual(str(r), 'foo_tasks')
         self.assertEqual(len(r._task_blocks), 1)
         assert isinstance(r._task_blocks[0], Block)
 
     def test_load_role_with_handlers(self):
 
         fake_loader = DictDataLoader({
-            "/etc/ansible/roles/foo/handlers/main.yml": """
+            "/etc/ansible/roles/foo_handlers/handlers/main.yml": """
             - name: test handler
               shell: echo 'hello world'
             """,
         })
 
-        i = RoleInclude.load('foo', loader=fake_loader)
+        i = RoleInclude.load('foo_handlers', loader=fake_loader)
         r = Role.load(i)
 
         self.assertEqual(len(r._handler_blocks), 1)
@@ -71,15 +71,15 @@ class TestRole(unittest.TestCase):
     def test_load_role_with_vars(self):
 
         fake_loader = DictDataLoader({
-            "/etc/ansible/roles/foo/defaults/main.yml": """
+            "/etc/ansible/roles/foo_vars/defaults/main.yml": """
             foo: bar
             """,
-            "/etc/ansible/roles/foo/vars/main.yml": """
+            "/etc/ansible/roles/foo_vars/vars/main.yml": """
             foo: bam
             """,
         })
 
-        i = RoleInclude.load('foo', loader=fake_loader)
+        i = RoleInclude.load('foo_vars', loader=fake_loader)
         r = Role.load(i)
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
@@ -88,41 +88,41 @@ class TestRole(unittest.TestCase):
     def test_load_role_with_metadata(self):
 
         fake_loader = DictDataLoader({
-            '/etc/ansible/roles/foo/meta/main.yml': """
+            '/etc/ansible/roles/foo_metadata/meta/main.yml': """
                 allow_duplicates: true
                 dependencies:
-                  - bar
+                  - bar_metadata
                 galaxy_info:
                   a: 1
                   b: 2
                   c: 3
             """,
-            '/etc/ansible/roles/bar/meta/main.yml': """
+            '/etc/ansible/roles/bar_metadata/meta/main.yml': """
                 dependencies:
-                  - baz
+                  - baz_metadata
             """,
-            '/etc/ansible/roles/baz/meta/main.yml': """
+            '/etc/ansible/roles/baz_metadata/meta/main.yml': """
                 dependencies:
-                  - bam
+                  - bam_metadata
             """,
-            '/etc/ansible/roles/bam/meta/main.yml': """
+            '/etc/ansible/roles/bam_metadata/meta/main.yml': """
                 dependencies: []
             """,
-            '/etc/ansible/roles/bad1/meta/main.yml': """
+            '/etc/ansible/roles/bad1_metadata/meta/main.yml': """
                 1
             """,
-            '/etc/ansible/roles/bad2/meta/main.yml': """
+            '/etc/ansible/roles/bad2_metadata/meta/main.yml': """
                 foo: bar
             """,
-            '/etc/ansible/roles/recursive1/meta/main.yml': """
-                dependencies: ['recursive2']
+            '/etc/ansible/roles/recursive1_metadata/meta/main.yml': """
+                dependencies: ['recursive2_metadata']
             """,
-            '/etc/ansible/roles/recursive2/meta/main.yml': """
-                dependencies: ['recursive1']
+            '/etc/ansible/roles/recursive2_metadata/meta/main.yml': """
+                dependencies: ['recursive1_metadata']
             """,
         })
 
-        i = RoleInclude.load('foo', loader=fake_loader)
+        i = RoleInclude.load('foo_metadata', loader=fake_loader)
         r = Role.load(i)
 
         role_deps = r.get_direct_dependencies()
@@ -136,17 +136,17 @@ class TestRole(unittest.TestCase):
 
         all_deps = r.get_all_dependencies()
         self.assertEqual(len(all_deps), 3)
-        self.assertEqual(all_deps[0].get_name(), 'bar')
-        self.assertEqual(all_deps[1].get_name(), 'baz')
-        self.assertEqual(all_deps[2].get_name(), 'bam')
+        self.assertEqual(all_deps[0].get_name(), 'bam_metadata')
+        self.assertEqual(all_deps[1].get_name(), 'baz_metadata')
+        self.assertEqual(all_deps[2].get_name(), 'bar_metadata')
 
-        i = RoleInclude.load('bad1', loader=fake_loader)
+        i = RoleInclude.load('bad1_metadata', loader=fake_loader)
         self.assertRaises(AnsibleParserError, Role.load, i)
 
-        i = RoleInclude.load('bad2', loader=fake_loader)
+        i = RoleInclude.load('bad2_metadata', loader=fake_loader)
         self.assertRaises(AnsibleParserError, Role.load, i)
 
-        i = RoleInclude.load('recursive1', loader=fake_loader)
+        i = RoleInclude.load('recursive1_metadata', loader=fake_loader)
         self.assertRaises(AnsibleError, Role.load, i)
 
     def test_load_role_complex(self):
@@ -155,13 +155,13 @@ class TestRole(unittest.TestCase):
         #        params and tags/when statements
 
         fake_loader = DictDataLoader({
-            "/etc/ansible/roles/foo/tasks/main.yml": """
+            "/etc/ansible/roles/foo_complex/tasks/main.yml": """
             - shell: echo 'hello world'
             """,
         })
 
-        i = RoleInclude.load(dict(role='foo'), loader=fake_loader)
+        i = RoleInclude.load(dict(role='foo_complex'), loader=fake_loader)
         r = Role.load(i)
 
-        self.assertEqual(r.get_name(), "foo")
+        self.assertEqual(r.get_name(), "foo_complex")
 
