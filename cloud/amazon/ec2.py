@@ -1089,6 +1089,13 @@ def terminate_instances(module, ec2, instance_ids):
         # waiting took too long
         if wait_timeout < time.time() and num_terminated < len(terminated_instance_ids):
             module.fail_json(msg = "wait for instance termination timeout on %s" % time.asctime())
+        #Lets get the current state of the instances after terminating - issue600
+        instance_dict_array = []
+        for res in ec2.get_all_instances(instance_ids=terminated_instance_ids,\
+                                            filters={'instance-state-name':'terminated'}):
+            for inst in res.instances:
+                instance_dict_array.append(get_instance_info(inst))
+        
 
     return (changed, instance_dict_array, terminated_instance_ids)
 
