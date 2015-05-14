@@ -50,9 +50,9 @@ options:
     version_added: "1.3"
   overwrite:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
+      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Starting with (v2.0) the valid values for this parameter are (always, never, different) and boolean is still accepted for backward compatibility,  If the value set to (different) the file would be uploaded/downloaded only if the checksums are different.
     required: false
-    default: true
+    default: always
     version_added: "1.2"
   mode:
     description:
@@ -105,6 +105,9 @@ EXAMPLES = '''
 
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
+
+# GET an object but dont download if the file checksums  match 
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=different
 '''
 
 import os
@@ -119,7 +122,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-
 
 def key_check(module, s3, bucket, obj):
     try:
@@ -273,8 +275,8 @@ def main():
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
-            overwrite      = dict(aliases=['force'], default=True, type='bool'),
-            metadata      = dict(type='dict'),
+            overwrite      = dict(aliases=['force'], default='always'),
+            metadata       = dict(type='dict'),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -292,6 +294,12 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
+
+    if overwrite not in  ['always', 'never', 'different']: 
+        if module.boolean(overwrite): 
+            overwrite = 'always' 
+        else: 
+            overwrite='never'
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -363,23 +371,23 @@ def main():
             md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
             if md5_local == md5_remote:
                 sum_matches = True
-                if overwrite is True:
+                if overwrite == 'always':
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
+                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
             else:
                 sum_matches = False
-                if overwrite is True:
+                if overwrite in ('always', 'different'):
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
 
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message.
-        if sum_matches is True and overwrite is False:
+        if sum_matches is True and overwrite == 'never':
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
 
         # At this point explicitly define the overwrite condition.
-        if sum_matches is True and pathrtn is True and overwrite is True:
+        if sum_matches is True and pathrtn is True and overwrite == 'always':
             download_s3file(module, s3, bucket, obj, dest)
 
         # If sum does not match but the destination exists, we
@@ -407,13 +415,13 @@ def main():
                 md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
                 if md5_local == md5_remote:
                     sum_matches = True
-                    if overwrite is True:
+                    if overwrite == 'always':
                         upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
                         get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
-                    if overwrite is True:
+                    if overwrite in ('always', 'different'):
                         upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
                         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
