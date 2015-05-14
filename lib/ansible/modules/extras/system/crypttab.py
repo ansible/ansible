@@ -69,7 +69,7 @@ options:
 
 notes: []
 requirements: []
-author: Steve <yo@groks.org>
+author: '"Steve (@groks)" <yo@groks.org>'
 '''
 
 EXAMPLES = '''

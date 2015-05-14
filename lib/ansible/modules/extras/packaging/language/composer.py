@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: composer
-author: Dimitrios Tydeas Mengidis
+author: '"Dimitrios Tydeas Mengidis (@dmtrs)" <tydeas.dr@gmail.com>'
 short_description: Dependency Manager for PHP
 version_added: "1.6"
 description:

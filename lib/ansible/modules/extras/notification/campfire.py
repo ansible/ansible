@@ -43,7 +43,7 @@ options:
 
 # informational: requirements for nodes
 requirements: [ urllib2, cgi ]
-author: Adam Garside <adam.garside@gmail.com>
+author: '"Adam Garside (@fabulops)" <adam.garside@gmail.com>'
 '''
 
 EXAMPLES = '''
