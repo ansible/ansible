@@ -32,6 +32,8 @@ REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS = "# POWERSHELL_COMMON"
 REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
+REPLACER_SELINUX = "<<SELINUX_SPECIAL_FILESYSTEMS>>"
+
 
 class ModuleReplacer(object):
 
@@ -40,14 +42,14 @@ class ModuleReplacer(object):
     transfer.  Rather than doing classical python imports, this allows for more
     efficient transfer in a no-bootstrapping scenario by not moving extra files
     over the wire, and also takes care of embedding arguments in the transferred
-    modules.  
+    modules.
 
     This version is done in such a way that local imports can still be
     used in the module code, so IDEs don't have to be aware of what is going on.
 
     Example:
 
-    from ansible.module_utils.basic import * 
+    from ansible.module_utils.basic import *
 
        ... will result in the insertion basic.py into the module
 
@@ -93,7 +95,7 @@ class ModuleReplacer(object):
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
-      
+
         output = StringIO()
         lines = module_data.split('\n')
         snippet_names = []
@@ -166,6 +168,7 @@ class ModuleReplacer(object):
 
             # these strings should be part of the 'basic' snippet which is required to be included
             module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
+            module_data = module_data.replace(REPLACER_SELINUX, ','.join(C.DEFAULT_SELINUX_SPECIAL_FS))
             module_data = module_data.replace(REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(REPLACER_COMPLEX, encoded_complex)
 
