@@ -130,7 +130,10 @@ def main():
             details = r.text
         )
 
-    changeRequired = not exchangeExists if module.params['state']=='present' else exchangeExists
+    if module.params['state']=='present':
+        changeRequired = not exchangeExists
+    else:
+        changeRequired = exchangeExists
 
     # Check if attributes change on existing exchange
     if not changeRequired and r.status_code==200 and module.params['state'] == 'present':
