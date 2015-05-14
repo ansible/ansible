@@ -1,11 +1,15 @@
 sudo: false
 language: python
+python:
+  - "2.7"
 addons:
   apt:
     sources:
       - deadsnakes
     packages:
       - python2.4
+      - python2.6
 script:
   - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/layman\.py|/maven_artifact\.py|clustering/consul.*\.py|notification/pushbullet\.py' .
-  - python -m compileall -fq .
+  - python2.6 -m compileall -fq .
+  - python2.7 -m compileall -fq .
