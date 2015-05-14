@@ -30,7 +30,6 @@ description:
 options:
     state:
         required: True
-        default: "present"
         choices: [ present, absent ]
     description:
         - Whether the device should exist or not, taking action if the state is different from what is stated.
@@ -41,25 +40,14 @@ options:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
             - Whether the connection profile can be automatically activated ( default: yes)
-    action:
-        required: False
-        default: None
-        choices: [ add, modify, show, up, down ]
-        description:
-            - Set to 'add' if you want to add a connection.
-            - Set to 'modify' if you want to modify a connection. Modify one or more properties in the connection profile.
-            - Set to 'delete' if you want to delete a connection. Delete a configured connection. The connection to be deleted is identified by its name 'cfname'.
-            - Set to 'show' if you want to show a connection. Will show all devices unless 'cfname' is set.
-            - Set to 'up' if you want to bring a connection up. Requires 'cfname' to be set.
-            - Set to 'down' if you want to bring a connection down. Requires 'cfname' to be set.
-    cname:
+    conn_name:
         required: True
         default: None
         description:
-            - Where CNAME will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]
+            - Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]
     ifname:
         required: False
-        default: cname
+        default: conn_name
         description:
             - Where INAME will be the what we call the interface name. Required with 'up', 'down' modifiers.
             - interface to bind the connection to. The connection will only be applicable to this interface name.
@@ -80,7 +68,7 @@ options:
         required: False
         default: None
         description:
-            - master <master (ifname, or connection UUID or cname) of bridge, team, bond master connection profile.
+            - master <master (ifname, or connection UUID or conn_name) of bridge, team, bond master connection profile.
     ip4:
         required: False
         default: None
@@ -241,32 +229,32 @@ tenant_gw: "172.100.0.254"
 
 #Team vars
 nmcli_team:
-    - {cname: 'tenant', ip4: "{{tenant_ip}}", gw4: "{{tenant_gw}}"}
-    - {cname: 'external', ip4: "{{external_ip}}", gw4: "{{external_gw}}"}
-    - {cname: 'storage', ip4: "{{storage_ip}}", gw4: "{{storage_gw}}"}
+    - {conn_name: 'tenant', ip4: "{{tenant_ip}}", gw4: "{{tenant_gw}}"}
+    - {conn_name: 'external', ip4: "{{external_ip}}", gw4: "{{external_gw}}"}
+    - {conn_name: 'storage', ip4: "{{storage_ip}}", gw4: "{{storage_gw}}"}
 nmcli_team_slave:
-    - {cname: 'em1', ifname: 'em1', master: 'tenant'}
-    - {cname: 'em2', ifname: 'em2', master: 'tenant'}
-    - {cname: 'p2p1', ifname: 'p2p1', master: 'storage'}
-    - {cname: 'p2p2', ifname: 'p2p2', master: 'external'}
+    - {conn_name: 'em1', ifname: 'em1', master: 'tenant'}
+    - {conn_name: 'em2', ifname: 'em2', master: 'tenant'}
+    - {conn_name: 'p2p1', ifname: 'p2p1', master: 'storage'}
+    - {conn_name: 'p2p2', ifname: 'p2p2', master: 'external'}
 
 #bond vars
 nmcli_bond:
-    - {cname: 'tenant', ip4: "{{tenant_ip}}", gw4: '', mode: 'balance-rr'}
-    - {cname: 'external', ip4: "{{external_ip}}", gw4: '', mode: 'balance-rr'}
-    - {cname: 'storage', ip4: "{{storage_ip}}", gw4: "{{storage_gw}}", mode: 'balance-rr'}
+    - {conn_name: 'tenant', ip4: "{{tenant_ip}}", gw4: '', mode: 'balance-rr'}
+    - {conn_name: 'external', ip4: "{{external_ip}}", gw4: '', mode: 'balance-rr'}
+    - {conn_name: 'storage', ip4: "{{storage_ip}}", gw4: "{{storage_gw}}", mode: 'balance-rr'}
 nmcli_bond_slave:
-    - {cname: 'em1', ifname: 'em1', master: 'tenant'}
-    - {cname: 'em2', ifname: 'em2', master: 'tenant'}
-    - {cname: 'p2p1', ifname: 'p2p1', master: 'storage'}
-    - {cname: 'p2p2', ifname: 'p2p2', master: 'external'}
+    - {conn_name: 'em1', ifname: 'em1', master: 'tenant'}
+    - {conn_name: 'em2', ifname: 'em2', master: 'tenant'}
+    - {conn_name: 'p2p1', ifname: 'p2p1', master: 'storage'}
+    - {conn_name: 'p2p2', ifname: 'p2p2', master: 'external'}
 
 #ethernet vars
 nmcli_ethernet:
-    - {cname: 'em1', ifname: 'em1', ip4: "{{tenant_ip}}", gw4: "{{tenant_gw}}"}
-    - {cname: 'em2', ifname: 'em2', ip4: "{{tenant_ip1}}", gw4: "{{tenant_gw}}"}
-    - {cname: 'p2p1', ifname: 'p2p1', ip4: "{{storage_ip}}", gw4: "{{storage_gw}}"}
-    - {cname: 'p2p2', ifname: 'p2p2', ip4: "{{external_ip}}", gw4: "{{external_gw}}"}
+    - {conn_name: 'em1', ifname: 'em1', ip4: "{{tenant_ip}}", gw4: "{{tenant_gw}}"}
+    - {conn_name: 'em2', ifname: 'em2', ip4: "{{tenant_ip1}}", gw4: "{{tenant_gw}}"}
+    - {conn_name: 'p2p1', ifname: 'p2p1', ip4: "{{storage_ip}}", gw4: "{{storage_gw}}"}
+    - {conn_name: 'p2p2', ifname: 'p2p2', ip4: "{{external_ip}}", gw4: "{{external_gw}}"}
 ```
 
 ### host_vars
@@ -296,30 +284,30 @@ tenant_ip: "192.168.200.21/23"
     - policycoreutils-python
 
 ##### Working with all cloud nodes - Teaming
-  - name: try nmcli add team - cname only & ip4 gw4
-    nmcli: type=team cname={{item.cname}} ip4={{item.ip4}} gw4={{item.gw4}} state=present
+  - name: try nmcli add team - conn_name only & ip4 gw4
+    nmcli: type=team conn_name={{item.conn_name}} ip4={{item.ip4}} gw4={{item.gw4}} state=present
     with_items:
       - "{{nmcli_team}}"
 
   - name: try nmcli add teams-slave
-    nmcli: type=team-slave cname={{item.cname}} ifname={{item.ifname}} master={{item.master}} state=present
+    nmcli: type=team-slave conn_name={{item.conn_name}} ifname={{item.ifname}} master={{item.master}} state=present
     with_items:
       - "{{nmcli_team_slave}}"
 
 ###### Working with all cloud nodes - Bonding
-#  - name: try nmcli add bond - cname only & ip4 gw4 mode
-#    nmcli: type=bond cname={{item.cname}} ip4={{item.ip4}} gw4={{item.gw4}} mode={{item.mode}} state=present
+#  - name: try nmcli add bond - conn_name only & ip4 gw4 mode
+#    nmcli: type=bond conn_name={{item.conn_name}} ip4={{item.ip4}} gw4={{item.gw4}} mode={{item.mode}} state=present
 #    with_items:
 #      - "{{nmcli_bond}}"
 #
 #  - name: try nmcli add bond-slave
-#    nmcli: type=bond-slave cname={{item.cname}} ifname={{item.ifname}} master={{item.master}} state=present
+#    nmcli: type=bond-slave conn_name={{item.conn_name}} ifname={{item.ifname}} master={{item.master}} state=present
 #    with_items:
 #      - "{{nmcli_bond_slave}}"
 
 ##### Working with all cloud nodes - Ethernet
-#  - name: nmcli add Ethernet - cname only & ip4 gw4
-#    nmcli: type=ethernet cname={{item.cname}} ip4={{item.ip4}} gw4={{item.gw4}} state=present
+#  - name: nmcli add Ethernet - conn_name only & ip4 gw4
+#    nmcli: type=ethernet conn_name={{item.conn_name}} ip4={{item.ip4}} gw4={{item.gw4}} state=present
 #    with_items:
 #      - "{{nmcli_ethernet}}"
 ```
@@ -333,41 +321,41 @@ tenant_ip: "192.168.200.21/23"
   tasks:
 
   - name: try nmcli del team - multiple
-    nmcli: cname={{item.cname}} state=absent
+    nmcli: conn_name={{item.conn_name}} state=absent
     with_items:
-      - { cname: 'em1'}
-      - { cname: 'em2'}
-      - { cname: 'p1p1'}
-      - { cname: 'p1p2'}
-      - { cname: 'p2p1'}
-      - { cname: 'p2p2'}
-      - { cname: 'tenant'}
-      - { cname: 'storage'}
-      - { cname: 'external'}
-      - { cname: 'team-em1'}
-      - { cname: 'team-em2'}
-      - { cname: 'team-p1p1'}
-      - { cname: 'team-p1p2'}
-      - { cname: 'team-p2p1'}
-      - { cname: 'team-p2p2'}
+      - { conn_name: 'em1'}
+      - { conn_name: 'em2'}
+      - { conn_name: 'p1p1'}
+      - { conn_name: 'p1p2'}
+      - { conn_name: 'p2p1'}
+      - { conn_name: 'p2p2'}
+      - { conn_name: 'tenant'}
+      - { conn_name: 'storage'}
+      - { conn_name: 'external'}
+      - { conn_name: 'team-em1'}
+      - { conn_name: 'team-em2'}
+      - { conn_name: 'team-p1p1'}
+      - { conn_name: 'team-p1p2'}
+      - { conn_name: 'team-p2p1'}
+      - { conn_name: 'team-p2p2'}
 ```
 # To add an Ethernet connection with static IP configuration, issue a command as follows
-- nmcli: cname=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
+- nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
 
 # To add an Team connection with static IP configuration, issue a command as follows
-- nmcli: cname=my-team1 ifname=my-team1 type=team ip4=192.168.100.100/24 gw4=192.168.100.1 state=present enabled=yes
+- nmcli: conn_name=my-team1 ifname=my-team1 type=team ip4=192.168.100.100/24 gw4=192.168.100.1 state=present enabled=yes
 
 # Optionally, at the same time specify IPv6 addresses for the device as follows:
-- nmcli: cname=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 ip6=abbe::cafe gw6=2001:db8::1 state=present
+- nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 ip6=abbe::cafe gw6=2001:db8::1 state=present
 
 # To add two IPv4 DNS server addresses:
--nmcli: cname=my-eth1 dns4=["8.8.8.8", "8.8.4.4"] state=present
+-nmcli: conn_name=my-eth1 dns4=["8.8.8.8", "8.8.4.4"] state=present
 
 # To make a profile usable for all compatible Ethernet interfaces, issue a command as follows
 - nmcli: ctype=ethernet name=my-eth1 ifname="*" state=present
 
 # To change the property of a setting e.g. MTU, issue a command as follows:
-- nmcli: cname=my-eth1 mtu=9000 state=present
+- nmcli: conn_name=my-eth1 mtu=9000 state=present
 
     Exit Status's:
         - nmcli exits with status 0 if it succeeds, a value greater than 0 is
@@ -438,15 +426,12 @@ class Nmcli(object):
                  120: "Failed"
             }
 
-    def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(Nmcli, args, kwargs)
 
     def __init__(self, module):
         self.module=module
         self.state=module.params['state']
         self.enabled=module.params['enabled']
-        self.action=module.params['action']
-        self.cname=module.params['cname']
+        self.conn_name=module.params['conn_name']
         self.master=module.params['master']
         self.autoconnect=module.params['autoconnect']
         self.ifname=module.params['ifname']
@@ -570,7 +555,7 @@ class Nmcli(object):
         connections=self.list_connection_info()
 
         for con_item in connections:
-            if self.cname==con_item:
+            if self.conn_name==con_item:
                 return True
 
     def down_connection(self):
@@ -578,14 +563,14 @@ class Nmcli(object):
         # if self.connection_exists():
         cmd.append('con')
         cmd.append('down')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         return self.execute_command(cmd)
 
     def up_connection(self):
         cmd=[self.module.get_bin_path('nmcli', True)]
         cmd.append('con')
         cmd.append('up')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         return self.execute_command(cmd)
 
     def create_connection_team(self):
@@ -596,15 +581,15 @@ class Nmcli(object):
         cmd.append('type')
         cmd.append('team')
         cmd.append('con-name')
-        if self.cname is not None:
-            cmd.append(self.cname)
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
         elif self.ifname is not None:
             cmd.append(self.ifname)
         cmd.append('ifname')
         if self.ifname is not None:
             cmd.append(self.ifname)
-        elif self.cname is not None:
-            cmd.append(self.cname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
         if self.ip4 is not None:
             cmd.append('ip4')
             cmd.append(self.ip4)
@@ -627,7 +612,7 @@ class Nmcli(object):
         # format for modifying team interface
         cmd.append('con')
         cmd.append('mod')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         if self.ip4 is not None:
             cmd.append('ipv4.address')
             cmd.append(self.ip4)
@@ -660,17 +645,17 @@ class Nmcli(object):
         cmd.append('type')
         cmd.append(self.type)
         cmd.append('con-name')
-        if self.cname is not None:
-            cmd.append(self.cname)
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
         elif self.ifname is not None:
             cmd.append(self.ifname)
         cmd.append('ifname')
         if self.ifname is not None:
             cmd.append(self.ifname)
-        elif self.cname is not None:
-            cmd.append(self.cname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
         cmd.append('master')
-        if self.cname is not None:
+        if self.conn_name is not None:
             cmd.append(self.master)
         # if self.mtu is not None:
         #     cmd.append('802-3-ethernet.mtu')
@@ -682,7 +667,7 @@ class Nmcli(object):
         # format for modifying team-slave interface
         cmd.append('con')
         cmd.append('mod')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         cmd.append('connection.master')
         cmd.append(self.master)
         if self.mtu is not None:
@@ -698,15 +683,15 @@ class Nmcli(object):
         cmd.append('type')
         cmd.append('bond')
         cmd.append('con-name')
-        if self.cname is not None:
-            cmd.append(self.cname)
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
         elif self.ifname is not None:
             cmd.append(self.ifname)
         cmd.append('ifname')
         if self.ifname is not None:
             cmd.append(self.ifname)
-        elif self.cname is not None:
-            cmd.append(self.cname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
         if self.ip4 is not None:
             cmd.append('ip4')
             cmd.append(self.ip4)
@@ -747,7 +732,7 @@ class Nmcli(object):
         # format for modifying bond interface
         cmd.append('con')
         cmd.append('mod')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         if self.ip4 is not None:
             cmd.append('ipv4.address')
             cmd.append(self.ip4)
@@ -779,17 +764,17 @@ class Nmcli(object):
         cmd.append('type')
         cmd.append('bond-slave')
         cmd.append('con-name')
-        if self.cname is not None:
-            cmd.append(self.cname)
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
         elif self.ifname is not None:
             cmd.append(self.ifname)
         cmd.append('ifname')
         if self.ifname is not None:
             cmd.append(self.ifname)
-        elif self.cname is not None:
-            cmd.append(self.cname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
         cmd.append('master')
-        if self.cname is not None:
+        if self.conn_name is not None:
             cmd.append(self.master)
         return cmd
 
@@ -798,7 +783,7 @@ class Nmcli(object):
         # format for modifying bond-slave interface
         cmd.append('con')
         cmd.append('mod')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         cmd.append('connection.master')
         cmd.append(self.master)
         return cmd
@@ -807,22 +792,22 @@ class Nmcli(object):
         cmd=[self.module.get_bin_path('nmcli', True)]
         # format for creating ethernet interface
         # To add an Ethernet connection with static IP configuration, issue a command as follows
-        # - nmcli: name=add cname=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
+        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
         # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.168.100.100/24 gw4 192.168.100.1
         cmd.append('con')
         cmd.append('add')
         cmd.append('type')
         cmd.append('ethernet')
         cmd.append('con-name')
-        if self.cname is not None:
-            cmd.append(self.cname)
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
         elif self.ifname is not None:
             cmd.append(self.ifname)
         cmd.append('ifname')
         if self.ifname is not None:
             cmd.append(self.ifname)
-        elif self.cname is not None:
-            cmd.append(self.cname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
         if self.ip4 is not None:
             cmd.append('ip4')
             cmd.append(self.ip4)
@@ -844,11 +829,11 @@ class Nmcli(object):
         cmd=[self.module.get_bin_path('nmcli', True)]
         # format for  modifying ethernet interface
         # To add an Ethernet connection with static IP configuration, issue a command as follows
-        # - nmcli: name=add cname=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
+        # - nmcli: name=add conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
         # nmcli con add con-name my-eth1 ifname eth1 type ethernet ip4 192.168.100.100/24 gw4 192.168.100.1
         cmd.append('con')
         cmd.append('mod')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         if self.ip4 is not None:
             cmd.append('ipv4.address')
             cmd.append(self.ip4)
@@ -955,7 +940,7 @@ class Nmcli(object):
         cmd=[self.module.get_bin_path('nmcli', True)]
         cmd.append('con')
         cmd.append('del')
-        cmd.append(self.cname)
+        cmd.append(self.conn_name)
         return self.execute_command(cmd)
 
     def modify_connection(self):
@@ -982,9 +967,8 @@ def main():
     module=AnsibleModule(
         argument_spec=dict(
             enabled=dict(required=False, default=None, choices=['yes', 'no'], type='str'),
-            action=dict(required=False, default=None, choices=['add', 'mod', 'show', 'up', 'down', 'del'], type='str'),
-            state=dict(required=True, default=None, choices=['present', 'absent'], type='str'),
-            cname=dict(required=False, type='str'),
+            state=dict(required=True, choices=['present', 'absent'], type='str'),
+            conn_name=dict(required=False, type='str'),
             master=dict(required=False, default=None, type='str'),
             autoconnect=dict(required=False, default=None, choices=['yes', 'no'], type='str'),
             ifname=dict(required=False, default=None, type='str'),
@@ -1035,11 +1019,11 @@ def main():
     out=''
     err=''
     result={}
-    result['cname']=nmcli.cname
+    result['conn_name']=nmcli.conn_name
     result['state']=nmcli.state
 
     # check for issues
-    if nmcli.cname is None:
+    if nmcli.conn_name is None:
         nmcli.module.fail_json(msg="You haven't specified a name for the connection")
     # team-slave checks
     if nmcli.type=='team-slave' and nmcli.master is None:
@@ -1054,23 +1038,23 @@ def main():
             (rc, out, err)=nmcli.down_connection()
             (rc, out, err)=nmcli.remove_connection()
         if rc!=0:
-            module.fail_json(name =('No Connection named %s exists' % nmcli.cname), msg=err, rc=rc)
+            module.fail_json(name =('No Connection named %s exists' % nmcli.conn_name), msg=err, rc=rc)
 
     elif nmcli.state=='present':
         if nmcli.connection_exists():
             # modify connection (note: this function is check mode aware)
-            # result['Connection']=('Connection %s of Type %s is not being added' % (nmcli.cname, nmcli.type))
+            # result['Connection']=('Connection %s of Type %s is not being added' % (nmcli.conn_name, nmcli.type))
             result['Exists']='Connections do exist so we are modifying them'
             if module.check_mode:
                 module.exit_json(changed=True)
             (rc, out, err)=nmcli.modify_connection()
         if not nmcli.connection_exists():
-            result['Connection']=('Connection %s of Type %s is being added' % (nmcli.cname, nmcli.type))
+            result['Connection']=('Connection %s of Type %s is being added' % (nmcli.conn_name, nmcli.type))
             if module.check_mode:
                 module.exit_json(changed=True)
             (rc, out, err)=nmcli.create_connection()
         if rc is not None and rc!=0:
-            module.fail_json(name=nmcli.cname, msg=err, rc=rc)
+            module.fail_json(name=nmcli.conn_name, msg=err, rc=rc)
 
     if rc is None:
         result['changed']=False
