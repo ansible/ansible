@@ -144,7 +144,9 @@ def main():
 
     # Search for given device
     if device is not None:
-        devices_by_nickname = {d.nickname: d for d in pb.devices}
+        devices_by_nickname = {}
+        for d in pb.devices:
+            devices_by_nickname[d.nickname] = d
 
         if device in devices_by_nickname:
             target = devices_by_nickname[device]
@@ -153,7 +155,9 @@ def main():
 
     # Search for given channel
     if channel is not None:
-        channels_by_tag = {c.channel_tag: c for c in pb.channels}
+        channels_by_tag = {}
+        for c in pb.channels:
+            channels_by_tag[c.channel_tag] = c
 
         if channel in channels_by_tag:
             target = channels_by_tag[channel]
