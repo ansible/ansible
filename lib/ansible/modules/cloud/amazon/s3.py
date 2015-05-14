@@ -73,6 +73,13 @@ options:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
     required: false
     default: null
+  version:
+    description:
+      - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
+    required: false
+    default: null
+    aliases: []
+    version_added: "2.0"
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -114,6 +121,9 @@ EXAMPLES = '''
 # Simple GET operation
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get
 
+# Get a specific version of an object.
+- s3: bucket=mybucket object=/my/desired/key.txt version=48c9ee5131af7a716edc22df9772aa6f dest=/usr/local/myfile.txt mode=get
+
 # PUT/upload with metadata
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
 
@@ -146,21 +156,23 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-
-def key_check(module, s3, bucket, obj):
+def key_check(module, s3, bucket, obj, version=None):
     try:
         bucket = s3.lookup(bucket)
-        key_check = bucket.get_key(obj)
+        key_check = bucket.get_key(obj, version_id=version)
     except s3.provider.storage_response_error, e:
-        module.fail_json(msg= str(e))
+        if version is not None and e.status == 400: # If a specified version doesn't exist a 400 is returned.
+            key_check = None
+        else:
+            module.fail_json(msg=str(e))
     if key_check:
         return True
     else:
         return False
 
-def keysum(module, s3, bucket, obj):
+def keysum(module, s3, bucket, obj, version=None):
     bucket = s3.lookup(bucket)
-    key_check = bucket.get_key(obj)
+    key_check = bucket.get_key(obj, version_id=version)
     if not key_check:
         return None
     md5_remote = key_check.etag[1:-1]
@@ -246,11 +258,11 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt):
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
-def download_s3file(module, s3, bucket, obj, dest, retries):
+def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
     # retries is the number of loops; range/xrange needs to be one
     # more to get that count of loops.
     bucket = s3.lookup(bucket)
-    key = bucket.lookup(obj)
+    key = bucket.get_key(obj, version_id=version)
     for x in range(0, retries + 1):
         try:
             key.get_contents_to_filename(dest)
@@ -264,10 +276,10 @@ def download_s3file(module, s3, bucket, obj, dest, retries):
             # otherwise, try again, this may be a transient timeout.
             pass
 
-def download_s3str(module, s3, bucket, obj):
+def download_s3str(module, s3, bucket, obj, version=None):
     try:
         bucket = s3.lookup(bucket)
-        key = bucket.lookup(obj)
+        key = bucket.get_key(obj, version_id=version)
         contents = key.get_contents_as_string()
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
     except s3.provider.storage_copy_error, e:
@@ -317,6 +329,7 @@ def main():
             metadata       = dict(type='dict'),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj'], required=True),
             object         = dict(),
+            version        = dict(default=None),
             overwrite      = dict(aliases=['force'], default='always'),
             retries        = dict(aliases=['retry'], type='int', default=0),
             s3_url         = dict(aliases=['S3_URL']),
@@ -336,6 +349,7 @@ def main():
     metadata = module.params.get('metadata')
     mode = module.params.get('mode')
     obj = module.params.get('object')
+    version = module.params.get('version')
     overwrite = module.params.get('overwrite')
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
@@ -408,29 +422,34 @@ def main():
             module.fail_json(msg="Target bucket cannot be found", failed=True)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
-        keyrtn = key_check(module, s3, bucket, obj)
+        keyrtn = key_check(module, s3, bucket, obj, version=version)
         if keyrtn is False:
-            module.fail_json(msg="Target key cannot be found", failed=True)
+            if version is not None:
+                module.fail_json(msg="Key %s with version id %s does not exist."% (obj, version), failed=True)
+            else:
+                module.fail_json(msg="Key %s does not exist."%obj, failed=True)
 
         # If the destination path doesn't exist, no need to md5um etag check, so just download.
         pathrtn = path_check(dest)
         if pathrtn is False:
-            download_s3file(module, s3, bucket, obj, dest)
+            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
-            md5_remote = keysum(module, s3, bucket, obj)
+            md5_remote = keysum(module, s3, bucket, obj, version=version)
             md5_local = get_md5_digest(dest)
+
             if md5_local == md5_remote:
                 sum_matches = True
-                if overwrite is True:
-                    download_s3file(module, s3, bucket, obj, dest)
+                if overwrite == 'always':
+                    download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
                     module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
             else:
                 sum_matches = False
-                if overwrite is True:
-                    download_s3file(module, s3, bucket, obj, dest)
+
+                if overwrite in ('always', 'different'):
+                    download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
 
@@ -440,9 +459,7 @@ def main():
 
         # At this point explicitly define the overwrite condition.
         if sum_matches is True and pathrtn is True and overwrite == 'always':
-            download_s3file(module, s3, bucket, obj, dest, retries)
-
-        # If sum does not match but the destination exists, we
+            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
@@ -563,11 +580,14 @@ def main():
             if bucketrtn is False:
                 module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
             else:
-                keyrtn = key_check(module, s3, bucket, obj)
+                keyrtn = key_check(module, s3, bucket, obj, version=version)
                 if keyrtn is True:
-                    download_s3str(module, s3, bucket, obj)
+                    download_s3str(module, s3, bucket, obj, version=version)
                 else:
-                    module.fail_json(msg="Key %s does not exist."%obj, failed=True)
+                    if version is not None:
+                        module.fail_json(msg="Key %s with version id %s does not exist."% (obj, version), failed=True)
+                    else:
+                        module.fail_json(msg="Key %s does not exist."%obj, failed=True)
 
     module.exit_json(failed=False)
 
