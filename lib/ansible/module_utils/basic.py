@@ -38,6 +38,8 @@ BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
+SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
+
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here
 # can be inserted in any module source automatically by including
@@ -528,10 +530,10 @@ class AnsibleModule(object):
             path = os.path.dirname(path)
         return path
 
-    def is_nfs_path(self, path):
+    def is_special_selinux_path(self, path):
         """
-        Returns a tuple containing (True, selinux_context) if the given path
-        is on a NFS mount point, otherwise the return will be (False, None).
+        Returns a tuple containing (True, selinux_context) if the given path is on a
+        NFS or other 'special' fs  mount point, otherwise the return will be (False, None).
         """
         try:
             f = open('/proc/mounts', 'r')
@@ -542,9 +544,13 @@ class AnsibleModule(object):
         path_mount_point = self.find_mount_point(path)
         for line in mount_data:
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-            if path_mount_point == mount_point and 'nfs' in fstype:
-                nfs_context = self.selinux_context(path_mount_point)
-                return (True, nfs_context)
+
+            if path_mount_point == mount_point:
+                for fs in SELINUX_SPECIAL_FS.split(','):
+                    if fs in fstype:
+                        special_context = self.selinux_context(path_mount_point)
+                        return (True, special_context)
+
         return (False, None)
 
     def set_default_selinux_context(self, path, changed):
@@ -562,9 +568,9 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        (is_nfs, nfs_context) = self.is_nfs_path(path)
-        if is_nfs:
-            new_context = nfs_context
+        (is_special_se, sp_context) = self.is_special_selinux_path(path)
+        if is_special_se:
+            new_context = sp_context
         else:
             for i in range(len(cur_context)):
                 if len(context) > i:
