@@ -121,12 +121,17 @@ def main():
         supports_check_mode = True
     )
 
+    if module.params['destinationType'] == "queue":
+        destType="q"
+    else:
+        destType="e"
+
     url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
         module.params['name'],
-        "q" if module.params['destinationType'] == "queue" else "e",        
+        destType,
         module.params['destination'],
         urllib.quote(module.params['routingKey'],'')
     )
@@ -146,7 +151,10 @@ def main():
             details = r.text
         )
 
-    changeRequired = not bindingExists if module.params['state']=='present' else bindingExists
+    if module.params['state']=='present':
+        changeRequired = not bindingExists
+    else:
+        changeRequired = bindingExists
 
     # Exit if check_mode
     if module.check_mode:
@@ -165,7 +173,7 @@ def main():
                 module.params['login_port'],
                 urllib.quote(module.params['vhost'],''),
                 module.params['name'],
-                "q" if module.params['destinationType'] == "queue" else "e",        
+                destType,
                 module.params['destination']
             )
 
