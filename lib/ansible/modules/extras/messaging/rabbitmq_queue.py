@@ -167,9 +167,6 @@ def main():
         ):
             module.fail_json(
                 msg = "RabbitMQ RESTAPI doesn't support attribute changes for existing queues",
-                details = "XPTO",
-                src = json.dumps(response['arguments']),
-                dest = json.dumps(module.params)
             )
 
 
