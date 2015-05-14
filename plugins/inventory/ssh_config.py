@@ -75,6 +75,8 @@ def print_list():
         tmp_dict = {}
         for ssh_opt, ans_opt in _ssh_to_ansible:
             if ssh_opt in attributes:
+                if type(attributes[ssh_opt]) is list:
+                    attributes[ssh_opt] = attributes[ssh_opt][0]
                 tmp_dict[ans_opt] = attributes[ssh_opt]
         if tmp_dict:
             meta['hostvars'][alias] = tmp_dict
