@@ -80,9 +80,9 @@ options:
 
 # informational: requirements for nodes
 requirements: [ socket ]
-author: 
-    - "Jan-Piet Mens (@jpmens)"
-    - "Matt Martz (@sivel)"
+author:
+    - '"Jan-Piet Mens (@jpmens)"'
+    - '"Matt Martz (@sivel)"'
 '''
 
 EXAMPLES = '''

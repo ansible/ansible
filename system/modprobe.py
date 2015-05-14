@@ -25,8 +25,8 @@ module: modprobe
 short_description: Add or remove kernel modules
 requirements: []
 version_added: 1.4
-author: 
-    - "David Stygstra (@stygstra)" <david.stygstra@gmail.com>
+author:
+    - '"David Stygstra (@stygstra)" <david.stygstra@gmail.com>'
     - Julien Dauphant
     - Matt Jeffery
 description:
