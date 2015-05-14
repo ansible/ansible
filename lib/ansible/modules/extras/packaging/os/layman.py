@@ -25,7 +25,7 @@ from urllib2 import Request, urlopen, URLError
 DOCUMENTATION = '''
 ---
 module: layman
-author: Jakub Jirutka
+author: '"Jakub Jirutka (@jirutka)" <jakub@jirutka.cz>'
 version_added: "1.6"
 short_description: Manage Gentoo overlays
 description:

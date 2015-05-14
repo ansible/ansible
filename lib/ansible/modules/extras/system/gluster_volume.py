@@ -103,7 +103,7 @@ options:
 notes:
   - "Requires cli tools for GlusterFS on servers"
   - "Will add new bricks, but not remove them"
-author: Taneli Leppä
+author: '"Taneli Leppä (@rosmo)" <taneli@crasman.fi>'
 """
 
 EXAMPLES = """

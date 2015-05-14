@@ -47,7 +47,7 @@ options:
 notes:
   - "The JBoss standalone deployment-scanner has to be enabled in standalone.xml"
   - "Ensure no identically named application is deployed through the JBoss CLI"
-author: Jeroen Hoekx
+author: '"Jeroen Hoekx (@jhoekx)" <jeroen.hoekx@dsquare.be>'
 """
 
 EXAMPLES = """

@@ -20,7 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: opkg
-author: Patrick Pelletier
+author: '"Patrick Pelletier (@skinp)" <pp.pelletier@gmail.com>'
 short_description: Package manager for OpenWrt
 description:
     - Manages OpenWrt packages

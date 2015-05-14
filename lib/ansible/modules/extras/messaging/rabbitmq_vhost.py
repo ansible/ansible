@@ -26,7 +26,7 @@ short_description: Manage the state of a virtual host in RabbitMQ
 description:
   - Manage the state of a virtual host in RabbitMQ
 version_added: "1.1"
-author: Chris Hoffman
+author: '"Chris Hoffman (@choffman)"'
 options:
   name:
     description:

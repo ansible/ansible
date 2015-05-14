@@ -37,7 +37,7 @@ description:
     - Downloads an artifact from a maven repository given the maven coordinates provided to the module. Can retrieve
     - snapshots or release versions of the artifact and will resolve the latest available version if one is not
     - available.
-author: Chris Schmidt <chris.schmidt () contrastsecurity.com>
+author: '"Chris Schmidt (@chrisisbeef)" <chris.schmidt () contrastsecurity.com>'
 requirements:
     - "python >= 2.6"
     - lxml
