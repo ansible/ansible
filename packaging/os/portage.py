@@ -147,7 +147,9 @@ options:
     choices: [ "yes" ]
 
 requirements: [ gentoolkit ]
-author: Yap Sok Ann, Andrew Udvare
+author: 
+    - "Yap Sok Ann (@sayap)"
+    - "Andrew Udvare"
 notes:  []
 '''
 
