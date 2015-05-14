@@ -334,6 +334,12 @@ def main():
         else: 
             overwrite='never'
 
+    if overwrite not in  ['always', 'never', 'different']: 
+        if module.boolean(overwrite): 
+            overwrite = 'always' 
+        else: 
+            overwrite='never'
+
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     if region in ('us-east-1', '', None):
