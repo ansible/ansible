@@ -34,7 +34,7 @@ short_description: Manage boundary meters
 description:
     - This module manages boundary meters
 version_added: "1.3"
-author: curtis@serverascode.com
+author: '"curtis (@ccollicutt)" <curtis@serverascode.com>'
 requirements:
     - Boundary API access
     - bprobe is required to send data, but not to register a meter

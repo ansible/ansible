@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: airbrake_deployment
 version_added: "1.2"
-author: Bruce Pennypacker
+author: '"Bruce Pennypacker (@bpennypacker)" <bruce@pennypacker.org>'
 short_description: Notify airbrake about app deployments
 description:
    - Notify airbrake about app deployments (see http://help.airbrake.io/kb/api-2/deploy-tracking)

@@ -25,7 +25,7 @@ short_description: Manages account on Apache CloudStack based clouds.
 description:
     - Create, disable, lock, enable and remove accounts.
 version_added: '2.0'
-author: René Moser
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
   name:
     description:
