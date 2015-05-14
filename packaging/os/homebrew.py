@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: homebrew
 author: 
     - "Daniel Jaouen (@danieljaouen)" <dcj24@cornell.edu>
-    - "Andrew Dunham" (@andrew-d)" <andrew@du.nham.ca>
+    - "Andrew Dunham (@andrew-d)" <andrew@du.nham.ca>
 short_description: Package manager for Homebrew
 description:
     - Manages Homebrew packages
