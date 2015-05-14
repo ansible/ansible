@@ -162,7 +162,10 @@ def main():
             details = r.text
         )
 
-    changeRequired = not queueExists if module.params['state']=='present' else queueExists
+    if module.params['state']=='present':
+        changeRequired = not queueExists
+    else:
+        changeRequired = queueExists
 
     # Check if attributes change on existing queue
     if not changeRequired and r.status_code==200 and module.params['state'] == 'present':
@@ -170,19 +173,24 @@ def main():
             response['durable'] == module.params['durable'] and
             response['auto_delete'] == module.params['autoDelete'] and
             (
-                response['arguments']['x-message-ttl'] == module.params['messageTTL'] if 'x-message-ttl' in response['arguments'] else module.params['messageTTL'] is None
+                ( 'x-message-ttl' in response['arguments'] and response['arguments']['x-message-ttl'] == module.params['messageTTL'] ) or
+                ( 'x-message-ttl' not in response['arguments'] and module.params['messageTTL'] is None )
             ) and
             (
-                response['arguments']['x-expires'] == module.params['autoExpire'] if 'x-expires' in response['arguments'] else module.params['autoExpire'] is None
+                ( 'x-expires' in response['arguments'] and response['arguments']['x-expires'] == module.params['autoExpire'] ) or
+                ( 'x-expires' not in response['arguments'] and module.params['autoExpire'] is None )
             ) and
             (
-                response['arguments']['x-max-length'] == module.params['maxLength'] if 'x-max-length' in response['arguments'] else module.params['maxLength'] is None
+                ( 'x-max-length' in response['arguments'] and response['arguments']['x-max-length'] == module.params['maxLength'] ) or
+                ( 'x-max-length' not in response['arguments'] and module.params['maxLength'] is None )
             ) and
             (
-                response['arguments']['x-dead-letter-exchange'] == module.params['deadLetterExchange'] if 'x-dead-letter-exchange' in response['arguments'] else module.params['deadLetterExchange'] is None
+                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['deadLetterExchange'] ) or
+                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['deadLetterExchange'] is None )
             ) and
             (
-                response['arguments']['x-dead-letter-routing-key'] == module.params['deadLetterRoutingKey'] if 'x-dead-letter-routing-key' in response['arguments'] else module.params['deadLetterRoutingKey'] is None
+                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['deadLetterRoutingKey'] ) or
+                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['deadLetterRoutingKey'] is None )
             )
         ):
             module.fail_json(
