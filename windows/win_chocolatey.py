@@ -88,7 +88,7 @@ options:
     aliases: []
 author: 
     - "Trond Hindenes (@trondhindenes)" <trond@hindenes.com>
-    - "Peter Mounce (@petemounce)"
+    - "Peter Mounce (@petemounce)" <public@neverrunwithscissors.com>
 '''
 
 # TODO:
