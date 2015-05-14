@@ -24,7 +24,7 @@ module: cs_iso
 short_description: Manages ISOs images on Apache CloudStack based clouds.
 description: Register and remove ISO images.
 version_added: '2.0'
-author: René Moser
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
   name:
     description:

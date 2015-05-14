@@ -23,7 +23,7 @@ module: cs_securitygroup
 short_description: Manages security groups on Apache CloudStack based clouds.
 description: Create and remove security groups.
 version_added: '2.0'
-author: "René Moser (@resmo)" <mail@renemoser.net>
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
   name:
     description:

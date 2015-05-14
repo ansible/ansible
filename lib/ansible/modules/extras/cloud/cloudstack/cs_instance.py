@@ -25,7 +25,7 @@ short_description: Manages instances and virtual machines on Apache CloudStack b
 description:
     - Deploy, start, restart, stop and destroy instances on Apache CloudStack, Citrix CloudPlatform and Exoscale.
 version_added: '2.0'
-author: "René Moser (@resmo)" <mail@renemoser.net>
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
   name:
     description:
