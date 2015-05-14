@@ -156,12 +156,12 @@ options:
           - restarted
           - absent
           - frozen
-          - clone
         description:
-          - Define the state of a container. If you use clone the container
-            will be stopped while the clone operation is happening and upon
-            completion of the clone the original container state will be
-            restored.
+          - Define the state of a container. If you clone a container using
+            `clone_name` the newly cloned container created in a stopped state.
+            The running container will be stopped while the clone operation is
+            happening and upon completion of the clone the original container
+            state will be restored.
         required: false
         default: started
     container_config:
@@ -225,6 +225,7 @@ EXAMPLES = """
 - name: Create filesystem container
   lxc_container:
     name: test-container-config
+    backing_store: dir
     container_log: true
     template: ubuntu
     state: started
@@ -238,7 +239,7 @@ EXAMPLES = """
 # Create an lvm container, run a complex command in it, add additional
 # configuration to it, create an archive of it, and finally leave the container
 # in a frozen state. The container archive will be compressed using bzip2
-- name: Create an lvm container
+- name: Create a frozen lvm container
   lxc_container:
     name: test-container-lvm
     container_log: true
@@ -263,14 +264,6 @@ EXAMPLES = """
 - name: Debug info on container "test-container-lvm"
   debug: var=lvm_container_info
 
-- name: Get information on a given container.
-  lxc_container:
-    name: test-container-config
-  register: config_container_info
-
-- name: debug info on container "test-container"
-  debug: var=config_container_info
-
 - name: Run a command in a container and ensure its in a "stopped" state.
   lxc_container:
     name: test-container-started
@@ -285,19 +278,19 @@ EXAMPLES = """
     container_command: |
       echo 'hello world.' | tee /opt/frozen
 
-- name: Start a container.
+- name: Start a container
   lxc_container:
     name: test-container-stopped
     state: started
 
-- name: Run a command in a container and then restart it.
+- name: Run a command in a container and then restart it
   lxc_container:
     name: test-container-started
     state: restarted
     container_command: |
       echo 'hello world.' | tee /opt/restarted
 
-- name: Run a complex command within a "running" container.
+- name: Run a complex command within a "running" container
   lxc_container:
     name: test-container-started
     container_command: |
@@ -317,7 +310,10 @@ EXAMPLES = """
     archive: true
     archive_path: /opt/archives
 
-- name: Create an overlayfs container
+# Create a container using overlayfs, create an archive of it, create a
+# snapshot clone of the container and and finally leave the container
+# in a frozen state. The container archive will be compressed using gzip.
+- name: Create an overlayfs container archive and clone it
   lxc_container:
     name: test-container-overlayfs
     container_log: true
@@ -325,40 +321,42 @@ EXAMPLES = """
     state: started
     backing_store: overlayfs
     template_options: --release trusty
-
-- name: Clone a container
-  lxc_container:
-    name: test-container-overlayfs
-    clone_name: test-container-clone
-    state: clone
-
-- name: Clone a container using snapshot.
-  lxc_container:
-    name: test-container-overlayfs
-    clone_name: test-container-overlayfs-clone
-    backing_store: overlayfs
     clone_snapshot: true
-    state: clone
+    clone_name: test-container-overlayfs-clone-snapshot
+    archive: true
+    archive_compression: gzip
+  register: clone_container_info
+
+- name: debug info on container "test-container"
+  debug: var=clone_container_info
+
+- name: Clone a container using snapshot
+  lxc_container:
+    name: test-container-overlayfs-clone-snapshot
+    backing_store: overlayfs
+    clone_name: test-container-overlayfs-clone-snapshot2
+    clone_snapshot: true
 
 - name: Create a new container and clone it
   lxc_container:
-    name: test-container-new-overlayfs
-    clone_name: test-container-new-overlayfs-clone
-    backing_store: overlayfs
-    clone_snapshot: true
-    state: clone
+    name: test-container-new-archive
+    backing_store: dir
+    clone_name: test-container-new-archive-clone
 
-- name: Create a new container, clone it, and archive
+- name: Archive and clone a container then destroy it
   lxc_container:
-    name: test-container-new-overlayfs
-    clone_name: test-container-new-overlayfs-clone
-    backing_store: overlayfs
-    clone_snapshot: true
-    state: clone
+    name: test-container-new-archive
+    state: absent
+    clone_name: test-container-new-archive-destroyed-clone
     archive: true
     archive_compression: gzip
 
-- name: Destroy a container.
+- name: Start a cloned container.
+  lxc_container:
+    name: test-container-new-archive-destroyed-clone
+    state: started
+
+- name: Destroy a container
   lxc_container:
     name: "{{ item }}"
     state: absent
@@ -369,8 +367,12 @@ EXAMPLES = """
     - test-container-lvm
     - test-container-config
     - test-container-overlayfs
-    - test-container-clone
     - test-container-overlayfs-clone
+    - test-container-overlayfs-clone-snapshot
+    - test-container-overlayfs-clone-snapshot2
+    - test-container-new-archive
+    - test-container-new-archive-clone
+    - test-container-new-archive-destroyed-clone
 """
 
 
@@ -518,18 +520,16 @@ def create_script(command):
         f.close()
 
     # Ensure the script is executable.
-    os.chmod(script_file, 0755)
+    os.chmod(script_file, 1755)
 
     # Get temporary directory.
     tempdir = tempfile.gettempdir()
 
     # Output log file.
-    stdout = path.join(tempdir, 'lxc-attach-script.log')
-    stdout_file = open(stdout, 'ab')
+    stdout_file = open(path.join(tempdir, 'lxc-attach-script.log'), 'ab')
 
     # Error log file.
-    stderr = path.join(tempdir, 'lxc-attach-script.err')
-    stderr_file = open(stderr, 'ab')
+    stderr_file = open(path.join(tempdir, 'lxc-attach-script.err'), 'ab')
 
     # Execute the script command.
     try:
@@ -561,6 +561,7 @@ class LxcContainerManagement(object):
         self.container_name = self.module.params['name']
         self.container = self.get_container_bind()
         self.archive_info = None
+        self.clone_info = None
 
     def get_container_bind(self):
         return lxc.Container(name=self.container_name)
@@ -735,7 +736,7 @@ class LxcContainerManagement(object):
                 self._container_startup()
                 self.container.freeze()
 
-    def _clone(self, count=0):
+    def _container_create_clone(self):
         """Clone a new LXC container from an existing container.
 
         This method will clone an existing container to a new container using
@@ -751,66 +752,51 @@ class LxcContainerManagement(object):
         state.
         """
 
-        self.check_count(count=count, method='clone')
-        if self._container_exists(container_name=self.container_name):
-            # Ensure that the state of the original container is stopped
-            container_state = self._get_state()
-            if container_state != 'stopped':
-                self.state_change = True
-                self.container.stop()
+        # Ensure that the state of the original container is stopped
+        container_state = self._get_state()
+        if container_state != 'stopped':
+            self.state_change = True
+            self.container.stop()
 
-            build_command = [
-                self.module.get_bin_path('lxc-clone', True),
-            ]
+        build_command = [
+            self.module.get_bin_path('lxc-clone', True),
+        ]
 
-            build_command = self._add_variables(
-                variables_dict=self._get_vars(
-                    variables=LXC_COMMAND_MAP['clone']['variables']
-                ),
-                build_command=build_command
-            )
+        build_command = self._add_variables(
+            variables_dict=self._get_vars(
+                variables=LXC_COMMAND_MAP['clone']['variables']
+            ),
+            build_command=build_command
+        )
 
-            # Load logging for the instance when creating it.
-            if self.module.params.get('clone_snapshot') in BOOLEANS_TRUE:
-                build_command.append('--snapshot')
+        # Load logging for the instance when creating it.
+        if self.module.params.get('clone_snapshot') in BOOLEANS_TRUE:
+            build_command.append('--snapshot')
+        # Check for backing_store == overlayfs if so force the use of snapshot
+        # If overlay fs is used and snapshot is unset the clone command will
+        # fail with an unsupported type.
+        elif self.module.params.get('backing_store') == 'overlayfs':
+            build_command.append('--snapshot')
 
-            rc, return_data, err = self._run_command(build_command)
-            if rc != 0:
-                message = "Failed executing lxc-clone."
-                self.failure(
-                    err=err, rc=rc, msg=message, command=' '.join(
-                        build_command
-                    )
+        rc, return_data, err = self._run_command(build_command)
+        if rc != 0:
+            message = "Failed executing lxc-clone."
+            self.failure(
+                err=err, rc=rc, msg=message, command=' '.join(
+                    build_command
                 )
-            else:
-                self.state_change = True
-                # Restore the original state of the origin container if it was
-                # not in a stopped state.
-                if container_state == 'running':
-                    self.container.start()
-                elif container_state == 'frozen':
-                    self.container.start()
-                    self.container.freeze()
-
-            # Change the container name context to the new cloned container
-            # This enforces that the state of the new cloned container will be
-            # "stopped".
-            self.state = 'stopped'
-            self.container_name = self.module.params['clone_name']
-            self.container = self.get_container_bind()
-
-            # Return data
-            self._execute_command()
-
-            # Perform any configuration updates
-            self._config()
-
-            # Check if the container needs to have an archive created.
-            self._check_archive()
+            )
         else:
-            self._create()
-            count += 1
-            self._clone(count)
+            self.state_change = True
+            # Restore the original state of the origin container if it was
+            # not in a stopped state.
+            if container_state == 'running':
+                self.container.start()
+            elif container_state == 'frozen':
+                self.container.start()
+                self.container.freeze()
+
+        return True
 
     def _create(self):
         """Create a new LXC container.
@@ -965,6 +951,23 @@ class LxcContainerManagement(object):
                 'archive': self._container_create_tar()
             }
 
+    def _check_clone(self):
+        """Create a compressed archive of a container.
+
+        This will store archive_info in as self.archive_info
+        """
+
+        clone_name = self.module.params.get('clone_name')
+        if clone_name:
+            if not self._container_exists(container_name=clone_name):
+                self.clone_info = {
+                    'cloned': self._container_create_clone()
+                }
+            else:
+                self.clone_info = {
+                    'cloned': False
+                }
+
     def _destroyed(self, timeout=60):
         """Ensure a container is destroyed.
 
@@ -978,6 +981,9 @@ class LxcContainerManagement(object):
 
             # Check if the container needs to have an archive created.
             self._check_archive()
+
+            # Check if the container is to be cloned
+            self._check_clone()
 
             if self._get_state() != 'stopped':
                 self.state_change = True
@@ -1028,6 +1034,9 @@ class LxcContainerManagement(object):
 
             # Check if the container needs to have an archive created.
             self._check_archive()
+
+            # Check if the container is to be cloned
+            self._check_clone()
         else:
             self._create()
             count += 1
@@ -1055,6 +1064,9 @@ class LxcContainerManagement(object):
 
             # Check if the container needs to have an archive created.
             self._check_archive()
+
+            # Check if the container is to be cloned
+            self._check_clone()
         else:
             self._create()
             count += 1
@@ -1082,6 +1094,9 @@ class LxcContainerManagement(object):
 
             # Check if the container needs to have an archive created.
             self._check_archive()
+
+            # Check if the container is to be cloned
+            self._check_clone()
         else:
             self._create()
             count += 1
@@ -1122,6 +1137,9 @@ class LxcContainerManagement(object):
 
             # Check if the container needs to have an archive created.
             self._check_archive()
+
+            # Check if the container is to be cloned
+            self._check_clone()
         else:
             self._create()
             count += 1
@@ -1580,6 +1598,9 @@ class LxcContainerManagement(object):
         outcome = self._container_data()
         if self.archive_info:
             outcome.update(self.archive_info)
+
+        if self.clone_info:
+            outcome.update(self.clone_info)
 
         self.module.exit_json(
             changed=self.state_change,
