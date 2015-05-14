@@ -20,6 +20,7 @@
 #
 # see examples/playbooks/uri.yml
 
+import cgi
 import shutil
 import tempfile
 import base64
@@ -187,7 +188,6 @@ try:
 except ImportError:
     HAS_URLPARSE = False
 
-
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
     fd, tmpsrc = tempfile.mkstemp()
@@ -308,10 +308,7 @@ def uri(module, url, dest, user, password, body, body_format, method, headers, r
         r['redirected'] = redirected
         r.update(resp_redir)
         r.update(resp)
-        try:
-            return r, unicode(content.decode('raw_unicode_escape')), dest
-        except:
-            return r, content, dest
+        return r, content, dest
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
     except httplib2.RedirectLimit:
@@ -439,22 +436,32 @@ def main():
         ukey = key.replace("-", "_")
         uresp[ukey] = value
 
+    # Default content_encoding to try
+    content_encoding = 'utf-8'
     if 'content_type' in uresp:
-        if uresp['content_type'].startswith('application/json') or \
-                uresp['content_type'].startswith('text/json'):
+        content_type, params = cgi.parse_header(uresp['content_type'])
+        if 'charset' in params:
+            content_encoding = params['charset']
+        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+        if content_type.startswith('application/json') or \
+                content_type.startswith('text/json'):
             try:
-                js = json.loads(content)
+                js = json.loads(u_content)
                 uresp['json'] = js
             except:
                 pass
+    else:
+        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+
     if resp['status'] not in status_code:
-        module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
+        module.fail_json(msg="Status code was not " + str(status_code), content=u_content, **uresp)
     elif return_content:
-        module.exit_json(changed=changed, content=content, **uresp)
+        module.exit_json(changed=changed, content=u_content, **uresp)
     else:
         module.exit_json(changed=changed, **uresp)
 
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
