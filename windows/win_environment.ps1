@@ -1,7 +1,7 @@
 #!powershell
 # This file is part of Ansible
 #
-# Copyright 2015, J Hawkesworth @jhawkesworth <figs@unity.demon.co.uk>
+# Copyright 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
