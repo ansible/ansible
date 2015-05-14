@@ -31,25 +31,24 @@ options:
     state:
         required: True
         choices: [ present, absent ]
-    description:
-        - Whether the device should exist or not, taking action if the state is different from what is stated.
-    enabled:
+        description:
+            - Whether the device should exist or not, taking action if the state is different from what is stated.
+    autoconnect:
         required: False
         default: "yes"
         choices: [ "yes", "no" ]
         description:
-            - Whether the service should start on boot. B(At least one of state and enabled are required.)
+            - Whether the connection should start on boot.
             - Whether the connection profile can be automatically activated ( default: yes)
     conn_name:
         required: True
-        default: None
         description:
             - Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]
     ifname:
         required: False
         default: conn_name
         description:
-            - Where INAME will be the what we call the interface name. Required with 'up', 'down' modifiers.
+            - Where IFNAME will be the what we call the interface name.
             - interface to bind the connection to. The connection will only be applicable to this interface name.
             - A special value of "*" can be used for interface-independent connections.
             - The ifname argument is mandatory for all connection types except bond, team, bridge and vlan.
@@ -72,14 +71,17 @@ options:
     ip4:
         required: False
         default: None
-        description: The IPv4 address to this interface using this format ie: "192.168.1.24/24"
+        description:
+            - The IPv4 address to this interface using this format ie: "192.168.1.24/24"
     gw4:
         required: False
-        description: The IPv4 gateway for this interface using this format ie: "192.168.100.1"
+        description:
+            - The IPv4 gateway for this interface using this format ie: "192.168.100.1"
     dns4:
         required: False
         default: None
-        description: A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ['"8.8.8.8 8.8.4.4"']
+        description:
+            - A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ['"8.8.8.8 8.8.4.4"']
     ip6:
         required: False
         default: None
@@ -88,10 +90,12 @@ options:
     gw6:
         required: False
         default: None
-        description: The IPv6 gateway for this interface using this format ie: "2001:db8::1"
+        description:
+            - The IPv6 gateway for this interface using this format ie: "2001:db8::1"
     dns6:
         required: False
-        description: A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: ['"2001:4860:4860::8888 2001:4860:4860::8844"']
+        description:
+            - A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: ['"2001:4860:4860::8888 2001:4860:4860::8844"']
     mtu:
         required: False
         default: None
@@ -343,7 +347,7 @@ tenant_ip: "192.168.200.21/23"
 - nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 state=present
 
 # To add an Team connection with static IP configuration, issue a command as follows
-- nmcli: conn_name=my-team1 ifname=my-team1 type=team ip4=192.168.100.100/24 gw4=192.168.100.1 state=present enabled=yes
+- nmcli: conn_name=my-team1 ifname=my-team1 type=team ip4=192.168.100.100/24 gw4=192.168.100.1 state=present autoconnect=yes
 
 # Optionally, at the same time specify IPv6 addresses for the device as follows:
 - nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.168.100.100/24 gw4=192.168.100.1 ip6=abbe::cafe gw6=2001:db8::1 state=present
@@ -430,10 +434,9 @@ class Nmcli(object):
     def __init__(self, module):
         self.module=module
         self.state=module.params['state']
-        self.enabled=module.params['enabled']
+        self.autoconnect=module.params['autoconnect']
         self.conn_name=module.params['conn_name']
         self.master=module.params['master']
-        self.autoconnect=module.params['autoconnect']
         self.ifname=module.params['ifname']
         self.type=module.params['type']
         self.ip4=module.params['ip4']
@@ -602,9 +605,9 @@ class Nmcli(object):
         if self.gw6 is not None:
             cmd.append('gw6')
             cmd.append(self.gw6)
-        if self.enabled is not None:
+        if self.autoconnect is not None:
             cmd.append('autoconnect')
-            cmd.append(self.enabled)
+            cmd.append(self.autoconnect)
         return cmd
 
     def modify_connection_team(self):
@@ -631,9 +634,9 @@ class Nmcli(object):
         if self.dns6 is not None:
             cmd.append('ipv6.dns')
             cmd.append(self.dns6)
-        if self.enabled is not None:
+        if self.autoconnect is not None:
             cmd.append('autoconnect')
-            cmd.append(self.enabled)
+            cmd.append(self.autoconnect)
             # Can't use MTU with team
         return cmd
 
@@ -704,9 +707,9 @@ class Nmcli(object):
         if self.gw6 is not None:
             cmd.append('gw6')
             cmd.append(self.gw6)
-        if self.enabled is not None:
+        if self.autoconnect is not None:
             cmd.append('autoconnect')
-            cmd.append(self.enabled)
+            cmd.append(self.autoconnect)
         if self.mode is not None:
             cmd.append('mode')
             cmd.append(self.mode)
@@ -751,9 +754,9 @@ class Nmcli(object):
         if self.dns6 is not None:
             cmd.append('ipv6.dns')
             cmd.append(self.dns6)
-        if self.enabled is not None:
+        if self.autoconnect is not None:
             cmd.append('autoconnect')
-            cmd.append(self.enabled)
+            cmd.append(self.autoconnect)
         return cmd
 
     def create_connection_bond_slave(self):
@@ -820,9 +823,9 @@ class Nmcli(object):
         if self.gw6 is not None:
             cmd.append('gw6')
             cmd.append(self.gw6)
-        if self.enabled is not None:
+        if self.autoconnect is not None:
             cmd.append('autoconnect')
-            cmd.append(self.enabled)
+            cmd.append(self.autoconnect)
         return cmd
 
     def modify_connection_ethernet(self):
@@ -855,9 +858,9 @@ class Nmcli(object):
         if self.mtu is not None:
             cmd.append('802-3-ethernet.mtu')
             cmd.append(self.mtu)
-        if self.enabled is not None:
+        if self.autoconnect is not None:
             cmd.append('autoconnect')
-            cmd.append(self.enabled)
+            cmd.append(self.autoconnect)
         return cmd
 
     def create_connection_bridge(self):
@@ -966,11 +969,10 @@ def main():
     # Parsing argument file
     module=AnsibleModule(
         argument_spec=dict(
-            enabled=dict(required=False, default=None, choices=['yes', 'no'], type='str'),
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
-            conn_name=dict(required=False, type='str'),
-            master=dict(required=False, default=None, type='str'),
             autoconnect=dict(required=False, default=None, choices=['yes', 'no'], type='str'),
+            state=dict(required=True, choices=['present', 'absent'], type='str'),
+            conn_name=dict(required=True, type='str'),
+            master=dict(required=False, default=None, type='str'),
             ifname=dict(required=False, default=None, type='str'),
             type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
             ip4=dict(required=False, default=None, type='str'),
@@ -1008,12 +1010,6 @@ def main():
     )
 
     nmcli=Nmcli(module)
-
-    if nmcli.syslogging:
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'Nmcli instantiated - platform %s' % nmcli.platform)
-        if nmcli.distribution:
-            syslog.syslog(syslog.LOG_NOTICE, 'Nuser instantiated - distribution %s' % nmcli.distribution)
 
     rc=None
     out=''
