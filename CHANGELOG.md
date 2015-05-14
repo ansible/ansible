@@ -39,6 +39,7 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * pushover
+  * pushbullet
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
