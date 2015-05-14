@@ -406,7 +406,9 @@ class Ec2Inventory(object):
             else:
                 backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
-            self.fail_with_error(error)
+            self.fail_with_error(
+                'ERROR: "{error}", while: {err_operation}'.format(
+                     error=error, err_operation='getting EC2 instances'))
 
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
@@ -425,7 +427,9 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
-            self.fail_with_error(error)
+            self.fail_with_error(
+                'ERROR: "{error}", while: {err_operation}'.format(
+                     error=error, err_operation='getting RDS instances'))
 
     def get_elasticache_clusters_by_region(self, region):
         ''' Makes an AWS API call to the list of ElastiCache clusters (with
