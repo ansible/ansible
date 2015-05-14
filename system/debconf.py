@@ -68,7 +68,7 @@ options:
     required: false
     default: False
     aliases: []
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 
 '''
 
