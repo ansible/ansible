@@ -61,7 +61,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
-        self._groups_list    = {} 
+        self._groups_list    = {}
         self._pattern_cache  = {}
 
         # to be set by calling set_playbook_basedir by playbook code
