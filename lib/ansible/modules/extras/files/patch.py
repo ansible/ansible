@@ -22,7 +22,9 @@
 DOCUMENTATION = '''
 ---
 module: patch
-author: Luis Alberto Perez Lazaro, Jakub Jirutka
+author:
+    - '"Jakub Jirutka (@jirutka)" <jakub@jirutka.cz>'
+    - '"Luis Alberto Perez Lazaro (@luisperlaz)" <luisperlazaro@gmail.com>'
 version_added: 1.9
 description:
     - Apply patch files using the GNU patch tool.

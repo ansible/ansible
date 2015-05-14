@@ -24,7 +24,7 @@ import re
 DOCUMENTATION = '''
 ---
 module: homebrew_tap
-author: Daniel Jaouen
+author: '"Daniel Jaouen (@danieljaouen)" <dcj24@cornell.edu>'
 short_description: Tap a Homebrew repository.
 description:
     - Tap external Homebrew repositories.

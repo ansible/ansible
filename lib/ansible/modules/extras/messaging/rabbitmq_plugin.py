@@ -25,7 +25,7 @@ short_description: Adds or removes plugins to RabbitMQ
 description:
   - Enables or disables RabbitMQ plugins
 version_added: "1.1"
-author: Chris Hoffman
+author: '"Chris Hoffman (@chrishoffman)"'
 options:
   names:
     description:

@@ -64,7 +64,7 @@ options:
     default: 'json'
     choices: ['json', 'form']
 
-author: Phillip Gentry, CX Inc
+author: '"Phillip Gentry, CX Inc (@pcgentry)" <phillip@cx.com>'
 '''
 
 EXAMPLES = '''

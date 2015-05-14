@@ -20,7 +20,7 @@
 
 DOCUMENTATION = """
 ---
-author: Dag Wieers
+author: '"Dag Wieers (@dagwieers)" <dag@wieers.com>'
 module: mail
 short_description: Send an email
 description:

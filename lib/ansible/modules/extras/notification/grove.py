@@ -25,11 +25,11 @@ options:
     required: true
   url:
     description:
-      - Service URL for the web client 
+      - Service URL for the web client
     required: false
   icon_url:
     description:
-      -  Icon for the service 
+      -  Icon for the service
     required: false
   validate_certs:
     description:
@@ -39,7 +39,7 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
     version_added: 1.5.1
-author: Jonas Pfenniger <zimbatm@zimbatm.com>
+author: '"Jonas Pfenniger (@zimbatm)" <zimbatm@zimbatm.com>'
 '''
 
 EXAMPLES = '''

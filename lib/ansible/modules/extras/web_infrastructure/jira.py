@@ -99,7 +99,7 @@ options:
 notes:
   - "Currently this only works with basic-auth."
 
-author: Steve Smith
+author: '"Steve Smith (@tarka)" <ssmith@atlassian.com>'
 """
 
 EXAMPLES = """

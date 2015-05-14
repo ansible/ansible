@@ -19,7 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: homebrew_cask
-author: Daniel Jaouen
+author: '"Daniel Jaouen (@danieljaouen)" <dcj24@cornell.edu>'
 short_description: Install/uninstall homebrew casks.
 description:
     - Manages Homebrew casks.
