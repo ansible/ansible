@@ -182,17 +182,6 @@ def get_vpc_info(vpc):
         'state': vpc.state,
     })
 
-def get_igw_info(igw):
-    """
-    Get info about the internet gateway.
-    """
-    if igw is None:
-        return {}
-
-    return ({
-        'id': igw.id,
-    })
-
 def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     """
     Finds a VPC that matches a specific id or cidr + tags
