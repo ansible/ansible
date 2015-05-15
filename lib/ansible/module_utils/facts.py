@@ -474,14 +474,17 @@ class Facts(object):
         dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
         rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
         ecdsa_filename = '/etc/ssh/ssh_host_ecdsa_key.pub'
+        ed25519_filename = '/etc/ssh/ssh_host_ed25519_key.pub'
 
         if self.facts['system'] == 'Darwin':
             dsa_filename = '/etc/ssh_host_dsa_key.pub'
             rsa_filename = '/etc/ssh_host_rsa_key.pub'
             ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
+            ed25519_filename = '/etc/ssh_host_ed25519_key.pub'
         dsa = get_file_content(dsa_filename)
         rsa = get_file_content(rsa_filename)
         ecdsa = get_file_content(ecdsa_filename)
+        ed25519 = get_file_content(ed25519_filename)
         if dsa is None:
             dsa = 'NA'
         else:
@@ -494,6 +497,10 @@ class Facts(object):
             ecdsa = 'NA'
         else:
             self.facts['ssh_host_key_ecdsa_public'] = ecdsa.split()[1]
+        if ed25519 is None:
+            ed25519 = 'NA'
+        else:
+            self.facts['ssh_host_key_ed25519_public'] = ed25519.split()[1]
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
