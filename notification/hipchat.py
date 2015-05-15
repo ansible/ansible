@@ -114,7 +114,6 @@ def send_msg_v1(module, token, room, msg_from, msg, msg_format='text',
         module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
 
 
-
 def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
              color='yellow', notify=False, api=MSG_URI_V2):
     '''sending message to hipchat v2 server'''
@@ -193,4 +192,3 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 
 main()
-
