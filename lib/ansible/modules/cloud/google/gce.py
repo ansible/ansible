@@ -340,7 +340,13 @@ def create_instances(module, gce, instance_names):
         metadata = {'items': items}
 
     ex_sa_perms = []
+    bad_perms = []
     if service_account_permissions:
+        for perm in service_account_permissions:
+            if not perm in gce.SA_SCOPES_MAP.keys():
+                bad_perms.append(perm)
+        if len(bad_perms) > 0:
+            module.fail_json(msg='bad permissions: %s' % str(bad_perms))
         if service_account_email:
             ex_sa_perms.append({'email': service_account_email})
         else:
