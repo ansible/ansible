@@ -28,7 +28,7 @@ description:
       Arch Linux and its variants.
 version_added: "1.0"
 author:
-    - "Aaron Bull Schaefer (@elasticdog)" <aaron@elasticdog.com>
+    - "'Aaron Bull Schaefer (@elasticdog)' <aaron@elasticdog.com>"
     - "Afterburn"
 notes: []
 requirements: []
