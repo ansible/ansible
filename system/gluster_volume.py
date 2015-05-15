@@ -336,7 +336,7 @@ def main():
     action = module.params['state']
     volume_name = module.params['name']
     cluster= module.params['cluster']
-    brick_paths = module.params['brick']
+    brick_paths = module.params['bricks']
     stripes = module.params['stripes']
     replicas = module.params['replicas']
     transport = module.params['transport']
