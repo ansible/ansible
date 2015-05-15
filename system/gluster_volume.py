@@ -247,11 +247,11 @@ def wait_for_peer(host):
         time.sleep(1)
     return False
 
-def probe(host):
+def probe(host, myhostname):
     global module
     run_gluster([ 'peer', 'probe', host ])
     if not wait_for_peer(host):
-        module.fail_json(msg='failed to probe peer %s' % host)
+        module.fail_json(msg='failed to probe peer %s on %s' % (host, myhostname))
     changed = True
 
 def probe_all_peers(hosts, peers, myhostname):
@@ -259,7 +259,7 @@ def probe_all_peers(hosts, peers, myhostname):
         if host not in peers:
             # dont probe ourselves
             if myhostname != host:
-                probe(host)
+                probe(host, myhostname)
 
 def create_volume(name, stripe, replica, transport, hosts, bricks, force):
     args = [ 'volume', 'create' ]
