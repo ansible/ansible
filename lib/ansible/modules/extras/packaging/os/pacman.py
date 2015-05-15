@@ -27,7 +27,9 @@ description:
     - Manage packages with the I(pacman) package manager, which is used by
       Arch Linux and its variants.
 version_added: "1.0"
-author: Afterburn
+author:
+    - "'Aaron Bull Schaefer (@elasticdog)' <aaron@elasticdog.com>"
+    - "Afterburn"
 notes: []
 requirements: []
 options:
