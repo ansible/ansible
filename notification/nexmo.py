@@ -24,7 +24,7 @@ short_description: Send a SMS via nexmo
 description:
     - Send a SMS message via nexmo
 version_added: 1.6
-author: Matt Martz
+author: '"Matt Martz (@sivel)" <matt@sivel.net>'
 options:
   api_key:
     description:

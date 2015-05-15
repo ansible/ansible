@@ -27,9 +27,13 @@ short_description: Zabbix screen creates/updates/deletes
 description:
     - This module allows you to create, modify and delete Zabbix screens and associated graph data.
 version_added: "2.0"
-author: Tony Minfei Ding, Harrison Gu
+author: 
+    - "(@cove)"
+    - "Tony Minfei Ding"
+    - "Harrison Gu (@harrisongu)"
 requirements:
-    - zabbix-api python module
+    - "python >= 2.6"
+    - zabbix-api
 options:
     server_url:
         description:

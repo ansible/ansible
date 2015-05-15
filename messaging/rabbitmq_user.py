@@ -25,7 +25,7 @@ short_description: Adds or removes users to RabbitMQ
 description:
   - Add or remove users to RabbitMQ and assign permissions
 version_added: "1.1"
-author: Chris Hoffman
+author: '"Chris Hoffman (@chrishoffman)"'
 options:
   user:
     description:

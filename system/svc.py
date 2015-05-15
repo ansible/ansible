@@ -4,7 +4,7 @@
 DOCUMENTATION = '''
 ---
 module: svc
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 version_added:
 short_description:  Manage daemontools services.
 description:

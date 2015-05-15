@@ -55,8 +55,13 @@ options:
       - XML document used with the define command
     required: false
     default: null
-requirements: [ "libvirt" ]
-author: Michael DeHaan, Seth Vidal
+requirements:
+    - "python >= 2.6"
+    - "libvirt-python"
+author:
+    - "Ansible Core Team"
+    - '"Michael DeHaan (@mpdehaan)" <michael.dehaan@gmail.com>'
+    - '"Seth Vidal (@skvidal)" <skvidal@fedoraproject.org>'
 '''
 
 EXAMPLES = '''

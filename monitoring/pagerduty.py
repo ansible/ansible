@@ -7,7 +7,10 @@ short_description: Create PagerDuty maintenance windows
 description:
     - This module will let you create PagerDuty maintenance windows
 version_added: "1.2"
-author: Justin Johns
+author:
+    - "Andrew Newdigate (@suprememoocow)"
+    - "Dylan Silva (@thaumos)"
+    - "Justin Johns"
 requirements:
     - PagerDuty API access
 options:

@@ -25,7 +25,7 @@ short_description: "Collect facts from F5 BIG-IP devices"
 description:
     - "Collect facts from F5 BIG-IP devices via iControl SOAP API"
 version_added: "1.6"
-author: Matt Hite
+author: '"Matt Hite (@mhite)" <mhite@hotmail.com>'
 notes:
     - "Requires BIG-IP software version >= 11.4"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"

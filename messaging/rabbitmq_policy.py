@@ -26,7 +26,7 @@ short_description: Manage the state of policies in RabbitMQ.
 description:
   - Manage the state of a virtual host in RabbitMQ.
 version_added: "1.5"
-author: John Dewey
+author: '"John Dewey (@retr0h)" <john@dewey.ws>'
 options:
   name:
     description:

@@ -69,7 +69,7 @@ options:
 notes:
    - Not tested on any debian based system.
 requirements: [ firewalld >= 0.2.11 ]
-author: Adam Miller <maxamillion@fedoraproject.org>
+author: '"Adam Miller (@maxamillion)" <maxamillion@fedoraproject.org>'
 '''
 
 EXAMPLES = '''

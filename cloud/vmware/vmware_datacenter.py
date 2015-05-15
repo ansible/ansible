@@ -25,10 +25,11 @@ short_description: Manage VMware vSphere Datacenters
 description:
     - Manage VMware vSphere Datacenters
 version_added: 2.0
-author: Joseph Callen
+author: '"Joseph Callen (@jcpowermac)" <jcallen () csc.com>'
 notes:
     - Tested on vSphere 5.5
 requirements:
+    - "python >= 2.6"
     - PyVmomi
 options:
     hostname:

@@ -73,7 +73,7 @@ options:
     required: true
     default: null
 
-author: Tim Bielawa
+author: '"Tim Bielawa (@tbielawa)" <tbielawa@redhat.com>'
 requirements: [ "Nagios" ]
 '''
 
