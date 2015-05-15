@@ -155,7 +155,7 @@ def main():
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
-            validate = dict(required=False, default=None),
+            validate = dict(required=False, default=None, type='bool'),
             src = dict(required=False, default=None),
         ),
         add_file_common_args=True,
