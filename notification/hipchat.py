@@ -183,7 +183,7 @@ def main():
         else:
             send_msg_v1(module, token, room, msg_from, msg, msg_format, color, notify, api)
     except Exception, e:
-        module.fail_json(msg="unable to sent msg: %s" % e)
+        module.fail_json(msg="unable to send msg: %s" % e)
 
     changed = True
     module.exit_json(changed=changed, room=room, msg_from=msg_from, msg=msg)
