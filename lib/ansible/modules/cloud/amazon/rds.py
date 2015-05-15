@@ -624,6 +624,8 @@ def await_resource(conn, resource, status, module):
             if resource.name is None:
                 module.fail_json(msg="Problem with instance %s" % resource.instance)
             resource = conn.get_db_instance(resource.name)
+            if resource is None:
+                break
     return resource
 
 
