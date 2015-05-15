@@ -72,30 +72,30 @@ options:
         required: false
         choices: [ "yes", "no" ]
         default: yes
-    autoDelete:
+    auto_delete:
         description:
             - if the queue should delete itself after all queues/queues unbound from it
         required: false
         choices: [ "yes", "no" ]
         default: no
-    messageTTL:
+    message_ttl:
         description:
             - How long a message can live in queue before it is discarded (milliseconds)
         required: False
-    autoExpires:
+    auto_expires:
         description:
             - How long a queue can be unused before it is automatically deleted (milliseconds)
         required: false
-    maxLength:
+    max_length:
         description:
             - How many messages can the queue contain before it starts rejecting
         required: false
-    deadLetterExchange:
+    dead_letter_exchange:
         description:
             - Optional name of an exchange to which messages will be republished if they
             - are rejected or expire
         required: false
-    deadLetterRoutingKey:
+    dead_letter_routing_key:
         description:
             - Optional replacement routing key to use when a message is dead-lettered.
             - Original routing key will be used if unset
@@ -129,12 +129,12 @@ def main():
             login_port = dict(default='15672', type='str'),
             vhost = dict(default='/', type='str'),
             durable = dict(default=True, choices=BOOLEANS, type='bool'),
-            autoDelete = dict(default=False, choices=BOOLEANS, type='bool'),
-            messageTTL = dict(default=None, type='int'),
-            autoExpire = dict(default=None, type='int'),
-            maxLength = dict(default=None, type='int'),
-            deadLetterExchange = dict(default=None, type='str'),
-            deadLetterRoutingKey = dict(default=None, type='str'),
+            auto_delete = dict(default=False, choices=BOOLEANS, type='bool'),
+            message_ttl = dict(default=None, type='int'),
+            auto_expires = dict(default=None, type='int'),
+            max_length = dict(default=None, type='int'),
+            dead_letter_exchange = dict(default=None, type='str'),
+            dead_letter_routing_key = dict(default=None, type='str'),
             arguments = dict(default=dict(), type='dict')
         ),
         supports_check_mode = True
@@ -151,10 +151,10 @@ def main():
     r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
 
     if r.status_code==200:
-        queueExists = True
+        queue_exists = True
         response = r.json()
     elif r.status_code==404:
-        queueExists = False
+        queue_exists = False
         response = r.text
     else:
         module.fail_json(
@@ -163,34 +163,34 @@ def main():
         )
 
     if module.params['state']=='present':
-        changeRequired = not queueExists
+        change_required = not queue_exists
     else:
-        changeRequired = queueExists
+        change_required = queue_exists
 
     # Check if attributes change on existing queue
-    if not changeRequired and r.status_code==200 and module.params['state'] == 'present':
+    if not change_required and r.status_code==200 and module.params['state'] == 'present':
         if not (
             response['durable'] == module.params['durable'] and
-            response['auto_delete'] == module.params['autoDelete'] and
+            response['auto_delete'] == module.params['auto_delete'] and
             (
-                ( 'x-message-ttl' in response['arguments'] and response['arguments']['x-message-ttl'] == module.params['messageTTL'] ) or
-                ( 'x-message-ttl' not in response['arguments'] and module.params['messageTTL'] is None )
+                ( 'x-message-ttl' in response['arguments'] and response['arguments']['x-message-ttl'] == module.params['message_ttl'] ) or
+                ( 'x-message-ttl' not in response['arguments'] and module.params['message_ttl'] is None )
             ) and
             (
-                ( 'x-expires' in response['arguments'] and response['arguments']['x-expires'] == module.params['autoExpire'] ) or
-                ( 'x-expires' not in response['arguments'] and module.params['autoExpire'] is None )
+                ( 'x-expires' in response['arguments'] and response['arguments']['x-expires'] == module.params['auto_expires'] ) or
+                ( 'x-expires' not in response['arguments'] and module.params['auto_expires'] is None )
             ) and
             (
-                ( 'x-max-length' in response['arguments'] and response['arguments']['x-max-length'] == module.params['maxLength'] ) or
-                ( 'x-max-length' not in response['arguments'] and module.params['maxLength'] is None )
+                ( 'x-max-length' in response['arguments'] and response['arguments']['x-max-length'] == module.params['max_length'] ) or
+                ( 'x-max-length' not in response['arguments'] and module.params['max_length'] is None )
             ) and
             (
-                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['deadLetterExchange'] ) or
-                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['deadLetterExchange'] is None )
+                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange'] ) or
+                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None )
             ) and
             (
-                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['deadLetterRoutingKey'] ) or
-                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['deadLetterRoutingKey'] is None )
+                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key'] ) or
+                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None )
             )
         ):
             module.fail_json(
@@ -200,11 +200,11 @@ def main():
 
     # Copy parameters to arguments as used by RabbitMQ
     for k,v in {
-        'messageTTL': 'x-message-ttl',
-        'autoExpire': 'x-expires',
-        'maxLength': 'x-max-length',
-        'deadLetterExchange': 'x-dead-letter-exchange',
-        'deadLetterRoutingKey': 'x-dead-letter-routing-key'
+        'message_ttl': 'x-message-ttl',
+        'auto_expires': 'x-expires',
+        'max_length': 'x-max-length',
+        'dead_letter_exchange': 'x-dead-letter-exchange',
+        'dead_letter_routing_key': 'x-dead-letter-routing-key'
     }.items():
         if module.params[k]:
             module.params['arguments'][v] = module.params[k]
@@ -212,14 +212,14 @@ def main():
     # Exit if check_mode
     if module.check_mode:
         module.exit_json(
-            changed= changeRequired,
+            changed= change_required,
             name = module.params['name'],
             details = response,
             arguments = module.params['arguments']
         )
 
     # Do changes
-    if changeRequired:
+    if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
                     url,
@@ -227,7 +227,7 @@ def main():
                     headers = { "content-type": "application/json"},
                     data = json.dumps({
                         "durable": module.params['durable'],
-                        "auto_delete": module.params['autoDelete'],
+                        "auto_delete": module.params['auto_delete'],
                         "arguments": module.params['arguments']
                     })
                 )
