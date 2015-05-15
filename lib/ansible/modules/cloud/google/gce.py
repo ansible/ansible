@@ -58,6 +58,13 @@ options:
     required: false
     default: null
     aliases: []
+  service_account_permissions:
+    version_added: 1.5.1
+    description:
+      - service account permissions (see U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create), --scopes section for detailed information)
+    required: false
+    default: null
+    aliases: []
   pem_file:
     version_added: 1.5.1
     description:
