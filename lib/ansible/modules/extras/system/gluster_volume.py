@@ -256,6 +256,7 @@ def probe(host, myhostname):
 
 def probe_all_peers(hosts, peers, myhostname):
     for host in hosts:
+        host = host.strip() # Clean up any extra space for exact comparison
         if host not in peers:
             # dont probe ourselves
             if myhostname != host:
@@ -346,6 +347,11 @@ def main():
 
     if not myhostname:
         myhostname = socket.gethostname()
+
+    # Clean up if last element is empty. Consider that yml can look like this:
+    #   cluster="{% for host in groups['glusterfs'] %}{{ hostvars[host]['private_ip'] }},{% endfor %}"
+    if cluster != None and cluster[-1] == '':
+        cluster = cluster[0:-1]
 
     if brick_paths != None and "," in brick_paths:
         brick_paths = brick_paths.split(",")
