@@ -131,7 +131,7 @@ class PlaybookCLI(CLI):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager()
-        variable_manager.set_extra_vars(extra_vars)
+        variable_manager.extra_vars = extra_vars
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
