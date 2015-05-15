@@ -421,7 +421,6 @@ class LinuxService(Service):
             if not location.get('systemctl', False):
                 return False
 
-            systemd_enabled = False
             # Check if init is the systemd command, using comm as cmdline could be symlink
             try:
                 f = open('/proc/1/comm', 'r')
