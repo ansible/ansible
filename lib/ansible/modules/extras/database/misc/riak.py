@@ -26,6 +26,9 @@ description:
      - This module can be used to join nodes to a cluster, check
        the status of the cluster.
 version_added: "1.2"
+author:
+    - '"James Martin (@jsmartin)" <jmartin@ansible.com>'
+    - '"Drew Kerrigan (@drewkerrigan)" <dkerrigan@basho.com>'
 options:
   command:
     description:

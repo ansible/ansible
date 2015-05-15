@@ -63,7 +63,7 @@ options:
               for newer pkgng versions, specify a the name of a repository
               configured in /usr/local/etc/pkg/repos
         required: false
-author: bleader
+author: '"bleader (@bleader)" <bleader@ratonland.org>'
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
 '''

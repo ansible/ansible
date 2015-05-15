@@ -206,7 +206,7 @@ options:
       - The zoned property.
     required: False
     choices: ['on','off']
-author: Johan Wiren
+author: '"Johan Wiren (@johanwiren)" <johan.wiren.se@gmail.com>'
 '''
 
 EXAMPLES = '''

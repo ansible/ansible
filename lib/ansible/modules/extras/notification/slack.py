@@ -24,7 +24,7 @@ short_description: Send Slack notifications
 description:
     - The M(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
 version_added: 1.6
-author: Ramon de la Fuente <ramon@delafuente.nl>
+author: '"Ramon de la Fuente (@ramondelafuente)" <ramon@delafuente.nl>'
 options:
   domain:
     description:

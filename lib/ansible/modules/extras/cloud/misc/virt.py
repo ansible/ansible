@@ -58,10 +58,10 @@ options:
 requirements:
     - "python >= 2.6"
     - "libvirt-python"
-author: 
+author:
     - "Ansible Core Team"
-    - "Michael DeHaan (@mpdehaan)" <michael.dehaan@gmail.com>
-    - "Seth Vidal (@skvidal)" <skvidal@fedoraproject.org>
+    - '"Michael DeHaan (@mpdehaan)" <michael.dehaan@gmail.com>'
+    - '"Seth Vidal (@skvidal)" <skvidal@fedoraproject.org>'
 '''
 
 EXAMPLES = '''
