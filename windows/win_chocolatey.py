@@ -86,9 +86,9 @@ options:
     require: false
     default: c:\\ansible-playbook.log
     aliases: []
-author: 
-    - "Trond Hindenes (@trondhindenes)" <trond@hindenes.com>
-    - "Peter Mounce (@petemounce)" <public@neverrunwithscissors.com>
+author:
+    - '"Trond Hindenes (@trondhindenes)" <trond@hindenes.com>'
+    - '"Peter Mounce (@petemounce)" <public@neverrunwithscissors.com>'
 '''
 
 # TODO:

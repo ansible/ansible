@@ -27,8 +27,8 @@ description:
        the status of the cluster.
 version_added: "1.2"
 author:
-    - "James Martin (@jsmartin)" <jmartin@ansible.com>
-    - "Drew Kerrigan (@drewkerrigan)" <dkerrigan@basho.com>
+    - '"James Martin (@jsmartin)" <jmartin@ansible.com>'
+    - '"Drew Kerrigan (@drewkerrigan)" <dkerrigan@basho.com>'
 options:
   command:
     description:
