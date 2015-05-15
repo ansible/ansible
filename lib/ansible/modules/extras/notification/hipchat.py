@@ -108,6 +108,37 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
         module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
 
 
+def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
+             color='yellow', notify=False, api=MSG_URI_V2):
+    '''sending message to hipchat v2 server'''
+    print "Sending message to v2 server"
+
+    headers = {'Authorization':'Bearer %s' % token, 'Content-Type':'application/json'}
+
+    body = dict()
+    body['message'] = msg
+    body['color'] = color
+    body['message_format'] = msg_format
+
+    if notify:
+        POST_URL = api + NOTIFY_URI_V2
+    else:
+        POST_URL = api + MSG_URI_V2
+
+    url = POST_URL.replace('{id_or_name}',room)
+    data = json.dumps(body)
+
+    if module.check_mode:
+        # In check mode, exit before actually sending the message
+        module.exit_json(changed=False)
+
+    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
+    if info['status'] == 200:
+        return response.read()
+    else:
+        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
+
+
 # ===========================================
 # Module execution.
 #
