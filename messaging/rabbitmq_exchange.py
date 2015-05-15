@@ -72,14 +72,14 @@ options:
         required: false
         choices: [ "yes", "no" ]
         default: yes
-    exchangeType:
+    exchange_type:
         description:
             - type for the exchange
         required: false
         choices: [ "fanout", "direct", "headers", "topic" ]
         aliases: [ "type" ]
         default: direct
-    autoDelete:
+    auto_delete:
         description:
             - if the exchange should delete itself after all queues/exchanges unbound from it
         required: false
@@ -120,9 +120,9 @@ def main():
             login_port = dict(default='15672', type='str'),
             vhost = dict(default='/', type='str'),
             durable = dict(default=True, choices=BOOLEANS, type='bool'),
-            autoDelete = dict(default=False, choices=BOOLEANS, type='bool'),
+            auto_delete = dict(default=False, choices=BOOLEANS, type='bool'),
             internal = dict(default=False, choices=BOOLEANS, type='bool'),
-            exchangeType = dict(default='direct', aliases=['type'], type='str'),
+            exchange_type = dict(default='direct', aliases=['type'], type='str'),
             arguments = dict(default=dict(), type='dict')
         ),
         supports_check_mode = True
@@ -151,17 +151,17 @@ def main():
         )
 
     if module.params['state']=='present':
-        changeRequired = not exchangeExists
+        change_required = not exchangeExists
     else:
-        changeRequired = exchangeExists
+        change_required = exchangeExists
 
     # Check if attributes change on existing exchange
-    if not changeRequired and r.status_code==200 and module.params['state'] == 'present':
+    if not change_required and r.status_code==200 and module.params['state'] == 'present':
         if not (
             response['durable'] == module.params['durable'] and
-            response['auto_delete'] == module.params['autoDelete'] and
+            response['auto_delete'] == module.params['auto_delete'] and
             response['internal'] == module.params['internal'] and
-            response['type'] == module.params['exchangeType']
+            response['type'] == module.params['exchange_type']
         ):
             module.fail_json(
                 msg = "RabbitMQ RESTAPI doesn't support attribute changes for existing exchanges"
@@ -170,14 +170,14 @@ def main():
     # Exit if check_mode
     if module.check_mode:
         module.exit_json(
-            changed= changeRequired,
+            changed= change_required,
             name = module.params['name'],
             details = response,
             arguments = module.params['arguments']
         )
 
     # Do changes
-    if changeRequired:
+    if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
                     url,
@@ -185,9 +185,9 @@ def main():
                     headers = { "content-type": "application/json"},
                     data = json.dumps({
                         "durable": module.params['durable'],
-                        "auto_delete": module.params['autoDelete'],
+                        "auto_delete": module.params['auto_delete'],
                         "internal": module.params['internal'],
-                        "type": module.params['exchangeType'],
+                        "type": module.params['exchange_type'],
                         "arguments": module.params['arguments']
                     })
                 )
