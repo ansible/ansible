@@ -287,6 +287,8 @@ def create_instances(module, gce, instance_names):
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
+    service_account_permissions = module.params.get('service_account_permissions')
+    service_account_email = module.params.get('service_account_email')
 
     if external_ip == "none":
         external_ip = None
@@ -330,6 +332,14 @@ def create_instances(module, gce, instance_names):
             items.append({"key": k,"value": v})
         metadata = {'items': items}
 
+    ex_sa_perms = []
+    if service_account_permissions:
+        if service_account_email:
+            ex_sa_perms.append({'email': service_account_email})
+        else:
+            ex_sa_perms.append({'email': "default"})
+        ex_sa_perms[0]['scopes'] = service_account_permissions
+
     # These variables all have default values but check just in case
     if not lc_image or not lc_network or not lc_machine_type or not lc_zone:
         module.fail_json(msg='Missing required create instance variable',
@@ -349,7 +359,7 @@ def create_instances(module, gce, instance_names):
             inst = gce.create_node(name, lc_machine_type, lc_image,
                     location=lc_zone, ex_network=network, ex_tags=tags,
                     ex_metadata=metadata, ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
-                    external_ip=external_ip, ex_disk_auto_delete=disk_auto_delete)
+                    external_ip=external_ip, ex_disk_auto_delete=disk_auto_delete, ex_service_accounts=ex_sa_perms)
             changed = True
         except ResourceExistsError:
             inst = gce.ex_get_node(name, lc_zone)
@@ -437,6 +447,7 @@ def main():
             tags = dict(type='list'),
             zone = dict(default='us-central1-a'),
             service_account_email = dict(),
+            service_account_permissions = dict(type='list'),
             pem_file = dict(),
             project_id = dict(),
             ip_forward = dict(type='bool', default=False),
