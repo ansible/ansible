@@ -182,17 +182,6 @@ def get_vpc_info(vpc):
         'state': vpc.state,
     })
 
-def get_igw_info(igw):
-    """
-    Get info about the internet gateway.
-    """
-    if igw is None:
-        return {}
-
-    return ({
-        'id': igw.id,
-    })
-
 def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     """
     Finds a VPC that matches a specific id or cidr + tags
@@ -462,6 +451,7 @@ def create_vpc(module, vpc_conn):
 
     # Handle Internet gateway (create/delete igw)
     igw = None
+    igw_id = None
     igws = vpc_conn.get_all_internet_gateways(filters={'attachment.vpc-id': vpc.id})
     if len(igws) > 1:
         module.fail_json(msg='EC2 returned more than one Internet Gateway for id %s, aborting' % vpc.id)
@@ -484,6 +474,9 @@ def create_vpc(module, vpc_conn):
                 changed = True
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to delete Internet Gateway, error: {0}'.format(e))
+
+    if igw is not None:
+        igw_id = igw.id
 
     # Handle route tables - this may be worth splitting into a
     # different module but should work fine here. The strategy to stay
@@ -581,7 +574,7 @@ def create_vpc(module, vpc_conn):
                     module.fail_json(msg='Unable to delete old route table {0}, error: {1}'.format(rt.id, e))
 
     vpc_dict = get_vpc_info(vpc)
-    igw_dict = get_igw_info(igw)
+
     created_vpc_id = vpc.id
     returned_subnets = []
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
@@ -604,7 +597,7 @@ def create_vpc(module, vpc_conn):
         subnets_in_play = len(subnets)
         returned_subnets.sort(key=lambda x: order.get(x['cidr'], subnets_in_play))
 
-    return (vpc_dict, created_vpc_id, returned_subnets, igw_dict, changed)
+    return (vpc_dict, created_vpc_id, returned_subnets, igw_id, changed)
 
 def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     """
@@ -705,7 +698,7 @@ def main():
     else:
         module.fail_json(msg="region must be specified")
 
-    igw_dict = {}
+    igw_id = None
     if module.params.get('state') == 'absent':
         vpc_id = module.params.get('vpc_id')
         cidr = module.params.get('cidr_block')
@@ -713,9 +706,9 @@ def main():
         subnets_changed = None
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning a new VPC
-        (vpc_dict, new_vpc_id, subnets_changed, igw_dict, changed) = create_vpc(module, vpc_conn)
+        (vpc_dict, new_vpc_id, subnets_changed, igw_id, changed) = create_vpc(module, vpc_conn)
 
-    module.exit_json(changed=changed, vpc_id=new_vpc_id, vpc=vpc_dict, igw=igw_dict, subnets=subnets_changed)
+    module.exit_json(changed=changed, vpc_id=new_vpc_id, vpc=vpc_dict, igw_id=igw_id, subnets=subnets_changed)
 
 # import module snippets
 from ansible.module_utils.basic import *
