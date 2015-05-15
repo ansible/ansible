@@ -64,7 +64,7 @@ options:
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
-author: WAKAYAMA Shirou
+author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
 '''
 
 EXAMPLES = '''
