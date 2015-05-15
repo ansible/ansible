@@ -119,10 +119,10 @@ def main():
     r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
 
     if r.status_code==200:
-        exchangeExists = True
+        exchange_exists = True
         response = r.json()
     elif r.status_code==404:
-        exchangeExists = False
+        exchange_exists = False
         response = r.text
     else:
         module.fail_json(
@@ -131,9 +131,9 @@ def main():
         )
 
     if module.params['state']=='present':
-        changeRequired = not exchangeExists
+        change_required = not exchange_exists
     else:
-        changeRequired = exchangeExists
+        change_required = exchange_exists
 
     # Check if attributes change on existing exchange
     if not changeRequired and r.status_code==200 and module.params['state'] == 'present':
