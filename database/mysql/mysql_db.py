@@ -79,7 +79,7 @@ options:
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
-        files (C(.sql)) as well as bzip2 (C(.bz2)) and gzip (C(.gz)) compressed files are supported.
+        files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz compressed files are supported.
     required: false
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
@@ -146,6 +146,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd = cmd + ' | gzip > ' + pipes.quote(target)
     elif os.path.splitext(target)[-1] == '.bz2':
         cmd = cmd + ' | bzip2 > ' + pipes.quote(target)
+    elif os.path.splitext(target)[-1] == '.xz':
+        cmd = cmd + ' | xz > ' + pipes.quote(target)
     else:
         cmd += " > %s" % pipes.quote(target)
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
@@ -197,6 +199,23 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         finally:
             #bzip2 file back up
             rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
+    elif os.path.splitext(target)[-1] == '.xz':
+        xz_path = module.get_bin_path('xz')
+        if not xz_path:
+            module.fail_json(msg="xz command not found")
+        #xz -d file (uncompress)
+        rc, stdout, stderr = module.run_command('%s -d %s' % (xz_path, target))
+        if rc != 0:
+            return rc, stdout, stderr
+        #Import sql
+        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
+        try:
+            rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
+            if rc != 0:
+                return rc, stdout, stderr
+        finally:
+            #xz file back up
+            rc, stdout, stderr = module.run_command('%s %s' % (xz_path, os.path.splitext(target)[0]))
     else:
         cmd += " < %s" % pipes.quote(target)
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
