@@ -73,13 +73,13 @@ options:
             - destination exchange or queue for the binding
         required: true
         aliases: [ "dst", "dest" ]
-    destinationType:
+    destination_type:
         description:
             - Either queue or exchange
         required: true
         choices: [ "queue", "exchange" ]
-        aliases: [ "type", "destType" ]
-    routingKey:
+        aliases: [ "type", "dest_type" ]
+    routing_key:
         description:
             - routing key for the binding
             - default is #
@@ -93,10 +93,10 @@ options:
 
 EXAMPLES = '''
 # Bind myQueue to directExchange with routing key info
-- rabbitmq_binding: name=directExchange destination=myQueue type=queue routingKey=info
+- rabbitmq_binding: name=directExchange destination=myQueue type=queue routing_key=info
 
 # Bind directExchange to topicExchange with routing key *.info
-- rabbitmq_binding: name=topicExchange destination=topicExchange type=exchange routingKey="*.info"
+- rabbitmq_binding: name=topicExchange destination=topicExchange type=exchange routing_key="*.info"
 '''
 
 import requests
@@ -114,36 +114,36 @@ def main():
             login_port = dict(default='15672', type='str'),
             vhost = dict(default='/', type='str'),
             destination = dict(required=True, aliases=[ "dst", "dest"], type='str'),
-            destinationType = dict(required=True, aliases=[ "type", "destType"], choices=[ "queue", "exchange" ],type='str'),
-            routingKey = dict(default='#', type='str'),
+            destination_type = dict(required=True, aliases=[ "type", "dest_type"], choices=[ "queue", "exchange" ],type='str'),
+            routing_key = dict(default='#', type='str'),
             arguments = dict(default=dict(), type='dict')
         ),
         supports_check_mode = True
     )
 
-    if module.params['destinationType'] == "queue":
-        destType="q"
+    if module.params['destination_type'] == "queue":
+        dest_type="q"
     else:
-        destType="e"
+        dest_type="e"
 
     url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
         module.params['name'],
-        destType,
+        dest_type,
         module.params['destination'],
-        urllib.quote(module.params['routingKey'],'')
+        urllib.quote(module.params['routing_key'],'')
     )
 
     # Check if exchange already exists
     r = requests.get( url, auth=(module.params['login_user'],module.params['login_password']))
 
     if r.status_code==200:
-        bindingExists = True
+        binding_exists = True
         response = r.json()
     elif r.status_code==404:
-        bindingExists = False
+        binding_exists = False
         response = r.text
     else:
         module.fail_json(
@@ -152,28 +152,28 @@ def main():
         )
 
     if module.params['state']=='present':
-        changeRequired = not bindingExists
+        change_required = not binding_exists
     else:
-        changeRequired = bindingExists
+        change_required = binding_exists
 
     # Exit if check_mode
     if module.check_mode:
         module.exit_json(
-            changed= changeRequired,
+            changed= change_required,
             name = module.params['name'],
             details = response,
             arguments = module.params['arguments']
         )
 
     # Do changes
-    if changeRequired:
+    if change_required:
         if module.params['state'] == 'present':
             url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s" % (
                 module.params['login_host'],
                 module.params['login_port'],
                 urllib.quote(module.params['vhost'],''),
                 module.params['name'],
-                destType,
+                dest_type,
                 module.params['destination']
             )
 
@@ -182,7 +182,7 @@ def main():
                     auth = (module.params['login_user'],module.params['login_password']),
                     headers = { "content-type": "application/json"},
                     data = json.dumps({
-                        "routing_key": module.params['routingKey'],
+                        "routing_key": module.params['routing_key'],
                         "arguments": module.params['arguments']
                     })
                 )
