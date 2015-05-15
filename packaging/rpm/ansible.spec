@@ -27,6 +27,7 @@ Requires: python26-paramiko
 Requires: python26-jinja2
 Requires: python26-keyczar
 Requires: python26-httplib2
+# We should have a python26-gnupg here but EPEL is not carrying it, work around via pip
 Requires: python26-setuptools
 %endif
 
@@ -44,6 +45,7 @@ Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
+Requires: python-gnupg
 Requires: python-setuptools
 %endif
 
@@ -56,6 +58,7 @@ Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
+Requires: python-gnupg
 Requires: python-setuptools
 %endif
 

@@ -1137,10 +1137,13 @@ def ask_passwords(ask_pass=False, become_ask_pass=False, ask_vault_pass=False, b
         if becomepass:
             becomepass = to_bytes(becomepass)
 
-    if ask_vault_pass:
+    if ask_vault_pass and C.VAULT_GPG_NOPROMPT == False:
         vaultpass = getpass.getpass(prompt="Vault password: ")
         if vaultpass:
             vaultpass = to_bytes(vaultpass, errors='strict', nonstring='simplerepr').strip()
+    else:
+        # We use gpg-agent to provide decryption passphrase
+        vaultpass = False
 
     return (sshpass, becomepass, vaultpass)
 
@@ -1167,7 +1170,6 @@ def normalize_become_options(options):
     elif options.su:
         options.become = True
         options.become_method = 'su'
-
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:

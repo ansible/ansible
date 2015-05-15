@@ -69,16 +69,38 @@ try:
 except ImportError:
     HAS_AES = False    
 
+# GPG IMPORTS
+try:
+    import gnupg
+    HAS_GPG = True
+except ImportError:
+    HAS_GPG = False
+
+# Test for gnupg library (there is too many forks)
+try:
+    authors = gnupg.__authors__
+    version = gnupg.__version__
+    if authors:
+        if version > 2:
+            HAS_GNUPG_FORK = True
+except AttributeError:
+    HAS_GNUPG_FORK = False
+
+
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
+GPG_DEP_ERROR = "ansible-vault requires a newer version of python-gnupg than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-gnupg; rpm -e --nodeps python-gnupg; pip install gnupg"
+
+GPG_LIB_ERROR = "ansible-vault requires python-gnupg version 2.0.2 or later. See http://pythonhosted.org/gnupg/ You may fix this by installing from pip directly: pip install gnupg"
+
 HEADER='$ANSIBLE_VAULT'
-CIPHER_WHITELIST=['AES', 'AES256']
+CIPHER_WHITELIST=['AES', 'AES256', 'GPG']
 
 class VaultLib(object):
 
     def __init__(self, password):
         self.password = password
-        self.cipher_name = None
+        self.cipher_name = C.VAULT_CIPHER
         self.version = '1.1'
 
     def is_encrypted(self, data): 
@@ -93,8 +115,8 @@ class VaultLib(object):
             raise errors.AnsibleError("data is already encrypted")
 
         if not self.cipher_name:
-            self.cipher_name = "AES256"
-            #raise errors.AnsibleError("the cipher must be set before encrypting data")
+            #self.cipher_name = "AES256"
+            raise errors.AnsibleError("the cipher must be set before encrypting data")
 
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
             cipher = globals()['Vault' + self.cipher_name]
@@ -116,8 +138,10 @@ class VaultLib(object):
         return tmp_data
 
     def decrypt(self, data):
-        if self.password is None:
-            raise errors.AnsibleError("A vault password must be specified to decrypt data")
+
+        if C.VAULT_CIPHER != "GPG":
+            if self.password is None:
+                raise errors.AnsibleError("A vault password must be specified to decrypt data")
 
         if not self.is_encrypted(data):
             raise errors.AnsibleError("data is not encrypted")
@@ -142,16 +166,22 @@ class VaultLib(object):
     def _add_header(self, data):     
         # combine header and encrypted data in 80 char columns
 
-        #tmpdata = hexlify(data)
-        tmpdata = [data[i:i+80] for i in range(0, len(data), 80)]
-
         if not self.cipher_name:
             raise errors.AnsibleError("the cipher must be set before adding a header")
 
         dirty_data = HEADER + ";" + str(self.version) + ";" + self.cipher_name + "\n"
 
-        for l in tmpdata:
-            dirty_data += l + '\n'
+        # Test cipher
+        if self.cipher_name == "GPG":
+            # Dont split lines. GPG mode uses external provided line ending
+            for l in data:
+                dirty_data += l
+        else:
+            # Spllt lines into 80 character lenghts
+            tmpdata = [data[i:i + 80] for i in range(0, len(data), 80)]
+
+            for l in tmpdata:
+                dirty_data += l + '\n'
 
         return dirty_data
 
@@ -226,9 +256,10 @@ class VaultEditor(object):
 
     def create_file(self):
         """ create a new encrypted file """
-
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        
+        if not cipher == "GPG":
+            if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+                raise errors.AnsibleError(CRYPTO_UPGRADE)
 
         if os.path.isfile(self.filename):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
@@ -387,7 +418,7 @@ class VaultAES(object):
             d += d_i
 
         key = d[:key_length]
-        iv = d[key_length:key_length+iv_length]
+        iv = d[key_length:key_length + iv_length]
 
         return key, iv
 
@@ -539,7 +570,7 @@ class VaultAES256(object):
 
         # COMBINE SALT, DIGEST AND DATA
         hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = "%s\n%s\n%s" % ( hexlify(salt), hmac.hexdigest(), hexlify(cryptedData) )
+        message = "%s\n%s\n%s" % ( hexlify(salt), hmac.hexdigest(), hexlify(cryptedData))
         message = hexlify(message)
         return message
 
@@ -582,4 +613,159 @@ class VaultAES256(object):
             result |= ord(x) ^ ord(y)
         return result == 0     
 
+class VaultGPG(object):
+
+    """
+    Vault implementation using python-gnupg to manage files via GPG binary.
+    """
+
+    def __init__(self):
+        if not HAS_GPG:
+            raise errors.AnsibleError(GPG_DEP_ERROR)
+
+        if not HAS_GNUPG_FORK:
+            raise errors.AnsibleError(GPG_LIB_ERROR)
+
+        self.binary = C.VAULT_GPG_BINARY
+
+        if not C.VAULT_GPG_PASS_MARGINAL:
+            self.passmarginal = False
+        else:
+            self.passmarginal = C.VAULT_GPG_PASS_MARGINAL
+
+        if not C.VAULT_GPG_ALWAYS_TRUST:
+            self.alwaystrust = False
+        else:
+            self.alwaystrust = C.VAULT_GPG_ALWAYS_TRUST
+
+        if not C.VAULT_GPG_HOMEDIR:
+            self.gpghomedir = None
+        else:
+            self.gpghomedir = C.VAULT_GPG_HOMEDIR
+
+        if not C.VAULT_GPG_PUB_KEYRING:
+            self.pubkeyring = None
+        else:
+            self.pubkeyring = C.VAULT_GPG_PUB_KEYRING
+
+        if not C.VAULT_GPG_PRIV_KEYRING:
+            self.privkeyring = None
+        else:
+            self.privkeyring = C.VAULT_GPG_PRIV_KEYRING
+
+        if not C.VAULT_GPG_RECIPIENTS:
+            self.recipients = None
+        else:
+            self.recipients = C.VAULT_GPG_RECIPIENTS
+
+        if not C.VAULT_GPG_DEBUG:
+            self.debug = False
+        else:
+            self.debug = C.VAULT_GPG_DEBUG
+
+    def keys_available(self, requested_keys):
+        '''Basic check to see if we have a public key to encrypt to'''
+
+        # Open GPG subprocess
+        try:
+            self.gpg = gnupg.GPG(binary=self.binary, homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        except:
+            raise errors.AnsibleError("Unhandled error initalizing gnupg, check your binary %s" % self.binary)
+
+        # Take each requested key and compare it to keys available in the keyring
+        public_keys = self.gpg.list_keys()
+        priv_keys = self.gpg.list_keys(secret=True)
+
+        # If the user has not provided a gpg_homedir and python has selected a non default home you can find empty keyrings.
+        if len(public_keys) < 1:
+            raise errors.AnsibleError("No public keys found in keyring %s, check your gpg_homedir is correct" % str(self.gpg.keyring))
+
+        # If the user has not provided a gpg_homedir and python has selected a non default home you can find empty keyrings.
+        if len(priv_keys) < 1:
+            raise errors.AnsibleError("No private keys found in keyring %s, check your gpg_homedir is correct" % str(self.gpg.secring))
+
+        available_keys = []
+        untrusted_keys = []
+
+        # list_keys() returns a list of dicts
+        for li in public_keys:
+            for k,v in li.iteritems():
+                if k == "keyid":
+                    # iterate over available keys for a match
+                    for rk in requested_keys:
+                        if v.find(rk) is not -1:
+                            if self.alwaystrust:
+                                available_keys.append(v)
+                                requested_keys.remove(rk)
+                            else:
+                                if li['ownertrust'] == 'u':
+                                    available_keys.append(v)
+                                    requested_keys.remove(rk)
+                                elif li['ownertrust'] == 'f':
+                                    available_keys.append(v)
+                                    requested_keys.remove(rk)
+                                elif li['ownertrust'] == 'm' and self.passmarginal:
+                                    available_keys.append(v)
+                                    requested_keys.remove(rk)
+                                else:
+                                    untrusted_keys.append(v)
+
+        # If we have unresolved key ids lets exit cleanly
+        if len(untrusted_keys) > 0:
+            raise errors.AnsibleError("Requested untrusted key %s. Are you using marginal trust? Set gpg_pass_marginal in ansible.cfg" % str(untrusted_keys))
+        if len(requested_keys) > 0:
+            raise errors.AnsibleError("Cannot locate key ids %s in GPG keyring" % str(requested_keys))
+        if not len(available_keys) >= 1:
+            raise errors.AnsibleError("No usable key ids provided")
+
+        return available_keys
+
+    def encrypt(self, data, password):
+        '''encrypt function for VaultLib'''
+
+        # Open GPG subprocess
+        try:
+            self.gpg = gnupg.GPG(binary=self.binary, homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        except:
+            raise errors.AnsibleError("Unhandled error initalizing gnupg, check your binary %s" % self.binary)
+
+        # Get public and private key availability
+        try:
+            available_keys = self.keys_available(self.recipients.split())
+        except AttributeError:
+            raise errors.AnsibleError("You need to provide gpg_recipients in ansible.cfg to use GPG cipher type")
+
+        # Uses _encrypt over encrypt(). Appears to only be a thin stream wrapper anyway
+        # https://github.com/isislovecruft/python-gnupg/blob/master/gnupg/gnupg.py#L973
+        enc_data = self.gpg._encrypt(data,available_keys,always_trust=self.alwaystrust)
+
+        if len(str(enc_data)) == 0:
+            raise errors.AnsibleError("Encryption failed: GPG returned '%s'. Check recipient validity and trusts." % enc_data.status)
+
+        message = str(enc_data)
+
+        return message
+
+    def decrypt(self, data, password):
+        '''decrypt function for VaultLib'''
+
+        # Open GPG subprocess
+        try:
+            self.gpg = gnupg.GPG(binary=self.binary, homedir=self.gpghomedir, use_agent=True, verbose=self.debug, keyring=self.pubkeyring, secring=self.privkeyring)
+        except:
+            raise errors.AnsibleError("Unhandled error initalizing gnupg, check your binary %s" % self.binary)
+
+        # If we have a user password we need to pass it on
+        if password:
+            dec_data = self.gpg.decrypt(data,passphrase=password,always_trust=self.alwaystrust)
+        else:
+            # We are in gpg_noprompt mode
+            dec_data = self.gpg.decrypt(data)
+
+        if len(str(dec_data)) == 0:
+            raise errors.AnsibleError("Decryption failed: GPG returned '%s'. Check private key passwords and agent function" % dec_data.status)
+
+        decryptedData = str(dec_data)
+
+        return decryptedData
 

@@ -1,8 +1,10 @@
-sudo: false
+sudo: true
 language: python
 env:
   - TOXENV=py26
   - TOXENV=py27
+before_install:
+ - sudo apt-get install -qq gnupg2
 install:
   - pip install tox
 script:
