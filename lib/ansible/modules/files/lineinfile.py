@@ -65,8 +65,7 @@ options:
     description:
       - Required for C(state=present). The line to insert/replace into the
         file. If C(backrefs) is set, may contain backreferences that will get
-        expanded with the C(regexp) capture groups if the regexp matches. The
-        backreferences should be double escaped (see examples).
+        expanded with the C(regexp) capture groups if the regexp matches.
   backrefs:
     required: false
     default: "no"
