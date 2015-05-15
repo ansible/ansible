@@ -72,7 +72,8 @@ class VariableManager:
         ''' ensures a clean copy of the extra_vars are made '''
         return self._extra_vars.copy()
 
-    def set_extra_vars(self, value):
+    @extra_vars.setter
+    def extra_vars(self, value):
         ''' ensures a clean copy of the extra_vars are used to set the value '''
         assert isinstance(value, MutableMapping)
         self._extra_vars = value.copy()
@@ -123,7 +124,7 @@ class VariableManager:
 
         return result
 
-    def get_vars(self, loader, play=None, host=None, task=None):
+    def get_vars(self, loader, play=None, host=None, task=None, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -145,7 +146,7 @@ class VariableManager:
 
         debug("in VariableManager get_vars()")
         cache_entry = self._get_cache_entry(play=play, host=host, task=task)
-        if cache_entry in CACHED_VARS:
+        if cache_entry in CACHED_VARS and use_cache:
             debug("vars are cached, returning them now")
             return CACHED_VARS[cache_entry]
 
@@ -229,7 +230,7 @@ class VariableManager:
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
 
-        CACHED_VARS[cache_entry] = all_vars
+        #CACHED_VARS[cache_entry] = all_vars
 
         debug("done with get_vars()")
         return all_vars

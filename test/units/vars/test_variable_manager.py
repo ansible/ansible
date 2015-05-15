@@ -38,7 +38,11 @@ class TestVariableManager(unittest.TestCase):
         fake_loader = DictDataLoader({})
 
         v = VariableManager()
-        self.assertEqual(v.get_vars(loader=fake_loader), dict())
+        vars = v.get_vars(loader=fake_loader, use_cache=False)
+        if 'omit' in vars:
+            del vars['omit']
+
+        self.assertEqual(vars, dict())
 
         self.assertEqual(
             v._merge_dicts(
@@ -59,11 +63,14 @@ class TestVariableManager(unittest.TestCase):
 
         extra_vars = dict(a=1, b=2, c=3)
         v = VariableManager()
-        v.set_extra_vars(extra_vars)
+        v.extra_vars = extra_vars
+
+        vars = v.get_vars(loader=fake_loader, use_cache=False)
 
         for (key, val) in extra_vars.iteritems():
-            self.assertEqual(v.get_vars(loader=fake_loader).get(key), val)
-            self.assertIsNot(v.extra_vars.get(key), val)
+            self.assertEqual(vars.get(key), val)
+
+        self.assertIsNot(v.extra_vars, extra_vars)
 
     def test_variable_manager_host_vars_file(self):
         fake_loader = DictDataLoader({
@@ -82,30 +89,38 @@ class TestVariableManager(unittest.TestCase):
         mock_host.get_vars.return_value = dict()
         mock_host.get_groups.return_value = ()
 
-        self.assertEqual(v.get_vars(loader=fake_loader, host=mock_host).get("foo"), "bar")
+        self.assertEqual(v.get_vars(loader=fake_loader, host=mock_host, use_cache=False).get("foo"), "bar")
 
     def test_variable_manager_group_vars_file(self):
         fake_loader = DictDataLoader({
-            "group_vars/somegroup.yml": """
+            "group_vars/all.yml": """
                foo: bar
+            """,
+            "group_vars/somegroup.yml": """
+               bam: baz
             """
         })
 
         v = VariableManager()
+        v.add_group_vars_file("group_vars/all.yml", loader=fake_loader)
         v.add_group_vars_file("group_vars/somegroup.yml", loader=fake_loader)
         self.assertIn("somegroup", v._group_vars_files)
-        self.assertEqual(v._group_vars_files["somegroup"], dict(foo="bar"))
+        self.assertEqual(v._group_vars_files["all"], dict(foo="bar"))
+        self.assertEqual(v._group_vars_files["somegroup"], dict(bam="baz"))
 
         mock_group = MagicMock()
-        mock_group.name.return_value = "somegroup"
+        mock_group.name = "somegroup"
         mock_group.get_ancestors.return_value = ()
+        mock_group.get_vars.return_value = dict()
 
         mock_host = MagicMock()
         mock_host.get_name.return_value = "hostname1"
         mock_host.get_vars.return_value = dict()
-        mock_host.get_groups.return_value = (mock_group)
+        mock_host.get_groups.return_value = (mock_group,)
 
-        self.assertEqual(v.get_vars(loader=fake_loader, host=mock_host).get("foo"), "bar")
+        vars = v.get_vars(loader=fake_loader, host=mock_host, use_cache=False)
+        self.assertEqual(vars.get("foo"), "bar")
+        self.assertEqual(vars.get("bam"), "baz")
 
     def test_variable_manager_play_vars(self):
         fake_loader = DictDataLoader({})
@@ -116,7 +131,7 @@ class TestVariableManager(unittest.TestCase):
         mock_play.get_vars_files.return_value = []
 
         v = VariableManager()
-        self.assertEqual(v.get_vars(loader=fake_loader, play=mock_play).get("foo"), "bar")
+        self.assertEqual(v.get_vars(loader=fake_loader, play=mock_play, use_cache=False).get("foo"), "bar")
 
     def test_variable_manager_play_vars_files(self):
         fake_loader = DictDataLoader({
@@ -131,7 +146,7 @@ class TestVariableManager(unittest.TestCase):
         mock_play.get_vars_files.return_value = ['/path/to/somefile.yml']
 
         v = VariableManager()
-        self.assertEqual(v.get_vars(loader=fake_loader, play=mock_play).get("foo"), "bar")
+        self.assertEqual(v.get_vars(loader=fake_loader, play=mock_play, use_cache=False).get("foo"), "bar")
 
     def test_variable_manager_task_vars(self):
         fake_loader = DictDataLoader({})
@@ -141,5 +156,5 @@ class TestVariableManager(unittest.TestCase):
         mock_task.get_vars.return_value = dict(foo="bar")
 
         v = VariableManager()
-        self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task).get("foo"), "bar")
+        self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")
 
