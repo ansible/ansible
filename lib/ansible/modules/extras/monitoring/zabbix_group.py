@@ -64,7 +64,7 @@ options:
         required: true
 notes:
     - The module has been tested with Zabbix Server 2.2.
-author: René Moser
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 '''
 
 EXAMPLES = '''

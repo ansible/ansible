@@ -26,7 +26,7 @@ options:
       - message body
     required: true
 requirements: [ urllib, urllib2, json ]
-author: Takashi Someda <someda@isenshi.com>
+author: '"Takashi Someda (@tksmd)" <someda@isenshi.com>'
 '''
 
 EXAMPLES = '''

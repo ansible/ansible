@@ -43,7 +43,7 @@ options:
         choices: [ 'yes', 'no' ]
         required: false
         default: yes
-author: berenddeboer
+author: '"berenddeboer (@berenddeboer)" <berend@pobox.com>'
 '''
 
 EXAMPLES = '''

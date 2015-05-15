@@ -19,7 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: pkg5_publisher
-author: Peter Oliver
+author: '"Peter Oliver (@mavit)" <ansible@mavit.org.uk>'
 short_description: Manages Solaris 11 Image Packaging System publishers
 description:
   - IPS packages are the native packages in Solaris 11 and higher.

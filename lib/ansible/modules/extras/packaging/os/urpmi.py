@@ -57,7 +57,7 @@ options:
     required: false
     default: yes
     choices: [ "yes", "no" ]
-author: Philippe Makowski
+author: '"Philippe Makowski (@pmakowski)" <philippem@mageia.org>'
 notes:  []
 '''
 

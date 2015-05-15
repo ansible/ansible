@@ -28,7 +28,10 @@ short_description: Manage firewall with UFW
 description:
     - Manage firewall with UFW.
 version_added: 1.6
-author: Aleksey Ovcharenko, Jarno Keskikangas, Ahti Kitsik
+author:
+    - '"Aleksey Ovcharenko (@ovcharenko)" <aleksey.ovcharenko@gmail.com>'
+    - '"Jarno Keskikangas (@pyykkis)" <jarno.keskikangas@gmail.com>'
+    - '"Ahti Kitsik (@ahtik)" <ak@ahtik.com>'
 notes:
     - See C(man ufw) for more examples.
 requirements:
