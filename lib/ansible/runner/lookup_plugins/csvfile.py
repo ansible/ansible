@@ -32,8 +32,8 @@ class LookupModule(object):
             creader = csv.reader(f, delimiter=delimiter)
 
             for row in creader:
-                if row[0] == key:
-                    return row[int(col)]
+                if row[0].strip() == key:
+                    return row[int(col)].strip()
         except Exception, e:
             raise errors.AnsibleError("csvfile: %s" % str(e))
 
@@ -69,6 +69,8 @@ class LookupModule(object):
 
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
+            if paramvals['delimiter'] == 'PROPERTIES':
+                paramvals['delimiter'] = "="
 
             path = utils.path_dwim(self.basedir, paramvals['file'])
 
