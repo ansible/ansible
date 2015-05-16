@@ -72,6 +72,16 @@ options:
       - Register the ISO to be bootable. Only used if C(state) is present.
     required: false
     default: true
+  domain:
+    description:
+      - Domain the ISO is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the ISO is related to.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the ISO to be registered in.
@@ -167,6 +177,21 @@ created:
   returned: success
   type: string
   sample: 2015-03-29T14:57:06+0200
+domain:
+  description: Domain the ISO is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the ISO is related to.
+  returned: success
+  type: string
+  sample: example account
+project:
+  description: Project the ISO is related to.
+  returned: success
+  type: string
+  sample: example project
 '''
 
 try:
@@ -190,8 +215,9 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         if not iso:
             args = {}
             args['zoneid'] = self.get_zone('id')
+            args['domainid'] = self.get_domain('id')
+            args['account'] = self.get_account('name')
             args['projectid'] = self.get_project('id')
-
             args['bootable'] = self.module.params.get('bootable')
             args['ostypeid'] = self.get_os_type('id')
             if args['bootable'] and not args['ostypeid']:
@@ -220,6 +246,8 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args = {}
             args['isready'] = self.module.params.get('is_ready')
             args['isofilter'] = self.module.params.get('iso_filter')
+            args['domainid'] = self.get_domain('id')
+            args['account'] = self.get_account('name')
             args['projectid'] = self.get_project('id')
             args['zoneid'] = self.get_zone('id')
 
@@ -269,6 +297,12 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 self.result['is_ready'] = iso['isready']
             if 'created' in iso:
                 self.result['created'] = iso['created']
+            if 'project' in iso:
+                self.result['project'] = iso['project']
+            if 'domain' in iso:
+                self.result['domain'] = iso['domain']
+            if 'account' in iso:
+                self.result['account'] = iso['account']
         return self.result
 
 
@@ -280,6 +314,8 @@ def main():
             os_type = dict(default=None),
             zone = dict(default=None),
             iso_filter = dict(default='self', choices=[ 'featured', 'self', 'selfexecutable','sharedexecutable','executable', 'community' ]),
+            domain = dict(default=None),
+            account = dict(default=None),
             project = dict(default=None),
             checksum = dict(default=None),
             is_ready = dict(choices=BOOLEANS, default=False),
