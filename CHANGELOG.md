@@ -9,6 +9,13 @@ New Modules:
 
 Other Notable Changes:
 
+## 1.9.2 "Dancing In the Street" - TBD
+
+* Fixed a bug in the service module where init scripts were being incorrectly used instead of upstart/systemd.
+* Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
+* Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
+* Fixed a bug where certain remote file systems where the SELinux context was not being properly set.
+
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
 * Fixed a bug related to Kerberos auth when using winrm with a domain account.
