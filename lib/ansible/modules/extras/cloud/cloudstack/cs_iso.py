@@ -213,26 +213,27 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
     def register_iso(self):
         iso = self.get_iso()
         if not iso:
-            args = {}
-            args['zoneid'] = self.get_zone('id')
-            args['domainid'] = self.get_domain('id')
-            args['account'] = self.get_account('name')
-            args['projectid'] = self.get_project('id')
-            args['bootable'] = self.module.params.get('bootable')
-            args['ostypeid'] = self.get_os_type('id')
+
+            args                            = {}
+            args['zoneid']                  = self.get_zone('id')
+            args['domainid']                = self.get_domain('id')
+            args['account']                 = self.get_account('name')
+            args['projectid']               = self.get_project('id')
+            args['bootable']                = self.module.params.get('bootable')
+            args['ostypeid']                = self.get_os_type('id')
+            args['name']                    = self.module.params.get('name')
+            args['displaytext']             = self.module.params.get('name')
+            args['checksum']                = self.module.params.get('checksum')
+            args['isdynamicallyscalable']   = self.module.params.get('is_dynamically_scalable')
+            args['isfeatured']              = self.module.params.get('is_featured')
+            args['ispublic']                = self.module.params.get('is_public')
+
             if args['bootable'] and not args['ostypeid']:
                 self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
 
             args['url'] = self.module.params.get('url')
             if not args['url']:
                 self.module.fail_json(msg="URL is requried.")
-
-            args['name'] = self.module.params.get('name')
-            args['displaytext'] = self.module.params.get('name')
-            args['checksum'] = self.module.params.get('checksum')
-            args['isdynamicallyscalable'] = self.module.params.get('is_dynamically_scalable')
-            args['isfeatured'] = self.module.params.get('is_featured')
-            args['ispublic'] = self.module.params.get('is_public')
 
             self.result['changed'] = True
             if not self.module.check_mode:
@@ -243,13 +244,14 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 
     def get_iso(self):
         if not self.iso:
-            args = {}
-            args['isready'] = self.module.params.get('is_ready')
-            args['isofilter'] = self.module.params.get('iso_filter')
-            args['domainid'] = self.get_domain('id')
-            args['account'] = self.get_account('name')
-            args['projectid'] = self.get_project('id')
-            args['zoneid'] = self.get_zone('id')
+
+            args                = {}
+            args['isready']     = self.module.params.get('is_ready')
+            args['isofilter']   = self.module.params.get('iso_filter')
+            args['domainid']    = self.get_domain('id')
+            args['account']     = self.get_account('name')
+            args['projectid']   = self.get_project('id')
+            args['zoneid']      = self.get_zone('id')
 
             # if checksum is set, we only look on that.
             checksum = self.module.params.get('checksum')
@@ -272,10 +274,12 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         iso = self.get_iso()
         if iso:
             self.result['changed'] = True
-            args = {}
-            args['id'] = iso['id']
-            args['projectid'] = self.get_project('id')
-            args['zoneid'] = self.get_zone('id')
+
+            args                = {}
+            args['id']          = iso['id']
+            args['projectid']   = self.get_project('id')
+            args['zoneid']      = self.get_zone('id')
+
             if not self.module.check_mode:
                 res = self.cs.deleteIso(**args)
         return iso
@@ -309,7 +313,7 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             url = dict(default=None),
             os_type = dict(default=None),
             zone = dict(default=None),
