@@ -218,7 +218,7 @@ class Templar:
             # safely catch run failures per #5059
             try:
                 ran = instance.run(*args, variables=self._available_variables, **kwargs)
-            except AnsibleUndefinedVariable:
+            except (AnsibleUndefinedVariable, UndefinedError):
                 raise
             except Exception, e:
                 if self._fail_on_lookup_errors:
