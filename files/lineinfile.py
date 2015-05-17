@@ -376,7 +376,7 @@ def main():
         if backrefs:
             line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', line)
 
-        line = codecs.escape_decode(line)
+        line = codecs.escape_decode(line)[0]
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
