@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import pipes
 import re
 import os
+import pipes
+import codecs
 import tempfile
 
 DOCUMENTATION = """
@@ -383,11 +384,7 @@ def main():
             line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', line)
         line = module.safe_eval(line)
 
-        # Now remove quotes around the string, if needed after
-        # removing the layer we added above
-        line = unquote(line)
-        if should_unquote:
-            line = unquote(line)
+        line = codecs.escape_decode(line)
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
@@ -400,5 +397,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.splitter import *
-
-main()
+if __name__ == '__main__':
+    main()
