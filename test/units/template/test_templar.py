@@ -45,7 +45,18 @@ class TestTemplar(unittest.TestCase):
           "/path/to/my_file.txt": "foo\n",
         })
         shared_loader = SharedPluginLoaderObj()
-        templar = Templar(loader=fake_loader, variables=dict(foo="bar", bam="{{foo}}", num=1, var_true=True, var_false=False, var_dict=dict(a="b"), bad_dict="{a='b'", var_list=[1], recursive="{{recursive}}"))
+        variables = dict(
+            foo="bar",
+            bam="{{foo}}",
+            num=1,
+            var_true=True,
+            var_false=False,
+            var_dict=dict(a="b"),
+            bad_dict="{a='b'",
+            var_list=[1],
+            recursive="{{recursive}}",
+        )
+        templar = Templar(loader=fake_loader, variables=variables)
 
         # test some basic templating
         self.assertEqual(templar.template("{{foo}}"), "bar")
