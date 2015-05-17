@@ -63,7 +63,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # create a new private / public key pair:
 - local_action: cs_sshkeypair name=linus@example.com
   register: key
@@ -114,9 +113,6 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.ssh_key = None
 
 
@@ -219,7 +215,7 @@ def main():
             project = dict(default=None),
             state = dict(choices=['present', 'absent'], default='present'),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
@@ -248,6 +244,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

@@ -194,9 +194,6 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
 
 
     def _tcp_udp_match(self, rule, protocol, start_port, end_port):
@@ -271,7 +268,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
             security_group_name = self.module.params.get('security_group')
         args = {}
         args['securitygroupname'] =  security_group_name
-        args['projectid'] = self.get_project_id()
+        args['projectid'] = self.get_project('id')
         sgs = self.cs.listSecurityGroups(**args)
         if not sgs or 'securitygroup' not in sgs:
                 self.module.fail_json(msg="security group '%s' not found" % security_group_name)
@@ -301,7 +298,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         args['endport']         = self.get_end_port()
         args['icmptype']        = self.module.params.get('icmp_type')
         args['icmpcode']        = self.module.params.get('icmp_code')
-        args['projectid']       = self.get_project_id()
+        args['projectid']       = self.get_project('id')
         args['securitygroupid'] = security_group['id']
 
         rule = None
@@ -401,7 +398,7 @@ def main():
             project = dict(default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
@@ -430,6 +427,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

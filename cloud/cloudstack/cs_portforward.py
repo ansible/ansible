@@ -106,7 +106,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # 1.2.3.4:80 -> web01:8080
 - local_action:
     module: cs_portforward
@@ -144,7 +143,6 @@ EXAMPLES = '''
     public_port: 22
     private_port: 22
     state: absent
-
 '''
 
 RETURN = '''
@@ -402,7 +400,7 @@ def main():
             project = dict(default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
@@ -424,6 +422,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 
