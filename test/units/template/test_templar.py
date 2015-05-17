@@ -19,10 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.exceptions import UndefinedError
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
+from ansible.errors import *
 from ansible.plugins import filter_loader, lookup_loader, module_loader
 from ansible.plugins.strategies import SharedPluginLoaderObj
 from ansible.template import Templar
@@ -38,9 +41,11 @@ class TestTemplar(unittest.TestCase):
         pass
 
     def test_templar_simple(self):
-        fake_loader = DictDataLoader({})
+        fake_loader = DictDataLoader({
+          "/path/to/my_file.txt": "foo\n",
+        })
         shared_loader = SharedPluginLoaderObj()
-        templar = Templar(loader=fake_loader, variables=dict(foo="bar", bam="{{foo}}", num=1, var_true=True, var_false=False, var_dict=dict(a="b"), bad_dict="{a='b'", var_list=[1]))
+        templar = Templar(loader=fake_loader, variables=dict(foo="bar", bam="{{foo}}", num=1, var_true=True, var_false=False, var_dict=dict(a="b"), bad_dict="{a='b'", var_list=[1], recursive="{{recursive}}"))
 
         # test some basic templating
         self.assertEqual(templar.template("{{foo}}"), "bar")
@@ -54,6 +59,17 @@ class TestTemplar(unittest.TestCase):
         self.assertEqual(templar.template("{{var_dict}}"), dict(a="b"))
         self.assertEqual(templar.template("{{bad_dict}}"), "{a='b'")
         self.assertEqual(templar.template("{{var_list}}"), [1])
+        self.assertEqual(templar.template(1, convert_bare=True), 1)
+        self.assertRaises(UndefinedError, templar.template, "{{bad_var}}")
+        self.assertEqual(templar.template("{{lookup('file', '/path/to/my_file.txt')}}"), "foo")
+        self.assertRaises(UndefinedError, templar.template, "{{lookup('file', bad_var)}}")
+        self.assertRaises(AnsibleError, templar.template, "{{lookup('bad_lookup')}}")
+        self.assertRaises(AnsibleError, templar.template, "{{recursive}}")
+        self.assertRaises(AnsibleUndefinedVariable, templar.template, "{{foo-bar}}")
+
+        # test with fail_on_undefined=False
+        templar = Templar(loader=fake_loader, fail_on_undefined=False)
+        self.assertEqual(templar.template("{{bad_var}}"), "{{bad_var}}")
 
         # test set_available_variables()
         templar.set_available_variables(variables=dict(foo="bam"))

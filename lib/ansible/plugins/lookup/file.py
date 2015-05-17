@@ -42,18 +42,22 @@ class LookupModule(LookupBase):
             # role/files/ directory, and finally the playbook directory
             # itself (which will be relative to the current working dir)
 
+            if 'role_path' in variables:
+                relative_path = self._loader.path_dwim_relative(variables['role_path'], 'files', term, check=False)
+
             # FIXME: the original file stuff still needs to be worked out, but the
             #        playbook_dir stuff should be able to be removed as it should
             #        be covered by the fact that the loader contains that info
-            #if '_original_file' in variables:
-            #    relative_path = self._loader.path_dwim_relative(variables['_original_file'], 'files', term, self.basedir, check=False)
             #if 'playbook_dir' in variables:
             #    playbook_path = os.path.join(variables['playbook_dir'], term)
 
             for path in (basedir_path, relative_path, playbook_path):
-                if path and os.path.exists(path):
-                    ret.append(codecs.open(path, encoding="utf8").read().rstrip())
+                try:
+                    contents = self._loader._get_file_contents(path)
+                    ret.append(contents.rstrip())
                     break
+                except AnsibleParserError:
+                    continue
             else:
                 raise AnsibleError("could not locate file in lookup: %s" % term)
 

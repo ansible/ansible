@@ -38,6 +38,12 @@ class DictDataLoader(DataLoader):
             return self.load(self._file_mapping[path], path)
         return None
 
+    def _get_file_contents(self, path):
+        if path in self._file_mapping:
+            return self._file_mapping[path]
+        else:
+            raise AnsibleParserError("file not found: %s" % path)
+
     def path_exists(self, path):
         return path in self._file_mapping or path in self._known_directories
 
