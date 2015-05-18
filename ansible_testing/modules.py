@@ -93,11 +93,12 @@ class ModuleValidator(object):
             found_has = False
             if isinstance(child, ast.TryExcept):
                 bodies = child.body
-                bodies.extend([h.body for h in child.handlers])
+                for handler in child.handlers:
+                    bodies.extend(handler.body)
                 for grandchild in bodies:
                     if isinstance(grandchild, ast.Import):
                         found_try_except_import = True
-                    elif isinstance(grandchild, ast.Assign):
+                    if isinstance(grandchild, ast.Assign):
                         for target in grandchild.targets:
                             if target.id.lower().startswith('has_'):
                                 found_has = True
