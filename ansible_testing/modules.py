@@ -13,6 +13,7 @@ from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
 BLACKLIST_DIRS = frozenset(('.git',))
 
+
 class Validator(object):
     """Validator instances are intended to be run on a single object.  if you
     are scanning multiple objects for problems, you'll want to have a separate
@@ -57,7 +58,10 @@ class Validator(object):
 
 class ModuleValidator(Validator):
     BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*')
-    BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml', '.gitattributes', '.gitmodules', 'COPYING', 'CONTRIBUTING.md', 'README.md', '__init__.py'))
+    BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
+                                 '.gitattributes', '.gitmodules', 'COPYING',
+                                 'CONTRIBUTING.md', 'README.md',
+                                 '__init__.py'))
     BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
 
     def __init__(self, path):
@@ -176,17 +180,20 @@ class ModuleValidator(Validator):
         super(ModuleValidator, self).validate()
 
         # Blacklists -- these files are not checked
-        if not frozenset((self.basename, self.name)).isdisjoint(self.BLACKLIST):
+        if not frozenset((self.basename,
+                          self.name)).isdisjoint(self.BLACKLIST):
             return
         for pat in self.BLACKLIST_PATTERNS:
             if fnmatch(self.basename, pat):
                 return
 
         if self._powershell_module():
-            self.warnings.append('Cannot check powershell modules at this time.  Skipping')
+            self.warnings.append('Cannot check powershell modules at this '
+                                 'time.  Skipping')
             return
         if not self._python_module():
-            self.errors.append('Official Ansible modules must have a .py extension')
+            self.errors.append('Official Ansible modules must have a .py '
+                               'extension')
             return
         if self.ast is None:
             self.errors.append('Python SyntaxError while parsing module')
@@ -226,7 +233,8 @@ class PythonPackageValidator(Validator):
 
         init_file = os.path.join(self.path, '__init__.py')
         if not os.path.exists(init_file):
-            self.errors.append('Ansible module subdirectories must contain an __init__.py')
+            self.errors.append('Ansible module subdirectories must contain an '
+                               '__init__.py')
 
 
 def main():
