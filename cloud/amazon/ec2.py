@@ -188,8 +188,8 @@ options:
     description:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
     required: false
-    default: true
-    choices: [ "true", "false" ]
+    default: yes
+    choices: [ "yes", "no" ]
   state:
     version_added: "1.3"
     description:
