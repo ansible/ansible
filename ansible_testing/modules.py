@@ -103,6 +103,15 @@ class ModuleValidator(Validator):
         if not self.text.startswith('#!/usr/bin/python'):
             self.errors.append('Interpreter line is not "#!/usr/bin/python"')
 
+    def _find_json_import(self):
+        for child in self.ast.body:
+            if isinstance(child, ast.Import):
+                for name in child.names:
+                    if name.name == 'json':
+                        self.warnings.append('JSON import found, '
+                                             'already provided by '
+                                             'ansible.module_utils.basic')
+
     def _find_module_utils(self):
         linenos = []
         for child in self.ast.body:
@@ -213,6 +222,7 @@ class ModuleValidator(Validator):
 
         if not self._just_docs():
             self._check_interpreter()
+            self._find_json_import()
             module_utils = self._find_module_utils()
             main = self._find_main_call()
             for mu in module_utils:
