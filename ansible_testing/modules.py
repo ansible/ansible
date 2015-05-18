@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import ast
-import sys
 import argparse
 
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
@@ -79,8 +78,8 @@ class ModuleValidator(object):
                     if (isinstance(child.value.func, ast.Name) and
                             child.value.func.id == 'main'):
                         lineno = child.lineno
-                        if lineno != self.length:
-                            self.warnings.append('Call to main() not the last '
+                        if lineno < self.length - 1:
+                            self.errors.append('Call to main() not the last '
                                                'line')
 
         if not lineno:
