@@ -62,28 +62,34 @@ options:
         description:
             - How long a message can live in queue before it is discarded (milliseconds)
         required: False
-    autoExpires:
+        default: forever
+    auto_expires:
         description:
             - How long a queue can be unused before it is automatically deleted (milliseconds)
         required: false
-    maxLength:
+        default: forever
+    max_length:
         description:
             - How many messages can the queue contain before it starts rejecting
         required: false
-    deadLetterExchange:
+        default: no limit
+    dead_letter_exchange:
         description:
             - Optional name of an exchange to which messages will be republished if they
             - are rejected or expire
         required: false
-    deadLetterRoutingKey:
+        default: None
+    dead_letter_routing_key:
         description:
             - Optional replacement routing key to use when a message is dead-lettered.
             - Original routing key will be used if unset
         required: false
+        default: None
     arguments:
         description:
             - extra arguments for queue. If defined this argument is a key/value dictionary
-        required: false        
+        required: false
+        default: {}
 '''
 
 EXAMPLES = '''
