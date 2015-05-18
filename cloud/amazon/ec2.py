@@ -44,7 +44,7 @@ options:
   region:
     version_added: "1.2"
     description:
-      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
     required: false
     default: null
     aliases: [ 'aws_region', 'ec2_region' ]
@@ -57,16 +57,17 @@ options:
     aliases: [ 'aws_zone', 'ec2_zone' ]
   instance_type:
     description:
-      - instance type to use for the instance
+      - instance type to use for the instance, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
     required: true
     default: null
     aliases: []
   tenancy:
     version_added: "1.9"
     description:
-      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC. Valid values are "default" or "dedicated". Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
+      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC. Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
     required: false
     default: default
+    choices: [ "default", "dedicated" ]
     aliases: []
   spot_price:
     version_added: "1.5"
@@ -123,6 +124,7 @@ options:
       - enable detailed monitoring (CloudWatch) for instance
     required: false
     default: null
+    choices: [ "yes", "no" ]
     aliases: []
   user_data:
     version_added: "0.9"
@@ -187,6 +189,7 @@ options:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
     required: false
     default: true
+    choices: [ "true", "false" ]
   state:
     version_added: "1.3"
     description:
