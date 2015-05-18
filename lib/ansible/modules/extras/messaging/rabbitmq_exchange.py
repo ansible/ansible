@@ -74,7 +74,8 @@ options:
     arguments:
         description:
             - extra arguments for exchange. If defined this argument is a key/value dictionary
-        required: false        
+        required: false
+        default: {}
 '''
 
 EXAMPLES = '''
