@@ -227,7 +227,7 @@ class ModuleValidator(Validator):
             main = self._find_main_call()
             for mu in module_utils:
                 if mu < main - 10:
-                    self.errors.append('module_utils import not near main()')
+                    self.errors.warnings('module_utils import not near main()')
 
             self._find_has_import()
 
