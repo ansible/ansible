@@ -412,5 +412,7 @@ def main():
     else:
         module.exit_json(changed=False)
 
-# <<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()
