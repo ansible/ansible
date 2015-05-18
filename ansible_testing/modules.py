@@ -3,25 +3,91 @@
 from __future__ import print_function
 
 import os
+import abc
 import ast
 import argparse
+from fnmatch import fnmatch
 
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
 
-class ModuleValidator(object):
+BLACKLIST_DIRS = frozenset(('.git',))
+
+class Validator(object):
+    """Validator instances are intended to be run on a single object.  if you
+    are scanning multiple objects for problems, you'll want to have a separate
+    Validator for each one."""
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """Reset the test results"""
+        self.errors = []
+        self.warnings = []
+
+    @abc.abstractproperty
+    def object_name(self):
+        """Name of the object we validated"""
+        pass
+
+    @abc.abstractmethod
+    def validate(self, reset=True):
+        """Run this method to generate the test results"""
+        if reset:
+            self.reset()
+
+    def report(self, warnings=False):
+        """Print out the test results"""
+        if self.errors or (warnings and self.warnings):
+            print('=' * 76)
+            print(self.object_name)
+            print('=' * 76)
+
+        for error in self.errors:
+            print('ERROR: %s' % error)
+        if warnings:
+            for warning in self.warnings:
+                print('WARNING: %s' % warning)
+
+        if self.errors or (warnings and self.warnings):
+            print()
+
+
+class ModuleValidator(Validator):
+    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*')
+    BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml', '.gitattributes', '.gitmodules', 'COPYING', 'CONTRIBUTING.md', 'README.md', '__init__.py'))
+    BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
+
     def __init__(self, path):
+        super(ModuleValidator, self).__init__()
+
         self.path = path
         self.basename = os.path.basename(self.path)
         self.name, _ = os.path.splitext(self.basename)
 
-        self.errors = []
-        self.warnings = []
-
         with open(path) as f:
             text = f.read()
         self.length = len(text.splitlines())
-        self.ast = ast.parse(text)
+        try:
+            self.ast = ast.parse(text)
+        except:
+            self.ast = None
+
+    @property
+    def object_name(self):
+        return self.basename
+
+    def _python_module(self):
+        if self.path.endswith('.py'):
+            return True
+        return False
+
+    def _powershell_module(self):
+        if self.path.endswith('.ps1'):
+            return True
+        return False
 
     def _just_docs(self):
         for child in self.ast.body:
@@ -107,7 +173,23 @@ class ModuleValidator(object):
                                      'assginment')
 
     def validate(self):
-        if set([self.basename, self.name]) & set(BLACKLIST_MODULES):
+        super(ModuleValidator, self).validate()
+
+        # Blacklists -- these files are not checked
+        if not frozenset((self.basename, self.name)).isdisjoint(self.BLACKLIST):
+            return
+        for pat in self.BLACKLIST_PATTERNS:
+            if fnmatch(self.basename, pat):
+                return
+
+        if self._powershell_module():
+            self.warnings.append('Cannot check powershell modules at this time.  Skipping')
+            return
+        if not self._python_module():
+            self.errors.append('Official Ansible modules must have a .py extension')
+            return
+        if self.ast is None:
+            self.errors.append('Python SyntaxError while parsing module')
             return
 
         doc, examples, ret = get_docstring(self.path)
@@ -127,20 +209,24 @@ class ModuleValidator(object):
 
             self._find_has_import()
 
-    def report(self, warnings=False):
-        if self.errors or (warnings and self.warnings):
-            print('=' * 76)
-            print(self.basename)
-            print('=' * 76)
 
-        for error in self.errors:
-            print('ERROR: %s' % error)
-        if warnings:
-            for warning in self.warnings:
-                print('WARNING: %s' % warning)
+class PythonPackageValidator(Validator):
+    def __init__(self, path):
+        super(PythonPackageValidator, self).__init__()
 
-        if self.errors or (warnings and self.warnings):
-            print()
+        self.path = path
+        self.basename = os.path.basename(path)
+
+    @property
+    def object_name(self):
+        return self.basename
+
+    def validate(self):
+        super(PythonPackageValidator, self).validate()
+
+        init_file = os.path.join(self.path, '__init__.py')
+        if not os.path.exists(init_file):
+            self.errors.append('Ansible module subdirectories must contain an __init__.py')
 
 
 def main():
@@ -151,10 +237,19 @@ def main():
     args = parser.parse_args()
 
     for root, dirs, files in os.walk(args.modules):
+        basedir = root[len(args.modules)+1:].split('/', 1)[0]
+        if basedir in BLACKLIST_DIRS:
+            continue
+        for dirname in dirs:
+            if root == args.modules and dirname in BLACKLIST_DIRS:
+                continue
+            path = os.path.join(root, dirname)
+            pv = PythonPackageValidator(os.path.abspath(path))
+            pv.validate()
+            pv.report(args.warnings)
+
         for filename in files:
             path = os.path.join(root, filename)
-            if not path.endswith('.py') or filename == '__init__.py':
-                continue
             mv = ModuleValidator(os.path.abspath(path))
             mv.validate()
             mv.report(args.warnings)
