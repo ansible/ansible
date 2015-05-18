@@ -40,6 +40,9 @@ New Modules:
   * openstack: os_volume
   * pushover
   * pushbullet
+  * rabbitmq_binding
+  * rabbitmq_exchange
+  * rabbitmq_queue
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
