@@ -263,7 +263,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         role_attr_flags_changing = False
         if role_attr_flags:
             role_attr_flags_dict = {}
-            for r in role_attr_flags.split(','):
+            for r in role_attr_flags.split(' '):
                 if r.startswith('NO'):
                     role_attr_flags_dict[r.replace('NO', '', 1)] = False
                 else:
