@@ -72,10 +72,10 @@ class ModuleValidator(Validator):
         self.name, _ = os.path.splitext(self.basename)
 
         with open(path) as f:
-            text = f.read()
-        self.length = len(text.splitlines())
+            self.text = f.read()
+        self.length = len(self.text.splitlines())
         try:
-            self.ast = ast.parse(text)
+            self.ast = ast.parse(self.text)
         except:
             self.ast = None
 
@@ -98,6 +98,10 @@ class ModuleValidator(Validator):
             if not isinstance(child, ast.Assign):
                 return False
         return True
+
+    def _check_interpreter(self):
+        if not self.text.startswith('#!/usr/bin/python'):
+            self.errors.append('Interpreter line is not "#!/usr/bin/python"')
 
     def _find_module_utils(self):
         linenos = []
@@ -208,6 +212,7 @@ class ModuleValidator(Validator):
             self.warnings.append('No RETURN provided')
 
         if not self._just_docs():
+            self._check_interpreter()
             module_utils = self._find_module_utils()
             main = self._find_main_call()
             for mu in module_utils:
