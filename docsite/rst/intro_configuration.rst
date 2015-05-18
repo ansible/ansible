@@ -436,6 +436,17 @@ it to 'shell'::
 
     module_name = command
 
+.. _no_syslog:
+
+no_syslog
+=======
+
+.. versionadded: 'v2'
+
+By default ansible will log actions to the remote syslog, this turns off this behaviour.
+
+   no_syslog=False
+
 .. _nocolor:
 
 nocolor

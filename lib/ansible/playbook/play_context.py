@@ -142,6 +142,7 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'connection',
     'delegate_to',
     'no_log',
+    'no_syslog',
     'remote_user',
 )
 
@@ -155,7 +156,7 @@ class PlayContext(Base):
     '''
 
     # connection fields, some are inherited from Base:
-    # (connection, port, remote_user, environment, no_log)
+    # (connection, port, remote_user, environment, no_log, no_syslog)
     _remote_addr      = FieldAttribute(isa='string')
     _password         = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
@@ -257,6 +258,8 @@ class PlayContext(Base):
             self.verbosity  = options.verbosity
         #if options.no_log:
         #    self.no_log     = boolean(options.no_log)
+        if options.no_syslog:
+            self.no_syslog  = boolean(options.no_syslog)
         if options.check:
             self.check_mode = boolean(options.check)
         if hasattr(options, 'force_handlers') and options.force_handlers:

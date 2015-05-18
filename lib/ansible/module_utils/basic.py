@@ -344,7 +344,7 @@ def heuristic_log_sanitize(data):
 
 class AnsibleModule(object):
 
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False,
+    def __init__(self, argument_spec, bypass_checks=False, no_log=False, no_syslog=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
         required_one_of=None, add_file_common_args=False, supports_check_mode=False,
         required_if=None):
@@ -359,6 +359,7 @@ class AnsibleModule(object):
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
         self.no_log = no_log
+        self.no_syslog = no_syslog
         self.cleanup_files = []
 
         self.aliases = {}
@@ -374,7 +375,7 @@ class AnsibleModule(object):
 
         self.params = self._load_params()
 
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_no_syslog']
 
         self.aliases = self._handle_aliases()
 
@@ -382,8 +383,9 @@ class AnsibleModule(object):
             self._check_invalid_arguments()
         self._check_for_check_mode()
         self._check_for_no_log()
+        self._check_for_no_syslog()
 
-        # check exclusive early 
+        # check exclusive early
         if not bypass_checks:
             self._check_mutually_exclusive(mutually_exclusive)
 
@@ -408,7 +410,7 @@ class AnsibleModule(object):
             self._check_required_if(required_if)
 
         self._set_defaults(pre=False)
-        if not self.no_log:
+        if not (self.no_log or self.no_syslog):
             self._log_invocation()
 
         # finally, make sure we're in a sane working dir
@@ -927,6 +929,11 @@ class AnsibleModule(object):
         for (k,v) in self.params.iteritems():
             if k == '_ansible_no_log':
                 self.no_log = self.boolean(v)
+
+    def _check_for_no_syslog(self):
+        for (k,v) in self.params.iteritems():
+            if k == '_ansible_no_syslog':
+                self.no_syslog = self.boolean(v)
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():

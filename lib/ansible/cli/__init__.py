@@ -315,6 +315,8 @@ class CLI(object):
                 help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
             parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
                 help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+            parser.add_option('-n', '--no-syslog', default=C.DEFAULT_NO_SYSLOG, dest='no_syslog', action='store_true',
+                help='disable syslogging on remote machine')
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',

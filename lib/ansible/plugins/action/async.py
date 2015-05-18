@@ -40,8 +40,12 @@ class ActionModule(ActionBase):
 
         env_string = self._compute_environment_string()
 
+        module_args = self._task.args.copy()
+        if self._play_context.no_syslog:
+            module_args['_ansible_no_syslog'] = True
+
         # configure, upload, and chmod the target module
-        (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=self._task.args, task_vars=task_vars)
+        (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         self._transfer_data(remote_module_path, module_data)
         self._remote_chmod(tmp, 'a+rx', remote_module_path)
 
@@ -50,7 +54,7 @@ class ActionModule(ActionBase):
         self._transfer_data(async_module_path, async_module_data)
         self._remote_chmod(tmp, 'a+rx', async_module_path)
 
-        argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(self._task.args))
+        argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(module_args))
 
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))
