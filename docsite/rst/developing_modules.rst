@@ -466,12 +466,14 @@ Module checklist
   * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
   * GPL License header
   * Examples: make sure they are reproducible
+  * Return: document the return structure of the module
 * Does module use check_mode? Could it be modified to use it? Document it
 * Exceptions: The module must handle them. (exceptions are bugs)
     * Give out useful messages on what you were doing and you can add the exception message to that.
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * The module must not use sys.exit() --> use fail_json() from the module object
 * Import custom packages in try/except and handled with fail_json() in main() e.g.::
+* The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 
   try:
     import foo
