@@ -91,7 +91,8 @@ options:
     description:
       - Check if mysql allows login as root/nopassword before trying supplied credentials.
     required: false
-    default: false
+    choices: [ "yes", "no" ]
+    default: "no"
     version_added: "1.3"
   update_password:
     required: false
@@ -382,8 +383,8 @@ def main():
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
-            append_privs=dict(type="bool", default="no"),
-            check_implicit_admin=dict(default=False),
+            append_privs=dict(default=False, type='bool'),
+            check_implicit_admin=dict(default=False, type='bool'),
             update_password=dict(default="always", choices=["always", "on_create"]),
             config_file=dict(default="~/.my.cnf"),
         )
