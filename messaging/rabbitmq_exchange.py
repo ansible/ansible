@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: rabbitmq_exchange
-author: Manuel Sousa
+author: '"Manuel Sousa (@manuel-sousa)" <manuel.sousa@gmail.com>'
 version_added: "2.0"
 
 short_description: This module manages rabbitMQ exchanges
