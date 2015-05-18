@@ -249,6 +249,8 @@ def main():
                         action='store_true')
     args = parser.parse_args()
 
+    args.modules = args.modules.rstrip('/')
+
     for root, dirs, files in os.walk(args.modules):
         basedir = root[len(args.modules)+1:].split('/', 1)[0]
         if basedir in BLACKLIST_DIRS:
