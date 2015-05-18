@@ -35,6 +35,12 @@ options:
     required: false
     default: null
     aliases: []
+  dockerfile:
+    description:
+       - Dockerfile to use
+    required: false
+    default: Dockerfile
+    version_added: "2.0"
   name:
     description:
        - Image name to work with
@@ -136,6 +142,7 @@ class DockerImageManager:
     def __init__(self, module):
         self.module = module
         self.path = self.module.params.get('path')
+        self.dockerfile = self.module.params.get('dockerfile')
         self.name = self.module.params.get('name')
         self.tag = self.module.params.get('tag')
         self.nocache = self.module.params.get('nocache')
@@ -149,7 +156,7 @@ class DockerImageManager:
         return "".join(self.log) if as_string else self.log
 
     def build(self):
-        stream = self.client.build(self.path, tag=':'.join([self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
+        stream = self.client.build(self.path, dockerfile=self.dockerfile, tag=':'.join([self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
         success_search = r'Successfully built ([0-9a-f]+)'
         image_id = None
         self.changed = True
@@ -214,6 +221,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             path            = dict(required=False, default=None),
+            dockerfile      = dict(required=False, default="Dockerfile"),
             name            = dict(required=True),
             tag             = dict(required=False, default="latest"),
             nocache         = dict(default=False, type='bool'),
