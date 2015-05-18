@@ -158,6 +158,7 @@ options:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     required: false
     default: null
+    choices: [ "yes", "no" ]
     aliases: []
   private_ip:
     version_added: "1.2"
