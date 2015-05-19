@@ -267,8 +267,7 @@ class ModuleValidator(Validator):
             self._check_for_gpl3_header()
             self._find_json_import()
             main = self._find_main_call()
-            module_utils = self._find_module_utils(main)
-
+            self._find_module_utils(main)
             self._find_has_import()
 
 
