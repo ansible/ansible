@@ -33,33 +33,29 @@ else
 {
     Fail-Json $result "missing required argument: name"
 }
-if ($params.state)
+if ($params.enabled)
 {
-  $state = $params.state.ToString()
-  if (($state -ne 'Enabled') -and ($state -ne 'Disabled'))
-  {
-    Fail-Json $result "state is '$state'; must be 'Enabled' or 'Disabled'"
-  }
+  $enabled = $params.enabled | ConvertTo-Bool
 }
 else
 {
-  $state = "Enabled"
+  $enabled = $true
 }
-
+$target_state = @{$true = "Enabled"; $false="Disabled"}[$enabled]
 
 try
 {
   $tasks = Get-ScheduledTask -TaskPath $name
-  $tasks_needing_changing = $tasks |? { $_.State -ne $state }
+  $tasks_needing_changing = $tasks |? { $_.State -ne $target_state }
   if (-not($tasks_needing_changing -eq $null))
   {
-    if ($state -eq 'Disabled')
-    {
-      $tasks_needing_changing | Disable-ScheduledTask
-    }
-    elseif ($state -eq 'Enabled')
+    if ($enabled)
     {
       $tasks_needing_changing | Enable-ScheduledTask
+    }
+    else
+    {
+      $tasks_needing_changing | Disable-ScheduledTask
     }
     Set-Attr $result "tasks_changed" ($tasks_needing_changing | foreach { $_.TaskPath + $_.TaskName })
     $result.changed = $true
