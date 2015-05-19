@@ -15,15 +15,20 @@ Deprecated Modules (new ones in parens):
 New Modules:
   * find
   * ec2_ami_find
+  * ec2_win_password
+  * circonus_annotation
   * consul
   * consul_acl
   * consul_kv
   * consul_session
   * cloudtrail
+  * cloudstack: cs_account
   * cloudstack: cs_affinitygroup
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
   * cloudstack: cs_instance
+  * cloudstack: cs_instancegroup
+  * cloudstack: cs_portforward
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
@@ -35,6 +40,10 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * pushover
+  * pushbullet
+  * rabbitmq_binding
+  * rabbitmq_exchange
+  * rabbitmq_queue
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
