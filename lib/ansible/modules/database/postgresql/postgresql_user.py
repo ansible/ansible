@@ -419,8 +419,6 @@ def revoke_privileges(cursor, user, privs):
         return False
 
     changed = False
-    revoke_funcs = dict(table=revoke_table_privilege, database=revoke_database_privilege)
-    check_funcs = dict(table=has_table_privilege, database=has_database_privilege)
     for type_ in privs:
         revoke_func = {
             'table':revoke_table_privilege,
@@ -436,8 +434,9 @@ def revoke_privileges(cursor, user, privs):
 def grant_privileges(cursor, user, privs):
     if privs is None:
         return False
-    grant_funcs = dict(table=grant_table_privilege, database=grant_database_privilege)
-    check_funcs = dict(table=has_table_privilege, database=has_database_privilege)
+
+    grant_funcs = dict(table=grant_table_privileges, database=grant_database_privileges)
+    check_funcs = dict(table=has_table_privileges, database=has_database_privileges)
 
     changed = False
     for type_ in privs:
