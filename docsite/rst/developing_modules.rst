@@ -473,14 +473,14 @@ Module checklist
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * The module must not use sys.exit() --> use fail_json() from the module object
 * Import custom packages in try/except and handled with fail_json() in main() e.g.::
+
+    try:
+        import foo
+        HAS_LIB=True
+    except:
+        HAS_LIB=False
+
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
-
-  try:
-    import foo
-    HAS_LIB=True
-  except:
-    HAS_LIB=False
-
 * Are module actions idempotent? If not document in the descriptions or the notes
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
