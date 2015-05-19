@@ -61,7 +61,6 @@ class StrategyBase:
         self._inventory         = tqm.get_inventory()
         self._workers           = tqm.get_workers()
         self._notified_handlers = tqm.get_notified_handlers()
-        #self._callback          = tqm.get_callback()
         self._variable_manager  = tqm.get_variable_manager()
         self._loader            = tqm.get_loader()
         self._final_q           = tqm._final_q
@@ -80,8 +79,6 @@ class StrategyBase:
         num_failed      = len(self._tqm._failed_hosts)
         num_unreachable = len(self._tqm._unreachable_hosts)
 
-        #debug("running the cleanup portion of the play")
-        #result &= self.cleanup(iterator, connection_info)
         debug("running handlers")
         result &= self.run_handlers(iterator, connection_info)
 
@@ -99,6 +96,7 @@ class StrategyBase:
             return 0
 
     def get_hosts_remaining(self, play):
+        print("inventory get hosts: %s" % self._inventory.get_hosts(play.hosts))
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name not in self._tqm._failed_hosts and host.name not in self._tqm._unreachable_hosts]
 
     def get_failed_hosts(self, play):
@@ -119,13 +117,12 @@ class StrategyBase:
             if self._cur_worker >= len(self._workers):
                 self._cur_worker = 0
 
-            self._pending_results += 1
-
             # create a dummy object with plugin loaders set as an easier
             # way to share them with the forked processes
             shared_loader_obj = SharedPluginLoaderObj()
 
             main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info, shared_loader_obj), block=False)
+            self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
             debug("got an error while queuing: %s" % e)
