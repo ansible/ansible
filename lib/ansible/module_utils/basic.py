@@ -1015,57 +1015,60 @@ class AnsibleModule(object):
             value = self.params[k]
             is_invalid = False
 
-            if wanted == 'str':
-                if not isinstance(value, basestring):
-                    self.params[k] = str(value)
-            elif wanted == 'list':
-                if not isinstance(value, list):
-                    if isinstance(value, basestring):
-                        self.params[k] = value.split(",")
-                    elif isinstance(value, int) or isinstance(value, float):
-                        self.params[k] = [ str(value) ]
-                    else:
-                        is_invalid = True
-            elif wanted == 'dict':
-                if not isinstance(value, dict):
-                    if isinstance(value, basestring):
-                        if value.startswith("{"):
-                            try:
-                                self.params[k] = json.loads(value)
-                            except:
-                                (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                                if exc is not None:
-                                    self.fail_json(msg="unable to evaluate dictionary for %s" % k)
-                                self.params[k] = result
-                        elif '=' in value:
-                            self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
+            try:
+                if wanted == 'str':
+                    if not isinstance(value, basestring):
+                        self.params[k] = str(value)
+                elif wanted == 'list':
+                    if not isinstance(value, list):
+                        if isinstance(value, basestring):
+                            self.params[k] = value.split(",")
+                        elif isinstance(value, int) or isinstance(value, float):
+                            self.params[k] = [ str(value) ]
                         else:
-                            self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
-                    else:
-                        is_invalid = True
-            elif wanted == 'bool':
-                if not isinstance(value, bool):
-                    if isinstance(value, basestring):
-                        self.params[k] = self.boolean(value)
-                    else:
-                        is_invalid = True
-            elif wanted == 'int':
-                if not isinstance(value, int):
-                    if isinstance(value, basestring):
-                        self.params[k] = int(value)
-                    else:
-                        is_invalid = True
-            elif wanted == 'float':
-                if not isinstance(value, float):
-                    if isinstance(value, basestring):
-                        self.params[k] = float(value)
-                    else:
-                        is_invalid = True
-            else:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+                            is_invalid = True
+                elif wanted == 'dict':
+                    if not isinstance(value, dict):
+                        if isinstance(value, basestring):
+                            if value.startswith("{"):
+                                try:
+                                    self.params[k] = json.loads(value)
+                                except:
+                                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                                    if exc is not None:
+                                        self.fail_json(msg="unable to evaluate dictionary for %s" % k)
+                                    self.params[k] = result
+                            elif '=' in value:
+                                self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
+                            else:
+                                self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
+                        else:
+                            is_invalid = True
+                elif wanted == 'bool':
+                    if not isinstance(value, bool):
+                        if isinstance(value, basestring):
+                            self.params[k] = self.boolean(value)
+                        else:
+                            is_invalid = True
+                elif wanted == 'int':
+                    if not isinstance(value, int):
+                        if isinstance(value, basestring):
+                            self.params[k] = int(value)
+                        else:
+                            is_invalid = True
+                elif wanted == 'float':
+                    if not isinstance(value, float):
+                        if isinstance(value, basestring):
+                            self.params[k] = float(value)
+                        else:
+                            is_invalid = True
+                else:
+                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
-            if is_invalid:
-                self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
+                if is_invalid:
+                    self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
+            except ValueError, e:
+                self.fail_json(msg="value of argument %s is not of type %s and we were unable to automatically convert" % (k, wanted))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.iteritems():
