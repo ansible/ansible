@@ -248,6 +248,8 @@ class SystemdStrategy(GenericStrategy):
         return out.strip()
 
     def set_current_hostname(self, name):
+        if len(name) > 64:
+            self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = ['hostnamectl', '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
@@ -263,6 +265,8 @@ class SystemdStrategy(GenericStrategy):
         return out.strip()
 
     def set_permanent_hostname(self, name):
+        if len(name) > 64:
+            self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
