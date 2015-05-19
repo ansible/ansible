@@ -97,7 +97,7 @@ def main():
         state                           = dict(default='present', choices=['absent', 'present'])
     ))
     module = AnsibleModule(argument_spec=argument_spec)
-    if not HAVE_NOVACLIENT:
+    if not HAS_NOVACLIENT:
         module.fail_json(msg='python-novaclient is required for this module to work')
 
     nova = nova_client.Client(module.params['login_username'],
