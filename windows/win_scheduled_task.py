@@ -34,18 +34,18 @@ options:
       - Name of the scheduled task
       - Supports * as wildcard
     required: true
-  state:
+  enabled:
     description:
       - State that the task should become
     required: false
     choices:
-      - Disabled
-      - Enabled
-    default: Enabled
+      - yes
+      - no
+    default: yes
 author: Peter Mounce
 '''
 
 EXAMPLES = '''
   # Disable the scheduled tasks with "WindowsUpdate" in their name
-  win_scheduled_task: name="*WindowsUpdate*" state=disabled
+  win_scheduled_task: name="*WindowsUpdate*" enabled=no
 '''
