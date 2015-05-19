@@ -33,7 +33,8 @@ options:
     required: true
   vm:
     description:
-      - Name of virtual machine which we make the port forwarding rule for. Required if C(state=present).
+      - Name of virtual machine which we make the port forwarding rule for.
+      - Required if C(state=present).
     required: false
     default: null
   state:
@@ -54,7 +55,8 @@ options:
     required: true
   public_end_port
     description:
-      - End public port for this rule. If not specific, equal C(public_port).
+      - End public port for this rule.
+      - If not specified equal C(public_port).
     required: false
     default: null
   private_port
@@ -63,7 +65,8 @@ options:
     required: true
   private_end_port
     description:
-      - End private port for this rule. If not specific, equal C(private_port)
+      - End private port for this rule.
+      - If not specified equal C(private_port).
     required: false
     default: null
   open_firewall:
@@ -362,13 +365,13 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             if 'vmguestip' in portforwarding_rule:
                 self.result['vm_guest_ip'] = portforwarding_rule['vmguestip']
             if 'publicport' in portforwarding_rule:
-                self.result['public_port'] = portforwarding_rule['publicport']
+                self.result['public_port'] = int(portforwarding_rule['publicport'])
             if 'publicendport' in portforwarding_rule:
-                self.result['public_end_port'] = portforwarding_rule['publicendport']
+                self.result['public_end_port'] = int(portforwarding_rule['publicendport'])
             if 'privateport' in portforwarding_rule:
-                self.result['private_port'] = portforwarding_rule['privateport']
+                self.result['private_port'] = int(portforwarding_rule['privateport'])
             if 'privateendport' in portforwarding_rule:
-                self.result['private_end_port'] = portforwarding_rule['privateendport']
+                self.result['private_end_port'] = int(portforwarding_rule['privateendport'])
             if 'protocol' in portforwarding_rule:
                 self.result['protocol'] = portforwarding_rule['protocol']
             if 'tags' in portforwarding_rule:
