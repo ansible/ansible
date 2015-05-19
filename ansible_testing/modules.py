@@ -115,6 +115,11 @@ class ModuleValidator(Validator):
         if 'sys.exit(' in self.text:
             self.errors.append('sys.exit() call found')
 
+    def _check_for_gpl3_header(self):
+        if ('GNU General Public License' not in self.text and
+                'version 3' not in self.text):
+            self.errors.append('GPLv3 license header not found')
+
     def _find_json_import(self):
         for child in self.ast.body:
             if isinstance(child, ast.Import):
@@ -235,6 +240,7 @@ class ModuleValidator(Validator):
         if not self._just_docs():
             self._check_interpreter()
             self._check_for_sys_exit()
+            self._check_for_gpl3_header()
             self._find_json_import()
             module_utils = self._find_module_utils()
             main = self._find_main_call()
