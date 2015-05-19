@@ -102,6 +102,7 @@ def main():
             environment=dict(required=False),
             validate_certs = dict(default='yes', type='bool'),
         ),
+        required_one_of=[['app_name', 'application_id']],
         supports_check_mode=True
     )
 
