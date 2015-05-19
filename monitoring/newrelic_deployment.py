@@ -29,7 +29,7 @@ description:
 options:
   token:
     description:
-      - API token.
+      - API token, to place in the x-api-key header.
     required: true
   app_name:
     description:
