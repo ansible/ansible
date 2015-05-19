@@ -101,6 +101,9 @@ EXAMPLES = '''
 # touch the same file, but add/remove some permissions
 - file: path=/etc/foo.conf state=touch mode="u+rw,g-wx,o-rwx"
 
+# create a directory if it doesn't exist
+- file: path=/etc/some_directory state=directory mode=0755
+
 '''
 
 
