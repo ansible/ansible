@@ -66,7 +66,6 @@ options:
   src:
     required: false
     default: null
-    choices: []
     description:
       - path of the file to link to (applies only to C(state=link)). Will accept absolute,
         relative and nonexisting paths. Relative paths are not expanded.
