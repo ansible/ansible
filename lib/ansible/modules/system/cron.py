@@ -73,7 +73,8 @@ options:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup_file) variable by this module.
     required: false
-    default: false
+    choices: [ "yes", "no" ]
+    default: no
   minute:
     description:
       - Minute when the job should run ( 0-59, *, */2, etc )
