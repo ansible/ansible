@@ -293,7 +293,7 @@ class PythonPackageValidator(Validator):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('modules', help='Path to modules')
+    parser.add_argument('modules', help='Path to module or module directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
                         action='store_true')
     args = parser.parse_args()
@@ -301,6 +301,13 @@ def main():
     args.modules = args.modules.rstrip('/')
 
     exit = []
+
+    # Allow testing against a single file
+    if os.path.isfile(args.modules):
+        mv = ModuleValidator(os.path.abspath(args.modules))
+        mv.validate()
+        exit.append(mv.report(args.warnings))
+        sys.exit(sum(exit))
 
     for root, dirs, files in os.walk(args.modules):
         basedir = root[len(args.modules)+1:].split('/', 1)[0]
