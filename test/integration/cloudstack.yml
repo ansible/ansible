@@ -12,3 +12,4 @@
     - { role: test_cs_instance,             tags: test_cs_instance }
     - { role: test_cs_instancegroup,        tags: test_cs_instancegroup }
     - { role: test_cs_account,              tags: test_cs_account }
+    - { role: test_cs_firewall,             tags: test_cs_firewall }
