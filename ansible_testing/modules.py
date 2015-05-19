@@ -72,6 +72,17 @@ class ModuleValidator(Validator):
                                  '__init__.py'))
     BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
 
+    BOTTOM_IMPORTS = frozenset((
+        'ansible.module_utils.basic',
+        'ansible.module_utils.urls',
+        'ansible.module_utils.facts',
+        'ansible.module_utils.splitter',
+        'ansible.module_utils.known_hosts',
+    ))
+    BOTTOM_IMPORTS_BLACKLIST = frozenset((
+        'command.py',
+    ))
+
     def __init__(self, path):
         super(ModuleValidator, self).__init__()
 
@@ -107,6 +118,9 @@ class ModuleValidator(Validator):
                 return False
         return True
 
+    def _is_bottom_import_blacklisted(self):
+        return self.object_name in self.BOTTOM_IMPORTS_BLACKLIST
+
     def _check_interpreter(self):
         if not self.text.startswith('#!/usr/bin/python'):
             self.errors.append('Interpreter line is not "#!/usr/bin/python"')
@@ -129,13 +143,23 @@ class ModuleValidator(Validator):
                                              'already provided by '
                                              'ansible.module_utils.basic')
 
-    def _find_module_utils(self):
+    def _find_module_utils(self, main):
         linenos = []
         for child in self.ast.body:
             found_module_utils_import = False
             if isinstance(child, ast.ImportFrom):
                 if child.module.startswith('ansible.module_utils.'):
                     found_module_utils_import = True
+
+                    if child.module in self.BOTTOM_IMPORTS:
+                        if (child.lineno < main - 10 and
+                                not self._is_bottom_import_blacklisted()):
+                            self.errors.append('%s import not near main()' %
+                                               child.module)
+                    else:
+                        self.warnings.append('%s import not near main()' %
+                                             child.module)
+
                     linenos.append(child.lineno)
 
                     if not child.names:
@@ -242,11 +266,8 @@ class ModuleValidator(Validator):
             self._check_for_sys_exit()
             self._check_for_gpl3_header()
             self._find_json_import()
-            module_utils = self._find_module_utils()
             main = self._find_main_call()
-            for mu in module_utils:
-                if mu < main - 10:
-                    self.warnings.append('module_utils import not near main()')
+            module_utils = self._find_module_utils(main)
 
             self._find_has_import()
 
