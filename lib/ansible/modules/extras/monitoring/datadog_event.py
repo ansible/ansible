@@ -116,7 +116,10 @@ def post_event(module):
     if module.params['date_happened'] != None:
         body['date_happened'] = module.params['date_happened']
     if module.params['tags'] != None:
-        body['tags'] = module.params['tags'].split(",")
+        if module.params['tags'].startswith("[") and module.params['tags'].endswith("]"):
+            body['tags'] = eval(module.params['tags'])
+        else:
+            body['tags'] = module.params['tags'].split(",")
     if module.params['aggregation_key'] != None:
         body['aggregation_key'] = module.params['aggregation_key']
     if module.params['source_type_name'] != None:
