@@ -5,7 +5,9 @@ from __future__ import print_function
 import os
 import abc
 import ast
+import sys
 import argparse
+
 from fnmatch import fnmatch
 
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
@@ -46,14 +48,20 @@ class Validator(object):
             print(self.object_name)
             print('=' * 76)
 
+        ret = []
+
         for error in self.errors:
             print('ERROR: %s' % error)
+            ret.append(1)
         if warnings:
             for warning in self.warnings:
                 print('WARNING: %s' % warning)
+                ret.append(1)
 
         if self.errors or (warnings and self.warnings):
             print()
+
+        return len(ret)
 
 
 class ModuleValidator(Validator):
@@ -261,6 +269,8 @@ def main():
 
     args.modules = args.modules.rstrip('/')
 
+    exit = []
+
     for root, dirs, files in os.walk(args.modules):
         basedir = root[len(args.modules)+1:].split('/', 1)[0]
         if basedir in BLACKLIST_DIRS:
@@ -271,13 +281,15 @@ def main():
             path = os.path.join(root, dirname)
             pv = PythonPackageValidator(os.path.abspath(path))
             pv.validate()
-            pv.report(args.warnings)
+            exit.append(pv.report(args.warnings))
 
         for filename in files:
             path = os.path.join(root, filename)
             mv = ModuleValidator(os.path.abspath(path))
             mv.validate()
-            mv.report(args.warnings)
+            exit.append(mv.report(args.warnings))
+
+    sys.exit(sum(exit))
 
 
 if __name__ == '__main__':
