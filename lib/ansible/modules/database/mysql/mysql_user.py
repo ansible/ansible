@@ -317,12 +317,8 @@ def privileges_unpack(priv):
     output = {}
     for item in priv.strip().split('/'):
         pieces = item.strip().split(':')
-        if '.' in pieces[0]:
-            pieces[0] = pieces[0].split('.')
-            for idx, piece in enumerate(pieces):
-                if pieces[0][idx] != "*":
-                    pieces[0][idx] = "`" + pieces[0][idx] + "`"
-            pieces[0] = '.'.join(pieces[0])
+        dbpriv = pieces[0].rsplit(".", 1)
+        pieces[0] = "`%s`.%s" % (dbpriv[0].strip('`'), dbpriv[1])
 
         output[pieces[0]] = pieces[1].upper().split(',')
         new_privs = frozenset(output[pieces[0]])
