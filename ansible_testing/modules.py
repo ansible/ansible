@@ -10,6 +10,7 @@ import argparse
 
 from fnmatch import fnmatch
 
+from ansible.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
 
@@ -83,6 +84,11 @@ class ModuleValidator(Validator):
         'command.py',
     ))
 
+    PS_DOC_BLACKLIST = frozenset((
+        'slurp.ps1',
+        'setup.ps1'
+    ))
+
     def __init__(self, path):
         super(ModuleValidator, self).__init__()
 
@@ -121,7 +127,12 @@ class ModuleValidator(Validator):
     def _is_bottom_import_blacklisted(self):
         return self.object_name in self.BOTTOM_IMPORTS_BLACKLIST
 
-    def _check_interpreter(self):
+    def _check_interpreter(self, powershell=False):
+        if powershell:
+            if not self.text.startswith('#!powershell\n'):
+                self.errors.append('Interpreter line is not "#!powershell"')
+            return
+
         if not self.text.startswith('#!/usr/bin/python'):
             self.errors.append('Interpreter line is not "#!/usr/bin/python"')
 
@@ -230,6 +241,20 @@ class ModuleValidator(Validator):
                 self.warnings.append('Found Try/Except block without HAS_ '
                                      'assginment')
 
+    def _find_ps_replacers(self):
+        if 'WANT_JSON' not in self.text:
+            self.errors.append('WANT_JSON not found in module')
+
+        if REPLACER_WINDOWS not in self.text:
+            self.errors.append('"%s" not found in module' % REPLACER_WINDOWS)
+
+    def _find_ps_docs_py_file(self):
+        if self.object_name in self.PS_DOC_BLACKLIST:
+            return
+        py_path = self.path.replace('.ps1', '.py')
+        if not os.path.isfile(py_path):
+            self.errors.append('Missing python documentation file')
+
     def validate(self):
         super(ModuleValidator, self).validate()
 
@@ -241,34 +266,43 @@ class ModuleValidator(Validator):
             if fnmatch(self.basename, pat):
                 return
 
-        if self._powershell_module():
-            self.warnings.append('Cannot check powershell modules at this '
-                                 'time.  Skipping')
-            return
-        if not self._python_module():
+#        if self._powershell_module():
+#            self.warnings.append('Cannot check powershell modules at this '
+#                                 'time.  Skipping')
+#            return
+        if not self._python_module() and not self._powershell_module():
             self.errors.append('Official Ansible modules must have a .py '
-                               'extension')
+                               'extension for python modules or a .ps1 '
+                               'for powershell modules')
             return
-        if self.ast is None:
+
+        if self._python_module() and self.ast is None:
             self.errors.append('Python SyntaxError while parsing module')
             return
 
-        doc, examples, ret = get_docstring(self.path)
-        if not bool(doc):
-            self.errors.append('Invalid or no DOCUMENTATION provided')
-        if not bool(examples):
-            self.errors.append('No EXAMPLES provided')
-        if not bool(ret):
-            self.warnings.append('No RETURN provided')
+        if self._python_module():
+            doc, examples, ret = get_docstring(self.path)
+            if not bool(doc):
+                self.errors.append('Invalid or no DOCUMENTATION provided')
+            if not bool(examples):
+                self.errors.append('No EXAMPLES provided')
+            if not bool(ret):
+                self.warnings.append('No RETURN provided')
 
-        if not self._just_docs():
+        if self._python_module() and not self._just_docs():
             self._check_interpreter()
             self._check_for_sys_exit()
-            self._check_for_gpl3_header()
             self._find_json_import()
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
+
+        if self._powershell_module():
+            self._find_ps_replacers()
+            self._find_ps_docs_py_file()
+
+        self._check_for_gpl3_header()
+        self._check_interpreter(powershell=self._powershell_module())
 
 
 class PythonPackageValidator(Validator):
