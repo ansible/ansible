@@ -111,6 +111,10 @@ class ModuleValidator(Validator):
         if not self.text.startswith('#!/usr/bin/python'):
             self.errors.append('Interpreter line is not "#!/usr/bin/python"')
 
+    def _check_for_sys_exit(self):
+        if 'sys.exit(' in self.text:
+            self.errors.append('sys.exit() call found')
+
     def _find_json_import(self):
         for child in self.ast.body:
             if isinstance(child, ast.Import):
@@ -230,6 +234,7 @@ class ModuleValidator(Validator):
 
         if not self._just_docs():
             self._check_interpreter()
+            self._check_for_sys_exit()
             self._find_json_import()
             module_utils = self._find_module_utils()
             main = self._find_main_call()
