@@ -112,9 +112,9 @@ Else
 If ($params.source)
 {
     $source = $params.source.ToString().ToLower()
-    If (($source -ne "chocolatey") -and ($source -ne "webpi") -and ($source -ne "windowsfeatures") -and ($source -ne "ruby"))
+    If (($source -ne "chocolatey") -and ($source -ne "webpi") -and ($source -ne "windowsfeatures") -and ($source -ne "ruby") -and (!$source.startsWith("http://", "CurrentCultureIgnoreCase")) -and (!$source.startsWith("https://", "CurrentCultureIgnoreCase")))
     {
-        Fail-Json $result "source is $source - must be one of chocolatey, ruby, webpi or windowsfeatures."
+        Fail-Json $result "source is $source - must be one of chocolatey, ruby, webpi, windowsfeatures or a custom source url."
     }
 }
 Elseif (!$params.source)
@@ -187,6 +187,10 @@ if ($source -eq "chocolatey")
     $expression += " -source https://chocolatey.org/api/v2/"
 }
 elseif (($source -eq "windowsfeatures") -or ($source -eq "webpi") -or ($source -eq "ruby"))
+{
+    $expression += " -source $source"
+}
+elseif(($source -ne $Null) -and ($source -ne ""))
 {
     $expression += " -source $source"
 }
