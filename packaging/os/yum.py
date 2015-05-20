@@ -26,6 +26,7 @@ import traceback
 import os
 import yum
 import rpm
+import syslog
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -153,8 +154,6 @@ if not os.path.exists(repoquery):
 
 yumbin='/usr/bin/yum'
 
-import syslog
-
 def log(msg):
     syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
     syslog.syslog(syslog.LOG_NOTICE, msg)
@@ -186,8 +185,11 @@ def po_to_nevra(po):
     else:
         return '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[], is_pkg=False):
-
+def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, is_pkg=False):
+    if en_repos is None:
+        en_repos = []
+    if dis_repos is None:
+        dis_repos = []
     if not repoq:
 
         pkgs = []
@@ -225,7 +227,11 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
             
     return []
 
-def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[]):
+def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None):
+    if en_repos is None:
+        en_repos = []
+    if dis_repos is None:
+        dis_repos = []
 
     if not repoq:
 
@@ -262,10 +268,13 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
 
-            
     return []
 
-def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[]):
+def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None):
+    if en_repos is None:
+        en_repos = []
+    if dis_repos is None:
+        dis_repos = []
 
     if not repoq:
 
@@ -312,7 +321,11 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
             
     return []
 
-def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], dis_repos=[]):
+def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None, dis_repos=None):
+    if en_repos is None:
+        en_repos = []
+    if dis_repos is None:
+        dis_repos = []
 
     if not repoq:
 
@@ -683,7 +696,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     nothing_to_do = False
                     break
                     
-                if basecmd == 'update' and is_update(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=en_repos):
+                if basecmd == 'update' and is_update(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                     nothing_to_do = False
                     break
                     
