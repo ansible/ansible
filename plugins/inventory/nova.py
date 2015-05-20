@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# WARNING: This file is deprecated. New work should focus on the openstack.py
+# inventory module, which properly handles multiple clouds as well as keystone
+# v3 and keystone auth plugins
+
 import sys
 import re
 import os
@@ -27,6 +31,9 @@ try:
     import json
 except ImportError:
     import simplejson as json
+
+
+sys.stderr.write("WARNING: this inventory module is deprecated. please migrate usage to openstack.py\n")
 
 ###################################################
 # executed with no parameters, return the list of
