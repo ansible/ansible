@@ -153,6 +153,10 @@ EXAMPLES = '''
         type: vmxnet3
         network: VM Network
         network_type: standard
+      nic2:
+        type: vmxnet3
+        network: dvSwitch Network
+        network_type: dvs
     vm_hardware:
       memory_mb: 2048
       num_cpus: 2
