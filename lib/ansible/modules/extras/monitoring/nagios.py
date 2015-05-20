@@ -9,7 +9,7 @@
 # Tim Bielawa <tbielawa@redhat.com>
 #
 # This software may be freely redistributed under the terms of the GNU
-# general public license version 2.
+# general public license version 2 or any later version.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -189,7 +189,7 @@ def main():
     services = module.params['services']
     cmdfile = module.params['cmdfile']
     command = module.params['command']
-    
+
     ##################################################################
     # Required args per action:
     # downtime = (minutes, service, host)
@@ -356,7 +356,7 @@ class Nagios(object):
         notif_str = "[%s] %s" % (entry_time, cmd)
         if host is not None:
             notif_str += ";%s" % host
-            
+
             if svc is not None:
                 notif_str += ";%s" % svc
 
@@ -796,42 +796,42 @@ class Nagios(object):
             return return_str_list
         else:
             return "Fail: could not write to the command file"
-    
+
     def silence_nagios(self):
         """
         This command is used to disable notifications for all hosts and services
         in nagios.
-        
+
         This is a 'SHUT UP, NAGIOS' command
         """
         cmd = 'DISABLE_NOTIFICATIONS'
         self._write_command(self._fmt_notif_str(cmd))
-    
+
     def unsilence_nagios(self):
         """
         This command is used to enable notifications for all hosts and services
         in nagios.
-        
+
         This is a 'OK, NAGIOS, GO'' command
         """
         cmd = 'ENABLE_NOTIFICATIONS'
         self._write_command(self._fmt_notif_str(cmd))
-        
+
     def nagios_cmd(self, cmd):
         """
         This sends an arbitrary command to nagios
-        
+
         It prepends the submitted time and appends a \n
-        
+
         You just have to provide the properly formatted command
         """
-        
+
         pre = '[%s]' % int(time.time())
-        
+
         post = '\n'
         cmdstr = '%s %s %s' % (pre, cmd, post)
         self._write_command(cmdstr)
-        
+
     def act(self):
         """
         Figure out what you want to do from ansible, and then do the
@@ -871,13 +871,13 @@ class Nagios(object):
                                                services=self.services)
         elif self.action == 'silence_nagios':
             self.silence_nagios()
-            
+
         elif self.action == 'unsilence_nagios':
             self.unsilence_nagios()
-            
+
         elif self.action == 'command':
             self.nagios_cmd(self.command)
-            
+
         # wtf?
         else:
             self.module.fail_json(msg="unknown action specified: '%s'" % \
