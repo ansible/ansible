@@ -89,8 +89,9 @@ EXAMPLES = '''
 - easy_install: name=bottle virtualenv=/webapps/myapp/venv
 '''
 
-def _is_package_installed(module, name, easy_install):
-    cmd = '%s --dry-run %s' % (easy_install, name)
+def _is_package_installed(module, name, easy_install, executable_arguments):
+    executable_arguments.append('--dry-run')
+    cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
     rc, status_stdout, status_stderr = module.run_command(cmd)
     return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
 
@@ -124,6 +125,10 @@ def _get_easy_install(module, env=None, executable=None):
 def main():
     arg_spec = dict(
         name=dict(required=True),
+        state=dict(required=False,
+                   default='present',
+                   choices=['present','latest'],
+                   type='str'),
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
@@ -137,6 +142,8 @@ def main():
     executable = module.params['executable']
     site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
+    executable_arguments = []
+    module.params['state'] is 'latest' and executable_arguments.append('--upgrade')
 
     rc = 0
     err = ''
@@ -167,7 +174,7 @@ def main():
     if not installed:
         if module.check_mode:
             module.exit_json(changed=True)
-        cmd = '%s %s' % (easy_install, name)
+        cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
         rc_easy_inst, out_easy_inst, err_easy_inst = module.run_command(cmd)
 
         rc += rc_easy_inst
