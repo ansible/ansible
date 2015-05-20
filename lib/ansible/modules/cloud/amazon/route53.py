@@ -138,6 +138,15 @@ options:
     required: false
     default: null
     version_added: "2.0"
+  vpc_id:
+    description:
+      - When used in conjunction with private_zone: true, this will only modify
+        records in the private hosted zone attached to this VPC. This allows you
+        to have multiple private hosted zones, all with the same name, attached
+        to different VPCs.
+    required: false
+    default: null
+    version_added: "2.0"
 author: "Bruce Pennypacker (@bpennypacker)"
 extends_documentation_fragment: aws
 '''
@@ -238,14 +247,26 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def get_zone_by_name(conn, module, zone_name, want_private, zone_id):
+def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id):
     """Finds a zone by name or zone_id"""
     for zone in conn.get_zones():
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
         private_zone = module.boolean(zone.config.get('PrivateZone', False))
         if private_zone == want_private and ((zone.name == zone_name and zone_id == None) or zone.id.replace('/hostedzone/', '') == zone_id):
-            return zone
+            if want_vpc_id:
+                # NOTE: These details aren't available in other boto methods, hence the necessary
+                # extra API call
+                zone_details = conn.get_hosted_zone(zone.id)['GetHostedZoneResponse']
+                # this is to deal with this boto bug: https://github.com/boto/boto/pull/2882
+                if isinstance(zone_details['VPCs'], dict):
+                    if zone_details['VPCs']['VPC']['VPCId'] == want_vpc_id:
+                        return zone
+                else: # Forward compatibility for when boto fixes that bug
+                    if want_vpc_id in [v['VPCId'] for v in zone_details['VPCs']]:
+                        return zone
+            else:
+                return zone
     return None
 
 
@@ -283,6 +304,7 @@ def main():
             region               = dict(required=False),
             health_check         = dict(required=False),
             failover             = dict(required=False),
+            vpc_id               = dict(required=False),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -305,6 +327,7 @@ def main():
     region_in               = module.params.get('region')
     health_check_in         = module.params.get('health_check')
     failover_in             = module.params.get('failover')
+    vpc_id_in               = module.params.get('vpc_id')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -330,6 +353,11 @@ def main():
               module.fail_json(msg = "parameter 'value' must contain a single dns name for alias create/delete")
           elif not alias_hosted_zone_id_in:
               module.fail_json(msg = "parameter 'alias_hosted_zone_id' required for alias create/delete")
+
+    if vpc_id_in and not private_zone_in:
+        module.fail_json(msg="parameter 'private_zone' must be true when specifying parameter"
+            " 'vpc_id'")
+
 
     # connect to the route53 endpoint 
     try:
