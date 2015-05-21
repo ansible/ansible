@@ -141,7 +141,7 @@ EXAMPLES = '''
 # Search for the AMI tagged "project:website"
 - ec2_ami_find:
     owner: self
-    tags:
+    ami_tags:
       project: website
     no_result_action: fail
   register: ami_find
