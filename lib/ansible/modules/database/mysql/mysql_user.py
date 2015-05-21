@@ -393,7 +393,7 @@ def main():
     login_password = module.params["login_password"]
     user = module.params["user"]
     password = module.params["password"]
-    host = module.params["host"]
+    host = module.params["host"].lower()
     state = module.params["state"]
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
