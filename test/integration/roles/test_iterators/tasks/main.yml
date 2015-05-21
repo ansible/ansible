@@ -60,6 +60,10 @@
   set_fact: "{{ 'x' + item }}={{ item }}"
   with_sequence: start=0 end=3
 
+- name: test with_sequence backwards
+  set_fact: "{{ 'y' + item }}={{ item }}"
+  with_sequence: start=3 end=0 stride=-1
+
 - name: verify with_sequence
   assert:
     that:
@@ -67,6 +71,20 @@
         - "x1 == '1'"
         - "x2 == '2'"
         - "x3 == '3'"
+        - "y3 == '3'"
+        - "y2 == '2'"
+        - "y1 == '1'"
+        - "y0 == '0'"
+
+- name: test with_sequence not failing on count == 0
+  debug: msg='previously failed with backward counting error'
+  with_sequence: count=0
+  register: count_of_zero
+
+- assert:
+    that:
+        - count_of_zero | skipped
+        - not count_of_zero | failed
 
 # WITH_RANDOM_CHOICE
 
