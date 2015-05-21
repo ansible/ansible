@@ -218,8 +218,8 @@ def main():
             elif size < this_lv['size']:
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
-                tool = module.get_bin_path("lvextend", required=True)
-                tool.append("--force")
+                tool = module.get_bin_path("lvreduce", required=True)
+                tool = '%s %s' % (tool, '--force')
 
             if tool:
                 if module.check_mode:
@@ -238,4 +238,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
