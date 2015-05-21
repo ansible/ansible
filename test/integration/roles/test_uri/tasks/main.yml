@@ -37,6 +37,10 @@
     dest: "{{files_dir}}/{{ item }}"
   with_sequence: start=0 end=30 format=fail%d.json
 
+- copy:
+    src: "testserver.py"
+    dest: "{{ output_dir }}/testserver.py"
+
 - name: verify that python2 is installed so this test can continue
   shell: which python2
   register: py2
