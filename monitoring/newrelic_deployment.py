@@ -25,11 +25,11 @@ version_added: "1.2"
 author: '"Matt Coddington (@mcodd)" <coddington@gmail.com>'
 short_description: Notify newrelic about app deployments
 description:
-   - Notify newrelic about app deployments (see http://newrelic.github.io/newrelic_api/NewRelicApi/Deployment.html)
+   - Notify newrelic about app deployments (see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/deployment-notifications#api)
 options:
   token:
     description:
-      - API token.
+      - API token, to place in the x-api-key header.
     required: true
   app_name:
     description:
@@ -102,6 +102,7 @@ def main():
             environment=dict(required=False),
             validate_certs = dict(default='yes', type='bool'),
         ),
+        required_one_of=[['app_name', 'application_id']],
         supports_check_mode=True
     )
 
