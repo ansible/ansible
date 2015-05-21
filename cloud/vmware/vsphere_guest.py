@@ -162,6 +162,9 @@ EXAMPLES = '''
       num_cpus: 2
       osid: centos64Guest
       scsi: paravirtual
+      vm_cdrom:
+        type: "iso"
+        iso_path: "DatastoreName/cd-image.iso"
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
