@@ -177,7 +177,7 @@ def main():
 
     cmd = None
     changed = False
-    installed = _is_package_installed(module, name, easy_install)
+    installed = _is_package_installed(module, name, easy_install, executable_arguments)
 
     if not installed:
         if module.check_mode:
