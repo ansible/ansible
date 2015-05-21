@@ -70,6 +70,12 @@ options:
     version_added: "1.3"
     required: false
     default: null
+  state:
+    description:
+      - The desired state of the gem. C(latest) ensures that the latest version is installed.
+    required: false
+    choices: [present, latest]
+    default: present
 notes:
     - Please note that the M(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
@@ -83,7 +89,7 @@ author: Matt Wright
 
 EXAMPLES = '''
 # Examples from Ansible Playbooks
-- easy_install: name=pip
+- easy_install: name=pip state=latest
 
 # Install Bottle into the specified virtualenv.
 - easy_install: name=bottle virtualenv=/webapps/myapp/venv
