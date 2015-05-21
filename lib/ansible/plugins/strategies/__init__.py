@@ -236,8 +236,6 @@ class StrategyBase:
             debug("waiting for pending results (%d left)" % self._pending_results)
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
-            if self._tqm._terminated:
-                break
             time.sleep(0.01)
 
         return ret_results
@@ -335,63 +333,6 @@ class StrategyBase:
             b.vars = included_file._args.copy()
 
         return block_list
-
-    def cleanup(self, iterator, connection_info):
-        '''
-        Iterates through failed hosts and runs any outstanding rescue/always blocks
-        and handlers which may still need to be run after a failure.
-        '''
-
-        debug("in cleanup")
-        result = True
-
-        debug("getting failed hosts")
-        failed_hosts = self.get_failed_hosts(iterator._play)
-        if len(failed_hosts) == 0:
-            debug("there are no failed hosts")
-            return result
-
-        debug("marking hosts failed in the iterator")
-        # mark the host as failed in the iterator so it will take
-        # any required rescue paths which may be outstanding
-        for host in failed_hosts:
-            iterator.mark_host_failed(host)
-
-        debug("clearing the failed hosts list")
-        # clear the failed hosts dictionary now while also
-        for entry in self._tqm._failed_hosts.keys():
-            del self._tqm._failed_hosts[entry]
-
-        work_to_do = True
-        while work_to_do:
-            work_to_do = False
-            for host in failed_hosts:
-                host_name = host.name
-
-                if host_name in self._tqm._failed_hosts:
-                    iterator.mark_host_failed(host)
-                    del self._tqm._failed_hosts[host_name]
-
-                if host_name in self._blocked_hosts:
-                    work_to_do = True
-                    continue
-                elif iterator.get_next_task_for_host(host, peek=True) and host_name not in self._tqm._unreachable_hosts:
-                    work_to_do = True
-
-                    # pop the task, mark the host blocked, and queue it
-                    self._blocked_hosts[host_name] = True
-                    task = iterator.get_next_task_for_host(host)
-                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                    self._tqm.send_callback('v2_playbook_on_cleanup_task_start', task)
-                    self._queue_task(host, task, task_vars, connection_info)
-
-            self._process_pending_results(iterator)
-            time.sleep(0.01)
-
-        # no more work, wait until the queue is drained
-        self._wait_on_pending_results(iterator)
-
-        return result
 
     def run_handlers(self, iterator, connection_info):
         '''
