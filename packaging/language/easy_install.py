@@ -143,7 +143,8 @@ def main():
     site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
     executable_arguments = []
-    module.params['state'] is 'latest' and executable_arguments.append('--upgrade')
+    if module.params['state'] == 'latest':
+        executable_arguments.append('--upgrade')
 
     rc = 0
     err = ''
