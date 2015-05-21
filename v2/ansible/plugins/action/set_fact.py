@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
@@ -33,4 +35,4 @@ class ActionModule(ActionBase):
                 if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v
-        return dict(changed=True, ansible_facts=facts)
+        return dict(changed=False, ansible_facts=facts)

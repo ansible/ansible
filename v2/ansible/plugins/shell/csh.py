@@ -14,10 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from ansible.runner.shell_plugins.sh import ShellModule as ShModule
+from ansible.plugins.shell.sh import ShellModule as ShModule
 
 class ShellModule(ShModule):
+
+    # How to end lines in a python script one-liner
+    _SHELL_EMBEDDED_PY_EOL = '\\\n'
 
     def env_prefix(self, **kwargs):
         return 'env %s' % super(ShellModule, self).env_prefix(**kwargs)

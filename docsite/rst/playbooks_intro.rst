@@ -67,11 +67,44 @@ For starters, here's a playbook that contains just one play::
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
-      - name: ensure apache is running
-        service: name=httpd state=started
+      - name: ensure apache is running (and enable it at boot)
+        service: name=httpd state=started enabled=yes
       handlers:
         - name: restart apache
           service: name=httpd state=restarted
+
+We can also break task items out over multiple lines using the YAML dictionary
+types to supply module arguments. This can be helpful when working with tasks
+that have really long parameters or modules that take many parameters to keep
+them well structured. Below is another version of the above example but using
+YAML dictionaries to supply the modules with their key=value arguments.::
+
+    ---
+    - hosts: webservers
+      vars:
+        http_port: 80
+        max_clients: 200
+      remote_user: root
+      tasks:
+      - name: ensure apache is at the latest version
+        yum:
+          pkg: httpd
+          state: latest
+      - name: write the apache config file
+        template:
+          src: /srv/httpd.j2
+          dest: /etc/httpd.conf
+        notify:
+        - restart apache
+      - name: ensure apache is running
+        service:
+          name: httpd
+          state: started
+      handlers:
+        - name: restart apache
+          service:
+            name: httpd
+            state: restarted
 
 Below, we'll break down what the various features of the playbook language are.
 
@@ -115,7 +148,7 @@ Remote users can also be defined per task::
     The `remote_user` parameter for tasks was added in 1.4.
 
 
-Support for running things from sudo is also available::
+Support for running things as another user is also available (see :doc:`become`)::
 
     ---
     - hosts: webservers
@@ -129,31 +162,44 @@ You can also use sudo on a particular task instead of the whole play::
       remote_user: yourname
       tasks:
         - service: name=nginx state=started
-          sudo: yes
+          become: yes
+          become_method: sudo
 
+.. note::
 
-You can also login as you, and then sudo to different users than root::
+    The become syntax deprecates the old sudo/su specific syntax beginning in 1.9.
+
+You can also login as you, and then become a user different than root::
 
     ---
     - hosts: webservers
       remote_user: yourname
-      sudo: yes
-      sudo_user: postgres
+      become: yes
+      become_user: postgres
 
-If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-sudo-pass`` (`-K`).
-If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
-Just `Control-C` to kill it and run it again with `-K`.
+You can also use other privilege escalation methods, like su::
+
+    ---
+    - hosts: webservers
+      remote_user: yourname
+      become: yes
+      become_method: su
+
+If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-become-pass`` or
+when using the old sudo syntax ``--ask-sudo--pass`` (`-K`).  If you run a become playbook and the
+playbook seems to hang, it's probably stuck at the privilege escalation prompt.
+Just `Control-C` to kill it and run it again adding the appropriate password.
 
 .. important::
 
-   When using `sudo_user` to a user other than root, the module
+   When using `become_user` to a user other than root, the module
    arguments are briefly written into a random tempfile in /tmp.
    These are deleted immediately after the command is executed.  This
-   only occurs when sudoing from a user like 'bob' to 'timmy', not
-   when going from 'bob' to 'root', or logging in directly as 'bob' or
+   only occurs when changing privileges from a user like 'bob' to 'timmy',
+   not when going from 'bob' to 'root', or logging in directly as 'bob' or
    'root'.  If it concerns you that this data is briefly readable
    (not writable), avoid transferring unencrypted passwords with
-   `sudo_user` set.  In other cases, '/tmp' is not used and this does
+   `become_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
 
@@ -268,7 +314,7 @@ The old form continues to work in newer versions without any plan of deprecation
 Handlers: Running Operations On Change
 ``````````````````````````````````````
 
-As we've mentioned, modules are written to be 'idempotent' and can relay  when
+As we've mentioned, modules are written to be 'idempotent' and can relay when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
@@ -301,7 +347,7 @@ Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          service:  name=memcached state=restarted
+          service: name=memcached state=restarted
         - name: restart apache
           service: name=apache state=restarted
 

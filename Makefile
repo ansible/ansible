@@ -34,7 +34,8 @@ PYTHON=python
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # VERSION file provides one place to update the software version
-VERSION := $(shell cat VERSION)
+VERSION := $(shell cat VERSION | cut -f1 -d' ')
+RELEASE := $(shell cat VERSION | cut -f2 -d' ')
 
 # Get the branch information from git
 ifneq ($(shell which git),)
@@ -52,8 +53,9 @@ DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
+DEB_DATE := $(shell date +"%a, %d %b %Y %T %z")
 ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE = 1ppa
+    DEB_RELEASE = $(RELEASE)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
     # DEBSIGN_KEYID is required when signing
     ifneq ($(DEBSIGN_KEYID),)
@@ -74,7 +76,7 @@ DEB_DIST ?= unstable
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
-RPMRELEASE = 1
+RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
 endif
@@ -93,7 +95,7 @@ NOSETESTS3 ?= nosetests-3.3
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v # Could do: --with-coverage --cover-package=ansible
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
 
 newtests:
 	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
@@ -216,7 +218,7 @@ debian: sdist
 	    mkdir -p deb-build/$${DIST} ; \
 	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
 	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
-	    sed -ie "s#^$(NAME) (\([^)]*\)) \([^;]*\);#ansible (\1-$(DEB_RELEASE)~$${DIST}) $${DIST};#" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
+        sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
 deb: debian

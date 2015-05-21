@@ -32,7 +32,7 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
-        remote_src = utils.boolean(options.get('remote_src', 'yes'))
+        remote_src = utils.boolean(options.get('remote_src', 'no'))
 
         if src is None:
             result = dict(failed=True, msg="src is required")
@@ -47,10 +47,13 @@ class ActionModule(object):
         else:
             src = utils.path_dwim(self.runner.basedir, src)
 
-        tmp_src = tmp + src
+        if tmp is None or "-tmp-" not in tmp:
+            tmp = self.runner._make_tmp_path(conn)
+
+        tmp_src = conn.shell.join_path(tmp, os.path.basename(src))
         conn.put_file(src, tmp_src)
 
-        if self.runner.sudo and self.runner.sudo_user != 'root' or self.runner.su and self.runner.su_user != 'root':
+        if self.runner.become and self.runner.become_user != 'root':
             if not self.runner.noop_on_check(inject):
                 self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
 

@@ -30,14 +30,8 @@ from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
-
-## fixes https://github.com/ansible/ansible/issues/3518
-# http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
-
-import sys
-reload(sys)
-sys.setdefaultencoding("utf8")
-
+from ansible.utils.unicode import to_bytes
+from ansible.parsing.vault import VaultLib
 
 class ActionModule(ActionBase):
 
@@ -50,16 +44,6 @@ class ActionModule(ActionBase):
         raw     = boolean(self._task.args.get('raw', 'no'))
         force   = boolean(self._task.args.get('force', 'yes'))
 
-        # content with newlines is going to be escaped to safely load in yaml
-        # now we need to unescape it so that the newlines are evaluated properly
-        # when writing the file to disk
-        if content:
-            if isinstance(content, unicode):
-                try:
-                    content = content.decode('unicode-escape')
-                except UnicodeDecodeError:
-                    pass
-
         # FIXME: first available file needs to be reworked somehow...
         #if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
         #    result=dict(failed=True, msg="src (or content) and dest are required")
@@ -71,7 +55,7 @@ class ActionModule(ActionBase):
         # Check if the source ends with a "/"
         source_trailing_slash = False
         if source:
-            source_trailing_slash = source.endswith("/")
+            source_trailing_slash = source.endswith(os.sep)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -81,12 +65,12 @@ class ActionModule(ActionBase):
             try:
                 # If content comes to us as a dict it should be decoded json.
                 # We need to encode it back into a string to write it out.
-                if type(content) is dict:
+                if isinstance(content, dict):
                     content_tempfile = self._create_content_tempfile(json.dumps(content))
                 else:
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
-            except Exception, err:
+            except Exception as err:
                 return dict(failed=True, msg="could not write content temp file: %s" % err)
 
         ###############################################################################################
@@ -161,6 +145,7 @@ class ActionModule(ActionBase):
         dest = self._remote_expand_user(dest, tmp)
 
         for source_full, source_rel in source_files:
+
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
@@ -231,7 +216,7 @@ class ActionModule(ActionBase):
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                if (self._connection_info.sudo and self._connection_info.sudo_user != 'root' or self._connection_info.su and self._connection_info.su_user != 'root') and not raw:
+                if self._connection_info.become and self._connection_info.become_user != 'root':
                     self._remote_chmod('a+r', tmp_src, tmp)
 
                 if raw:
@@ -285,7 +270,7 @@ class ActionModule(ActionBase):
             if module_return.get('changed') == True:
                 changed = True
 
-            # the file module returns the file path as 'path', but 
+            # the file module returns the file path as 'path', but
             # the copy module uses 'dest', so add it if it's not there
             if 'path' in module_return and 'dest' not in module_return:
                 module_return['dest'] = module_return['path']
@@ -300,21 +285,19 @@ class ActionModule(ActionBase):
         else:
             result = dict(dest=dest, src=source, changed=changed)
 
-        # FIXME: move diffs into the result?
-        #if len(diffs) == 1:
-        #    return ReturnData(conn=conn, result=result, diff=diffs[0])
-        #else:
-        #    return ReturnData(conn=conn, result=result)
+        if len(diffs) == 1:
+            result['diff']=diffs[0]
 
         return result
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
         fd, content_tempfile = tempfile.mkstemp()
-        f = os.fdopen(fd, 'w')
+        f = os.fdopen(fd, 'wb')
+        content = to_bytes(content)
         try:
             f.write(content)
-        except Exception, err:
+        except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
         finally:

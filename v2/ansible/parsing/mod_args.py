@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six import iteritems, string_types
-from types import NoneType
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins import module_loader
@@ -56,7 +55,7 @@ class ModuleArgsParser:
           dest: b
 
     # extra gross, but also legal. in this case, the args specified
-    # will act as 'defaults' and will be overriden by any args specified
+    # will act as 'defaults' and will be overridden by any args specified
     # in one of the other formats (complex args under the action, or
     # parsed from the k=v string
     - command: 'pwd'
@@ -136,7 +135,11 @@ class ModuleArgsParser:
 
         # this can occasionally happen, simplify
         if args and 'args' in args:
-            args = args['args']
+            tmp_args = args['args']
+            del args['args']
+            if isinstance(tmp_args, string_types):
+                tmp_args = parse_kv(tmp_args)
+            args.update(tmp_args)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -165,7 +168,7 @@ class ModuleArgsParser:
             # form is like: local_action: copy src=a dest=b ... pretty common
             check_raw = action in ('command', 'shell', 'script')
             args = parse_kv(thing, check_raw=check_raw)
-        elif isinstance(thing, NoneType):
+        elif thing is None:
             # this can happen with modules which take no params, like ping:
             args = None
         else:

@@ -31,81 +31,74 @@ class CallbackModule(CallbackBase):
     to stdout when new callback events are received.
     '''
 
-    def _print_banner(self, msg):
-        '''
-        Prints a header-looking line with stars taking up to 80 columns
-        of width (3 columns, minimum)
-        '''
-        msg = msg.strip()
-        star_len = (80 - len(msg))
-        if star_len < 0:
-            star_len = 3
-        stars = "*" * star_len
-        self._display.display("\n%s %s\n" % (msg, stars))
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'stdout'
 
-    def on_any(self, *args, **kwargs):
+    def v2_on_any(self, *args, **kwargs):
         pass
 
-    def runner_on_failed(self, task, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result, ignore_errors=False):
+        if 'exception' in result._result and self._display.verbosity < 3:
+            del result._result['exception']
         self._display.display("%s | FAILED! => %s" % (result._host.get_name(), result._result), color='red')
 
-    def runner_on_ok(self, task, result):
+    def v2_runner_on_ok(self, result):
         self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), json.dumps(result._result, indent=4)), color='green')
 
-    def runner_on_skipped(self, task, result):
+    def v2_runner_on_skipped(self, result):
         pass
 
-    def runner_on_unreachable(self, task, result):
+    def v2_runner_on_unreachable(self, result):
         self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color='yellow')
 
-    def runner_on_no_hosts(self, task):
+    def v2_runner_on_no_hosts(self, task):
         pass
 
-    def runner_on_async_poll(self, host, res, jid, clock):
+    def v2_runner_on_async_poll(self, host, res, jid, clock):
         pass
 
-    def runner_on_async_ok(self, host, res, jid):
+    def v2_runner_on_async_ok(self, host, res, jid):
         pass
 
-    def runner_on_async_failed(self, host, res, jid):
+    def v2_runner_on_async_failed(self, host, res, jid):
         pass
 
-    def playbook_on_start(self):
+    def v2_playbook_on_start(self):
         pass
 
-    def playbook_on_notify(self, host, handler):
+    def v2_playbook_on_notify(self, host, handler):
         pass
 
-    def playbook_on_no_hosts_matched(self):
+    def v2_playbook_on_no_hosts_matched(self):
         pass
 
-    def playbook_on_no_hosts_remaining(self):
+    def v2_playbook_on_no_hosts_remaining(self):
         pass
 
-    def playbook_on_task_start(self, name, is_conditional):
+    def v2_playbook_on_task_start(self, task, is_conditional):
         pass
 
-    def playbook_on_cleanup_task_start(self, name):
+    def v2_playbook_on_cleanup_task_start(self, task):
         pass
 
-    def playbook_on_handler_task_start(self, name):
+    def v2_playbook_on_handler_task_start(self, task):
         pass
 
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         pass
 
-    def playbook_on_setup(self):
+    def v2_playbook_on_setup(self):
         pass
 
-    def playbook_on_import_for_host(self, host, imported_file):
+    def v2_playbook_on_import_for_host(self, result, imported_file):
         pass
 
-    def playbook_on_not_import_for_host(self, host, missing_file):
+    def v2_playbook_on_not_import_for_host(self, result, missing_file):
         pass
 
-    def playbook_on_play_start(self, name):
+    def v2_playbook_on_play_start(self, play):
         pass
 
-    def playbook_on_stats(self, stats):
+    def v2_playbook_on_stats(self, stats):
         pass
 

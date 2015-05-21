@@ -125,6 +125,9 @@ class Connection(object):
         self.private_key_file = private_key_file
         self.has_pipelining = False
 
+        # TODO: add pbrun, pfexec
+        self.become_methods_supported=['sudo', 'su', 'pbrun']
+
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
 
@@ -184,8 +187,11 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
+
+        if self.runner.become and sudoable and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -206,7 +212,7 @@ class Connection(object):
 
         no_prompt_out = ''
         no_prompt_err = ''
-        if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
+        if not (self.runner.become and sudoable):
 
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
@@ -224,50 +230,46 @@ class Connection(object):
                 chan.get_pty(term=os.getenv('TERM', 'vt100'),
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
-            if self.runner.sudo or sudoable:
-                shcmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
-            elif self.runner.su or su:
-                shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
+            if self.runner.become and sudoable:
+                shcmd, prompt, success_key = utils.make_become_cmd(cmd, become_user, executable, self.runner.become_method, '', self.runner.become_exe)
 
             vvv("EXEC %s" % shcmd, host=self.host)
-            sudo_output = ''
+            become_output = ''
 
             try:
 
                 chan.exec_command(shcmd)
 
-                if self.runner.sudo_pass or self.runner.su_pass:
+                if self.runner.become_pass:
 
                     while True:
 
-                        if success_key in sudo_output or \
-                            (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
-                            (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
+                        if success_key in become_output or \
+                            (prompt and become_output.endswith(prompt)) or \
+                            utils.su_prompts.check_su_prompt(become_output):
                             break
                         chunk = chan.recv(bufsize)
 
                         if not chunk:
-                            if 'unknown user' in sudo_output:
+                            if 'unknown user' in become_output:
                                 raise errors.AnsibleError(
-                                    'user %s does not exist' % sudo_user)
+                                    'user %s does not exist' % become_user)
                             else:
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
-                        sudo_output += chunk
+                        become_output += chunk
 
-                    if success_key not in sudo_output:
+                    if success_key not in become_output:
 
                         if sudoable:
-                            chan.sendall(self.runner.sudo_pass + '\n')
-                        elif su:
-                            chan.sendall(self.runner.su_pass + '\n')
+                            chan.sendall(self.runner.become_pass + '\n')
                     else:
-                        no_prompt_out += sudo_output
-                        no_prompt_err += sudo_output
+                        no_prompt_out += become_output
+                        no_prompt_err += become_output
 
             except socket.timeout:
 
-                raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
+                raise errors.AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))

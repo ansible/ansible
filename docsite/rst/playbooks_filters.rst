@@ -277,7 +277,7 @@ Get a string checksum::
 
     {{ 'test2'|checksum }}
 
-Other hashes (platform dependant)::
+Other hashes (platform dependent)::
 
     {{ 'test2'|hash('blowfish') }}
 
@@ -299,9 +299,9 @@ Hash types available depend on the master system running ansible,
 Other Useful Filters
 --------------------
 
-To use one value on true and another on false::
+To use one value on true and another on false (since 1.9)::
 
-   {{ name == "John" | ternary('Mr','Ms') }}
+   {{ (name == "John") | ternary('Mr','Ms') }}
 
 To concatenate a list into a string::
 

@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import base64
 import os
@@ -29,33 +31,6 @@ _common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
 _powershell_version = os.environ.get('POWERSHELL_VERSION', None)
 if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
-
-def _escape(value, include_vars=False):
-    '''Return value escaped for use in PowerShell command.'''
-    # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
-    # http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
-    subs = [('\n', '`n'), ('\r', '`r'), ('\t', '`t'), ('\a', '`a'),
-            ('\b', '`b'), ('\f', '`f'), ('\v', '`v'), ('"', '`"'),
-            ('\'', '`\''), ('`', '``'), ('\x00', '`0')]
-    if include_vars:
-        subs.append(('$', '`$'))
-    pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
-    substs = [s for p, s in subs]
-    replace = lambda m: substs[m.lastindex - 1]
-    return re.sub(pattern, replace, value)
-
-def _encode_script(script, as_list=False):
-    '''Convert a PowerShell script to a single base64-encoded command.'''
-    script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
-    encoded_script = base64.b64encode(script.encode('utf-16-le'))
-    cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
-    if as_list:
-        return cmd_parts
-    return ' '.join(cmd_parts)
-
-def _build_file_cmd(cmd_parts):
-    '''Build command line to run a file, given list of file name plus args.'''
-    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts])
 
 class ShellModule(object):
 
@@ -73,19 +48,19 @@ class ShellModule(object):
         return ''
 
     def remove(self, path, recurse=False):
-        path = _escape(path)
+        path = self._escape(path)
         if recurse:
-            return _encode_script('''Remove-Item "%s" -Force -Recurse;''' % path)
+            return self._encode_script('''Remove-Item "%s" -Force -Recurse;''' % path)
         else:
-            return _encode_script('''Remove-Item "%s" -Force;''' % path)
+            return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
     def mkdtemp(self, basefile, system=False, mode=None):
-        basefile = _escape(basefile)
+        basefile = self._escape(basefile)
         # FIXME: Support system temp path!
-        return _encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
     def md5(self, path):
-        path = _escape(path)
+        path = self._escape(path)
         script = '''
             If (Test-Path -PathType Leaf "%(path)s")
             {
@@ -103,15 +78,43 @@ class ShellModule(object):
                 Write-Host "1";
             }
         ''' % dict(path=path)
-        return _encode_script(script)
+        return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
         cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]
-        script = _build_file_cmd(cmd_parts)
+        script = self._build_file_cmd(cmd_parts)
         if rm_tmp:
-            rm_tmp = _escape(rm_tmp)
+            rm_tmp = self._escape(rm_tmp)
             script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)
-        return _encode_script(script)
+        return self._encode_script(script)
+
+    def _escape(self, value, include_vars=False):
+        '''Return value escaped for use in PowerShell command.'''
+        # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
+        # http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
+        subs = [('\n', '`n'), ('\r', '`r'), ('\t', '`t'), ('\a', '`a'),
+                ('\b', '`b'), ('\f', '`f'), ('\v', '`v'), ('"', '`"'),
+                ('\'', '`\''), ('`', '``'), ('\x00', '`0')]
+        if include_vars:
+            subs.append(('$', '`$'))
+        pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
+        substs = [s for p, s in subs]
+        replace = lambda m: substs[m.lastindex - 1]
+        return re.sub(pattern, replace, value)
+
+    def _encode_script(self, script, as_list=False):
+        '''Convert a PowerShell script to a single base64-encoded command.'''
+        script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
+        encoded_script = base64.b64encode(script.encode('utf-16-le'))
+        cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+        if as_list:
+            return cmd_parts
+        return ' '.join(cmd_parts)
+
+    def _build_file_cmd(self, cmd_parts):
+        '''Build command line to run a file, given list of file name plus args.'''
+        return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + ['"%s"' % x for x in cmd_parts])
+

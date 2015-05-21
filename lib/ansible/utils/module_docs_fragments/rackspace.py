@@ -50,6 +50,7 @@ options:
       - Whether or not to require SSL validation of API endpoints
     version_added: 1.5
 requirements:
+  - "python >= 2.6"
   - pyrax
 notes:
   - The following environment variables can be used, C(RAX_USERNAME),
@@ -111,6 +112,7 @@ options:
       - Whether or not to require SSL validation of API endpoints
     version_added: 1.5
 requirements:
+  - "python >= 2.6"
   - pyrax
 notes:
   - The following environment variables can be used, C(RAX_USERNAME),

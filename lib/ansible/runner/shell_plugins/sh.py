@@ -24,6 +24,9 @@ _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 class ShellModule(object):
 
+    # How to end lines in a python script one-liner
+    _SHELL_EMBEDDED_PY_EOL = '\n'
+
     def env_prefix(self, **kwargs):
         '''Build command prefix with environment variables.'''
         env = dict(
@@ -103,14 +106,19 @@ class ShellModule(object):
         # 2: No read permissions on the file
         # 3: File is a directory
         # 4: No python interpreter
-        test = "rc=flag; [ -r \'%(p)s\' ] || rc=2; [ -f \'%(p)s\' ] || rc=1; [ -d \'%(p)s\' ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}\"\'  %(p)s\' && exit 0" % dict(p=path, i=python_interp)
+
+        # Quoting gets complex here.  We're writing a python string that's
+        # used by a variety of shells on the remote host to invoke a python
+        # "one-liner".
+        shell_escaped_path = pipes.quote(path)
+        test = "rc=flag; [ -r %(p)s ] || rc=2; [ -f %(p)s ] || rc=1; [ -d %(p)s ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}  \"%(p)s && exit 0" % dict(p=shell_escaped_path, i=python_interp)
         csums = [
-            "(%s -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();\nafile = open(\"%s\", \"rb\")\nbuf = afile.read(BLOCKSIZE)\nwhile len(buf) > 0:\n\thasher.update(buf)\n\tbuf = afile.read(BLOCKSIZE)\nafile.close()\nprint(hasher.hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python > 2.4 (including python3)
-            "(%s -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();\nafile = open(\"%s\", \"rb\")\nbuf = afile.read(BLOCKSIZE)\nwhile len(buf) > 0:\n\thasher.update(buf)\n\tbuf = afile.read(BLOCKSIZE)\nafile.close()\nprint(hasher.hexdigest())' 2>/dev/null)" % (python_interp, path),      # Python == 2.4
+            "({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python > 2.4 (including python3)
+            "({0} -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python == 2.4
         ]
 
         cmd = " || ".join(csums)
-        cmd = "%s; %s || (echo \'0  %s\')" % (test, cmd, path)
+        cmd = "%s; %s || (echo \'0  \'%s)" % (test, cmd, shell_escaped_path)
         return cmd
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):

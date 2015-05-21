@@ -14,10 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from itertools import product
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
@@ -40,7 +42,7 @@ class LookupModule(LookupBase):
 
         my_list = terms[:]
         if len(my_list) == 0:
-            raise errors.AnsibleError("with_cartesian requires at least one element in each list")
+            raise AnsibleError("with_cartesian requires at least one element in each list")
 
         return [self._flatten(x) for x in product(*my_list, fillvalue=None)]
 

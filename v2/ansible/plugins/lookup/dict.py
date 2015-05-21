@@ -14,7 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
@@ -22,6 +25,6 @@ class LookupModule(LookupBase):
     def run(self, terms, varibles=None, **kwargs):
 
         if not isinstance(terms, dict):
-            raise errors.AnsibleError("with_dict expects a dict")
+            raise AnsibleError("with_dict expects a dict")
 
         return self._flatten_hash_to_list(terms)

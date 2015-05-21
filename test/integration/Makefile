@@ -56,6 +56,20 @@ test_group_by:
 
 test_handlers:
 	ansible-playbook test_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	# Not forcing, should only run on successful host
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
+	# Forcing from command line
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing from command line, should only run later tasks on unfailed hosts
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_TASK_. | sort | uniq | xargs)" = "CALLED_TASK_B CALLED_TASK_D CALLED_TASK_E" ]
+	# Forcing from command line, should call handlers even if all hosts fail
+	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v -e fail_all=yes $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing from ansible.cfg
+	[ "$$(ANSIBLE_FORCE_HANDLERS=true ansible-playbook --tags normal test_force_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing true in play
+	[ "$$(ansible-playbook test_force_handlers.yml --tags force_true_in_play -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
+	# Forcing false in play, which overrides command line
+	[ "$$(ansible-playbook test_force_handlers.yml --force-handlers --tags force_false_in_play -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 
 test_hash:
 	ANSIBLE_HASH_BEHAVIOUR=replace ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
@@ -84,19 +98,22 @@ test_winrm:
 
 test_tags:
 	# Run everything by default
-	[ "$$(ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag Task_with_always_tag Task_without_tag" ]
+	[ "$$(ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
 	# Run the exact tags, and always
-	[ "$$(ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag Task_with_always_tag" ]
+	[ "$$(ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always]" ]
 	# Skip one tag
-	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag Task_without_tag" ]
+	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
 
 
-cloud: amazon rackspace
+cloud: amazon rackspace azure
 
 cloud_cleanup: amazon_cleanup rackspace_cleanup
 
 amazon_cleanup:
 	python cleanup_ec2.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
+
+azure_cleanup:
+	python cleanup_azure.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
 
 gce_setup:
 	python setup_gce.py "$(CLOUD_RESOURCE_PREFIX)"
@@ -117,6 +134,12 @@ amazon: $(CREDENTIALS_FILE)
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make amazon_cleanup ; \
     exit $$RC;
 
+azure: $(CREDENTIALS_FILE)
+	ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook azure.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make azure_cleanup ; \
+    exit $$RC;
+
 gce: $(CREDENTIALS_FILE)
 	CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make gce_setup ; \
     ansible-playbook gce.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
@@ -129,6 +152,11 @@ rackspace: $(CREDENTIALS_FILE)
     RC=$$? ; \
     CLOUD_RESOURCE_PREFIX="$(CLOUD_RESOURCE_PREFIX)" make rackspace_cleanup ; \
     exit $$RC;
+
+cloudstack:
+	ansible-playbook cloudstack.yml -i $(INVENTORY) -e @$(VARS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
 
 $(CONSUL_RUNNING):
 

@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import codecs
@@ -33,7 +35,7 @@ class LookupModule(LookupBase):
             for row in creader:
                 if row[0] == key:
                     return row[int(col)]
-        except Exception, e:
+        except Exception as e:
             raise AnsibleError("csvfile: %s" % str(e))
 
         return dflt
@@ -61,7 +63,7 @@ class LookupModule(LookupBase):
                     name, value = param.split('=')
                     assert(name in paramvals)
                     paramvals[name] = value
-            except (ValueError, AssertionError), e:
+            except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
             if paramvals['delimiter'] == 'TAB':

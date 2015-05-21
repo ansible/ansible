@@ -85,11 +85,11 @@ That's all you really need to know about YAML to start writing
 Gotchas
 -------
 
-While YAML is generally friendly, the following is going to result in a YAML syntax error:
+While YAML is generally friendly, the following is going to result in a YAML syntax error::
 
     foo: somebody said I should put a colon here: so I did
 
-You will want to quote any hash values using colons, like so:
+You will want to quote any hash values using colons, like so::
 
     foo: "somebody said I should put a colon here: so I did"
 

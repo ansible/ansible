@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import uuid
 
+from functools import partial
 from inspect import getmembers
 from io import FileIO
 
@@ -40,6 +41,16 @@ from ansible.template import template
 
 class Base:
 
+    # connection/transport
+    _connection          = FieldAttribute(isa='string')
+    _port                = FieldAttribute(isa='int')
+    _remote_user         = FieldAttribute(isa='string')
+
+    # vars and flags
+    _vars                = FieldAttribute(isa='dict', default=dict())
+    _environment         = FieldAttribute(isa='dict', default=dict())
+    _no_log              = FieldAttribute(isa='bool', default=False)
+
     def __init__(self):
 
         # initialize the data loader and variable manager, which will be provided
@@ -50,11 +61,43 @@ class Base:
         # every object gets a random uuid:
         self._uuid = uuid.uuid4()
 
-        # each class knows attributes set upon it, see Task.py for example
-        self._attributes = dict()
+        # and initialize the base attributes
+        self._initialize_base_attributes()
 
-        for (name, value) in iteritems(self._get_base_attributes()):
-            self._attributes[name] = value.default
+    # The following three functions are used to programatically define data
+    # descriptors (aka properties) for the Attributes of all of the playbook
+    # objects (tasks, blocks, plays, etc).
+    #
+    # The function signature is a little strange because of how we define
+    # them.  We use partial to give each method the name of the Attribute that
+    # it is for.  Since partial prefills the positional arguments at the
+    # beginning of the function we end up with the first positional argument
+    # being allocated to the name instead of to the class instance (self) as
+    # normal.  To deal with that we make the property name field the first
+    # positional argument and self the second arg.
+    #
+    # Because these methods are defined inside of the class, they get bound to
+    # the instance when the object is created.  After we run partial on them
+    # and put the result back into the class as a property, they get bound
+    # a second time.  This leads to self being  placed in the arguments twice.
+    # To work around that, we mark the functions as @staticmethod so that the
+    # first binding to the instance doesn't happen.
+
+    @staticmethod
+    def _generic_g(prop_name, self):
+        method = "_get_attr_%s" % prop_name
+        if method in dir(self):
+            return getattr(self, method)()
+
+        return self._attributes[prop_name]
+
+    @staticmethod
+    def _generic_s(prop_name, self, value):
+        self._attributes[prop_name] = value
+
+    @staticmethod
+    def _generic_d(prop_name, self):
+        del self._attributes[prop_name]
 
     def _get_base_attributes(self):
         '''
@@ -69,9 +112,30 @@ class Base:
                base_attributes[name] = value
         return base_attributes
 
-    def munge(self, ds):
+    def _initialize_base_attributes(self):
+        # each class knows attributes set upon it, see Task.py for example
+        self._attributes = dict()
+
+        for (name, value) in self._get_base_attributes().items():
+            getter = partial(self._generic_g, name)
+            setter = partial(self._generic_s, name)
+            deleter = partial(self._generic_d, name)
+
+            # Place the property into the class so that cls.name is the
+            # property functions.
+            setattr(Base, name, property(getter, setter, deleter))
+
+            # Place the value into the instance so that the property can
+            # process and hold that value/
+            setattr(self, name, value.default)
+
+    def preprocess_data(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
 
+        for base_class in self.__class__.mro():
+            method = getattr(self, "_preprocess_data_%s" % base_class.__name__.lower(), None)
+            if method:
+                return method(ds)
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None):
@@ -92,10 +156,10 @@ class Base:
         if isinstance(ds, string_types) or isinstance(ds, FileIO):
             ds = self._loader.load(ds)
 
-        # call the munge() function to massage the data into something
-        # we can more easily parse, and then call the validation function
-        # on it to ensure there are no incorrect key values
-        ds = self.munge(ds)
+        # call the preprocess_data() function to massage the data into
+        # something we can more easily parse, and then call the validation
+        # function on it to ensure there are no incorrect key values
+        ds = self.preprocess_data(ds)
         self._validate_attributes(ds)
 
         # Walk all attributes in the class.
@@ -103,7 +167,7 @@ class Base:
         # FIXME: we currently don't do anything with private attributes but
         #        may later decide to filter them out of 'ds' here.
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for name in self._get_base_attributes():
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
@@ -122,7 +186,7 @@ class Base:
         return self
 
     def get_ds(self):
-       	try:
+        try:
             return getattr(self, '_ds')
         except AttributeError:
             return None
@@ -139,7 +203,7 @@ class Base:
         not map to attributes for this object.
         '''
 
-        valid_attrs = [name for (name, attribute) in iteritems(self._get_base_attributes())]
+        valid_attrs = frozenset(name for name in self._get_base_attributes())
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
@@ -162,7 +226,7 @@ class Base:
 
         new_me = self.__class__()
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for name in self._get_base_attributes():
             setattr(new_me, name, getattr(self, name))
 
         new_me._loader           = self._loader
@@ -170,7 +234,7 @@ class Base:
 
         return new_me
 
-    def post_validate(self, all_vars=dict(), fail_on_undefined=True):
+    def post_validate(self, templar):
         '''
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
@@ -180,8 +244,6 @@ class Base:
         basedir = None
         if self._loader is not None:
             basedir = self._loader.get_basedir()
-
-        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=fail_on_undefined)
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
 
@@ -194,11 +256,11 @@ class Base:
             try:
                 # if the attribute contains a variable, template it now
                 value = templar.template(getattr(self, name))
-                
+
                 # run the post-validator if present
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
-                    value = method(attribute, value, all_vars, fail_on_undefined)
+                    value = method(attribute, value, all_vars, templar._fail_on_undefined_errors)
                 else:
                     # otherwise, just make sure the attribute is of the type it should be
                     if attribute.isa == 'string':
@@ -216,10 +278,10 @@ class Base:
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
 
-            except (TypeError, ValueError), e:
+            except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
-            except UndefinedError, e:
-                if fail_on_undefined:
+            except UndefinedError as e:
+                if templar._fail_on_undefined_errors:
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):
@@ -233,7 +295,7 @@ class Base:
 
         repr = dict()
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for name in self._get_base_attributes():
             repr[name] = getattr(self, name)
 
         # serialize the uuid field
@@ -260,20 +322,19 @@ class Base:
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
 
-    def __getattr__(self, needle):
+    def _extend_value(self, value, new_value):
+        '''
+        Will extend the value given with new_value (and will turn both
+        into lists if they are not so already). The values are run through
+        a set to remove duplicate values.
+        '''
 
-        # return any attribute names as if they were real
-        # optionally allowing masking by accessors
+        if not isinstance(value, list):
+            value = [ value ]
+        if not isinstance(new_value, list):
+            new_value = [ new_value ]
 
-        if not needle.startswith("_"):
-            method = "get_%s" % needle
-            if method in self.__dict__:
-                return method(self)
-
-        if needle in self._attributes:
-            return self._attributes[needle]
-
-        raise AttributeError("attribute not found: %s" % needle)
+        return list(set(value + new_value))
 
     def __getstate__(self):
         return self.serialize()

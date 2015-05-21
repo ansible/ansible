@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+
 from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.utils import concat as j2_concat
@@ -32,7 +34,16 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
+from numbers import Number
+
 __all__ = ['Templar']
+
+# A regex for checking to see if a variable we're trying to
+# expand is just a single variable name.
+SINGLE_VAR = re.compile(r"^{{\s*(\w*)\s*}}$")
+
+# Primitive Types which we don't want Jinja to convert to strings.
+NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
 JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
@@ -42,11 +53,18 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
+    def __init__(self, loader, shared_loader_obj=None, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
         self._loader              = loader
         self._basedir             = loader.get_basedir()
         self._filters             = None
         self._available_variables = variables
+
+        if shared_loader_obj:
+            self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
+            self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
+        else:
+            self._filter_loader = filter_loader
+            self._lookup_loader = lookup_loader
 
         # flags to determine whether certain failures during templating
         # should result in fatal errors being raised
@@ -77,7 +95,7 @@ class Templar:
         if self._filters is not None:
             return self._filters.copy()
 
-        plugins = [x for x in filter_loader.all()]
+        plugins = [x for x in self._filter_loader.all()]
 
         self._filters = dict()
         for fp in plugins:
@@ -125,6 +143,18 @@ class Templar:
             if isinstance(variable, basestring):
                 result = variable
                 if self._contains_vars(variable):
+
+                    # Check to see if the string we are trying to render is just referencing a single
+                    # var.  In this case we don't want to accidentally change the type of the variable
+                    # to a string by using the jinja template renderer. We just want to pass it.
+                    only_one = SINGLE_VAR.match(variable)
+                    if only_one:
+                        var_name = only_one.group(1)
+                        if var_name in self._available_variables:
+                            resolved_val = self._available_variables[var_name]
+                            if isinstance(resolved_val, NON_TEMPLATED_TYPES):
+                                return resolved_val
+
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines)
 
                     # if this looks like a dictionary or list, convert it to such using the safe_eval method
@@ -182,7 +212,7 @@ class Templar:
         return thing if thing is not None else ''
 
     def _lookup(self, name, *args, **kwargs):
-        instance = lookup_loader.get(name.lower(), loader=self._loader)
+        instance = self._lookup_loader.get(name.lower(), loader=self._loader)
 
         if instance is not None:
             # safely catch run failures per #5059

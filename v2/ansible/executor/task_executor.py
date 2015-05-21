@@ -19,20 +19,25 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
+import pipes
+import subprocess
+import sys
+import time
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.connection_info import ConnectionInformation
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import lookup_loader, connection_loader, action_loader
+from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.unicode import to_unicode
 
 from ansible.utils.debug import debug
 
 __all__ = ['TaskExecutor']
-
-import json
-import time
 
 class TaskExecutor:
 
@@ -43,13 +48,14 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, connection_info, loader, module_loader):
-        self._host            = host
-        self._task            = task
-        self._job_vars        = job_vars
-        self._connection_info = connection_info
-        self._loader          = loader
-        self._module_loader   = module_loader
+    def __init__(self, host, task, job_vars, connection_info, new_stdin, loader, shared_loader_obj):
+        self._host              = host
+        self._task              = task
+        self._job_vars          = job_vars
+        self._connection_info   = connection_info
+        self._new_stdin         = new_stdin
+        self._loader            = loader
+        self._shared_loader_obj = shared_loader_obj
 
     def run(self):
         '''
@@ -71,7 +77,29 @@ class TaskExecutor:
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
+
+                    # loop through the item results, and remember the changed/failed
+                    # result flags based on any item there.
+                    changed = False
+                    failed  = False
+                    for item in item_results:
+                        if 'changed' in item:
+                           changed = True
+                        if 'failed' in item:
+                           failed = True
+
+                    # create the overall result item, and set the changed/failed
+                    # flags there to reflect the overall result of the loop
                     res = dict(results=item_results)
+
+                    if changed:
+                        res['changed'] = True
+
+                    if failed:
+                        res['failed'] = True
+                        res['msg'] = 'One or more items failed'
+                    else:
+                        res['msg'] = 'All items completed'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
@@ -88,7 +116,7 @@ class TaskExecutor:
             debug("done dumping result, returning")
             return result
         except AnsibleError, e:
-            return dict(failed=True, msg=str(e))
+            return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
 
     def _get_loop_items(self):
         '''
@@ -132,12 +160,13 @@ class TaskExecutor:
             res = self._execute(variables=task_vars)
             (self._task, tmp_task) = (tmp_task, self._task)
 
-            # FIXME: we should be sending back a callback result for each item in the loop here
-
             # now update the result with the item info, and append the result
             # to the list of results
             res['item'] = item
             results.append(res)
+
+            # FIXME: we should be sending back a callback result for each item in the loop here
+            print(res)
 
         return results
 
@@ -167,9 +196,15 @@ class TaskExecutor:
         if variables is None:
             variables = self._job_vars
 
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+
         # fields set from the play/task may be based on variables, so we have to
-        # do the same kind of post validation step on it here before we use it
-        self._connection_info.post_validate(variables=variables, loader=self._loader)
+        # do the same kind of post validation step on it here before we use it.
+        self._connection_info.post_validate(templar=templar)
+
+        # now that the connection information is finalized, we can add 'magic'
+        # variables to the variable dictionary
+        self._connection_info.update_vars(variables)
 
         # get the connection and the handler for this execution
         self._connection = self._get_connection(variables)
@@ -184,7 +219,7 @@ class TaskExecutor:
             return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
 
         # Now we do final validation on the task, which sets all fields to their final values
-        self._task.post_validate(variables)
+        self._task.post_validate(templar=templar)
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
@@ -235,9 +270,13 @@ class TaskExecutor:
                 if self._task.poll > 0:
                     result = self._poll_async_result(result=result)
 
-            # update the local copy of vars with the registered value, if specified
+            # update the local copy of vars with the registered value, if specified,
+            # or any facts which may have been generated by the module execution
             if self._task.register:
                 vars_copy[self._task.register] = result 
+
+            if 'ansible_facts' in result:
+                vars_copy.update(result['ansible_facts'])
 
             # create a conditional object to evaluate task conditions
             cond = Conditional(loader=self._loader)
@@ -264,6 +303,15 @@ class TaskExecutor:
             if attempt < retries - 1:
                 time.sleep(delay)
 
+        # do the final update of the local variables here, for both registered
+        # values and any facts which may have been created
+        if self._task.register:
+            variables[self._task.register] = result 
+
+        if 'ansible_facts' in result:
+            variables.update(result['ansible_facts'])
+
+        # and return
         debug("attempt loop complete, returning result")
         return result
 
@@ -291,7 +339,7 @@ class TaskExecutor:
             connection=self._connection,
             connection_info=self._connection_info,
             loader=self._loader,
-            module_loader=self._module_loader,
+            shared_loader_obj=self._shared_loader_obj,
         )
 
         time_left = self._task.async
@@ -322,17 +370,24 @@ class TaskExecutor:
         if self._task.delegate_to is not None:
             self._compute_delegate(variables)
 
-        # FIXME: add all port/connection type munging here (accelerated mode,
-        #        fixing up options for ssh, etc.)? and 'smart' conversion
         conn_type = self._connection_info.connection
         if conn_type == 'smart':
             conn_type = 'ssh'
+            if sys.platform.startswith('darwin') and self._connection_info.remote_pass:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
+                conn_type = "paramiko"
+            else:
+                # see if SSH can support ControlPersist if not use paramiko
+                cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                if "Bad configuration option" in err:
+                    conn_type = "paramiko"
 
-        connection = connection_loader.get(conn_type, self._connection_info)
+        connection = connection_loader.get(conn_type, self._connection_info, self._new_stdin)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
-
-        connection.connect()
 
         return connection
 
@@ -356,8 +411,9 @@ class TaskExecutor:
             connection=connection,
             connection_info=self._connection_info,
             loader=self._loader,
-            module_loader=self._module_loader,
+            shared_loader_obj=self._shared_loader_obj,
         )
+
         if not handler:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
@@ -379,7 +435,7 @@ class TaskExecutor:
         self._connection_info.password         = this_info.get('ansible_ssh_pass', self._connection_info.password)
         self._connection_info.private_key_file = this_info.get('ansible_ssh_private_key_file', self._connection_info.private_key_file)
         self._connection_info.connection       = this_info.get('ansible_connection', self._connection_info.connection)
-        self._connection_info.sudo_pass        = this_info.get('ansible_sudo_pass', self._connection_info.sudo_pass)
+        self._connection_info.become_pass      = this_info.get('ansible_sudo_pass', self._connection_info.become_pass)
 
         if self._connection_info.remote_addr in ('127.0.0.1', 'localhost'):
              self._connection_info.connection = 'local'

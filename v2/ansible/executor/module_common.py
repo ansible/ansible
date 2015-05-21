@@ -21,7 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # from python and deps
-from cStringIO import StringIO
+from six.moves import StringIO
 import json
 import os
 import shlex
@@ -140,6 +140,16 @@ def modify_module(module_path, module_args, strip_comments=False):
     which results in the inclusion of the common code from powershell.ps1
 
     """
+    ### TODO: Optimization ideas if this code is actually a source of slowness:
+    # * Fix comment stripping: Currently doesn't preserve shebangs and encoding info (but we unconditionally add encoding info)
+    # * Use pyminifier if installed
+    # * comment stripping/pyminifier needs to have config setting to turn it
+    #   off for debugging purposes (goes along with keep remote but should be
+    #   separate otherwise users wouldn't be able to get info on what the
+    #   minifier output)
+    # * Only split into lines and recombine into strings once
+    # * Cache the modified module?  If only the args are different and we do
+    #   that as the last step we could cache sll the work up to that point.
 
     with open(module_path) as f:
 
@@ -165,23 +175,25 @@ def modify_module(module_path, module_args, strip_comments=False):
         #        facility = inject['ansible_syslog_facility']
         #    module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
-        lines = module_data.split("\n", 1)
+        lines = module_data.split(b"\n", 1)
         shebang = None
-        if lines[0].startswith("#!"):
+        if lines[0].startswith(b"#!"):
             shebang = lines[0].strip()
             args = shlex.split(str(shebang[2:]))
             interpreter = args[0]
             interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
             # FIXME: more inject stuff here...
+            #from ansible.utils.unicode import to_bytes
             #if interpreter_config in inject:
-            #    lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
+            #    interpreter = to_bytes(inject[interpreter_config], errors='strict')
+            #    lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
 
             lines.insert(1, ENCODING_STRING)
         else:
             lines.insert(0, ENCODING_STRING)
 
-        module_data = "\n".join(lines)
+        module_data = b"\n".join(lines)
 
         return (module_data, module_style, shebang)
 

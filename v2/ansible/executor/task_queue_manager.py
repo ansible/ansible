@@ -24,18 +24,19 @@ import os
 import socket
 import sys
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.connection_info import ConnectionInformation
-#from ansible.executor.manager import AnsibleManager
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
+from ansible.executor.stats import AggregateStats
 from ansible.plugins import callback_loader, strategy_loader
+from ansible.template import Templar
 
 from ansible.utils.debug import debug
 
 __all__ = ['TaskQueueManager']
-
 
 class TaskQueueManager:
 
@@ -49,19 +50,18 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, callback, variable_manager, loader, options):
+    def __init__(self, inventory, variable_manager, loader, display, options, passwords, stdout_callback=None):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
+        self._display          = display
         self._options          = options
+        self._stats            = AggregateStats()
+        self.passwords         = passwords
 
         # a special flag to help us exit cleanly
         self._terminated = False
-
-        # create and start the multiprocessing manager
-        #self._manager = AnsibleManager()
-        #self._manager.start()
 
         # this dictionary is used to keep track of notified handlers
         self._notified_handlers = dict()
@@ -72,9 +72,8 @@ class TaskQueueManager:
 
         self._final_q = multiprocessing.Queue()
 
-        # FIXME: hard-coded the default callback plugin here, which
-        #        should be configurable.
-        self._callback = callback_loader.get(callback)
+        # load callback plugins
+        self._callback_plugins = self._load_callbacks(stdout_callback)
 
         # create the pool of worker threads, based on the number of forks specified
         try:
@@ -84,21 +83,10 @@ class TaskQueueManager:
 
         self._workers = []
         for i in range(self._options.forks):
-            # duplicate stdin, if possible
-            new_stdin = None
-            if fileno is not None:
-                try:
-                    new_stdin = os.fdopen(os.dup(fileno))
-                except OSError, e:
-                    # couldn't dupe stdin, most likely because it's
-                    # not a valid file descriptor, so we just rely on
-                    # using the one that was passed in
-                    pass
-
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
 
-            prc = WorkerProcess(self, main_q, rslt_q, loader, new_stdin)
+            prc = WorkerProcess(self, main_q, rslt_q, loader)
             prc.start()
 
             self._workers.append((prc, main_q, rslt_q))
@@ -121,11 +109,46 @@ class TaskQueueManager:
         # FIXME: there is a block compile helper for this...
         handler_list = []
         for handler_block in handlers:
-            handler_list.extend(handler_block.compile())
+            for handler in handler_block.block:
+                handler_list.append(handler)
 
-        # then initalize it with the handler names from the handler list
+        # then initialize it with the handler names from the handler list
         for handler in handler_list:
             self._notified_handlers[handler.get_name()] = []
+
+    def _load_callbacks(self, stdout_callback):
+        '''
+        Loads all available callbacks, with the exception of those which
+        utilize the CALLBACK_TYPE option. When CALLBACK_TYPE is set to 'stdout',
+        only one such callback plugin will be loaded.
+        '''
+
+        loaded_plugins = []
+
+        stdout_callback_loaded = False
+        if stdout_callback is None:
+            stdout_callback = C.DEFAULT_STDOUT_CALLBACK
+
+        if stdout_callback not in callback_loader:
+            raise AnsibleError("Invalid callback for stdout specified: %s" % stdout_callback)
+
+        for callback_plugin in callback_loader.all(class_only=True):
+            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
+                # we only allow one callback of type 'stdout' to be loaded, so check
+                # the name of the current plugin and type to see if we need to skip
+                # loading this callback plugin
+                callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
+                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+                if callback_type == 'stdout':
+                    if callback_name != stdout_callback or stdout_callback_loaded:
+                        continue
+                    stdout_callback_loaded = True
+
+                loaded_plugins.append(callback_plugin(self._display))
+            else:
+                loaded_plugins.append(callback_plugin())
+
+        return loaded_plugins
 
     def run(self, play):
         '''
@@ -136,28 +159,29 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        connection_info = ConnectionInformation(play, self._options)
-        self._callback.set_connection_info(connection_info)
+        all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
 
-        # run final validation on the play now, to make sure fields are templated
-        # FIXME: is this even required? Everything is validated and merged at the
-        #        task level, so else in the play needs to be templated
-        #all_vars = self._vmw.get_vars(loader=self._dlw, play=play)
-        #all_vars = self._vmw.get_vars(loader=self._loader, play=play)
-        #play.post_validate(all_vars=all_vars)
+        new_play = play.copy()
+        new_play.post_validate(templar)
 
-        self._callback.playbook_on_play_start(play.name)
+        connection_info = ConnectionInformation(new_play, self._options, self.passwords)
+        for callback_plugin in self._callback_plugins:
+            if hasattr(callback_plugin, 'set_connection_info'):
+                callback_plugin.set_connection_info(connection_info)
+
+        self.send_callback('v2_playbook_on_play_start', new_play)
 
         # initialize the shared dictionary containing the notified handlers
-        self._initialize_notified_handlers(play.handlers)
+        self._initialize_notified_handlers(new_play.handlers)
 
         # load the specified strategy (or the default linear one)
-        strategy = strategy_loader.get(play.strategy, self)
+        strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:
-            raise AnsibleError("Invalid play strategy specified: %s" % play.strategy, obj=play._ds)
+            raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=play)
+        iterator = PlayIterator(inventory=self._inventory, play=new_play, connection_info=connection_info, all_vars=all_vars)
 
         # and run the play using the strategy
         return strategy.run(iterator, connection_info)
@@ -178,26 +202,11 @@ class TaskQueueManager:
     def get_inventory(self):
         return self._inventory
 
-    def get_callback(self):
-        return self._callback
-
     def get_variable_manager(self):
         return self._variable_manager
 
     def get_loader(self):
         return self._loader
-
-    def get_server_pipe(self):
-        return self._server_pipe
-
-    def get_client_pipe(self):
-        return self._client_pipe
-
-    def get_pending_results(self):
-        return self._pending_results
-
-    def get_allow_processing(self):
-        return self._allow_processing
 
     def get_notified_handlers(self):
         return self._notified_handlers
@@ -207,3 +216,18 @@ class TaskQueueManager:
 
     def terminate(self):
         self._terminated = True
+
+    def send_callback(self, method_name, *args, **kwargs):
+        for callback_plugin in self._callback_plugins:
+            # a plugin that set self.disabled to True will not be called
+            # see osx_say.py example for such a plugin
+            if getattr(callback_plugin, 'disabled', False):
+                continue
+            methods = [
+                getattr(callback_plugin, method_name, None),
+                getattr(callback_plugin, 'on_any', None)
+            ]
+            for method in methods:
+                if method is not None:
+                    method(*args, **kwargs)
+

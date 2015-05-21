@@ -449,6 +449,46 @@ a github pull request to the `extras <https://github.com/ansible/ansible-modules
 Included modules will ship with ansible, and also have a chance to be promoted to 'core' status, which
 gives them slightly higher development priority (though they'll work in exactly the same way).
 
+Module checklist
+````````````````
+
+* The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
+* Documentation: Make sure it exists
+  * `required` should always be present, be it true or false
+  * If `required` is false you need to document `default`, even if its 'null'
+  * `default` is not needed for `required: true`
+  * Remove unnecessary doc like `aliases: []` or `choices: []`
+  * The version is not a float number and value the current development version
+  * The verify that arguments in doc and module spec dict are identical
+  * For password / secret arguments no_log=True should be set
+  * Requirements should  be documented, using the `requirements=[]` field
+  * Author should be set, name and github id at least
+  * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
+  * GPL License header
+  * Examples: make sure they are reproducible
+  * Return: document the return structure of the module
+* Does module use check_mode? Could it be modified to use it? Document it
+* Exceptions: The module must handle them. (exceptions are bugs)
+    * Give out useful messages on what you were doing and you can add the exception message to that.
+    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+* The module must not use sys.exit() --> use fail_json() from the module object
+* Import custom packages in try/except and handled with fail_json() in main() e.g.::
+
+    try:
+        import foo
+        HAS_LIB=True
+    except:
+        HAS_LIB=False
+
+* The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
+* Are module actions idempotent? If not document in the descriptions or the notes
+* Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
+* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
+* Sometimes you want to split the module, specially if you are adding a list/info state, you want a _facts version
+* If you are asking 'how can i have a module execute other modules' ... you want to write a role
+
 
 Deprecating and making module aliases
 ``````````````````````````````````````
@@ -474,8 +514,10 @@ This example allows the stat module to be called with fileinfo, making the follo
        Learn about developing plugins
    :doc:`developing_api`
        Learn about the Python API for playbook and task execution
-   `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
+   `GitHub Core modules directory <https://github.com/ansible/ansible-modules-core/tree/devel>`_
        Browse source of core modules
+   `Github Extras modules directory <https://github.com/ansible/ansible-modules-extras/tree/devel>`_
+       Browse source of extras modules.
    `Mailing List <http://groups.google.com/group/ansible-devel>`_
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_

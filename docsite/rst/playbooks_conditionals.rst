@@ -11,6 +11,8 @@ whether the hosts match other criteria.   There are many options to control exec
 
 Let's dig into what they are.
 
+.. _the_when_statement:
+
 The When Statement
 ``````````````````
 
@@ -25,6 +27,14 @@ It's actually pretty simple::
       - name: "shutdown Debian flavored systems"
         command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
+
+You can also use parentheses to group conditions::
+
+    tasks:
+      - name: "shutdown CentOS 6 and 7 systems"
+        command: /sbin/shutdown -t now
+        when: ansible_distribution == "CentOS" and
+              (ansible_distribution_major_version == "6" or ansible_distribution_major_version == "7")
 
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
 and provided by Ansible.  Suppose we want to ignore the error of one statement and then

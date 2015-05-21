@@ -19,34 +19,47 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-class AnsibleBaseYAMLObject:
+from six import text_type
+
+
+class AnsibleBaseYAMLObject(object):
     '''
     the base class used to sub-class python built-in objects
     so that we can add attributes to them during yaml parsing
 
     '''
-    _data_source   = None
-    _line_number   = 0
+    _data_source = None
+    _line_number = 0
     _column_number = 0
 
-    def get_position_info(self):
+    def _get_ansible_position(self):
         return (self._data_source, self._line_number, self._column_number)
 
-    def set_position_info(self, src, line, col):
-        self._data_source   = src
-        self._line_number   = line
+    def _set_ansible_position(self, obj):
+        try:
+            (src, line, col) = obj
+        except (TypeError, ValueError):
+            raise AssertionError(
+                'ansible_pos can only be set with a tuple/list '
+                'of three values: source, line number, column number'
+            )
+        self._data_source = src
+        self._line_number = line
         self._column_number = col
 
-    def copy_position_info(self, obj):
-        ''' copies the position info from another object '''
-        assert isinstance(obj, AnsibleBaseYAMLObject)
+    ansible_pos = property(_get_ansible_position, _set_ansible_position)
 
-        (src, line, col) = obj.get_position_info()
-        self._data_source   = src
-        self._line_number   = line
-        self._column_number = col
 
 class AnsibleMapping(AnsibleBaseYAMLObject, dict):
     ''' sub class for dictionaries '''
     pass
 
+
+class AnsibleUnicode(AnsibleBaseYAMLObject, text_type):
+    ''' sub class for unicode objects '''
+    pass
+
+
+class AnsibleSequence(AnsibleBaseYAMLObject, list):
+    ''' sub class for lists '''
+    pass

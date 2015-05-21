@@ -1,0 +1,9 @@
+#
+# Test requirements
+#
+
+nose
+mock
+passlib
+coverage
+coveralls

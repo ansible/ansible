@@ -92,7 +92,7 @@ class AnsibleError(Exception):
         error_message = ''
 
         try:
-            (src_file, line_number, col_number) = self._obj.get_position_info()
+            (src_file, line_number, col_number) = self._obj.ansible_pos
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
@@ -140,6 +140,10 @@ class AnsibleError(Exception):
 
         return error_message
 
+class AnsibleOptionsError(AnsibleError):
+    ''' bad or incomplete options passed '''
+    pass
+
 class AnsibleParserError(AnsibleError):
     ''' something was detected early that is wrong about a playbook or data file '''
     pass
@@ -164,6 +168,18 @@ class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass
 
+class AnsibleLookupError(AnsibleRuntimeError):
+    ''' a lookup failure '''
+    pass
+
+class AnsibleCallbackError(AnsibleRuntimeError):
+    ''' a callback failure '''
+    pass
+
 class AnsibleUndefinedVariable(AnsibleRuntimeError):
     ''' a templating failure '''
+    pass
+
+class AnsibleFileNotFound(AnsibleRuntimeError):
+    ''' a file missing failure '''
     pass

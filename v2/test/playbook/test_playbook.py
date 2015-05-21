@@ -24,6 +24,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook import Playbook
+from ansible.vars import VariableManager
 
 from test.mock.loader import DictDataLoader
 
@@ -36,7 +37,8 @@ class TestPlaybook(unittest.TestCase):
         pass
 
     def test_empty_playbook(self):
-        p = Playbook()
+        fake_loader = DictDataLoader({})
+        p = Playbook(loader=fake_loader)
 
     def test_basic_playbook(self):
         fake_loader = DictDataLoader({
@@ -45,7 +47,7 @@ class TestPlaybook(unittest.TestCase):
             """,
         })
         p = Playbook.load("test_file.yml", loader=fake_loader)
-        entries = p.get_entries()
+        plays = p.get_plays()
 
     def test_bad_playbook_files(self):
         fake_loader = DictDataLoader({
@@ -61,6 +63,7 @@ class TestPlaybook(unittest.TestCase):
 
             """,
         })
-        self.assertRaises(AnsibleParserError, Playbook.load, "bad_list.yml", fake_loader)
-        self.assertRaises(AnsibleParserError, Playbook.load, "bad_entry.yml", fake_loader)
+        vm = VariableManager()
+        self.assertRaises(AnsibleParserError, Playbook.load, "bad_list.yml", vm, fake_loader)
+        self.assertRaises(AnsibleParserError, Playbook.load, "bad_entry.yml", vm, fake_loader)
 

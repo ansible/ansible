@@ -29,6 +29,7 @@ from ansible.plugins import module_loader, lookup_loader
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
@@ -36,7 +37,7 @@ from ansible.playbook.taggable import Taggable
 
 __all__ = ['Task']
 
-class Task(Base, Conditional, Taggable):
+class Task(Base, Conditional, Taggable, Become):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -62,10 +63,8 @@ class Task(Base, Conditional, Taggable):
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='string')
-    _connection           = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
-    _environment          = FieldAttribute(isa='dict')
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _ignore_errors        = FieldAttribute(isa='bool')
@@ -77,24 +76,14 @@ class Task(Base, Conditional, Taggable):
     # FIXME: this should not be a Task
     _meta                 = FieldAttribute(isa='string')
 
-    _name                 = FieldAttribute(isa='string')
+    _name                 = FieldAttribute(isa='string', default='')
 
-    _no_log               = FieldAttribute(isa='bool')
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
-    _remote_user          = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
-    _su                   = FieldAttribute(isa='bool')
-    _su_pass              = FieldAttribute(isa='string')
-    _su_user              = FieldAttribute(isa='string')
-    _sudo                 = FieldAttribute(isa='bool')
-    _sudo_user            = FieldAttribute(isa='string')
-    _sudo_pass            = FieldAttribute(isa='string')
-    _transport            = FieldAttribute(isa='string')
     _until                = FieldAttribute(isa='list') # ?
-    _vars                 = FieldAttribute(isa='dict', default=dict())
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -102,7 +91,6 @@ class Task(Base, Conditional, Taggable):
         self._block        = block
         self._role         = role
         self._task_include = task_include
-        self._dep_chain    = []
 
         super(Task, self).__init__()
 
@@ -143,7 +131,7 @@ class Task(Base, Conditional, Taggable):
         ''' returns a human readable representation of the task '''
         return "TASK: %s" % self.get_name()
 
-    def _munge_loop(self, ds, new_ds, k, v):
+    def _preprocess_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
         loop_name = k.replace("with_", "")
@@ -152,7 +140,7 @@ class Task(Base, Conditional, Taggable):
         new_ds['loop'] = loop_name
         new_ds['loop_args'] = v
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         tasks are especially complex arguments so need pre-processing.
         keep it short.
@@ -165,7 +153,7 @@ class Task(Base, Conditional, Taggable):
         # attributes of the task class
         new_ds = AnsibleMapping()
         if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.copy_position_info(ds)
+            new_ds.ansible_pos = ds.ansible_pos
 
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms
@@ -183,27 +171,29 @@ class Task(Base, Conditional, Taggable):
                 # determined by the ModuleArgsParser() above
                 continue
             elif k.replace("with_", "") in lookup_loader:
-                self._munge_loop(ds, new_ds, k, v)
+                self._preprocess_loop(ds, new_ds, k, v)
             else:
                 new_ds[k] = v
 
-        return new_ds
+        return super(Task, self).preprocess_data(new_ds)
 
-    def post_validate(self, all_vars=dict(), fail_on_undefined=True):
+    def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on
         the block and task include (if any) to which this task belongs.
         '''
 
         if self._block:
-            self._block.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+            self._block.post_validate(templar)
         if self._task_include:
-            self._task_include.post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+            self._task_include.post_validate(templar)
 
-        super(Task, self).post_validate(all_vars=all_vars, fail_on_undefined=fail_on_undefined)
+        super(Task, self).post_validate(templar)
 
     def get_vars(self):
         all_vars = self.vars.copy()
+        if self._block:
+            all_vars.update(self._block.get_vars())
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
@@ -215,21 +205,11 @@ class Task(Base, Conditional, Taggable):
             del all_vars['when']
         return all_vars
 
-    def compile(self):
-        '''
-        For tasks, this is just a dummy method returning an array
-        with 'self' in it, so we don't have to care about task types
-        further up the chain.
-        '''
-
-        return [self]
-
-    def copy(self):
+    def copy(self, exclude_block=False):
         new_me = super(Task, self).copy()
-        new_me._dep_chain = self._dep_chain[:]
 
         new_me._block = None
-        if self._block:
+        if self._block and not exclude_block:
             new_me._block = self._block.copy()
 
         new_me._role = None
@@ -244,7 +224,6 @@ class Task(Base, Conditional, Taggable):
 
     def serialize(self):
         data = super(Task, self).serialize()
-        data['dep_chain'] = self._dep_chain
 
         if self._block:
             data['block'] = self._block.serialize()
@@ -263,7 +242,6 @@ class Task(Base, Conditional, Taggable):
         #from ansible.playbook.task_include import TaskInclude
 
         block_data = data.get('block')
-        self._dep_chain = data.get('dep_chain', [])
 
         if block_data:
             b = Block()
@@ -289,10 +267,6 @@ class Task(Base, Conditional, Taggable):
         super(Task, self).deserialize(data)
 
     def evaluate_conditional(self, all_vars):
-        if len(self._dep_chain):
-            for dep in self._dep_chain:
-                if not dep.evaluate_conditional(all_vars):
-                    return False
         if self._block is not None:
             if not self._block.evaluate_conditional(all_vars):
                 return False
@@ -300,15 +274,6 @@ class Task(Base, Conditional, Taggable):
             if not self._task_include.evaluate_conditional(all_vars):
                 return False
         return super(Task, self).evaluate_conditional(all_vars)
-
-    def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        result = False
-        if len(self._dep_chain):
-            for dep in self._dep_chain:
-                result |= dep.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        if self._block is not None:
-            result |= self._block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        return result | super(Task, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
 
     def set_loader(self, loader):
         '''
@@ -324,5 +289,22 @@ class Task(Base, Conditional, Taggable):
         if self._task_include:
             self._task_include.set_loader(loader)
 
-        for dep in self._dep_chain:
-            dep.set_loader(loader)
+    def _get_parent_attribute(self, attr, extend=False):
+        '''
+        Generic logic to get the attribute or parent attribute for a task value.
+        '''
+        value = self._attributes[attr]
+        if self._block and (not value or extend):
+            parent_value = getattr(self._block, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+        if self._task_include and (not value or extend):
+            parent_value = getattr(self._task_include, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+        return value
+

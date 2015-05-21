@@ -125,6 +125,7 @@ import os
 import re
 import argparse
 from time import time
+import sys
 import ConfigParser
 import urllib, urllib2, base64
 
@@ -210,9 +211,9 @@ class ConsulInventory(object):
 
   def load_data_for_node(self, node, datacenter):
     '''loads the data for a sinle node adding it to various groups based on
-    metadata retrieved from the kv store and service availablity'''
+    metadata retrieved from the kv store and service availability'''
 
-    index, node_data = self.consul_api.catalog.node(node, datacenter)
+    index, node_data = self.consul_api.catalog.node(node, dc=datacenter)
     node = node_data['Node']
     self.add_node_to_map(self.nodes, 'all', node)
     self.add_metadata(node_data, "consul_datacenter", datacenter)

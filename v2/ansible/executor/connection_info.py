@@ -25,7 +25,7 @@ import random
 from ansible import constants as C
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
-
+from ansible.errors import AnsibleError
 
 __all__ = ['ConnectionInformation']
 
@@ -38,34 +38,40 @@ class ConnectionInformation:
     connection/authentication information.
     '''
 
-    def __init__(self, play=None, options=None):
-        # FIXME: implement the new methodology here for supporting
-        #        various different auth escalation methods (becomes, etc.)
+    def __init__(self, play=None, options=None, passwords=None):
 
-        self.connection  = C.DEFAULT_TRANSPORT
-        self.remote_addr = None
-        self.remote_user = 'root'
-        self.password    = ''
-        self.port        = 22
-        self.private_key_file = None
-        self.su          = False
-        self.su_user     = ''
-        self.su_pass     = ''
-        self.sudo        = False
-        self.sudo_user   = ''
-        self.sudo_pass   = ''
+        if passwords is None:
+            passwords = {}
+
+        # connection
+        self.connection       = None
+        self.remote_addr      = None
+        self.remote_user      = None
+        self.password         = passwords.get('conn_pass','')
+        self.port             = None
+        self.private_key_file = C.DEFAULT_PRIVATE_KEY_FILE
+        self.timeout          = C.DEFAULT_TIMEOUT
+
+        # privilege escalation
+        self.become        = None
+        self.become_method = None
+        self.become_user   = None
+        self.become_pass   = passwords.get('become_pass','')
+
+        # general flags (should we move out?)
         self.verbosity   = 0
         self.only_tags   = set()
         self.skip_tags   = set()
-
         self.no_log      = False
         self.check_mode  = False
 
-        if play:
-            self.set_play(play)
-
+        #TODO: just pull options setup to above?
+        # set options before play to allow play to override them
         if options:
             self.set_options(options)
+
+        if play:
+            self.set_play(play)
 
     def __repr__(self):
         value = "CONNECTION INFO:\n"
@@ -84,15 +90,19 @@ class ConnectionInformation:
         if play.connection:
             self.connection = play.connection
 
-        self.remote_user = play.remote_user
-        self.password    = ''
-        self.port        = int(play.port) if play.port else 22
-        self.su          = play.su
-        self.su_user     = play.su_user
-        self.su_pass     = play.su_pass
-        self.sudo        = play.sudo
-        self.sudo_user   = play.sudo_user
-        self.sudo_pass   = play.sudo_pass
+        if play.remote_user:
+            self.remote_user   = play.remote_user
+
+        if play.port:
+            self.port          = int(play.port)
+
+        if play.become is not None:
+            self.become        = play.become
+        if play.become_method:
+            self.become_method = play.become_method
+        if play.become_user:
+            self.become_user   = play.become_user
+        self.become_pass   = play.become_pass
 
         # non connection related
         self.no_log      = play.no_log
@@ -105,12 +115,23 @@ class ConnectionInformation:
         higher precedence than those set on the play or host.
         '''
 
-        # FIXME: set other values from options here?
-
-        self.verbosity = options.verbosity
         if options.connection:
             self.connection = options.connection
 
+        self.remote_user = options.remote_user
+        self.private_key_file = options.private_key_file
+
+        # privilege escalation
+        self.become        = options.become
+        self.become_method = options.become_method
+        self.become_user   = options.become_user
+        self.become_pass   = ''
+
+        # general flags (should we move out?)
+        if options.verbosity:
+            self.verbosity  = options.verbosity
+        #if options.no_log:
+        #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
 
@@ -158,7 +179,7 @@ class ConnectionInformation:
         new_info = ConnectionInformation()
         new_info.copy(self)
 
-        for attr in ('connection', 'remote_user', 'su', 'su_user', 'su_pass', 'sudo', 'sudo_user', 'sudo_pass', 'environment', 'no_log'):
+        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val:
@@ -166,42 +187,84 @@ class ConnectionInformation:
 
         return new_info
 
-    def make_sudo_cmd(self, sudo_exe, executable, cmd):
-        """
-        Helper function for wrapping commands with sudo.
+    def make_become_cmd(self, cmd, executable, become_settings=None):
 
-        Rather than detect if sudo wants a password this time, -k makes
-        sudo always ask for a password if one is required. Passing a quoted
-        compound command to sudo (or sudo -s) directly doesn't work, so we
-        shellquote it with pipes.quote() and pass the quoted string to the
-        user's shell.  We loop reading output until we see the randomly-
-        generated sudo prompt set with the -p option.
+        """
+        helper function to create privilege escalation commands
         """
 
-        randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-        prompt = '[sudo via ansible, key=%s] password: ' % randbits
-        success_key = 'SUDO-SUCCESS-%s' % randbits
+        # FIXME: become settings should probably be stored in the connection info itself
+        if become_settings is None:
+            become_settings = {}
 
-        sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
-            sudo_exe, sudo_exe, C.DEFAULT_SUDO_FLAGS, prompt,
-            self.sudo_user, executable or '$SHELL',
-            pipes.quote('echo %s; %s' % (success_key, cmd))
-        )
+        randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+        success_key = 'BECOME-SUCCESS-%s' % randbits
+        prompt      = None
+        becomecmd   = None
 
-        # FIXME: old code, can probably be removed as it's been commented out for a while
-        #return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
-        return (sudocmd, prompt, success_key)
+        executable = executable or '$SHELL'
+
+        success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+        if self.become:
+            if self.become_method == 'sudo':
+                # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
+                # a password if one is required. Passing a quoted compound command to sudo (or sudo -s)
+                # directly doesn't work, so we shellquote it with pipes.quote() and pass the quoted
+                # string to the user's shell.  We loop reading output until we see the randomly-generated
+                # sudo prompt set with the -p option.
+                prompt = '[sudo via ansible, key=%s] password: ' % randbits
+                exe = become_settings.get('sudo_exe', C.DEFAULT_SUDO_EXE)
+                flags = become_settings.get('sudo_flags', C.DEFAULT_SUDO_FLAGS)
+                becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % \
+                    (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, success_cmd)
+
+            elif self.become_method == 'su':
+                exe = become_settings.get('su_exe', C.DEFAULT_SU_EXE)
+                flags = become_settings.get('su_flags', C.DEFAULT_SU_FLAGS)
+                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
+
+            elif self.become_method == 'pbrun':
+                exe = become_settings.get('pbrun_exe', 'pbrun')
+                flags = become_settings.get('pbrun_flags', '')
+                becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, self.become_user, success_cmd)
+
+            elif self.become_method == 'pfexec':
+                exe = become_settings.get('pfexec_exe', 'pbrun')
+                flags = become_settings.get('pfexec_flags', '')
+                # No user as it uses it's own exec_attr to figure it out
+                becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
+
+            else:
+                raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
+
+            return (('%s -c ' % executable) + pipes.quote(becomecmd), prompt, success_key)
+
+        return (cmd, "", "")
+
+    def check_become_success(self, output, become_settings):
+        #TODO: implement
+        pass
 
     def _get_fields(self):
         return [i for i in self.__dict__.keys() if i[:1] != '_']
 
-    def post_validate(self, variables, loader):
+    def post_validate(self, templar):
         '''
         Finalizes templated values which may be set on this objects fields.
         '''
 
-        templar = Templar(loader=loader, variables=variables)
         for field in self._get_fields():
             value = templar.template(getattr(self, field))
             setattr(self, field, value)
 
+    def update_vars(self, variables):
+        '''
+        Adds 'magic' variables relating to connections to the variable dictionary provided.
+        '''
+
+        variables['ansible_connection']           = self.connection
+        variables['ansible_ssh_host']             = self.remote_addr
+        variables['ansible_ssh_pass']             = self.password
+        variables['ansible_ssh_port']             = self.port
+        variables['ansible_ssh_user']             = self.remote_user
+        variables['ansible_ssh_private_key_file'] = self.private_key_file

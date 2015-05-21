@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import Queue
+from six.moves import queue
 import multiprocessing
 import os
 import signal
@@ -77,7 +77,7 @@ class ResultProcess(multiprocessing.Process):
                     result = rslt_q.get(block=False)
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
             if self._cur_worker == starting_point:
@@ -137,12 +137,13 @@ class ResultProcess(multiprocessing.Process):
                         result_items = [ result._result ]
 
                     for result_item in result_items:
-                        if 'include' in result_item:
-                            include_variables = result_item.get('include_variables', dict())
-                            if 'item' in result_item:
-                                include_variables['item'] = result_item['item']
-                            self._send_result(('include', result._host, result._task, result_item['include'], include_variables))
-                        elif 'add_host' in result_item:
+                        #if 'include' in result_item:
+                        #    include_variables = result_item.get('include_variables', dict())
+                        #    if 'item' in result_item:
+                        #        include_variables['item'] = result_item['item']
+                        #    self._send_result(('include', result._host, result._task, result_item['include'], include_variables))
+                        #elif 'add_host' in result_item:
+                        if 'add_host' in result_item:
                             # this task added a new host (add_host module)
                             self._send_result(('add_host', result_item))
                         elif 'add_group' in result_item:
@@ -163,7 +164,7 @@ class ResultProcess(multiprocessing.Process):
                 if result._task.register:
                     self._send_result(('set_host_var', result._host, result._task.register, result._result))
 
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             except (KeyboardInterrupt, IOError, EOFError):
                 break

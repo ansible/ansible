@@ -15,6 +15,8 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import os.path
@@ -90,7 +92,7 @@ class ActionModule(ActionBase):
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
             # the source is local, so expand it here
-            src = os.path.expanduser(src)
+            src = self._loader.path_dwim(os.path.expanduser(src))
 
         _re = None
         if regexp is not None:
@@ -117,7 +119,7 @@ class ActionModule(ActionBase):
             xfered = self._transfer_data('src', resultant)
 
             # fix file permissions when the copy is done as a different user
-            if self._connection_info.sudo and self._connection_info.sudo_user != 'root' or self._connection_info.su and self._connection_info.su_user != 'root':
+            if self._connection_info.become and self._connection_info.become_user != 'root':
                 self._remote_chmod('a+r', xfered, tmp)
 
             # run the copy module

@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import pwd
@@ -57,7 +59,7 @@ class ActionModule(ActionBase):
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
-        if remote_checksum in ('1', '2') or self._connection_info.sudo:
+        if remote_checksum in ('1', '2') or self._connection_info.become:
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), tmp=tmp)
             if slurpres.get('rc') == 0:
                 if slurpres['encoding'] == 'base64':
@@ -82,7 +84,7 @@ class ActionModule(ActionBase):
 
         dest = os.path.expanduser(dest)
         if flat:
-            if dest.endswith("/"):
+            if dest.endswith(os.sep):
                 # if the path ends with "/", we'll use the source filename as the
                 # destination filename
                 base = os.path.basename(source_local)
@@ -92,7 +94,11 @@ class ActionModule(ActionBase):
                 dest = self._loader.path_dwim(dest)
         else:
             # files are saved in dest dir, with a subdir for each host, then the filename
-            dest = "%s/%s/%s" % (self._loader.path_dwim(dest), self._connection_info.remote_addr, source_local)
+            if 'inventory_hostname' in task_vars:
+                target_name = task_vars['inventory_hostname']
+            else:
+                target_name = self._connection_info.remote_addr
+            dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
         dest = dest.replace("//","/")
 

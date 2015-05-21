@@ -29,7 +29,7 @@ from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.utils.path import unfrackpath
 
 class DataLoader():
@@ -70,12 +70,26 @@ class DataLoader():
             # we first try to load this data as JSON
             return json.loads(data)
         except:
+            # if loading JSON failed for any reason, we go ahead
+            # and try to parse it as YAML instead
+
+            if isinstance(data, AnsibleUnicode):
+                # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
+                # they are unable to cope with our subclass.
+                # Unwrap and re-wrap the unicode so we can keep track of line
+                # numbers
+                new_data = unicode(data)
+            else:
+                new_data = data
             try:
-                # if loading JSON failed for any reason, we go ahead
-                # and try to parse it as YAML instead
-                return self._safe_load(data, file_name=file_name)
+                new_data = self._safe_load(new_data, file_name=file_name)
             except YAMLError as yaml_exc:
                 self._handle_error(yaml_exc, file_name, show_content)
+
+            if isinstance(data, AnsibleUnicode):
+                new_data = AnsibleUnicode(new_data)
+                new_data.ansible_pos = data.ansible_pos
+            return new_data
 
     def load_from_file(self, file_name):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
@@ -99,11 +113,14 @@ class DataLoader():
     def path_exists(self, path):
         return os.path.exists(path)
 
+    def is_file(self, path):
+        return os.path.isfile(path)
+
     def is_directory(self, path):
         return os.path.isdir(path)
 
-    def is_file(self, path):
-        return os.path.isfile(path)
+    def list_directory(self, path):
+        return os.listdir(path)
 
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
@@ -132,12 +149,12 @@ class DataLoader():
                     show_content = False
             return (data, show_content)
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occured while trying to read the file '%s': %s" % (file_name, str(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
 
     def _handle_error(self, yaml_exc, file_name, show_content):
         '''
         Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
-        file name/position where a YAML exception occured, and raises an AnsibleParserError
+        file name/position where a YAML exception occurred, and raises an AnsibleParserError
         to display the syntax exception information.
         '''
 
@@ -146,7 +163,7 @@ class DataLoader():
         err_obj = None
         if hasattr(yaml_exc, 'problem_mark'):
             err_obj = AnsibleBaseYAMLObject()
-            err_obj.set_position_info(file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
+            err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
         raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
 

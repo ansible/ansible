@@ -26,6 +26,7 @@ from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
 
+
 class Connection(object):
     ''' Local based connections '''
 
@@ -33,31 +34,34 @@ class Connection(object):
         self.runner = runner
         self.host = host
         # port is unused, since this is local
-        self.port = port 
+        self.port = port
         self.has_pipelining = False
+
+        # TODO: add su(needs tty), pbrun, pfexec
+        self.become_methods_supported=['sudo']
 
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the local host '''
 
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
-        if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        if not self.runner.sudo or not sudoable:
+        if self.runner.become and sudoable:
+            local_cmd, prompt, success_key = utils.make_become_cmd(cmd, become_user, executable, self.runner.become_method, '-H', self.runner.become_exe)
+        else:
             if executable:
                 local_cmd = executable.split() + ['-c', cmd]
             else:
                 local_cmd = cmd
-        else:
-            local_cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
         executable = executable.split()[0] if executable else None
 
         vvv("EXEC %s" % (local_cmd), host=self.host)
@@ -66,13 +70,19 @@ class Connection(object):
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        if self.runner.sudo and sudoable and self.runner.sudo_pass:
+        if self.runner.become and sudoable and self.runner.become_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL,
                         fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-            sudo_output = ''
-            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
+            become_output = ''
+            while success_key not in become_output:
+
+                if prompt and become_output.endswith(prompt):
+                    break
+                if utils.su_prompts.check_su_prompt(become_output):
+                    break
+
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
                                               [p.stdout, p.stderr], self.runner.timeout)
                 if p.stdout in rfd:
@@ -81,13 +91,13 @@ class Connection(object):
                     chunk = p.stderr.read()
                 else:
                     stdout, stderr = p.communicate()
-                    raise errors.AnsibleError('timeout waiting for sudo password prompt:\n' + sudo_output)
+                    raise errors.AnsibleError('timeout waiting for %s password prompt:\n' % self.runner.become_method + become_output)
                 if not chunk:
                     stdout, stderr = p.communicate()
-                    raise errors.AnsibleError('sudo output closed while waiting for password prompt:\n' + sudo_output)
-                sudo_output += chunk
-            if success_key not in sudo_output:
-                p.stdin.write(self.runner.sudo_pass + '\n')
+                    raise errors.AnsibleError('%s output closed while waiting for password prompt:\n' % self.runner.become_method + become_output)
+                become_output += chunk
+            if success_key not in become_output:
+                p.stdin.write(self.runner.become_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 

@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.plugins.lookup import LookupBase
 import urllib2
@@ -31,11 +33,11 @@ class LookupModule(LookupBase):
             try:
                 r = urllib2.Request(term)
                 response = urllib2.urlopen(r)
-            except URLError, e:
+            except URLError as e:
                 utils.warnings("Failed lookup url for %s : %s" % (term, str(e)))
                 continue
-            except HTTPError, e:
-                utils.warnings("Recieved HTTP error for %s : %s" % (term, str(e)))
+            except HTTPError as e:
+                utils.warnings("Received HTTP error for %s : %s" % (term, str(e)))
                 continue
 
             for line in response.read().splitlines():

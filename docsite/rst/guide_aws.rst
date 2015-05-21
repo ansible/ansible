@@ -107,7 +107,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
           register: ec2
     
        - name: Add all instance public IPs to host group
-         add_host: hostname={{ item.public_ip }} groupname=ec2hosts
+         add_host: hostname={{ item.public_ip }} groups=ec2hosts
          with_items: ec2.instances
 
 With the host group now created, a second play at the bottom of the the same provisioning playbook file might now have some configuration steps::
@@ -157,7 +157,7 @@ it will be automatically discoverable via a dynamic group like so::
 Using this philosophy can be a great way to keep systems separated by the function they perform.
 
 In this example, if we wanted to define variables that are automatically applied to each machine tagged with the 'class' of 'webserver', 'group_vars'
-in ansible can be used.  See :doc:`splitting_out_vars`.
+in ansible can be used.  See :ref:`splitting_out_vars`.
 
 Similar groups are available for regions and other classifications, and can be similarly assigned variables using the same mechanism.
 

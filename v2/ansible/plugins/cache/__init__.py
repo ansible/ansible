@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from collections import MutableMapping
 
@@ -25,6 +27,7 @@ class FactCache(MutableMapping):
     def __init__(self, *args, **kwargs):
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
         if self._plugin is None:
+            # FIXME: this should be an exception
             return
 
     def __getitem__(self, key):

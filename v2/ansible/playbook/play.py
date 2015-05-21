@@ -23,9 +23,11 @@ from ansible.errors import AnsibleError, AnsibleParserError
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles, compile_block_list
+from ansible.playbook.become import Become
+from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.playbook.block import Block
 
 from ansible.utils.vars import combine_vars
 
@@ -33,7 +35,7 @@ from ansible.utils.vars import combine_vars
 __all__ = ['Play']
 
 
-class Play(Base, Taggable):
+class Play(Base, Taggable, Become):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -47,24 +49,18 @@ class Play(Base, Taggable):
 
     # =================================================================================
     # Connection-Related Attributes
+
+    # TODO: generalize connection
     _accelerate          = FieldAttribute(isa='bool', default=False)
     _accelerate_ipv6     = FieldAttribute(isa='bool', default=False)
-    _accelerate_port     = FieldAttribute(isa='int', default=5099)
-    _connection          = FieldAttribute(isa='string', default='smart')
+    _accelerate_port     = FieldAttribute(isa='int', default=5099) # should be alias of port
+
+    # Connection
     _gather_facts        = FieldAttribute(isa='string', default='smart')
     _hosts               = FieldAttribute(isa='list', default=[], required=True)
     _name                = FieldAttribute(isa='string', default='<no name specified>')
-    _port                = FieldAttribute(isa='int', default=22)
-    _remote_user         = FieldAttribute(isa='string', default='root')
-    _su                  = FieldAttribute(isa='bool', default=False)
-    _su_user             = FieldAttribute(isa='string', default='root')
-    _su_pass             = FieldAttribute(isa='string')
-    _sudo                = FieldAttribute(isa='bool', default=False)
-    _sudo_user           = FieldAttribute(isa='string', default='root')
-    _sudo_pass           = FieldAttribute(isa='string')
 
     # Variable Attributes
-    _vars                = FieldAttribute(isa='dict', default=dict())
     _vars_files          = FieldAttribute(isa='list', default=[])
     _vars_prompt         = FieldAttribute(isa='dict', default=dict())
     _vault_password      = FieldAttribute(isa='string')
@@ -80,9 +76,7 @@ class Play(Base, Taggable):
 
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
-    _environment         = FieldAttribute(isa='dict', default=dict())
     _max_fail_percentage = FieldAttribute(isa='string', default='0')
-    _no_log              = FieldAttribute(isa='bool', default=False)
     _serial              = FieldAttribute(isa='int', default=0)
     _strategy            = FieldAttribute(isa='string', default='linear')
 
@@ -103,7 +97,7 @@ class Play(Base, Taggable):
         p = Play()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         Adjusts play datastructure to cleanup old/legacy items
         '''
@@ -122,7 +116,7 @@ class Play(Base, Taggable):
             ds['remote_user'] = ds['user']
             del ds['user']
 
-        return ds
+        return super(Play, self).preprocess_data(ds)
 
     def _load_vars(self, attr, ds):
         '''
@@ -144,35 +138,35 @@ class Play(Base, Taggable):
             else:
                 raise ValueError
         except ValueError:
-            raise AnsibleParsingError("Vars in a playbook must be specified as a dictionary, or a list of dictionaries", obj=ds)
+            raise AnsibleParserError("Vars in a playbook must be specified as a dictionary, or a list of dictionaries", obj=ds)
 
     def _load_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_pre_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_post_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_handlers(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_roles(self, attr, ds):
         '''
@@ -187,7 +181,7 @@ class Play(Base, Taggable):
             roles.append(Role.load(ri))
         return roles
 
-    # FIXME: post_validation needs to ensure that su/sudo are not both set
+    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
 
     def _compile_roles(self):
         '''
@@ -198,13 +192,13 @@ class Play(Base, Taggable):
         the parent role R last. This is done for all roles in the Play.
         '''
 
-        task_list = []
+        block_list = []
 
         if len(self.roles) > 0:
             for r in self.roles:
-                task_list.extend(r.compile())
+                block_list.extend(r.compile(play=self))
 
-        return task_list
+        return block_list
 
     def compile(self):
         '''
@@ -213,14 +207,14 @@ class Play(Base, Taggable):
         tasks specified in the play.
         '''
 
-        task_list = []
+        block_list = []
 
-        task_list.extend(compile_block_list(self.pre_tasks))
-        task_list.extend(self._compile_roles())
-        task_list.extend(compile_block_list(self.tasks))
-        task_list.extend(compile_block_list(self.post_tasks))
+        block_list.extend(self.pre_tasks)
+        block_list.extend(self._compile_roles())
+        block_list.extend(self.tasks)
+        block_list.extend(self.post_tasks)
 
-        return task_list
+        return block_list
 
     def get_vars(self):
         return self.vars.copy()
@@ -233,6 +227,15 @@ class Play(Base, Taggable):
 
     def get_roles(self):
         return self.roles[:]
+
+    def get_tasks(self):
+        tasklist = []
+        for task in self.pre_tasks + self.tasks + self.post_tasks:
+            if isinstance(task, Block):
+                tasklist.append(task.block + task.rescue + task.always)
+            else:
+                tasklist.append(task)
+        return tasklist
 
     def serialize(self):
         data = super(Play, self).serialize()

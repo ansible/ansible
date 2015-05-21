@@ -21,26 +21,29 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
-class Block(Base, Conditional, Taggable):
+class Block(Base, Become, Conditional, Taggable):
 
-    _block  = FieldAttribute(isa='list')
-    _rescue = FieldAttribute(isa='list')
-    _always = FieldAttribute(isa='list')
+    _block  = FieldAttribute(isa='list', default=[])
+    _rescue = FieldAttribute(isa='list', default=[])
+    _always = FieldAttribute(isa='list', default=[])
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
     #_otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, parent_block=None, role=None, task_include=None, use_handlers=False):
-        self._parent_block = parent_block
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False):
+        self._play         = play
         self._role         = role
         self._task_include = task_include
+        self._parent_block = parent_block
         self._use_handlers = use_handlers
+        self._dep_chain    = []
 
         super(Block, self).__init__()
 
@@ -54,36 +57,43 @@ class Block(Base, Conditional, Taggable):
 
         if self._role:
             all_vars.update(self._role.get_vars())
+        if self._parent_block:
+            all_vars.update(self._parent_block.get_vars())
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
+        all_vars.update(self.vars)
         return all_vars
 
     @staticmethod
-    def load(data, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-        b = Block(parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
+    def load(data, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def munge(self, ds):
+    def preprocess_data(self, ds):
         '''
         If a simple task is given, an implicit block for that single task
         is created, which goes in the main portion of the block
         '''
+
         is_block = False
         for attr in ('block', 'rescue', 'always'):
             if attr in ds:
                 is_block = True
                 break
+
         if not is_block:
             if isinstance(ds, list):
-                return dict(block=ds)
+                return super(Block, self).preprocess_data(dict(block=ds))
             else:
-                return dict(block=[ds])
-        return ds
+                return super(Block, self).preprocess_data(dict(block=[ds]))
+
+        return super(Block, self).preprocess_data(ds)
 
     def _load_block(self, attr, ds):
         return load_list_of_tasks(
             ds,
+            play=self._play,
             block=self,
             role=self._role,
             task_include=self._task_include,
@@ -95,6 +105,7 @@ class Block(Base, Conditional, Taggable):
     def _load_rescue(self, attr, ds):
         return load_list_of_tasks(
             ds,
+            play=self._play,
             block=self,
             role=self._role,
             task_include=self._task_include,
@@ -106,6 +117,7 @@ class Block(Base, Conditional, Taggable):
     def _load_always(self, attr, ds):
         return load_list_of_tasks(
             ds, 
+            play=self._play,
             block=self, 
             role=self._role, 
             task_include=self._task_include,
@@ -118,6 +130,7 @@ class Block(Base, Conditional, Taggable):
     #def _load_otherwise(self, attr, ds):
     #    return load_list_of_tasks(
     #        ds, 
+    #        play=self._play,
     #        block=self, 
     #        role=self._role, 
     #        task_include=self._task_include,
@@ -126,24 +139,30 @@ class Block(Base, Conditional, Taggable):
     #        use_handlers=self._use_handlers,
     #    )
 
-    def compile(self):
-        '''
-        Returns the task list for this object
-        '''
+    def copy(self, exclude_parent=False):
+        def _dupe_task_list(task_list, new_block):
+            new_task_list = []
+            for task in task_list:
+                if isinstance(task, Block):
+                    new_task = task.copy(exclude_parent=True)
+                    new_task._parent_block = new_block
+                else:
+                    new_task = task.copy(exclude_block=True)
+                    new_task._block = new_block
+                new_task_list.append(new_task)
+            return new_task_list
 
-        task_list = []
-        for task in self.block:
-            # FIXME: evaulate task tags/conditionals here
-            task_list.extend(task.compile())
-
-        return task_list
-
-    def copy(self):
         new_me = super(Block, self).copy()
+        new_me._play         = self._play
         new_me._use_handlers = self._use_handlers
+        new_me._dep_chain    = self._dep_chain[:]
+
+        new_me.block  = _dupe_task_list(self.block or [], new_me)
+        new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
+        new_me.always = _dupe_task_list(self.always or [], new_me)
 
         new_me._parent_block = None
-        if self._parent_block:
+        if self._parent_block and not exclude_parent:
             new_me._parent_block = self._parent_block.copy()
 
         new_me._role = None
@@ -162,7 +181,12 @@ class Block(Base, Conditional, Taggable):
         a task we don't want to include the attribute list of tasks.
         '''
 
-        data = dict(when=self.when)
+        data = dict()
+        for attr in self._get_base_attributes():
+            if attr not in ('block', 'rescue', 'always'):
+                data[attr] = getattr(self, attr)
+
+        data['dep_chain'] = self._dep_chain
 
         if self._role is not None:
             data['role'] = self._role.serialize()
@@ -177,11 +201,15 @@ class Block(Base, Conditional, Taggable):
         serialize method
         '''
 
-        #from ansible.playbook.task_include import TaskInclude
         from ansible.playbook.task import Task
 
-        # unpack the when attribute, which is the only one we want
-        self.when = data.get('when')
+        # we don't want the full set of attributes (the task lists), as that
+        # would lead to a serialize/deserialize loop
+        for attr in self._get_base_attributes():
+            if attr in data and attr not in ('block', 'rescue', 'always'):
+                setattr(self, attr, data.get(attr))
+
+        self._dep_chain = data.get('dep_chain', [])
 
         # if there was a serialized role, unpack it too
         role_data = data.get('role')
@@ -198,6 +226,10 @@ class Block(Base, Conditional, Taggable):
             self._task_include = ti
 
     def evaluate_conditional(self, all_vars):
+        if len(self._dep_chain):
+            for dep in self._dep_chain:
+                if not dep.evaluate_conditional(all_vars):
+                    return False
         if self._task_include is not None:
             if not self._task_include.evaluate_conditional(all_vars):
                 return False
@@ -209,14 +241,6 @@ class Block(Base, Conditional, Taggable):
                 return False
         return super(Block, self).evaluate_conditional(all_vars)
 
-    def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        result = False
-        if self._parent_block is not None:
-            result |= self._parent_block.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        elif self._role is not None:
-            result |= self._role.evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-        return result | super(Block, self).evaluate_tags(only_tags=only_tags, skip_tags=skip_tags, all_vars=all_vars)
-
     def set_loader(self, loader):
         self._loader = loader
         if self._parent_block:
@@ -227,3 +251,69 @@ class Block(Base, Conditional, Taggable):
         if self._task_include:
             self._task_include.set_loader(loader)
 
+        for dep in self._dep_chain:
+            dep.set_loader(loader)
+
+    def _get_parent_attribute(self, attr, extend=False):
+        '''
+        Generic logic to get the attribute or parent attribute for a block value.
+        '''
+
+        value = self._attributes[attr]
+        if self._parent_block and (not value or extend):
+            parent_value = getattr(self._parent_block, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+        if self._task_include and (not value or extend):
+            parent_value = getattr(self._task_include, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+        if self._role and (not value or extend):
+            parent_value = getattr(self._role, attr)
+            if len(self._dep_chain) and (not value or extend):
+                reverse_dep_chain = self._dep_chain[:]
+                reverse_dep_chain.reverse()
+                for dep in reverse_dep_chain:
+                    dep_value = getattr(dep, attr)
+                    if extend:
+                        value = self._extend_value(value, parent_value)
+                    else:
+                        value = parent_value
+
+                    if value and not extend:
+                        break
+        if self._play and (not value or extend):
+            parent_value = getattr(self._play, attr)
+            if extend:
+                value = self._extend_value(value, parent_value)
+            else:
+                value = parent_value
+
+        return value
+
+    def filter_tagged_tasks(self, connection_info, all_vars):
+        '''
+        Creates a new block, with task lists filtered based on the tags contained
+        within the connection_info object.
+        '''
+
+        def evaluate_and_append_task(target):
+            tmp_list = []
+            for task in target:
+                if task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, all_vars=all_vars):
+                    tmp_list.append(task)
+            return tmp_list
+
+        new_block = self.copy()
+        new_block.block  = evaluate_and_append_task(self.block)
+        new_block.rescue = evaluate_and_append_task(self.rescue)
+        new_block.always = evaluate_and_append_task(self.always)
+
+        return new_block
+
+    def has_tasks(self):
+        return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0

@@ -29,6 +29,7 @@ except ImportError:
     from sha import sha as sha1
 
 from ansible import constants as C
+from ansible.errors import *
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -78,14 +79,19 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
+    def _validate_both_dicts(self, a, b):
+        '''
+        Validates that both arguments are dictionaries, or an error is raised.
+        '''
+        if not (isinstance(a, dict) and isinstance(b, dict)):
+            raise AnsibleError("failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__))
+
     def _combine_vars(self, a, b):
         '''
         Combines dictionaries of variables, based on the hash behavior
         '''
 
-        # FIXME: do we need this from utils, or should it just
-        #        be merged into this definition?
-        #_validate_both_dicts(a, b)
+        self._validate_both_dicts(a, b)
 
         if C.DEFAULT_HASH_BEHAVIOUR == "merge":
             return self._merge_dicts(a, b)
@@ -100,9 +106,7 @@ class VariableManager:
 
         result = dict()
 
-        # FIXME: do we need this from utils, or should it just
-        #        be merged into this definition?
-        #_validate_both_dicts(a, b)
+        self._validate_both_dicts(a, b)
 
         for dicts in a, b:
             # next, iterate over b keys and values
@@ -162,10 +166,9 @@ class VariableManager:
                 all_vars = self._combine_vars(all_vars, self._group_vars_files['all'])
 
             for group in host.get_groups():
-                group_name = group.get_name()
                 all_vars = self._combine_vars(all_vars, group.get_vars())
-                if group_name in self._group_vars_files and group_name != 'all':
-                    all_vars = self._combine_vars(all_vars, self._group_vars_files[group_name])
+                if group.name in self._group_vars_files and group.name != 'all':
+                    all_vars = self._combine_vars(all_vars, self._group_vars_files[group.name])
 
             host_name = host.get_name()
             if host_name in self._host_vars_files:
@@ -184,6 +187,8 @@ class VariableManager:
                 try:
                     vars_file = templar.template(vars_file)
                     data = loader.load_from_file(vars_file)
+                    if data is None:
+                        data = dict()
                     all_vars = self._combine_vars(all_vars, data)
                 except:
                     # FIXME: get_vars should probably be taking a flag to determine
@@ -228,7 +233,7 @@ class VariableManager:
         '''
 
         (name, ext) = os.path.splitext(os.path.basename(path))
-        if ext not in ('yml', 'yaml'):
+        if ext not in ('.yml', '.yaml'):
             return os.path.basename(path)
         else:
             return name
@@ -239,12 +244,12 @@ class VariableManager:
         basename of the file without the extension
         '''
 
-        if os.path.isdir(path):
+        if loader.is_directory(path):
             data = dict()
 
             try:
-                names = os.listdir(path)
-            except os.error, err:
+                names = loader.list_directory(path)
+            except os.error as err:
                 raise AnsibleError("This folder cannot be listed: %s: %s." % (path, err.strerror))
 
             # evaluate files in a stable order rather than whatever
@@ -259,6 +264,8 @@ class VariableManager:
 
         else:
             data = loader.load_from_file(path)
+            if data is None:
+                data = dict()
 
         name = self._get_inventory_basename(path)
         return (name, data)
@@ -270,7 +277,7 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        if os.path.exists(path):
+        if loader.path_exists(path):
             (name, data) = self._load_inventory_file(path, loader)
             self._host_vars_files[name] = data
 
@@ -281,7 +288,7 @@ class VariableManager:
         the extension, for matching against a given inventory host name
         '''
 
-        if os.path.exists(path):
+        if loader.path_exists(path):
             (name, data) = self._load_inventory_file(path, loader)
             self._group_vars_files[name] = data
 

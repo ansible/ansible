@@ -92,7 +92,7 @@ class InventoryScript(object):
             if not isinstance(data, dict):
                 data = {'hosts': data}
             # is not those subkeys, then simplified syntax, host with vars
-            elif not any(k in data for k in ('hosts','vars')):
+            elif not any(k in data for k in ('hosts','vars','children')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:

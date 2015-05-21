@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 import os
 import base64
@@ -23,8 +26,9 @@ import struct
 import time
 from ansible.callbacks import vvv, vvvv
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
-from ansible.runner.connection_plugins.paramiko_ssh import Connection as ParamikoConnection
+from . import ConnectionBase
+from .ssh import Connection as SSHConnection
+from .paramiko_ssh import Connection as ParamikoConnection
 from ansible import utils
 from ansible import constants
 
@@ -35,7 +39,7 @@ from ansible import constants
 # multiple of the value to speed up file reads.
 CHUNK_SIZE=1044*20
 
-class Connection(object):
+class Connection(ConnectionBase):
     ''' raw socket accelerated connection '''
 
     def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
@@ -50,6 +54,7 @@ class Connection(object):
         self.accport = port[1]
         self.is_connected = False
         self.has_pipelining = False
+        self.become_methods_supported=['sudo']
 
         if not self.port:
             self.port = constants.DEFAULT_REMOTE_PORT
@@ -86,6 +91,11 @@ class Connection(object):
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
             utils.AES_KEYS = self.runner.aes_keys
+
+    @property
+    def transport(self):
+        """String used to identify this Connection class from other classes"""
+        return 'accelerate'
 
     def _execute_accelerate_module(self):
         args = "password=%s port=%s minutes=%d debug=%d ipv6=%s" % (
@@ -140,7 +150,7 @@ class Connection(object):
                     # shutdown, so we'll reconnect.
                     wrong_user = True
 
-        except AnsibleError, e:
+        except AnsibleError as e:
             if allow_ssh:
                 if "WRONG_USER" in e:
                     vvv("Switching users, waiting for the daemon on %s to shutdown completely..." % self.host)
@@ -226,11 +236,11 @@ class Connection(object):
         else:
             return response.get('rc') == 0
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
-        if su or su_user:
-            raise AnsibleError("Internal Error: this module does not support running commands via su")
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -238,8 +248,8 @@ class Connection(object):
         if executable == "":
             executable = constants.DEFAULT_EXECUTABLE
 
-        if self.runner.sudo and sudoable and sudo_user:
-            cmd, prompt, success_key = utils.make_sudo_cmd(self.runner.sudo_exe, sudo_user, executable, cmd)
+        if self.runner.become and sudoable:
+            cmd, prompt, success_key = utils.make_become_cmd(cmd, become_user, executable, self.runner.become_method, '', self.runner.become_exe)
 
         vvv("EXEC COMMAND %s" % cmd)
 
@@ -292,8 +302,8 @@ class Connection(object):
                 if fd.tell() >= fstat.st_size:
                     last = True
                 data = dict(mode='put', data=base64.b64encode(data), out_path=out_path, last=last)
-                if self.runner.sudo:
-                    data['user'] = self.runner.sudo_user
+                if self.runner.become:
+                    data['user'] = self.runner.become_user
                 data = utils.jsonify(data)
                 data = utils.encrypt(self.key, data)
 

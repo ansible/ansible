@@ -32,24 +32,26 @@ import uuid
 
 class Play(object):
 
-    __slots__ = [
-       'hosts', 'name', 'vars', 'vars_file_vars', 'role_vars', 'default_vars', 'vars_prompt', 'vars_files',
-       'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
-       'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
-       'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user',
-       'vault_password', 'no_log', 'environment',
+    _pb_common = [
+        'accelerate', 'accelerate_ipv6', 'accelerate_port', 'any_errors_fatal', 'become',
+        'become_method', 'become_user', 'environment', 'force_handlers', 'gather_facts',
+        'handlers', 'hosts', 'name', 'no_log', 'remote_user', 'roles', 'serial', 'su', 
+        'su_user', 'sudo', 'sudo_user', 'tags', 'vars', 'vars_files', 'vars_prompt', 
+        'vault_password',
+    ]
+
+    __slots__ = _pb_common + [
+        '_ds', '_handlers', '_play_hosts', '_tasks', 'any_errors_fatal', 'basedir',
+        'default_vars', 'included_roles', 'max_fail_pct', 'playbook', 'remote_port',
+        'role_vars', 'transport', 'vars_file_vars',
     ]
 
     # to catch typos and so forth -- these are userland names
     # and don't line up 1:1 with how they are stored
-    VALID_KEYS = frozenset((
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user', 'vault_password', 'no_log', 'environment',
-    ))
+    VALID_KEYS = frozenset(_pb_common + [
+        'connection', 'include', 'max_fail_percentage', 'port', 'post_tasks',
+        'pre_tasks', 'role_names', 'tasks', 'user',
+    ])
 
     # *************************************************
 
@@ -58,7 +60,7 @@ class Play(object):
 
         for x in ds.keys():
             if not x in Play.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter at this level in an Ansible Playbook" % x)
+                raise errors.AnsibleError("%s is not a legal parameter of an Ansible Play" % x)
 
         # allow all playbook keys to be set by --extra-vars
         self.vars             = ds.get('vars', {})
@@ -115,10 +117,14 @@ class Play(object):
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
 
-        temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
-        temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+        temp_vars = utils.combine_vars(self.vars, self.vars_file_vars)
+        temp_vars = utils.combine_vars(temp_vars, self.playbook.extra_vars)
 
-        ds = template(basedir, ds, temp_vars)
+        try:
+            ds = template(basedir, ds, temp_vars)
+        except errors.AnsibleError, e:
+            utils.warning("non fatal error while trying to template play variables: %s" % (str(e)))
+
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
@@ -140,8 +146,6 @@ class Play(object):
         self._handlers        = ds.get('handlers', [])
         self.remote_user      = ds.get('remote_user', ds.get('user', self.playbook.remote_user))
         self.remote_port      = ds.get('port', self.playbook.remote_port)
-        self.sudo             = ds.get('sudo', self.playbook.sudo)
-        self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
         self.remote_port      = self.remote_port
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
@@ -149,21 +153,41 @@ class Play(object):
         self.accelerate_port  = ds.get('accelerate_port', None)
         self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
-        self.su               = ds.get('su', self.playbook.su)
-        self.su_user          = ds.get('su_user', self.playbook.su_user)
         self.no_log           = utils.boolean(ds.get('no_log', 'false'))
+        self.force_handlers   = utils.boolean(ds.get('force_handlers', self.playbook.force_handlers))
+
+        # Fail out if user specifies conflicting privilege escalations
+        if (ds.get('become') or ds.get('become_user')) and (ds.get('sudo') or ds.get('sudo_user')):
+            raise errors.AnsibleError('sudo params ("become", "become_user") and su params ("sudo", "sudo_user") cannot be used together')
+        if (ds.get('become') or ds.get('become_user')) and (ds.get('su') or ds.get('su_user')):
+            raise errors.AnsibleError('sudo params ("become", "become_user") and su params ("su", "su_user") cannot be used together')
+        if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
+            raise errors.AnsibleError('sudo params ("sudo", "sudo_user") and su params ("su", "su_user") cannot be used together')
+
+        # become settings are inherited and updated normally
+        self.become           = ds.get('become', self.playbook.become)
+        self.become_method    = ds.get('become_method', self.playbook.become_method)
+        self.become_user      = ds.get('become_user', self.playbook.become_user)
+
+        # Make sure current play settings are reflected in become fields
+        if 'sudo' in ds:
+            self.become=ds['sudo']
+            self.become_method='sudo'
+            if 'sudo_user' in ds:
+                self.become_user=ds['sudo_user']
+        elif 'su' in ds:
+            self.become=True
+            self.become=ds['su']
+            self.become_method='su'
+            if 'su_user' in ds:
+                self.become_user=ds['su_user']
 
         # gather_facts is not a simple boolean, as None means  that a 'smart'
         # fact gathering mode will be used, so we need to be careful here as
         # calling utils.boolean(None) returns False
         self.gather_facts = ds.get('gather_facts', None)
-        if self.gather_facts:
+        if self.gather_facts is not None:
             self.gather_facts = utils.boolean(self.gather_facts)
-
-        # Fail out if user specifies a sudo param with a su param in a given play
-        if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
-            raise errors.AnsibleError('sudo params ("sudo", "sudo_user") and su params '
-                                      '("su", "su_user") cannot be used together')
 
         load_vars['role_names'] = ds.get('role_names', [])
 
@@ -172,9 +196,6 @@ class Play(object):
 
         # apply any missing tags to role tasks
         self._late_merge_role_tags()
-
-        if self.sudo_user != 'root':
-            self.sudo = True
 
         # place holder for the discovered hosts to be used in this play
         self._play_hosts = None
@@ -427,7 +448,7 @@ class Play(object):
 
         for (role, role_path, role_vars, role_params, default_vars) in roles:
             # special vars must be extracted from the dict to the included tasks
-            special_keys = [ "sudo", "sudo_user", "when", "with_items" ]
+            special_keys = [ "sudo", "sudo_user", "when", "with_items", "su", "su_user", "become", "become_user" ]
             special_vars = {}
             for k in special_keys:
                 if k in role_vars:
@@ -529,7 +550,7 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars=None, role_params=None, default_vars=None, sudo_vars=None,
+    def _load_tasks(self, tasks, vars=None, role_params=None, default_vars=None, become_vars=None,
                     additional_conditions=None, original_file=None, role_name=None):
         ''' handle task and handler include statements '''
 
@@ -545,8 +566,8 @@ class Play(object):
             role_params = {}
         if default_vars is None:
             default_vars = {}
-        if sudo_vars is None:
-            sudo_vars = {}
+        if become_vars is None:
+            become_vars = {}
 
         old_conditions = list(additional_conditions)
 
@@ -558,23 +579,25 @@ class Play(object):
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s, error in %s" % (x, original_file))
 
-            # evaluate sudo vars for current and child tasks
-            included_sudo_vars = {}
-            for k in ["sudo", "sudo_user"]:
+            # evaluate privilege escalation vars for current and child tasks
+            included_become_vars = {}
+            for k in ["become", "become_user", "become_method", "become_exe", "sudo", "su", "sudo_user", "su_user"]:
                 if k in x:
-                    included_sudo_vars[k] = x[k]
-                elif k in sudo_vars:
-                    included_sudo_vars[k] = sudo_vars[k]
-                    x[k] = sudo_vars[k]
-
-            if 'meta' in x:
-                if x['meta'] == 'flush_handlers':
-                    results.append(Task(self, x))
-                    continue
+                    included_become_vars[k] = x[k]
+                elif k in become_vars:
+                    included_become_vars[k] = become_vars[k]
+                    x[k] = become_vars[k]
 
             task_vars = vars.copy()
             if original_file:
                 task_vars['_original_file'] = original_file
+
+            if 'meta' in x:
+                if x['meta'] == 'flush_handlers':
+                    if role_name and 'role_name' not in x:
+                        x['role_name'] = role_name
+                    results.append(Task(self, x, module_vars=task_vars, role_name=role_name))
+                    continue
 
             if 'include' in x:
                 tokens = split_args(str(x['include']))
@@ -594,7 +617,7 @@ class Play(object):
                             included_additional_conditions.append(x[k])
                         elif type(x[k]) is list:
                             included_additional_conditions.extend(x[k])
-                    elif k in ("include", "vars", "role_params", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
+                    elif k in ("include", "vars", "role_params", "default_vars", "sudo", "sudo_user", "role_name", "no_log", "become", "become_user", "su", "su_user"):
                         continue
                     else:
                         include_vars[k] = x[k]
@@ -630,9 +653,9 @@ class Play(object):
                     dirname = os.path.dirname(original_file)
 
                 # temp vars are used here to avoid trampling on the existing vars structures
-                temp_vars = utils.merge_hash(self.vars, self.vars_file_vars)
-                temp_vars = utils.merge_hash(temp_vars, mv)
-                temp_vars = utils.merge_hash(temp_vars, self.playbook.extra_vars)
+                temp_vars = utils.combine_vars(self.vars, self.vars_file_vars)
+                temp_vars = utils.combine_vars(temp_vars, mv)
+                temp_vars = utils.combine_vars(temp_vars, self.playbook.extra_vars)
                 include_file = template(dirname, tokens[0], temp_vars)
                 include_filename = utils.path_dwim(dirname, include_file)
 
@@ -641,7 +664,7 @@ class Play(object):
                     for y in data:
                         if isinstance(y, dict) and 'include' in y:
                             y['role_name'] = new_role
-                loaded = self._load_tasks(data, mv, role_params, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
+                loaded = self._load_tasks(data, mv, role_params, default_vars, included_become_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                 results += loaded
             elif type(x) == dict:
                 task = Task(

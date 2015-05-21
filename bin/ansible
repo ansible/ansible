@@ -58,12 +58,12 @@ class Cli(object):
         ''' create an options parser for bin/ansible '''
 
         parser = utils.base_parser(
-            constants=C, 
-            runas_opts=True, 
-            subset_opts=True, 
+            constants=C,
+            runas_opts=True,
+            subset_opts=True,
             async_opts=True,
-            output_opts=True, 
-            connect_opts=True, 
+            output_opts=True,
+            connect_opts=True,
             check_opts=True,
             diff_opts=False,
             usage='%prog <host-pattern> [options]'
@@ -82,12 +82,8 @@ class Cli(object):
             parser.print_help()
             sys.exit(1)
 
-        # su and sudo command line arguments need to be mutually exclusive
-        if (options.su or options.su_user or options.ask_su_pass) and \
-                (options.sudo or options.sudo_user or options.ask_sudo_pass):
-            parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                         "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
-                         "mutually exclusive")
+        # privlege escalation command line arguments need to be mutually exclusive
+        utils.check_mutually_exclusive_privilege(options, parser)
 
         if (options.ask_vault_pass and options.vault_password_file):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
@@ -101,20 +97,20 @@ class Cli(object):
 
         pattern = args[0]
 
-        sshpass = None
-        sudopass = None
-        su_pass = None
-        vault_pass = None
+        sshpass = becomepass = vault_pass = become_method = None
 
-        options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
-        options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
+        else:
+            options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+
         options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
 
-        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
+        # become
+        utils.normalize_become_options(options)
+        prompt_method = utils.choose_pass_prompt(options)
+        (sshpass, becomepass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, become_ask_pass=options.become_ask_pass, ask_vault_pass=options.ask_vault_pass, become_method=prompt_method)
 
         # read vault_pass from a file
         if not options.ask_vault_pass and options.vault_password_file:
@@ -126,6 +122,7 @@ class Cli(object):
         if options.subset:
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
+
         if len(hosts) == 0:
             callbacks.display("No hosts matched", stderr=True)
             sys.exit(0)
@@ -135,16 +132,10 @@ class Cli(object):
                 callbacks.display('    %s' % host)
             sys.exit(0)
 
-        if ((options.module_name == 'command' or options.module_name == 'shell')
-                and not options.module_args):
+        if options.module_name in ['command','shell'] and not options.module_args:
             callbacks.display("No argument passed to %s module" % options.module_name, color='red', stderr=True)
             sys.exit(1)
 
-
-        if options.su_user or options.ask_su_pass:
-            options.su = True
-        options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-        options.su_user = options.su_user or C.DEFAULT_SU_USER
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
 
@@ -160,17 +151,15 @@ class Cli(object):
             forks=options.forks,
             pattern=pattern,
             callbacks=self.callbacks,
-            sudo=options.sudo,
-            sudo_pass=sudopass,
-            sudo_user=options.sudo_user,
             transport=options.connection,
             subset=options.subset,
             check=options.check,
             diff=options.check,
-            su=options.su,
-            su_pass=su_pass,
-            su_user=options.su_user,
             vault_pass=vault_pass,
+            become=options.become,
+            become_method=options.become_method,
+            become_pass=becomepass,
+            become_user=options.become_user,
             extra_vars=extra_vars,
         )
 

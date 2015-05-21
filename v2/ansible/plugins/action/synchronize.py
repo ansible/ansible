@@ -15,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os.path
 
@@ -23,20 +25,18 @@ from ansible.utils.boolean import boolean
 
 class ActionModule(ActionBase):
 
-    def _get_absolute_path(self, path, task_vars):
-        if 'vars' in task_vars:
-            if '_original_file' in task_vars['vars']:
-                # roles
-                original_path = path
-                path = self._loader.path_dwim_relative(task_vars['_original_file'], 'files', path, self.runner.basedir)
-                if original_path and original_path[-1] == '/' and path[-1] != '/':
-                    # make sure the dwim'd path ends in a trailing "/"
-                    # if the original path did
-                    path += '/'
+    def _get_absolute_path(self, path):
+        if self._task._role is not None:
+            original_path = path
+            path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
+            if original_path and original_path[-1] == '/' and path[-1] != '/':
+                # make sure the dwim'd path ends in a trailing "/"
+                # if the original path did
+                path += '/'
 
         return path
 
-    def _process_origin(self, host, path, user, task_vars):
+    def _process_origin(self, host, path, user):
 
         if not host in ['127.0.0.1', 'localhost']:
             if user:
@@ -46,10 +46,10 @@ class ActionModule(ActionBase):
         else:
             if not ':' in path:
                 if not path.startswith('/'):
-                    path = self._get_absolute_path(path=path, task_vars=task_vars)
+                    path = self._get_absolute_path(path=path)
             return path
 
-    def _process_remote(self, host, path, user, task_vars):
+    def _process_remote(self, host, task, path, user):
         transport = self._connection_info.connection
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
@@ -62,7 +62,7 @@ class ActionModule(ActionBase):
 
         if not ':' in return_data:
             if not return_data.startswith('/'):
-                return_data = self._get_absolute_path(path=return_data, task_vars=task_vars)
+                return_data = self._get_absolute_path(path=return_data)
 
         return return_data
 
@@ -76,7 +76,7 @@ class ActionModule(ActionBase):
             # IF original transport is not local, override transport and disable sudo.
             if original_transport != 'local':
                 task_vars['ansible_connection'] = 'local'
-                self.transport_overridden = True
+                transport_overridden = True
                 self.runner.sudo = False
 
         src  = self._task.args.get('src', None)
@@ -90,8 +90,6 @@ class ActionModule(ActionBase):
         dest_host = task_vars.get('ansible_ssh_host', task_vars.get('inventory_hostname'))
 
         # allow ansible_ssh_host to be templated
-        # FIXME: does this still need to be templated?
-        #dest_host = template.template(self.runner.basedir, dest_host, task_vars, fail_on_undefined=True)
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
 
         # CHECK FOR NON-DEFAULT SSH PORT
@@ -113,13 +111,13 @@ class ActionModule(ActionBase):
         # FIXME: not sure if this is in connection info yet or not...
         #if conn.delegate != conn.host:
         #    if 'hostvars' in task_vars:
-        #        if conn.delegate in task_vars['hostvars'] and self.original_transport != 'local':
+        #        if conn.delegate in task_vars['hostvars'] and original_transport != 'local':
         #            # use a delegate host instead of localhost
         #            use_delegate = True
 
         # COMPARE DELEGATE, HOST AND TRANSPORT                             
         process_args = False
-        if not dest_host is src_host and self.original_transport != 'local':
+        if not dest_host is src_host and original_transport != 'local':
             # interpret and task_vars remote host info into src or dest
             process_args = True
 
@@ -127,7 +125,7 @@ class ActionModule(ActionBase):
         if process_args or use_delegate:
 
             user = None
-            if boolean(options.get('set_remote_user', 'yes')):
+            if boolean(task_vars.get('set_remote_user', 'yes')):
                 if use_delegate:
                     user = task_vars['hostvars'][conn.delegate].get('ansible_ssh_user')
 
@@ -146,31 +144,26 @@ class ActionModule(ActionBase):
             # use the mode to define src and dest's url
             if self._task.args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
-                src  = self._process_remote(src_host, src, user, task_vars)
-                dest = self._process_origin(dest_host, dest, user, task_vars)
+                src  = self._process_remote(src_host, src, user)
+                dest = self._process_origin(dest_host, dest, user)
             else:
                 # src is a local path, dest is a remote path: <user>@<host>
-                src  = self._process_origin(src_host, src, user, task_vars)
-                dest = self._process_remote(dest_host, dest, user, task_vars)
+                src  = self._process_origin(src_host, src, user)
+                dest = self._process_remote(dest_host, dest, user)
 
         # Allow custom rsync path argument.
         rsync_path = self._task.args.get('rsync_path', None)
 
         # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument.
-        if not rsync_path and self.transport_overridden and self._connection_info.sudo and not dest_is_local:
-            self._task.args['rsync_path'] = 'sudo rsync'
+        if not rsync_path and transport_overridden and self._connection_info.become and self._connection_info.become_method == 'sudo' and not dest_is_local:
+            rsync_path = 'sudo rsync'
 
         # make sure rsync path is quoted.
         if rsync_path:
-            rsync_path = '"%s"' % rsync_path
-
-        # FIXME: noop stuff still needs to be figured out
-        #module_args = ""
-        #if self.runner.noop_on_check(task_vars):
-        #    module_args = "CHECKMODE=True"
+            self._task.args['rsync_path'] = '"%s"' % rsync_path
 
         # run the module and store the result
-        result = self.runner._execute_module('synchronize', module_args=, complex_args=options, task_vars=task_vars)
+        result = self._execute_module('synchronize')
 
         return result
 

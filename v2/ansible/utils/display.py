@@ -16,24 +16,26 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # FIXME: copied mostly from old code, needs py3 improvements
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import textwrap
+import sys
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
 
 class Display:
 
-    def __init__(self, conn_info=None):
-        if conn_info:
-            self._verbosity = conn_info.verbosity
-        else:
-            self._verbosity = 0
+    def __init__(self, verbosity=0):
+
+        self.verbosity = verbosity
 
         # list of all deprecation messages to prevent duplicate display
         self._deprecations = {}
         self._warns        = {}
+        self._errors       = {}
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         msg2 = msg
@@ -42,14 +44,14 @@ class Display:
         if not log_only:
             if not stderr:
                 try:
-                    print msg2
+                    print(msg2)
                 except UnicodeEncodeError:
-                    print msg2.encode('utf-8')
+                    print(msg2.encode('utf-8'))
             else:
                 try:
-                    print >>sys.stderr, msg2
+                    print(msg2, file=sys.stderr)
                 except UnicodeEncodeError:
-                    print >>sys.stderr, msg2.encode('utf-8')
+                    print(msg2.encode('utf-8'), file=sys.stderr)
         if C.DEFAULT_LOG_PATH != '':
             while msg.startswith("\n"):
                 msg = msg.replace("\n","")
@@ -69,14 +71,20 @@ class Display:
     def vvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=3)
 
+    def vvvvv(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=4)
+
+    def vvvvvv(self, msg, host=None):
+        return self.verbose(msg, host=host, caplevel=5)
+
     def verbose(self, msg, host=None, caplevel=2):
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
-        if self._verbosity > caplevel:
+        if self.verbosity > caplevel:
             if host is None:
                 self.display(msg, color='blue')
             else:
-                self.display("<%s> %s" % (host, msg), color='blue')
+                self.display("<%s> %s" % (host, msg), color='blue', screen_only=True)
 
     def deprecated(self, msg, version, removed=False):
         ''' used to print out a deprecation message.'''
@@ -96,19 +104,39 @@ class Display:
         wrapped = textwrap.wrap(new_msg, 79)
         new_msg = "\n".join(wrapped) + "\n"
 
-        if new_msg not in deprecations:
-            self._display(new_msg, color='purple', stderr=True)
+        if new_msg not in self._deprecations:
+            self.display(new_msg, color='purple', stderr=True)
             self._deprecations[new_msg] = 1
 
     def warning(self, msg):
         new_msg = "\n[WARNING]: %s" % msg
         wrapped = textwrap.wrap(new_msg, 79)
         new_msg = "\n".join(wrapped) + "\n"
-        if new_msg not in warns:
-            self._display(new_msg, color='bright purple', stderr=True)
+        if new_msg not in self._warns:
+            self.display(new_msg, color='bright purple', stderr=True)
             self._warns[new_msg] = 1
 
     def system_warning(self, msg):
         if C.SYSTEM_WARNINGS:
-            self._warning(msg)
+            self.warning(msg)
+
+    def banner(self, msg, color=None):
+        '''
+        Prints a header-looking line with stars taking up to 80 columns
+        of width (3 columns, minimum)
+        '''
+        msg = msg.strip()
+        star_len = (80 - len(msg))
+        if star_len < 0:
+            star_len = 3
+        stars = "*" * star_len
+        self.display("\n%s %s" % (msg, stars), color=color)
+
+    def error(self, msg):
+        new_msg = "\n[ERROR]: %s" % msg
+        wrapped = textwrap.wrap(new_msg, 79)
+        new_msg = "\n".join(wrapped) + "\n"
+        if new_msg not in self._errors:
+            self.display(new_msg, color='red', stderr=True)
+            self._errors[new_msg] = 1
 

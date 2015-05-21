@@ -31,7 +31,7 @@
 
 ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
 
-MODULE_ARGS = ""
+MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
@@ -65,6 +65,7 @@ import pwd
 import platform
 import errno
 import tempfile
+from itertools import imap, repeat
 
 try:
     import json
@@ -234,7 +235,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     return super(cls, subclass).__new__(subclass)
 
 
-def json_dict_unicode_to_bytes(d):
+def json_dict_unicode_to_bytes(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -242,17 +243,17 @@ def json_dict_unicode_to_bytes(d):
     '''
 
     if isinstance(d, unicode):
-        return d.encode('utf-8')
+        return d.encode(encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+        return dict(imap(json_dict_unicode_to_bytes, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_unicode_to_bytes, d))
+        return list(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_unicode_to_bytes, d))
+        return tuple(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     else:
         return d
 
-def json_dict_bytes_to_unicode(d):
+def json_dict_bytes_to_unicode(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -260,13 +261,13 @@ def json_dict_bytes_to_unicode(d):
     '''
 
     if isinstance(d, str):
-        return unicode(d, 'utf-8')
+        return unicode(d, encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_bytes_to_unicode, d.iteritems()))
+        return dict(imap(json_dict_bytes_to_unicode, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_bytes_to_unicode, d))
+        return list(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_bytes_to_unicode, d))
+        return tuple(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     else:
         return d
 
@@ -656,14 +657,25 @@ class AnsibleModule(object):
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
-                if 'lchmod' in dir(os):
+                if hasattr(os, 'lchmod'):
                     os.lchmod(path, mode)
                 else:
-                    os.chmod(path, mode)
+                    if not os.path.islink(path):
+                        os.chmod(path, mode)
+                    else:
+                        # Attempt to set the perms of the symlink but be
+                        # careful not to change the perms of the underlying
+                        # file while trying
+                        underlying_stat = os.stat(path)
+                        os.chmod(path, mode)
+                        new_underlying_stat = os.stat(path)
+                        if underlying_stat.st_mode != new_underlying_stat.st_mode:
+                            os.chmod(path, stat.S_IMODE(underlying_stat.st_mode))
+                        q_stat = os.stat(path)
             except OSError, e:
                 if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
-                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                elif e.errno in (errno.ENOENT, errno.ELOOP): # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -1189,13 +1201,17 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1", "unicode_escape"):
+        for encoding in ("utf-8", "latin-1"):
             try:
                 return json.dumps(data, encoding=encoding)
-            # Old systems using simplejson module does not support encoding keyword.
-            except TypeError, e:
-                return json.dumps(data)
-            except UnicodeDecodeError, e:
+            # Old systems using old simplejson module does not support encoding keyword.
+            except TypeError:
+                try:
+                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+                except UnicodeDecodeError:
+                    continue
+                return json.dumps(new_data)
+            except UnicodeDecodeError:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
 
@@ -1277,14 +1293,18 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
-        backupdest = '%s.%s' % (fn, ext)
 
-        try:
-            shutil.copy2(fn, backupdest)
-        except shutil.Error, e:
-            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+        backupdest = ''
+        if os.path.exists(fn):
+            # backups named basename-YYYY-MM-DD@HH:MM:SS~
+            ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
+            backupdest = '%s.%s' % (fn, ext)
+
+            try:
+                shutil.copy2(fn, backupdest)
+            except (shutil.Error, IOError), e:
+                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+
         return backupdest
 
     def cleanup(self, tmpfile):
@@ -1371,7 +1391,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(dest, 0666 ^ umask)
+            os.chmod(dest, 0666 & ~umask)
             if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
@@ -1428,7 +1448,7 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporart env path if a prefix is passed
+        # Set a temporary env path if a prefix is passed
         env=os.environ
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
@@ -1437,7 +1457,12 @@ class AnsibleModule(object):
         # in reporting later, which strips out things like
         # passwords from the args list
         if isinstance(args, basestring):
-            to_clean_args = shlex.split(args.encode('utf-8'))
+            if isinstance(args, unicode):
+                b_args = args.encode('utf-8')
+            else:
+                b_args = args
+            to_clean_args = shlex.split(b_args)
+            del b_args
         else:
             to_clean_args = args
 

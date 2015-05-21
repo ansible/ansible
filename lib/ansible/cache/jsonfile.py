@@ -18,6 +18,7 @@
 import os
 import time
 import errno
+import codecs
 
 try:
     import simplejson as json
@@ -57,9 +58,9 @@ class CacheModule(BaseCacheModule):
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            f = open( cachefile, 'r')
+            f = codecs.open(cachefile, 'r', encoding='utf-8')
         except (OSError,IOError), e:
-            utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
+            utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
         else:
             value = json.load(f)
             self._cache[key] = value
@@ -73,9 +74,9 @@ class CacheModule(BaseCacheModule):
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            f = open(cachefile, 'w')
+            f = codecs.open(cachefile, 'w', encoding='utf-8')
         except (OSError,IOError), e:
-            utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
+            utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
         else:
             f.write(utils.jsonify(value))
         finally:
@@ -107,6 +108,7 @@ class CacheModule(BaseCacheModule):
         return keys
 
     def contains(self, key):
+        cachefile = "%s/%s" % (self._cache_dir, key)
 
         if key in self._cache:
             return True
@@ -114,7 +116,7 @@ class CacheModule(BaseCacheModule):
         if self.has_expired(key):
             return False
         try:
-            st = os.stat("%s/%s" % (self._cache_dir, key))
+            st = os.stat(cachefile)
             return True
         except (OSError,IOError), e:
             if e.errno == errno.ENOENT:

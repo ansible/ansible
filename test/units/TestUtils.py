@@ -293,7 +293,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, __file__)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Syntax Error while loading' in e.msg)
+                self.assertTrue('Syntax Error while loading' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -304,7 +304,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, __file__)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Syntax Error while loading' in e.msg)
+                self.assertTrue('Syntax Error while loading' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -315,7 +315,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, __file__)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Check over' in e.msg)
+                self.assertTrue('Check over' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -326,7 +326,7 @@ class TestUtils(unittest.TestCase):
             try:
                 ansible.utils.process_yaml_error(exc, data, None)
             except ansible.errors.AnsibleYAMLValidationFailed, e:
-                self.assertTrue('Could not parse YAML.' in e.msg)
+                self.assertTrue('Could not parse YAML.' in str(e))
             else:
                 raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -352,7 +352,7 @@ class TestUtils(unittest.TestCase):
         try:
             ansible.utils.parse_yaml_from_file(broken)
         except ansible.errors.AnsibleYAMLValidationFailed, e:
-            self.assertTrue('Syntax Error while loading' in e.msg)
+            self.assertTrue('Syntax Error while loading' in str(e))
         else:
             raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
 
@@ -498,7 +498,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(cmd), 3)
         self.assertTrue('-u root' in cmd[0])
         self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
-        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('echo BECOME-SUCCESS-' in cmd[0] and cmd[2].startswith('BECOME-SUCCESS-'))
         self.assertTrue('sudo -k' in cmd[0])
 
     def test_make_su_cmd(self):
@@ -506,7 +506,7 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('root -c "/bin/sh' in cmd[0] or ' root -c /bin/sh' in cmd[0])
-        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('echo BECOME-SUCCESS-' in cmd[0] and cmd[2].startswith('BECOME-SUCCESS-'))
 
     def test_to_unicode(self):
         uni = ansible.utils.unicode.to_unicode(u'ansible')
@@ -594,8 +594,8 @@ class TestUtils(unittest.TestCase):
         try:
             ansible.utils.deprecated('Ack!', '0.0', True)
         except ansible.errors.AnsibleError, e:
-            self.assertTrue('0.0' not in e.msg)
-            self.assertTrue('[DEPRECATED]' in e.msg)
+            self.assertTrue('0.0' not in str(e))
+            self.assertTrue('[DEPRECATED]' in str(e))
         else:
             raise AssertionError("Incorrect exception, expected AnsibleError")
 

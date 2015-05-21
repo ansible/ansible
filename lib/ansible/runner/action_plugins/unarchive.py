@@ -62,7 +62,7 @@ class ActionModule(object):
             module_args_tmp = ""
             complex_args_tmp = dict(path=creates, get_md5=False, get_checksum=False)
             module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
-                                                        complex_args=complex_args_tmp, persist_files=True)
+                                                        complex_args=complex_args_tmp, delete_remote_tmp=False)
             stat = module_return.result.get('stat', None)
             if stat and stat.get('exists', False):
                 return ReturnData(
@@ -99,7 +99,7 @@ class ActionModule(object):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self.runner.sudo and self.runner.sudo_user != 'root' or self.runner.su and self.runner.su_user != 'root':
+            if self.runner.become and self.runner.become_user != 'root':
                 if not self.runner.noop_on_check(inject):
                     self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
             # Build temporary module_args.

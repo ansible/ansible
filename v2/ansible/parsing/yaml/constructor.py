@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from yaml.constructor import Constructor
-from ansible.parsing.yaml.objects import AnsibleMapping
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 
 class AnsibleConstructor(Constructor):
     def __init__(self, file_name=None):
@@ -32,25 +32,43 @@ class AnsibleConstructor(Constructor):
         yield data
         value = self.construct_mapping(node)
         data.update(value)
-        data._line_number   = value._line_number
-        data._column_number = value._column_number
-        data._data_source   = value._data_source
+        data.ansible_pos = self._node_position_info(node)
 
     def construct_mapping(self, node, deep=False):
         ret = AnsibleMapping(super(Constructor, self).construct_mapping(node, deep))
-        ret._line_number   = node.__line__
-        ret._column_number = node.__column__
+        ret.ansible_pos = self._node_position_info(node)
+
+        return ret
+
+    def construct_yaml_str(self, node):
+        # Override the default string handling function
+        # to always return unicode objects
+        value = self.construct_scalar(node)
+        ret = AnsibleUnicode(value)
+
+        ret.ansible_pos = self._node_position_info(node)
+
+        return ret
+
+    def construct_yaml_seq(self, node):
+        data = AnsibleSequence()
+        yield data
+        data.extend(self.construct_sequence(node))
+        data.ansible_pos = self._node_position_info(node)
+
+    def _node_position_info(self, node):
+        # the line number where the previous token has ended (plus empty lines)
+        # Add one so that the first line is line 1 rather than line 0
+        column = node.start_mark.column + 1
+        line = node.start_mark.line + 1
 
         # in some cases, we may have pre-read the data and then
         # passed it to the load() call for YAML, in which case we
         # want to override the default datasource (which would be
         # '<string>') to the actual filename we read in
-        if self._ansible_file_name:
-            ret._data_source = self._ansible_file_name
-        else:
-            ret._data_source = node.__datasource__
+        datasource = self._ansible_file_name or node.start_mark.name
 
-        return ret
+        return (datasource, line, column)
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',
@@ -60,3 +78,14 @@ AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:python/dict',
     AnsibleConstructor.construct_yaml_map)
 
+AnsibleConstructor.add_constructor(
+    u'tag:yaml.org,2002:str',
+    AnsibleConstructor.construct_yaml_str)
+
+AnsibleConstructor.add_constructor(
+    u'tag:yaml.org,2002:python/unicode',
+    AnsibleConstructor.construct_yaml_str)
+
+AnsibleConstructor.add_constructor(
+    u'tag:yaml.org,2002:seq',
+    AnsibleConstructor.construct_yaml_seq)

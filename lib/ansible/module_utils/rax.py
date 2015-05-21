@@ -315,7 +315,11 @@ def setup_rax_module(module, rax_module, region_required=True):
         else:
             raise Exception('No credentials supplied!')
     except Exception, e:
-        module.fail_json(msg='%s' % e.message)
+        if e.message:
+            msg = str(e.message)
+        else:
+            msg = repr(e)
+        module.fail_json(msg=msg)
 
     if region_required and region not in rax_module.regions:
         module.fail_json(msg='%s is not a valid region, must be one of: %s' %

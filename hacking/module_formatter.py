@@ -68,7 +68,7 @@ def rst_ify(text):
 
     t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
     t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-    t = _MODULE.sub(r'``' + r"\1" + r"``", t)
+    t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
     t = _URL.sub(r"\1", t)
     t = _CONST.sub(r'``' + r"\1" + r"``", t)
 
@@ -289,6 +289,10 @@ def process_module(module, options, env, template, outputname, module_map, alias
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
+    if returndocs:
+        doc['returndocs']       = yaml.safe_load(returndocs)
+    else:
+        doc['returndocs']       = None
 
     # here is where we build the table of contents...
 

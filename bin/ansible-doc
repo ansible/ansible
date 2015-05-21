@@ -197,7 +197,7 @@ def get_module_list_text(module_list):
             continue
 
         try:
-            doc, plainexamples = module_docs.get_docstring(filename)
+            doc, plainexamples, returndocs = module_docs.get_docstring(filename)
             desc = tty_ify(doc.get('short_description', '?')).strip()
             if len(desc) > linelimit:
                 desc = desc[:linelimit] + '...'

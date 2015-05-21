@@ -15,17 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
+import pipes
 
 from ansible.plugins.action import ActionBase
-
-## fixes https://github.com/ansible/ansible/issues/3518
-# http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
-import sys
-reload(sys)
-sys.setdefaultencoding("utf8")
-import pipes
 
 
 class ActionModule(ActionBase):
@@ -81,7 +77,7 @@ class ActionModule(ActionBase):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self._connection_info.sudo and self._connection_info.sudo_user != 'root' or self._connection_info.su and self._connection_info.su_user != 'root':
+            if self._connection_info.become and self._connection_info.become_user != 'root':
                 # FIXME: noop stuff needs to be reworked
                 #if not self.runner.noop_on_check(task_vars):
                 #    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)

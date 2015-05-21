@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import StringIO
+from six.moves import StringIO
 import json
 import os
 import random
@@ -44,34 +44,24 @@ class ActionBase:
     action in use.
     '''
 
-    def __init__(self, task, connection, connection_info, loader, module_loader):
-        self._task            = task
-        self._connection      = connection
-        self._connection_info = connection_info
-        self._loader          = loader
-        self._module_loader   = module_loader
-        self._shell           = self.get_shell()
+    def __init__(self, task, connection, connection_info, loader, shared_loader_obj):
+        self._task              = task
+        self._connection        = connection
+        self._connection_info   = connection_info
+        self._loader            = loader
+        self._shared_loader_obj = shared_loader_obj
+        self._shell             = self.get_shell()
 
         self._supports_check_mode = True
 
     def get_shell(self):
 
-        # FIXME: no more inject, get this from the host variables?
-        #default_shell = getattr(self._connection, 'default_shell', '')
-        #shell_type = inject.get('ansible_shell_type')
-        #if not shell_type:
-        #    if default_shell:
-        #        shell_type = default_shell
-        #    else:
-        #        shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
-
-        shell_type = getattr(self._connection, 'default_shell', '')
-        if not shell_type:
-            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
-
-        shell_plugin = shell_loader.get(shell_type)
-        if shell_plugin is None:
-            shell_plugin = shell_loader.get('sh')
+        if hasattr(self._connection, '_shell'):
+            shell_plugin = getattr(self._connection, '_shell', '')
+        else:
+            shell_plugin = shell_loader.get(os.path.basename(C.DEFAULT_EXECUTABLE))
+            if shell_plugin is None:
+                shell_plugin = shell_loader.get('sh')
 
         return shell_plugin
 
@@ -83,9 +73,9 @@ class ActionBase:
 
         # Search module path(s) for named module.
         module_suffixes = getattr(self._connection, 'default_suffixes', None)
-        module_path = self._module_loader.find_plugin(module_name, module_suffixes, transport=self._connection.get_transport())
+        module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, module_suffixes)
         if module_path is None:
-            module_path2 = self._module_loader.find_plugin('ping', module_suffixes)
+            module_path2 = self._shared_loader_obj.module_loader.find_plugin('ping', module_suffixes)
             if module_path2 is not None:
                 raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
             else:
@@ -122,7 +112,7 @@ class ActionBase:
         # FIXME: modified from original, needs testing? Since this is now inside
         #        the action plugin, it should make it just this simple
         return getattr(self, 'TRANSFERS_FILES', False)
-        
+
     def _late_needs_tmp_path(self, tmp, module_style):
         '''
         Determines if a temp path is required after some early actions have already taken place.
@@ -130,10 +120,10 @@ class ActionBase:
         if tmp and "tmp" in tmp:
             # tmp has already been created
             return False
-        if not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._connection_info.su:
+        if not self._connection.__class__.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._connection_info.become:
             # tmp is necessary to store module source code
             return True
-        if not self._connection._has_pipelining:
+        if not self._connection.__class__.has_pipelining:
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -152,12 +142,11 @@ class ActionBase:
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = False
 
-        if (self._connection_info.sudo and self._connection_info.sudo_user != 'root') or (self._connection_info.su and self._connection_info.su_user != 'root'):
+        if self._connection_info.become and self._connection_info.become_user != 'root':
             use_system_tmp = True
 
         tmp_mode = None
-        if self._connection_info.remote_user != 'root' or \
-           ((self._connection_info.sudo and self._connection_info.sudo_user != 'root') or (self._connection_info.su and self._connection_info.su_user != 'root')):
+        if self._connection_info.remote_user != 'root' or self._connection_info.become and self._connection_info.become_user != 'root':
             tmp_mode = 'a+rx'
 
         cmd = self._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
@@ -169,7 +158,7 @@ class ActionBase:
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
-            elif result['rc'] == 255 and self._connection.get_transport() in ['ssh']:
+            elif result['rc'] == 255 and self._connection.transport in ('ssh',):
                 # FIXME: more utils.VERBOSITY
                 #if utils.VERBOSITY > 3:
                 #    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
@@ -191,7 +180,7 @@ class ActionBase:
         # Catch failure conditions, files should never be
         # written to locations in /.
         if rc == '/':
-            raise AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
+            raise AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basefile, cmd))
 
         return rc
 
@@ -224,7 +213,7 @@ class ActionBase:
             #else:
             #    data = data.encode('utf-8')
             afo.write(data)
-        except Exception, e:
+        except Exception as e:
             #raise AnsibleError("failure encoding into utf-8: %s" % str(e))
             raise AnsibleError("failure writing module data to temporary file for transfer: %s" % str(e))
 
@@ -291,10 +280,8 @@ class ActionBase:
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
         if expand_path == '~':
-            if self._connection_info.sudo and self._connection_info.sudo_user:
-                expand_path = '~%s' % self._connection_info.sudo_user
-            elif self._connection_info.su and self._connection_info.su_user:
-                expand_path = '~%s' % self._connection_info.su_user
+            if self._connection_info.become and self._connection_info.become_user:
+                expand_path = '~%s' % self._connection_info.become_user
 
         cmd = self._shell.expand_user(expand_path)
         debug("calling _low_level_execute_command to expand the remote user path")
@@ -322,7 +309,7 @@ class ActionBase:
         filter only leading lines since multiline JSON is valid.
         '''
 
-        filtered_lines = StringIO.StringIO()
+        filtered_lines = StringIO()
         stop_filtering = False
         for line in data.splitlines():
             if stop_filtering or line.startswith('{') or line.startswith('['):
@@ -367,13 +354,13 @@ class ActionBase:
         # FIXME: async stuff here?
         #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
         if remote_module_path:
-            debug("transfering module to remote")
+            debug("transferring module to remote")
             self._transfer_data(remote_module_path, module_data)
-            debug("done transfering module to remote")
+            debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
 
-        if tmp and "tmp" in tmp and ((self._connection_info.sudo and self._connection_info.sudo_user != 'root') or (self._connection_info.su and self._connection_info.su_user != 'root')):
+        if tmp and "tmp" in tmp and self._connection_info.become and self._connection_info.become_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             self._remote_chmod(tmp, 'a+r', remote_module_path)
 
@@ -383,7 +370,7 @@ class ActionBase:
         # FIXME: all of the old-module style and async stuff has been removed from here, and
         #        might need to be re-added (unless we decide to drop support for old-style modules
         #        at this point and rework things to support non-python modules specifically)
-        if self._connection._has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES:
+        if self._connection.__class__.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES:
             in_data = module_data
         else:
             if remote_module_path:
@@ -391,7 +378,7 @@ class ActionBase:
 
         rm_tmp = None
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if not self._connection_info.sudo or self._connection_info.su or self._connection_info.sudo_user == 'root' or self._connection_info.su_user == 'root':
+            if not self._connection_info.become or self._connection_info.become_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
@@ -409,24 +396,28 @@ class ActionBase:
         debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if (self._connection_info.sudo and self._connection_info.sudo_user != 'root') or (self._connection_info.su and self._connection_info.su_user != 'root'):
+            if self._connection_info.become and self._connection_info.become_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = self._shell.remove(tmp, recurse=True)
                 self._low_level_execute_command(cmd2, tmp, sudoable=False)
 
-        # FIXME: in error situations, the stdout may not contain valid data, so we
-        #        should check for bad rc codes better to catch this here
-        if 'stdout' in res and res['stdout'].strip():
-            data = json.loads(self._filter_leading_non_json_lines(res['stdout']))
-            if 'parsed' in data and data['parsed'] == False:
-                data['msg'] += res['stderr']
-            # pre-split stdout into lines, if stdout is in the data and there
-            # isn't already a stdout_lines value there
-            if 'stdout' in data and 'stdout_lines' not in data:
-                data['stdout_lines'] = data.get('stdout', '').splitlines()
-        else:
-            data = dict()
+        try:
+            data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', '')))
+        except ValueError:
+            # not valid json, lets try to capture error
+            data = dict(failed=True, parsed=False)
+            if 'stderr' in res and res['stderr'].startswith('Traceback'):
+                data['traceback'] = res['stderr']
+            else:
+                data['msg'] = res.get('stdout', '')
+                if 'stderr' in res:
+                    data['msg'] += res['stderr']
+
+        # pre-split stdout into lines, if stdout is in the data and there
+        # isn't already a stdout_lines value there
+        if 'stdout' in data and 'stdout_lines' not in data:
+            data['stdout_lines'] = data.get('stdout', '').splitlines()
 
         # store the module invocation details back into the result
         data['invocation'] = dict(
@@ -457,11 +448,7 @@ class ActionBase:
         success_key = None
 
         if sudoable:
-            if self._connection_info.su and self._connection_info.su_user:
-                cmd, prompt, success_key = self._connection_info.make_su_cmd(executable, cmd)
-            elif self._connection_info.sudo and self._connection_info.sudo_user:
-                # FIXME: hard-coded sudo_exe here
-                cmd, prompt, success_key = self._connection_info.make_sudo_cmd('/usr/bin/sudo', executable, cmd)
+            cmd, prompt, success_key = self._connection_info.make_become_cmd(cmd, executable)
 
         debug("executing the command %s through the connection" % cmd)
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, executable=executable, in_data=in_data)
