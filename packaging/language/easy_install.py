@@ -71,6 +71,7 @@ options:
     required: false
     default: null
   state:
+    version_added: "2.0"
     description:
       - The desired state of the library. C(latest) ensures that the latest version is installed.
     required: false
