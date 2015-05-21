@@ -72,7 +72,7 @@ options:
     default: null
   state:
     description:
-      - The desired state of the gem. C(latest) ensures that the latest version is installed.
+      - The desired state of the library. C(latest) ensures that the latest version is installed.
     required: false
     choices: [present, latest]
     default: present
