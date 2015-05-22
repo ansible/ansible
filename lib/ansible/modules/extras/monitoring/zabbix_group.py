@@ -153,10 +153,10 @@ def main():
         argument_spec=dict(
             server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
-            login_password=dict(required=True),
+            login_password=dict(required=True, no_log=True),
             host_groups=dict(required=True, aliases=['host_group']),
             state=dict(default="present", choices=['present','absent']),
-            timeout=dict(default=10)
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
     )
