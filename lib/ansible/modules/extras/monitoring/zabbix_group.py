@@ -55,6 +55,7 @@ options:
             - Possible values are: present and absent.
         required: false
         default: "present"
+        choices: [ "present", "absent" ]
     timeout:
         description:
             - The timeout of API request(seconds).
@@ -63,6 +64,7 @@ options:
         description:
             - List of host groups to create or delete.
         required: true
+        aliases: [ "host_group" ]
 notes:
     - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
@@ -152,8 +154,8 @@ def main():
             server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
             login_password=dict(required=True),
-            host_groups=dict(required=True),
-            state=dict(default="present"),
+            host_groups=dict(required=True, aliases=['host_group']),
+            state=dict(default="present", choices=['present','absent']),
             timeout=dict(default=10)
         ),
         supports_check_mode=True
@@ -206,4 +208,3 @@ def main():
 
 from ansible.module_utils.basic import *
 main()
-
