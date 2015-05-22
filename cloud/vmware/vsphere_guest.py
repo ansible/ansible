@@ -71,7 +71,7 @@ options:
   from_template:
     version_added: "1.9"
     description:
-      - Specifies if the VM should be deployed from a template (annot be run with state). Only accepts 'cluster' and 'resource_pool' params. No guest customization changes to hardware such as CPU, RAM, NICs or Disks can be applied this way.
+      - Specifies if the VM should be deployed from a template (cannot be run with state). Only accepts 'cluster' and 'resource_pool' params. No guest customization changes to hardware such as CPU, RAM, NICs or Disks can be applied this way.
     default: no
     choices: ['yes', 'no']
   template_src:
