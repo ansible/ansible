@@ -195,7 +195,7 @@ EXAMPLES = '''
       hostname: esx001.mydomain.local
 
 # Deploy a guest from a template
-# No reconfiguration of the destination guest is done at this stage, a reconfigure would be needed to adjust memory/cpu etc..
+# No reconfiguration of the destination guest is done at this stage, a reconfigure is needed to adjust RAM/CPU.
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser
